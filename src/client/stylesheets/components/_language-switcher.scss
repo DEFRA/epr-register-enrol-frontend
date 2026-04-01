@@ -19,7 +19,7 @@
 
     &--current {
       font-weight: 600;
-      color: #000;
+      color: #000000;
     }
   }
 
@@ -45,12 +45,12 @@
     &--current {
       text-decoration: none;
       cursor: default;
-      color: #000;
+      color: #000000;
 
       &:hover,
       &:focus {
         background-color: transparent;
-        color: #000;
+        color: #000000;
       }
     }
   }
