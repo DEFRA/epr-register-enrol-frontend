@@ -11,11 +11,9 @@ vi.mock('node:fs', async () => {
     readFileSync: (...args) => mockReadFileSync(...args)
   }
 })
-vi.mock('../../../server/common/helpers/logging/logger.js', () => (
-  {
-    createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
-  }
-))
+vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
+  createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
+}))
 
 describe('context and cache', () => {
   beforeEach(() => {

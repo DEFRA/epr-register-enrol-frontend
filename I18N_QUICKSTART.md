@@ -10,20 +10,25 @@
 ## What's Been Created
 
 ### Configuration Files
+
 - `src/config/i18n.js` - hapi-i18n setup and configuration
 
 ### Translation Files
+
 - `src/locales/en/translation.json` - English translations
 - `src/locales/cy/translation.json` - Welsh translations
 
 ### Components & Templates
+
 - `src/server/common/components/language-switcher/` - Language toggle component
 - Updated routes to support language prefixes (`/en/`, `/cy/`)
 
 ### Styling
+
 - `src/client/stylesheets/components/_language-switcher.scss` - Component styles
 
 ### Documentation
+
 - `I18N_GUIDE.md` - Comprehensive guide (in workspace root)
 
 ## How to Use
@@ -31,6 +36,7 @@
 ### 1. Add Translation Keys
 
 Edit translation files:
+
 ```json
 // src/locales/en/translation.json
 {
@@ -59,6 +65,7 @@ Edit translation files:
 ### 3. Add Language Switcher
 
 Include the component in your layouts:
+
 ```nunjucks
 {% include "language-switcher/index.njk" %}
 ```
@@ -70,7 +77,7 @@ export const myController = {
   handler(request, h) {
     const title = request.t('myPage.title')
     const locale = request.getLocale()
-    
+
     return h.view('mypage', { pageTitle: title, language: locale })
   }
 }
@@ -105,11 +112,12 @@ npm test
 ✅ **Query parameter support** - `?lang=cy`  
 ✅ **Language detection** - From browser preferences, cookies, URL  
 ✅ **Language switcher component** - Built-in  
-✅ **Easy translation file management** - Simple JSON files  
+✅ **Easy translation file management** - Simple JSON files
 
 ## Example Translation Files Already Included
 
 Both translation files include basic keys for:
+
 - Header information
 - Navigation items
 - Common UI elements
@@ -144,6 +152,7 @@ src/
 ## Translation Key Syntax
 
 Use dot notation for nested keys:
+
 ```
 header.serviceName
 pages.home.title
@@ -155,22 +164,26 @@ languageSwitcher.english
 ## Comparison: Old vs New
 
 **Old Syntax (i18next):**
+
 ```nunjucks
 {{ 'key' | t(currentLanguage) }}
 ```
 
 **New Syntax (hapi-i18n):**
+
 ```nunjucks
 {{ t('key') }}
 ```
 
 **Old Controllers:**
+
 ```javascript
 import i18next from '../../../config/i18n.js'
 i18next.t('key', { lng: language })
 ```
 
 **New Controllers:**
+
 ```javascript
 request.t('key')
 ```
@@ -178,6 +191,7 @@ request.t('key')
 ## Need Help?
 
 See **`I18N_GUIDE.md`** for complete documentation including:
+
 - Interpolation and pluralization
 - Troubleshooting
 - Best practices

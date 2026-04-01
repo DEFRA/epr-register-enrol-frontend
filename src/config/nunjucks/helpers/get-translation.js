@@ -10,8 +10,12 @@ let translations = null
 function loadTranslations() {
   if (translations) return translations
 
-  const en = JSON.parse(readFileSync(path.join(localesPath, 'en/translation.json'), 'utf-8'))
-  const cy = JSON.parse(readFileSync(path.join(localesPath, 'cy/translation.json'), 'utf-8'))
+  const en = JSON.parse(
+    readFileSync(path.join(localesPath, 'en/translation.json'), 'utf-8')
+  )
+  const cy = JSON.parse(
+    readFileSync(path.join(localesPath, 'cy/translation.json'), 'utf-8')
+  )
 
   translations = { en, cy }
   return translations

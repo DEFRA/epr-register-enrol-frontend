@@ -1,46 +1,46 @@
 {
-    "header": {
-        "serviceName": "Cofrestriad & Ymrestru EPR",
-        "language": "Iaith"
+  "header": {
+    "serviceName": "Cofrestriad & Ymrestru EPR",
+    "language": "Iaith"
+  },
+  "pages": {
+    "home": {
+      "title": "Cartref",
+      "heading": "Cartref"
     },
-    "pages": {
-        "home": {
-            "title": "Cartref",
-            "heading": "Cartref"
-        },
-        "about": {
-            "title": "Ynghylch",
-            "heading": "Ynghylch"
-        },
-        "regulator": {
-            "title": "Rheolwr",
-            "heading": "Rheolwr"
-        },
-        "worklistItems": {
-            "title": "Eitemau Rhestr Waith",
-            "heading": "Eitemau Rhestr Waith"
-        },
-        "organisationList": {
-            "title": "Rhestr Sefydliadau",
-            "heading": "Rhestr Sefydliadau"
-        }
+    "about": {
+      "title": "Ynghylch",
+      "heading": "Ynghylch"
     },
-    "navigation": {
-        "home": "Cartref",
-        "about": "Ynghylch",
-        "regulator": "Rheolwr",
-        "worklistItems": "Eitemau Rhestr Waith",
-        "organisationList": "Sefydliadau"
+    "regulator": {
+      "title": "Rheolwr",
+      "heading": "Rheolwr"
     },
-    "common": {
-        "yes": "Ie",
-        "no": "Nac ydy",
-        "back": "Yn ôl",
-        "continue": "Parhau",
-        "save": "Cadw"
+    "worklistItems": {
+      "title": "Eitemau Rhestr Waith",
+      "heading": "Eitemau Rhestr Waith"
     },
-    "languageSwitcher": {
-        "english": "English",
-        "welsh": "Cymraeg"
+    "organisationList": {
+      "title": "Rhestr Sefydliadau",
+      "heading": "Rhestr Sefydliadau"
     }
+  },
+  "navigation": {
+    "home": "Cartref",
+    "about": "Ynghylch",
+    "regulator": "Rheolwr",
+    "worklistItems": "Eitemau Rhestr Waith",
+    "organisationList": "Sefydliadau"
+  },
+  "common": {
+    "yes": "Ie",
+    "no": "Nac ydy",
+    "back": "Yn ôl",
+    "continue": "Parhau",
+    "save": "Cadw"
+  },
+  "languageSwitcher": {
+    "english": "English",
+    "welsh": "Cymraeg"
+  }
 }

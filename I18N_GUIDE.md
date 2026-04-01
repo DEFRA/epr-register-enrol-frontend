@@ -4,9 +4,10 @@ This guide explains how to use the English and Welsh language support in the EPR
 
 ## Overview
 
-The application uses **hapi-i18n**, a Hapi-native plugin for managing translations between English (en) and Welsh (cy). 
+The application uses **hapi-i18n**, a Hapi-native plugin for managing translations between English (en) and Welsh (cy).
 
 Language preference is determined by:
+
 1. **URL path prefix** (highest priority) - `/en/` or `/cy/`
 2. **Query parameter** - `?lang=en` or `?lang=cy`
 3. **Cookie** - Stored language preference
@@ -43,6 +44,7 @@ src/
 Edit the translation files to add new keys:
 
 **`src/locales/en/translation.json`:**
+
 ```json
 {
   "pages": {
@@ -55,6 +57,7 @@ Edit the translation files to add new keys:
 ```
 
 **`src/locales/cy/translation.json`:**
+
 ```json
 {
   "pages": {
@@ -67,6 +70,7 @@ Edit the translation files to add new keys:
 ```
 
 ### 2. Use Translations in Templates
+
 ing the translation function in Nunjucks templates is now simpler:
 
 ```nunjucks
@@ -77,13 +81,14 @@ ing the translation function in Nunjucks templates is now simpler:
 {# Language switcher #}
 {% include "language-switcher/index.njk" %}
 ```
+
 - `languageToggle` - Opposite language code for switching
 
 ### 3. Using the Language Switcher Component
 
 Include the language switcher component in your templates:
 
-```nunjucks
+````nunjucks
 {% from "e Translations in Controllers
 
 Controllers can use `request.t()` to get translated strings:
@@ -141,9 +146,10 @@ In templates:
 ```nunjucks
 {# Get current locale #}
 <p>Current language: {{ request.getLocale() }}</p>
-```
+````
 
 In controllers:
+
 ```javascript
 export const myController = {
   handler(request, h) {
@@ -160,6 +166,7 @@ Include the language switcher component in your templates:
 ```nunjucks
 {% include "language-switcher/index.njk" %}
 ```
+
 Configuration
 
 The hapi-i18n plugin is configured in `src/config/i18n.js`:
@@ -173,7 +180,8 @@ The hapi-i18n plugin is configured in `src/config/i18n.js`:
   extension: '.json'               // Translation file extension
 }
 ```
-```
+
+````
 
 ## Test Assets
 
@@ -202,14 +210,16 @@ Translations can use dynamic values with interpolation:
 {
   "greeting": "Hello {{name}}, welcome to {{service}}"
 }
-```
+````
 
 **Template:**
+
 ```nunjucks
 {{ t('greeting', { name: userName, service: 'EPR' }) }}
 ```
 
 **Controller:**
+
 ```javascript
 request.t('greeting', { name: userName, service: 'EPR' })
 ```
@@ -219,6 +229,7 @@ request.t('greeting', { name: userName, service: 'EPR' })
 For plural forms, use nested keys:
 
 **Translation file:**
+
 ```json
 {
   "items": {
@@ -255,6 +266,7 @@ Add translations to both files for all keys used in your app. The plugin will fa
 ```
 
 ## Troubleshooting
+
 Test Assets
 
 View the application in different languages:
@@ -267,63 +279,70 @@ Switch languages using the language switcher component or by changing the URL.
 ## Command Reference
 
 ### Run Development Server
+
 ```bash
 npm run dev
 ```
 
 ### Run Tests
+
 ```bash
 npm test
 ```
 
 ### Format Code
+
 ```bash
 npm run format
 ```
 
 ### Check Lint
+
 ```bash
 npm run lint
 ```
 
 ### Build Frontend
-```bash
+
+````bash
 npm run build:frontend
 ### Run Development Server
 ```bash
 npm run dev
-```
+````
 
 ### Run Tests
+
 ```bash
 npm test
 ```
-all languages** - Ensure all keys exist in both English and Welsh files
-5. **Test both languages** - Validate UI layout in both languages
-6. **Use language switcher** - Make it easy for users to switch languages
-7. **Maintain consistency** - Use standardized translations for common terms
-8. **Document special terms** - Keep a glossary of technical terms and their Welsh equivalents
+
+all languages** - Ensure all keys exist in both English and Welsh files 5. **Test both languages** - Validate UI layout in both languages 6. **Use language switcher** - Make it easy for users to switch languages 7. **Maintain consistency** - Use standardized translations for common terms 8. **Document special terms\*\* - Keep a glossary of technical terms and their Welsh equivalents
 
 ## Migration from i18next
 
 If upgrading from i18next:
 
 **Old way (removed):**
+
 ```nunjucks
 {{ 'key' | t(currentLanguage) }}
 ```
 
 **New way (hapi-i18n):**
+
 ```nunjucks
 {{ t('key') }}
 ```
 
 **Old controller:**
+
 ```javascript
 i18next.t('key', { lng: language })
 ```
 
 **New controller:**
+
 ```javascript
 request.t('key')
 ```
