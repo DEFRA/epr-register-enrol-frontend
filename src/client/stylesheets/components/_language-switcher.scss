@@ -1,6 +1,6 @@
 // Language Switcher Component Styles
 
-.language-switcher {
+.app-language-switcher {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -16,11 +16,6 @@
 
   &__item {
     display: inline-block;
-
-    &--current {
-      font-weight: 600;
-      color: #000000;
-    }
   }
 
   &__link {
@@ -42,7 +37,7 @@
       color: #003078;
     }
 
-    &--current {
+    &--active {
       text-decoration: none;
       cursor: default;
       color: #000000;
@@ -58,7 +53,7 @@
 
 // Responsive design
 @media (max-width: 768px) {
-  .language-switcher {
+  .app-language-switcher {
     gap: 0.5rem;
 
     &__list {
