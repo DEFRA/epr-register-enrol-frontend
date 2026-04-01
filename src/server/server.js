@@ -15,9 +15,11 @@ import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { metrics } from '@defra/cdp-metrics'
+import { i18nPlugin } from '../config/i18n.js'
 
 export async function createServer() {
   setupProxy()
+
   const server = hapi.server({
     host: config.get('host'),
     port: config.get('port'),
@@ -54,6 +56,7 @@ export async function createServer() {
       strictHeader: false
     }
   })
+
   await server.register([
     requestLogger,
     requestTracing,
@@ -61,11 +64,22 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    i18nPlugin,
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
     router // Register all the controllers/routes defined in src/server/router.js
   ])
+
+  // Middleware to detect language from URL path
+  server.ext('onRequest', (request, h) => {
+    const pathMatch = request.path.match(/^\/(en|cy)/)
+    if (pathMatch) {
+      const language = pathMatch[1]
+      request.setLocale(language)
+    }
+    return h.continue
+  })
 
   server.ext('onPreResponse', catchAll)
 

@@ -8,12 +8,14 @@ vi.mock('node:fs', async () => {
 
   return {
     ...nodeFs,
-    readFileSync: () => mockReadFileSync()
+    readFileSync: (...args) => mockReadFileSync(...args)
   }
 })
-vi.mock('../../../server/common/helpers/logging/logger.js', () => ({
-  createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
-}))
+vi.mock('../../../server/common/helpers/logging/logger.js', () => (
+  {
+    createLogger: () => ({ error: (...args) => mockLoggerError(...args) })
+  }
+))
 
 describe('context and cache', () => {
   beforeEach(() => {
@@ -47,6 +49,8 @@ describe('context and cache', () => {
         expect(contextResult).toEqual({
           assetPath: '/public/assets',
           breadcrumbs: [],
+          currentLocale: 'en',
+          currentPath: '/',
           getAssetPath: expect.any(Function),
           navigation: [
             {
@@ -61,7 +65,8 @@ describe('context and cache', () => {
             }
           ],
           serviceName: 'epr-register-enrol-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          t: expect.any(Function)
         })
       })
 
@@ -90,7 +95,17 @@ describe('context and cache', () => {
       })
 
       beforeEach(() => {
-        mockReadFileSync.mockReturnValue(new Error('File not found'))
+        // Mock to handle both manifest and translation file reads
+        mockReadFileSync.mockImplementation((pathArg) => {
+          const pathStr = pathArg?.toString() || ''
+          if (pathStr.includes('assets-manifest.json')) {
+            throw new Error('File not found')
+          }
+          // Return valid translation JSON for other files
+          return JSON.stringify({
+            pages: { home: { title: 'Home', heading: 'Home' } }
+          })
+        })
 
         contextImport.context(mockRequest)
       })
@@ -136,6 +151,8 @@ describe('context and cache', () => {
         expect(contextResult).toEqual({
           assetPath: '/public/assets',
           breadcrumbs: [],
+          currentLocale: 'en',
+          currentPath: '/',
           getAssetPath: expect.any(Function),
           navigation: [
             {
@@ -150,7 +167,8 @@ describe('context and cache', () => {
             }
           ],
           serviceName: 'epr-register-enrol-frontend',
-          serviceUrl: '/'
+          serviceUrl: '/',
+          t: expect.any(Function)
         })
       })
     })

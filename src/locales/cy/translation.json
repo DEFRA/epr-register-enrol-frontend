@@ -1,0 +1,46 @@
+{
+    "header": {
+        "serviceName": "Cofrestriad & Ymrestru EPR",
+        "language": "Iaith"
+    },
+    "pages": {
+        "home": {
+            "title": "Cartref",
+            "heading": "Cartref"
+        },
+        "about": {
+            "title": "Ynghylch",
+            "heading": "Ynghylch"
+        },
+        "regulator": {
+            "title": "Rheolwr",
+            "heading": "Rheolwr"
+        },
+        "worklistItems": {
+            "title": "Eitemau Rhestr Waith",
+            "heading": "Eitemau Rhestr Waith"
+        },
+        "organisationList": {
+            "title": "Rhestr Sefydliadau",
+            "heading": "Rhestr Sefydliadau"
+        }
+    },
+    "navigation": {
+        "home": "Cartref",
+        "about": "Ynghylch",
+        "regulator": "Rheolwr",
+        "worklistItems": "Eitemau Rhestr Waith",
+        "organisationList": "Sefydliadau"
+    },
+    "common": {
+        "yes": "Ie",
+        "no": "Nac ydy",
+        "back": "Yn ôl",
+        "continue": "Parhau",
+        "save": "Cadw"
+    },
+    "languageSwitcher": {
+        "english": "English",
+        "welsh": "Cymraeg"
+    }
+}

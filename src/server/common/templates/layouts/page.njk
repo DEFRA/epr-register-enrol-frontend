@@ -6,6 +6,7 @@
 
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
+{% from "language-switcher/macro.njk" import languageSwitcher %}
 
 {% set mainClasses = "app-main-wrapper" %}
 
@@ -23,6 +24,8 @@
     serviceUrl: serviceUrl,
     useTudorCrown: true
   }) }}
+
+  {{ languageSwitcher(currentPath, currentLocale, t) }}
 
   {{ govukServiceNavigation({
     navigation: navigation

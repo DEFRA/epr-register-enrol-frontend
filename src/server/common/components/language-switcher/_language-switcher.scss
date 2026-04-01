@@ -1,0 +1,41 @@
+.app-language-switcher {
+  padding: 15px 0;
+  text-align: right;
+}
+
+.app-language-switcher__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 20px;
+  justify-content: flex-end;
+}
+
+.app-language-switcher__item {
+  display: inline-block;
+}
+
+.app-language-switcher__link {
+  text-decoration: none;
+  color: #1d70b8;
+  font-weight: 400;
+  font-size: 16px;
+  transition: color 0.2s ease;
+}
+
+.app-language-switcher__link:hover {
+  color: #003078;
+  text-decoration: underline;
+}
+
+.app-language-switcher__link--active {
+  color: #0b0c0c;
+  font-weight: 700;
+  cursor: default;
+}
+
+.app-language-switcher__link--active:hover {
+  text-decoration: none;
+  color: #0b0c0c;
+}

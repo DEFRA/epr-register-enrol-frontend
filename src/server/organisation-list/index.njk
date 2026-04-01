@@ -3,13 +3,13 @@
 {% block content %}
   {{ appHeading({
     text: heading,
-    caption: "regulatro organisation list"
+    caption: pageTitle
   }) }}
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <p>Organisation List content</p>
+        <p>{{t('pages.organisationList.description')}}</p>
       </div>
     </div>
   </div>

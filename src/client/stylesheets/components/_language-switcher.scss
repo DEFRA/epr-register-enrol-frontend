@@ -1,0 +1,69 @@
+// Language Switcher Component Styles
+
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  &__item {
+    display: inline-block;
+
+    &--current {
+      font-weight: 600;
+      color: #000;
+    }
+  }
+
+  &__link {
+    color: #0b0c0c;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9375rem;
+
+    &:hover {
+      color: #005ea5;
+    }
+
+    &:focus {
+      outline: 3px solid #ffbf47;
+      outline-offset: 0;
+    }
+
+    &:active {
+      color: #003078;
+    }
+
+    &--current {
+      text-decoration: none;
+      cursor: default;
+      color: #000;
+
+      &:hover,
+      &:focus {
+        background-color: transparent;
+        color: #000;
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .language-switcher {
+    gap: 0.5rem;
+
+    &__list {
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+  }
+}

@@ -1,0 +1,31 @@
+<nav class="language-switcher" aria-label="{{ t('header.language') }}">
+  <ul class="language-switcher__list">
+    {% if request.getLocale() !== 'en' %}
+      <li class="language-switcher__item">
+        <a href="/en{{ currentPath }}" lang="en" hreflang="en" class="language-switcher__link">
+          {{ t('languageSwitcher.english') }}
+        </a>
+      </li>
+    {% else %}
+      <li class="language-switcher__item language-switcher__item--current">
+        <span class="language-switcher__link language-switcher__link--current">
+          {{ t('languageSwitcher.english') }}
+        </span>
+      </li>
+    {% endif %}
+
+    {% if request.getLocale() !== 'cy' %}
+      <li class="language-switcher__item">
+        <a href="/cy{{ currentPath }}" lang="cy" hreflang="cy" class="language-switcher__link">
+          {{ t('languageSwitcher.welsh') }}
+        </a>
+      </li>
+    {% else %}
+      <li class="language-switcher__item language-switcher__item--current">
+        <span class="language-switcher__link language-switcher__link--current">
+          {{ t('languageSwitcher.welsh') }}
+        </span>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
