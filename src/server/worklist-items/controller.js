@@ -1,11 +1,15 @@
 /**
  * Worklist Items controller.
  */
+import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
+
 export const worklistItemsController = {
-  handler(_request, h) {
+  handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+
     return h.view('worklist-items/index', {
-      pageTitle: 'Worklist Items',
-      heading: 'Worklist Items'
+      pageTitle: t('pages.worklistItems.title'),
+      heading: t('pages.worklistItems.heading')
     })
   }
 }

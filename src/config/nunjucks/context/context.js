@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { config } from '../../config.js'
 import { buildNavigation } from './build-navigation.js'
 import { createLogger } from '../../../server/common/helpers/logging/logger.js'
+import { getTranslator } from '../helpers/get-translation.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')
@@ -23,6 +24,13 @@ export function context(request) {
     }
   }
 
+  const currentPath = request.path.replace(/^\/(en|cy)/, '') || '/'
+  // Detect current locale from the request path
+  const localeMatch = request.path.match(/^\/(en|cy)/)
+  const currentLocale = localeMatch ? localeMatch[1] : 'en'
+  // Get the translation function for the current locale
+  const t = getTranslator(currentLocale)
+
   return {
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
@@ -32,6 +40,9 @@ export function context(request) {
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
       return `${assetPath}/${webpackAssetPath ?? asset}`
-    }
+    },
+    currentPath,
+    currentLocale,
+    t
   }
 }
