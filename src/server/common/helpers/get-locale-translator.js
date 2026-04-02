@@ -8,7 +8,7 @@ import { getTranslator } from '../../../config/nunjucks/helpers/get-translation.
 export function getLocaleAndTranslator(request) {
   const localeMatch = request.path.match(/^\/(en|cy)/)
   const currentLocale = localeMatch ? localeMatch[1] : 'en'
-  
+
   // Block Welsh language access
   if (currentLocale === 'cy') {
     const error = new Error('Welsh translations not available yet')
@@ -25,7 +25,7 @@ export function getLocaleAndTranslator(request) {
     }
     throw error
   }
-  
+
   const t = getTranslator(currentLocale)
 
   return {
