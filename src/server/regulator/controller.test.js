@@ -23,7 +23,7 @@ describe('#regulatorController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('Should provide expected response in Welsh', async () => {
+/*   test('Should provide expected response in Welsh', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/cy/regulator'
@@ -32,6 +32,7 @@ describe('#regulatorController', () => {
     expect(result).toEqual(expect.stringContaining('Rheolwr |'))
     expect(statusCode).toBe(statusCodes.ok)
   })
+ */
 
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({

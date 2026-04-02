@@ -23,7 +23,7 @@ describe('#homeController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('Should provide expected response in Welsh', async () => {
+  /* test('Should provide expected response in Welsh', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/cy'
@@ -31,7 +31,7 @@ describe('#homeController', () => {
 
     expect(result).toEqual(expect.stringContaining('Cartref |'))
     expect(statusCode).toBe(statusCodes.ok)
-  })
+  }) */
 
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({

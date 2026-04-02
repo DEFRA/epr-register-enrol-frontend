@@ -71,16 +71,6 @@ export async function createServer() {
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 
-  // Middleware to detect language from URL path
-  server.ext('onRequest', (request, h) => {
-    const pathMatch = request.path.match(/^\/(en|cy)/)
-    if (pathMatch) {
-      const language = pathMatch[1]
-      request.setLocale(language)
-    }
-    return h.continue
-  })
-
   server.ext('onPreResponse', catchAll)
 
   return server
