@@ -3,15 +3,16 @@
 {% block content %}
   {{ appHeading({
     text: heading,
-    caption: "Regulator landing page"
+    caption: pageTitle
   }) }}
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
+      <p>{{ t('pages.regulator.description') }}</p>
         <ul class="govuk-list govuk-list--bullet">
-          <li><a href="/worklist-items" class="govuk-link">Worklist Items</a></li>
-          <li><a href="/organisation-list" class="govuk-link">Organisation List</a></li>
+          <li><a href="/worklist-items" class="govuk-link">{{t('pages.regulator.worklistItems')}}</a></li>
+          <li><a href="/organisation-list" class="govuk-link">{{t('pages.regulator.organisations')}}</a></li>
         </ul>
       </div>
     </div>

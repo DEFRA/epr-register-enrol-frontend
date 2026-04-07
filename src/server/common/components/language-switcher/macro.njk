@@ -1,0 +1,28 @@
+{%- macro languageSwitcher(currentPath, currentLocale, t) -%}
+  <nav class="app-language-switcher" aria-label="{{ t('header.language') }}">
+    <ul class="app-language-switcher__list">
+      <li class="app-language-switcher__item">
+        {% if currentLocale == 'en' %}
+          <span class="app-language-switcher__link app-language-switcher__link--active" aria-current="page">
+            {{ t('languageSwitcher.english') }}
+          </span>
+        {% else %}
+          <a href="{{ currentPath }}" class="app-language-switcher__link">
+            {{ t('languageSwitcher.english') }}
+          </a>
+        {% endif %}
+      </li>
+      <li class="app-language-switcher__item">
+        {% if currentLocale == 'cy' %}
+          <span class="app-language-switcher__link app-language-switcher__link--active" aria-current="page">
+            {{ t('languageSwitcher.welsh') }}
+          </span>
+        {% else %}
+          <a href="/cy{{ currentPath }}" class="app-language-switcher__link">
+            {{ t('languageSwitcher.welsh') }}
+          </a>
+        {% endif %}
+      </li>
+    </ul>
+  </nav>
+{%- endmacro -%}
