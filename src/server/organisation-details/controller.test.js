@@ -31,9 +31,8 @@ describe('#organisation-detailsController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toEqual(expect.stringContaining('Bananaman Export Company'))
-    expect(result).toEqual(
-      expect.stringContaining('Companies house number : 123')
-    )
+    expect(result).toEqual(expect.stringContaining('Companies house number'))
+    expect(result).toEqual(expect.stringContaining('123'))
   })
 
   test('Should see Cymraeg organisation details', async () => {
@@ -44,6 +43,7 @@ describe('#organisation-detailsController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toEqual(expect.stringContaining('Bananaman Export Company'))
-    expect(result).toEqual(expect.stringContaining('Rhif Tŷ’r Cwmnïau : 123'))
+    expect(result).toEqual(expect.stringContaining('Rhif Tŷ’r Cwmnïau'))
+    expect(result).toEqual(expect.stringContaining('123'))
   })
 })

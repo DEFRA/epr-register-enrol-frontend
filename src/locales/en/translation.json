@@ -38,6 +38,7 @@
       "companiesHouseNumber": "Companies house number",
       "registeredAddress": "Registered address",
       "companyName": "Company name",
+      "approvedPerson": "Approved person",
       "directors": "Directors"
     }
   },

@@ -8,6 +8,7 @@ export const OrgDetailsViewModel = {
   companiesHouseNumber: '087654321', //company number
   regid: 'BN2712300000001',
   registeredAddress: '29 Acacia Road',
+  approvedPerson: 'General Blight',
   directors: [
     { name: 'Eric Twinge' },
     { name: 'Crow' },

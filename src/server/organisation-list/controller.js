@@ -2,13 +2,13 @@ import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.
 
 export const OrganisationsViewModel = [
   {
-    name: 'Glass Recycling Export Import Company',
-    id: 'GB806735831',
+    name: 'GLASSROOM EXPORT UK LTD',
+    id: '07620513 ',
     foo: 'fooey'
   },
   {
-    name: 'Metal and Metal (UK) Ltd',
-    id: 'GB26734548',
+    name: 'METAL RECYCLING LIMITED',
+    id: '03323288 ',
     foo: 'ipsum'
   }
 ]
