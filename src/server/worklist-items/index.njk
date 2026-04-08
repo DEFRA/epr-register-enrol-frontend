@@ -9,9 +9,27 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
+
         <p>{{t('pages.worklistItems.description')}}</p>
+        <ul>
+          {% for item in worklistItemsViewModel %}
+            <li><p>
+              <strong>{{ item.task }} - {{item.regid}}</strong>
+              <br/>{{ item.orgname }} : {{ item.orgid }}
+              <br/>Status: {{ item.status }}
+              <br/>Date of Application: {{ item.dtOfApplication }}
+              <br/>Material: {{ item.material }}
+              <br/>Risk: {{ item.risk }}
+              <br/>Role: {{ item.role }}
+              <br/><i>Assigned To: {{ item.assignedTo }}</i>
+              </p>
+            </li>
+          {% endfor %}
+        </ul>
+
       </div>
     </div>
   </div>
 
 {% endblock %}
+ 

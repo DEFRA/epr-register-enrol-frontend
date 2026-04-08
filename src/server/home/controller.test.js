@@ -39,7 +39,7 @@ describe('#homeController', () => {
       url: '/'
     })
 
-    expect(result).toEqual(expect.stringContaining('Home |'))
     expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toEqual(expect.stringContaining('Home |'))
   })
 })

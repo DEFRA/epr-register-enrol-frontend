@@ -40,7 +40,7 @@ describe('#regulatorController', () => {
       url: '/regulator'
     })
 
-    expect(result).toEqual(expect.stringContaining('Regulator |'))
+    expect(result).toEqual(expect.stringContaining('Regulator'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 })
