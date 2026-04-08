@@ -19,7 +19,7 @@ export const organisationDetailsController = {
     const { organisationId } = request.params
     const { t } = getLocaleAndTranslator(request)
 
-    const org = OrgDetailsViewModel;
+    const org = OrgDetailsViewModel
     org.companiesHouseNumber = organisationId
 
     return h.view('organisation-details/index', {

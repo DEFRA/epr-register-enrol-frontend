@@ -33,11 +33,12 @@
     "organisationDetails": {
       "title": "Organisation Details",
       "heading": "Organisation Details",
-      "description": "This page is for viewing of an organisation's details.",
+      "description": "Organisation details of ",
       "organisationId": "Organisation ID",
       "companiesHouseNumber": "Companies house number",
       "registeredAddress": "Registered address",
-      "companyName": "Company name"
+      "companyName": "Company name",
+      "directors": "Directors"
     }
   },
   "navigation": {

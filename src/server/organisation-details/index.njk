@@ -9,19 +9,21 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <p>{{t('pages.organisationDetails.description')}}</p>
+        <p>{{t('pages.organisationDetails.description')}} : {{ orgDetailsViewModel.companyName }}</p>
           <ul>
             <li> {{t('pages.organisationDetails.companyName')}} : {{ orgDetailsViewModel.companyName }} </li>
             <li> {{t('pages.organisationDetails.organisationId')}} : {{ orgDetailsViewModel.regid}} </li>
             <li> {{t('pages.organisationDetails.companiesHouseNumber')}} : {{ orgDetailsViewModel.companiesHouseNumber }} </li>
             <li> {{t('pages.organisationDetails.registeredAddress')}} : {{ orgDetailsViewModel.registeredAddress }} </li>
-            <li><p>
-               <strong>Directors</strong>
+            </ul>
+            <p>
+               <strong>{{t('pages.organisationDetails.directors')}}</strong>
+               <ul>
                {% for director in orgDetailsViewModel.directors %}
-                 <br/>{{ director.name }}
+                 <li>&nbsp; {{ director.name }}</li>
                {% endfor %}
-            </li>
-          </ul>
+               </ul>
+
       </div>
     </div>
   </div>

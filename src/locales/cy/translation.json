@@ -27,10 +27,12 @@
     "organisationDetails": {
       "title": "Manylion y sefydliad",
       "heading": "Manylion y sefydliad",
-      "description": "[Welsh] This page is for viewing of an orgnisation's details.",
+      "description": "[Welsh] Organisation details of ",
       "organisationId": "ID y sefydliad",
       "companiesHouseNumber": "Rhif Tŷ’r Cwmnïau",
-      "registeredAddress": "Cyfeiriad cofrestredig"
+      "registeredAddress": "Cyfeiriad cofrestredig",
+      "companyName": "[Welsh] Company name",
+      "directors": "[Welsh] Directors"
     }
   },
   "navigation": {

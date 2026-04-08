@@ -1,6 +1,4 @@
-import {
-  organisationDetailsController
-} from './controller.js'
+import { organisationDetailsController } from './controller.js'
 
 /**
  * Sets up the routes used in the organisation list page.
