@@ -6,6 +6,7 @@ import { health } from './health/index.js'
 import { regulator } from './regulator/index.js'
 import { worklistItems } from './worklist-items/index.js'
 import { organisationList } from './organisation-list/index.js'
+import { organisationDetails } from './organisation-details/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 
 export const router = {
@@ -23,7 +24,8 @@ export const router = {
         about,
         regulator,
         worklistItems,
-        organisationList
+        organisationList,
+        organisationDetails
       ])
 
       // Static assets
