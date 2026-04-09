@@ -5,16 +5,16 @@
   },
   "pages": {
     "home": {
-      "title": "Cartref",
-      "heading": "Cartref"
+      "title": "Hafan",
+      "heading": "Hafan"
     },
     "about": {
       "title": "Ynghylch",
       "heading": "Ynghylch"
     },
     "regulator": {
-      "title": "Rheolwr",
-      "heading": "Rheolwr"
+      "title": "Rheoleiddiwr",
+      "heading": "Rheoleiddiwr"
     },
     "worklistItems": {
       "title": "Eitemau Rhestr Waith",
@@ -23,18 +23,29 @@
     "organisationList": {
       "title": "Rhestr Sefydliadau",
       "heading": "Rhestr Sefydliadau"
+    },
+    "organisationDetails": {
+      "title": "Manylion y sefydliad",
+      "heading": "Manylion y sefydliad",
+      "description": "[Welsh] Organisation details of ",
+      "organisationId": "ID y sefydliad",
+      "companiesHouseNumber": "Rhif Tŷ’r Cwmnïau",
+      "registeredAddress": "Cyfeiriad cofrestredig",
+      "companyName": "[Welsh] Company name",
+      "approvedPerson": "[Welsh] Approved person",
+      "directors": "[Welsh] Directors"
     }
   },
   "navigation": {
-    "home": "Cartref",
+    "home": "Hafan",
     "about": "Ynghylch",
-    "regulator": "Rheolwr",
+    "regulator": "Rheoleiddiwr",
     "worklistItems": "Eitemau Rhestr Waith",
     "organisationList": "Sefydliadau"
   },
   "common": {
-    "yes": "Ie",
-    "no": "Nac ydy",
+    "yes": "Hoffwn",
+    "no": "Nac ydw",
     "back": "Yn ôl",
     "continue": "Parhau",
     "save": "Cadw"

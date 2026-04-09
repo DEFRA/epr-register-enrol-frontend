@@ -14,7 +14,12 @@
         <h2>Tasks</h2>
 			<ul>
 			  {% for org in organisationsViewModel %}
-				<li><strong>{{ org.name }}<br/></strong> {{ org.id }} : {{ org.foo }}</li>
+				<li>
+				  <a href="/organisation-details/{{org.id}}" class="govuk-link">
+				    <strong>{{ org.name }}<br/></strong>
+				  </a>
+				  {{ org.id }} : {{ org.foo }}
+				</li>
 			  {% endfor %}
 			</ul>
       </div>
