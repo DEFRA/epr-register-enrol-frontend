@@ -3,6 +3,7 @@ import inert from '@hapi/inert'
 import { home } from './home/index.js'
 import { about } from './about/index.js'
 import { health } from './health/index.js'
+import { authRoutes } from './auth/index.js'
 import { regulator } from './regulator/index.js'
 import { worklistItems } from './worklist-items/index.js'
 import { organisationList } from './organisation-list/index.js'
@@ -17,6 +18,9 @@ export const router = {
 
       // Health-check route. Used by platform to check if service is running, do not remove!
       await server.register([health])
+
+      // Auth routes (login, callback, logout, stub chooser)
+      await server.register([authRoutes])
 
       // Application specific routes, add your own routes here
       await server.register([

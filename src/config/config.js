@@ -213,6 +213,73 @@ export const config = convict({
       default: 'x-cdp-request-id',
       env: 'TRACING_HEADER'
     }
+  },
+  environment: {
+    doc: 'Deployment environment name',
+    format: [
+      'local',
+      'infra-dev',
+      'management',
+      'dev',
+      'test',
+      'perf-test',
+      'ext-test',
+      'prod'
+    ],
+    default: 'local',
+    env: 'ENVIRONMENT'
+  },
+  auth: {
+    stubEnabled: {
+      doc: 'Enable stub auth (bypasses real OAuth). Defaults true for non-prod.',
+      format: Boolean,
+      default: process.env.ENVIRONMENT !== 'prod',
+      env: 'AUTH_STUB_ENABLED'
+    },
+    azureEntraId: {
+      clientId: {
+        format: String,
+        default: '',
+        env: 'AZURE_CLIENT_ID',
+        sensitive: true
+      },
+      clientSecret: {
+        format: String,
+        default: '',
+        env: 'AZURE_CLIENT_SECRET',
+        sensitive: true
+      },
+      tenantId: {
+        format: String,
+        default: '',
+        env: 'AZURE_TENANT_ID'
+      }
+    },
+    defraId: {
+      clientId: {
+        format: String,
+        default: '',
+        env: 'DEFRA_ID_CLIENT_ID',
+        sensitive: true
+      },
+      clientSecret: {
+        format: String,
+        default: '',
+        env: 'DEFRA_ID_CLIENT_SECRET',
+        sensitive: true
+      },
+      discoveryUrl: {
+        format: String,
+        default: '',
+        env: 'DEFRA_ID_DISCOVERY_URL'
+      }
+    },
+    callbackBaseUrl: {
+      doc: 'Base URL for OAuth callback URLs (e.g. https://myapp.example.com)',
+      format: String,
+      default: 'http://localhost:3000',
+      env: 'AUTH_CALLBACK_BASE_URL'
+    }
   }
 })
 
