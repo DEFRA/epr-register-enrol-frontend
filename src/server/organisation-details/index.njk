@@ -9,21 +9,43 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <p>{{t('pages.organisationDetails.description')}} : {{ orgDetailsViewModel.companyName }}</p>
-          <ul>
-            <li> {{t('pages.organisationDetails.companyName')}} : {{ orgDetailsViewModel.companyName }} </li>
-            <li> {{t('pages.organisationDetails.organisationId')}} : {{ orgDetailsViewModel.regid}} </li>
-            <li> {{t('pages.organisationDetails.companiesHouseNumber')}} : <a href='https://find-and-update.company-information.service.gov.uk/company/{{ orgDetailsViewModel.companiesHouseNumber }}' > {{ orgDetailsViewModel.companiesHouseNumber }} </a></li>
-            <li> {{t('pages.organisationDetails.registeredAddress')}} : {{ orgDetailsViewModel.registeredAddress }} </li>
-            <li> {{t('pages.organisationDetails.approvedPerson')}} : {{ orgDetailsViewModel.approvedPerson }} </li>
-          </ul>
-          <p>
-          <strong>{{t('pages.organisationDetails.directors')}}</strong>
-          <ul>
-            {% for director in orgDetailsViewModel.directors %}
-            <li>&nbsp; {{ director.name }}</li>
-            {% endfor %}
-          </ul>
+        <p>{{t('pages.organisationDetails.description')}} : {{ orgDetailsViewModel.companyName }} : {{ orgDetailsViewModel.companiesHouseNumber }}</p>
+        <dl class="govuk-summary-list ">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.organisationDetails.companyName')}}</dt>
+            <dd class="govuk-summary-list__value">{{ orgDetailsViewModel.companyName }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.organisationDetails.schemeRegistrationId')}}</dt>
+            <dd class="govuk-summary-list__value">{{ orgDetailsViewModel.schemeRegistrationId}}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.organisationDetails.companiesHouseNumber')}}</dt>
+            <dd class="govuk-summary-list__value"><a href='https://find-and-update.company-information.service.gov.uk/company/{{ orgDetailsViewModel.companiesHouseNumber }}' > {{ orgDetailsViewModel.companiesHouseNumber }} </a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.organisationDetails.registeredAddress')}}</dt>
+            <dd class="govuk-summary-list__value">{{ orgDetailsViewModel.registeredAddress }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.organisationDetails.approvedPerson')}}</dt>
+            <dd class="govuk-summary-list__value">{{ orgDetailsViewModel.approvedPerson }}</dd>
+          </div>
+        </dl>
+
+        <dl class="govuk-summary-list ">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.organisationDetails.directors')}}</dt>
+            <dd class="govuk-summary-list__value"></dd>
+          </div>
+
+          {% for director in orgDetailsViewModel.directors %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key"></dt>
+            <dd class="govuk-summary-list__value"> {{ director.name }} </dd>
+          </div>
+          {% endfor %}
+        </dl>
       </div>
     </div>
   </div>

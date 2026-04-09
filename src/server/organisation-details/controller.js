@@ -5,8 +5,8 @@ import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.
 
 export const OrgDetailsViewModel = {
   companyName: 'Bananaman Export Company',
-  companiesHouseNumber: '087654321', //company number
-  regid: 'BN2712300000001',
+  companiesHouseNumber: '11044891', //company number
+  schemeRegistrationId: 'BN2712300000001',
   registeredAddress: '29 Acacia Road',
   approvedPerson: 'General Blight',
   directors: [
@@ -17,11 +17,13 @@ export const OrgDetailsViewModel = {
 }
 export const organisationDetailsController = {
   handler(request, h) {
-    const { organisationId } = request.params
+    const { companiesHouseNo } = request.params
     const { t } = getLocaleAndTranslator(request)
 
-    const org = OrgDetailsViewModel
-    org.companiesHouseNumber = organisationId
+    const org = {
+      ...OrgDetailsViewModel,
+      companiesHouseNumber: companiesHouseNo
+    }
 
     return h.view('organisation-details/index', {
       pageTitle: t('pages.organisationDetails.title'),

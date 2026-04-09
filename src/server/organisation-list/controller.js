@@ -3,12 +3,12 @@ import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.
 export const OrganisationsViewModel = [
   {
     name: 'GLASSROOM EXPORT UK LTD',
-    id: '07620513 ',
+    id: '07620513',
     foo: 'fooey'
   },
   {
     name: 'METAL RECYCLING LIMITED',
-    id: '03323288 ',
+    id: '03323288',
     foo: 'ipsum'
   }
 ]

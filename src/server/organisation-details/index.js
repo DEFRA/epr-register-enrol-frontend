@@ -12,17 +12,12 @@ export const organisationDetails = {
       server.route([
         {
           method: 'GET',
-          path: '/organisation-details',
+          path: '/organisation-details/{companiesHouseNo}',
           ...organisationDetailsController
         },
         {
           method: 'GET',
-          path: '/organisation-details/{organisationId}',
-          ...organisationDetailsController
-        },
-        {
-          method: 'GET',
-          path: '/{language}/organisation-details/{organisationId}',
+          path: '/{language}/organisation-details/{companiesHouseNo}',
           ...organisationDetailsController
         }
       ])

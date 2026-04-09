@@ -28,12 +28,35 @@
       "title": "Manylion y sefydliad",
       "heading": "Manylion y sefydliad",
       "description": "[Welsh] Organisation details of ",
-      "organisationId": "ID y sefydliad",
+      "schemeRegistrationId": "[Welsh] Registration ID",
       "companiesHouseNumber": "Rhif Tŷ’r Cwmnïau",
       "registeredAddress": "Cyfeiriad cofrestredig",
       "companyName": "[Welsh] Company name",
       "approvedPerson": "[Welsh] Approved person",
       "directors": "[Welsh] Directors"
+    },
+    "operator": {
+      "title": "[Welsh] Operator Landing Page",
+      "heading": "[Welsh] Operator Landing Page",
+      "description": "[Welsh] This page is the Operator Landing Page.",
+      "accreditation": "[Welsh] Operator accreditation.",
+      "details": "[Welsh] Operator details.",
+      "registration": "[Welsh] Operator registration."
+    },
+    "operatorAccreditation": {
+      "title": "[Welsh] Operator Accreditation",
+      "heading": "[Welsh] Operator Accreditation",
+      "description": "[Welsh] This page is the Operator Accreditation Page."
+    },
+    "operatorRegistration": {
+      "title": "[Welsh] Operator Registration",
+      "heading": "[Welsh] Operator Registration",
+      "description": "[Welsh] This page is the Operator Registration Page."
+    },
+    "operatorDetails": {
+      "title": "[Welsh] Operator Details",
+      "heading": "[Welsh] Operator Details",
+      "description": "[Welsh] This page is the Operator Details Page."
     }
   },
   "navigation": {
