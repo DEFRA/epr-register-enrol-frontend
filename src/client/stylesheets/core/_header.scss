@@ -5,3 +5,9 @@
 .app-header {
   border-bottom-color: $app-light-grey;
 }
+
+.app-service-navigation__item--right {
+  @media (min-width: 40.0625em) {
+    margin-left: auto;
+  }
+}

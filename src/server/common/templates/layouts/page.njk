@@ -28,7 +28,10 @@
   {# {{ languageSwitcher(currentPath, currentLocale, t) }} #}
 
   {{ govukServiceNavigation({
-    navigation: navigation
+    navigation: navigation,
+    slots: {
+      navigationEnd: ('<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/auth/logout">Sign out</a></li>' if user else "")
+    }
   }) }}
 {% endblock %}
 
