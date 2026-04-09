@@ -1,6 +1,7 @@
 import cookie from '@hapi/cookie'
 
 import { config } from '../../../../config/config.js'
+import { redirectToLogin } from './auth-redirect.js'
 
 export const authPlugin = {
   plugin: {
@@ -25,6 +26,10 @@ export const authPlugin = {
 
       // Protect all routes by default; individual routes may opt out with auth: false
       server.auth.default('session')
+
+      // Redirect unauthenticated requests to the appropriate login page.
+      // Registered here so it runs before the generic catchAll error handler.
+      server.ext('onPreResponse', redirectToLogin)
     }
   }
 }

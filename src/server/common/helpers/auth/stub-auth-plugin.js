@@ -1,6 +1,7 @@
 import cookie from '@hapi/cookie'
 
 import { config } from '../../../../config/config.js'
+import { redirectToLogin } from './auth-redirect.js'
 
 export const TEST_REGULATOR = {
   id: 'test-regulator-id',
@@ -40,6 +41,7 @@ export const stubAuthPlugin = {
         }))
         server.auth.strategy('session', 'test-bypass')
         server.auth.default('session')
+        server.ext('onPreResponse', redirectToLogin)
       } else {
         // Stub mode (local/dev): cookie strategy + stub chooser
         await server.register([cookie])
@@ -57,6 +59,7 @@ export const stubAuthPlugin = {
           }
         })
         server.auth.default('session')
+        server.ext('onPreResponse', redirectToLogin)
       }
     }
   }
