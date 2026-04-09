@@ -19,7 +19,7 @@ export const authPlugin = {
         validate: async (request, session) => {
           const user = request.yar.get('user')
           if (!user) return { valid: false }
-          return { valid: true, credentials: user }
+          return { valid: true, credentials: { ...user, scope: [user.userType] } }
         }
       })
 

@@ -103,6 +103,38 @@ server.route({
 })
 ```
 
+### Restricting a route to a specific user type
+
+Use the `requireRegulator` or `requireOperator` helpers from `auth-scopes.js`. These use Hapi's built-in scope checking, so a user authenticated with the wrong provider receives a **403 before the controller runs** — no controller-level type checks needed.
+
+```javascript
+import { requireRegulator, requireOperator } from '../common/helpers/auth/auth-scopes.js'
+
+// Only regulator users can reach this route — operators get 403
+server.route({
+  method: 'GET',
+  path: '/regulator/dashboard',
+  options: requireRegulator,
+  handler: dashboardController
+})
+
+// Only operator users can reach this route — regulators get 403
+server.route({
+  method: 'GET',
+  path: '/operator/enrol',
+  options: requireOperator,
+  handler: enrolController
+})
+```
+
+The helpers can be spread alongside other options:
+
+```javascript
+options: { ...requireRegulator, cache: { expiresIn: 5000 } }
+```
+
+How it works: every authenticated session carries a `scope` array derived from `userType` (e.g. `['regulator']`). Hapi compares this against the route's required scope before dispatching to the handler — this is the framework's native `server.auth.strategy` scope mechanism, not middleware.
+
 ---
 
 ## Accessing the authenticated user in a controller
@@ -149,17 +181,43 @@ export const myController = {
 
 ### Regular controller tests
 
-The test-bypass scheme (active when `NODE_ENV=test`) auto-authenticates every request with the default test user. No special setup needed:
+The test-bypass scheme (active when `NODE_ENV=test`) auto-authenticates every request as `TEST_REGULATOR` by default. No special setup needed:
 
 ```javascript
-import { TEST_USER } from '../common/helpers/auth/stub-auth-plugin.js'
-
 test('renders the page', async () => {
   const { statusCode } = await server.inject({
     method: 'GET',
-    url: '/my-route'
+    url: '/my-regulator-route'
   })
   expect(statusCode).toBe(200)
+})
+```
+
+To test an **operator** route, pass the `x-test-user-type` header:
+
+```javascript
+import { TEST_OPERATOR } from '../common/helpers/auth/stub-auth-plugin.js'
+
+test('renders operator page', async () => {
+  const { statusCode } = await server.inject({
+    method: 'GET',
+    url: '/my-operator-route',
+    headers: { 'x-test-user-type': 'operator' }
+  })
+  expect(statusCode).toBe(200)
+})
+```
+
+To assert that a route correctly **rejects** the wrong user type:
+
+```javascript
+test('operator cannot access regulator route', async () => {
+  const { statusCode } = await server.inject({
+    method: 'GET',
+    url: '/regulator/dashboard',
+    headers: { 'x-test-user-type': 'operator' }
+  })
+  expect(statusCode).toBe(403)
 })
 ```
 

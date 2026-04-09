@@ -2,22 +2,40 @@ import cookie from '@hapi/cookie'
 
 import { config } from '../../../../config/config.js'
 
-export const TEST_USER = {
-  id: 'test-user-id',
-  email: 'test@example.com',
-  name: 'Test User',
-  userType: 'regulator'
+export const TEST_REGULATOR = {
+  id: 'test-regulator-id',
+  email: 'regulator@test.example',
+  name: 'Test Regulator',
+  userType: 'regulator',
+  scope: ['regulator']
 }
+
+export const TEST_OPERATOR = {
+  id: 'test-operator-id',
+  email: 'operator@test.example',
+  name: 'Test Operator',
+  userType: 'operator',
+  scope: ['operator']
+}
+
+// Default test user — kept for backwards compatibility
+export const TEST_USER = TEST_REGULATOR
+
+const TEST_USERS = { regulator: TEST_REGULATOR, operator: TEST_OPERATOR }
 
 export const stubAuthPlugin = {
   plugin: {
     name: 'auth',
     async register(server) {
       if (config.get('isTest')) {
-        // Test mode: bypass scheme — always authenticated
+        // Test mode: bypass scheme — always authenticated.
+        // Tests can override the user type by setting the x-test-user-type header
+        // (e.g. 'regulator' or 'operator'). Defaults to regulator.
         server.auth.scheme('test-bypass', () => ({
           authenticate(request, h) {
-            return h.authenticated({ credentials: TEST_USER })
+            const userType = request.headers['x-test-user-type'] ?? 'regulator'
+            const user = TEST_USERS[userType] ?? TEST_REGULATOR
+            return h.authenticated({ credentials: user })
           }
         }))
         server.auth.strategy('session', 'test-bypass')
@@ -35,7 +53,7 @@ export const stubAuthPlugin = {
           validate: async (request, session) => {
             const user = request.yar.get('user')
             if (!user) return { valid: false }
-            return { valid: true, credentials: user }
+            return { valid: true, credentials: { ...user, scope: [user.userType] } }
           }
         })
         server.auth.default('session')
