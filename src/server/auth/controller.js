@@ -86,7 +86,6 @@ export async function regulatorCallbackController(request, h) {
   }
 
   request.yar.set('user', user)
-  request.cookieAuth.set(user)
   return h.redirect('/')
 }
 
@@ -138,7 +137,6 @@ export async function operatorCallbackController(request, h) {
   }
 
   request.yar.set('user', user)
-  request.cookieAuth.set(user)
   return h.redirect('/')
 }
 
@@ -146,6 +144,5 @@ export async function operatorCallbackController(request, h) {
 
 export function logoutController(request, h) {
   request.yar.clear('user')
-  request.cookieAuth?.clear()
   return h.redirect('/auth/regulator/login')
 }

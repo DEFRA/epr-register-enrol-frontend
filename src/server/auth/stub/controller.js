@@ -46,6 +46,5 @@ export async function stubLoginPostController(request, h) {
   }
 
   request.yar.set('user', user)
-  request.cookieAuth?.set(user)
   return h.redirect('/')
 }

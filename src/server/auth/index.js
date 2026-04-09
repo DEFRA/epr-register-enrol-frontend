@@ -14,7 +14,6 @@ export const authRoutes = {
     async register(server) {
       const stubEnabled = config.get('auth.stubEnabled')
 
-      // Logout is always available
       server.route({
         method: 'GET',
         path: '/auth/logout',
@@ -55,7 +54,7 @@ export const authRoutes = {
             options: { auth: false },
             handler: operatorLoginController
           },
-          // OAuth callbacks — exchange code for session via server.auth.strategy('session')
+          // OAuth callbacks — public so the provider redirect can reach them
           {
             method: 'GET',
             path: '/auth/regulator/callback',

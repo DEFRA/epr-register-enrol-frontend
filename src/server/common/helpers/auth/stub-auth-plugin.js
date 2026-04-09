@@ -1,4 +1,4 @@
-import cookie from '@hapi/cookie'
+import Boom from '@hapi/boom'
 
 import { config } from '../../../../config/config.js'
 import { redirectToLogin } from './auth-redirect.js'
@@ -43,21 +43,17 @@ export const stubAuthPlugin = {
         server.auth.default('session')
         server.ext('onPreResponse', redirectToLogin)
       } else {
-        // Stub mode (local/dev): cookie strategy + stub chooser
-        await server.register([cookie])
-        server.auth.strategy('session', 'cookie', {
-          cookie: {
-            name: 'auth',
-            password: config.get('session.cookie.password'),
-            isSecure: false,
-            ttl: config.get('session.cookie.ttl')
-          },
-          validate: async (request, session) => {
+        // Stub mode (local/dev): yar-session scheme + stub chooser
+        server.auth.scheme('yar-session', () => ({
+          authenticate(request, h) {
             const user = request.yar.get('user')
-            if (!user) return { valid: false }
-            return { valid: true, credentials: { ...user, scope: [user.userType] } }
+            if (!user) {
+              return h.unauthenticated(Boom.unauthorized(null, 'session'))
+            }
+            return h.authenticated({ credentials: { ...user, scope: [user.userType] } })
           }
-        })
+        }))
+        server.auth.strategy('session', 'yar-session')
         server.auth.default('session')
         server.ext('onPreResponse', redirectToLogin)
       }
