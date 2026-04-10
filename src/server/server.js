@@ -16,6 +16,8 @@ import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { metrics } from '@defra/cdp-metrics'
 import { i18nPlugin } from '../config/i18n.js'
+import { authPlugin } from './common/helpers/auth/auth-plugin.js'
+import { stubAuthPlugin } from './common/helpers/auth/stub-auth-plugin.js'
 
 export async function createServer() {
   setupProxy()
@@ -57,6 +59,11 @@ export async function createServer() {
     }
   })
 
+  const authToRegister =
+    config.get('auth.stubEnabled') || config.get('isTest')
+      ? stubAuthPlugin
+      : authPlugin
+
   await server.register([
     requestLogger,
     requestTracing,
@@ -64,6 +71,7 @@ export async function createServer() {
     secureContext,
     pulse,
     sessionCache,
+    authToRegister,
     i18nPlugin,
     nunjucksConfig,
     Scooter,
