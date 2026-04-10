@@ -32,10 +32,16 @@ describe('#operatorController', () => {
       url: '/cy/operator'
     })
 
-    expect(result).toEqual(expect.stringContaining('[Welsh] Operator Landing Page'))
-    expect(result).toEqual(expect.stringContaining('[Welsh] Operator accreditation'))
+    expect(result).toEqual(
+      expect.stringContaining('[Welsh] Operator Landing Page')
+    )
+    expect(result).toEqual(
+      expect.stringContaining('[Welsh] Operator accreditation')
+    )
     expect(result).toEqual(expect.stringContaining('[Welsh] Operator details'))
-    expect(result).toEqual(expect.stringContaining('[Welsh] Operator registration'))
+    expect(result).toEqual(
+      expect.stringContaining('[Welsh] Operator registration')
+    )
     expect(statusCode).toBe(statusCodes.ok)
   })
 

@@ -20,9 +20,7 @@ describe('#operatorDetailsController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(
-      expect.stringContaining('Operator Details Page.')
-    )
+    expect(result).toEqual(expect.stringContaining('Operator Details Page.'))
   })
 
   test('Should provide expected response in Welsh', async () => {
@@ -33,9 +31,7 @@ describe('#operatorDetailsController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toEqual(
-      expect.stringContaining(
-        '[Welsh] This page is the Operator Details Page.'
-      )
+      expect.stringContaining('[Welsh] This page is the Operator Details Page.')
     )
   })
 

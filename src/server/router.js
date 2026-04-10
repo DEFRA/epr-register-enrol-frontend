@@ -14,7 +14,6 @@ import { operatorRegistration } from './operator-registration/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { operatorDetails } from './operator-details/index.js'
 
-
 export const router = {
   plugin: {
     name: 'router',

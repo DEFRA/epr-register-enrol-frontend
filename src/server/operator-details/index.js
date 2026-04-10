@@ -1,7 +1,4 @@
-import {
-  operatorAccreditationController,
-  operatorDetailsController
-} from './controller.js'
+import { operatorDetailsController } from './controller.js'
 
 /**
  * Sets up the routes used in the operator page.

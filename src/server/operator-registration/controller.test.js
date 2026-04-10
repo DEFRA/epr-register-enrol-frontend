@@ -19,7 +19,9 @@ describe('#operatorRegistrationController', () => {
       url: '/en/operator-registration'
     })
 
-    expect(result).toEqual(expect.stringContaining('Operator Registration Page.'))
+    expect(result).toEqual(
+      expect.stringContaining('Operator Registration Page.')
+    )
     expect(statusCode).toBe(statusCodes.ok)
   })
 
