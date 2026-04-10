@@ -186,6 +186,8 @@ A local environment with:
 docker compose up --build -d
 ```
 
+If local changes are not reflected in the docker container, delete the frontend container, delete the image and rebuild:
+
 ### Dependabot
 
 We have added an example dependabot configuration file to the repository. You can enable it by renaming
