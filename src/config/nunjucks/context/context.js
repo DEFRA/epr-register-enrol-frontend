@@ -31,6 +31,8 @@ export function context(request) {
   // Get the translation function for the current locale
   const t = getTranslator(currentLocale)
 
+  const user = request.auth?.credentials ?? null
+
   return {
     assetPath: `${assetPath}/assets`,
     serviceName: config.get('serviceName'),
@@ -43,6 +45,8 @@ export function context(request) {
     },
     currentPath,
     currentLocale,
-    t
+    t,
+    user,
+    userType: user?.userType ?? null
   }
 }

@@ -64,7 +64,9 @@ describe('context and cache', () => {
           ],
           serviceName: 'epr-register-enrol-frontend',
           serviceUrl: '/',
-          t: expect.any(Function)
+          t: expect.any(Function),
+          user: null,
+          userType: null
         })
       })
 
@@ -166,7 +168,9 @@ describe('context and cache', () => {
           ],
           serviceName: 'epr-register-enrol-frontend',
           serviceUrl: '/',
-          t: expect.any(Function)
+          t: expect.any(Function),
+          user: null,
+          userType: null
         })
       })
     })
