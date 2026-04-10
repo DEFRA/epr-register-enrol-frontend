@@ -50,7 +50,9 @@ export const stubAuthPlugin = {
             if (!user) {
               return h.unauthenticated(Boom.unauthorized(null, 'session'))
             }
-            return h.authenticated({ credentials: { ...user, scope: [user.userType] } })
+            return h.authenticated({
+              credentials: { ...user, scope: [user.userType] }
+            })
           }
         }))
         server.auth.strategy('session', 'yar-session')

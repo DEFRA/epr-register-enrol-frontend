@@ -4,14 +4,15 @@
 
 The app supports two OAuth2 identity providers:
 
-| Provider | Users | Login path |
-|---|---|---|
+| Provider           | Users      | Login path              |
+| ------------------ | ---------- | ----------------------- |
 | **Azure Entra ID** | Regulators | `/auth/regulator/login` |
-| **Defra ID** | Operators | `/auth/operator/login` |
+| **Defra ID**       | Operators  | `/auth/operator/login`  |
 
 Route protection is enforced by Hapi's built-in `server.auth.strategy` / `server.auth.default` mechanism using `@hapi/cookie` as the session scheme. After a successful OAuth exchange the user profile is stored in the server-side yar session and the cookie strategy validates it on every subsequent request.
 
 A **stub auth** mode is available for local development and automated tests:
+
 - **Local/dev** (`AUTH_STUB_ENABLED=true`): a login chooser page at `/auth/stub/login` lets you select a fake user without hitting any real OAuth provider.
 - **Tests** (`NODE_ENV=test`): a bypass scheme auto-authenticates all requests with a default test user — no cookies, no sessions needed.
 
@@ -57,17 +58,17 @@ The operator flow is identical, using Defra ID endpoints instead.
 
 ## Environment variables
 
-| Variable | Description | Default |
-|---|---|---|
-| `ENVIRONMENT` | Deployment environment (`local`, `dev`, `test`, `perf-test`, `ext-test`, `infra-dev`, `management`, `prod`) | `local` |
-| `AUTH_STUB_ENABLED` | Enable stub auth. Defaults `true` when `ENVIRONMENT != prod` | `true` |
-| `AUTH_CALLBACK_BASE_URL` | Base URL used to construct OAuth callback redirect URIs | `http://localhost:3000` |
-| `AZURE_CLIENT_ID` | Azure Entra ID client ID | _(empty)_ |
-| `AZURE_CLIENT_SECRET` | Azure Entra ID client secret | _(empty)_ |
-| `AZURE_TENANT_ID` | Azure Entra ID tenant ID | _(empty)_ |
-| `DEFRA_ID_CLIENT_ID` | Defra ID client ID | _(empty)_ |
-| `DEFRA_ID_CLIENT_SECRET` | Defra ID client secret | _(empty)_ |
-| `DEFRA_ID_DISCOVERY_URL` | Defra ID OIDC base URL (authorize/token/userinfo paths appended) | _(empty)_ |
+| Variable                 | Description                                                                                                 | Default                 |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `ENVIRONMENT`            | Deployment environment (`local`, `dev`, `test`, `perf-test`, `ext-test`, `infra-dev`, `management`, `prod`) | `local`                 |
+| `AUTH_STUB_ENABLED`      | Enable stub auth. Defaults `true` when `ENVIRONMENT != prod`                                                | `true`                  |
+| `AUTH_CALLBACK_BASE_URL` | Base URL used to construct OAuth callback redirect URIs                                                     | `http://localhost:3000` |
+| `AZURE_CLIENT_ID`        | Azure Entra ID client ID                                                                                    | _(empty)_               |
+| `AZURE_CLIENT_SECRET`    | Azure Entra ID client secret                                                                                | _(empty)_               |
+| `AZURE_TENANT_ID`        | Azure Entra ID tenant ID                                                                                    | _(empty)_               |
+| `DEFRA_ID_CLIENT_ID`     | Defra ID client ID                                                                                          | _(empty)_               |
+| `DEFRA_ID_CLIENT_SECRET` | Defra ID client secret                                                                                      | _(empty)_               |
+| `DEFRA_ID_DISCOVERY_URL` | Defra ID OIDC base URL (authorize/token/userinfo paths appended)                                            | _(empty)_               |
 
 ---
 
@@ -108,7 +109,10 @@ server.route({
 Use the `requireRegulator` or `requireOperator` helpers from `auth-scopes.js`. These use Hapi's built-in scope checking, so a user authenticated with the wrong provider receives a **403 before the controller runs** — no controller-level type checks needed.
 
 ```javascript
-import { requireRegulator, requireOperator } from '../common/helpers/auth/auth-scopes.js'
+import {
+  requireRegulator,
+  requireOperator
+} from '../common/helpers/auth/auth-scopes.js'
 
 // Only regulator users can reach this route — operators get 403
 server.route({
@@ -140,7 +144,11 @@ How it works: every authenticated session carries a `scope` array derived from `
 ## Accessing the authenticated user in a controller
 
 ```javascript
-import { getUser, isRegulator, isOperator } from '../common/helpers/auth/get-user.js'
+import {
+  getUser,
+  isRegulator,
+  isOperator
+} from '../common/helpers/auth/get-user.js'
 
 export const myController = {
   handler(request, h) {

@@ -14,7 +14,9 @@ export const authPlugin = {
           if (!user) {
             return h.unauthenticated(Boom.unauthorized(null, 'session'))
           }
-          return h.authenticated({ credentials: { ...user, scope: [user.userType] } })
+          return h.authenticated({
+            credentials: { ...user, scope: [user.userType] }
+          })
         }
       }))
 
