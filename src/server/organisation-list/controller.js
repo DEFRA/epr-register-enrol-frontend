@@ -13,10 +13,6 @@ export const OrganisationsViewModel = [
   }
 ]
 
-/**
- * Organisation List controller.
- */
-
 export const organisationListController = {
   handler(request, h) {
     const { t } = getLocaleAndTranslator(request)

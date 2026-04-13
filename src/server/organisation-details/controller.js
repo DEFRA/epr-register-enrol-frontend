@@ -1,6 +1,3 @@
-/**
- * Organisation details controller.
- */
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 
 export const OrgDetailsViewModel = {
