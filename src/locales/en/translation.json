@@ -52,11 +52,11 @@
     "operatorAccreditation": {
       "heading": "Apply for accreditation",
       "title": "How to apply for accreditation",
-      "guidance001": "Before you apply for accreditation you’ll need to either:",
-      "guidance002": "be registered with your regulator",
-      "guidance003": "have applied to register but not yet had a decision from your regulator",
-      "guidance004": "The regulations allow regulators up to 12 weeks to approve your registration and accreditation applications. If these are submitted at the same time, the 12 week determination period will cover both applications.\nThere are separate charges for applying for registration and accreditation.",
-      "guidance005": "If your application is refused, you will need to pay the charges again if you reapply.",
+      "guidanceBeforeYouApply": "Before you apply for accreditation you’ll need to either:",
+      "guidanceBeRegistered": "be registered with your regulator",
+      "guidanceRegisteredButNoDecision": "have applied to register but not yet had a decision from your regulator",
+      "guidance12Weeks": "The regulations allow regulators up to 12 weeks to approve your registration and accreditation applications. If these are submitted at the same time, the 12 week determination period will cover both applications.\nThere are separate charges for applying for registration and accreditation.",
+      "guidanceRefusalChargesApply": "If your application is refused, you will need to pay the charges again if you reapply.",
       "apply": "Apply"
     },
     "operatorRegistration": {
