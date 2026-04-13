@@ -1,0 +1,17 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading,
+    caption: pageTitle
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <p>{{ t('pages.operatorDetails.description') }}</p>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

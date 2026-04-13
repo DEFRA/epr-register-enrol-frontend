@@ -1,9 +1,5 @@
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 
-/**
- * Worklist Items controller.
- */
-
 export const WorklistItemsViewModel = [
   {
     task: 'Re-Accreditation',

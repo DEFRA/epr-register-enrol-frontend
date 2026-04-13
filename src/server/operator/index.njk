@@ -1,0 +1,22 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading,
+    caption: pageTitle
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <p>{{ t('pages.operator.description') }}</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li><a href="/operator-registration" class="govuk-link"> {{t('pages.operator.registration')}} </a></li>
+          <li><a href="/operator-accreditation" class="govuk-link"> {{t('pages.operator.accreditation')}} </a></li>
+          <li><a href="/operator-details" class="govuk-link"> {{t('pages.operator.details')}} </a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

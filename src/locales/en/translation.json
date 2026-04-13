@@ -34,12 +34,35 @@
       "title": "Organisation Details",
       "heading": "Organisation Details",
       "description": "Organisation details of ",
-      "organisationId": "Organisation ID",
+      "schemeRegistrationId": "Registration ID",
       "companiesHouseNumber": "Companies house number",
       "registeredAddress": "Registered address",
       "companyName": "Company name",
       "approvedPerson": "Approved person",
       "directors": "Directors"
+    },
+    "operator": {
+      "title": "Operator Landing Page",
+      "heading": "Operator Landing Page",
+      "description": "This page is the Operator Landing Page.",
+      "accreditation": "Operator accreditation.",
+      "details": "Operator details.",
+      "registration": "Operator registration."
+    },
+    "operatorAccreditation": {
+      "title": "Operator Accreditation",
+      "heading": "Operator Accreditation",
+      "description": "This page is the Operator Accreditation Page."
+    },
+    "operatorRegistration": {
+      "title": "Operator Registration",
+      "heading": "Operator Registration",
+      "description": "This page is the Operator Registration Page."
+    },
+    "operatorDetails": {
+      "title": "Operator Details",
+      "heading": "Operator Details",
+      "description": "This page is the Operator Details Page."
     }
   },
   "navigation": {

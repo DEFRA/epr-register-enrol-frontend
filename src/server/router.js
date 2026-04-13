@@ -8,7 +8,11 @@ import { regulator } from './regulator/index.js'
 import { worklistItems } from './worklist-items/index.js'
 import { organisationList } from './organisation-list/index.js'
 import { organisationDetails } from './organisation-details/index.js'
+import { operator } from './operator/index.js'
+import { operatorAccreditation } from './operator-accreditation/index.js'
+import { operatorRegistration } from './operator-registration/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
+import { operatorDetails } from './operator-details/index.js'
 
 export const router = {
   plugin: {
@@ -29,7 +33,11 @@ export const router = {
         regulator,
         worklistItems,
         organisationList,
-        organisationDetails
+        organisationDetails,
+        operator,
+        operatorAccreditation,
+        operatorRegistration,
+        operatorDetails
       ])
 
       // Static assets
