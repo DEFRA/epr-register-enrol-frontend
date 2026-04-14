@@ -1,0 +1,117 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <div class="govuk-body" data-testid="app-page-body">
+          <h2 class="govuk-heading-m">{{ t('pages.operatorRegistrationBankDetails.pay_by_bank_transfer_heading') }}</h2>
+          <p>{{ t('pages.operatorRegistrationBankDetails.payment_details_section') }}</p>
+
+          <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.operatorRegistrationBankDetails.england') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.england_account_name') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.england_account_number') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.england_sort_code') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.england_bank_name') }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.operatorRegistrationBankDetails.wales') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.wales_account_name') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.wales_account_number') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.wales_sort_code') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.wales_bank_name') }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+		      <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.operatorRegistrationBankDetails.scotland') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.scotland_account_name') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.scotland_account_number') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.scotland_sort_code') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.scotland_bank_name') }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+		      <table class="govuk-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.operatorRegistrationBankDetails.northernireland') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.northernireland_account_name') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.northernireland_account_number') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.northernireland_sort_code') }}</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <td align="left">{{ t('pages.operatorRegistrationBankDetails.northernireland_bank_name') }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p> When you have paid by bank transfer, please send remittance advice to:</p>
+          <p>
+          <br/>England: madeUpEmail@environment-agency.gov.uk
+          <br/>Wales: madeUpEmail@nrw.gov.uk
+          <br/>Scotland madeUpEmail@sepa.gov.uk
+          <br/>Northern Ireland madeUpEmail@daera-ni.gov.uk
+          </p>
+
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

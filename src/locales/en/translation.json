@@ -60,9 +60,62 @@
       "apply": "Apply"
     },
     "operatorRegistration": {
-      "title": "Operator Registration",
       "heading": "Operator Registration",
-      "description": "This page is the Operator Registration Page."
+      "title": "Registration",
+      "registerOnly": "Register only:",
+      "registerMustIf": "You must register with your regulator if you either:",
+      "registerRecycleListInfo": "recycle UK-sourced packaging waste",
+      "registerExportListInfo": "export UK-sourced packaging waste for recycling",
+      "registerBeforeYou": "Before you register, you need to be actively recycling or exporting the packaging waste material you are applying to be registered for.",
+      "registerOnceYouAre": "Once you are registered, you can maintain this for future years by paying an annual charge and keeping your registration details up to date.",
+      "registerAnnualFee": "Annual fee:",
+      "registerToMaintainRegistration": "To maintain each registration you’ll  need to pay an annual charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
+      "registerNew": "New Registration",
+      "registerRenewal": "Renew Registration"
+    },
+    "operatorRegistrationNew": {
+      "heading": "New Registration",
+      "title": "New Registration Title",
+      "description": "NEW registration page..."
+    },
+    "operatorRegistrationRenewal": {
+      "heading": "Registration Renewal",
+      "title": "Renew Your Registration",
+      "renewalAnnualFee": "Annual fee:",
+      "registerToMaintainRegistration": "To maintain each registration you will need to pay an annual charge.",
+      "registerPayByDate": "Pay this charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
+
+      "registerDataIsCorrect": "If the above details are still correct please accept this fees and pay by bank transfer.",
+      "acceptAndSend": "Accept and Send"
+    },
+    "operatorRegistrationBankDetails": {
+      "title": "Operator Bank Details",
+      "heading": "Operator Bank Details",
+      "pay_by_bank_transfer_heading": "Pay by bank transfer",
+      "pay_resubmission_fee_of": "Pay the packaging data resubmission fee of",
+      "by_bank_transfer": " by bank transfer.",
+      "payment_details_section": "Payment details",
+      "england": "EA (England)",
+      "wales": "NRW (Wales)",
+      "northernireland": "NIEA (Northern Ireland)",
+      "scotland": "SEPA (Scotland)",
+      "use_application_payment_ref": "Use the payment reference:",
+      "england_account_name": "Account name: EA Receipts",
+      "england_account_number": "Account number: 10014411",
+      "england_sort_code": "Sort code: 60-70-80",
+      "england_bank_name": "Bank name: Royal Bank of Scotland, London Corporate Service Centre, CPB Services, 2nd floor, 280 Bishopsgate, London EC2M 4RB",
+      "wales_account_name": "Account name: Natural Resources Wales",
+      "wales_account_number": "Account number: 10014438",
+      "wales_sort_code": "Sort code: 60-70-80",
+      "wales_bank_name": "Bank name: National Westminster Bank PLC, 2 ½ Devonshire Square, London EC2M 4BA",
+      "northernireland_account_name": "Account name: DAERA General Account",
+      "northernireland_account_number": "Account number: 61253506",
+      "northernireland_sort_code": "Sort code: 95-01-21",
+      "northernireland_bank_name": "Bank name: Danske Bank, PO BOX 183, Donegall Square West, Belfast, BT1 6JS",
+      "scotland_account_name": "Account name: Scottish Environment Protection Agency",
+      "scotland_account_number": "Account number: 00137187",
+      "scotland_sort_code": "Sort code: 83-34-00",
+      "scotland_bank_name": "Bank name: Royal Bank of Scotland, 30 Nicholson Street, Edinburgh, EH8 9DL"
     },
     "operatorDetails": {
       "title": "Operator Details",

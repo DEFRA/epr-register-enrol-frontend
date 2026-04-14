@@ -11,6 +11,10 @@ import { organisationDetails } from './organisation-details/index.js'
 import { operator } from './operator/index.js'
 import { operatorAccreditation } from './operator-accreditation/index.js'
 import { operatorRegistration } from './operator-registration/index.js'
+import { operatorRegistrationNew } from './operator-registration-new/index.js'
+import { operatorRegistrationRenewal } from './operator-registration-renewal/index.js'
+import { operatorRegistrationBankDetails } from './operator-registration-bank-details/index.js'
+
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { operatorDetails } from './operator-details/index.js'
 
@@ -37,6 +41,9 @@ export const router = {
         operator,
         operatorAccreditation,
         operatorRegistration,
+        operatorRegistrationNew,
+        operatorRegistrationRenewal,
+        operatorRegistrationBankDetails,
         operatorDetails
       ])
 

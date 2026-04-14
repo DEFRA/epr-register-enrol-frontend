@@ -54,9 +54,61 @@
       "apply": "[Welsh] Apply"
     },
     "operatorRegistration": {
-      "title": "[Welsh] Operator Registration",
       "heading": "[Welsh] Operator Registration",
-      "description": "[Welsh] This page is the Operator Registration Page."
+      "title": "[Welsh] Registration",
+      "registerOnly": "[Welsh] Register only:",
+      "registerMustIf": "[Welsh] You must register with your regulator if you either:",
+      "registerRecycleListInfo": "[Welsh] recycle UK-sourced packaging waste",
+      "registerExportListInfo": "[Welsh] export UK-sourced packaging waste for recycling",
+      "registerBeforeYou": "[Welsh] Before you register, you need to be actively recycling or exporting the packaging waste material you are applying to be registered for.",
+      "registerOnceYouAre": "[Welsh] Once you are registered, you can maintain this for future years by paying an annual charge and keeping your registration details up to date.",
+      "registerAnnualFee": "[Welsh] Annual fee:",
+      "registerToMaintainRegistration": "[Welsh] To maintain each registration you will need to pay an annual charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
+      "registerNew": "[Welsh] New Registration",
+      "registerRenewal": "[Welsh] Renew Registration"
+    },
+    "operatorRegistrationNew": {
+      "heading": "[Welsh] New Registration",
+      "title": "[Welsh] New Registration Title",
+      "description": "[Welsh] NEW registration page..."
+    },
+    "operatorRegistrationRenewal": {
+      "heading": "[Welsh] Registration Renewal",
+      "title": "[Welsh] Renew Your Registration",
+      "renewalAnnualFee": "[Welsh] Annual fee:",
+      "registerToMaintainRegistration": "[Welsh] To maintain each registration you will need to pay an annual charge.",
+      "registerPayByDate": "[Welsh] Pay this charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
+      "registerDataIsCorrect": "[Welsh] If the above details are still correct please accept this fees and pay by bank transfer.",
+      "acceptAndSend": "[Welsh] Accept and Send"
+    },
+    "operatorRegistrationBankDetails": {
+      "title": "Operator Bank Details",
+      "heading": "Operator Bank Details",
+      "pay_by_bank_transfer_heading": "Talu drwy drosglwyddiad banc",
+      "pay_resubmission_fee_of": "Pay the packaging data resubmission fee of",
+      "by_bank_transfer": " drwy drosglwyddiad banc.",
+      "payment_details_section": "Manylion y Taliad",
+      "england": "EA (Lloegr)",
+      "wales": "NRW (Cymru)",
+      "northernireland": "NIEA (Gogledd Iwerddon)",
+      "scotland": "NIEA (Gogledd Iwerddon)",
+      "use_application_payment_ref": "Defnyddiwch y cyfeirnod taliad am gais:",
+      "england_account_name": "Enw'r cyfrif: EA Receipts",
+      "england_account_number": "Rhif y cyfrif: 10014411",
+      "england_sort_code": "Cod didoli: 60-70-80",
+      "england_bank_name": "Enw'r banc: Royal Bank of Scotland, London Corporate Service Centre, CPB Services, 2nd floor, 280 Bishopsgate, London EC2M 4RB",
+      "wales_account_name": "Enw'r cyfrif: Natural Resources Wales",
+      "wales_account_number": "Rhif y cyfrif: 10014438",
+      "wales_sort_code": "Cod didoli: 60-70-80",
+      "wales_bank_name": "Enw'r banc: National Westminster Bank PLC, 2 ½ Devonshire Square, London EC2M 4BA",
+      "northernireland_account_name": "Enw'r cyfrif: DAERA General Account",
+      "northernireland_account_number": "Rhif y cyfrif: 61253506",
+      "northernireland_sort_code": "Cod didoli: 95-01-21",
+      "northernireland_bank_name": "Enw'r banc: Danske Bank, PO BOX 183, Donegall Square West, Belfast, BT1 6JS",
+      "scotland_account_name": "Enw'r cyfrif: Scottish Environment Protection Agency",
+      "scotland_account_number": "Rhif y cyfrif: 00137187",
+      "scotland_sort_code": "Cod didoli: 83-34-00",
+      "scotland_bank_name": "Enw'r banc: Royal Bank of Scotland, 30 Nicholson Street, Edinburgh, EH8 9DL"
     },
     "operatorDetails": {
       "title": "[Welsh] Operator Details",

@@ -1,0 +1,72 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <div class="govuk-body" data-testid="app-page-body">
+
+          <h2 class="govuk-heading-m">{{ t('pages.operatorRegistrationRenewal.title') }}</h2>
+          <p class="govuk-body">{{ t('pages.operatorRegistrationRenewal.registerToMaintainRegistration') }}</p>
+  <p class="govuk-body">{{ t('pages.operatorRegistrationRenewal.registerPayByDate') }}</p>
+
+          <table class="govuk-table govuk-table--small-text-until-tablet">
+            <caption class="govuk-table__caption govuk-table__caption--m">Dates and amounts</caption>
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">Site</th>
+                <th scope="col" class="govuk-table__header">Material</th>
+                <th scope="col" class="govuk-table__header">Tonnage Band</th>
+                <th scope="col" class="govuk-table__header">Renewal Fee</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">123, Accord Road, London. N4.</th>
+                <td class="govuk-table__cell">Plastics</td>
+                <td class="govuk-table__cell">up to 5,000 tonnes</td>
+                <td class="govuk-table__cell">£1571</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">123, Accord Road, London. N4.</th>
+                <td class="govuk-table__cell">Metal</td>
+                <td class="govuk-table__cell">more than 10,000 tonnes</td>
+                <td class="govuk-table__cell">£1571</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">65B, Lake View, Ripon. R18 3QW.</th>
+                <td class="govuk-table__cell">Metal</td>
+                <td class="govuk-table__cell">up to 500 tonnes</td>
+                <td class="govuk-table__cell">£1571</td>
+              </tr>
+              <tr class="govuk-table__row">
+                <th scope="row" class="govuk-table__header">Unit 4A, Uplands B, London. E17 9PG.</th>
+                <td class="govuk-table__cell">Composites</td>
+                <td class="govuk-table__cell">up to 5,000 tonnes</td>
+                <td class="govuk-table__cell">£1571</td>
+              </tr>
+              <tr class="govuk-table__row">
+               <th scope="row" class="govuk-table__header">Total Due</th>
+                <td class="govuk-table__cell"></td>
+                <td class="govuk-table__cell"></td>
+                <td class="govuk-table__cell">£6284.00</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p class="govuk-body">{{ t('pages.operatorRegistrationRenewal.registerDataIsCorrect') }}</p>
+
+          <a href="operator-registration-bank-details">
+            <button type="submit" class="govuk-button" data-module="govuk-button">
+              {{ t('pages.operatorRegistrationRenewal.acceptAndSend') }}
+            </button></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

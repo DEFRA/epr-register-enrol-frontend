@@ -2,14 +2,32 @@
 
 {% block content %}
   {{ appHeading({
-    text: heading,
-    caption: pageTitle
+    text: heading
   }) }}
 
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <p>{{ t('pages.operatorRegistration.description') }}</p>
+        <div class="govuk-body" data-testid="app-page-body">
+          <h2 class="govuk-heading-m">{{ t('pages.operatorRegistration.registerOnly') }}</h2>
+          <p class="govuk-body">{{ t('pages.operatorRegistration.registerMustIf') }}</p>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>{{ t('pages.operatorRegistration.registerRecycleListInfo') }}</li>
+            <li>{{ t('pages.operatorRegistration.registerExportListInfo') }}</li>
+          </ul>
+          <p class="govuk-body">{{ t('pages.operatorRegistration.registerBeforeYou') }}</p>
+          <p class="govuk-body">{{ t('pages.operatorRegistration.registerOnceYouAre') }}</p>
+          <p class="govuk-body">
+            Continue to <a href="/operator-registration-new" class="govuk-link">{{ t('pages.operatorRegistration.registerNew') }}</a>.
+          </p>
+
+
+          <h2 class="govuk-heading-m">{{ t('pages.operatorRegistration.registerAnnualFee') }}</h2>
+          <p class="govuk-body">{{ t('pages.operatorRegistration.registerToMaintainRegistration') }}</p>
+          <p class="govuk-body">
+            Continue to <a href="/operator-registration-renewal" class="govuk-link">{{ t('pages.operatorRegistration.registerRenewal') }}</a>.
+          </p>
+        </div>
       </div>
     </div>
   </div>

@@ -1,0 +1,71 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  <div class="govuk-phase-banner govuk-width-container">
+    <p class="govuk-phase-banner__content">
+      <strong class="govuk-tag govuk-phase-banner__content__tag">
+        Alpha
+      </strong>
+      <span class="govuk-phase-banner__text">
+        This is a new service. Help us improve it and <a class="govuk-link" href="#">give your feedback by email</a>.
+      </span>
+    </p>
+  </div>
+
+  {{ appHeading({
+    text: heading
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <div class="govuk-body" data-testid="app-page-body">
+          <h2 class="govuk-heading-m">{{ t('pages.operatorRegistration.registerOnly') }}</h2>
+          <p class="govuk-body">{{ t('pages.operatorRegistration.registerMustIf') }}</p>
+          <ul class="govuk-list govuk-list--bullet">
+            <li>{{ t('pages.operatorRegistration.registerRecycleListInfo') }}</li>
+            <li>{{ t('pages.operatorRegistration.registerExportListInfo') }}</li>
+          </ul>
+          <p class="govuk-body">{{ t('pages.operatorRegistration.registerBeforeYou') }}</p>
+
+<h3 id="registration-charges">Registration charges&nbsp;</h3>
+<p>An initial charge is payable to the regulator upon reprocessors and exporters first applying for registration. This charge is payable per registration.&nbsp;&nbsp;</p>
+<p>Following your initial registration, you will then need to pay an annual registration charge, for each of your active registrations. This is payable annually by 30 September, starting in 2026.&nbsp;</p>
+<table class="govuk-table">
+  <thead class="govuk-table__head">
+    <tr class="govuk-table__row">
+      <th scope="col" class="govuk-table__header">Type of registration</th>
+      <th scope="col" class="govuk-table__header">Charge</th>
+      <td></td>
+    </tr>
+  </thead>
+  <tbody class="govuk-table__body">
+    <tr class="govuk-table__row">
+      <td>First time registration, per material</td>
+      <td>£3228</td>
+    </tr>
+    <tr class="govuk-table__row">
+      <td>Annual registration (payable annually by 30 September, from 2026)</td>
+      <td>£1571</td>
+    </tr>
+  </tbody>
+</table>
+
+          <h2 class="govuk-heading-m">Contact the helpdesk</h2>
+
+<p class="govuk-body">New registrations are not yet available through this service.</p>
+ <p class="govuk-body">Please contact the EPR Helpdesk.</p>
+
+          <p class="govuk-body">
+Telephone: 0300 060 0002</p>
+<p class="govuk-body">
+Email: <a href="mailto:"EPRCustomerService@defra.gov.uk">EPRCustomerService@defra.gov.uk</a>
+
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
