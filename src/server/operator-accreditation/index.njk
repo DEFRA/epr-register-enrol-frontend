@@ -9,7 +9,16 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
-        <p>{{ t('pages.operatorAccreditation.description') }}</p>
+        <p class="govuk-body">{{ t('pages.operatorAccreditation.guidanceBeforeYouApply') }}</p>
+        <ul class="govuk-list govuk-list--bullet">
+          <li>{{ t('pages.operatorAccreditation.guidanceBeRegistered') }}</li>
+          <li>{{ t('pages.operatorAccreditation.guidanceRegisteredButNoDecision') }}</li>
+        </ul>
+        <p class="govuk-body">{{ t('pages.operatorAccreditation.guidance12Weeks') }}</p>
+        <p class="govuk-body">{{ t('pages.operatorAccreditation.guidanceRefusalChargesApply') }}</p>
+        <button type="submit" class="govuk-button" data-module="govuk-button">
+          {{ t('pages.operatorAccreditation.apply') }}
+        </button>
       </div>
     </div>
   </div>

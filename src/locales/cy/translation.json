@@ -44,9 +44,14 @@
       "registration": "[Welsh] Operator registration."
     },
     "operatorAccreditation": {
-      "title": "[Welsh] Operator Accreditation",
-      "heading": "[Welsh] Operator Accreditation",
-      "description": "[Welsh] This page is the Operator Accreditation Page."
+      "heading": "[Welsh] Apply for accreditation",
+      "title": "[Welsh] How to apply for accreditation",
+      "guidanceBeforeYouApply": "[Welsh] Before you apply for accreditation you’ll need to either:",
+      "guidanceBeRegistered": "[Welsh] be registered with your regulator",
+      "guidanceRegisteredButNoDecision": "[Welsh] have applied to register but not yet had a decision from your regulator",
+      "guidance12Weeks": "[Welsh] The regulations allow regulators up to 12 weeks to approve your registration and accreditation applications. If these are submitted at the same time, the 12 week determination period will cover both applications.\nThere are separate charges for applying for registration and accreditation.",
+      "guidanceRefusalChargesApply": "[Welsh] If your application is refused, you will need to pay the charges again if you reapply.",
+      "apply": "[Welsh] Apply"
     },
     "operatorRegistration": {
       "title": "[Welsh] Operator Registration",

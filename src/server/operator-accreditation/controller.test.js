@@ -21,7 +21,7 @@ describe('#operatorAccreditationController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toEqual(
-      expect.stringContaining('Operator Accreditation Page.')
+      expect.stringContaining('How to apply for accreditation')
     )
   })
 
@@ -33,9 +33,7 @@ describe('#operatorAccreditationController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toEqual(
-      expect.stringContaining(
-        '[Welsh] This page is the Operator Accreditation Page.'
-      )
+      expect.stringContaining('[Welsh] How to apply for accreditation')
     )
   })
 
@@ -45,7 +43,9 @@ describe('#operatorAccreditationController', () => {
       url: '/operator-accreditation'
     })
 
-    expect(result).toEqual(expect.stringContaining('Operator Accreditation'))
+    expect(result).toEqual(
+      expect.stringContaining('Before you apply for accreditation')
+    )
     expect(statusCode).toBe(statusCodes.ok)
   })
 })
