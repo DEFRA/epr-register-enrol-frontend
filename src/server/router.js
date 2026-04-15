@@ -13,7 +13,7 @@ import { operatorAccreditation } from './operator-accreditation/index.js'
 import { operatorRegistration } from './operator-registration/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { operatorDetails } from './operator-details/index.js'
-
+import { operatorOrganisationDetails } from './operator-organisation-details/index.js'
 export const router = {
   plugin: {
     name: 'router',
@@ -37,7 +37,8 @@ export const router = {
         operator,
         operatorAccreditation,
         operatorRegistration,
-        operatorDetails
+        operatorDetails,
+        operatorOrganisationDetails
       ])
 
       // Static assets
