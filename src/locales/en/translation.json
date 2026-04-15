@@ -39,7 +39,8 @@
       "registeredAddress": "Registered address",
       "companyName": "Company name",
       "approvedPerson": "Approved person",
-      "directors": "Directors"
+      "directors": "Directors",
+      "orgStatus": "Org Status"
     },
     "operator": {
       "title": "Operator Landing Page",
