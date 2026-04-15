@@ -95,8 +95,7 @@
     "about": "About",
     "regulator": "Regulator",
     "worklistItems": "Worklist Items",
-    "organisationList": "Organisations",
-    "operatorOrganisationDetails": "Operator Organisation Details"
+    "organisationList": "Organisations"
   },
   "common": {
     "yes": "Yes",
