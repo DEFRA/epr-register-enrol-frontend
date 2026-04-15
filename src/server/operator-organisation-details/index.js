@@ -1,4 +1,4 @@
-import { operatororganisationDetailsController } from './controller.js'
+import { operatorOrganisationDetailsController } from './controller.js'
 
 /**
  * Sets up the routes used in the organisation list page.
