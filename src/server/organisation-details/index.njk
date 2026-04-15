@@ -45,6 +45,10 @@
             <dd class="govuk-summary-list__value"> {{ director.name }} </dd>
           </div>
           {% endfor %}
+          <div class="govuk-summary-list__row">
+               <dt class="govuk-summary-list__key">{{t('pages.organisationDetails.orgStatus')}}</dt>
+               <dd class="govuk-summary-list__value">{{ orgDetailsViewModel.orgStatus }}</dd>
+             </div>
         </dl>
       </div>
     </div>

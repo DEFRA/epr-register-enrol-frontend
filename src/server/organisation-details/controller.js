@@ -10,7 +10,8 @@ export const OrgDetailsViewModel = {
     { name: 'Eric Twinge' },
     { name: 'Crow' },
     { name: 'Doctor Gloom' }
-  ]
+  ],
+  orgStatus: 'Active'
 }
 export const organisationDetailsController = {
   handler(request, h) {
