@@ -18,7 +18,7 @@ export const operatorOrganisationDetails = {
         {
           method: 'GET',
           path: '/{language}/operator-organisation-details/{companiesHouseNo}',
-          ...operatorOrganisationDetailsController 
+          ...operatorOrganisationDetailsController
         }
       ])
     }
