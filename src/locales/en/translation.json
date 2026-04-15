@@ -68,6 +68,17 @@
       "title": "Operator Details",
       "heading": "Operator Details",
       "description": "This page is the Operator Details Page."
+    },
+    "operatorOrganisationDetails": {
+      "title": "Operator Organisation Details",
+      "heading": "Operator Organisation Details",
+      "description": "Operator Organisation details of ",
+      "schemeRegistrationId": "Registration ID",
+      "companiesHouseNumber": "Companies house number",
+      "registeredAddress": "Registered address",
+      "companyName": "Company name",
+      "approvedPerson": "Approved person",
+      "directors": "Directors"
     }
   },
   "navigation": {
@@ -75,7 +86,8 @@
     "about": "About",
     "regulator": "Regulator",
     "worklistItems": "Worklist Items",
-    "organisationList": "Organisations"
+    "organisationList": "Organisations",
+    "operatorOrganisationDetails": "Operator Organisation Details"
   },
   "common": {
     "yes": "Yes",

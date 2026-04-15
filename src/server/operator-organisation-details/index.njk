@@ -1,0 +1,53 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading,
+    caption: pageTitle
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <p>{{t('pages.operatorOrganisationDetails.description')}} : {{ operatorOrgDetailsViewModel.companyName }} : {{ operatorOrgDetailsViewModel.companiesHouseNumber }}</p>
+        <dl class="govuk-summary-list ">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.operatorOrganisationDetails.companyName')}}</dt>
+            <dd class="govuk-summary-list__value">{{ operatorOrgDetailsViewModel.companyName }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.operatorOrganisationDetails.schemeRegistrationId')}}</dt>
+            <dd class="govuk-summary-list__value">{{ operatorOrgDetailsViewModel.schemeRegistrationId}}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.operatorOrganisationDetails.companiesHouseNumber')}}</dt>
+            <dd class="govuk-summary-list__value"><a href='https://find-and-update.company-information.service.gov.uk/company/{{ operatorOrgDetailsViewModel.companiesHouseNumber }}' > {{ operatorOrgDetailsViewModel.companiesHouseNumber }} </a></dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.operatorOrganisationDetails.registeredAddress')}}</dt>
+            <dd class="govuk-summary-list__value">{{ operatorOrgDetailsViewModel.registeredAddress }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.operatorOrganisationDetails.approvedPerson')}}</dt>
+            <dd class="govuk-summary-list__value">{{ operatorOrgDetailsViewModel.approvedPerson }}</dd>
+          </div>
+        </dl>
+
+        <dl class="govuk-summary-list ">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{t('pages.operatorOrganisationDetails.directors')}}</dt>
+            <dd class="govuk-summary-list__value"></dd>
+          </div>
+
+          {% for director in operatorOrgDetailsViewModel.directors %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key"></dt>
+            <dd class="govuk-summary-list__value"> {{ director.name }} </dd>
+          </div>
+          {% endfor %}
+        </dl>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
