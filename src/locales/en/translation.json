@@ -60,9 +60,18 @@
       "apply": "Apply"
     },
     "operatorRegistration": {
-      "title": "Operator Registration",
       "heading": "Operator Registration",
-      "description": "This page is the Operator Registration Page."
+      "title": "Registration",
+      "registerOnly": "Register only:",
+      "registerMustIf": "You must register with your regulator if you either:",
+      "registerRecycleListInfo": "recycle UK-sourced packaging waste",
+      "registerExportListInfo": "export UK-sourced packaging waste for recycling",
+      "registerBeforeYou": "Before you register, you need to be actively recycling or exporting the packaging waste material you are applying to be registered for.",
+      "registerOnceYouAre": "Once you are registered, you can maintain this for future years by paying an annual charge and keeping your registration details up to date.",
+      "registerAnnualFee": "Annual fee:",
+      "registerToMaintainRegistration": "To maintain each registration you’ll  need to pay an annual charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
+      "registerNew": "New Registration",
+      "registerRenewal": "Renew Registration"
     },
     "operatorDetails": {
       "title": "Operator Details",

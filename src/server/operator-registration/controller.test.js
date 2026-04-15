@@ -19,9 +19,7 @@ describe('#operatorRegistrationController', () => {
       url: '/en/operator-registration'
     })
 
-    expect(result).toEqual(
-      expect.stringContaining('Operator Registration Page.')
-    )
+    expect(result).toEqual(expect.stringContaining('Operator Registration'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 
@@ -34,7 +32,7 @@ describe('#operatorRegistrationController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toEqual(
       expect.stringContaining(
-        '[Welsh] This page is the Operator Registration Page.'
+        '[Welsh] You must register with your regulator if you either:'
       )
     )
   })
@@ -45,7 +43,7 @@ describe('#operatorRegistrationController', () => {
       url: '/operator-registration'
     })
 
-    expect(result).toEqual(expect.stringContaining('Operator'))
+    expect(result).toEqual(expect.stringContaining('Annual fee:'))
     expect(statusCode).toBe(statusCodes.ok)
   })
 })
