@@ -1,4 +1,4 @@
-import { OperatororganisationDetailsController } from './controller.js'
+import { operatororganisationDetailsController } from './controller.js'
 
 /**
  * Sets up the routes used in the organisation list page.
@@ -13,12 +13,12 @@ export const operatorOrganisationDetails = {
         {
           method: 'GET',
           path: '/operator-organisation-details/{companiesHouseNo}',
-          ...OperatororganisationDetailsController
+          ...operatororganisationDetailsController
         },
         {
           method: 'GET',
           path: '/{language}/operator-organisation-details/{companiesHouseNo}',
-          ...OperatororganisationDetailsController
+          ...operatororganisationDetailsController
         }
       ])
     }

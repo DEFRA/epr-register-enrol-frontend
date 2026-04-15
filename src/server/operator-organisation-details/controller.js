@@ -12,7 +12,7 @@ export const OperatorOrgDetailsViewModel = {
     { name: 'Doctor Gloom' }
   ]
 }
-export const OperatororganisationDetailsController = {
+export const operatororganisationDetailsController = {
   handler(request, h) {
     const { companiesHouseNo } = request.params
     const { t } = getLocaleAndTranslator(request)
