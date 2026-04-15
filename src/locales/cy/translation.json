@@ -65,7 +65,8 @@
       "registerAnnualFee": "[Welsh] Annual fee:",
       "registerToMaintainRegistration": "[Welsh] To maintain each registration you will need to pay an annual charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
       "registerNew": "[Welsh] New Registration",
-      "registerRenewal": "[Welsh] Renew Registration"
+      "registerRenewal": "[Welsh] Renew Registration",
+      "continueTo": "[Welsh] Continue to "
     },
     "operatorDetails": {
       "title": "[Welsh] Operator Details",
