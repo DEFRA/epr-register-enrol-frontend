@@ -54,9 +54,18 @@
       "apply": "[Welsh] Apply"
     },
     "operatorRegistration": {
-      "title": "[Welsh] Operator Registration",
       "heading": "[Welsh] Operator Registration",
-      "description": "[Welsh] This page is the Operator Registration Page."
+      "title": "[Welsh] Registration",
+      "registerOnly": "[Welsh] Register only:",
+      "registerMustIf": "[Welsh] You must register with your regulator if you either:",
+      "registerRecycleListInfo": "[Welsh] recycle UK-sourced packaging waste",
+      "registerExportListInfo": "[Welsh] export UK-sourced packaging waste for recycling",
+      "registerBeforeYou": "[Welsh] Before you register, you need to be actively recycling or exporting the packaging waste material you are applying to be registered for.",
+      "registerOnceYouAre": "[Welsh] Once you are registered, you can maintain this for future years by paying an annual charge and keeping your registration details up to date.",
+      "registerAnnualFee": "[Welsh] Annual fee:",
+      "registerToMaintainRegistration": "[Welsh] To maintain each registration you will need to pay an annual charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
+      "registerNew": "[Welsh] New Registration",
+      "registerRenewal": "[Welsh] Renew Registration"
     },
     "operatorDetails": {
       "title": "[Welsh] Operator Details",
