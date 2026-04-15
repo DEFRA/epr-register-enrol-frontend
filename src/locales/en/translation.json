@@ -71,7 +71,8 @@
       "registerAnnualFee": "Annual fee:",
       "registerToMaintainRegistration": "To maintain each registration you’ll  need to pay an annual charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
       "registerNew": "New Registration",
-      "registerRenewal": "Renew Registration"
+      "registerRenewal": "Renew Registration",
+      "continueTo": "Continue to "
     },
     "operatorDetails": {
       "title": "Operator Details",
