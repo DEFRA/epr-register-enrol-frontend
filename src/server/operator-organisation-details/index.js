@@ -13,12 +13,12 @@ export const operatorOrganisationDetails = {
         {
           method: 'GET',
           path: '/operator-organisation-details/{companiesHouseNo}',
-          ...operatororganisationDetailsController
+          ...operatorOrganisationDetailsController
         },
         {
           method: 'GET',
           path: '/{language}/operator-organisation-details/{companiesHouseNo}',
-          ...operatororganisationDetailsController
+          ...operatorOrganisationDetailsController 
         }
       ])
     }
