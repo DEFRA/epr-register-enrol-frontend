@@ -27,14 +27,14 @@ export const authRoutes = {
             method: 'GET',
             path: '/auth/regulator/login',
             options: { auth: false },
-            handler: (request, h) =>
+            handler: (_, h) =>
               h.redirect('/auth/stub/login?type=regulator')
           },
           {
             method: 'GET',
             path: '/auth/operator/login',
             options: { auth: false },
-            handler: (request, h) =>
+            handler: (_, h) =>
               h.redirect('/auth/stub/login?type=operator')
           }
         ])

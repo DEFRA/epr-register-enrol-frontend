@@ -17,6 +17,7 @@ import { contentSecurityPolicy } from './common/helpers/content-security-policy.
 import { metrics } from '@defra/cdp-metrics'
 import { i18nPlugin } from '../config/i18n.js'
 import { authPlugin } from './common/helpers/auth/auth-plugin.js'
+import { basicAuthPlugin } from './common/helpers/auth/basic-auth-plugin.js'
 import { stubAuthPlugin } from './common/helpers/auth/stub-auth-plugin.js'
 
 export async function createServer() {
@@ -72,6 +73,7 @@ export async function createServer() {
     pulse,
     sessionCache,
     authToRegister,
+    basicAuthPlugin,
     i18nPlugin,
     nunjucksConfig,
     Scooter,
