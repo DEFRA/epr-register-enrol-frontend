@@ -16,7 +16,8 @@ describe('#operatorDetailsController', () => {
   test('Should provide expected response in English', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/en/operator-details'
+      url: '/en/operator-details',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -26,7 +27,8 @@ describe('#operatorDetailsController', () => {
   test('Should provide expected response in Welsh', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/operator-details'
+      url: '/cy/operator-details',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -38,7 +40,8 @@ describe('#operatorDetailsController', () => {
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/operator-details'
+      url: '/operator-details',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Operator Details'))

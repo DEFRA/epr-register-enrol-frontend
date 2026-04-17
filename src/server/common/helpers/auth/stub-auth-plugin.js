@@ -28,9 +28,7 @@ export const stubAuthPlugin = {
   plugin: {
     name: 'auth',
     async register(server) {
-
-      if (config.get('isTest'))
-      {
+      if (config.get('isTest')) {
         // Test mode: bypass scheme — always authenticated.
         // Tests can override the user type by setting the x-test-user-type header
         // (e.g. 'regulator' or 'operator'). Defaults to regulator.
@@ -44,15 +42,12 @@ export const stubAuthPlugin = {
         server.auth.strategy('session', 'test-bypass')
         server.auth.default('session')
         server.ext('onPreResponse', redirectToLogin)
-      }
-      else
-      {
+      } else {
         // Stub mode (local/dev): yar-session scheme + stub chooser
         server.auth.scheme('yar-session', () => ({
           authenticate(request, h) {
             const user = request.yar.get('user')
-            if (!user)
-            {
+            if (!user) {
               return h.unauthenticated(Boom.unauthorized(null, 'session'))
             }
             return h.authenticated({
@@ -64,7 +59,6 @@ export const stubAuthPlugin = {
         server.auth.default('session')
         server.ext('onPreResponse', redirectToLogin)
       }
-
     }
   }
 }

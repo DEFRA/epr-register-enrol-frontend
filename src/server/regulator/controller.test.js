@@ -16,7 +16,8 @@ describe('#regulatorController', () => {
   test('Should provide expected response in English', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/en/regulator'
+      url: '/en/regulator',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Regulator |'))
@@ -37,7 +38,8 @@ describe('#regulatorController', () => {
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/regulator'
+      url: '/regulator',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Regulator'))

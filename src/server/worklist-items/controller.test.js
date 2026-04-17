@@ -16,7 +16,8 @@ describe('#worklist-itemsController', () => {
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/worklist-items'
+      url: '/worklist-items',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -26,7 +27,8 @@ describe('#worklist-itemsController', () => {
   test('Should see a worklist item', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/worklist-items'
+      url: '/worklist-items',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)

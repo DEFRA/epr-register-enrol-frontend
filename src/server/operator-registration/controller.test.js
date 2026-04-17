@@ -16,7 +16,8 @@ describe('#operatorRegistrationController', () => {
   test('Should provide expected response in English', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/en/operator-registration'
+      url: '/en/operator-registration',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Operator Registration'))
@@ -26,7 +27,8 @@ describe('#operatorRegistrationController', () => {
   test('Should provide expected response in Welsh', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/operator-registration'
+      url: '/cy/operator-registration',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -40,7 +42,8 @@ describe('#operatorRegistrationController', () => {
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/operator-registration'
+      url: '/operator-registration',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Annual fee:'))

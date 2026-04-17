@@ -16,7 +16,8 @@ describe('##operatorOrganisationDetailsController', () => {
   test('Should see organisation details', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/operator-organisation-details/123'
+      url: '/operator-organisation-details/123',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -28,7 +29,8 @@ describe('##operatorOrganisationDetailsController', () => {
   test('Should see Cymraeg organisation details', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/operator-organisation-details/123'
+      url: '/cy/operator-organisation-details/123',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)

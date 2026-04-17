@@ -97,7 +97,10 @@ describe('#redirectToLogin', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test-redirect-regulator',
-        headers: { 'x-test-user-type': 'operator' }
+        headers: {
+          'x-test-user-type': 'operator',
+          Authorization: 'Basic dGVzdDp0ZXN0MTIz'
+        }
       })
       expect(statusCode).toBe(statusCodes.forbidden)
     })
@@ -105,7 +108,8 @@ describe('#redirectToLogin', () => {
     test('regulator cannot access an operator route — receives 403, not a redirect', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/test-redirect-operator'
+        url: '/test-redirect-operator',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
         // default test user is regulator
       })
       expect(statusCode).toBe(statusCodes.forbidden)

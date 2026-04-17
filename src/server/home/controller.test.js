@@ -16,7 +16,8 @@ describe('#homeController', () => {
   test('Should provide expected response in English', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/en'
+      url: '/en',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Home |'))
@@ -36,7 +37,8 @@ describe('#homeController', () => {
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/'
+      url: '/',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)

@@ -18,7 +18,8 @@ describe('#stubLoginController', () => {
     test('renders chooser for regulator type', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=regulator'
+        url: '/auth/stub/login?type=regulator',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -29,7 +30,8 @@ describe('#stubLoginController', () => {
     test('renders chooser for operator type', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=operator'
+        url: '/auth/stub/login?type=operator',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -40,7 +42,8 @@ describe('#stubLoginController', () => {
     test('redirects to regulator login for unknown type', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=unknown'
+        url: '/auth/stub/login?type=unknown',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -56,7 +59,8 @@ describe('#stubLoginController', () => {
         payload: {
           userId: STUB_USERS.regulator[0].id,
           type: 'regulator'
-        }
+        },
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -70,7 +74,8 @@ describe('#stubLoginController', () => {
         payload: {
           userId: 'nonexistent-user',
           type: 'regulator'
-        }
+        },
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)

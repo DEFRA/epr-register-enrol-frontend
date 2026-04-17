@@ -16,7 +16,8 @@ describe('#serveStaticFiles', () => {
     test('Should serve favicon as expected', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/favicon.ico'
+        url: '/favicon.ico',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
 
       expect(statusCode).toBe(statusCodes.noContent)
@@ -27,7 +28,8 @@ describe('#serveStaticFiles', () => {
       // available for this test. Remove as you see fit
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/public/assets/images/govuk-crest.svg'
+        url: '/public/assets/images/govuk-crest.svg',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
 
       expect(statusCode).toBe(statusCodes.ok)

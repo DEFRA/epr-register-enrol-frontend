@@ -29,7 +29,8 @@ export const basicAuthPlugin = {
       server.ext('onPreAuth', async (request, h) => {
         const authHeader = request.headers.authorization
         if (!authHeader?.startsWith('Basic ')) {
-          return h.response()
+          return h
+            .response()
             .code(401)
             .header('WWW-Authenticate', 'Basic realm="Application"')
             .takeover()
@@ -42,7 +43,8 @@ export const basicAuthPlugin = {
 
         const isValid = await validate(username, password)
         if (!isValid) {
-          return h.response()
+          return h
+            .response()
             .code(401)
             .header('WWW-Authenticate', 'Basic realm="Application"')
             .takeover()

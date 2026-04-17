@@ -14,7 +14,8 @@ vi.mock('bcrypt', () => ({
 const { config } = await import('../../../../config/config.js')
 const { basicAuthPlugin } = await import('./basic-auth-plugin.js')
 
-const validAuthHeader = 'Basic ' + Buffer.from('test:test123').toString('base64')
+const validAuthHeader =
+  'Basic ' + Buffer.from('test:test123').toString('base64')
 
 const makeServer = async () => {
   const server = hapi.server()
@@ -43,7 +44,10 @@ describe('#basicAuthPlugin', () => {
     })
 
     test('returns 401 with WWW-Authenticate when no Authorization header', async () => {
-      const { statusCode, headers } = await server.inject({ method: 'GET', url: '/test' })
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/test'
+      })
       expect(statusCode).toBe(statusCodes.unauthorized)
       expect(headers['www-authenticate']).toBe('Basic realm="Application"')
     })
@@ -61,7 +65,10 @@ describe('#basicAuthPlugin', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test',
-        headers: { authorization: 'Basic ' + Buffer.from('nobody:test123').toString('base64') }
+        headers: {
+          authorization:
+            'Basic ' + Buffer.from('nobody:test123').toString('base64')
+        }
       })
       expect(statusCode).toBe(statusCodes.unauthorized)
     })
@@ -70,7 +77,10 @@ describe('#basicAuthPlugin', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test',
-        headers: { authorization: 'Basic ' + Buffer.from('test:wrongpassword').toString('base64') }
+        headers: {
+          authorization:
+            'Basic ' + Buffer.from('test:wrongpassword').toString('base64')
+        }
       })
       expect(statusCode).toBe(statusCodes.unauthorized)
     })
@@ -98,7 +108,10 @@ describe('#basicAuthPlugin', () => {
     })
 
     test('allows requests through without any Authorization header', async () => {
-      const { statusCode } = await server.inject({ method: 'GET', url: '/test' })
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/test'
+      })
       expect(statusCode).toBe(statusCodes.ok)
     })
   })
