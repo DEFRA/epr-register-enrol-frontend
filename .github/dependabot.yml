@@ -1,0 +1,90 @@
+version: 2
+
+updates:
+  # Update npm packages
+  - package-ecosystem: npm
+    directory: /
+    open-pull-requests-limit: 10
+
+    # Group packages into shared PRs
+    groups:
+      build:
+        patterns:
+          - '@babel/*'
+          - 'autoprefixer'
+          - 'babel-loader'
+          - 'clean-webpack-plugin'
+          - 'copy-webpack-plugin'
+          - 'postcss-*'
+          - 'sass-*'
+          - 'sass-loader'
+          - 'source-map-loader'
+          - 'terser-webpack-plugin'
+          - 'webpack'
+          - 'webpack-*'
+
+      defra:
+        patterns:
+          - '@defra/*'
+
+      govuk:
+        patterns:
+          - 'govuk-frontend'
+
+      hapi:
+        patterns:
+          - '@hapi/*'
+          - 'hapi-*'
+          - 'blankie'
+
+      lint:
+        patterns:
+          - 'eslint'
+          - 'eslint-*'
+          - 'neostandard'
+          - 'prettier'
+          - 'stylelint'
+          - 'stylelint-*'
+
+      logging:
+        patterns:
+          - '@elastic/ecs-pino-format'
+          - 'hapi-pino'
+          - 'pino'
+          - 'pino-*'
+
+      tools:
+        patterns:
+          - 'cross-env'
+          - 'husky'
+          - 'nodemon'
+          - 'npm-run-all'
+          - 'vitest'
+          - 'vitest-*'
+          - '@vitest/*'
+
+      types:
+        patterns:
+          - '@types/*'
+
+    # Schedule run every Monday, local time
+    schedule:
+      interval: weekly
+      time: '10:30'
+      timezone: 'Europe/London'
+
+    versioning-strategy: increase
+
+    allow:
+      # Include direct package.json updates
+      - dependency-type: direct
+
+  # Update GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+
+    # Schedule run every Monday, local time
+    schedule:
+      interval: weekly
+      time: '10:30'
+      timezone: 'Europe/London'
