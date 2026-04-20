@@ -14,7 +14,7 @@ const validate = async (username, password) => {
   if (!user) {
     return false
   }
-  return password === user.password;
+  return password === user.password
 }
 
 export const basicAuthPlugin = {
