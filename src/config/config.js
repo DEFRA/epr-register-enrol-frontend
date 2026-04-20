@@ -240,10 +240,22 @@ export const config = convict({
       env: 'AUTH_STUB_ENABLED'
     },
     basicEnabled: {
-      doc: 'Enable basic auth (bypasses real OAuth). Defaults true.',
+      doc: 'Enable basic auth. Defaults true.',
       format: Boolean,
       default: true,
       env: 'AUTH_BASIC_ENABLED'
+    },
+    basicUsr: {
+      doc: 'Basic Auth username. Defaults to emptyString for no auth.',
+      format: String,
+      default: '',
+      env: 'BASIC_USER'
+    },
+    basicPasswd: {
+      doc: 'Basic auth password. Defaults to emptyString for no auth.',
+      format: String,
+      default: '',
+      env: 'BASIC_PASSWD'
     },
     azureEntraId: {
       clientId: {

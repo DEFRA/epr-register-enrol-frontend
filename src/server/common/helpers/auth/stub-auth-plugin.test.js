@@ -2,11 +2,17 @@ import { createServer } from '../../../server.js'
 import { statusCodes } from '../../constants/status-codes.js'
 import { TEST_USER, TEST_REGULATOR, TEST_OPERATOR } from './stub-auth-plugin.js'
 import { requireRegulator, requireOperator } from './auth-scopes.js'
+import { config } from '../../../../config/config.js'
 
 describe('#stubAuthPlugin (test mode)', () => {
   let server
 
   beforeAll(async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'auth.basicEnabled') return false
+      return originalGet(key)
+    })
     server = await createServer()
     await server.initialize()
 

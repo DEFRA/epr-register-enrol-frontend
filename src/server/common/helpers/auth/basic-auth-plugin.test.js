@@ -7,10 +7,6 @@ vi.mock('../../../../config/config.js', () => ({
   config: { get: vi.fn() }
 }))
 
-vi.mock('bcrypt', () => ({
-  default: { compare: vi.fn(async (plain) => plain === 'test123') }
-}))
-
 const { config } = await import('../../../../config/config.js')
 const { basicAuthPlugin } = await import('./basic-auth-plugin.js')
 
@@ -35,7 +31,11 @@ describe('#basicAuthPlugin', () => {
     let server
 
     beforeAll(async () => {
-      config.get.mockReturnValue(true)
+      config.get.mockImplementation((key) => {
+        if (key === 'auth.basicEnabled') return true
+        if (key === 'auth.basicUsr') return 'test'
+        if (key === 'auth.basicPasswd') return 'test123'
+      })
       server = await makeServer()
     })
 
@@ -99,7 +99,9 @@ describe('#basicAuthPlugin', () => {
     let server
 
     beforeAll(async () => {
-      config.get.mockReturnValue(false)
+      config.get.mockImplementation((key) => {
+        if (key === 'auth.basicEnabled') return false
+      })
       server = await makeServer()
     })
 

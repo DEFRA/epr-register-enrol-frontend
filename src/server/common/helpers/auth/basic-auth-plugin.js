@@ -1,21 +1,8 @@
 import { config } from '../../../../config/config.js'
 
-const users = {
-  test: {
-    username: 'test',
-    password: 'test123',
-    name: 'BasicAuthUser',
-    id: 'Basic'
-  }
-}
-
-const validate = async (username, password) => {
-  const user = users[username]
-  if (!user) {
-    return false
-  }
-  return password === user.password
-}
+const validate = (username, password) =>
+  username === config.get('auth.basicUsr') &&
+  password === config.get('auth.basicPasswd')
 
 export const basicAuthPlugin = {
   plugin: {
@@ -40,7 +27,7 @@ export const basicAuthPlugin = {
         const username = decoded.slice(0, colonIndex)
         const password = decoded.slice(colonIndex + 1)
 
-        const isValid = await validate(username, password)
+        const isValid = validate(username, password)
         if (!isValid) {
           return h
             .response()
