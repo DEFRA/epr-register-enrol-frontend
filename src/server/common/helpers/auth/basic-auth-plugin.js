@@ -1,10 +1,9 @@
 import { config } from '../../../../config/config.js'
-import Bcrypt from 'bcrypt'
 
 const users = {
   test: {
     username: 'test',
-    password: '$2a$12$j.W2V3Tn0PcW/NUCbeQCrer7ICloP42FDxvb5SMzCazC543z0a.ii', // 'test123'
+    password: 'test123',
     name: 'BasicAuthUser',
     id: 'Basic'
   }
@@ -15,7 +14,7 @@ const validate = async (username, password) => {
   if (!user) {
     return false
   }
-  return Bcrypt.compare(password, user.password)
+  return password === user.password;
 }
 
 export const basicAuthPlugin = {
