@@ -35,9 +35,6 @@ export const config = convict({
     default: 3000,
     env: 'PORT'
   },
-  basicAuthPassword: {
-    default: 'testPassword123'
-  },
   staticCacheTimeout: {
     doc: 'Static cache timeout in milliseconds',
     format: Number,
@@ -240,21 +237,21 @@ export const config = convict({
       env: 'AUTH_STUB_ENABLED'
     },
     basicEnabled: {
-      doc: 'Enable basic auth. Defaults true.',
+      doc: 'Enable HTTP basic authentication. Defaults true.',
       format: Boolean,
       default: true,
       env: 'AUTH_BASIC_ENABLED'
     },
     basicUsr: {
-      doc: 'Basic Auth username. Defaults to emptyString for no auth.',
+      doc: 'The username for HTTP basic authentication. Defaults to "default-user" if not set when auth enabled.',
       format: String,
-      default: '',
+      default: 'default-user',
       env: 'BASIC_USER'
     },
     basicPasswd: {
-      doc: 'Basic auth password. Defaults to emptyString for no auth.',
+      doc: 'The password for HTTP basic authentication. Defaults to "default-password" if not set when auth enabled.',
       format: String,
-      default: '',
+      default: 'default-password',
       env: 'BASIC_PASSWD'
     },
     azureEntraId: {

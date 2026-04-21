@@ -8,8 +8,8 @@ describe('#healthController', () => {
   beforeAll(async () => {
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
+      if (key === 'auth.basicUsr') return 'not'
+      if (key === 'auth.basicPasswd') return 'used'
       return originalGet(key)
     })
     server = await createServer()
@@ -20,7 +20,7 @@ describe('#healthController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('Should provide expected response', async () => {
+  test('Should provide expected response and short circuit basic auth plugin', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/health',

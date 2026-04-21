@@ -17,6 +17,7 @@ describe('#startServer', () => {
     vi.spyOn(config, 'get').mockImplementation((key) => {
       if (key === 'auth.basicUsr') return 'test'
       if (key === 'auth.basicPasswd') return 'test123'
+      if (key === 'port') return 3097
       return originalGet(key)
     })
 

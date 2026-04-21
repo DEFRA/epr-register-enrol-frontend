@@ -1,9 +1,5 @@
 import { config } from '../../../../config/config.js'
 
-const validate = (username, password) =>
-  username === config.get('auth.basicUsr') &&
-  password === config.get('auth.basicPasswd')
-
 export const basicAuthPlugin = {
   plugin: {
     name: 'basicAuth',
@@ -12,7 +8,20 @@ export const basicAuthPlugin = {
         return
       }
 
+      const validUsername = config.get('auth.basicUsr')
+      const validPassword = config.get('auth.basicPasswd')
+
+      if (!validUsername || !validPassword) {
+        throw new Error(
+          'Basic auth enabled but username or password not set in config'
+        )
+      }
+
       server.ext('onPreAuth', async (request, h) => {
+        if (request.path === '/health') {
+          return h.continue
+        }
+
         const authHeader = request.headers.authorization
         if (!authHeader?.startsWith('Basic ')) {
           return h
@@ -27,7 +36,7 @@ export const basicAuthPlugin = {
         const username = decoded.slice(0, colonIndex)
         const password = decoded.slice(colonIndex + 1)
 
-        const isValid = validate(username, password)
+        const isValid = username === validUsername && password === validPassword
         if (!isValid) {
           return h
             .response()
