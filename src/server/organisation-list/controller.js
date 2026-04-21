@@ -23,7 +23,8 @@ export const organisationListController = {
         pageTitle: t('pages.organisationList.title'),
         heading: t('pages.organisationList.heading'),
         organisationsViewModel: [],
-        error: t('pages.organisationList.error') || 'Failed to load organisations'
+        error:
+          t('pages.organisationList.error') || 'Failed to load organisations'
       })
     }
   }

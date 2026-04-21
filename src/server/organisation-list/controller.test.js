@@ -1,7 +1,15 @@
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { apiClient } from '../common/api-client.js'
-import { describe, test, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest'
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  afterAll,
+  vi,
+  beforeEach
+} from 'vitest'
 
 describe('#organisationListController', () => {
   let server
@@ -89,7 +97,9 @@ describe('#organisationListController', () => {
   })
 
   test('Should handle API error gracefully', async () => {
-    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API request failed'))
+    vi.spyOn(apiClient, 'get').mockRejectedValue(
+      new Error('API request failed')
+    )
 
     const { statusCode } = await server.inject({
       method: 'GET',
