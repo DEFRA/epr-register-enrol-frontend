@@ -1,26 +1,30 @@
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
-
-export const OrganisationsViewModel = [
-  {
-    name: 'GLASSROOM EXPORT UK LTD',
-    id: '07620513',
-    foo: 'fooey'
-  },
-  {
-    name: 'METAL RECYCLING LIMITED',
-    id: '03323288',
-    foo: 'ipsum'
-  }
-]
+import { apiClient } from '../common/api-client.js'
 
 export const organisationListController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
 
-    return h.view('organisation-list/index', {
-      pageTitle: t('pages.organisationList.title'),
-      heading: t('pages.organisationList.heading'),
-      organisationsViewModel: OrganisationsViewModel
-    })
+    try {
+      const organisations = await apiClient.get('/organisation')
+
+      return h.view('organisation-list/index', {
+        pageTitle: t('pages.organisationList.title'),
+        heading: t('pages.organisationList.heading'),
+        organisationsViewModel: organisations
+      })
+    } catch (error) {
+      request.server.logger.error(
+        `Error fetching organisations from API: ${error.message}`
+      )
+
+      // Return empty list on error to gracefully handle API failures
+      return h.view('organisation-list/index', {
+        pageTitle: t('pages.organisationList.title'),
+        heading: t('pages.organisationList.heading'),
+        organisationsViewModel: [],
+        error: t('pages.organisationList.error') || 'Failed to load organisations'
+      })
+    }
   }
 }

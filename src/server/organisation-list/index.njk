@@ -1,4 +1,4 @@
-{% extends 'layouts/page.njk' %}
+{% extends "layouts/page.njk" %}
 
 {% block content %}
   {{ appHeading({
@@ -10,18 +10,46 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
 
-        <p>{{t('pages.organisationList.description')}}</p>
-        <h2>Tasks</h2>
-			<ul>
-			  {% for org in organisationsViewModel %}
-				<li>
-				  <a href="/organisation-details/{{org.id}}" class="govuk-link">
-				    <strong>{{ org.name }}<br/></strong>
-				  </a>
-				  {{ org.id }} : {{ org.foo }}
-				</li>
-			  {% endfor %}
-			</ul>
+        <p>{{t("pages.organisationList.description")}}</p>
+        <h2>Organisations</h2>
+
+        <table class="govuk-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th class="govuk-table__header">Company Name</th>
+              <th class="govuk-table__header">Companies House Number</th>
+              <th class="govuk-table__header">Scheme Registration ID</th>
+              <th class="govuk-table__header">Approved Person</th>
+              <th class="govuk-table__header">Directors</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for org in organisationsViewModel %}
+            <tr class="govuk-table__row">
+              <td class="govuk-table__cell">
+                <a href="/organisation-details/{{org.companiesHouseNumber}}" class="govuk-link">
+                  {{ org.companyName }}
+                </a>
+              </td>
+              <td class="govuk-table__cell">{{ org.companiesHouseNumber }}</td>
+              <td class="govuk-table__cell">{{ org.schemeRegistrationId }}</td>
+              <td class="govuk-table__cell">{{ org.approvedPerson }}</td>
+              <td class="govuk-table__cell">
+                {% if org.directors and org.directors.length > 0 %}
+                  <ul class="govuk-list govuk-list--bullet">
+                    {% for director in org.directors %}
+                    <li>{{ director.name }}</li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="govuk-body-s">No directors listed</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
       </div>
     </div>
   </div>
