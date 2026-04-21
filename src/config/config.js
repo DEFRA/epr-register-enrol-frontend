@@ -301,6 +301,20 @@ export const config = convict({
       default: 'http://localhost:3000',
       env: 'AUTH_CALLBACK_BASE_URL'
     }
+  },
+  api: {
+    baseUrl: {
+      doc: 'Base URL for external API',
+      format: String,
+      default: 'http://localhost:5000',
+      env: 'API_BASE_URL'
+    },
+    timeout: {
+      doc: 'API request timeout in milliseconds',
+      format: Number,
+      default: 5000,
+      env: 'API_TIMEOUT'
+    }
   }
 })
 

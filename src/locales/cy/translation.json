@@ -33,7 +33,8 @@
       "registeredAddress": "Cyfeiriad cofrestredig",
       "companyName": "[Welsh] Company name",
       "approvedPerson": "[Welsh] Approved person",
-      "directors": "[Welsh] Directors"
+      "directors": "[Welsh] Directors",
+      "orgStatus": "[Welsh] Org Status"
     },
     "operator": {
       "title": "[Welsh] Operator Landing Page",
