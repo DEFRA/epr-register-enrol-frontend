@@ -44,7 +44,8 @@ export function createApiClient() {
     }
 
     if (body) {
-      requestOptions.body = typeof body === 'string' ? body : JSON.stringify(body)
+      requestOptions.body =
+        typeof body === 'string' ? body : JSON.stringify(body)
     }
 
     try {
