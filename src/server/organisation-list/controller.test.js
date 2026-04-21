@@ -112,7 +112,8 @@ describe('#organisationListController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/organisation-list'
+      url: '/organisation-list',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
