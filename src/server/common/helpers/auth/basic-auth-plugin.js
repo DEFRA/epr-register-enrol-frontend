@@ -1,4 +1,20 @@
+import crypto from 'crypto'
+
 import { config } from '../../../../config/config.js'
+
+// Prevents timing attacks where a naive string comparison (===) returns faster
+// for an early mismatch, leaking credential length/content via response time.
+function safeCompare(a, b) {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB)
+}
+
+export const basicAuthExcludedPaths = ['/health']
+
+// A generic realm avoids advertising that Basic Auth is active or revealing
+// anything about the application to an unauthenticated caller.
+export const WWW_AUTHENTICATE = 'Basic realm="Secure"'
 
 export const basicAuthPlugin = {
   plugin: {
@@ -17,8 +33,8 @@ export const basicAuthPlugin = {
         )
       }
 
-      server.ext('onPreAuth', async (request, h) => {
-        if (request.path === '/health') {
+      server.ext('onPreAuth', (request, h) => {
+        if (basicAuthExcludedPaths.includes(request.path)) {
           return h.continue
         }
 
@@ -27,7 +43,7 @@ export const basicAuthPlugin = {
           return h
             .response()
             .code(401)
-            .header('WWW-Authenticate', 'Basic realm="Application"')
+            .header('WWW-Authenticate', WWW_AUTHENTICATE)
             .takeover()
         }
 
@@ -36,12 +52,14 @@ export const basicAuthPlugin = {
         const username = decoded.slice(0, colonIndex)
         const password = decoded.slice(colonIndex + 1)
 
-        const isValid = username === validUsername && password === validPassword
+        const isValid =
+          safeCompare(username, validUsername) &&
+          safeCompare(password, validPassword)
         if (!isValid) {
           return h
             .response()
             .code(401)
-            .header('WWW-Authenticate', 'Basic realm="Application"')
+            .header('WWW-Authenticate', WWW_AUTHENTICATE)
             .takeover()
         }
 

@@ -4,6 +4,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    env: {
+      BASIC_USER: 'test',
+      BASIC_PASSWD: 'test'
+    },
     clearMocks: true,
     hookTimeout: 30000,
     coverage: {

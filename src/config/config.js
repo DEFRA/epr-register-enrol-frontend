@@ -245,14 +245,15 @@ export const config = convict({
     basicUsr: {
       doc: 'The username for HTTP basic authentication. Defaults to "default-user" if not set when auth enabled.',
       format: String,
-      default: 'default-user',
+      default: '',
       env: 'BASIC_USER'
     },
     basicPasswd: {
       doc: 'The password for HTTP basic authentication. Defaults to "default-password" if not set when auth enabled.',
       format: String,
-      default: 'default-password',
-      env: 'BASIC_PASSWD'
+      default: '',
+      env: 'BASIC_PASSWD',
+      sensitive: true
     },
     azureEntraId: {
       clientId: {
