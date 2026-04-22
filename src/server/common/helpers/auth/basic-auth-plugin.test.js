@@ -8,8 +8,9 @@ vi.mock('../../../../config/config.js', () => ({
 }))
 
 const { config } = await import('../../../../config/config.js')
-const { basicAuthPlugin, basicAuthExcludedPaths, WWW_AUTHENTICATE } =
-  await import('./basic-auth-plugin.js')
+const { basicAuthPlugin, basicAuthExcludedPaths } = await import(
+  './basic-auth-plugin.js'
+)
 
 const validAuthHeader =
   'Basic ' + Buffer.from('test:test123').toString('base64')
@@ -50,7 +51,7 @@ describe('#basicAuthPlugin', () => {
         url: '/test'
       })
       expect(statusCode).toBe(statusCodes.unauthorized)
-      expect(headers['www-authenticate']).toBe(WWW_AUTHENTICATE)
+      expect(headers['www-authenticate']).toBe('Basic realm="Secure"')
     })
 
     test('returns 401 when Authorization header is not Basic scheme', async () => {
@@ -94,6 +95,22 @@ describe('#basicAuthPlugin', () => {
       })
       expect(statusCode).toBe(statusCodes.ok)
     })
+
+    // A Base64-encoded string with no colon has no valid username/password
+    // split point. Without an explicit guard the decoded string would be
+    // treated as the username with an empty password, which passes silently
+    // to safeCompare. We reject early instead to keep the logic explicit.
+    test('returns 401 for a credential string with no colon separator', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/test',
+        headers: {
+          authorization:
+            'Basic ' + Buffer.from('nocolonhere').toString('base64')
+        }
+      })
+      expect(statusCode).toBe(statusCodes.unauthorized)
+    })
   })
 
   // Timing attacks exploit the fact that a naive string comparison (===)
@@ -107,6 +124,10 @@ describe('#basicAuthPlugin', () => {
   // constant-time comparison is the correct form for any credential check and
   // is cheap to apply — so we do it to avoid reasoning about whether ambient
   // noise is sufficient protection in any given deployment.
+  //
+  // Both username and password comparisons run unconditionally (no short-circuit
+  // &&) so an attacker cannot use a timing difference on the username check to
+  // infer that the username alone was correct.
   describe('constant-time credential comparison', () => {
     let server
 
@@ -183,56 +204,39 @@ describe('#basicAuthPlugin', () => {
   // may hint at the technology stack. A generic realm ("Secure") still satisfies
   // RFC 7235 (browsers need it to label the credential prompt) without leaking
   // anything actionable.
+  //
+  // WWW_AUTHENTICATE is intentionally not exported from the plugin — it is an
+  // implementation detail. Tests assert the value via the HTTP response header
+  // rather than importing the constant, so the public API stays minimal.
   describe('WWW-Authenticate header', () => {
-    test('uses a generic realm that does not identify the application', () => {
-      expect(WWW_AUTHENTICATE).toBe('Basic realm="Secure"')
-      expect(WWW_AUTHENTICATE).not.toMatch(/application/i)
+    let server
+
+    beforeAll(async () => {
+      config.get.mockImplementation((key) => {
+        if (key === 'auth.basicEnabled') return true
+        if (key === 'auth.basicUsr') return 'test'
+        if (key === 'auth.basicPasswd') return 'test123'
+      })
+      server = await makeServer()
+    })
+
+    afterAll(async () => {
+      await server.stop({ timeout: 0 })
+    })
+
+    test('uses a generic realm that does not identify the application', async () => {
+      const { headers } = await server.inject({ method: 'GET', url: '/test' })
+      expect(headers['www-authenticate']).toBe('Basic realm="Secure"')
+      expect(headers['www-authenticate']).not.toMatch(/application/i)
     })
 
     test('is returned on a request with no Authorization header', async () => {
-      // Re-use the already-running server from the outer describe by injecting
-      // directly — we just need to confirm the header is present on a real 401.
-      config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return 'test123'
-      })
-      const localServer = hapi.server()
-      await localServer.register(basicAuthPlugin)
-      localServer.route({
-        method: 'GET',
-        path: '/test',
-        options: { auth: false },
-        handler: () => 'ok'
-      })
-      await localServer.initialize()
-
-      const { headers } = await localServer.inject({
-        method: 'GET',
-        url: '/test'
-      })
-      expect(headers['www-authenticate']).toBe(WWW_AUTHENTICATE)
-
-      await localServer.stop({ timeout: 0 })
+      const { headers } = await server.inject({ method: 'GET', url: '/test' })
+      expect(headers['www-authenticate']).toBe('Basic realm="Secure"')
     })
 
     test('is returned on a request with invalid credentials', async () => {
-      config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return 'test123'
-      })
-      const localServer = hapi.server()
-      await localServer.register(basicAuthPlugin)
-      localServer.route({
-        method: 'GET',
-        path: '/test',
-        options: { auth: false },
-        handler: () => 'ok'
-      })
-      await localServer.initialize()
-
-      const { headers } = await localServer.inject({
+      const { headers } = await server.inject({
         method: 'GET',
         url: '/test',
         headers: {
@@ -240,15 +244,24 @@ describe('#basicAuthPlugin', () => {
             'Basic ' + Buffer.from('wrong:creds').toString('base64')
         }
       })
-      expect(headers['www-authenticate']).toBe(WWW_AUTHENTICATE)
-
-      await localServer.stop({ timeout: 0 })
+      expect(headers['www-authenticate']).toBe('Basic realm="Secure"')
     })
   })
 
   describe('basicAuthExcludedPaths', () => {
     test('contains /health', () => {
       expect(basicAuthExcludedPaths).toContain('/health')
+    })
+
+    // Exported as a frozen array so no import site can accidentally push to it
+    // and silently widen the bypass. Object.freeze makes that intent enforceable
+    // at runtime rather than just conventional.
+    test('is frozen to prevent external mutation', () => {
+      expect(Object.isFrozen(basicAuthExcludedPaths)).toBe(true)
+    })
+
+    test('throws when an external caller attempts to push a new path', () => {
+      expect(() => basicAuthExcludedPaths.push('/secret')).toThrow(TypeError)
     })
   })
 

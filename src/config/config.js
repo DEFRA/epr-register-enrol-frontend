@@ -237,19 +237,19 @@ export const config = convict({
       env: 'AUTH_STUB_ENABLED'
     },
     basicEnabled: {
-      doc: 'Enable HTTP basic authentication. Defaults true.',
+      doc: 'Enable HTTP basic authentication. Defaults true. Requires BASIC_USER and BASIC_PASSWD to be set — server will refuse to start if either is empty when this is enabled.',
       format: Boolean,
       default: true,
       env: 'AUTH_BASIC_ENABLED'
     },
     basicUsr: {
-      doc: 'The username for HTTP basic authentication. Defaults to "default-user" if not set when auth enabled.',
+      doc: 'The username for HTTP basic authentication. Must be non-empty when AUTH_BASIC_ENABLED is true.',
       format: String,
       default: '',
       env: 'BASIC_USER'
     },
     basicPasswd: {
-      doc: 'The password for HTTP basic authentication. Defaults to "default-password" if not set when auth enabled.',
+      doc: 'The password for HTTP basic authentication. Must be non-empty when AUTH_BASIC_ENABLED is true.',
       format: String,
       default: '',
       env: 'BASIC_PASSWD',

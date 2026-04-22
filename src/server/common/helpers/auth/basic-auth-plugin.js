@@ -10,11 +10,11 @@ function safeCompare(a, b) {
   return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB)
 }
 
-export const basicAuthExcludedPaths = ['/health']
+// Frozen so no import site can accidentally push to this array and widen the bypass.
+export const basicAuthExcludedPaths = Object.freeze(['/health'])
 
-// A generic realm avoids advertising that Basic Auth is active or revealing
-// anything about the application to an unauthenticated caller.
-export const WWW_AUTHENTICATE = 'Basic realm="Secure"'
+// Not exported — internal to this module. Tests assert the value via HTTP response headers.
+const WWW_AUTHENTICATE = 'Basic realm="Secure"'
 
 export const basicAuthPlugin = {
   plugin: {
@@ -49,13 +49,25 @@ export const basicAuthPlugin = {
 
         const decoded = Buffer.from(authHeader.slice(6), 'base64').toString()
         const colonIndex = decoded.indexOf(':')
+
+        // A missing colon means the credential is malformed — reject immediately
+        // rather than falling through to safeCompare with an empty password.
+        if (colonIndex === -1) {
+          return h
+            .response()
+            .code(401)
+            .header('WWW-Authenticate', WWW_AUTHENTICATE)
+            .takeover()
+        }
+
         const username = decoded.slice(0, colonIndex)
         const password = decoded.slice(colonIndex + 1)
 
-        const isValid =
-          safeCompare(username, validUsername) &&
-          safeCompare(password, validPassword)
-        if (!isValid) {
+        // Both comparisons run unconditionally so neither branch leaks timing
+        // information about whether the username alone was correct.
+        const usernameMatch = safeCompare(username, validUsername)
+        const passwordMatch = safeCompare(password, validPassword)
+        if (!usernameMatch || !passwordMatch) {
           return h
             .response()
             .code(401)

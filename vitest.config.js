@@ -5,8 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     env: {
-      BASIC_USER: 'test',
-      BASIC_PASSWD: 'test'
+      BASIC_USER: 'test-user',
+      BASIC_PASSWD: 'test-pass'
     },
     clearMocks: true,
     hookTimeout: 30000,
