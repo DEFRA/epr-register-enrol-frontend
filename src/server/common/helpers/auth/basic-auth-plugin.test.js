@@ -8,9 +8,8 @@ vi.mock('../../../../config/config.js', () => ({
 }))
 
 const { config } = await import('../../../../config/config.js')
-const { basicAuthPlugin, basicAuthExcludedPaths } = await import(
-  './basic-auth-plugin.js'
-)
+const { basicAuthPlugin, basicAuthExcludedPaths } =
+  await import('./basic-auth-plugin.js')
 
 const validAuthHeader =
   'Basic ' + Buffer.from('test:test123').toString('base64')
