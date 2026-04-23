@@ -27,12 +27,33 @@ services:
     ports:
       - '6379:6379'
     restart: always
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'PING']
+      interval: 5s
+      start_period: 2s
+      retries: 5
     networks:
       - cdp-tenant
 
+  mongodb:
+    image: mongo:6.0.13
+    networks:
+      - cdp-tenant
+    ports:
+      - '27017:27017'
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
+      interval: 5s
+      start_period: 5s
+      retries: 5
+
+    volumes:
+      - mongodb-data:/data
+    restart: always
+
   ################################################################################
 
-  epr-frontend:
+  epr-register-enrol-frontend:
     build: ./
     ports:
       - '3000:3000'
@@ -52,10 +73,34 @@ services:
       REDIS_HOST: redis
       LOCALSTACK_ENDPOINT: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
+      API_BASE_URL: http://epr-register-enrol-backend:8080
+    networks:
+      - cdp-tenant
+
+  epr-register-enrol-backend:
+    image: defradigital/epr-register-enrol-backend:${EPR_REGISTER_ENROL_BACKEND:-latest}
+    platform: linux/amd64
+    environment:
+      - PORT=8080
+      - LOCALSTACK_ENDPOINT='http://localstack:4566'
+      - MONGO_URI='mongodb://mongodb:27017/'
+
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ['CMD', 'curl', 'http://epr-register-enrol-backend:8080/health']
+      interval: 3s
+      start_period: 2s
+      retries: 3
     networks:
       - cdp-tenant
 
 ################################################################################
+volumes:
+  mongodb-data:
 
 networks:
   cdp-tenant:
