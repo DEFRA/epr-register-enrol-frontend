@@ -252,6 +252,10 @@ describe('#basicAuthPlugin', () => {
       expect(basicAuthExcludedPaths).toContain('/health')
     })
 
+    test('contains /favicon.ico', () => {
+      expect(basicAuthExcludedPaths).toContain('/favicon.ico')
+    })
+
     test('contains OIDC callback routes', () => {
       expect(basicAuthExcludedPaths).toContain('/auth/regulator/callback')
       expect(basicAuthExcludedPaths).toContain('/auth/operator/callback')
