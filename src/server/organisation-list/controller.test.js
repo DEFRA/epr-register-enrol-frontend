@@ -1,5 +1,6 @@
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
 import {
   describe,
@@ -15,6 +16,12 @@ describe('#organisationListController', () => {
   let server
 
   beforeAll(async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'auth.basicUsr') return 'test'
+      if (key === 'auth.basicPasswd') return 'test123'
+      return originalGet(key)
+    })
     server = await createServer()
     await server.initialize()
   })
@@ -54,7 +61,8 @@ describe('#organisationListController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/organisation-list'
+      url: '/organisation-list',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     console.log('Result:', result.substring(0, 2000)) // Log first 2000 chars
@@ -89,7 +97,8 @@ describe('#organisationListController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/organisation-list'
+      url: '/cy/organisation-list',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -103,7 +112,8 @@ describe('#organisationListController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/organisation-list'
+      url: '/organisation-list',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)

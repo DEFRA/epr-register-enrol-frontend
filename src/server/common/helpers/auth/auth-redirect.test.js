@@ -3,6 +3,7 @@ import { redirectToLogin } from './auth-redirect.js'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../constants/status-codes.js'
 import { requireRegulator, requireOperator } from './auth-scopes.js'
+import { config } from '../../../../config/config.js'
 
 // --- Unit tests for the redirect logic ---
 
@@ -70,6 +71,11 @@ describe('#redirectToLogin', () => {
     let server
 
     beforeAll(async () => {
+      const originalGet = config.get.bind(config)
+      vi.spyOn(config, 'get').mockImplementation((key) => {
+        if (key === 'auth.basicEnabled') return false
+        return originalGet(key)
+      })
       server = await createServer()
       await server.initialize()
 
@@ -97,7 +103,10 @@ describe('#redirectToLogin', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test-redirect-regulator',
-        headers: { 'x-test-user-type': 'operator' }
+        headers: {
+          'x-test-user-type': 'operator',
+          Authorization: 'Basic dGVzdDp0ZXN0MTIz'
+        }
       })
       expect(statusCode).toBe(statusCodes.forbidden)
     })
@@ -105,7 +114,8 @@ describe('#redirectToLogin', () => {
     test('regulator cannot access an operator route — receives 403, not a redirect', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/test-redirect-operator'
+        url: '/test-redirect-operator',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
         // default test user is regulator
       })
       expect(statusCode).toBe(statusCodes.forbidden)

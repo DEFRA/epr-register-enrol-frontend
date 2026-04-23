@@ -1,10 +1,17 @@
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { config } from '../../config/config.js'
 
 describe('#operatorController', () => {
   let server
 
   beforeAll(async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'auth.basicUsr') return 'test'
+      if (key === 'auth.basicPasswd') return 'test123'
+      return originalGet(key)
+    })
     server = await createServer()
     await server.initialize()
   })
@@ -16,7 +23,8 @@ describe('#operatorController', () => {
   test('Should provide expected response in English', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/en/operator'
+      url: '/en/operator',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Operator Landing Page'))
@@ -29,7 +37,8 @@ describe('#operatorController', () => {
   test('Should provide expected Welsh', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/operator'
+      url: '/cy/operator',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(
@@ -48,7 +57,8 @@ describe('#operatorController', () => {
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/operator'
+      url: '/operator',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(result).toEqual(expect.stringContaining('Operator'))

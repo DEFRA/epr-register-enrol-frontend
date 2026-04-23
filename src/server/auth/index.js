@@ -27,15 +27,13 @@ export const authRoutes = {
             method: 'GET',
             path: '/auth/regulator/login',
             options: { auth: false },
-            handler: (request, h) =>
-              h.redirect('/auth/stub/login?type=regulator')
+            handler: (_, h) => h.redirect('/auth/stub/login?type=regulator')
           },
           {
             method: 'GET',
             path: '/auth/operator/login',
             options: { auth: false },
-            handler: (request, h) =>
-              h.redirect('/auth/stub/login?type=operator')
+            handler: (_, h) => h.redirect('/auth/stub/login?type=operator')
           }
         ])
         await server.register([stubAuthRoutes])

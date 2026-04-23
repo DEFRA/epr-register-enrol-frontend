@@ -2,11 +2,17 @@ import { createServer } from '../../../server.js'
 import { statusCodes } from '../../constants/status-codes.js'
 import { TEST_USER, TEST_REGULATOR, TEST_OPERATOR } from './stub-auth-plugin.js'
 import { requireRegulator, requireOperator } from './auth-scopes.js'
+import { config } from '../../../../config/config.js'
 
 describe('#stubAuthPlugin (test mode)', () => {
   let server
 
   beforeAll(async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'auth.basicEnabled') return false
+      return originalGet(key)
+    })
     server = await createServer()
     await server.initialize()
 
@@ -31,7 +37,11 @@ describe('#stubAuthPlugin (test mode)', () => {
   })
 
   test('auto-authenticates requests in test mode', async () => {
-    const { statusCode } = await server.inject({ method: 'GET', url: '/' })
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+    })
     expect(statusCode).toBe(statusCodes.ok)
   })
 
@@ -50,14 +60,19 @@ describe('#stubAuthPlugin (test mode)', () => {
           return h.response('ok').code(statusCodes.ok)
         }
       })
-      await server.inject({ method: 'GET', url: '/test-scope-check' })
+      await server.inject({
+        method: 'GET',
+        url: '/test-scope-check',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      })
       expect(captured).toMatchObject({ ...TEST_REGULATOR })
     })
 
     test('allows access to regulator routes', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/test-regulator-only'
+        url: '/test-regulator-only',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -65,7 +80,8 @@ describe('#stubAuthPlugin (test mode)', () => {
     test('rejects access to operator routes', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: '/test-operator-only'
+        url: '/test-operator-only',
+        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
       })
       expect(statusCode).toBe(statusCodes.forbidden)
     })
@@ -85,7 +101,10 @@ describe('#stubAuthPlugin (test mode)', () => {
       await server.inject({
         method: 'GET',
         url: '/test-operator-scope-check',
-        headers: { 'x-test-user-type': 'operator' }
+        headers: {
+          'x-test-user-type': 'operator',
+          Authorization: 'Basic dGVzdDp0ZXN0MTIz'
+        }
       })
       expect(captured).toMatchObject({ ...TEST_OPERATOR })
     })
@@ -94,7 +113,10 @@ describe('#stubAuthPlugin (test mode)', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test-operator-only',
-        headers: { 'x-test-user-type': 'operator' }
+        headers: {
+          'x-test-user-type': 'operator',
+          Authorization: 'Basic dGVzdDp0ZXN0MTIz'
+        }
       })
       expect(statusCode).toBe(statusCodes.ok)
     })
@@ -103,7 +125,10 @@ describe('#stubAuthPlugin (test mode)', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test-regulator-only',
-        headers: { 'x-test-user-type': 'operator' }
+        headers: {
+          'x-test-user-type': 'operator',
+          Authorization: 'Basic dGVzdDp0ZXN0MTIz'
+        }
       })
       expect(statusCode).toBe(statusCodes.forbidden)
     })

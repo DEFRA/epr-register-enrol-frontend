@@ -1,10 +1,17 @@
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { config } from '../../config/config.js'
 
 describe('#organisationDetailsController', () => {
   let server
 
   beforeAll(async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'auth.basicUsr') return 'test'
+      if (key === 'auth.basicPasswd') return 'test123'
+      return originalGet(key)
+    })
     server = await createServer()
     await server.initialize()
   })
@@ -16,7 +23,8 @@ describe('#organisationDetailsController', () => {
   test('Should see organisation details', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/organisation-details/123'
+      url: '/organisation-details/123',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -28,7 +36,8 @@ describe('#organisationDetailsController', () => {
   test('Should see Cymraeg organisation details', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/organisation-details/123'
+      url: '/cy/organisation-details/123',
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
