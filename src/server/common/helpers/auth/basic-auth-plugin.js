@@ -11,7 +11,16 @@ function safeCompare(a, b) {
 }
 
 // Frozen so no import site can accidentally push to this array and widen the bypass.
-export const basicAuthExcludedPaths = Object.freeze(['/health'])
+export const basicAuthExcludedPaths = Object.freeze([
+  '/health',
+  '/auth/regulator/callback',
+  '/auth/operator/callback'
+])
+
+// Prefix-based exclusions — any path starting with one of these bypasses basic auth.
+// /public/ must be open so browsers can load static assets before the OIDC login
+// redirects the user, and so the IdP callback redirect is not blocked.
+export const basicAuthExcludedPrefixes = Object.freeze(['/public/'])
 
 // Not exported — internal to this module. Tests assert the value via HTTP response headers.
 const WWW_AUTHENTICATE = 'Basic realm="Secure"'
@@ -34,7 +43,12 @@ export const basicAuthPlugin = {
       }
 
       server.ext('onPreAuth', (request, h) => {
-        if (basicAuthExcludedPaths.includes(request.path)) {
+        if (
+          basicAuthExcludedPaths.includes(request.path) ||
+          basicAuthExcludedPrefixes.some((prefix) =>
+            request.path.startsWith(prefix)
+          )
+        ) {
           return h.continue
         }
 

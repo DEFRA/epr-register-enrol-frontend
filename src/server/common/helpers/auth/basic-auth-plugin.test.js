@@ -8,7 +8,7 @@ vi.mock('../../../../config/config.js', () => ({
 }))
 
 const { config } = await import('../../../../config/config.js')
-const { basicAuthPlugin, basicAuthExcludedPaths } =
+const { basicAuthPlugin, basicAuthExcludedPaths, basicAuthExcludedPrefixes } =
   await import('./basic-auth-plugin.js')
 
 const validAuthHeader =
@@ -252,6 +252,11 @@ describe('#basicAuthPlugin', () => {
       expect(basicAuthExcludedPaths).toContain('/health')
     })
 
+    test('contains OIDC callback routes', () => {
+      expect(basicAuthExcludedPaths).toContain('/auth/regulator/callback')
+      expect(basicAuthExcludedPaths).toContain('/auth/operator/callback')
+    })
+
     // Exported as a frozen array so no import site can accidentally push to it
     // and silently widen the bypass. Object.freeze makes that intent enforceable
     // at runtime rather than just conventional.
@@ -261,6 +266,20 @@ describe('#basicAuthPlugin', () => {
 
     test('throws when an external caller attempts to push a new path', () => {
       expect(() => basicAuthExcludedPaths.push('/secret')).toThrow(TypeError)
+    })
+  })
+
+  describe('basicAuthExcludedPrefixes', () => {
+    test('contains /public/ to cover static assets', () => {
+      expect(basicAuthExcludedPrefixes).toContain('/public/')
+    })
+
+    test('is frozen to prevent external mutation', () => {
+      expect(Object.isFrozen(basicAuthExcludedPrefixes)).toBe(true)
+    })
+
+    test('throws when an external caller attempts to push a new prefix', () => {
+      expect(() => basicAuthExcludedPrefixes.push('/other/')).toThrow(TypeError)
     })
   })
 
@@ -305,6 +324,61 @@ describe('#basicAuthPlugin', () => {
     )
 
     test('still requires Authorization on non-excluded paths', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/gated'
+      })
+      expect(statusCode).toBe(statusCodes.unauthorized)
+    })
+  })
+
+  describe('when basicEnabled is true and a prefix-excluded path is requested', () => {
+    let server
+
+    beforeAll(async () => {
+      config.get.mockImplementation((key) => {
+        if (key === 'auth.basicEnabled') return true
+        if (key === 'auth.basicUsr') return 'test'
+        if (key === 'auth.basicPasswd') return 'test123'
+      })
+      server = hapi.server()
+      await server.register(basicAuthPlugin)
+      server.route({
+        method: 'GET',
+        path: '/public/{param*}',
+        options: { auth: false },
+        handler: () => 'ok'
+      })
+      server.route({
+        method: 'GET',
+        path: '/gated',
+        options: { auth: false },
+        handler: () => 'ok'
+      })
+      await server.initialize()
+    })
+
+    afterAll(async () => {
+      await server.stop({ timeout: 0 })
+    })
+
+    test('allows a nested static asset path through without Authorization header', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/public/assets/app.js'
+      })
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('allows a top-level /public/ path through without Authorization header', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/public/favicon.ico'
+      })
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('still requires Authorization on non-prefixed paths', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/gated'

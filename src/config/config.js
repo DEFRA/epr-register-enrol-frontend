@@ -239,7 +239,7 @@ export const config = convict({
     basicEnabled: {
       doc: 'Enable HTTP basic authentication. Defaults true. Requires BASIC_USER and BASIC_PASSWD to be set — server will refuse to start if either is empty when this is enabled.',
       format: Boolean,
-      default: true,
+      default: false,
       env: 'AUTH_BASIC_ENABLED'
     },
     basicUsr: {
