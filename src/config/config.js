@@ -293,6 +293,36 @@ export const config = convict({
       format: Number,
       default: 5000,
       env: 'API_TIMEOUT'
+    },
+    oauth2: {
+      clientCredentials: {
+        clientId: {
+          doc: 'OAuth2 client ID for client credentials flow',
+          format: String,
+          default: 'epr-register-enrol-frontend',
+          env: 'API_OAUTH2_CLIENT_ID',
+          sensitive: true
+        },
+        clientSecret: {
+          doc: 'OAuth2 client secret for client credentials flow',
+          format: String,
+          default: '2c6e43f5-9a3c-4559-863a-741d2fcda42b',
+          env: 'API_OAUTH2_CLIENT_SECRET',
+          sensitive: true
+        },
+        tokenUrl: {
+          doc: 'OAuth2 token endpoint URL',
+          format: String,
+          default: 'http://localhost:5000/token',
+          env: 'API_OAUTH2_TOKEN_URL'
+        },
+        scope: {
+          doc: 'OAuth2 token scope',
+          format: String,
+          default: 'read write',
+          env: 'API_OAUTH2_SCOPE'
+        }
+      }
     }
   }
 })

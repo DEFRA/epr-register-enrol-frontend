@@ -1,9 +1,96 @@
 /**
  * Reusable API client for calling external APIs.
  * Uses node-fetch to make HTTP requests with configurable base URL and timeout.
+ * Supports OAuth2 client credentials authentication with automatic token management.
  */
 import fetch from 'node-fetch'
 import { config } from '../../config/config.js'
+
+/**
+ * Creates an OAuth2 token manager for client credentials flow
+ * @returns {Object} Token manager with getAccessToken method
+ */
+function createTokenManager() {
+  let accessToken = null
+  let tokenExpiry = null
+
+  const minValidityMs = 30000
+
+  const getTokenConfig = () => ({
+    clientId: config.get('api.oauth2.clientCredentials.clientId'),
+    clientSecret: config.get('api.oauth2.clientCredentials.clientSecret'),
+    tokenUrl: config.get('api.oauth2.clientCredentials.tokenUrl'),
+    scope: config.get('api.oauth2.clientCredentials.scope')
+  })
+
+  const isConfigured = () => {
+    const { clientId, clientSecret, tokenUrl } = getTokenConfig()
+    return Boolean(clientId && clientSecret && tokenUrl)
+  }
+
+  const fetchAccessToken = async () => {
+    const { clientId, clientSecret, tokenUrl, scope } = getTokenConfig()
+    
+    const body = {
+      grant_type: 'client_credentials',
+      client_id: clientId,
+      client_secret: clientSecret,
+      ...(scope && { scope })
+    }
+
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(
+        `OAuth2 token request failed: ${response.status} ${response.statusText} - ${errorText}`
+      )
+    }
+
+    const tokenResponse = await response.json()
+    return {
+      accessToken: tokenResponse.access_token,
+      expiresIn: tokenResponse.expires_in
+    }
+  }
+
+  return {
+    async getAccessToken() {
+      if (!isConfigured()) {
+        return null
+      }
+
+      const now = Date.now()
+      if (accessToken && tokenExpiry && now < tokenExpiry - minValidityMs) {
+        return accessToken
+      }
+
+      try {
+        const { accessToken: newToken, expiresIn } = await fetchAccessToken()
+        accessToken = newToken
+        tokenExpiry = now + expiresIn * 1000
+        return accessToken
+      } catch (error) {
+        // Log the error but allow request to proceed without auth
+        console.error(`OAuth2 token fetch failed: ${error.message}`)
+        throw error
+      }
+    },
+
+    clearToken() {
+      accessToken = null
+      tokenExpiry = null
+    }
+  }
+}
+
+const tokenManager = createTokenManager()
 
 /**
  * Creates an API client instance with configured base URL and timeout
@@ -33,12 +120,19 @@ export function createApiClient() {
 
     const url = new URL(endpoint, baseUrl).toString()
 
+    const accessToken = await tokenManager.getAccessToken()
+
+    const requestHeaders = {
+      'Content-Type': 'application/json',
+      ...headers
+    }
+    if (accessToken) {
+      requestHeaders.Authorization = `Bearer ${accessToken}`
+    }
+
     const requestOptions = {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...headers
-      },
+      headers: requestHeaders,
       signal: AbortSignal.timeout(timeout),
       ...otherOptions
     }
