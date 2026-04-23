@@ -5,7 +5,7 @@ export const organisationListController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
 
-    try {
+    try {   
       const organisations = await apiClient.get('/organisation')
 
       return h.view('organisation-list/index', {
