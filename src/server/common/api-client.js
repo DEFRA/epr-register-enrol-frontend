@@ -1,19 +1,8 @@
-/**
- * Reusable API client for calling external APIs.
- * Uses node-fetch to make HTTP requests with configurable base URL and timeout.
- * Supports OAuth2 client credentials authentication with automatic token management.
- */
-import fetch from 'node-fetch'
 import { config } from '../../config/config.js'
 
-/**
- * Creates an OAuth2 token manager for client credentials flow
- * @returns {Object} Token manager with getAccessToken method
- */
 function createTokenManager() {
   let accessToken = null
   let tokenExpiry = null
-
   const minValidityMs = 30000
 
   const getTokenConfig = () => ({
@@ -30,7 +19,7 @@ function createTokenManager() {
 
   const fetchAccessToken = async () => {
     const { clientId, clientSecret, tokenUrl, scope } = getTokenConfig()
-    
+    console.debug('Fetching new OAuth2 access token for API client', clientId, clientSecret , scope  )
     const body = {
       grant_type: 'client_credentials',
       client_id: clientId,
@@ -40,9 +29,7 @@ function createTokenManager() {
 
     const response = await fetch(tokenUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     })
 
@@ -71,16 +58,11 @@ function createTokenManager() {
         return accessToken
       }
 
-      try {
-        const { accessToken: newToken, expiresIn } = await fetchAccessToken()
-        accessToken = newToken
-        tokenExpiry = now + expiresIn * 1000
-        return accessToken
-      } catch (error) {
-        // Log the error but allow request to proceed without auth
-        console.error(`OAuth2 token fetch failed: ${error.message}`)
-        throw error
-      }
+      // Propagate token fetch failures — the request cannot proceed without auth.
+      const { accessToken: newToken, expiresIn } = await fetchAccessToken()
+      accessToken = newToken
+      tokenExpiry = now + expiresIn * 1000
+      return accessToken
     },
 
     clearToken() {
@@ -90,27 +72,14 @@ function createTokenManager() {
   }
 }
 
-const tokenManager = createTokenManager()
-
-/**
- * Creates an API client instance with configured base URL and timeout
- * @returns {Object} API client with methods for making HTTP requests
- */
 export function createApiClient() {
   const baseUrl = config.get('api.baseUrl')
   const timeout = config.get('api.timeout')
+  // Each client instance owns its token manager so multiple clients targeting
+  // different APIs do not share cached tokens.
+  const tokenManager = createTokenManager()
 
-  /**
-   * Makes an HTTP request to the API
-   * @param {string} endpoint - The API endpoint (e.g., '/users', '/data')
-   * @param {Object} options - Request options
-   * @param {string} options.method - HTTP method (GET, POST, PUT, DELETE, etc.)
-   * @param {Object} options.headers - Additional headers to send
-   * @param {*} options.body - Request body (will be JSON stringified if object)
-   * @returns {Promise<Object>} The parsed JSON response
-   * @throws {Error} If the request fails or response is not OK
-   */
-  async function makeRequest(endpoint, options = {}) {
+  async function makeRequest(endpoint, options = {}, isRetry = false) {
     const {
       method = 'GET',
       headers = {},
@@ -119,15 +88,14 @@ export function createApiClient() {
     } = options
 
     const url = new URL(endpoint, baseUrl).toString()
+    const token = await tokenManager.getAccessToken()
 
-    const accessToken = await tokenManager.getAccessToken()
-
+    // Caller-supplied headers are applied last so they can override defaults,
+    // including Authorization if a different token is needed for this request.
     const requestHeaders = {
-      'Content-Type': 'application/json',
+      ...(body && { 'Content-Type': 'application/json' }),
+      ...(token && { Authorization: `Bearer ${token}` }),
       ...headers
-    }
-    if (accessToken) {
-      requestHeaders.Authorization = `Bearer ${accessToken}`
     }
 
     const requestOptions = {
@@ -146,6 +114,13 @@ export function createApiClient() {
       const response = await fetch(url, requestOptions)
 
       if (!response.ok) {
+        // On the first 401 the cached token may have been revoked early.
+        // Clear it and retry once with a freshly fetched token.
+        if (response.status === 401 && !isRetry) {
+          tokenManager.clearToken()
+          return makeRequest(endpoint, options, true)
+        }
+
         const errorText = await response.text()
         const error = new Error(
           `API request failed: ${response.status} ${response.statusText}`
@@ -157,7 +132,7 @@ export function createApiClient() {
 
       return await response.json()
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
         throw new Error(`API request timeout after ${timeout}ms`)
       }
       throw error
@@ -165,55 +140,26 @@ export function createApiClient() {
   }
 
   return {
-    /**
-     * GET request
-     * @param {string} endpoint - The API endpoint
-     * @param {Object} options - Additional request options
-     */
     get(endpoint, options = {}) {
       return makeRequest(endpoint, { ...options, method: 'GET' })
     },
 
-    /**
-     * POST request
-     * @param {string} endpoint - The API endpoint
-     * @param {*} body - Request body
-     * @param {Object} options - Additional request options
-     */
     post(endpoint, body, options = {}) {
       return makeRequest(endpoint, { ...options, method: 'POST', body })
     },
 
-    /**
-     * PUT request
-     * @param {string} endpoint - The API endpoint
-     * @param {*} body - Request body
-     * @param {Object} options - Additional request options
-     */
     put(endpoint, body, options = {}) {
       return makeRequest(endpoint, { ...options, method: 'PUT', body })
     },
 
-    /**
-     * PATCH request
-     * @param {string} endpoint - The API endpoint
-     * @param {*} body - Request body
-     * @param {Object} options - Additional request options
-     */
     patch(endpoint, body, options = {}) {
       return makeRequest(endpoint, { ...options, method: 'PATCH', body })
     },
 
-    /**
-     * DELETE request
-     * @param {string} endpoint - The API endpoint
-     * @param {Object} options - Additional request options
-     */
     delete(endpoint, options = {}) {
       return makeRequest(endpoint, { ...options, method: 'DELETE' })
     }
   }
 }
 
-// Create a singleton instance to be reused throughout the application
 export const apiClient = createApiClient()

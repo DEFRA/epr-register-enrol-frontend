@@ -32,7 +32,7 @@ export const config = convict({
   port: {
     doc: 'The port to bind.',
     format: 'port',
-    default: 3000,
+    default: 3005,
     env: 'PORT'
   },
   staticCacheTimeout: {
@@ -277,7 +277,7 @@ export const config = convict({
     callbackBaseUrl: {
       doc: 'Base URL for OAuth callback URLs (e.g. https://myapp.example.com)',
       format: String,
-      default: 'http://localhost:3000',
+      default: 'http://localhost:3005',
       env: 'AUTH_CALLBACK_BASE_URL'
     }
   },
@@ -299,14 +299,14 @@ export const config = convict({
         clientId: {
           doc: 'OAuth2 client ID for client credentials flow',
           format: String,
-          default: 'epr-register-enrol-frontend',
+          default: '',
           env: 'API_OAUTH2_CLIENT_ID',
           sensitive: true
         },
         clientSecret: {
           doc: 'OAuth2 client secret for client credentials flow',
           format: String,
-          default: '2c6e43f5-9a3c-4559-863a-741d2fcda42b',
+          default: '',
           env: 'API_OAUTH2_CLIENT_SECRET',
           sensitive: true
         },

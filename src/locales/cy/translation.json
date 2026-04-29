@@ -22,7 +22,15 @@
     },
     "organisationList": {
       "title": "Rhestr Sefydliadau",
-      "heading": "Rhestr Sefydliadau"
+      "heading": "Rhestr Sefydliadau",
+      "description": "[Welsh] This page is for organisations to view their details and enrol in the EPR register.",
+      "error": "[Welsh] An error occurred while fetching the organisation list. Please try again later.",
+      "orgId": "ID y Sefydliad",
+      "companyName": "[Welsh] Company name",
+      "registrationNumber": "[Welsh] Registration number",
+      "businessType": "[Welsh] Business type",
+      "contact": "[Welsh] Contact",
+      "noContact": "[Welsh] No contact listed"
     },
     "organisationDetails": {
       "title": "Manylion y sefydliad",
