@@ -11,7 +11,7 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
-import { buildMaterialOptions } from './controller.js'
+import { buildMaterialOptions, isAlreadyApplied } from './controller.js'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -120,6 +120,29 @@ describe('#buildMaterialOptions', () => {
     const wood = options.find((o) => o.value === 'Wood')
     expect(wood.disabled).toBe(false)
     expect(wood.hint).toBeNull()
+  })
+})
+
+describe('#isAlreadyApplied', () => {
+  test('returns true when materialType has application for current year', () => {
+    expect(
+      isAlreadyApplied([mockApplicationSteel], 'Steel', CURRENT_YEAR)
+    ).toBe(true)
+  })
+
+  test('returns false when materialType has no application for current year', () => {
+    expect(isAlreadyApplied([mockApplicationSteel], 'Wood', CURRENT_YEAR)).toBe(
+      false
+    )
+  })
+
+  test('returns false when application exists for a different year', () => {
+    const oldApp = { ...mockApplicationSteel, Year: CURRENT_YEAR - 1 }
+    expect(isAlreadyApplied([oldApp], 'Steel', CURRENT_YEAR)).toBe(false)
+  })
+
+  test('returns false for empty applications list', () => {
+    expect(isAlreadyApplied([], 'Steel', CURRENT_YEAR)).toBe(false)
   })
 })
 
@@ -263,6 +286,57 @@ describe('#materialSelectionGetController / #materialSelectionPostController', (
       expect(result).toContain('data-testid="error-summary"')
       expect(result).toContain('data-testid="field-error"')
       expect(result).toContain('Select a material for this application')
+    })
+
+    test('error summary contains GDS required h2 heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+
+      const { result } = await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: ''
+      })
+
+      expect(result).toContain('govuk-error-summary__title')
+      expect(result).toContain('There is a problem')
+    })
+
+    test('returns 400 when POSTing an already-applied material', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([mockApplicationSteel])
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'materialType=Steel'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Already applied')
+    })
+
+    test('does not call seed API when POSTing an already-applied material', async () => {
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      vi.spyOn(apiClient, 'get').mockResolvedValue([mockApplicationSteel])
+
+      await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'materialType=Steel'
+      })
+
+      expect(postSpy).not.toHaveBeenCalled()
     })
 
     test('redirects to task list on valid selection', async () => {

@@ -72,6 +72,16 @@ export const materialSelectionGetController = {
   }
 }
 
+export function isAlreadyApplied(applications, materialType, currentYear) {
+  return applications.some(
+    (app) => app.Year === currentYear && app.MaterialType === materialType
+  )
+}
+
+function renderForm(h, viewData) {
+  return h.view('accreditation/material-selection/index', viewData)
+}
+
 export const materialSelectionPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -80,30 +90,49 @@ export const materialSelectionPostController = {
     const currentYear = new Date().getFullYear()
     const { materialType } = request.payload
 
-    if (!materialType) {
-      const applications = await fetchApplications(
-        organisationId,
-        request.server.logger
-      )
+    const applications = await fetchApplications(
+      organisationId,
+      request.server.logger
+    )
 
-      return h
-        .view('accreditation/material-selection/index', {
-          pageTitle: t('pages.materialSelection.title'),
-          heading: t('pages.materialSelection.heading'),
-          materialOptions: buildMaterialOptions(
-            applications,
-            null,
-            currentYear,
-            t
-          ),
-          backLink: '/operator-accreditation',
-          errors: {
-            materialType: {
-              text: t('pages.materialSelection.validation.selectMaterial')
-            }
+    const baseViewData = {
+      pageTitle: t('pages.materialSelection.title'),
+      heading: t('pages.materialSelection.heading'),
+      backLink: '/operator-accreditation'
+    }
+
+    if (!materialType) {
+      return renderForm(h, {
+        ...baseViewData,
+        materialOptions: buildMaterialOptions(
+          applications,
+          null,
+          currentYear,
+          t
+        ),
+        errors: {
+          materialType: {
+            text: t('pages.materialSelection.validation.selectMaterial')
           }
-        })
-        .code(400)
+        }
+      }).code(400)
+    }
+
+    if (isAlreadyApplied(applications, materialType, currentYear)) {
+      return renderForm(h, {
+        ...baseViewData,
+        materialOptions: buildMaterialOptions(
+          applications,
+          materialType,
+          currentYear,
+          t
+        ),
+        errors: {
+          materialType: {
+            text: t('pages.materialSelection.alreadyApplied')
+          }
+        }
+      }).code(400)
     }
 
     let application
@@ -117,29 +146,20 @@ export const materialSelectionPostController = {
         `Error creating accreditation application: ${error.message}`
       )
 
-      const applications = await fetchApplications(
-        organisationId,
-        request.server.logger
-      )
-
-      return h
-        .view('accreditation/material-selection/index', {
-          pageTitle: t('pages.materialSelection.title'),
-          heading: t('pages.materialSelection.heading'),
-          materialOptions: buildMaterialOptions(
-            applications,
-            materialType,
-            currentYear,
-            t
-          ),
-          backLink: '/operator-accreditation',
-          errors: {
-            materialType: {
-              text: t('pages.materialSelection.validation.createError')
-            }
+      return renderForm(h, {
+        ...baseViewData,
+        materialOptions: buildMaterialOptions(
+          applications,
+          materialType,
+          currentYear,
+          t
+        ),
+        errors: {
+          materialType: {
+            text: t('pages.materialSelection.validation.createError')
           }
-        })
-        .code(500)
+        }
+      }).code(500)
     }
 
     request.yar.set('accreditationApplicationId', application.ApplicationId)

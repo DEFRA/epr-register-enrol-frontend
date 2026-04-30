@@ -141,7 +141,8 @@
     "no": "No",
     "back": "Back",
     "continue": "Continue",
-    "save": "Save"
+    "save": "Save",
+    "errorSummaryTitle": "There is a problem"
   },
   "languageSwitcher": {
     "english": "English",

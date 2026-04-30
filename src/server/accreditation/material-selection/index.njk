@@ -7,15 +7,18 @@
       <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
 
       {% if errors %}
-        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
-          <div class="govuk-error-summary__body">
-            <ul class="govuk-list govuk-error-summary__list">
-              {% if errors.materialType %}
-                <li>
-                  <a href="#materialType">{{ errors.materialType.text }}</a>
-                </li>
-              {% endif %}
-            </ul>
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% if errors.materialType %}
+                  <li>
+                    <a href="#materialType">{{ errors.materialType.text }}</a>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
           </div>
         </div>
       {% endif %}

@@ -135,7 +135,8 @@
     "no": "Nac ydw",
     "back": "Yn ôl",
     "continue": "Parhau",
-    "save": "Cadw"
+    "save": "Cadw",
+    "errorSummaryTitle": "[Welsh] There is a problem"
   },
   "languageSwitcher": {
     "english": "English",
