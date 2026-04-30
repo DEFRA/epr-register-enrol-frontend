@@ -45,14 +45,33 @@
       "registration": "[Welsh] Operator registration."
     },
     "operatorAccreditation": {
-      "heading": "[Welsh] Apply for accreditation",
-      "title": "[Welsh] How to apply for accreditation",
-      "guidanceBeforeYouApply": "[Welsh] Before you apply for accreditation you’ll need to either:",
-      "guidanceBeRegistered": "[Welsh] be registered with your regulator",
-      "guidanceRegisteredButNoDecision": "[Welsh] have applied to register but not yet had a decision from your regulator",
-      "guidance12Weeks": "[Welsh] The regulations allow regulators up to 12 weeks to approve your registration and accreditation applications. If these are submitted at the same time, the 12 week determination period will cover both applications.\nThere are separate charges for applying for registration and accreditation.",
-      "guidanceRefusalChargesApply": "[Welsh] If your application is refused, you will need to pay the charges again if you reapply.",
-      "apply": "[Welsh] Apply"
+      "heading": "[Welsh] Accreditation applications",
+      "title": "[Welsh] Accreditation applications",
+      "startNew": "[Welsh] Start new accreditation application",
+      "applyForAnother": "[Welsh] Apply for accreditation for another material",
+      "reExBackLink": "[Welsh] Return to Re/Ex service",
+      "continueApplication": "[Welsh] Continue application",
+      "viewApplication": "[Welsh] View application",
+      "applicationRef": "[Welsh] Application reference",
+      "dateSubmitted": "[Welsh] Date submitted",
+      "submittedBy": "[Welsh] Submitted by",
+      "errorLoading": "[Welsh] Sorry, we are unable to load your accreditation applications. Please try again later.",
+      "statuses": {
+        "Saved": "[Welsh] NOT STARTED",
+        "Started": "[Welsh] IN PROGRESS",
+        "Sent": "[Welsh] SUBMITTED",
+        "Approved": "[Welsh] WITH REGULATOR",
+        "Rejected": "[Welsh] REJECTED"
+      },
+      "materials": {
+        "Steel": "[Welsh] Steel",
+        "Wood": "[Welsh] Wood",
+        "Aluminium": "[Welsh] Aluminium",
+        "Fibre": "[Welsh] Fibre",
+        "Glass": "[Welsh] Glass",
+        "Paper": "[Welsh] Paper",
+        "Plastic": "[Welsh] Plastic"
+      }
     },
     "operatorRegistration": {
       "heading": "[Welsh] Operator Registration",

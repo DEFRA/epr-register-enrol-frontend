@@ -51,14 +51,33 @@
       "registration": "Operator registration."
     },
     "operatorAccreditation": {
-      "heading": "Apply for accreditation",
-      "title": "How to apply for accreditation",
-      "guidanceBeforeYouApply": "Before you apply for accreditation you’ll need to either:",
-      "guidanceBeRegistered": "be registered with your regulator",
-      "guidanceRegisteredButNoDecision": "have applied to register but not yet had a decision from your regulator",
-      "guidance12Weeks": "The regulations allow regulators up to 12 weeks to approve your registration and accreditation applications. If these are submitted at the same time, the 12 week determination period will cover both applications.\nThere are separate charges for applying for registration and accreditation.",
-      "guidanceRefusalChargesApply": "If your application is refused, you will need to pay the charges again if you reapply.",
-      "apply": "Apply"
+      "heading": "Accreditation applications",
+      "title": "Accreditation applications",
+      "startNew": "Start new accreditation application",
+      "applyForAnother": "Apply for accreditation for another material",
+      "reExBackLink": "Return to Re/Ex service",
+      "continueApplication": "Continue application",
+      "viewApplication": "View application",
+      "applicationRef": "Application reference",
+      "dateSubmitted": "Date submitted",
+      "submittedBy": "Submitted by",
+      "errorLoading": "Sorry, we are unable to load your accreditation applications. Please try again later.",
+      "statuses": {
+        "Saved": "NOT STARTED",
+        "Started": "IN PROGRESS",
+        "Sent": "SUBMITTED",
+        "Approved": "WITH REGULATOR",
+        "Rejected": "REJECTED"
+      },
+      "materials": {
+        "Steel": "Steel",
+        "Wood": "Wood",
+        "Aluminium": "Aluminium",
+        "Fibre": "Fibre",
+        "Glass": "Glass",
+        "Paper": "Paper",
+        "Plastic": "Plastic"
+      }
     },
     "operatorRegistration": {
       "heading": "Operator Registration",
