@@ -2,6 +2,9 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
 
+// Waste recovery operation codes defined in Schedule 3 of the Environmental Permitting Regulations.
+// R3 = recycling of organic materials (paper, wood, fibre, plastic), R4 = recycling of metals,
+// R5 = recycling of inorganic materials (glass). Accreditations are granted per material/operation pair.
 const MATERIAL_WASTE_CODES = {
   Steel: 'R4',
   Wood: 'R3',
