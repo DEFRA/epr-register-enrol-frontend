@@ -79,6 +79,24 @@
         "Plastic": "Plastic"
       }
     },
+    "materialSelection": {
+      "title": "Which material is this application for?",
+      "heading": "Which material is this application for?",
+      "alreadyApplied": "Already applied",
+      "validation": {
+        "selectMaterial": "Select a material for this application",
+        "createError": "Sorry, we were unable to create your application. Please try again."
+      },
+      "materials": {
+        "Steel": "Steel",
+        "Wood": "Wood",
+        "Aluminium": "Aluminium",
+        "Fibre": "Fibre",
+        "Glass": "Glass",
+        "Paper": "Paper",
+        "Plastic": "Plastic"
+      }
+    },
     "operatorRegistration": {
       "heading": "Operator Registration",
       "title": "Registration",
