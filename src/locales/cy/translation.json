@@ -79,6 +79,7 @@
       "alreadyApplied": "[Welsh] Already applied",
       "validation": {
         "selectMaterial": "[Welsh] Select a material for this application",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your applications. Please try again.",
         "createError": "[Welsh] Sorry, we were unable to create your application. Please try again."
       },
       "materials": {

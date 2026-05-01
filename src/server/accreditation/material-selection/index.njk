@@ -24,6 +24,7 @@
       {% endif %}
 
       <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
 
         <div class="govuk-form-group {% if errors.materialType %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" {% if errors.materialType %}aria-describedby="materialType-error"{% endif %}>

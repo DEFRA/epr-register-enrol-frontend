@@ -385,6 +385,27 @@ describe('#materialSelectionGetController / #materialSelectionPostController', (
       )
     })
 
+    test('returns 500 with error when fetch-applications fails on POST (does not call seed)', async () => {
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'materialType=Aluminium'
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain(
+        'Sorry, there was a problem loading your applications. Please try again.'
+      )
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
     test('returns 500 with error message when seed API fails', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([])
       vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('Seed failed'))

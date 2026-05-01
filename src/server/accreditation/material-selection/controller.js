@@ -43,15 +43,8 @@ export function buildMaterialOptions(
   })
 }
 
-async function fetchApplications(organisationId, logger) {
-  try {
-    return await apiClient.get(
-      `/api/v1/accreditation-applications/${organisationId}`
-    )
-  } catch (error) {
-    logger.error(`Error fetching accreditation applications: ${error.message}`)
-    return []
-  }
+async function fetchApplications(organisationId) {
+  return apiClient.get(`/api/v1/accreditation-applications/${organisationId}`)
 }
 
 export const materialSelectionGetController = {
@@ -61,10 +54,14 @@ export const materialSelectionGetController = {
     const organisationId = user?.id
     const currentYear = new Date().getFullYear()
 
-    const applications = await fetchApplications(
-      organisationId,
-      request.server.logger
-    )
+    let applications = []
+    try {
+      applications = await fetchApplications(organisationId)
+    } catch (error) {
+      request.server.logger.error(
+        `Error fetching accreditation applications: ${error.message}`
+      )
+    }
 
     return h.view('accreditation/material-selection/index', {
       pageTitle: t('pages.materialSelection.title'),
@@ -93,10 +90,25 @@ export const materialSelectionPostController = {
     const currentYear = new Date().getFullYear()
     const { materialType } = request.payload
 
-    const applications = await fetchApplications(
-      organisationId,
-      request.server.logger
-    )
+    let applications
+    try {
+      applications = await fetchApplications(organisationId)
+    } catch (error) {
+      request.server.logger.error(
+        `Error fetching accreditation applications: ${error.message}`
+      )
+      return renderForm(h, {
+        pageTitle: t('pages.materialSelection.title'),
+        heading: t('pages.materialSelection.heading'),
+        backLink: '/operator-accreditation',
+        materialOptions: buildMaterialOptions([], null, currentYear, t),
+        errors: {
+          materialType: {
+            text: t('pages.materialSelection.validation.fetchError')
+          }
+        }
+      }).code(500)
+    }
 
     const baseViewData = {
       pageTitle: t('pages.materialSelection.title'),
