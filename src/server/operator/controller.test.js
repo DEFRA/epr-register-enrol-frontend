@@ -27,7 +27,9 @@ describe('#operatorController', () => {
       headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
-    expect(result).toEqual(expect.stringContaining('Operator Landing Page'))
+    expect(result).toEqual(
+      expect.stringContaining('Operator Testing Flows Landing Page')
+    )
     expect(result).toEqual(expect.stringContaining('Operator accreditation'))
     expect(result).toEqual(expect.stringContaining('Operator details'))
     expect(result).toEqual(expect.stringContaining('Operator registration'))
