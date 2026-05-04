@@ -15,6 +15,7 @@ import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { operatorDetails } from './operator-details/index.js'
 import { operatorOrganisationDetails } from './operator-organisation-details/index.js'
 import { materialSelection } from './accreditation/material-selection/index.js'
+import { taskList } from './accreditation/task-list/index.js'
 
 export const router = {
   plugin: {
@@ -41,7 +42,8 @@ export const router = {
         operatorRegistration,
         operatorDetails,
         operatorOrganisationDetails,
-        materialSelection
+        materialSelection,
+        taskList
       ])
 
       // Static assets
