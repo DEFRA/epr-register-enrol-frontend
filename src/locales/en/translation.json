@@ -98,6 +98,21 @@
         "Plastic": "Plastic"
       }
     },
+    "taskList": {
+      "title": "Accreditation task list",
+      "headingPrefix": "Accredit to issue PRNs: UK",
+      "headingSuffix": "packaging waste",
+      "metadataYear": "For:",
+      "metadataSite": "For reprocessing site:",
+      "siteNotSet": "Not set",
+      "saveAndComeLater": "Save and come back later",
+      "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
+      "tasks": {
+        "prns": "PRNs tonnage and authority to issue PRNs",
+        "businessPlan": "Business plan",
+        "samplingPlan": "Accreditation sampling and inspection plan"
+      }
+    },
     "operatorRegistration": {
       "heading": "Operator Registration",
       "title": "Registration",

@@ -2,7 +2,6 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'path'
 import CopyPlugin from 'copy-webpack-plugin'
-import { CleanWebpackPlugin } from 'clean-webpack-plugin'
 import TerserPlugin from 'terser-webpack-plugin'
 import { WebpackAssetsManifest } from 'webpack-assets-manifest'
 
@@ -44,6 +43,7 @@ export default {
         ? 'javascripts/[name].[chunkhash:7].min.js'
         : 'javascripts/[name].js',
 
+    clean: true,
     path: path.join(dirname, '.public'),
     publicPath: '/public/',
     libraryTarget: 'module',
@@ -157,7 +157,6 @@ export default {
     usedExports: true
   },
   plugins: [
-    new CleanWebpackPlugin(),
     new WebpackAssetsManifest(),
     new CopyPlugin({
       patterns: [

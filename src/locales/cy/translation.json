@@ -92,6 +92,21 @@
         "Plastic": "[Welsh] Plastic"
       }
     },
+    "taskList": {
+      "title": "[Welsh] Accreditation task list",
+      "headingPrefix": "[Welsh] Accredit to issue PRNs: UK",
+      "headingSuffix": "[Welsh] packaging waste",
+      "metadataYear": "[Welsh] For:",
+      "metadataSite": "[Welsh] For reprocessing site:",
+      "siteNotSet": "[Welsh] Not set",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
+      "tasks": {
+        "prns": "[Welsh] PRNs tonnage and authority to issue PRNs",
+        "businessPlan": "[Welsh] Business plan",
+        "samplingPlan": "[Welsh] Accreditation sampling and inspection plan"
+      }
+    },
     "operatorRegistration": {
       "heading": "[Welsh] Operator Registration",
       "title": "[Welsh] Registration",
