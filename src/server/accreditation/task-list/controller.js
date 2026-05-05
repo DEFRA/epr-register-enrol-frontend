@@ -100,7 +100,8 @@ export const taskListGetController = {
       return h
         .view('accreditation/task-list/index', {
           pageTitle: t('pages.taskList.title'),
-          error: t('pages.taskList.loadError')
+          error: t('pages.taskList.loadError'),
+          backLink: '/operator-accreditation'
         })
         .code(500)
     }
