@@ -1,6 +1,7 @@
 import path from 'path'
 import hapi from '@hapi/hapi'
 import Scooter from '@hapi/scooter'
+import Crumb from '@hapi/crumb'
 
 import { router } from './router.js'
 import { config } from '../config/config.js'
@@ -78,6 +79,15 @@ export async function createServer() {
     nunjucksConfig,
     Scooter,
     contentSecurityPolicy,
+    {
+      plugin: Crumb,
+      options: {
+        // Skip validation in test mode so server.inject() calls work without a token.
+        // In all other modes CSRF validation is enforced on state-changing requests.
+        skip: () => config.get('isTest'),
+        addToViewContext: true
+      }
+    },
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 
