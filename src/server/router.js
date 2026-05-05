@@ -17,6 +17,8 @@ import { operatorOrganisationDetails } from './operator-organisation-details/ind
 import { materialSelection } from './accreditation/material-selection/index.js'
 import { taskList } from './accreditation/task-list/index.js'
 import { prnsTonnage } from './accreditation/prns-tonnage/index.js'
+import { prnsAuthority } from './accreditation/prns-authority/index.js'
+import { prnsCya } from './accreditation/prns-cya/index.js'
 
 export const router = {
   plugin: {
@@ -45,7 +47,9 @@ export const router = {
         operatorOrganisationDetails,
         materialSelection,
         taskList,
-        prnsTonnage
+        prnsTonnage,
+        prnsAuthority,
+        prnsCya
       ])
 
       // Static assets

@@ -110,6 +110,53 @@
         "Over10000": "[Welsh] Over 10,000 tonnes"
       }
     },
+    "prnsAuthority": {
+      "title": "[Welsh] Authority to issue PRNs",
+      "headingPrefix": "[Welsh] Authority to issue PRNs for",
+      "headingAt": "[Welsh] at",
+      "intro": "[Welsh] You can choose the people you want to have authority to issue PRNs. The people you choose will be able to issue PRNs on this system.",
+      "selectSubHeading": "[Welsh] Select who you want to have authority to issue PRNs — You can select more than one.",
+      "noAuthorisers": "[Welsh] No authorisers added yet. Use the form below to add someone.",
+      "addAuthoriserLabel": "[Welsh] Add a new authoriser",
+      "addAuthoriserButton": "[Welsh] Add authoriser",
+      "saveAndContinue": "[Welsh] Save and continue",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "table": {
+        "select": "[Welsh] Select",
+        "fullName": "[Welsh] Full name",
+        "email": "[Welsh] Email"
+      },
+      "addForm": {
+        "fullName": "[Welsh] Full name",
+        "email": "[Welsh] Email address"
+      },
+      "validation": {
+        "selectAtLeastOne": "[Welsh] Select at least one person to authorise",
+        "nameRequired": "[Welsh] Enter a full name",
+        "emailRequired": "[Welsh] Enter an email address",
+        "emailInvalid": "[Welsh] Enter a valid email address",
+        "emailDuplicate": "[Welsh] This email address has already been added",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "saveError": "[Welsh] Sorry, there was a problem saving your selection. Please try again."
+      }
+    },
+    "prnsCya": {
+      "title": "[Welsh] Check your answers before continuing",
+      "heading": "[Welsh] Check your answers before continuing",
+      "tonnageLabel": "[Welsh] Tonnage of PRNs you plan to issue",
+      "authorisersLabel": "[Welsh] People you want to request authority to issue PRNs",
+      "change": "[Welsh] Change",
+      "changeTonnageContext": "[Welsh] planned tonnage",
+      "changeAuthorityContext": "[Welsh] authority to issue PRNs",
+      "notSelected": "[Welsh] Not selected",
+      "noneSelected": "[Welsh] None selected",
+      "confirmAndContinue": "[Welsh] Confirm and continue",
+      "saveAndComeLater": "[Welsh] Save and continue later",
+      "validation": {
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "confirmError": "[Welsh] Sorry, there was a problem confirming your answers. Please try again."
+      }
+    },
     "taskList": {
       "title": "[Welsh] Accreditation task list",
       "headingPrefix": "[Welsh] Accredit to issue PRNs: UK",

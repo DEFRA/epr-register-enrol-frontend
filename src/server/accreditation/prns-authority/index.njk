@@ -1,0 +1,155 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error or errors or addErrors %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              {% if error %}
+                <p>{{ error }}</p>
+              {% else %}
+                <ul class="govuk-list govuk-error-summary__list">
+                  {% if errors.authorisers %}
+                    <li><a href="#authorisers-fieldset">{{ errors.authorisers.text }}</a></li>
+                  {% endif %}
+                  {% if addErrors.newFullName %}
+                    <li><a href="#newFullName">{{ addErrors.newFullName.text }}</a></li>
+                  {% endif %}
+                  {% if addErrors.newEmail %}
+                    <li><a href="#newEmail">{{ addErrors.newEmail.text }}</a></li>
+                  {% endif %}
+                </ul>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <p class="govuk-body">{{ t('pages.prnsAuthority.intro') }}</p>
+
+      <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group {% if errors.authorisers %}govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" id="authorisers-fieldset" {% if errors.authorisers %}aria-describedby="authorisers-error"{% endif %}>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+              {{ t('pages.prnsAuthority.selectSubHeading') }}
+            </legend>
+
+            {% if errors.authorisers %}
+              <p id="authorisers-error" class="govuk-error-message" data-testid="field-error">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ errors.authorisers.text }}
+              </p>
+            {% endif %}
+
+            {% if authoriserRows.length > 0 %}
+              <table class="govuk-table" data-testid="authorisers-table">
+                <thead class="govuk-table__head">
+                  <tr class="govuk-table__row">
+                    <th scope="col" class="govuk-table__header">{{ t('pages.prnsAuthority.table.select') }}</th>
+                    <th scope="col" class="govuk-table__header">{{ t('pages.prnsAuthority.table.fullName') }}</th>
+                    <th scope="col" class="govuk-table__header">{{ t('pages.prnsAuthority.table.email') }}</th>
+                  </tr>
+                </thead>
+                <tbody class="govuk-table__body">
+                  {% for row in authoriserRows %}
+                    <tr class="govuk-table__row" data-testid="authoriser-row-{{ loop.index0 }}">
+                      <td class="govuk-table__cell">
+                        <div class="govuk-checkboxes__item">
+                          <input
+                            class="govuk-checkboxes__input"
+                            id="authoriser-{{ loop.index0 }}"
+                            name="selectedEmails"
+                            type="checkbox"
+                            value="{{ row.email }}"
+                            {% if row.checked %}checked{% endif %}
+                            data-testid="authoriser-checkbox-{{ loop.index0 }}">
+                          <label class="govuk-label govuk-checkboxes__label" for="authoriser-{{ loop.index0 }}">
+                            <span class="govuk-visually-hidden">{{ row.fullName }}</span>
+                          </label>
+                        </div>
+                      </td>
+                      <td class="govuk-table__cell">{{ row.fullName }}</td>
+                      <td class="govuk-table__cell">{{ row.email }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% else %}
+              <p class="govuk-body" data-testid="no-authorisers-message">{{ t('pages.prnsAuthority.noAuthorisers') }}</p>
+            {% endif %}
+
+          </fieldset>
+        </div>
+
+        <details class="govuk-details" {% if showAddForm %}open{% endif %} data-testid="add-authoriser-details">
+          <summary class="govuk-details__summary" data-testid="add-authoriser-toggle">
+            <span class="govuk-details__summary-text">{{ t('pages.prnsAuthority.addAuthoriserLabel') }}</span>
+          </summary>
+          <div class="govuk-details__text">
+
+            <div class="govuk-form-group {% if addErrors.newFullName %}govuk-form-group--error{% endif %}">
+              <label class="govuk-label" for="newFullName">{{ t('pages.prnsAuthority.addForm.fullName') }}</label>
+              {% if addErrors.newFullName %}
+                <p id="newFullName-error" class="govuk-error-message" data-testid="new-full-name-error">
+                  <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newFullName.text }}
+                </p>
+              {% endif %}
+              <input
+                class="govuk-input {% if addErrors.newFullName %}govuk-input--error{% endif %}"
+                id="newFullName"
+                name="newFullName"
+                type="text"
+                value="{{ newFullName }}"
+                {% if addErrors.newFullName %}aria-describedby="newFullName-error"{% endif %}
+                data-testid="new-full-name-input">
+            </div>
+
+            <div class="govuk-form-group {% if addErrors.newEmail %}govuk-form-group--error{% endif %}">
+              <label class="govuk-label" for="newEmail">{{ t('pages.prnsAuthority.addForm.email') }}</label>
+              {% if addErrors.newEmail %}
+                <p id="newEmail-error" class="govuk-error-message" data-testid="new-email-error">
+                  <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newEmail.text }}
+                </p>
+              {% endif %}
+              <input
+                class="govuk-input {% if addErrors.newEmail %}govuk-input--error{% endif %}"
+                id="newEmail"
+                name="newEmail"
+                type="email"
+                value="{{ newEmail }}"
+                {% if addErrors.newEmail %}aria-describedby="newEmail-error"{% endif %}
+                data-testid="new-email-input">
+            </div>
+
+            <button type="submit" name="submitAction" value="addAuthoriser" class="govuk-button govuk-button--secondary" data-testid="add-authoriser-button">
+              {{ t('pages.prnsAuthority.addAuthoriserButton') }}
+            </button>
+
+          </div>
+        </details>
+
+        <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+          {{ t('pages.prnsAuthority.saveAndContinue') }}
+        </button>
+
+        <p class="govuk-body">
+          <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-link" data-testid="save-come-back-button">
+            {{ t('pages.prnsAuthority.saveAndComeLater') }}
+          </button>
+        </p>
+
+      </form>
+
+    </div>
+  </div>
+{% endblock %}
