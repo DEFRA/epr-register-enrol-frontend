@@ -1,0 +1,81 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <p>{{ error }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if errors and (errors | length > 0) %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% if sumError %}
+                <li><a href="#newInfrastructurePercent">{{ sumError.text }}</a></li>
+              {% endif %}
+              {% for input in fieldInputs %}
+                {% if input.errorMessage %}
+                  <li><a href="#{{ input.id }}">{{ input.errorMessage.text }}</a></li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <p class="govuk-body" data-testid="intro-text">{{ intro }}</p>
+
+      <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {% for input in fieldInputs %}
+          <div class="govuk-form-group {% if input.errorMessage %}govuk-form-group--error{% endif %}" data-testid="field-group-{{ input.id }}">
+            <label class="govuk-label" for="{{ input.id }}">
+              {{ input.label }}
+            </label>
+            {% if input.errorMessage %}
+              <p id="{{ input.id }}-error" class="govuk-error-message" data-testid="field-error-{{ input.id }}">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ input.errorMessage.text }}
+              </p>
+            {% endif %}
+            <div class="govuk-input__wrapper">
+              <input
+                class="govuk-input govuk-input--width-4 {% if input.errorMessage %}govuk-input--error{% endif %}"
+                id="{{ input.id }}"
+                name="{{ input.name }}"
+                type="text"
+                inputmode="numeric"
+                value="{{ input.value }}"
+                aria-describedby="{% if input.errorMessage %}{{ input.id }}-error{% endif %}"
+                data-testid="input-{{ input.id }}">
+              <div class="govuk-input__suffix" aria-hidden="true">%</div>
+            </div>
+          </div>
+        {% endfor %}
+
+        <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+          {{ t('pages.businessPlan.saveAndContinue') }}
+        </button>
+
+        <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+          {{ t('pages.businessPlan.saveAndComeLater') }}
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

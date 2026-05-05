@@ -1,0 +1,77 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <p>{{ error }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if errors and (errors | length > 0) %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% for input in textareaInputs %}
+                {% if input.errorMessage %}
+                  <li><a href="#{{ input.id }}">{{ input.errorMessage.text }}</a></li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <p class="govuk-body" data-testid="intro-text">{{ intro }}</p>
+
+      <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {% for textarea in textareaInputs %}
+          <div class="govuk-form-group {% if textarea.errorMessage %}govuk-form-group--error{% endif %}" data-testid="field-group-{{ textarea.id }}">
+            <label class="govuk-label" for="{{ textarea.id }}">
+              {{ textarea.label }}
+            </label>
+            <div id="{{ textarea.id }}-hint" class="govuk-hint">
+              {{ textarea.hint }}
+            </div>
+            {% if textarea.errorMessage %}
+              <p id="{{ textarea.id }}-error" class="govuk-error-message" data-testid="field-error-{{ textarea.id }}">
+                <span class="govuk-visually-hidden">Error:</span>
+                {{ textarea.errorMessage.text }}
+              </p>
+            {% endif %}
+            <textarea
+              class="govuk-textarea {% if textarea.errorMessage %}govuk-textarea--error{% endif %}"
+              id="{{ textarea.id }}"
+              name="{{ textarea.name }}"
+              rows="5"
+              maxlength="{{ textarea.maxlength }}"
+              aria-describedby="{{ textarea.id }}-hint{% if textarea.errorMessage %} {{ textarea.id }}-error{% endif %}"
+              data-testid="textarea-{{ textarea.id }}">{{ textarea.value }}</textarea>
+          </div>
+        {% endfor %}
+
+        <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+          {{ t('pages.businessPlanDetail.saveAndContinue') }}
+        </button>
+
+        <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+          {{ t('pages.businessPlanDetail.saveAndComeLater') }}
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

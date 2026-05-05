@@ -1,0 +1,360 @@
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  afterAll,
+  vi,
+  beforeEach
+} from 'vitest'
+import { createServer } from '../../server.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
+import { config } from '../../../config/config.js'
+import { apiClient } from '../../common/api-client.js'
+import {
+  validateDetailFields,
+  buildTextareaInputs,
+  DETAIL_FIELDS
+} from './controller.js'
+
+const APPLICATION_ID = 'app-bpd-001'
+
+const t = (key) => {
+  const last = key.split('.').pop()
+  if (last === 'tooLong') return '{field} must be 500 characters or fewer'
+  if (last === 'optional') return '(optional)'
+  if (last === 'characterCountHint') return 'You can enter up to 500 characters'
+  return last
+}
+
+function makeApplication(overrides = {}) {
+  return {
+    ApplicationId: APPLICATION_ID,
+    OrganisationId: 'test-operator-id',
+    MaterialType: 'Steel',
+    Year: 2025,
+    SiteId: 'site-001',
+    Prns: { SectionStatus: 'Completed' },
+    BusinessPlan: {
+      NewInfrastructurePercent: 20,
+      PriceSupportPercent: 20,
+      BusinessCollectionsPercent: 20,
+      CommunicationsPercent: 20,
+      NewMarketsPercent: 10,
+      NewUsesPercent: 10,
+      NewInfrastructureDetail: 'Investing in sorting lines',
+      PriceSupportDetail: '',
+      BusinessCollectionsDetail: '',
+      CommunicationsDetail: '',
+      NewMarketsDetail: '',
+      NewUsesDetail: '',
+      SectionStatus: 'InProgress'
+    },
+    SamplingPlan: { SectionStatus: 'NotStarted' },
+    ...overrides
+  }
+}
+
+describe('#validateDetailFields', () => {
+  test('returns no errors for all empty fields', () => {
+    const errors = validateDetailFields({}, t)
+    expect(Object.keys(errors)).toHaveLength(0)
+  })
+
+  test('returns no errors for values within 500 chars', () => {
+    const payload = { newInfrastructureDetail: 'a'.repeat(500) }
+    const errors = validateDetailFields(payload, t)
+    expect(errors.newInfrastructureDetail).toBeUndefined()
+  })
+
+  test('returns error for value exceeding 500 chars', () => {
+    const payload = { newInfrastructureDetail: 'a'.repeat(501) }
+    const errors = validateDetailFields(payload, t)
+    expect(errors.newInfrastructureDetail).toBeDefined()
+    expect(errors.newInfrastructureDetail.text).toContain('500 characters')
+  })
+
+  test('returns errors only for fields that exceed limit', () => {
+    const payload = {
+      newInfrastructureDetail: 'a'.repeat(501),
+      priceSupportDetail: 'short text'
+    }
+    const errors = validateDetailFields(payload, t)
+    expect(errors.newInfrastructureDetail).toBeDefined()
+    expect(errors.priceSupportDetail).toBeUndefined()
+  })
+})
+
+describe('#buildTextareaInputs', () => {
+  test('returns one textarea per detail field', () => {
+    const inputs = buildTextareaInputs({}, {}, t)
+    expect(inputs).toHaveLength(DETAIL_FIELDS.length)
+  })
+
+  test('sets value from payload', () => {
+    const inputs = buildTextareaInputs(
+      { newInfrastructureDetail: 'some detail' },
+      {},
+      t
+    )
+    const field = inputs.find((i) => i.id === 'newInfrastructureDetail')
+    expect(field.value).toBe('some detail')
+  })
+
+  test('sets errorMessage when error present', () => {
+    const errors = {
+      communicationsDetail: { text: 'too long error' }
+    }
+    const inputs = buildTextareaInputs({}, errors, t)
+    const field = inputs.find((i) => i.id === 'communicationsDetail')
+    expect(field.errorMessage).toEqual({ text: 'too long error' })
+  })
+
+  test('errorMessage is undefined when no error for field', () => {
+    const inputs = buildTextareaInputs({}, {}, t)
+    inputs.forEach((i) => expect(i.errorMessage).toBeUndefined())
+  })
+
+  test('label includes (optional) suffix', () => {
+    const inputs = buildTextareaInputs({}, {}, t)
+    inputs.forEach((i) => expect(i.label).toContain('(optional)'))
+  })
+
+  test('maxlength is 500', () => {
+    const inputs = buildTextareaInputs({}, {}, t)
+    inputs.forEach((i) => expect(i.maxlength).toBe(500))
+  })
+})
+
+describe('#businessPlanDetailController', () => {
+  let server
+
+  beforeAll(async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'auth.basicUsr') return 'test'
+      if (key === 'auth.basicPasswd') return 'test123'
+      return originalGet(key)
+    })
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const operatorHeaders = {
+    Authorization: 'Basic dGVzdDp0ZXN0MTIz',
+    'x-test-user-type': 'operator'
+  }
+
+  describe('GET /accreditation/business-plan-detail/{applicationId}', () => {
+    test('returns 200 with page heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="page-heading"')
+    })
+
+    test('renders all six textarea inputs', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      DETAIL_FIELDS.forEach((field) => {
+        expect(result).toContain(`data-testid="textarea-${field}"`)
+      })
+    })
+
+    test('pre-populates textarea with existing detail values', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Investing in sorting lines')
+    })
+
+    test('back link points to business-plan page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        `href="/accreditation/business-plan/${APPLICATION_ID}"`
+      )
+    })
+
+    test('returns 500 with error summary when API fetch fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('returns 200 for Welsh locale', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/cy/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
+
+  describe('POST /accreditation/business-plan-detail/{applicationId} - save-and-continue', () => {
+    test('patches all detail fields and redirects to business-plan-cya', async () => {
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'Sorting lines investment',
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/business-plan-cya/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/business-plan`),
+        expect.objectContaining({
+          NewInfrastructureDetail: 'Sorting lines investment'
+        })
+      )
+    })
+
+    test('returns 400 with field error when textarea exceeds 500 chars', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'a'.repeat(501),
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain(
+        'data-testid="field-error-newInfrastructureDetail"'
+      )
+    })
+
+    test('returns 200 and submits with all fields empty (all optional)', async () => {
+      vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: '',
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('returns 500 with error when PATCH fails', async () => {
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('save failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: '',
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+  })
+
+  describe('POST /accreditation/business-plan-detail/{applicationId} - save-and-come-later', () => {
+    test('patches and redirects to task list', async () => {
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'Some detail',
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndComeLater'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledOnce()
+    })
+  })
+})
