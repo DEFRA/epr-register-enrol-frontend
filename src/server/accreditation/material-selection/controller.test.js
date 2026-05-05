@@ -443,68 +443,40 @@ describe('#materialSelectionGetController / #materialSelectionPostController', (
       expect(result).toContain('value="Aluminium"')
       expect(result).toContain('checked')
     })
-  })
-})
 
-describe('#materialSelectionPostController - invalid materialType', () => {
-  let server
+    test('returns 400 when submitting a materialType not in the allowed list', async () => {
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
 
-  beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
-      return originalGet(key)
-    })
-    server = await createServer()
-    await server.initialize()
-  })
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'materialType=InvalidMaterial'
+      })
 
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-  })
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  const operatorHeaders = {
-    Authorization: 'Basic dGVzdDp0ZXN0MTIz',
-    'x-test-user-type': 'operator'
-  }
-
-  test('returns 400 when submitting a materialType not in the allowed list', async () => {
-    const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
-    vi.spyOn(apiClient, 'get').mockResolvedValue([])
-
-    const { statusCode } = await server.inject({
-      method: 'POST',
-      url: '/accreditation/material-selection',
-      headers: {
-        ...operatorHeaders,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      payload: 'materialType=InvalidMaterial'
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(postSpy).not.toHaveBeenCalled()
     })
 
-    expect(statusCode).toBe(statusCodes.badRequest)
-    expect(postSpy).not.toHaveBeenCalled()
-  })
+    test('returns 400 with validation message for unrecognised materialType', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
 
-  test('returns 400 with validation message for unrecognised materialType', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'materialType=HACK'
+      })
 
-    const { result, statusCode } = await server.inject({
-      method: 'POST',
-      url: '/accreditation/material-selection',
-      headers: {
-        ...operatorHeaders,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      payload: 'materialType=HACK'
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Select a material for this application')
     })
-
-    expect(statusCode).toBe(statusCodes.badRequest)
-    expect(result).toContain('Select a material for this application')
   })
 })
