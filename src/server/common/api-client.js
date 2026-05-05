@@ -1,8 +1,3 @@
-/**
- * Reusable API client for calling external APIs.
- * Uses node-fetch to make HTTP requests with configurable base URL and timeout.
- */
-import fetch from 'node-fetch'
 import { config } from '../../config/config.js'
 
 /**
