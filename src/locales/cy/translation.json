@@ -22,7 +22,14 @@
     },
     "organisationList": {
       "title": "Rhestr Sefydliadau",
-      "heading": "Rhestr Sefydliadau"
+      "heading": "Rhestr Sefydliadau",
+      "error": "[Welsh] An error occurred while fetching the organisation list. Please try again later.",
+      "orgId": "ID y Sefydliad",
+      "companyName": "[Welsh] Company name",
+      "registrationNumber": "[Welsh] Registration number",
+      "businessType": "[Welsh] Business type",
+      "contact": "[Welsh] Contact",
+      "noContact": "[Welsh] No contact listed"
     },
     "organisationDetails": {
       "title": "Manylion y sefydliad",
