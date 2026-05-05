@@ -382,7 +382,6 @@ describe('#taskListGetController', () => {
       expect(result).toContain('href="/operator-accreditation"')
     })
 
-
     test('returns 200 in Welsh locale', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
