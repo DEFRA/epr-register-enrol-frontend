@@ -73,6 +73,25 @@
         "Plastic": "[Welsh] Plastic"
       }
     },
+    "materialSelection": {
+      "title": "[Welsh] Which material is this application for?",
+      "heading": "[Welsh] Which material is this application for?",
+      "alreadyApplied": "[Welsh] Already applied",
+      "validation": {
+        "selectMaterial": "[Welsh] Select a material for this application",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your applications. Please try again.",
+        "createError": "[Welsh] Sorry, we were unable to create your application. Please try again."
+      },
+      "materials": {
+        "Steel": "[Welsh] Steel",
+        "Wood": "[Welsh] Wood",
+        "Aluminium": "[Welsh] Aluminium",
+        "Fibre": "[Welsh] Fibre",
+        "Glass": "[Welsh] Glass",
+        "Paper": "[Welsh] Paper",
+        "Plastic": "[Welsh] Plastic"
+      }
+    },
     "operatorRegistration": {
       "heading": "[Welsh] Operator Registration",
       "title": "[Welsh] Registration",
@@ -117,7 +136,8 @@
     "no": "Nac ydw",
     "back": "Yn ôl",
     "continue": "Parhau",
-    "save": "Cadw"
+    "save": "Cadw",
+    "errorSummaryTitle": "[Welsh] There is a problem"
   },
   "languageSwitcher": {
     "english": "English",

@@ -43,12 +43,12 @@
       "orgStatus": "Org Status"
     },
     "operator": {
-      "title": "Operator Landing Page",
-      "heading": "Operator Landing Page",
-      "description": "This page is the Operator Landing Page.",
-      "accreditation": "Operator accreditation.",
-      "details": "Operator details.",
-      "registration": "Operator registration."
+      "title": "Operator Testing Flows Landing Page",
+      "heading": "Operator Testing Flows Landing Page",
+      "description": "This page allows test users to select the different flows for accreditation, registration and details.",
+      "accreditation": "[WIP] Operator accreditation.",
+      "details": "[Tech Test] Operator details.",
+      "registration": "[Placeholder] Operator registration."
     },
     "operatorAccreditation": {
       "heading": "Accreditation applications",
@@ -68,6 +68,25 @@
         "Sent": "SUBMITTED",
         "Approved": "WITH REGULATOR",
         "Rejected": "REJECTED"
+      },
+      "materials": {
+        "Steel": "Steel",
+        "Wood": "Wood",
+        "Aluminium": "Aluminium",
+        "Fibre": "Fibre",
+        "Glass": "Glass",
+        "Paper": "Paper",
+        "Plastic": "Plastic"
+      }
+    },
+    "materialSelection": {
+      "title": "Which material is this application for?",
+      "heading": "Which material is this application for?",
+      "alreadyApplied": "Already applied",
+      "validation": {
+        "selectMaterial": "Select a material for this application",
+        "fetchError": "Sorry, there was a problem loading your applications. Please try again.",
+        "createError": "Sorry, we were unable to create your application. Please try again."
       },
       "materials": {
         "Steel": "Steel",
@@ -123,7 +142,8 @@
     "no": "No",
     "back": "Back",
     "continue": "Continue",
-    "save": "Save"
+    "save": "Save",
+    "errorSummaryTitle": "There is a problem"
   },
   "languageSwitcher": {
     "english": "English",
