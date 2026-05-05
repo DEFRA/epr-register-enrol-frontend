@@ -443,5 +443,40 @@ describe('#materialSelectionGetController / #materialSelectionPostController', (
       expect(result).toContain('value="Aluminium"')
       expect(result).toContain('checked')
     })
+
+    test('returns 400 when submitting a materialType not in the allowed list', async () => {
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'materialType=InvalidMaterial'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns 400 with validation message for unrecognised materialType', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: '/accreditation/material-selection',
+        headers: {
+          ...operatorHeaders,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'materialType=HACK'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Select a material for this application')
+    })
   })
 })
