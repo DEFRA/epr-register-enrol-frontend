@@ -369,6 +369,20 @@ describe('#taskListGetController', () => {
       )
     })
 
+    test('error response still renders back-link to /operator-accreditation', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="back-link"')
+      expect(result).toContain('href="/operator-accreditation"')
+    })
+
+
     test('returns 200 in Welsh locale', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
