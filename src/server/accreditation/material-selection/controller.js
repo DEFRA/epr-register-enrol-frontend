@@ -136,11 +136,20 @@ export const materialSelectionPostController = {
     if (!ALL_MATERIALS.includes(materialType)) {
       return renderForm(h, {
         ...baseViewData,
-        materialOptions: buildMaterialOptions(applications, null, currentYear, t),
-        errors: { materialType: { text: t('pages.materialSelection.validation.selectMaterial') } }
+        materialOptions: buildMaterialOptions(
+          applications,
+          null,
+          currentYear,
+          t
+        ),
+        errors: {
+          materialType: {
+            text: t('pages.materialSelection.validation.selectMaterial')
+          }
+        }
       }).code(400)
     }
-    
+
     if (isAlreadyApplied(applications, materialType, currentYear)) {
       return renderForm(h, {
         ...baseViewData,
