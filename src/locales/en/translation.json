@@ -50,22 +50,60 @@
       "orgStatus": "Org Status"
     },
     "operator": {
-      "title": "Operator Landing Page",
-      "heading": "Operator Landing Page",
-      "description": "This page is the Operator Landing Page.",
-      "accreditation": "Operator accreditation.",
-      "details": "Operator details.",
-      "registration": "Operator registration."
+      "title": "Operator Testing Flows Landing Page",
+      "heading": "Operator Testing Flows Landing Page",
+      "description": "This page allows test users to select the different flows for accreditation, registration and details.",
+      "accreditation": "[WIP] Operator accreditation.",
+      "details": "[Tech Test] Operator details.",
+      "registration": "[Placeholder] Operator registration."
     },
     "operatorAccreditation": {
-      "heading": "Apply for accreditation",
-      "title": "How to apply for accreditation",
-      "guidanceBeforeYouApply": "Before you apply for accreditation you’ll need to either:",
-      "guidanceBeRegistered": "be registered with your regulator",
-      "guidanceRegisteredButNoDecision": "have applied to register but not yet had a decision from your regulator",
-      "guidance12Weeks": "The regulations allow regulators up to 12 weeks to approve your registration and accreditation applications. If these are submitted at the same time, the 12 week determination period will cover both applications.\nThere are separate charges for applying for registration and accreditation.",
-      "guidanceRefusalChargesApply": "If your application is refused, you will need to pay the charges again if you reapply.",
-      "apply": "Apply"
+      "heading": "Accreditation applications",
+      "title": "Accreditation applications",
+      "startNew": "Start new accreditation application",
+      "applyForAnother": "Apply for accreditation for another material",
+      "reExBackLink": "Return to Re/Ex service",
+      "continueApplication": "Continue application",
+      "viewApplication": "View application",
+      "applicationRef": "Application reference",
+      "dateSubmitted": "Date submitted",
+      "submittedBy": "Submitted by",
+      "errorLoading": "Sorry, we are unable to load your accreditation applications. Please try again later.",
+      "statuses": {
+        "Saved": "NOT STARTED",
+        "Started": "IN PROGRESS",
+        "Sent": "SUBMITTED",
+        "Approved": "WITH REGULATOR",
+        "Rejected": "REJECTED"
+      },
+      "materials": {
+        "Steel": "Steel",
+        "Wood": "Wood",
+        "Aluminium": "Aluminium",
+        "Fibre": "Fibre",
+        "Glass": "Glass",
+        "Paper": "Paper",
+        "Plastic": "Plastic"
+      }
+    },
+    "materialSelection": {
+      "title": "Which material is this application for?",
+      "heading": "Which material is this application for?",
+      "alreadyApplied": "Already applied",
+      "validation": {
+        "selectMaterial": "Select a material for this application",
+        "fetchError": "Sorry, there was a problem loading your applications. Please try again.",
+        "createError": "Sorry, we were unable to create your application. Please try again."
+      },
+      "materials": {
+        "Steel": "Steel",
+        "Wood": "Wood",
+        "Aluminium": "Aluminium",
+        "Fibre": "Fibre",
+        "Glass": "Glass",
+        "Paper": "Paper",
+        "Plastic": "Plastic"
+      }
     },
     "operatorRegistration": {
       "heading": "Operator Registration",
@@ -111,7 +149,8 @@
     "no": "No",
     "back": "Back",
     "continue": "Continue",
-    "save": "Save"
+    "save": "Save",
+    "errorSummaryTitle": "There is a problem"
   },
   "languageSwitcher": {
     "english": "English",
