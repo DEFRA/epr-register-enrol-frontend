@@ -13,6 +13,7 @@ Core delivery platform Node.js Frontend Template.
 - [Local Development](#local-development)
   - [Setup](#setup)
   - [Development](#development)
+  - [Development without a backend](#development-without-a-backend)
   - [Production](#production)
   - [Npm scripts](#npm-scripts)
   - [Update dependencies](#update-dependencies)
@@ -99,6 +100,16 @@ To run the application in `development` mode run:
 ```bash
 npm run dev
 ```
+
+### Development without a backend
+
+To run the frontend without a running backend API, enable the stub API client:
+
+```bash
+API_STUB_ENABLED=true npm run dev
+```
+
+This replaces all API calls with in-memory fixture data, so no backend is required. The stub is implemented in [src/server/common/stub-api-client.js](src/server/common/stub-api-client.js) and returns two example accreditation applications and one organisation. Writes (PATCH, POST, DELETE) are accepted silently.
 
 ### Production
 
