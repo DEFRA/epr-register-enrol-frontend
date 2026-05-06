@@ -11,38 +11,46 @@
       <div class="govuk-body" data-testid="app-page-body">
 
         <p>{{t("pages.organisationList.description")}}</p>
-        <h2>Organisations</h2>
+
+        {% if error %}
+        <div class="govuk-error-summary" aria-labelledby="error-summary-title" role="alert" tabindex="-1" data-module="govuk-error-summary">
+          <h2 class="govuk-error-summary__title" id="error-summary-title">
+            There is a problem
+          </h2>
+          <div class="govuk-error-summary__body">
+            <p>{{ error }}</p>
+          </div>
+        </div>
+        {% endif %}
+
+        <h2>{{t("navigation.organisationList")}}</h2>
 
         <table class="govuk-table">
           <thead class="govuk-table__head">
             <tr class="govuk-table__row">
-              <th class="govuk-table__header">Company Name</th>
-              <th class="govuk-table__header">Companies House Number</th>
-              <th class="govuk-table__header">Scheme Registration ID</th>
-              <th class="govuk-table__header">Approved Person</th>
-              <th class="govuk-table__header">Directors</th>
+              <th class="govuk-table__header">{{t("pages.organisationList.orgId")}}</th>
+              <th class="govuk-table__header">{{t("pages.organisationList.companyName")}}</th>
+              <th class="govuk-table__header">{{t("pages.organisationList.registrationNumber")}}</th>
+              <th class="govuk-table__header">{{t("pages.organisationList.businessType")}}</th>
+              <th class="govuk-table__header">{{t("pages.organisationList.contact")}}</th>
             </tr>
           </thead>
           <tbody class="govuk-table__body">
             {% for org in organisationsViewModel %}
             <tr class="govuk-table__row">
+              <td class="govuk-table__cell">{{ org.orgId }}</td>
               <td class="govuk-table__cell">
-                <a href="/organisation-details/{{org.companiesHouseNumber}}" class="govuk-link">
-                  {{ org.companyName }}
+                <a href="/organisation-details/{{org.orgId}}" class="govuk-link">
+                  {{ org.companyDetails.name }}
                 </a>
               </td>
-              <td class="govuk-table__cell">{{ org.companiesHouseNumber }}</td>
-              <td class="govuk-table__cell">{{ org.schemeRegistrationId }}</td>
-              <td class="govuk-table__cell">{{ org.approvedPerson }}</td>
+              <td class="govuk-table__cell">{{ org.companyDetails.registrationNumber }}</td>
+              <td class="govuk-table__cell">{{ org.businessType }}</td>
               <td class="govuk-table__cell">
-                {% if org.directors and org.directors.length > 0 %}
-                  <ul class="govuk-list govuk-list--bullet">
-                    {% for director in org.directors %}
-                    <li>{{ director.name }}</li>
-                    {% endfor %}
-                  </ul>
+                {% if org.contactDetails and org.contactDetails.fullName %}
+                  {{ org.contactDetails.fullName }}
                 {% else %}
-                  <span class="govuk-body-s">No directors listed</span>
+                  <span class="govuk-body-s">{{t("pages.organisationList.noContact")}}</span>
                 {% endif %}
               </td>
             </tr>
