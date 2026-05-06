@@ -1,4 +1,4 @@
-﻿const STUB_APP_ID_1 = 'stub-app-1'
+const STUB_APP_ID_1 = 'stub-app-1'
 const STUB_APP_ID_2 = 'stub-app-2'
 
 const STUB_APPLICATIONS = [
