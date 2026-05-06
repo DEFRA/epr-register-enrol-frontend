@@ -4,7 +4,10 @@ import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKey
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
 export function shouldGuardPath(path) {
-  return path.startsWith(ACCREDITATION_ROUTE_PREFIX)
+  return (
+    path.startsWith(ACCREDITATION_ROUTE_PREFIX) ||
+    /^\/[a-z]{2}\/accreditation\//.test(path)
+  )
 }
 
 export function hasValidSession(yar) {

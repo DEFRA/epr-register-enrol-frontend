@@ -13,6 +13,11 @@ describe('shouldGuardPath', () => {
     expect(shouldGuardPath('/accreditation/business-plan/xyz')).toBe(true)
   })
 
+  test('returns true for Welsh /{language}/accreditation/ routes', () => {
+    expect(shouldGuardPath('/cy/accreditation/task-list/abc')).toBe(true)
+    expect(shouldGuardPath('/cy/accreditation/business-plan/xyz')).toBe(true)
+  })
+
   test('returns false for non-accreditation routes', () => {
     expect(shouldGuardPath('/')).toBe(false)
     expect(shouldGuardPath('/operator-accreditation')).toBe(false)
@@ -99,6 +104,18 @@ describe('guard handler behaviour', () => {
     runGuard('/accreditation/business-plan/abc', '')
     expect(h.redirect).toHaveBeenCalledWith('/')
   })
+
+  test('Welsh accreditation route with valid session passes through', () => {
+    const result = runGuard('/cy/accreditation/task-list/abc', 'app-123')
+    expect(result).toBe(h.continue)
+    expect(h.redirect).not.toHaveBeenCalled()
+  })
+
+  test('Welsh accreditation route without session redirects to /', () => {
+    const result = runGuard('/cy/accreditation/task-list/abc', null)
+    expect(h.redirect).toHaveBeenCalledWith('/')
+    expect(result).toBe('redirect-response')
+  })
 })
 
 describe('accreditationSessionGuard plugin registration', () => {
@@ -178,6 +195,27 @@ describe('accreditationSessionGuard plugin registration', () => {
     const callback = registerAndGetCallback()
     const h = makeH()
     callback({ path: '/accreditation/task-list/app-1', yar: makeYar(null) }, h)
+    expect(h.redirect).toHaveBeenCalledWith('/')
+  })
+
+  test('registered callback passes through Welsh accreditation routes with valid session', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = callback(
+      { path: '/cy/accreditation/task-list/app-1', yar: makeYar('app-1') },
+      h
+    )
+    expect(result).toBe(h.continue)
+    expect(h.redirect).not.toHaveBeenCalled()
+  })
+
+  test('registered callback redirects Welsh accreditation routes with missing session', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    callback(
+      { path: '/cy/accreditation/task-list/app-1', yar: makeYar(null) },
+      h
+    )
     expect(h.redirect).toHaveBeenCalledWith('/')
   })
 })
