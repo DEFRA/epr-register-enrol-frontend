@@ -106,14 +106,40 @@ describe('accreditationSessionGuard plugin registration', () => {
     vi.restoreAllMocks()
   })
 
+  function makeYar(accreditationId) {
+    return {
+      get: vi.fn((key) =>
+        key === ACCREDITATION_SESSION_KEYS.accreditationId
+          ? accreditationId
+          : null
+      )
+    }
+  }
+
+  function makeH() {
+    return {
+      continue: Symbol('continue'),
+      redirect: vi
+        .fn()
+        .mockReturnValue({ takeover: vi.fn().mockReturnValue('redirect') })
+    }
+  }
+
+  function registerAndGetCallback() {
+    vi.spyOn(config, 'get').mockImplementation((key) =>
+      key === 'isTest' ? false : undefined
+    )
+    const mockServer = { ext: vi.fn() }
+    accreditationSessionGuard.plugin.register(mockServer)
+    return mockServer.ext.mock.calls[0][1]
+  }
+
   test('registers onPreHandler when not in test mode', () => {
     vi.spyOn(config, 'get').mockImplementation((key) =>
       key === 'isTest' ? false : undefined
     )
-
     const mockServer = { ext: vi.fn() }
     accreditationSessionGuard.plugin.register(mockServer)
-
     expect(mockServer.ext).toHaveBeenCalledWith(
       'onPreHandler',
       expect.any(Function)
@@ -124,10 +150,34 @@ describe('accreditationSessionGuard plugin registration', () => {
     vi.spyOn(config, 'get').mockImplementation((key) =>
       key === 'isTest' ? true : undefined
     )
-
     const mockServer = { ext: vi.fn() }
     accreditationSessionGuard.plugin.register(mockServer)
-
     expect(mockServer.ext).not.toHaveBeenCalled()
+  })
+
+  test('registered callback passes through non-accreditation routes', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = callback({ path: '/health', yar: makeYar('app-1') }, h)
+    expect(result).toBe(h.continue)
+    expect(h.redirect).not.toHaveBeenCalled()
+  })
+
+  test('registered callback passes through accreditation routes with valid session', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = callback(
+      { path: '/accreditation/task-list/app-1', yar: makeYar('app-1') },
+      h
+    )
+    expect(result).toBe(h.continue)
+    expect(h.redirect).not.toHaveBeenCalled()
+  })
+
+  test('registered callback redirects accreditation routes with missing session', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    callback({ path: '/accreditation/task-list/app-1', yar: makeYar(null) }, h)
+    expect(h.redirect).toHaveBeenCalledWith('/')
   })
 })
