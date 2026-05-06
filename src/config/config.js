@@ -301,6 +301,12 @@ export const config = convict({
     }
   },
   api: {
+    stubEnabled: {
+      doc: 'Use stub API client instead of real API (for local dev without a running backend)',
+      format: Boolean,
+      default: false,
+      env: 'API_STUB_ENABLED'
+    },
     baseUrl: {
       doc: 'Base URL for external API',
       format: String,
