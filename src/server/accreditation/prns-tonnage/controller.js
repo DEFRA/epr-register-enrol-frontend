@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
-import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
 
@@ -37,8 +37,9 @@ export const prnsTonnageGetController = {
 
     let application
     try {
-      application = await apiClient.get(
-        `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
       )
     } catch (error) {
       request.server.logger.error(
@@ -76,8 +77,9 @@ export const prnsTonnagePostController = {
 
     let application
     try {
-      application = await apiClient.get(
-        `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
       )
     } catch (error) {
       request.server.logger.error(
@@ -113,10 +115,9 @@ export const prnsTonnagePostController = {
     }
 
     try {
-      await apiClient.patch(
-        `/api/v1/accreditation-applications/${organisationId}/${applicationId}/prns`,
-        { PlannedTonnageBand: plannedTonnageBand }
-      )
+      await accreditationApiService.patchPrns(organisationId, applicationId, {
+        PlannedTonnageBand: plannedTonnageBand
+      })
     } catch (error) {
       request.server.logger.error(
         `Error saving PRNs tonnage for ${applicationId}: ${error.message}`

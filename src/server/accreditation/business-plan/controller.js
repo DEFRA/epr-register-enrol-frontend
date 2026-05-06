@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
-import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 
 export const BUSINESS_PLAN_FIELDS = [
   'newInfrastructurePercent',
@@ -99,14 +99,6 @@ function businessPlanDetailUrl(applicationId) {
   return `/accreditation/business-plan-detail/${applicationId}`
 }
 
-function appUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
-}
-
-function patchUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/business-plan`
-}
-
 function renderPage(h, viewData) {
   return h.view('accreditation/business-plan/index', viewData)
 }
@@ -143,7 +135,10 @@ export const businessPlanGetController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -189,7 +184,11 @@ export const businessPlanPostController = {
     }
 
     try {
-      await apiClient.patch(patchUrl(organisationId, applicationId), patchBody)
+      await accreditationApiService.patchBusinessPlan(
+        organisationId,
+        applicationId,
+        patchBody
+      )
     } catch (err) {
       request.server.logger.error(
         `Error saving business plan for ${applicationId}: ${err.message}`

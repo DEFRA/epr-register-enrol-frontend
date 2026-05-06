@@ -53,7 +53,7 @@ export const router = {
         prnsTonnage,
         businessPlan,
         businessPlanDetail,
-        businessPlanCya
+        businessPlanCya,
         prnsAuthority,
         prnsCya
       ])
