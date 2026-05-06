@@ -11,7 +11,12 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
-import { buildMaterialOptions, isAlreadyApplied } from './controller.js'
+import {
+  buildMaterialOptions,
+  isAlreadyApplied,
+  materialSelectionPostController
+} from './controller.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -478,5 +483,138 @@ describe('#materialSelectionGetController / #materialSelectionPostController', (
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('Select a material for this application')
     })
+  })
+})
+
+describe('#materialSelectionPostController — session key behaviour (unit)', () => {
+  const SEED_RESPONSE = {
+    ApplicationId: 'app-session-001',
+    MaterialType: 'Wood',
+    Year: 2026,
+    SiteId: 'site-99'
+  }
+
+  function makeRequest(overrides = {}) {
+    const yarSets = {}
+    return {
+      path: '/accreditation/material-selection',
+      payload: { materialType: 'Wood' },
+      auth: { credentials: { id: 'org-unit-001' } },
+      server: { logger: { error: vi.fn() } },
+      yar: {
+        set: vi.fn((key, value) => {
+          yarSets[key] = value
+        }),
+        _captured: yarSets
+      },
+      ...overrides
+    }
+  }
+
+  function makeH() {
+    return {
+      view: vi.fn().mockReturnValue({ code: vi.fn().mockReturnThis() }),
+      redirect: vi.fn().mockReturnValue('redirect-response')
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test('sets accreditationId in session using constant key after successful seed', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockResolvedValue(SEED_RESPONSE)
+
+    const request = makeRequest()
+    const h = makeH()
+    await materialSelectionPostController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith(
+      ACCREDITATION_SESSION_KEYS.accreditationId,
+      SEED_RESPONSE.ApplicationId
+    )
+  })
+
+  test('sets organisationId in session using constant key', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockResolvedValue(SEED_RESPONSE)
+
+    const request = makeRequest()
+    const h = makeH()
+    await materialSelectionPostController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith(
+      ACCREDITATION_SESSION_KEYS.organisationId,
+      'org-unit-001'
+    )
+  })
+
+  test('sets materialType in session using constant key', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockResolvedValue(SEED_RESPONSE)
+
+    const request = makeRequest()
+    const h = makeH()
+    await materialSelectionPostController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith(
+      ACCREDITATION_SESSION_KEYS.materialType,
+      SEED_RESPONSE.MaterialType
+    )
+  })
+
+  test('sets year in session using constant key', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockResolvedValue(SEED_RESPONSE)
+
+    const request = makeRequest()
+    const h = makeH()
+    await materialSelectionPostController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith(
+      ACCREDITATION_SESSION_KEYS.year,
+      SEED_RESPONSE.Year
+    )
+  })
+
+  test('sets siteId in session when application has a SiteId', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockResolvedValue(SEED_RESPONSE)
+
+    const request = makeRequest()
+    const h = makeH()
+    await materialSelectionPostController.handler(request, h)
+
+    expect(request.yar.set).toHaveBeenCalledWith(
+      ACCREDITATION_SESSION_KEYS.siteId,
+      SEED_RESPONSE.SiteId
+    )
+  })
+
+  test('does not set siteId in session when application has no SiteId', async () => {
+    const responseNoSite = { ...SEED_RESPONSE, SiteId: null }
+    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockResolvedValue(responseNoSite)
+
+    const request = makeRequest()
+    const h = makeH()
+    await materialSelectionPostController.handler(request, h)
+
+    const siteIdCall = request.yar.set.mock.calls.find(
+      ([key]) => key === ACCREDITATION_SESSION_KEYS.siteId
+    )
+    expect(siteIdCall).toBeUndefined()
+  })
+
+  test('does not write any session keys when seed API fails', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('Seed failed'))
+
+    const request = makeRequest()
+    const h = makeH()
+    await materialSelectionPostController.handler(request, h)
+
+    expect(request.yar.set).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
-import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 
 const PERCENT_FIELDS = [
   'newInfrastructurePercent',
@@ -87,14 +87,6 @@ function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
-function appUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
-}
-
-function patchUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/business-plan`
-}
-
 function renderPage(h, viewData) {
   return h.view('accreditation/business-plan-cya/index', viewData)
 }
@@ -108,7 +100,10 @@ export const businessPlanCyaGetController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -154,7 +149,10 @@ export const businessPlanCyaPostController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -178,7 +176,11 @@ export const businessPlanCyaPostController = {
     }
 
     try {
-      await apiClient.patch(patchUrl(organisationId, applicationId), patchBody)
+      await accreditationApiService.patchBusinessPlan(
+        organisationId,
+        applicationId,
+        patchBody
+      )
     } catch (err) {
       request.server.logger.error(
         `Error confirming business plan for ${applicationId}: ${err.message}`

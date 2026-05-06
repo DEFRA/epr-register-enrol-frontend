@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
-import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 // Waste recovery operation codes defined in Schedule 3 of the Environmental Permitting Regulations.
 // R3 = recycling of organic materials (paper, wood, fibre, plastic), R4 = recycling of metals,
@@ -44,7 +45,7 @@ export function buildMaterialOptions(
 }
 
 async function fetchApplications(organisationId) {
-  return apiClient.get(`/api/v1/accreditation-applications/${organisationId}`)
+  return accreditationApiService.listApplications(organisationId)
 }
 
 export const materialSelectionGetController = {
@@ -169,8 +170,8 @@ export const materialSelectionPostController = {
 
     let application
     try {
-      application = await apiClient.post(
-        `/api/v1/accreditation-applications/${organisationId}/seed`,
+      application = await accreditationApiService.seedApplication(
+        organisationId,
         { materialType, year: currentYear, siteId: null }
       )
     } catch (error) {
@@ -194,7 +195,19 @@ export const materialSelectionPostController = {
       }).code(500)
     }
 
-    request.yar.set('accreditationApplicationId', application.ApplicationId)
+    request.yar.set(
+      ACCREDITATION_SESSION_KEYS.accreditationId,
+      application.ApplicationId
+    )
+    request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
+    request.yar.set(
+      ACCREDITATION_SESSION_KEYS.materialType,
+      application.MaterialType
+    )
+    request.yar.set(ACCREDITATION_SESSION_KEYS.year, application.Year)
+    if (application.SiteId) {
+      request.yar.set(ACCREDITATION_SESSION_KEYS.siteId, application.SiteId)
+    }
 
     return h.redirect(`/accreditation/task-list/${application.ApplicationId}`)
   }

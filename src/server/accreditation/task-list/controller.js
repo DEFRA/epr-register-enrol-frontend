@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
-import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -90,8 +90,9 @@ export const taskListGetController = {
 
     let application
     try {
-      application = await apiClient.get(
-        `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
       )
     } catch (error) {
       request.server.logger.error(

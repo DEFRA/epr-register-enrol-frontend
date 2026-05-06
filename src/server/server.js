@@ -20,6 +20,7 @@ import { i18nPlugin } from '../config/i18n.js'
 import { authPlugin } from './common/helpers/auth/auth-plugin.js'
 import { basicAuthPlugin } from './common/helpers/auth/basic-auth-plugin.js'
 import { stubAuthPlugin } from './common/helpers/auth/stub-auth-plugin.js'
+import { accreditationSessionGuard } from './common/plugins/accreditationSessionGuard.js'
 
 export async function createServer() {
   setupProxy()
@@ -88,6 +89,7 @@ export async function createServer() {
         addToViewContext: true
       }
     },
+    accreditationSessionGuard,
     router // Register all the controllers/routes defined in src/server/router.js
   ])
 
