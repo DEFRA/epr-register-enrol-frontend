@@ -157,6 +157,73 @@
         "confirmError": "[Welsh] Sorry, there was a problem confirming your answers. Please try again."
       }
     },
+    "businessPlan": {
+      "title": "[Welsh] Business plan",
+      "heading": "[Welsh] Business plan",
+      "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
+      "saveAndContinue": "[Welsh] Save and continue",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "fields": {
+        "newInfrastructurePercent": "[Welsh] New reprocessing infrastructure and maintaining existing infrastructure",
+        "priceSupportPercent": "[Welsh] Price support for buying packaging waste or selling recycled packaging waste",
+        "businessCollectionsPercent": "[Welsh] Support for business collections",
+        "communicationsPercent": "[Welsh] Communications, including information campaigns",
+        "newMarketsPercent": "[Welsh] Developing new markets for products made from recycled packaging waste",
+        "newUsesPercent": "[Welsh] Developing new uses for recycled waste"
+      },
+      "validation": {
+        "wholeNumber": "[Welsh] Enter a whole number for {field}",
+        "outOfRange": "[Welsh] {field} must be between 0 and 100",
+        "mustSumTo100": "[Welsh] The percentages must add up to 100",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "saveError": "[Welsh] Sorry, there was a problem saving your business plan. Please try again."
+      }
+    },
+    "businessPlanDetail": {
+      "title": "[Welsh] More detail about how you'll spend PRN income",
+      "heading": "[Welsh] More detail about how you'll spend PRN income",
+      "intro": "[Welsh] It's optional, but it can help the regulator to better understand your plans.",
+      "optional": "[Welsh] (optional)",
+      "characterCountHint": "[Welsh] You can enter up to 500 characters",
+      "saveAndContinue": "[Welsh] Save and continue",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "fields": {
+        "newInfrastructureDetail": "[Welsh] New reprocessing infrastructure and maintaining existing infrastructure",
+        "priceSupportDetail": "[Welsh] Price support for buying packaging waste or selling recycled packaging waste",
+        "businessCollectionsDetail": "[Welsh] Support for business collections",
+        "communicationsDetail": "[Welsh] Communications, including information campaigns",
+        "newMarketsDetail": "[Welsh] Developing new markets for products made from recycled packaging waste",
+        "newUsesDetail": "[Welsh] Developing new uses for recycled waste"
+      },
+      "validation": {
+        "tooLong": "[Welsh] {field} must be 500 characters or fewer",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "saveError": "[Welsh] Sorry, there was a problem saving your business plan detail. Please try again."
+      }
+    },
+    "businessPlanCya": {
+      "title": "[Welsh] Check your answers before continuing",
+      "heading": "[Welsh] Check your answers before continuing",
+      "subHeading": "[Welsh] Business plan: how you'll allocate PRN income",
+      "notProvided": "[Welsh] Not provided",
+      "change": "[Welsh] Change",
+      "changePercentContext": "[Welsh] percentage for {field}",
+      "changeDetailContext": "[Welsh] detail for {field}",
+      "confirmAndContinue": "[Welsh] Confirm and continue",
+      "saveAndComeLater": "[Welsh] Save and continue later",
+      "fields": {
+        "newInfrastructurePercent": "[Welsh] New reprocessing infrastructure and maintaining existing infrastructure",
+        "priceSupportPercent": "[Welsh] Price support for buying packaging waste or selling recycled packaging waste",
+        "businessCollectionsPercent": "[Welsh] Support for business collections",
+        "communicationsPercent": "[Welsh] Communications, including information campaigns",
+        "newMarketsPercent": "[Welsh] Developing new markets for products made from recycled packaging waste",
+        "newUsesPercent": "[Welsh] Developing new uses for recycled waste"
+      },
+      "validation": {
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "confirmError": "[Welsh] Sorry, there was a problem confirming your business plan. Please try again."
+      }
+    },
     "taskList": {
       "title": "[Welsh] Accreditation task list",
       "headingPrefix": "[Welsh] Accredit to issue PRNs: UK",
