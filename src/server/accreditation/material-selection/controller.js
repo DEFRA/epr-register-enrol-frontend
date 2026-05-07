@@ -172,7 +172,7 @@ export const materialSelectionPostController = {
     try {
       application = await accreditationApiService.seedApplication(
         organisationId,
-        'unknown',
+        'unknown', // siteId not available at material-selection step — see RA-115
         materialType,
         currentYear
       )

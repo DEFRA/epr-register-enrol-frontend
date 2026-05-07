@@ -311,6 +311,19 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('We were unable to start your application')
   })
 
+  test('error view renders back link with non-empty href', async () => {
+    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="reex-back-link"')
+    expect(result).not.toContain('href=""')
+  })
+
   test('returns 500 error view when seedApplication throws', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([])
     vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))

@@ -43,6 +43,7 @@ export const operatorAccreditationController = {
           pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
           heading: t('pages.operatorAccreditation.seedErrorHeading'),
           organisationName,
+          reExBackUrl: '#',
           error: message
         })
         .code(500)
