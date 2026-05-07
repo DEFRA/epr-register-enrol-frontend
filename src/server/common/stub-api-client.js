@@ -11,9 +11,12 @@ const STUB_APPLICATIONS = [
     DateSent: null,
     SubmittedBy: null,
     Prns: {
+      SectionStatus: 'Completed',
       PlannedTonnageBand: 'UpTo500',
       Authorisers: [{ FullName: 'Jane Smith', Email: 'jane.smith@example.com' }]
-    }
+    },
+    BusinessPlan: { SectionStatus: 'InProgress' },
+    SamplingPlan: { SectionStatus: 'NotStarted' }
   },
   {
     OrganisationId: 'org002',
@@ -23,13 +26,16 @@ const STUB_APPLICATIONS = [
     MaterialType: 'Glass',
     SiteId: 'site002',
     OrganisationName: 'Stub Organisation Ltd',
-    Year: new Date().getFullYear(),
+    Year: 2025,
     DateSent: '2024-03-15T00:00:00Z',
     SubmittedBy: { FullName: 'John Doe' },
     Prns: {
+      SectionStatus: 'Completed',
       PlannedTonnageBand: 'UpTo1000',
       Authorisers: []
-    }
+    },
+    BusinessPlan: { SectionStatus: 'Completed' },
+    SamplingPlan: { SectionStatus: 'Completed' }
   }
 ]
 
