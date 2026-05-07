@@ -11,13 +11,20 @@ const STATUS_CONFIG = {
   Rejected: { tagClass: 'govuk-tag--red' }
 }
 
-export function buildLandingViewModel(application, organisationName, t) {
+export function buildLandingViewModel(
+  application,
+  organisationName,
+  siteAddress,
+  accreditationYear,
+  t
+) {
   const config = STATUS_CONFIG[application.ApplicationStatus] ?? {
     tagClass: ''
   }
   return {
     organisationName,
-    siteName: application.SiteId ?? t('pages.taskList.siteNotSet'),
+    accreditationYear,
+    siteName: siteAddress ?? t('pages.taskList.siteNotSet'),
     materialDisplay: t(
       `pages.operatorAccreditation.materials.${application.MaterialType}`
     ),
@@ -35,14 +42,14 @@ export const operatorAccreditationController = {
     const user = getUser(request)
     const { organisationId, siteId, materialType, year } = request.params
     const yearInt = parseInt(year, 10)
-    const organisationName = user?.name ?? organisationId
+    const userName = user?.name
 
     const errorView = (message) =>
       h
         .view('operator-accreditation/index', {
           pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
           heading: t('pages.operatorAccreditation.seedErrorHeading'),
-          organisationName,
+          userName,
           reExBackUrl: '#',
           error: message
         })
@@ -82,6 +89,9 @@ export const operatorAccreditationController = {
       }
     }
 
+    const organisationName = application.OrganisationName
+    const siteAddress = application.SiteAddress
+
     request.yar.set(
       ACCREDITATION_SESSION_KEYS.accreditationId,
       application.ApplicationId
@@ -91,7 +101,13 @@ export const operatorAccreditationController = {
     request.yar.set(ACCREDITATION_SESSION_KEYS.siteId, siteId)
     request.yar.set(ACCREDITATION_SESSION_KEYS.year, yearInt)
 
-    const viewModel = buildLandingViewModel(application, organisationName, t)
+    const viewModel = buildLandingViewModel(
+      application,
+      organisationName,
+      siteAddress,
+      yearInt,
+      t
+    )
 
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),

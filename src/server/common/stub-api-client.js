@@ -6,16 +6,17 @@ const STUB_APPLICATIONS = [
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
     SiteId: 'site001',
+    SiteAddress: 'Site Lane 001, Siteville, SIT3 OO1',
     OrganisationName: 'Stub Organisation Ltd',
     Year: 2026,
     DateSent: null,
     SubmittedBy: null,
     Prns: {
-      SectionStatus: 'Completed',
+      SectionStatus: 'NotStarted',
       PlannedTonnageBand: 'UpTo500',
       Authorisers: [{ FullName: 'Jane Smith', Email: 'jane.smith@example.com' }]
     },
-    BusinessPlan: { SectionStatus: 'InProgress' },
+    BusinessPlan: { SectionStatus: 'NotStarted' },
     SamplingPlan: { SectionStatus: 'NotStarted' }
   },
   {

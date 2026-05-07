@@ -73,6 +73,7 @@
       "siteLabel": "Site",
       "materialLabel": "Material",
       "statusLabel": "Application status",
+      "yearLabel": "Accreditation Year",
       "continueButton": "Continue",
       "seedErrorHeading": "There is a problem",
       "seedError": "We were unable to start your application. Please try again.",
