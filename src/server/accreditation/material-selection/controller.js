@@ -172,7 +172,9 @@ export const materialSelectionPostController = {
     try {
       application = await accreditationApiService.seedApplication(
         organisationId,
-        { materialType, year: currentYear, siteId: null }
+        'unknown',
+        materialType,
+        currentYear
       )
     } catch (error) {
       request.server.logger.error(

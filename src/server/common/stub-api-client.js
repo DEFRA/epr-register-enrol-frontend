@@ -8,6 +8,8 @@ const STUB_APPLICATIONS = [
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
     SiteId: 'Stub Site Alpha',
+    OrganisationName: 'Stub Organisation Ltd',
+    Year: new Date().getFullYear(),
     DateSent: null,
     SubmittedBy: null,
     Prns: {
@@ -21,6 +23,8 @@ const STUB_APPLICATIONS = [
     ApplicationStatus: 'Sent',
     MaterialType: 'Glass',
     SiteId: 'Stub Site Beta',
+    OrganisationName: 'Stub Organisation Ltd',
+    Year: new Date().getFullYear(),
     DateSent: '2024-03-15T00:00:00Z',
     SubmittedBy: { FullName: 'John Doe' },
     Prns: {
@@ -56,9 +60,17 @@ export const stubApiClient = {
     return Promise.resolve(app ?? {})
   },
 
-  post(endpoint) {
+  post(endpoint, body) {
     if (/\/seed$/.test(endpoint)) {
-      return Promise.resolve({ ApplicationId: STUB_APP_ID_1 })
+      const parts = endpoint.split('/')
+      const materialType = parts[parts.length - 2]
+      return Promise.resolve({
+        ...STUB_APPLICATIONS[0],
+        ApplicationId: STUB_APP_ID_1,
+        MaterialType: materialType,
+        Year: body?.year ?? new Date().getFullYear(),
+        ApplicationStatus: 'Saved'
+      })
     }
     if (/\/files$/.test(endpoint)) {
       return Promise.resolve({ FileId: 'stub-file-1' })

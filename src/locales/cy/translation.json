@@ -63,6 +63,13 @@
       "dateSubmitted": "[Welsh] Date submitted",
       "submittedBy": "[Welsh] Submitted by",
       "errorLoading": "[Welsh] Sorry, we are unable to load your accreditation applications. Please try again later.",
+      "organisationLabel": "[Welsh] Organisation",
+      "siteLabel": "[Welsh] Site",
+      "materialLabel": "[Welsh] Material",
+      "statusLabel": "[Welsh] Application status",
+      "continueButton": "[Welsh] Continue",
+      "seedErrorHeading": "[Welsh] There is a problem",
+      "seedError": "[Welsh] We were unable to start your application. Please try again.",
       "statuses": {
         "Saved": "[Welsh] NOT STARTED",
         "Started": "[Welsh] IN PROGRESS",

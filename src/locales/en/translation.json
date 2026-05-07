@@ -69,6 +69,13 @@
       "dateSubmitted": "Date submitted",
       "submittedBy": "Submitted by",
       "errorLoading": "Sorry, we are unable to load your accreditation applications. Please try again later.",
+      "organisationLabel": "Organisation",
+      "siteLabel": "Site",
+      "materialLabel": "Material",
+      "statusLabel": "Application status",
+      "continueButton": "Continue",
+      "seedErrorHeading": "There is a problem",
+      "seedError": "We were unable to start your application. Please try again.",
       "statuses": {
         "Saved": "NOT STARTED",
         "Started": "IN PROGRESS",

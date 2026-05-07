@@ -21,13 +21,21 @@ beforeEach(() => {
 
 describe('accreditationApiService', () => {
   describe('seedApplication', () => {
-    test('calls POST to seed endpoint with body', async () => {
-      const body = { MaterialType: 'Steel', Year: 2026 }
+    const SITE_ID = 'site-abc'
+    const MATERIAL = 'Steel'
+    const YEAR = 2026
+
+    test('calls POST to seed endpoint with siteId and materialType in URL', async () => {
       apiClient.post.mockResolvedValue({ ApplicationId: APP_ID })
-      const result = await accreditationApiService.seedApplication(ORG_ID, body)
+      const result = await accreditationApiService.seedApplication(
+        ORG_ID,
+        SITE_ID,
+        MATERIAL,
+        YEAR
+      )
       expect(apiClient.post).toHaveBeenCalledWith(
-        `${BASE}/${ORG_ID}/seed`,
-        body
+        `${BASE}/${ORG_ID}/${SITE_ID}/${MATERIAL}/seed`,
+        { year: YEAR }
       )
       expect(result.ApplicationId).toBe(APP_ID)
     })
@@ -36,7 +44,7 @@ describe('accreditationApiService', () => {
       const err = Object.assign(new Error('Bad Request'), { status: 400 })
       apiClient.post.mockRejectedValue(err)
       await expect(
-        accreditationApiService.seedApplication(ORG_ID, {})
+        accreditationApiService.seedApplication(ORG_ID, SITE_ID, MATERIAL, YEAR)
       ).rejects.toMatchObject({ status: 400, isApiError: true })
     })
 
@@ -44,14 +52,14 @@ describe('accreditationApiService', () => {
       const err = Object.assign(new Error('Server Error'), { status: 500 })
       apiClient.post.mockRejectedValue(err)
       await expect(
-        accreditationApiService.seedApplication(ORG_ID, {})
+        accreditationApiService.seedApplication(ORG_ID, SITE_ID, MATERIAL, YEAR)
       ).rejects.toMatchObject({ status: 500, isApiError: true })
     })
 
     test('normalises network failure without status', async () => {
       apiClient.post.mockRejectedValue(new Error('fetch failed'))
       await expect(
-        accreditationApiService.seedApplication(ORG_ID, {})
+        accreditationApiService.seedApplication(ORG_ID, SITE_ID, MATERIAL, YEAR)
       ).rejects.toMatchObject({ status: 500, isApiError: true })
     })
   })
