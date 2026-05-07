@@ -20,12 +20,20 @@
 
         <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-testid="application-summary">
           <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.organisationLabel') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="organisation-name">{{ organisationName }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.siteLabel') }}</dt>
             <dd class="govuk-summary-list__value" data-testid="site-name">{{ siteName }}</dd>
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.materialLabel') }}</dt>
             <dd class="govuk-summary-list__value" data-testid="material-display">{{ materialDisplay }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.yearLabel') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="accreditation-year">{{ accreditationYear }}</dd>
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.statusLabel') }}</dt>
