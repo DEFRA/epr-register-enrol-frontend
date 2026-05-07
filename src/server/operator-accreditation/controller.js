@@ -1,31 +1,23 @@
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
-import { apiClient } from '../common/api-client.js'
+import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
 
 const STATUS_CONFIG = {
-  Saved: { tagClass: 'govuk-tag--grey', isEditable: true },
-  Started: { tagClass: 'govuk-tag--blue', isEditable: true },
-  Sent: { tagClass: 'govuk-tag--turquoise', isEditable: false },
-  Approved: { tagClass: 'govuk-tag--green', isEditable: false },
-  Rejected: { tagClass: 'govuk-tag--red', isEditable: false }
+  Saved: { tagClass: 'govuk-tag--grey' },
+  Started: { tagClass: 'govuk-tag--blue' },
+  Sent: { tagClass: 'govuk-tag--turquoise' },
+  Approved: { tagClass: 'govuk-tag--green' },
+  Rejected: { tagClass: 'govuk-tag--red' }
 }
 
-export function buildApplicationViewModel(application, t) {
+export function buildLandingViewModel(application, organisationName, t) {
   const config = STATUS_CONFIG[application.ApplicationStatus] ?? {
-    tagClass: '',
-    isEditable: false
+    tagClass: ''
   }
-  const formattedDateSent = application.DateSent
-    ? new Date(application.DateSent).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      })
-    : null
-
   return {
-    applicationId: application.ApplicationId,
-    materialType: application.MaterialType,
+    organisationName,
+    siteName: application.SiteId ?? t('pages.taskList.siteNotSet'),
     materialDisplay: t(
       `pages.operatorAccreditation.materials.${application.MaterialType}`
     ),
@@ -33,10 +25,6 @@ export function buildApplicationViewModel(application, t) {
       `pages.operatorAccreditation.statuses.${application.ApplicationStatus}`
     ),
     statusTagClass: config.tagClass,
-    isEditable: config.isEditable,
-    applicationReference: application.ApplicationReference,
-    dateSent: formattedDateSent,
-    submittedBy: application.SubmittedBy?.FullName ?? null,
     taskListUrl: `/accreditation/task-list/${application.ApplicationId}`
   }
 }
@@ -45,47 +33,70 @@ export const operatorAccreditationController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
-    const organisationId = user?.id
+    const { organisationId, siteId, materialType, year } = request.params
+    const yearInt = parseInt(year, 10)
+    const organisationName = user?.name ?? organisationId
 
-    let rawApplications = []
-    let apiError = false
+    const errorView = (message) =>
+      h
+        .view('operator-accreditation/index', {
+          pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
+          heading: t('pages.operatorAccreditation.seedErrorHeading'),
+          organisationName,
+          reExBackUrl: '#',
+          error: message
+        })
+        .code(500)
 
+    let applications
     try {
-      rawApplications = await apiClient.get(
-        `/api/v1/accreditation-applications/${organisationId}`
-      )
+      applications =
+        await accreditationApiService.listApplications(organisationId)
     } catch (error) {
       request.server.logger.error(
         `Error fetching accreditation applications: ${error.message}`
       )
-      apiError = true
+      return errorView(t('pages.operatorAccreditation.seedError'))
     }
 
-    if (apiError) {
-      return h.view('operator-accreditation/index', {
-        pageTitle: t('pages.operatorAccreditation.title'),
-        heading: t('pages.operatorAccreditation.heading'),
-        applications: [],
-        hasApplications: false,
-        hasSubmittedApplications: false,
-        error: t('pages.operatorAccreditation.errorLoading')
-      })
+    let application = applications.find(
+      (app) =>
+        app.SiteId === siteId &&
+        app.MaterialType === materialType &&
+        app.Year === yearInt
+    )
+
+    if (!application) {
+      try {
+        application = await accreditationApiService.seedApplication(
+          organisationId,
+          siteId,
+          materialType,
+          yearInt
+        )
+      } catch (error) {
+        request.server.logger.error(
+          `Error seeding accreditation application: ${error.message}`
+        )
+        return errorView(t('pages.operatorAccreditation.seedError'))
+      }
     }
 
-    const applications = rawApplications.map((app) =>
-      buildApplicationViewModel(app, t)
+    request.yar.set(
+      ACCREDITATION_SESSION_KEYS.accreditationId,
+      application.ApplicationId
     )
+    request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
+    request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
+    request.yar.set(ACCREDITATION_SESSION_KEYS.siteId, siteId)
+    request.yar.set(ACCREDITATION_SESSION_KEYS.year, yearInt)
 
-    const hasSubmittedApplications = rawApplications.some((app) =>
-      ['Sent', 'Approved', 'Rejected'].includes(app.ApplicationStatus)
-    )
+    const viewModel = buildLandingViewModel(application, organisationName, t)
 
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),
-      heading: t('pages.operatorAccreditation.heading'),
-      applications,
-      hasApplications: applications.length > 0,
-      hasSubmittedApplications
+      reExBackUrl: '#',
+      ...viewModel
     })
   }
 }

@@ -1,14 +1,13 @@
-const STUB_APP_ID_1 = 'stub-app-1'
-const STUB_APP_ID_2 = 'stub-app-2'
-
 const STUB_APPLICATIONS = [
   {
-    ApplicationId: STUB_APP_ID_1,
+    OrganisationId: 'org001',
+    ApplicationId: 'app001',
     ApplicationReference: 'REF-STUB-001',
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
-    Year: 2025,
-    SiteId: 'Stub Site Alpha',
+    SiteId: 'site001',
+    OrganisationName: 'Stub Organisation Ltd',
+    Year: 2026,
     DateSent: null,
     SubmittedBy: null,
     Prns: {
@@ -20,12 +19,14 @@ const STUB_APPLICATIONS = [
     SamplingPlan: { SectionStatus: 'NotStarted' }
   },
   {
-    ApplicationId: STUB_APP_ID_2,
+    OrganisationId: 'org002',
+    ApplicationId: 'app002',
     ApplicationReference: 'REF-STUB-002',
     ApplicationStatus: 'Sent',
     MaterialType: 'Glass',
+    SiteId: 'site002',
+    OrganisationName: 'Stub Organisation Ltd',
     Year: 2025,
-    SiteId: 'Stub Site Beta',
     DateSent: '2024-03-15T00:00:00Z',
     SubmittedBy: { FullName: 'John Doe' },
     Prns: {
@@ -45,9 +46,11 @@ const APP_PATH_RE =
 
 function findApplication(endpoint) {
   const match = endpoint.match(APP_PATH_RE)
-  if (!match) return null
+  if (!match) {
+    return null
+  }
   return (
-    STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
+    STUB_APPLICATIONS.find((a) => a.OrganisationId === match[1]) ??
     STUB_APPLICATIONS[0]
   )
 }
@@ -64,9 +67,17 @@ export const stubApiClient = {
     return Promise.resolve(app ?? {})
   },
 
-  post(endpoint) {
+  post(endpoint, body) {
     if (/\/seed$/.test(endpoint)) {
-      return Promise.resolve({ ApplicationId: STUB_APP_ID_1 })
+      const parts = endpoint.split('/')
+      const materialType = parts[parts.length - 2]
+      return Promise.resolve({
+        ...STUB_APPLICATIONS[0],
+        OrganisationId: 'org001',
+        MaterialType: materialType,
+        Year: body?.year ?? new Date().getFullYear(),
+        ApplicationStatus: 'Saved'
+      })
     }
     if (/\/files$/.test(endpoint)) {
       return Promise.resolve({ FileId: 'stub-file-1' })
