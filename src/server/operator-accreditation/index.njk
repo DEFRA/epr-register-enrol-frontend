@@ -1,97 +1,48 @@
 {% extends 'layouts/page.njk' %}
 
 {% block content %}
-  {{ appHeading({
-    text: heading,
-    caption: pageTitle
-  }) }}
-
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      <p class="govuk-body">
-        <a href="#" class="govuk-link" data-testid="reex-back-link">{{ t('pages.operatorAccreditation.reExBackLink') }}</a>
-      </p>
+      <a href="{{ reExBackUrl }}" class="govuk-back-link" data-testid="reex-back-link">
+        {{ t('pages.operatorAccreditation.reExBackLink') }}
+      </a>
 
       {% if error %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert">
-          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <h2 class="govuk-error-summary__title">{{ t('pages.operatorAccreditation.seedErrorHeading') }}</h2>
           <div class="govuk-error-summary__body">
             <p class="govuk-body" data-testid="error-message">{{ error }}</p>
           </div>
         </div>
-      {% endif %}
-
-      {% if hasApplications %}
-        <ul class="govuk-list" data-testid="applications-list">
-          {% for app in applications %}
-            <li class="govuk-summary-card" data-testid="application-card">
-              <div class="govuk-summary-card__title-wrapper">
-                <h2 class="govuk-summary-card__title">
-                  {{ app.materialDisplay }}
-                  <strong class="govuk-tag {{ app.statusTagClass }}" data-testid="status-tag">
-                    {{ app.statusLabel }}
-                  </strong>
-                </h2>
-                <ul class="govuk-summary-card__actions">
-                  <li class="govuk-summary-card__action">
-                    {% if app.isEditable %}
-                      <a class="govuk-link" href="{{ app.taskListUrl }}" data-testid="continue-link">
-                        {{ t('pages.operatorAccreditation.continueApplication') }}<span class="govuk-visually-hidden"> for {{ app.materialDisplay }}</span>
-                      </a>
-                    {% else %}
-                      <a class="govuk-link" href="{{ app.taskListUrl }}" data-testid="view-link">
-                        {{ t('pages.operatorAccreditation.viewApplication') }}<span class="govuk-visually-hidden"> for {{ app.materialDisplay }}</span>
-                      </a>
-                    {% endif %}
-                  </li>
-                </ul>
-              </div>
-              {% if app.applicationReference or app.dateSent or app.submittedBy %}
-                <div class="govuk-summary-card__content">
-                  <dl class="govuk-summary-list">
-                    {% if app.applicationReference %}
-                      <div class="govuk-summary-list__row">
-                        <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.applicationRef') }}</dt>
-                        <dd class="govuk-summary-list__value" data-testid="application-reference">{{ app.applicationReference }}</dd>
-                      </div>
-                    {% endif %}
-                    {% if app.dateSent %}
-                      <div class="govuk-summary-list__row">
-                        <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.dateSubmitted') }}</dt>
-                        <dd class="govuk-summary-list__value" data-testid="date-submitted">{{ app.dateSent }}</dd>
-                      </div>
-                    {% endif %}
-                    {% if app.submittedBy %}
-                      <div class="govuk-summary-list__row">
-                        <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.submittedBy') }}</dt>
-                        <dd class="govuk-summary-list__value" data-testid="submitted-by">{{ app.submittedBy }}</dd>
-                      </div>
-                    {% endif %}
-                  </dl>
-                </div>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-
-        {% if hasSubmittedApplications %}
-          <p class="govuk-body">
-            <a href="/accreditation/material-selection" class="govuk-link" data-testid="apply-another-link">
-              {{ t('pages.operatorAccreditation.applyForAnother') }}
-            </a>
-          </p>
-        {% endif %}
-
       {% else %}
-        <div>
-          <a href="/accreditation/material-selection" class="govuk-button" data-module="govuk-button" data-testid="start-new-link">
-            {{ t('pages.operatorAccreditation.startNew') }}
-          </a>
-        </div>
+        <h1 class="govuk-heading-l" data-testid="page-heading">{{ organisationName }}</h1>
+
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-testid="application-summary">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.siteLabel') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="site-name">{{ siteName }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.materialLabel') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="material-display">{{ materialDisplay }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.statusLabel') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="application-status">
+              <strong class="govuk-tag {{ statusTagClass }}" data-testid="status-tag">
+                {{ statusLabel }}
+              </strong>
+            </dd>
+          </div>
+        </dl>
+
+        <a href="{{ taskListUrl }}" role="button" draggable="false"
+           class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+          {{ t('pages.operatorAccreditation.continueButton') }}
+        </a>
       {% endif %}
 
     </div>
   </div>
-
 {% endblock %}
