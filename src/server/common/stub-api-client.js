@@ -7,26 +7,34 @@ const STUB_APPLICATIONS = [
     ApplicationReference: 'REF-STUB-001',
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
+    Year: 2025,
     SiteId: 'Stub Site Alpha',
     DateSent: null,
     SubmittedBy: null,
     Prns: {
+      SectionStatus: 'Completed',
       PlannedTonnageBand: 'UpTo500',
       Authorisers: [{ FullName: 'Jane Smith', Email: 'jane.smith@example.com' }]
-    }
+    },
+    BusinessPlan: { SectionStatus: 'InProgress' },
+    SamplingPlan: { SectionStatus: 'NotStarted' }
   },
   {
     ApplicationId: STUB_APP_ID_2,
     ApplicationReference: 'REF-STUB-002',
     ApplicationStatus: 'Sent',
     MaterialType: 'Glass',
+    Year: 2025,
     SiteId: 'Stub Site Beta',
     DateSent: '2024-03-15T00:00:00Z',
     SubmittedBy: { FullName: 'John Doe' },
     Prns: {
+      SectionStatus: 'Completed',
       PlannedTonnageBand: 'UpTo1000',
       Authorisers: []
-    }
+    },
+    BusinessPlan: { SectionStatus: 'Completed' },
+    SamplingPlan: { SectionStatus: 'Completed' }
   }
 ]
 
