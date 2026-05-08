@@ -13,8 +13,8 @@ const STUB_APPLICATIONS = [
     SubmittedBy: null,
     Prns: {
       SectionStatus: 'NotStarted',
-      PlannedTonnageBand: 'UpTo500',
-      Authorisers: [{ FullName: 'Jane Smith', Email: 'jane.smith@example.com' }]
+      PlannedTonnageBand: null,
+      Authorisers: []
     },
     BusinessPlan: { SectionStatus: 'NotStarted' },
     SamplingPlan: { SectionStatus: 'NotStarted' }
@@ -26,24 +26,33 @@ const STUB_APPLICATIONS = [
     ApplicationStatus: 'Sent',
     MaterialType: 'Glass',
     SiteId: 'site002',
-    OrganisationName: 'Stub Organisation Ltd',
+    OrganisationName: 'Beta Recycling Co',
     Year: 2025,
-    DateSent: '2024-03-15T00:00:00Z',
-    SubmittedBy: { FullName: 'John Doe' },
+    DateSent: null,
+    SubmittedBy: null,
     Prns: {
-      SectionStatus: 'Completed',
-      PlannedTonnageBand: 'UpTo1000',
+      SectionStatus: 'NotStarted',
+      PlannedTonnageBand: null,
       Authorisers: []
     },
-    BusinessPlan: { SectionStatus: 'Completed' },
-    SamplingPlan: { SectionStatus: 'Completed' }
+    BusinessPlan: { SectionStatus: 'NotStarted' },
+    SamplingPlan: { SectionStatus: 'NotStarted' }
   }
 ]
 
-const STUB_ORGANISATIONS = [{ id: 'stub-org-1', name: 'Stub Organisation Ltd' }]
+const STUB_ORGANISATIONS = [
+  { id: 'org001', name: 'Stub Organisation Ltd' },
+  { id: 'org002', name: 'Beta Recycling Co' }
+]
 
 const APP_PATH_RE =
-  /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+?)(?:\/|$)/
+  /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+?)(?:\/([^/]+))?$/
+
+const SECTION_KEY_MAP = {
+  prns: 'Prns',
+  'business-plan': 'BusinessPlan',
+  'sampling-plan': 'SamplingPlan'
+}
 
 function findApplication(endpoint) {
   const match = endpoint.match(APP_PATH_RE)
@@ -51,9 +60,18 @@ function findApplication(endpoint) {
     return null
   }
   return (
-    STUB_APPLICATIONS.find((a) => a.OrganisationId === match[1]) ??
+    STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
     STUB_APPLICATIONS[0]
   )
+}
+
+function findApplicationAndSection(endpoint) {
+  const match = endpoint.match(APP_PATH_RE)
+  if (!match) return { app: null, section: null }
+  const app =
+    STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
+    STUB_APPLICATIONS[0]
+  return { app, section: match[2] ?? null }
 }
 
 export const stubApiClient = {
@@ -71,11 +89,10 @@ export const stubApiClient = {
   post(endpoint, body) {
     if (/\/seed$/.test(endpoint)) {
       const parts = endpoint.split('/')
-      const materialType = parts[parts.length - 2]
+      const organisationId = parts[parts.length - 2]
       return Promise.resolve({
         ...STUB_APPLICATIONS[0],
-        OrganisationId: 'org001',
-        MaterialType: materialType,
+        OrganisationId: organisationId,
         Year: body?.year ?? new Date().getFullYear(),
         ApplicationStatus: 'Saved'
       })
@@ -86,8 +103,12 @@ export const stubApiClient = {
     return Promise.resolve({})
   },
 
-  patch() {
-    return Promise.resolve({})
+  patch(endpoint, body) {
+    const { app, section } = findApplicationAndSection(endpoint)
+    if (!app || !section) return Promise.resolve({})
+    const key = SECTION_KEY_MAP[section]
+    if (key) Object.assign(app[key], body)
+    return Promise.resolve(app)
   },
 
   put() {

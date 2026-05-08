@@ -167,7 +167,7 @@ export const businessPlanCyaPostController = {
     }
 
     const bp = application.BusinessPlan ?? {}
-    const patchBody = {}
+    const patchBody = { SectionStatus: 'Completed' }
     for (const field of PERCENT_FIELDS) {
       patchBody[API_PERCENT_MAP[field]] = bp[API_PERCENT_MAP[field]] ?? null
     }
