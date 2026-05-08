@@ -14,7 +14,7 @@ import { apiClient } from '../common/api-client.js'
 import { buildLandingViewModel } from './controller.js'
 
 const ORG_ID = 'org-123'
-const SITE_ID = 'site-abc'
+const SITE_ID = 'site001'
 const MATERIAL = 'Steel'
 const YEAR = 2026
 
@@ -34,6 +34,8 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ ApplicationStatus: 'Saved' }),
       'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('govuk-tag--grey')
@@ -43,6 +45,8 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ ApplicationStatus: 'Started' }),
       'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('govuk-tag--blue')
@@ -52,6 +56,8 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ ApplicationStatus: 'Sent' }),
       'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
@@ -61,6 +67,8 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ ApplicationStatus: 'Approved' }),
       'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('govuk-tag--green')
@@ -70,6 +78,8 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ ApplicationStatus: 'Rejected' }),
       'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('govuk-tag--red')
@@ -79,18 +89,32 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ ApplicationStatus: 'Unknown' }),
       'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('')
   })
 
-  test('siteName uses SiteId when present', () => {
-    const vm = buildLandingViewModel(makeApp({ SiteId: 'site-abc' }), 'Org', t)
-    expect(vm.siteName).toBe('site-abc')
+  test('siteName uses SiteAddr when present', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Unknown' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.siteName).toBe('siteAddr')
   })
 
-  test('siteName falls back to translation key when SiteId is null', () => {
-    const vm = buildLandingViewModel(makeApp({ SiteId: null }), 'Org', t)
+  test('siteName falls back to translation key when is null', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Unknown' }),
+      'Org Name',
+      null,
+      2027,
+      t
+    )
     expect(vm.siteName).toBe('siteNotSet')
   })
 
@@ -98,6 +122,8 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ ApplicationId: 'app-xyz' }),
       'Org',
+      null,
+      2027,
       t
     )
     expect(vm.taskListUrl).toBe('/accreditation/task-list/app-xyz')
@@ -107,14 +133,22 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({ MaterialType: 'Steel' }),
       'Org',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.materialDisplay).toBe('Steel')
   })
 
   test('organisationName is passed through', () => {
-    const vm = buildLandingViewModel(makeApp(), 'My Organisation', t)
-    expect(vm.organisationName).toBe('My Organisation')
+    const vm = buildLandingViewModel(
+      makeApp({ MaterialType: 'Steel' }),
+      'Organisation Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.organisationName).toBe('Organisation Name')
   })
 })
 
@@ -207,7 +241,7 @@ describe('#operatorAccreditationController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('renders site name in summary', async () => {
+  test('renders Not Set site name in summary', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
     const { result } = await server.inject({
@@ -217,7 +251,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(result).toContain('data-testid="site-name"')
-    expect(result).toContain(SITE_ID)
+    expect(result).toContain('Not set')
   })
 
   test('renders material display in summary', async () => {

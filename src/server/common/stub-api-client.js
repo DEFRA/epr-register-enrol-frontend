@@ -6,6 +6,7 @@ const STUB_APPLICATIONS = [
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
     SiteId: 'site001',
+    SiteAddress: 'Site Lane 001, Siteville, SIT3 OO1',
     OrganisationName: 'Stub Organisation Ltd',
     Year: 2026,
     DateSent: null,
