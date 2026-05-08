@@ -369,7 +369,8 @@
     "continue": "Continue",
     "save": "Save",
     "errorSummaryTitle": "There is a problem",
-    "error": "Error"
+    "error": "Error",
+    "warning": "Warning"
   },
   "languageSwitcher": {
     "english": "English",

@@ -362,7 +362,8 @@
     "continue": "Parhau",
     "save": "Cadw",
     "errorSummaryTitle": "[Welsh] There is a problem",
-    "error": "[Welsh] Error"
+    "error": "[Welsh] Error",
+    "warning": "[Welsh] Warning"
   },
   "languageSwitcher": {
     "english": "English",
