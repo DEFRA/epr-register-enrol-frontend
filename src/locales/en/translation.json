@@ -245,6 +245,43 @@
         "confirmError": "Sorry, there was a problem confirming your business plan. Please try again."
       }
     },
+    "samplingPlanUpload": {
+      "title": "Upload accreditation sampling and inspection plan",
+      "heading": "Upload accreditation sampling and inspection plan",
+      "requirements": {
+        "intro": "The file must be:",
+        "maxSize": "no more than 20MB",
+        "fileTypes": "one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
+      },
+      "uploadedFilesHeading": "Uploaded files",
+      "fileLabel": "Choose a file to upload",
+      "uploadButton": "Upload file",
+      "deleteFile": "Delete",
+      "saveAndContinue": "Save and continue",
+      "saveAndComeLater": "Save and come back later",
+      "table": {
+        "filename": "Filename",
+        "dateUploaded": "Date uploaded",
+        "uploadedBy": "Uploaded by",
+        "status": "Status",
+        "action": "Action"
+      },
+      "scanStatus": {
+        "scanning": "Scanning",
+        "clean": "Clean",
+        "infected": "Infected"
+      },
+      "validation": {
+        "noFile": "Select a file to upload",
+        "invalidType": "The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
+        "fileTooLarge": "The selected file must be smaller than 20MB",
+        "noCleanFile": "You must upload at least one file before continuing",
+        "fetchError": "Sorry, there was a problem loading your application. Please try again.",
+        "uploadError": "Sorry, there was a problem uploading your file. Please try again.",
+        "deleteError": "Sorry, there was a problem deleting the file. Please try again.",
+        "saveError": "Sorry, there was a problem saving your progress. Please try again."
+      }
+    },
     "submitDeclaration": {
       "title": "Submit accreditation application",
       "heading": "Submit accreditation application",
@@ -258,6 +295,7 @@
       "validation": {
         "fullNameRequired": "Enter your full name",
         "jobTitleRequired": "Enter your job title",
+        "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "submitError": "Sorry, there was a problem submitting your application. Please try again."
       }
     },

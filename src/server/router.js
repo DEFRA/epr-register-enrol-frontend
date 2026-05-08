@@ -24,6 +24,8 @@ import { prnsAuthority } from './accreditation/prns-authority/index.js'
 import { prnsCya } from './accreditation/prns-cya/index.js'
 import { submitDeclaration } from './accreditation/submit-declaration/index.js'
 import { submitConfirmation } from './accreditation/submit-confirmation/index.js'
+import { samplingPlanUpload } from './accreditation/sampling-plan-upload/index.js'
+
 
 export const router = {
   plugin: {
@@ -59,7 +61,8 @@ export const router = {
         prnsAuthority,
         prnsCya,
         submitDeclaration,
-        submitConfirmation
+        submitConfirmation,
+        samplingPlanUpload
       ])
 
       // Static assets

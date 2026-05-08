@@ -238,6 +238,43 @@
         "confirmError": "[Welsh] Sorry, there was a problem confirming your business plan. Please try again."
       }
     },
+    "samplingPlanUpload": {
+      "title": "[Welsh] Upload accreditation sampling and inspection plan",
+      "heading": "[Welsh] Upload accreditation sampling and inspection plan",
+      "requirements": {
+        "intro": "[Welsh] The file must be:",
+        "maxSize": "[Welsh] no more than 20MB",
+        "fileTypes": "[Welsh] one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
+      },
+      "uploadedFilesHeading": "[Welsh] Uploaded files",
+      "fileLabel": "[Welsh] Choose a file to upload",
+      "uploadButton": "[Welsh] Upload file",
+      "deleteFile": "[Welsh] Delete",
+      "saveAndContinue": "[Welsh] Save and continue",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "table": {
+        "filename": "[Welsh] Filename",
+        "dateUploaded": "[Welsh] Date uploaded",
+        "uploadedBy": "[Welsh] Uploaded by",
+        "status": "[Welsh] Status",
+        "action": "[Welsh] Action"
+      },
+      "scanStatus": {
+        "scanning": "[Welsh] Scanning",
+        "clean": "[Welsh] Clean",
+        "infected": "[Welsh] Infected"
+      },
+      "validation": {
+        "noFile": "[Welsh] Select a file to upload",
+        "invalidType": "[Welsh] The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
+        "fileTooLarge": "[Welsh] The selected file must be smaller than 20MB",
+        "noCleanFile": "[Welsh] You must upload at least one file before continuing",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "uploadError": "[Welsh] Sorry, there was a problem uploading your file. Please try again.",
+        "deleteError": "[Welsh] Sorry, there was a problem deleting the file. Please try again.",
+        "saveError": "[Welsh] Sorry, there was a problem saving your progress. Please try again."
+      }
+    },
     "submitDeclaration": {
       "title": "[Welsh] Submit accreditation application",
       "heading": "[Welsh] Submit accreditation application",
@@ -251,6 +288,7 @@
       "validation": {
         "fullNameRequired": "[Welsh] Enter your full name",
         "jobTitleRequired": "[Welsh] Enter your job title",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again."
       }
     },
