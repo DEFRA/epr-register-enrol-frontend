@@ -104,16 +104,29 @@ export const stubApiClient = {
     }
     if (/\/submit$/.test(endpoint)) {
       const app = findApplication(endpoint)
+      if (app) {
+        app.ApplicationStatus = 'Sent'
+        app.DateSent = new Date().toISOString()
+        app.SubmittedBy = body ?? null
+      }
       return Promise.resolve({
-        ...(app ?? STUB_APPLICATIONS[0]),
-        ApplicationStatus: 'Sent',
-        ApplicationReference: 'EPR-ACC-2027-000001',
-        DateSent: new Date().toISOString(),
-        SubmittedBy: body ?? null
+        ApplicationReference: app?.ApplicationReference ?? 'REF-STUB-001'
       })
     }
     if (/\/files$/.test(endpoint)) {
-      return Promise.resolve({ FileId: 'stub-file-1' })
+      const app = findApplication(endpoint)
+      const newFile = {
+        FileId: `stub-file-${Date.now()}`,
+        Filename: body?.Filename ?? 'unknown',
+        UploadedAt: new Date().toISOString(),
+        UploadedBy: 'Stub User',
+        ScanStatus: 'Clean'
+      }
+      if (app) {
+        if (!app.SamplingPlan.Files) app.SamplingPlan.Files = []
+        app.SamplingPlan.Files.push(newFile)
+      }
+      return Promise.resolve({ FileId: newFile.FileId })
     }
     return Promise.resolve({})
   },
@@ -130,7 +143,20 @@ export const stubApiClient = {
     return Promise.resolve({})
   },
 
-  delete() {
+  delete(endpoint) {
+    const match = endpoint.match(
+      /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+)\/files\/([^/]+)$/
+    )
+    if (match) {
+      const app =
+        STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
+        STUB_APPLICATIONS[0]
+      if (app.SamplingPlan?.Files) {
+        app.SamplingPlan.Files = app.SamplingPlan.Files.filter(
+          (f) => f.FileId !== match[2]
+        )
+      }
+    }
     return Promise.resolve(undefined)
   }
 }
