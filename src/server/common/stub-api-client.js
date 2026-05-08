@@ -6,9 +6,9 @@ const STUB_APPLICATIONS = [
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
     SiteId: 'site001',
-    SiteAddress: 'Site Lane 001, Siteville, SIT3 OO1',
+    SiteAddress: 'Stub Organisation House, Site Lane 001, Siteville, SIT3 OO1',
     OrganisationName: 'Stub Organisation Ltd',
-    Year: 2026,
+    Year: 2027,
     DateSent: null,
     SubmittedBy: null,
     Prns: {
@@ -17,17 +17,18 @@ const STUB_APPLICATIONS = [
       Authorisers: []
     },
     BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' }
+    SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   },
   {
     OrganisationId: 'org002',
     ApplicationId: 'app002',
     ApplicationReference: 'REF-STUB-002',
-    ApplicationStatus: 'Sent',
+    ApplicationStatus: 'NotStarted',
     MaterialType: 'Glass',
     SiteId: 'site002',
+    SiteAddress: 'Site Lane 002, Siteville, SIT3 OO2',
     OrganisationName: 'Beta Recycling Co',
-    Year: 2025,
+    Year: 2027,
     DateSent: null,
     SubmittedBy: null,
     Prns: {
@@ -36,7 +37,7 @@ const STUB_APPLICATIONS = [
       Authorisers: []
     },
     BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' }
+    SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   }
 ]
 
@@ -89,12 +90,26 @@ export const stubApiClient = {
   post(endpoint, body) {
     if (/\/seed$/.test(endpoint)) {
       const parts = endpoint.split('/')
-      const organisationId = parts[parts.length - 2]
+      const organisationId = parts[parts.length - 4]
+      const index = STUB_APPLICATIONS.findIndex(
+        (x) => x.OrganisationId === organisationId
+      )
+
       return Promise.resolve({
-        ...STUB_APPLICATIONS[0],
+        ...STUB_APPLICATIONS[index],
         OrganisationId: organisationId,
         Year: body?.year ?? new Date().getFullYear(),
         ApplicationStatus: 'Saved'
+      })
+    }
+    if (/\/submit$/.test(endpoint)) {
+      const app = findApplication(endpoint)
+      return Promise.resolve({
+        ...(app ?? STUB_APPLICATIONS[0]),
+        ApplicationStatus: 'Sent',
+        ApplicationReference: 'EPR-ACC-2027-000001',
+        DateSent: new Date().toISOString(),
+        SubmittedBy: body ?? null
       })
     }
     if (/\/files$/.test(endpoint)) {
