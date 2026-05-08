@@ -258,7 +258,6 @@
       "validation": {
         "fullNameRequired": "Enter your full name",
         "jobTitleRequired": "Enter your job title",
-        "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "submitError": "Sorry, there was a problem submitting your application. Please try again."
       }
     },
@@ -332,7 +331,8 @@
     "continue": "Continue",
     "save": "Save",
     "errorSummaryTitle": "There is a problem",
-    "error": "Error"
+    "error": "Error",
+    "warning": "Warning"
   },
   "languageSwitcher": {
     "english": "English",

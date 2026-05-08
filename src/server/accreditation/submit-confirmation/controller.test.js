@@ -170,6 +170,22 @@ describe('#submitConfirmationController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
     })
 
+    test('renders confirmation without materialDisplay when API fallback fails', async () => {
+      // materialType is not in session (declare POST does not set it), and API call fails
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API error'))
+      const cookie = await getSessionCookieWithReference()
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="confirmation-panel"')
+      expect(result).toContain('EPR-ACC-2027-000001')
+    })
+
     test('returns 200 in Welsh locale', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference()
