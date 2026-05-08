@@ -26,7 +26,6 @@ import { submitDeclaration } from './accreditation/submit-declaration/index.js'
 import { submitConfirmation } from './accreditation/submit-confirmation/index.js'
 import { samplingPlanUpload } from './accreditation/sampling-plan-upload/index.js'
 
-
 export const router = {
   plugin: {
     name: 'router',
