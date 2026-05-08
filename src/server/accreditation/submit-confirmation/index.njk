@@ -1,0 +1,32 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <div class="govuk-panel govuk-panel--confirmation" data-testid="confirmation-panel">
+        <h1 class="govuk-panel__title" data-testid="panel-heading">
+          {{ panelHeading }}
+        </h1>
+        <div class="govuk-panel__body" data-testid="panel-body">
+          {{ panelBodyPrefix }} {{ materialDisplay }}
+          <br>
+          {{ panelBodySuffix }}
+          <br>
+          <strong data-testid="application-reference">{{ applicationReference }}</strong>
+        </div>
+      </div>
+
+      <p class="govuk-body" data-testid="payment-text">{{ paymentText }}</p>
+
+      <p class="govuk-body">
+        <a href="#" class="govuk-link" data-testid="view-invoice-link">{{ viewInvoice }}</a>
+      </p>
+
+      <p class="govuk-body">
+        <a href="/" class="govuk-link" data-testid="return-home-link">{{ returnHome }}</a>
+      </p>
+
+    </div>
+  </div>
+{% endblock %}

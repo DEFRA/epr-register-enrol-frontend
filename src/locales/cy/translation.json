@@ -238,6 +238,32 @@
         "confirmError": "[Welsh] Sorry, there was a problem confirming your business plan. Please try again."
       }
     },
+    "submitDeclaration": {
+      "title": "[Welsh] Submit accreditation application",
+      "heading": "[Welsh] Submit accreditation application",
+      "declarationSubHeading": "[Welsh] Declaration",
+      "declarationText": "[Welsh] By entering your name and submitting your application, you confirm that the information you have provided is accurate.",
+      "warningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
+      "fullNameLabel": "[Welsh] Enter your full name",
+      "jobTitleLabel": "[Welsh] Enter your job title",
+      "submitButton": "[Welsh] Submit application",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "validation": {
+        "fullNameRequired": "[Welsh] Enter your full name",
+        "jobTitleRequired": "[Welsh] Enter your job title",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again."
+      }
+    },
+    "submitConfirmation": {
+      "title": "[Welsh] Application submitted",
+      "panelHeading": "[Welsh] Application submitted",
+      "panelBodyPrefix": "[Welsh] Your application reference for",
+      "panelBodySuffix": "[Welsh] is",
+      "paymentText": "[Welsh] Now pay the application fee. The regulator will only review your application after you've paid.",
+      "viewInvoice": "[Welsh] View invoice",
+      "returnHome": "[Welsh] Return to home page"
+    },
     "taskList": {
       "title": "[Welsh] Accreditation task list",
       "headingPrefix": "[Welsh] Accredit to issue PRNs: UK",
@@ -298,7 +324,8 @@
     "back": "Yn ôl",
     "continue": "Parhau",
     "save": "Cadw",
-    "errorSummaryTitle": "[Welsh] There is a problem"
+    "errorSummaryTitle": "[Welsh] There is a problem",
+    "error": "[Welsh] Error"
   },
   "languageSwitcher": {
     "english": "English",

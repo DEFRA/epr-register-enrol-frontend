@@ -97,6 +97,16 @@ export const stubApiClient = {
         ApplicationStatus: 'Saved'
       })
     }
+    if (/\/submit$/.test(endpoint)) {
+      const app = findApplication(endpoint)
+      return Promise.resolve({
+        ...(app ?? STUB_APPLICATIONS[0]),
+        ApplicationStatus: 'Sent',
+        ApplicationReference: 'EPR-ACC-2027-000001',
+        DateSent: new Date().toISOString(),
+        SubmittedBy: body ?? null
+      })
+    }
     if (/\/files$/.test(endpoint)) {
       return Promise.resolve({ FileId: 'stub-file-1' })
     }
