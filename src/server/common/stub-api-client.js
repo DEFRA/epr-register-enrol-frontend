@@ -6,9 +6,9 @@ const STUB_APPLICATIONS = [
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
     SiteId: 'site001',
-    SiteAddress: 'Site Lane 001, Siteville, SIT3 OO1',
+    SiteAddress: 'Stub Organisation House, Site Lane 001, Siteville, SIT3 OO1',
     OrganisationName: 'Stub Organisation Ltd',
-    Year: 2026,
+    Year: 2027,
     DateSent: null,
     SubmittedBy: null,
     Prns: {
@@ -17,17 +17,18 @@ const STUB_APPLICATIONS = [
       Authorisers: []
     },
     BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' }
+    SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   },
   {
     OrganisationId: 'org002',
     ApplicationId: 'app002',
     ApplicationReference: 'REF-STUB-002',
-    ApplicationStatus: 'Sent',
+    ApplicationStatus: 'NotStarted',
     MaterialType: 'Glass',
     SiteId: 'site002',
+    SiteAddress: 'Site Lane 002, Siteville, SIT3 OO2',
     OrganisationName: 'Beta Recycling Co',
-    Year: 2025,
+    Year: 2027,
     DateSent: null,
     SubmittedBy: null,
     Prns: {
@@ -36,7 +37,7 @@ const STUB_APPLICATIONS = [
       Authorisers: []
     },
     BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' }
+    SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   }
 ]
 
@@ -89,16 +90,43 @@ export const stubApiClient = {
   post(endpoint, body) {
     if (/\/seed$/.test(endpoint)) {
       const parts = endpoint.split('/')
-      const organisationId = parts[parts.length - 2]
+      const organisationId = parts[parts.length - 4]
+      const index = STUB_APPLICATIONS.findIndex(
+        (x) => x.OrganisationId === organisationId
+      )
+
       return Promise.resolve({
-        ...STUB_APPLICATIONS[0],
+        ...STUB_APPLICATIONS[index],
         OrganisationId: organisationId,
         Year: body?.year ?? new Date().getFullYear(),
         ApplicationStatus: 'Saved'
       })
     }
+    if (/\/submit$/.test(endpoint)) {
+      const app = findApplication(endpoint)
+      if (app) {
+        app.ApplicationStatus = 'Sent'
+        app.DateSent = new Date().toISOString()
+        app.SubmittedBy = body ?? null
+      }
+      return Promise.resolve({
+        ApplicationReference: app?.ApplicationReference ?? 'REF-STUB-001'
+      })
+    }
     if (/\/files$/.test(endpoint)) {
-      return Promise.resolve({ FileId: 'stub-file-1' })
+      const app = findApplication(endpoint)
+      const newFile = {
+        FileId: `stub-file-${Date.now()}`,
+        Filename: body?.Filename ?? 'unknown',
+        UploadedAt: new Date().toISOString(),
+        UploadedBy: 'Stub User',
+        ScanStatus: 'Clean'
+      }
+      if (app) {
+        if (!app.SamplingPlan.Files) app.SamplingPlan.Files = []
+        app.SamplingPlan.Files.push(newFile)
+      }
+      return Promise.resolve({ FileId: newFile.FileId })
     }
     return Promise.resolve({})
   },
@@ -115,7 +143,20 @@ export const stubApiClient = {
     return Promise.resolve({})
   },
 
-  delete() {
+  delete(endpoint) {
+    const match = endpoint.match(
+      /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+)\/files\/([^/]+)$/
+    )
+    if (match) {
+      const app =
+        STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
+        STUB_APPLICATIONS[0]
+      if (app.SamplingPlan?.Files) {
+        app.SamplingPlan.Files = app.SamplingPlan.Files.filter(
+          (f) => f.FileId !== match[2]
+        )
+      }
+    }
     return Promise.resolve(undefined)
   }
 }
