@@ -38,6 +38,57 @@ const STUB_APPLICATIONS = [
     },
     BusinessPlan: { SectionStatus: 'NotStarted' },
     SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
+  },
+  {
+    OrganisationId: 'org003',
+    ApplicationId: 'app003',
+    ApplicationReference: 'REF-STUB-003',
+    ApplicationStatus: 'Started',
+    MaterialType: 'Glass',
+    SiteId: 'site003',
+    SiteAddress: 'The Laundry, Siteville, SIT3 OO2',
+    OrganisationName: 'Delta Green Recycling Co',
+    Year: 2027,
+    DateSent: '2026-12-01T10:00:00Z',
+    SubmittedBy: 'Jane Doe',
+    Prns: {
+      SectionStatus: 'Completed',
+      PlannedTonnageBand: 'UpTo1000',
+      Authorisers: [{ FullName: 'Jane Doe', Email: 'jane@deltagreen.co.uk' }]
+    },
+    BusinessPlan: {
+      SectionStatus: 'Completed',
+      NewInfrastructurePercent: 30,
+      PriceSupportPercent: 20,
+      BusinessCollectionsPercent: 15,
+      CommunicationsPercent: 10,
+      NewMarketsPercent: 15,
+      NewUsesPercent: 10,
+      NewInfrastructureDetail:
+        'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
+      PriceSupportDetail:
+        'Price support payments to collectors to maintain viability of glass collection routes.',
+      BusinessCollectionsDetail:
+        'Expansion of commercial and industrial glass collection services across the region.',
+      CommunicationsDetail:
+        'Public awareness campaign promoting glass recycling and correct bin usage.',
+      NewMarketsDetail:
+        'Development of relationships with construction sector to use recycled glass aggregate.',
+      NewUsesDetail:
+        'Trials of cullet use in road surfacing and insulation manufacturing.'
+    },
+    SamplingPlan: {
+      SectionStatus: 'Started',
+      Files: [
+        {
+          FileId: 'file003',
+          Filename: 'code-nightmare-green.pdf',
+          UploadedAt: '2026-11-01T12:00:00Z',
+          UploadedBy: 'Jane Doe',
+          ScanStatus: 'Clean'
+        }
+      ]
+    }
   }
 ]
 
