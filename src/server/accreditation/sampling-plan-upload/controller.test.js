@@ -510,6 +510,135 @@ describe('#samplingPlanUploadController', () => {
     })
   })
 
+  describe('POST /accreditation/sampling-plan/{applicationId} — uploadFile', () => {
+    const boundary = 'test-boundary-abc123'
+    const multipartContentType = `multipart/form-data; boundary=${boundary}`
+
+    function buildMultipartPayload({
+      filename = 'test.png',
+      contentType = 'image/png',
+      fileBytes = Buffer.from('fake-content')
+    } = {}) {
+      const CRLF = '\r\n'
+      const buffers = []
+
+      buffers.push(
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="action"${CRLF}` +
+            CRLF +
+            `uploadFile${CRLF}`
+        )
+      )
+
+      if (filename !== '') {
+        buffers.push(
+          Buffer.from(
+            `--${boundary}${CRLF}` +
+              `Content-Disposition: form-data; name="file"; filename="${filename}"${CRLF}` +
+              `Content-Type: ${contentType}${CRLF}` +
+              CRLF
+          )
+        )
+        buffers.push(fileBytes)
+        buffers.push(Buffer.from(CRLF))
+      } else {
+        buffers.push(
+          Buffer.from(
+            `--${boundary}${CRLF}` +
+              `Content-Disposition: form-data; name="file"; filename=""${CRLF}` +
+              `Content-Type: application/octet-stream${CRLF}` +
+              CRLF +
+              CRLF
+          )
+        )
+      }
+
+      buffers.push(Buffer.from(`--${boundary}--${CRLF}`))
+      return Buffer.concat(buffers)
+    }
+
+    test('valid file redirects to GET and calls addFile with filename and contentType', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue({ FileId: 'new-file-123' })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}`
+      )
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/files`),
+        expect.objectContaining({
+          Filename: 'sampling-plan.png',
+          ContentType: 'image/png'
+        })
+      )
+    })
+
+    test('empty filename returns 400 with noFile error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({ filename: '' })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Select a file to upload')
+    })
+
+    test('disallowed extension returns 400 with invalidType error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'malware.exe',
+          contentType: 'application/octet-stream'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('PDF')
+    })
+
+    test('addFile API failure returns 500 with uploadError', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('Upload failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'plan.pdf',
+          contentType: 'application/pdf'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('problem uploading your file')
+    })
+  })
+
   describe('POST /accreditation/sampling-plan/{applicationId} — GET fetch failure', () => {
     test('returns 500 when initial GET fails on any POST', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))

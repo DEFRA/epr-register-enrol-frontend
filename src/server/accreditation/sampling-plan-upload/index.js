@@ -10,7 +10,7 @@ const uploadOptions = {
     maxBytes: 21 * 1024 * 1024,
     output: 'data',
     parse: true,
-    multipart: true
+    multipart: { output: 'stream' }
   }
 }
 
