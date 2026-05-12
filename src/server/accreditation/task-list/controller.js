@@ -39,6 +39,7 @@ export function buildTaskListViewModel(application, t) {
   const prnsSt = sectionStatus(Prns?.SectionStatus)
   const bpSt = sectionStatus(BusinessPlan?.SectionStatus)
   const spSt = sectionStatus(SamplingPlan?.SectionStatus)
+  const backlink = `/operator-accreditation/${application.OrganisationId}/${SiteId}/${MaterialType}/${Year}`
 
   return {
     heading,
@@ -76,7 +77,7 @@ export function buildTaskListViewModel(application, t) {
     continueUrl: allComplete
       ? `/accreditation/submit-declaration/${ApplicationId}`
       : null,
-    backLink: '/operator-accreditation',
+    backLink: backlink,
     saveAndComeLaterLink: '/operator-accreditation'
   }
 }

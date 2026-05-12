@@ -147,7 +147,9 @@ describe('#buildTaskListViewModel', () => {
 
   test('back link and save-and-come-back link point to /operator-accreditation', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
-    expect(vm.backLink).toBe('/operator-accreditation')
+    expect(vm.backLink).toBe(
+      '/operator-accreditation/test-operator-id/site-abc/Steel/2026'
+    )
     expect(vm.saveAndComeLaterLink).toBe('/operator-accreditation')
   })
 })
