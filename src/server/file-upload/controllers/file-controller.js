@@ -14,11 +14,13 @@ export const fileUploadDetailController = {
         `Error fetching file upload ${fileUploadId}: ${err.message}`
       )
       if (err.status === 404) return h.response().code(404)
-      return h.view('file-upload/views/file', {
-        pageTitle: t('pages.fileUpload.file.title'),
-        heading: t('pages.fileUpload.file.heading'),
-        error: t('pages.fileUpload.file.errorLoading')
-      }).code(500)
+      return h
+        .view('file-upload/views/file', {
+          pageTitle: t('pages.fileUpload.file.title'),
+          heading: t('pages.fileUpload.file.heading'),
+          error: t('pages.fileUpload.file.errorLoading')
+        })
+        .code(500)
     }
 
     return h.view('file-upload/views/file', {

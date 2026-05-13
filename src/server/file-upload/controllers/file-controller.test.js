@@ -1,4 +1,12 @@
-import { describe, test, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest'
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  afterAll,
+  vi,
+  beforeEach
+} from 'vitest'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'
@@ -64,7 +72,9 @@ describe('#fileUploadDetailController', () => {
     })
 
     test('shows download button when scan status is Clean', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeFileUpload({ ScanStatus: 'Clean' }))
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeFileUpload({ ScanStatus: 'Clean' })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -76,7 +86,9 @@ describe('#fileUploadDetailController', () => {
     })
 
     test('does not show download button when scan status is Pending', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeFileUpload({ ScanStatus: 'Pending' }))
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeFileUpload({ ScanStatus: 'Pending' })
+      )
 
       const { result } = await server.inject({
         method: 'GET',
@@ -88,7 +100,9 @@ describe('#fileUploadDetailController', () => {
     })
 
     test('does not show download button when scan status is Infected', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeFileUpload({ ScanStatus: 'Infected' }))
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeFileUpload({ ScanStatus: 'Infected' })
+      )
 
       const { result } = await server.inject({
         method: 'GET',

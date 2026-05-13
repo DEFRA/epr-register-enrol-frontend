@@ -43,9 +43,7 @@ export const fileUploadStatusController = {
           ScanStatus: 'Clean'
         })
       } catch (err) {
-        request.server.logger.error(
-          `Error saving file upload: ${err.message}`
-        )
+        request.server.logger.error(`Error saving file upload: ${err.message}`)
         request.yar.flash('error', t('pages.fileUpload.upload.saveError'))
         return h.redirect('/file-upload/upload')
       }

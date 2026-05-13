@@ -1,4 +1,12 @@
-import { describe, test, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest'
+import {
+  describe,
+  test,
+  expect,
+  beforeAll,
+  afterAll,
+  vi,
+  beforeEach
+} from 'vitest'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'

@@ -26,7 +26,9 @@ export const fileUploadApiService = {
 
   listFileUploads(organisationId) {
     return call(() =>
-      apiClient.get(`${BASE}?organisationId=${encodeURIComponent(organisationId)}`)
+      apiClient.get(
+        `${BASE}?organisationId=${encodeURIComponent(organisationId)}`
+      )
     )
   },
 

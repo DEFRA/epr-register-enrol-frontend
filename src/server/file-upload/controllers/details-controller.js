@@ -1,5 +1,9 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { FILE_UPLOAD_SESSION_KEY, MATERIALS, getYearOptions } from '../constants.js'
+import {
+  FILE_UPLOAD_SESSION_KEY,
+  MATERIALS,
+  getYearOptions
+} from '../constants.js'
 
 function renderDetails(h, viewData) {
   return h.view('file-upload/views/details', viewData)
