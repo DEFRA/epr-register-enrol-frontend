@@ -24,8 +24,13 @@ async function call(fn) {
 }
 
 export const accreditationApiService = {
-  seedApplication(organisationId, body) {
-    return call(() => apiClient.post(`${BASE}/${organisationId}/seed`, body))
+  seedApplication(organisationId, siteId, materialType, year) {
+    return call(() =>
+      apiClient.post(
+        `${BASE}/${organisationId}/${siteId}/${materialType}/seed`,
+        { year }
+      )
+    )
   },
 
   listApplications(organisationId) {

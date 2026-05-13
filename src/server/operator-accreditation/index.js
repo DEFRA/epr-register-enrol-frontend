@@ -1,10 +1,6 @@
 import { operatorAccreditationController } from './controller.js'
+import { requireOperator } from '../common/helpers/auth/auth-scopes.js'
 
-/**
- * Sets up the routes used in the operator page.
- * These routes are registered in src/server/router.js.
- * Supports both default and language-prefixed paths.
- */
 export const operatorAccreditation = {
   plugin: {
     name: 'operator-accreditation',
@@ -12,12 +8,14 @@ export const operatorAccreditation = {
       server.route([
         {
           method: 'GET',
-          path: '/operator-accreditation',
+          path: '/operator-accreditation/{organisationId}/{siteId}/{materialType}/{year}',
+          options: requireOperator,
           ...operatorAccreditationController
         },
         {
           method: 'GET',
-          path: '/{language}/operator-accreditation',
+          path: '/{language}/operator-accreditation/{organisationId}/{siteId}/{materialType}/{year}',
+          options: requireOperator,
           ...operatorAccreditationController
         }
       ])

@@ -1,4 +1,5 @@
 import { config } from '../../config/config.js'
+import { stubApiClient } from './stub-api-client.js'
 
 /**
  * Creates an API client instance with configured base URL and timeout
@@ -117,4 +118,6 @@ export function createApiClient() {
 }
 
 // Create a singleton instance to be reused throughout the application
-export const apiClient = createApiClient()
+export const apiClient = config.get('api.stubEnabled')
+  ? stubApiClient
+  : createApiClient()

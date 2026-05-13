@@ -11,99 +11,144 @@ import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
-import { buildApplicationViewModel } from './controller.js'
+import { buildLandingViewModel } from './controller.js'
 
-const mockSavedApp = {
+const ORG_ID = 'org-123'
+const SITE_ID = 'site001'
+const MATERIAL = 'Steel'
+const YEAR = 2026
+
+const makeApp = (overrides = {}) => ({
   ApplicationId: 'app-id-001',
   ApplicationStatus: 'Saved',
-  MaterialType: 'Steel',
-  ApplicationReference: null,
-  DateSent: null,
-  SubmittedBy: null
-}
+  MaterialType: MATERIAL,
+  SiteId: SITE_ID,
+  Year: YEAR,
+  ...overrides
+})
 
-const mockStartedApp = {
-  ApplicationId: 'app-id-002',
-  ApplicationStatus: 'Started',
-  MaterialType: 'Wood',
-  ApplicationReference: null,
-  DateSent: null,
-  SubmittedBy: null
-}
-
-const mockSentApp = {
-  ApplicationId: 'app-id-003',
-  ApplicationStatus: 'Sent',
-  MaterialType: 'Aluminium',
-  ApplicationReference: 'EPR-ACC-2026-ABC1234',
-  DateSent: '2026-04-01T10:00:00Z',
-  SubmittedBy: {
-    FullName: 'Jane Smith',
-    JobTitle: 'Manager',
-    Email: 'jane@example.com'
-  }
-}
-
-describe('#buildApplicationViewModel', () => {
+describe('#buildLandingViewModel', () => {
   const t = (key) => key.split('.').pop()
 
-  test('Saved status maps to grey tag and isEditable true', () => {
-    const vm = buildApplicationViewModel(mockSavedApp, t)
+  test('Saved maps to grey tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Saved' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
     expect(vm.statusTagClass).toBe('govuk-tag--grey')
-    expect(vm.isEditable).toBe(true)
-    expect(vm.applicationId).toBe('app-id-001')
-    expect(vm.taskListUrl).toBe('/accreditation/task-list/app-id-001')
   })
 
-  test('Started status maps to blue tag and isEditable true', () => {
-    const vm = buildApplicationViewModel(mockStartedApp, t)
+  test('Started maps to blue tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Started' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
     expect(vm.statusTagClass).toBe('govuk-tag--blue')
-    expect(vm.isEditable).toBe(true)
   })
 
-  test('Sent status maps to turquoise tag and isEditable false', () => {
-    const vm = buildApplicationViewModel(mockSentApp, t)
+  test('Sent maps to turquoise tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Sent' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
     expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
-    expect(vm.isEditable).toBe(false)
-    expect(vm.applicationReference).toBe('EPR-ACC-2026-ABC1234')
-    expect(vm.submittedBy).toBe('Jane Smith')
   })
 
-  test('Approved status maps to green tag and isEditable false', () => {
-    const vm = buildApplicationViewModel(
-      { ...mockSentApp, ApplicationStatus: 'Approved' },
+  test('Approved maps to green tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Approved' }),
+      'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('govuk-tag--green')
-    expect(vm.isEditable).toBe(false)
   })
 
-  test('Rejected status maps to red tag and isEditable false', () => {
-    const vm = buildApplicationViewModel(
-      { ...mockSentApp, ApplicationStatus: 'Rejected' },
+  test('Rejected maps to red tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Rejected' }),
+      'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('govuk-tag--red')
-    expect(vm.isEditable).toBe(false)
   })
 
-  test('DateSent is formatted as readable date', () => {
-    const vm = buildApplicationViewModel(mockSentApp, t)
-    expect(vm.dateSent).toBe('1 April 2026')
-  })
-
-  test('Null DateSent returns null', () => {
-    const vm = buildApplicationViewModel(mockSavedApp, t)
-    expect(vm.dateSent).toBeNull()
-  })
-
-  test('Unknown ApplicationStatus returns empty tagClass and isEditable false', () => {
-    const vm = buildApplicationViewModel(
-      { ...mockSavedApp, ApplicationStatus: 'Unknown' },
+  test('unknown status maps to empty tagClass', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Unknown' }),
+      'Org Name',
+      'siteAddr',
+      2027,
       t
     )
     expect(vm.statusTagClass).toBe('')
-    expect(vm.isEditable).toBe(false)
+  })
+
+  test('siteName uses SiteAddr when present', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Unknown' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.siteName).toBe('siteAddr')
+  })
+
+  test('siteName falls back to translation key when is null', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationStatus: 'Unknown' }),
+      'Org Name',
+      null,
+      2027,
+      t
+    )
+    expect(vm.siteName).toBe('siteNotSet')
+  })
+
+  test('taskListUrl contains applicationId', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ ApplicationId: 'app-xyz' }),
+      'Org',
+      null,
+      2027,
+      t
+    )
+    expect(vm.taskListUrl).toBe('/accreditation/task-list/app-xyz')
+  })
+
+  test('materialDisplay comes from translation', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ MaterialType: 'Steel' }),
+      'Org',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.materialDisplay).toBe('Steel')
+  })
+
+  test('organisationName is passed through', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ MaterialType: 'Steel' }),
+      'Organisation Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.organisationName).toBe('Organisation Name')
   })
 })
 
@@ -134,132 +179,224 @@ describe('#operatorAccreditationController', () => {
     'x-test-user-type': 'operator'
   }
 
-  test('Returns 200 with start-new CTA when operator has no applications', async () => {
+  const baseUrl = `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`
+
+  test('returns 200 when existing application found for site/material/year', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ ApplicationStatus: 'Started' })
+    ])
+    vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(apiClient.post).not.toHaveBeenCalled()
+  })
+
+  test('does not call seed when matching application already exists', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+    await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(postSpy).not.toHaveBeenCalled()
+  })
+
+  test('calls seedApplication when no matching application found for site/material/year', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ SiteId: 'other-site' })
+    ])
+    const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())
+
+    await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(postSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`/${SITE_ID}/${MATERIAL}/seed`),
+      expect.objectContaining({ year: YEAR })
+    )
+  })
+
+  test('returns 200 after successful seed when no application exists', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())
 
-    const { result, statusCode } = await server.inject({
+    const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/operator-accreditation',
+      url: baseUrl,
       headers: operatorHeaders
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(
-      expect.stringContaining('Start new accreditation application')
-    )
-    expect(result).not.toEqual(
-      expect.stringContaining('data-testid="applications-list"')
-    )
   })
 
-  test('Returns 200 with application card for in-progress application', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([mockSavedApp])
+  test('renders Not Set site name in summary', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
-      url: '/operator-accreditation',
+      url: baseUrl,
       headers: operatorHeaders
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(expect.stringContaining('Steel'))
-    expect(result).toEqual(expect.stringContaining('NOT STARTED'))
-    expect(result).toEqual(expect.stringContaining('govuk-tag--grey'))
-    expect(result).toEqual(expect.stringContaining('Continue application'))
+    expect(result).toContain('data-testid="site-name"')
+    expect(result).toContain('Not set')
   })
 
-  test('Shows View application link for submitted application', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([mockSentApp])
+  test('renders material display in summary', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
-      url: '/operator-accreditation',
+      url: baseUrl,
       headers: operatorHeaders
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(expect.stringContaining('Aluminium'))
-    expect(result).toEqual(expect.stringContaining('SUBMITTED'))
-    expect(result).toEqual(expect.stringContaining('govuk-tag--turquoise'))
-    expect(result).toEqual(expect.stringContaining('View application'))
-    expect(result).toEqual(expect.stringContaining('EPR-ACC-2026-ABC1234'))
-    expect(result).toEqual(expect.stringContaining('Jane Smith'))
+    expect(result).toContain('data-testid="material-display"')
+    expect(result).toContain('Steel')
   })
 
-  test('Shows apply-for-another link when at least one application is submitted', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([mockSavedApp, mockSentApp])
+  test('renders status tag with correct class for Started', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ ApplicationStatus: 'Started' })
+    ])
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
-      url: '/operator-accreditation',
+      url: baseUrl,
       headers: operatorHeaders
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(
-      expect.stringContaining('Apply for accreditation for another material')
-    )
+    expect(result).toContain('govuk-tag--blue')
+    expect(result).toContain('IN PROGRESS')
   })
 
-  test('Does not show apply-for-another link when no applications are submitted', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([mockSavedApp, mockStartedApp])
+  test('Continue button links to task-list with applicationId', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
-      url: '/operator-accreditation',
+      url: baseUrl,
       headers: operatorHeaders
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).not.toEqual(
-      expect.stringContaining('Apply for accreditation for another material')
-    )
+    expect(result).toContain('data-testid="continue-button"')
+    expect(result).toContain('/accreditation/task-list/app-id-001')
   })
 
-  test('Shows error message and empty list on API failure', async () => {
-    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API unavailable'))
+  test('Re/Ex back link is present', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
-      url: '/operator-accreditation',
+      url: baseUrl,
       headers: operatorHeaders
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(
-      expect.stringContaining(
-        'Sorry, we are unable to load your accreditation applications'
-      )
-    )
+    expect(result).toContain('data-testid="reex-back-link"')
   })
 
-  test('Returns 200 in Welsh locale', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([mockSavedApp])
+  test('application summary list is rendered', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
-    const { result, statusCode } = await server.inject({
+    const { result } = await server.inject({
       method: 'GET',
-      url: '/cy/operator-accreditation',
+      url: baseUrl,
       headers: operatorHeaders
     })
 
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(
-      expect.stringContaining('[Welsh] Accreditation applications')
-    )
+    expect(result).toContain('data-testid="application-summary"')
   })
 
-  test('Returns 200 for default locale with application data', async () => {
+  test('multi-application list is not rendered', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain('data-testid="applications-list"')
+  })
+
+  test('returns 500 error view when listApplications throws', async () => {
+    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('data-testid="error-message"')
+    expect(result).toContain('We were unable to start your application')
+  })
+
+  test('error view renders back link with non-empty href', async () => {
+    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="reex-back-link"')
+    expect(result).not.toContain('href=""')
+  })
+
+  test('returns 500 error view when seedApplication throws', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/operator-accreditation',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(result).toContain('data-testid="error-message"')
+  })
+
+  test('year URL param is compared as integer against app.Year', async () => {
+    const app2026 = makeApp({ Year: 2026 })
+    const app2025 = makeApp({ ApplicationId: 'app-2025', Year: 2025 })
+    vi.spyOn(apiClient, 'get').mockResolvedValue([app2025, app2026])
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/2026`,
       headers: operatorHeaders
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(
-      expect.stringContaining('Accreditation applications')
-    )
+    expect(apiClient.post).not.toHaveBeenCalled()
+  })
+
+  test('returns 200 in Welsh locale', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+
+    const { result, statusCode } = await server.inject({
+      method: 'GET',
+      url: `/cy/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('[Welsh]')
   })
 })

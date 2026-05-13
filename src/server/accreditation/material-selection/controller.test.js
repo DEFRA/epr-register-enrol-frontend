@@ -364,7 +364,7 @@ describe('#materialSelectionGetController / #materialSelectionPostController', (
       )
     })
 
-    test('calls seed API with correct materialType and current year', async () => {
+    test('calls seed API with materialType in URL and year in body', async () => {
       const postSpy = vi
         .spyOn(apiClient, 'post')
         .mockResolvedValue(mockSeedResponse)
@@ -381,12 +381,8 @@ describe('#materialSelectionGetController / #materialSelectionPostController', (
       })
 
       expect(postSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/seed'),
-        expect.objectContaining({
-          materialType: 'Aluminium',
-          year: CURRENT_YEAR,
-          siteId: null
-        })
+        expect.stringContaining('/Aluminium/seed'),
+        expect.objectContaining({ year: CURRENT_YEAR })
       )
     })
 
