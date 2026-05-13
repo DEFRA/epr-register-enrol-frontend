@@ -2,6 +2,21 @@ import { apiClient } from '../../common/api-client.js'
 
 const BASE = '/api/v1/file-uploads'
 
+function normalizeFileUpload(file) {
+  return {
+    fileUploadId: file.FileUploadId,
+    organisationId: file.OrganisationId,
+    material: file.Material,
+    yearOfAccreditation: file.YearOfAccreditation,
+    fileId: file.FileId,
+    filename: file.Filename,
+    contentType: file.ContentType,
+    s3Key: file.S3Key,
+    scanStatus: file.ScanStatus,
+    uploadedAt: file.UploadedAt
+  }
+}
+
 function normaliseError(err) {
   const status = err.status ?? 500
   const message = err.message ?? 'Unknown error'
@@ -25,14 +40,18 @@ export const fileUploadApiService = {
   },
 
   listFileUploads(organisationId) {
-    return call(() =>
-      apiClient.get(
+    return call(async () => {
+      const files = await apiClient.get(
         `${BASE}?organisationId=${encodeURIComponent(organisationId)}`
       )
-    )
+      return files.map(normalizeFileUpload)
+    })
   },
 
   getFileUpload(fileUploadId) {
-    return call(() => apiClient.get(`${BASE}/${fileUploadId}`))
+    return call(async () => {
+      const file = await apiClient.get(`${BASE}/${fileUploadId}`)
+      return normalizeFileUpload(file)
+    })
   }
 }
