@@ -43,6 +43,7 @@ export const operatorAccreditationController = {
     const { organisationId, siteId, materialType, year } = request.params
     const yearInt = parseInt(year, 10)
     const userName = user?.name
+    const reExBackLink = '/operator/'
 
     const errorView = (message) =>
       h
@@ -111,7 +112,7 @@ export const operatorAccreditationController = {
 
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),
-      reExBackUrl: '#',
+      reExBackUrl: reExBackLink,
       ...viewModel
     })
   }

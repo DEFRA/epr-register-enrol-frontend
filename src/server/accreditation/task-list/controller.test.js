@@ -150,7 +150,7 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.backLink).toBe(
       '/operator-accreditation/test-operator-id/site-abc/Steel/2026'
     )
-    expect(vm.saveAndComeLaterLink).toBe('/operator-accreditation')
+    expect(vm.saveAndComeLaterLink).toBe('/operator')
   })
 })
 
@@ -325,7 +325,7 @@ describe('#taskListGetController', () => {
       })
 
       expect(result).toContain('data-testid="save-come-back-link"')
-      expect(result).toContain('href="/operator-accreditation"')
+      expect(result).toContain('href="/operator"')
     })
 
     test('renders back link to /operator-accreditation', async () => {
