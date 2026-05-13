@@ -65,13 +65,19 @@ export const fileUpload = {
         {
           method: 'GET',
           path: '/file-upload/upload-status',
-          options: { ...requireOperator, pre: fileUploadStatusController.options.pre },
+          options: {
+            ...requireOperator,
+            pre: fileUploadStatusController.options.pre
+          },
           handler: fileUploadStatusController.handler
         },
         {
           method: 'GET',
           path: '/{language}/file-upload/upload-status',
-          options: { ...requireOperator, pre: fileUploadStatusController.options.pre },
+          options: {
+            ...requireOperator,
+            pre: fileUploadStatusController.options.pre
+          },
           handler: fileUploadStatusController.handler
         },
         {

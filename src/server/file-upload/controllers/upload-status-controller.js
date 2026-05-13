@@ -32,7 +32,10 @@ export const fileUploadStatusController = {
         return h.redirect('/file-upload/upload')
       }
 
-      const cdpFileStatusToScanStatus = { complete: 'Clean', rejected: 'Infected' }
+      const cdpFileStatusToScanStatus = {
+        complete: 'Clean',
+        rejected: 'Infected'
+      }
       const scanStatus = cdpFileStatusToScanStatus[fileInput.fileStatus]
 
       if (!scanStatus) {
