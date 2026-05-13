@@ -32,6 +32,14 @@ export const fileUploadStatusController = {
         return h.redirect('/file-upload/upload')
       }
 
+      const cdpFileStatusToScanStatus = { complete: 'Clean', rejected: 'Infected' }
+      const scanStatus = cdpFileStatusToScanStatus[fileInput.fileStatus]
+
+      if (!scanStatus) {
+        request.yar.flash('error', t('pages.fileUpload.upload.saveError'))
+        return h.redirect('/file-upload/upload')
+      }
+
       const s3Key =
         fileInput.s3Key ??
         `file-uploads/${session.material}/${session.year}/${session.uploadId}/${fileInput.fileId}`
@@ -45,7 +53,7 @@ export const fileUploadStatusController = {
           Filename: fileInput.filename,
           ContentType: fileInput.contentType,
           S3Key: s3Key,
-          ScanStatus: 'Clean'
+          ScanStatus: scanStatus
         })
       } catch (err) {
         request.server.logger.error(`Error saving file upload: ${err.message}`)
