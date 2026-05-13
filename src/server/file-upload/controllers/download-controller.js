@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream'
 import { config } from '../../../config/config.js'
 import { fileUploadApiService } from '../helpers/file-upload-api-service.js'
 
@@ -26,11 +27,10 @@ export const fileDownloadController = {
       return h.response('File not found in storage').code(404)
     }
 
-    const buffer = Buffer.from(await s3Response.arrayBuffer())
     const filename = encodeURIComponent(file.filename)
 
     return h
-      .response(buffer)
+      .response(Readable.fromWeb(s3Response.body))
       .header('Content-Type', file.contentType)
       .header(
         'Content-Disposition',
