@@ -2,7 +2,6 @@ import { config } from '../../../config/config.js'
 import { fileUploadApiService } from '../helpers/file-upload-api-service.js'
 
 export const fileDownloadController = {
-  options: { auth: { mode: 'required' } },
   async handler(request, h) {
     const { fileUploadId } = request.params
 
