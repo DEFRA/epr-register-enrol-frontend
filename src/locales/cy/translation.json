@@ -276,6 +276,68 @@
       "companyName": "[Welsh] Company name",
       "approvedPerson": "[Welsh] Approved person",
       "directors": "[Welsh] Directors"
+    },
+    "fileUpload": {
+      "details": {
+        "title": "[Welsh] File upload details",
+        "heading": "[Welsh] What are you uploading a file for?",
+        "materialLabel": "[Welsh] Material",
+        "selectMaterial": "[Welsh] Select a material",
+        "yearLabel": "[Welsh] Year of accreditation",
+        "selectYear": "[Welsh] Select a year",
+        "errors": {
+          "materialRequired": "[Welsh] Select a material",
+          "yearRequired": "[Welsh] Select a year of accreditation"
+        }
+      },
+      "upload": {
+        "title": "[Welsh] Upload a file",
+        "heading": "[Welsh] Upload your file",
+        "material": "[Welsh] Material",
+        "year": "[Welsh] Year",
+        "fileLabel": "[Welsh] Select file",
+        "fileHint": "[Welsh] Accepted formats: PDF, Word (.doc, .docx), JPG, PNG. Maximum file size 100MB.",
+        "uploadButton": "[Welsh] Upload file",
+        "virusError": "[Welsh] The uploaded file may contain a virus. Please try again with a different file.",
+        "saveError": "[Welsh] Sorry, there was a problem saving your file. Please try again."
+      },
+      "status": {
+        "title": "[Welsh] Scanning your file",
+        "heading": "[Welsh] Scanning your file",
+        "message": "[Welsh] Your file is being scanned for viruses. This page will refresh automatically.",
+        "doNotClose": "[Welsh] Please do not close this page."
+      },
+      "list": {
+        "title": "[Welsh] Uploaded files",
+        "heading": "[Welsh] Uploaded files",
+        "uploadNew": "[Welsh] Upload a new file",
+        "filename": "[Welsh] Filename",
+        "material": "[Welsh] Material",
+        "year": "[Welsh] Year",
+        "uploadedAt": "[Welsh] Uploaded",
+        "status": "[Welsh] Scan status",
+        "actions": "[Welsh] Actions",
+        "view": "[Welsh] View",
+        "noFiles": "[Welsh] No files have been uploaded yet.",
+        "errorLoading": "[Welsh] Sorry, there was a problem loading your files. Please try again.",
+        "scanStatuses": {
+          "Pending": "[Welsh] PENDING",
+          "Clean": "[Welsh] CLEAN",
+          "Infected": "[Welsh] INFECTED"
+        }
+      },
+      "file": {
+        "title": "[Welsh] File details",
+        "heading": "[Welsh] File details",
+        "filename": "[Welsh] Filename",
+        "material": "[Welsh] Material",
+        "year": "[Welsh] Year of accreditation",
+        "contentType": "[Welsh] File type",
+        "uploadedAt": "[Welsh] Uploaded at",
+        "status": "[Welsh] Scan status",
+        "download": "[Welsh] Download file",
+        "errorLoading": "[Welsh] Sorry, there was a problem loading the file details. Please try again."
+      }
     }
   },
   "navigation": {

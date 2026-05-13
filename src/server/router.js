@@ -22,6 +22,7 @@ import { businessPlanDetail } from './accreditation/business-plan-detail/index.j
 import { businessPlanCya } from './accreditation/business-plan-cya/index.js'
 import { prnsAuthority } from './accreditation/prns-authority/index.js'
 import { prnsCya } from './accreditation/prns-cya/index.js'
+import { fileUpload } from './file-upload/index.js'
 
 export const router = {
   plugin: {
@@ -55,7 +56,8 @@ export const router = {
         businessPlanDetail,
         businessPlanCya,
         prnsAuthority,
-        prnsCya
+        prnsCya,
+        fileUpload
       ])
 
       // Static assets

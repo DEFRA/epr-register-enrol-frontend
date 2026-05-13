@@ -282,6 +282,68 @@
       "companyName": "Company name",
       "approvedPerson": "Approved person",
       "directors": "Directors"
+    },
+    "fileUpload": {
+      "details": {
+        "title": "File upload details",
+        "heading": "What are you uploading a file for?",
+        "materialLabel": "Material",
+        "selectMaterial": "Select a material",
+        "yearLabel": "Year of accreditation",
+        "selectYear": "Select a year",
+        "errors": {
+          "materialRequired": "Select a material",
+          "yearRequired": "Select a year of accreditation"
+        }
+      },
+      "upload": {
+        "title": "Upload a file",
+        "heading": "Upload your file",
+        "material": "Material",
+        "year": "Year",
+        "fileLabel": "Select file",
+        "fileHint": "Accepted formats: PDF, Word (.doc, .docx), JPG, PNG. Maximum file size 100MB.",
+        "uploadButton": "Upload file",
+        "virusError": "The uploaded file may contain a virus. Please try again with a different file.",
+        "saveError": "Sorry, there was a problem saving your file. Please try again."
+      },
+      "status": {
+        "title": "Scanning your file",
+        "heading": "Scanning your file",
+        "message": "Your file is being scanned for viruses. This page will refresh automatically.",
+        "doNotClose": "Please do not close this page."
+      },
+      "list": {
+        "title": "Uploaded files",
+        "heading": "Uploaded files",
+        "uploadNew": "Upload a new file",
+        "filename": "Filename",
+        "material": "Material",
+        "year": "Year",
+        "uploadedAt": "Uploaded",
+        "status": "Scan status",
+        "actions": "Actions",
+        "view": "View",
+        "noFiles": "No files have been uploaded yet.",
+        "errorLoading": "Sorry, there was a problem loading your files. Please try again.",
+        "scanStatuses": {
+          "Pending": "PENDING",
+          "Clean": "CLEAN",
+          "Infected": "INFECTED"
+        }
+      },
+      "file": {
+        "title": "File details",
+        "heading": "File details",
+        "filename": "Filename",
+        "material": "Material",
+        "year": "Year of accreditation",
+        "contentType": "File type",
+        "uploadedAt": "Uploaded at",
+        "status": "Scan status",
+        "download": "Download file",
+        "errorLoading": "Sorry, there was a problem loading the file details. Please try again."
+      }
     }
   },
   "navigation": {
