@@ -60,7 +60,7 @@ export const router = {
         businessPlanCya,
         prnsAuthority,
         prnsCya,
-        fileUpload
+        fileUpload,
         submitDeclaration,
         submitConfirmation,
         samplingPlanUpload
