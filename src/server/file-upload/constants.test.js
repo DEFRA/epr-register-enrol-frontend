@@ -1,5 +1,9 @@
 import { describe, test, expect } from 'vitest'
-import { MATERIALS, getYearOptions, FILE_UPLOAD_SESSION_KEY } from './constants.js'
+import {
+  MATERIALS,
+  getYearOptions,
+  FILE_UPLOAD_SESSION_KEY
+} from './constants.js'
 
 describe('#FILE_UPLOAD_SESSION_KEY', () => {
   test('is a non-empty string', () => {
