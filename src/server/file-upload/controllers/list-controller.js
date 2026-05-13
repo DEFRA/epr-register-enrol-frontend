@@ -3,6 +3,7 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { fileUploadApiService } from '../helpers/file-upload-api-service.js'
 
 export const fileUploadListController = {
+  options: { auth: { mode: 'required' } },
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)

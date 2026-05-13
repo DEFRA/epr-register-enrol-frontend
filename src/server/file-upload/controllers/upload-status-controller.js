@@ -27,6 +27,11 @@ export const fileUploadStatusController = {
 
       const session = request.yar.get(FILE_UPLOAD_SESSION_KEY) ?? {}
 
+      if (!fileInput) {
+        request.yar.flash('error', t('pages.fileUpload.upload.saveError'))
+        return h.redirect('/file-upload/upload')
+      }
+
       const s3Key =
         fileInput.s3Key ??
         `file-uploads/${session.material}/${session.year}/${session.uploadId}/${fileInput.fileId}`

@@ -21,6 +21,7 @@ function buildViewData(t, payload = {}, errors = {}) {
 }
 
 export const fileUploadDetailsGetController = {
+  options: { auth: { mode: 'required' } },
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const session = request.yar.get(FILE_UPLOAD_SESSION_KEY) ?? {}

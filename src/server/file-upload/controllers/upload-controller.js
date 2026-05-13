@@ -4,6 +4,7 @@ import { FILE_UPLOAD_SESSION_KEY } from '../constants.js'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 
 export const fileUploadFormGetController = {
+  options: { auth: { mode: 'required' } },
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const session = request.yar.get(FILE_UPLOAD_SESSION_KEY) ?? {}

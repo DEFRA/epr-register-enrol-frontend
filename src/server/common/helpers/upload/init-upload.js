@@ -11,7 +11,8 @@ export async function initUpload(options = {}) {
     metadata
   } = options
 
-  const endpointUrl = config.get('fileUpload.cdpUploaderUrl') + '/initiate'
+  const baseUrl = new URL(config.get('fileUpload.cdpUploaderUrl'))
+  const endpointUrl = new URL('/initiate', baseUrl).toString()
   const response = await fetch(endpointUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

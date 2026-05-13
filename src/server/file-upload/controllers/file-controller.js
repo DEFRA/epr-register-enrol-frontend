@@ -2,6 +2,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { fileUploadApiService } from '../helpers/file-upload-api-service.js'
 
 export const fileUploadDetailController = {
+  options: { auth: { mode: 'required' } },
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { fileUploadId } = request.params
