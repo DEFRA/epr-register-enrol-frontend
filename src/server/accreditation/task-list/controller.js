@@ -18,6 +18,7 @@ export function buildTaskListViewModel(application, t) {
     MaterialType,
     Year,
     SiteId,
+    SiteAddress,
     Prns,
     BusinessPlan,
     SamplingPlan
@@ -46,7 +47,7 @@ export function buildTaskListViewModel(application, t) {
     heading,
     metadata: {
       year: Year,
-      site: SiteId ?? t('pages.taskList.siteNotSet')
+      site: SiteAddress ?? t('pages.taskList.siteNotSet')
     },
     tasks: [
       {

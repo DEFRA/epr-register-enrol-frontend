@@ -14,11 +14,11 @@ export const submitConfirmationGetController = {
     const organisationId = user?.id
     const { applicationId } = request.params
 
-    const applicationReference = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.applicationReference
+    const accreditationReference = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.accreditationReference
     )
 
-    if (!applicationReference) {
+    if (!accreditationReference) {
       return h.redirect(taskListUrl(applicationId))
     }
 
@@ -55,7 +55,7 @@ export const submitConfirmationGetController = {
       paymentText: t('pages.submitConfirmation.paymentText'),
       viewInvoice: t('pages.submitConfirmation.viewInvoice'),
       returnHome: t('pages.submitConfirmation.returnHome'),
-      applicationReference,
+      accreditationReference,
       materialDisplay
     })
   }

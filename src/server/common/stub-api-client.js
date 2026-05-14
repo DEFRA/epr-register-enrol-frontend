@@ -2,12 +2,13 @@ const STUB_APPLICATIONS = [
   {
     OrganisationId: 'org001',
     ApplicationId: 'app001',
-    ApplicationReference: 'REF-STUB-001',
+    SiteId: 'site001',
+    RegistrationReference: 'R26ER5000390068PL',
+    AccreditationReference: 'A27ER5000390051PL',
     ApplicationStatus: 'Started',
     MaterialType: 'Plastic',
-    SiteId: 'site001',
-    SiteAddress: 'Stub Organisation House, Site Lane 001, Siteville, SIT3 OO1',
-    OrganisationName: 'Stub Organisation Ltd',
+    SiteAddress: 'UNIT 5, BL4 7AQ, UK',
+    OrganisationName: 'NEWDEV RECYCLING LIMITED',
     Year: 2027,
     DateSent: null,
     SubmittedBy: null,
@@ -16,14 +17,23 @@ const STUB_APPLICATIONS = [
       PlannedTonnageBand: null,
       Authorisers: []
     },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
+    BusinessPlan: {
+      SectionStatus: 'NotStarted',
+      NewInfrastructurePercent: 0,
+      PriceSupportPercent: 0,
+      BusinessCollectionsPercent: 0,
+      CommunicationsPercent: 0,
+      NewMarketsPercent: 0,
+      NewUsesPercent: 0
+    },
     SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   },
   {
     OrganisationId: 'org002',
     ApplicationId: 'app002',
-    ApplicationReference: 'REF-STUB-002',
-    ApplicationStatus: 'NotStarted',
+    RegistrationReference: 'R26ER5000390068PL',
+    AccreditationReference: 'A27ER5000390052GL',
+    ApplicationStatus: 'Started',
     MaterialType: 'Glass',
     SiteId: 'site002',
     SiteAddress: 'Site Lane 002, Siteville, SIT3 OO2',
@@ -40,9 +50,91 @@ const STUB_APPLICATIONS = [
     SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   },
   {
+    OrganisationId: 'org004exp',
+    ApplicationId: 'app004exp',
+    AccreditationReference: 'A27ER5000390053SL',
+    ApplicationStatus: 'Started',
+    MaterialType: 'Steel',
+    SiteId: null,
+    SiteAddress: null,
+    OrganisationName: 'Export Steel Ltd.',
+    Year: 2027,
+    DateSent: '2026-12-01T10:00:00Z',
+    SubmittedBy: 'Jane Doe',
+    Tonnage: {
+      SectionStatus: 'Completed',
+      PlannedTonnageBand: 'UpTo1000',
+      Authorisers: [{ FullName: 'Jane Doe', Email: 'jane@deltagreen.co.uk' }]
+    },
+    BusinessPlan: {
+      SectionStatus: 'Completed',
+      NewInfrastructurePercent: 30,
+      PriceSupportPercent: 20,
+      BusinessCollectionsPercent: 15,
+      CommunicationsPercent: 10,
+      NewMarketsPercent: 15,
+      NewUsesPercent: 10,
+      NewInfrastructureDetail:
+        'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
+      PriceSupportDetail:
+        'Price support payments to collectors to maintain viability of glass collection routes.',
+      BusinessCollectionsDetail:
+        'Expansion of commercial and industrial glass collection services across the region.',
+      CommunicationsDetail:
+        'Public awareness campaign promoting glass recycling and correct bin usage.',
+      NewMarketsDetail:
+        'Development of relationships with construction sector to use recycled glass aggregate.',
+      NewUsesDetail:
+        'Trials of cullet use in road surfacing and insulation manufacturing.'
+    },
+    SamplingPlan: {
+      SectionStatus: 'Started',
+      Files: [
+        {
+          FileId: 'file003',
+          Filename: 'code-nightmare-green.pdf',
+          UploadedAt: '2026-11-01T12:00:00Z',
+          UploadedBy: 'Jane Doe',
+          ScanStatus: 'Clean'
+        }
+      ]
+    },
+    OverseasSites: [
+      {
+        SiteName: 'Site 1',
+        SiteAddress: 'Address 123',
+        Country: 'Germany',
+        IsEu: true,
+        IsOECD: true,
+        BESEvidence: {
+          BESEvidenceUploads: [
+            {
+              BESEvidenceValidFromDate: '2026-11-01T12:00:00Z',
+              BESEvidenceExpiryDate: '2027-11-30T12:00:00Z',
+              FileId: 'file003',
+              Filename: 'code-nightmare-green.pdf',
+              UploadedAt: '2026-11-01T12:00:00Z',
+              UploadedBy: 'Jane Doe',
+              ScanStatus: 'Clean'
+            }
+          ],
+          DoYouWantToUploadMoreEvidence: false
+          //No (it’s always no, as answering no to this question is the trigger for the check your answers page appearing)
+          //we loop until they say No/false to this question, when they say no we stop uplaoding more files and take them to the check answers page
+        }
+      },
+      {
+        SiteName: 'Site 2',
+        SiteAddress: 'Address 456',
+        Country: 'Chad',
+        IsEu: false
+      }
+    ]
+  },
+  {
     OrganisationId: 'org003',
     ApplicationId: 'app003',
-    ApplicationReference: 'REF-STUB-003',
+    AccreditationReference: 'A27ER5000390054GL',
     ApplicationStatus: 'Started',
     MaterialType: 'Glass',
     SiteId: 'site003',
@@ -161,7 +253,7 @@ export const stubApiClient = {
         app.SubmittedBy = body ?? null
       }
       return Promise.resolve({
-        ApplicationReference: app?.ApplicationReference ?? 'REF-STUB-001'
+        AccreditationReference: app?.AccreditationReference ?? 'REF-STUB-001'
       })
     }
     if (/\/files$/.test(endpoint)) {

@@ -22,7 +22,7 @@ function makeApplication(overrides = {}) {
     Year: 2025,
     SiteId: 'site-001',
     ApplicationStatus: 'Sent',
-    ApplicationReference: 'EPR-ACC-2027-000001',
+    AccreditationReference: 'EPR-ACC-2027-000001',
     Prns: { SectionStatus: 'Completed' },
     BusinessPlan: { SectionStatus: 'Completed' },
     SamplingPlan: { SectionStatus: 'Completed', Files: [] },
@@ -62,7 +62,7 @@ describe('#submitConfirmationController', () => {
   ) {
     // Use the submit-declaration POST to seed the session with an applicationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
-      ApplicationReference: reference,
+      AccreditationReference: reference,
       ApplicationStatus: 'Sent'
     })
 
