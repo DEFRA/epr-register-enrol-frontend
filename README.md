@@ -244,13 +244,13 @@ The user selects a material type (Steel, Wood, Aluminium, Fibre, Glass, Paper, P
 
 Before rendering the file input page, the server calls `initUpload()` ([src/server/common/helpers/upload/init-upload.js](src/server/common/helpers/upload/init-upload.js)), which POSTs to the CDP uploader's `/initiate` endpoint with:
 
-| Field | Value |
-|---|---|
-| `redirect` | `{appBaseUrl}/file-upload/upload-status` |
-| `s3Bucket` | `FILE_UPLOAD_S3_BUCKET` |
-| `s3Path` | `file-uploads/{material}/{year}` |
-| `maxFileSize` | 100 MB |
-| `mimeTypes` | PDF, Word (.doc/.docx), JPEG, PNG |
+| Field         | Value                                    |
+| ------------- | ---------------------------------------- |
+| `redirect`    | `{appBaseUrl}/file-upload/upload-status` |
+| `s3Bucket`    | `FILE_UPLOAD_S3_BUCKET`                  |
+| `s3Path`      | `file-uploads/{material}/{year}`         |
+| `maxFileSize` | 100 MB                                   |
+| `mimeTypes`   | PDF, Word (.doc/.docx), JPEG, PNG        |
 
 The CDP uploader responds with `uploadId`, `uploadUrl` (the form action URL), and `statusUrl`. The `uploadId` and `statusUrl` are saved to the session. The `uploadUrl` is passed to the Nunjucks template as the form `action`.
 
@@ -323,27 +323,27 @@ The `ScanStatus` is derived from `fileInput.fileStatus` (`complete` → `"Clean"
 
 ### Key source files
 
-| File | Purpose |
-|---|---|
-| [src/server/file-upload/index.js](src/server/file-upload/index.js) | Hapi plugin — registers all 14 routes with `requireOperator` auth |
-| [src/server/file-upload/controllers/details-controller.js](src/server/file-upload/controllers/details-controller.js) | Material and year selection (GET + POST) |
-| [src/server/file-upload/controllers/upload-controller.js](src/server/file-upload/controllers/upload-controller.js) | Calls CDP uploader `/initiate`, renders upload form |
-| [src/server/file-upload/controllers/upload-status-controller.js](src/server/file-upload/controllers/upload-status-controller.js) | Polls scan status, saves clean file to backend API |
-| [src/server/file-upload/controllers/list-controller.js](src/server/file-upload/controllers/list-controller.js) | Lists all files uploaded by the user's organisation |
-| [src/server/file-upload/controllers/file-controller.js](src/server/file-upload/controllers/file-controller.js) | Individual file detail view |
-| [src/server/file-upload/controllers/download-controller.js](src/server/file-upload/controllers/download-controller.js) | Streams file from S3 to browser |
-| [src/server/common/helpers/upload/init-upload.js](src/server/common/helpers/upload/init-upload.js) | POSTs to CDP uploader `/initiate`, rewrites internal hostnames |
-| [src/server/common/helpers/upload/provide-upload-status.js](src/server/common/helpers/upload/provide-upload-status.js) | Hapi pre-handler — fetches scan status before handler runs |
-| [src/server/file-upload/helpers/file-upload-api-service.js](src/server/file-upload/helpers/file-upload-api-service.js) | Typed client for the backend file upload API |
-| [src/server/file-upload/constants.js](src/server/file-upload/constants.js) | Material list, year options, session key |
+| File                                                                                                                             | Purpose                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [src/server/file-upload/index.js](src/server/file-upload/index.js)                                                               | Hapi plugin — registers all 14 routes with `requireOperator` auth |
+| [src/server/file-upload/controllers/details-controller.js](src/server/file-upload/controllers/details-controller.js)             | Material and year selection (GET + POST)                          |
+| [src/server/file-upload/controllers/upload-controller.js](src/server/file-upload/controllers/upload-controller.js)               | Calls CDP uploader `/initiate`, renders upload form               |
+| [src/server/file-upload/controllers/upload-status-controller.js](src/server/file-upload/controllers/upload-status-controller.js) | Polls scan status, saves clean file to backend API                |
+| [src/server/file-upload/controllers/list-controller.js](src/server/file-upload/controllers/list-controller.js)                   | Lists all files uploaded by the user's organisation               |
+| [src/server/file-upload/controllers/file-controller.js](src/server/file-upload/controllers/file-controller.js)                   | Individual file detail view                                       |
+| [src/server/file-upload/controllers/download-controller.js](src/server/file-upload/controllers/download-controller.js)           | Streams file from S3 to browser                                   |
+| [src/server/common/helpers/upload/init-upload.js](src/server/common/helpers/upload/init-upload.js)                               | POSTs to CDP uploader `/initiate`, rewrites internal hostnames    |
+| [src/server/common/helpers/upload/provide-upload-status.js](src/server/common/helpers/upload/provide-upload-status.js)           | Hapi pre-handler — fetches scan status before handler runs        |
+| [src/server/file-upload/helpers/file-upload-api-service.js](src/server/file-upload/helpers/file-upload-api-service.js)           | Typed client for the backend file upload API                      |
+| [src/server/file-upload/constants.js](src/server/file-upload/constants.js)                                                       | Material list, year options, session key                          |
 
 ### Environment variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `CDP_UPLOADER_URL` | `http://localhost:7337` | Base URL of the CDP uploader service |
-| `FILE_UPLOAD_S3_BUCKET` | `epr-register-enrol-file-uploads` | S3 bucket where clean files are stored |
-| `FILE_UPLOAD_S3_ENDPOINT` | `http://localhost:4566` | S3 endpoint URL (LocalStack locally, AWS in production) |
+| Variable                  | Default                           | Description                                             |
+| ------------------------- | --------------------------------- | ------------------------------------------------------- |
+| `CDP_UPLOADER_URL`        | `http://localhost:7337`           | Base URL of the CDP uploader service                    |
+| `FILE_UPLOAD_S3_BUCKET`   | `epr-register-enrol-file-uploads` | S3 bucket where clean files are stored                  |
+| `FILE_UPLOAD_S3_ENDPOINT` | `http://localhost:4566`           | S3 endpoint URL (LocalStack locally, AWS in production) |
 
 ### Running locally
 
