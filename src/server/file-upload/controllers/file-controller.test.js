@@ -10,7 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'
-import { apiClient } from '../../common/api-client.js'
+import { realApiClient as apiClient } from '../../common/api-client.js'
 
 const FILE_UPLOAD_ID = 'aabbccddeeff001122334455'
 
@@ -43,16 +43,16 @@ describe('#fileUploadDetailController', () => {
 
   function makeFileUpload(overrides = {}) {
     return {
-      FileUploadId: FILE_UPLOAD_ID,
-      OrganisationId: 'org-123',
-      Material: 'Steel',
-      YearOfAccreditation: 2025,
-      FileId: 'cdp-upload-id',
-      Filename: 'report.pdf',
-      ContentType: 'application/pdf',
-      S3Key: 'file-uploads/Steel/2025/report.pdf',
-      ScanStatus: 'Clean',
-      UploadedAt: '2025-06-01T12:00:00Z',
+      fileUploadId: FILE_UPLOAD_ID,
+      organisationId: 'org-123',
+      material: 'Steel',
+      yearOfAccreditation: 2025,
+      fileId: 'cdp-upload-id',
+      filename: 'report.pdf',
+      contentType: 'application/pdf',
+      s3Key: 'file-uploads/Steel/2025/report.pdf',
+      scanStatus: 'Clean',
+      uploadedAt: '2025-06-01T12:00:00Z',
       ...overrides
     }
   }
@@ -73,7 +73,7 @@ describe('#fileUploadDetailController', () => {
 
     test('shows download button when scan status is Clean', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeFileUpload({ ScanStatus: 'Clean' })
+        makeFileUpload({ scanStatus: 'Clean' })
       )
 
       const { result } = await server.inject({
@@ -87,7 +87,7 @@ describe('#fileUploadDetailController', () => {
 
     test('does not show download button when scan status is Pending', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeFileUpload({ ScanStatus: 'Pending' })
+        makeFileUpload({ scanStatus: 'Pending' })
       )
 
       const { result } = await server.inject({
@@ -101,7 +101,7 @@ describe('#fileUploadDetailController', () => {
 
     test('does not show download button when scan status is Infected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeFileUpload({ ScanStatus: 'Infected' })
+        makeFileUpload({ scanStatus: 'Infected' })
       )
 
       const { result } = await server.inject({

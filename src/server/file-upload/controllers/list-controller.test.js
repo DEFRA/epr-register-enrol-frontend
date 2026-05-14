@@ -10,7 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'
-import { apiClient } from '../../common/api-client.js'
+import { realApiClient as apiClient } from '../../common/api-client.js'
 
 describe('#fileUploadListController', () => {
   let server
@@ -80,12 +80,12 @@ describe('#fileUploadListController', () => {
     test('renders file table when files are returned', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([
         {
-          FileUploadId: 'abc123',
-          Filename: 'test.pdf',
-          Material: 'Steel',
-          YearOfAccreditation: 2025,
-          UploadedAt: '2025-01-01T00:00:00Z',
-          ScanStatus: 'Clean'
+          fileUploadId: 'abc123',
+          filename: 'test.pdf',
+          material: 'Steel',
+          yearOfAccreditation: 2025,
+          uploadedAt: '2025-01-01T00:00:00Z',
+          scanStatus: 'Clean'
         }
       ])
 

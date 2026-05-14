@@ -1,19 +1,19 @@
-import { apiClient } from '../../common/api-client.js'
+import { realApiClient as apiClient } from '../../common/api-client.js'
 
 const BASE = '/api/v1/file-uploads'
 
 function normalizeFileUpload(file) {
   return {
-    fileUploadId: file.FileUploadId,
-    organisationId: file.OrganisationId,
-    material: file.Material,
-    yearOfAccreditation: file.YearOfAccreditation,
-    fileId: file.FileId,
-    filename: file.Filename,
-    contentType: file.ContentType,
-    s3Key: file.S3Key,
-    scanStatus: file.ScanStatus,
-    uploadedAt: file.UploadedAt
+    fileUploadId: file.fileUploadId,
+    organisationId: file.organisationId,
+    material: file.material,
+    yearOfAccreditation: file.yearOfAccreditation,
+    fileId: file.fileId,
+    filename: file.filename,
+    contentType: file.contentType,
+    s3Key: file.s3Key,
+    scanStatus: file.scanStatus,
+    uploadedAt: file.uploadedAt
   }
 }
 

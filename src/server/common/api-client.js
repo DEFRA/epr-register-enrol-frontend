@@ -117,7 +117,11 @@ export function createApiClient() {
   }
 }
 
+// Real API client — always contacts the backend, ignores api.stubEnabled.
+// Use this for features that require a live backend (e.g. file upload).
+export const realApiClient = createApiClient()
+
 // Create a singleton instance to be reused throughout the application
 export const apiClient = config.get('api.stubEnabled')
   ? stubApiClient
-  : createApiClient()
+  : realApiClient
