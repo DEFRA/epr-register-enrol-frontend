@@ -319,6 +319,26 @@ export const config = convict({
       default: 5000,
       env: 'API_TIMEOUT'
     }
+  },
+  fileUpload: {
+    cdpUploaderUrl: {
+      doc: 'Base URL for the CDP uploader service',
+      format: String,
+      default: 'http://localhost:7337',
+      env: 'CDP_UPLOADER_URL'
+    },
+    s3Bucket: {
+      doc: 'S3 bucket name for file uploads',
+      format: String,
+      default: 'epr-register-enrol-file-uploads',
+      env: 'FILE_UPLOAD_S3_BUCKET'
+    },
+    s3Endpoint: {
+      doc: 'S3 endpoint URL (LocalStack locally, real AWS in production)',
+      format: String,
+      default: 'http://localhost:4566',
+      env: 'FILE_UPLOAD_S3_ENDPOINT'
+    }
   }
 })
 

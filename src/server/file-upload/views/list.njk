@@ -1,0 +1,63 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <p class="govuk-body">
+        <a href="/file-upload/add" class="govuk-button" data-testid="upload-new-button">
+          {{ t('pages.fileUpload.list.uploadNew') }}
+        </a>
+      </p>
+
+      {% if fetchError %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="fetch-error">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <p>{{ fetchError }}</p>
+          </div>
+        </div>
+      {% elseif files and files | length > 0 %}
+        <table class="govuk-table" data-testid="files-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">{{ t('pages.fileUpload.list.filename') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.fileUpload.list.material') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.fileUpload.list.year') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.fileUpload.list.uploadedAt') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.fileUpload.list.status') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.fileUpload.list.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for file in files %}
+              <tr class="govuk-table__row" data-testid="file-row">
+                <td class="govuk-table__cell">{{ file.filename }}</td>
+                <td class="govuk-table__cell">{{ file.material }}</td>
+                <td class="govuk-table__cell">{{ file.yearOfAccreditation }}</td>
+                <td class="govuk-table__cell">{{ file.uploadedAt | formatDate }}</td>
+                <td class="govuk-table__cell">
+                  <strong class="govuk-tag {% if file.scanStatus === 'Clean' %}govuk-tag--green{% elif file.scanStatus === 'Infected' %}govuk-tag--red{% else %}govuk-tag--yellow{% endif %}">
+                    {{ t('pages.fileUpload.list.scanStatuses.' + file.scanStatus) }}
+                  </strong>
+                </td>
+                <td class="govuk-table__cell">
+                  <a href="/file-upload/{{ file.fileUploadId }}" class="govuk-link" data-testid="view-file-link">
+                    {{ t('pages.fileUpload.list.view') }}
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="govuk-body" data-testid="no-files-message">
+          {{ t('pages.fileUpload.list.noFiles') }}
+        </p>
+      {% endif %}
+
+    </div>
+  </div>
+{% endblock %}

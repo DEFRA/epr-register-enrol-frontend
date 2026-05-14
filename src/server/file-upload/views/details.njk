@@ -1,0 +1,86 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if errors and (errors | length > 0) %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% if errors.material %}
+                <li><a href="#material">{{ errors.material.text }}</a></li>
+              {% endif %}
+              {% if errors.year %}
+                <li><a href="#year">{{ errors.year.text }}</a></li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group {% if errors.material %}govuk-form-group--error{% endif %}" data-testid="field-group-material">
+          <label class="govuk-label govuk-label--m" for="material">
+            {{ t('pages.fileUpload.details.materialLabel') }}
+          </label>
+          {% if errors.material %}
+            <p id="material-error" class="govuk-error-message" data-testid="field-error-material">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ errors.material.text }}
+            </p>
+          {% endif %}
+          <select
+            class="govuk-select {% if errors.material %}govuk-select--error{% endif %}"
+            id="material"
+            name="material"
+            aria-describedby="{% if errors.material %}material-error{% endif %}"
+            data-testid="select-material">
+            <option value="">{{ t('pages.fileUpload.details.selectMaterial') }}</option>
+            {% for option in materials %}
+              <option value="{{ option.value }}" {% if payload.material === option.value %}selected{% endif %}>
+                {{ option.text }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="govuk-form-group {% if errors.year %}govuk-form-group--error{% endif %}" data-testid="field-group-year">
+          <label class="govuk-label govuk-label--m" for="year">
+            {{ t('pages.fileUpload.details.yearLabel') }}
+          </label>
+          {% if errors.year %}
+            <p id="year-error" class="govuk-error-message" data-testid="field-error-year">
+              <span class="govuk-visually-hidden">Error:</span>
+              {{ errors.year.text }}
+            </p>
+          {% endif %}
+          <select
+            class="govuk-select {% if errors.year %}govuk-select--error{% endif %}"
+            id="year"
+            name="year"
+            aria-describedby="{% if errors.year %}year-error{% endif %}"
+            data-testid="select-year">
+            <option value="">{{ t('pages.fileUpload.details.selectYear') }}</option>
+            {% for option in yearOptions %}
+              <option value="{{ option.value }}" {% if payload.year === option.value %}selected{% endif %}>
+                {{ option.text }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+          {{ t('common.continue') }}
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

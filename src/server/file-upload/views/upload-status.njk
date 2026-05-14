@@ -1,0 +1,24 @@
+{% extends "layouts/page.njk" %}
+
+{% block head %}
+  {{ super() }}
+  <meta http-equiv="refresh" content="2">
+{% endblock %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <p class="govuk-body" data-testid="status-message">
+        {{ t('pages.fileUpload.status.message') }}
+      </p>
+
+      <div class="govuk-inset-text">
+        {{ t('pages.fileUpload.status.doNotClose') }}
+      </div>
+
+    </div>
+  </div>
+{% endblock %}
