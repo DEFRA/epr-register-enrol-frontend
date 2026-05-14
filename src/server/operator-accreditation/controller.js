@@ -20,7 +20,7 @@ export function buildLandingViewModel(
   accreditationYear,
   t
 ) {
-  const config = STATUS_CONFIG[application.ApplicationStatus] ?? {
+  const config = STATUS_CONFIG[application.applicationStatus] ?? {
     tagClass: ''
   }
   return {
@@ -29,13 +29,13 @@ export function buildLandingViewModel(
     registrationReference: application.RegistrationReference,
     siteName: siteAddress ?? t('pages.taskList.siteNotSet'),
     materialDisplay: t(
-      `pages.operatorAccreditation.materials.${application.MaterialType}`
+      `pages.operatorAccreditation.materials.${application.materialType}`
     ),
     statusLabel: t(
-      `pages.operatorAccreditation.statuses.${application.ApplicationStatus}`
+      `pages.operatorAccreditation.statuses.${application.applicationStatus}`
     ),
     statusTagClass: config.tagClass,
-    taskListUrl: `/accreditation/task-list/${application.ApplicationId}`
+    taskListUrl: `/accreditation/task-list/${application.applicationId}`
   }
 }
 
@@ -72,9 +72,9 @@ export const operatorAccreditationController = {
 
     let application = applications.find(
       (app) =>
-        app.SiteId === siteId &&
-        app.MaterialType === materialType &&
-        app.Year === yearInt
+        app.siteId === siteId &&
+        app.materialType === materialType &&
+        app.year === yearInt
     )
 
     if (!application) {
@@ -93,12 +93,12 @@ export const operatorAccreditationController = {
       }
     }
 
-    const organisationName = application.OrganisationName
-    const siteAddress = application.SiteAddress
+    const organisationName = application.organisationName
+    const siteAddress = application.siteAddress
 
     request.yar.set(
       ACCREDITATION_SESSION_KEYS.accreditationId,
-      application.ApplicationId
+      application.applicationId
     )
     request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
     request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
