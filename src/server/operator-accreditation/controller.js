@@ -6,6 +6,8 @@ import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSes
 const STATUS_CONFIG = {
   Saved: { tagClass: 'govuk-tag--grey' },
   Started: { tagClass: 'govuk-tag--blue' },
+  NotStarted: { tagClass: 'govuk-tag--grey' },
+  InProgress: { tagClass: 'govuk-tag--blue' },
   Sent: { tagClass: 'govuk-tag--turquoise' },
   Approved: { tagClass: 'govuk-tag--green' },
   Rejected: { tagClass: 'govuk-tag--red' }

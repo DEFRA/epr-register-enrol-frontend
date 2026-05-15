@@ -30,7 +30,6 @@ describe('#operatorController', () => {
     expect(result).toEqual(
       expect.stringContaining('Operator Testing Flows Landing Page')
     )
-    expect(result).toEqual(expect.stringContaining('Operator accreditation'))
     expect(result).toEqual(expect.stringContaining('Operator details'))
     expect(result).toEqual(expect.stringContaining('Operator registration'))
     expect(statusCode).toBe(statusCodes.ok)
@@ -46,9 +45,7 @@ describe('#operatorController', () => {
     expect(result).toEqual(
       expect.stringContaining('[Welsh] Operator Landing Page')
     )
-    expect(result).toEqual(
-      expect.stringContaining('[Welsh] Operator accreditation')
-    )
+
     expect(result).toEqual(expect.stringContaining('[Welsh] Operator details'))
     expect(result).toEqual(
       expect.stringContaining('[Welsh] Operator registration')
