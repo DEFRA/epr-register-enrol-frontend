@@ -51,6 +51,37 @@ function renderPage(h, viewData) {
   return h.view('accreditation/sampling-plan-upload/index', viewData)
 }
 
+export async function samplingPlanUpload413Handler(request, h) {
+  const { response } = request
+  if (!response.isBoom || response.output.statusCode !== 413) {
+    return h.continue
+  }
+
+  const { t } = getLocaleAndTranslator(request)
+  const user = getUser(request)
+  const organisationId = user?.id
+  const { applicationId } = request.params
+
+  let files = []
+  try {
+    const application = await apiClient.get(
+      appUrl(organisationId, applicationId)
+    )
+    files = buildFilesViewModel(application.SamplingPlan?.Files)
+  } catch (_) {
+    // render with empty file list if fetch fails
+  }
+
+  return renderPage(h, {
+    pageTitle: t('pages.samplingPlanUpload.title'),
+    heading: t('pages.samplingPlanUpload.heading'),
+    backLink: taskListUrl(applicationId),
+    taskListLink: taskListUrl(applicationId),
+    files,
+    fileError: t('pages.samplingPlanUpload.validation.fileTooLarge')
+  }).code(400)
+}
+
 export const samplingPlanUploadGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)

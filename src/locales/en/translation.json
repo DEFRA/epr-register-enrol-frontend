@@ -80,6 +80,7 @@
       "statuses": {
         "Saved": "NOT STARTED",
         "Started": "IN PROGRESS",
+        "NotStarted": "NOT STARTED",
         "Sent": "SUBMITTED",
         "Approved": "WITH REGULATOR",
         "Rejected": "REJECTED"

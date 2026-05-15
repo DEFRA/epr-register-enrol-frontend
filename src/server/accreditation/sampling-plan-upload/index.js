@@ -1,6 +1,7 @@
 import {
   samplingPlanUploadGetController,
-  samplingPlanUploadPostController
+  samplingPlanUploadPostController,
+  samplingPlanUpload413Handler
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 
@@ -11,6 +12,9 @@ const uploadOptions = {
     output: 'data',
     parse: true,
     multipart: { output: 'stream' }
+  },
+  ext: {
+    onPreResponse: { method: samplingPlanUpload413Handler }
   }
 }
 
