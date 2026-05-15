@@ -117,11 +117,11 @@ describe('#buildTaskListViewModel', () => {
 
   test('metadata contains year and site', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Year: 2026, SiteId: 'site-xyz' }),
+      makeApplication({ Year: 2026, SiteAddress: '123 Test Street' }),
       t
     )
     expect(vm.metadata.year).toBe(2026)
-    expect(vm.metadata.site).toBe('site-xyz')
+    expect(vm.metadata.site).toBe('123 Test Street')
   })
 
   test('null SiteId falls back to siteNotSet translation', () => {

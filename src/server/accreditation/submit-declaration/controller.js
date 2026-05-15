@@ -121,8 +121,8 @@ export const submitDeclarationPostController = {
     }
 
     request.yar.set(
-      ACCREDITATION_SESSION_KEYS.applicationReference,
-      response.ApplicationReference
+      ACCREDITATION_SESSION_KEYS.accreditationReference,
+      response.AccreditationReference
     )
     request.yar.clear(ACCREDITATION_SESSION_KEYS.declaration)
 
