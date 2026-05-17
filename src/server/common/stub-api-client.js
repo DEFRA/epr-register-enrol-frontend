@@ -1,6 +1,6 @@
 const STUB_APPLICATIONS = [
   {
-    OrganisationId: 50000,
+    OrganisationId: 50001,
     ApplicationId: 'app001',
     SiteId: 'site001',
     RegistrationReference: 'R26ER5000390068PL',
