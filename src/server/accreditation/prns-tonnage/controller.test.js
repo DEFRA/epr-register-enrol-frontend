@@ -19,18 +19,18 @@ const t = (key) => key.split('.').pop()
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    Prns: {
-      PlannedTonnageBand: null,
-      Authorisers: [],
-      SectionStatus: 'NotStarted'
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    prns: {
+      plannedTonnageBand: null,
+      authorisers: [],
+      sectionStatus: 'NotStarted'
     },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -126,10 +126,10 @@ describe('#prnsTonnageController', () => {
       })
     })
 
-    test('pre-populates radio when application has existing PlannedTonnageBand', async () => {
+    test('pre-populates radio when application has existing plannedTonnageBand', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: { PlannedTonnageBand: 'UpTo1000', SectionStatus: 'InProgress' }
+          prns: { plannedTonnageBand: 'UpTo1000', sectionStatus: 'InProgress' }
         })
       )
 
@@ -143,7 +143,7 @@ describe('#prnsTonnageController', () => {
       expect(result).toMatch(/value="UpTo1000"[\s\S]*?checked/)
     })
 
-    test('no radio pre-selected when PlannedTonnageBand is null', async () => {
+    test('no radio pre-selected when plannedTonnageBand is null', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -272,7 +272,7 @@ describe('#prnsTonnageController', () => {
       expect(getSpy).toHaveBeenCalledOnce()
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/prns`),
-        { PlannedTonnageBand: 'UpTo1000' }
+        { plannedTonnageBand: 'UpTo1000' }
       )
     })
 

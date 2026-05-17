@@ -237,8 +237,13 @@ describe('#submitDeclarationController', () => {
 
     test('calls submitApplication and redirects to confirmation on valid data', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
+<<<<<<< HEAD
         AccreditationReference: 'EPR-ACC-2027-000001',
         ApplicationStatus: 'Sent'
+=======
+        applicationReference: 'EPR-ACC-2027-000001',
+        applicationStatus: 'Sent'
+>>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
       })
 
       const { statusCode, headers } = await server.inject({
@@ -258,14 +263,19 @@ describe('#submitDeclarationController', () => {
       )
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/submit`),
-        { FullName: 'Jane Smith', JobTitle: 'Senior Manager' }
+        { fullName: 'Jane Smith', jobTitle: 'Senior Manager' }
       )
     })
 
     test('trims whitespace from inputs before submitting', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
+<<<<<<< HEAD
         AccreditationReference: 'EPR-ACC-2027-000001',
         ApplicationStatus: 'Sent'
+=======
+        applicationReference: 'EPR-ACC-2027-000001',
+        applicationStatus: 'Sent'
+>>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
       })
 
       await server.inject({
@@ -280,8 +290,8 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(postSpy).toHaveBeenCalledWith(expect.any(String), {
-        FullName: 'Jane Smith',
-        JobTitle: 'Senior Manager'
+        fullName: 'Jane Smith',
+        jobTitle: 'Senior Manager'
       })
     })
 

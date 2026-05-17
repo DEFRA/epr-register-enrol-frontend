@@ -23,16 +23,16 @@ const APPLICATION_ID = 'app-sampling-001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2027,
-    SiteId: 'site-001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: { SectionStatus: 'Completed' },
-    SamplingPlan: {
-      SectionStatus: 'NotStarted',
-      Files: []
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2027,
+    siteId: 'site-001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: { sectionStatus: 'Completed' },
+    samplingPlan: {
+      sectionStatus: 'NotStarted',
+      files: []
     },
     ...overrides
   }
@@ -40,12 +40,12 @@ function makeApplication(overrides = {}) {
 
 function makeFile(overrides = {}) {
   return {
-    FileId: 'file-001',
-    Filename: 'sampling-plan.pdf',
-    ContentType: 'application/pdf',
-    UploadedAt: '2027-03-01T10:00:00Z',
-    UploadedBy: 'test-operator-id',
-    ScanStatus: 'Pending',
+    fileId: 'file-001',
+    filename: 'sampling-plan.pdf',
+    contentType: 'application/pdf',
+    uploadedAt: '2027-03-01T10:00:00Z',
+    uploadedBy: 'test-operator-id',
+    scanStatus: 'Pending',
     ...overrides
   }
 }
@@ -92,7 +92,7 @@ describe('#buildFilesViewModel', () => {
   })
 
   test('formats uploadedAt as en-GB date', () => {
-    const files = [makeFile({ UploadedAt: '2027-03-01T10:00:00Z' })]
+    const files = [makeFile({ uploadedAt: '2027-03-01T10:00:00Z' })]
     const result = buildFilesViewModel(files)
     expect(result[0].uploadedAt).toMatch(/\d{2}\/\d{2}\/\d{4}/)
   })
@@ -101,26 +101,26 @@ describe('#buildFilesViewModel', () => {
     expect(buildFilesViewModel(undefined)).toEqual([])
   })
 
-  test('defaults ScanStatus to Pending when missing', () => {
-    const result = buildFilesViewModel([{ FileId: 'x', Filename: 'a.pdf' }])
+  test('defaults scanStatus to Pending when missing', () => {
+    const result = buildFilesViewModel([{ fileId: 'x', filename: 'a.pdf' }])
     expect(result[0].scanStatus).toBe('Pending')
   })
 })
 
 describe('#hasEligibleFile', () => {
   test('returns true when at least one Pending file exists', () => {
-    expect(hasEligibleFile([makeFile({ ScanStatus: 'Pending' })])).toBe(true)
+    expect(hasEligibleFile([makeFile({ scanStatus: 'Pending' })])).toBe(true)
   })
 
   test('returns true when at least one Clean file exists', () => {
-    expect(hasEligibleFile([makeFile({ ScanStatus: 'Clean' })])).toBe(true)
+    expect(hasEligibleFile([makeFile({ scanStatus: 'Clean' })])).toBe(true)
   })
 
   test('returns false when all files are Infected', () => {
     expect(
       hasEligibleFile([
-        makeFile({ ScanStatus: 'Infected' }),
-        makeFile({ ScanStatus: 'Infected' })
+        makeFile({ scanStatus: 'Infected' }),
+        makeFile({ scanStatus: 'Infected' })
       ])
     ).toBe(false)
   })
@@ -128,8 +128,8 @@ describe('#hasEligibleFile', () => {
   test('returns true when mixed Infected and Clean', () => {
     expect(
       hasEligibleFile([
-        makeFile({ ScanStatus: 'Infected' }),
-        makeFile({ ScanStatus: 'Clean' })
+        makeFile({ scanStatus: 'Infected' }),
+        makeFile({ scanStatus: 'Clean' })
       ])
     ).toBe(true)
   })
@@ -222,9 +222,9 @@ describe('#samplingPlanUploadController', () => {
     test('renders uploaded files table when files exist', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile()]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile()]
           }
         })
       )
@@ -242,9 +242,9 @@ describe('#samplingPlanUploadController', () => {
     test('shows Scanning tag for Pending file', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile({ ScanStatus: 'Pending' })]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Pending' })]
           }
         })
       )
@@ -321,9 +321,9 @@ describe('#samplingPlanUploadController', () => {
     test('returns 400 when all files are Infected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile({ ScanStatus: 'Infected' })]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Infected' })]
           }
         })
       )
@@ -341,12 +341,12 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
-    test('patches SectionStatus Completed and redirects to task list when eligible file exists', async () => {
+    test('patches sectionStatus Completed and redirects to task list when eligible file exists', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile({ ScanStatus: 'Pending' })]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Pending' })]
           }
         })
       )
@@ -365,16 +365,16 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     })
 
     test('returns 500 when patch fails on saveAndContinue', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile()]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile()]
           }
         })
       )
@@ -396,9 +396,9 @@ describe('#samplingPlanUploadController', () => {
     test('patches InProgress and redirects to task list when files exist', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'NotStarted',
-            Files: [makeFile()]
+          samplingPlan: {
+            sectionStatus: 'NotStarted',
+            files: [makeFile()]
           }
         })
       )
@@ -417,7 +417,7 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { SectionStatus: 'InProgress' }
+        { sectionStatus: 'InProgress' }
       )
     })
 
@@ -434,7 +434,7 @@ describe('#samplingPlanUploadController', () => {
 
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { SectionStatus: 'NotStarted' }
+        { sectionStatus: 'NotStarted' }
       )
     })
 
@@ -562,7 +562,7 @@ describe('#samplingPlanUploadController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const postSpy = vi
         .spyOn(apiClient, 'post')
-        .mockResolvedValue({ FileId: 'new-file-123' })
+        .mockResolvedValue({ fileId: 'new-file-123' })
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
@@ -581,8 +581,8 @@ describe('#samplingPlanUploadController', () => {
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/files`),
         expect.objectContaining({
-          Filename: 'sampling-plan.png',
-          ContentType: 'image/png'
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
         })
       )
     })

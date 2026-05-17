@@ -20,14 +20,14 @@ const t = (key) => key.split('.').pop()
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: CURRENT_YEAR,
-    SiteId: 'site-abc',
-    Prns: { SectionStatus: 'NotStarted' },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: CURRENT_YEAR,
+    siteId: 'site-abc',
+    prns: { sectionStatus: 'NotStarted' },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -54,7 +54,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs Completed — business plan unlocked, sampling plan still locked', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: { SectionStatus: 'Completed' } }),
+      makeApplication({ prns: { sectionStatus: 'Completed' } }),
       t
     )
 
@@ -73,8 +73,8 @@ describe('#buildTaskListViewModel', () => {
   test('PRNs + BusinessPlan Completed — sampling plan unlocked', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Prns: { SectionStatus: 'Completed' },
-        BusinessPlan: { SectionStatus: 'Completed' }
+        prns: { sectionStatus: 'Completed' },
+        businessPlan: { sectionStatus: 'Completed' }
       }),
       t
     )
@@ -88,9 +88,9 @@ describe('#buildTaskListViewModel', () => {
   test('all sections Completed — allComplete true, continueUrl set', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Prns: { SectionStatus: 'Completed' },
-        BusinessPlan: { SectionStatus: 'Completed' },
-        SamplingPlan: { SectionStatus: 'Completed' }
+        prns: { sectionStatus: 'Completed' },
+        businessPlan: { sectionStatus: 'Completed' },
+        samplingPlan: { sectionStatus: 'Completed' }
       }),
       t
     )
@@ -102,7 +102,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs InProgress — tag shows IN PROGRESS with blue class', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: { SectionStatus: 'InProgress' } }),
+      makeApplication({ prns: { sectionStatus: 'InProgress' } }),
       t
     )
 
@@ -117,7 +117,11 @@ describe('#buildTaskListViewModel', () => {
 
   test('metadata contains year and site', () => {
     const vm = buildTaskListViewModel(
+<<<<<<< HEAD
       makeApplication({ Year: 2026, SiteAddress: '123 Test Street' }),
+=======
+      makeApplication({ year: 2026, siteId: 'site-xyz' }),
+>>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
       t
     )
     expect(vm.metadata.year).toBe(2026)
@@ -125,13 +129,13 @@ describe('#buildTaskListViewModel', () => {
   })
 
   test('null SiteId falls back to siteNotSet translation', () => {
-    const vm = buildTaskListViewModel(makeApplication({ SiteId: null }), t)
+    const vm = buildTaskListViewModel(makeApplication({ siteId: null }), t)
     expect(vm.metadata.site).toBe('siteNotSet')
   })
 
   test('null Prns/BusinessPlan/SamplingPlan treated as NotStarted', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: null, BusinessPlan: null, SamplingPlan: null }),
+      makeApplication({ prns: null, businessPlan: null, samplingPlan: null }),
       t
     )
     expect(vm.allComplete).toBe(false)
@@ -226,7 +230,7 @@ describe('#taskListGetController', () => {
 
     test('shows IN PROGRESS tag when PRNs section is InProgress', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'InProgress' } })
+        makeApplication({ prns: { sectionStatus: 'InProgress' } })
       )
 
       const { result } = await server.inject({
@@ -241,7 +245,7 @@ describe('#taskListGetController', () => {
 
     test('shows COMPLETED tag with green class', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'Completed' } })
+        makeApplication({ prns: { sectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({
@@ -269,9 +273,9 @@ describe('#taskListGetController', () => {
     test('Continue button present when all sections are Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' }
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
         })
       )
 
@@ -303,7 +307,7 @@ describe('#taskListGetController', () => {
 
     test('business plan row has link when PRNs complete (unlocked)', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'Completed' } })
+        makeApplication({ prns: { sectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({
@@ -342,7 +346,7 @@ describe('#taskListGetController', () => {
 
     test('renders year and site metadata', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Year: 2026, SiteId: 'site-123' })
+        makeApplication({ year: 2026, siteId: 'site-123' })
       )
 
       const { result } = await server.inject({

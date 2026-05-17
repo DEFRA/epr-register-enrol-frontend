@@ -25,28 +25,28 @@ const t = (key) => {
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: {
-      NewInfrastructurePercent: 40,
-      PriceSupportPercent: 20,
-      BusinessCollectionsPercent: 15,
-      CommunicationsPercent: 10,
-      NewMarketsPercent: 10,
-      NewUsesPercent: 5,
-      NewInfrastructureDetail: 'Investing in sorting lines',
-      PriceSupportDetail: '',
-      BusinessCollectionsDetail: '',
-      CommunicationsDetail: '',
-      NewMarketsDetail: '',
-      NewUsesDetail: '',
-      SectionStatus: 'InProgress'
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: {
+      newInfrastructurePercent: 40,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 15,
+      communicationsPercent: 10,
+      newMarketsPercent: 10,
+      newUsesPercent: 5,
+      newInfrastructureDetail: 'Investing in sorting lines',
+      priceSupportDetail: '',
+      businessCollectionsDetail: '',
+      communicationsDetail: '',
+      newMarketsDetail: '',
+      newUsesDetail: '',
+      sectionStatus: 'InProgress'
     },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -74,9 +74,9 @@ describe('#buildSummaryRows', () => {
 
   test('shows "Not provided" when percent value is undefined', () => {
     const application = makeApplication({
-      BusinessPlan: {
-        NewMarketsPercent: undefined,
-        SectionStatus: 'InProgress'
+      businessPlan: {
+        newMarketsPercent: undefined,
+        sectionStatus: 'InProgress'
       }
     })
     const { percentRows } = buildSummaryRows(application, t, APPLICATION_ID)
@@ -268,7 +268,7 @@ describe('#businessPlanCyaController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
-        expect.objectContaining({ NewInfrastructurePercent: 40 })
+        expect.objectContaining({ newInfrastructurePercent: 40 })
       )
     })
 

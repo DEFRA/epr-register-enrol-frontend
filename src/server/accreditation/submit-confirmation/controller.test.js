@@ -16,6 +16,7 @@ const APPLICATION_ID = 'app-conf-001'
 
 function makeApplication(overrides = {}) {
   return {
+<<<<<<< HEAD
     ApplicationId: APPLICATION_ID,
     OrganisationId: 'test-operator-id',
     MaterialType: 'Steel',
@@ -26,6 +27,18 @@ function makeApplication(overrides = {}) {
     Prns: { SectionStatus: 'Completed' },
     BusinessPlan: { SectionStatus: 'Completed' },
     SamplingPlan: { SectionStatus: 'Completed', Files: [] },
+=======
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    applicationStatus: 'Sent',
+    applicationReference: 'EPR-ACC-2027-000001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: { sectionStatus: 'Completed' },
+    samplingPlan: { sectionStatus: 'Completed', files: [] },
+>>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
     ...overrides
   }
 }
@@ -62,8 +75,13 @@ describe('#submitConfirmationController', () => {
   ) {
     // Use the submit-declaration POST to seed the session with an applicationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
+<<<<<<< HEAD
       AccreditationReference: reference,
       ApplicationStatus: 'Sent'
+=======
+      applicationReference: reference,
+      applicationStatus: 'Sent'
+>>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
     })
 
     const postResponse = await server.inject({
