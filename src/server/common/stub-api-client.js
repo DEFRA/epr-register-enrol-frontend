@@ -1,6 +1,6 @@
 const STUB_APPLICATIONS = [
   {
-    OrganisationId: '50000',
+    OrganisationId: 50000,
     ApplicationId: 'app001',
     SiteId: 'site001',
     RegistrationReference: 'R26ER5000390068PL',
@@ -29,7 +29,7 @@ const STUB_APPLICATIONS = [
     SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   },
   {
-    OrganisationId: '50001',
+    OrganisationId: 50001,
     ApplicationId: 'app002',
     RegistrationReference: 'R26ER5000390068PL',
     AccreditationReference: 'APP2027ER5000390GL',
@@ -50,7 +50,7 @@ const STUB_APPLICATIONS = [
     SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
   },
   {
-    OrganisationId: '50002',
+    OrganisationId: 50002,
     ApplicationId: 'app003',
     AccreditationReference: 'APP2027ER5000390GL',
     ApplicationStatus: 'Started',
@@ -103,8 +103,8 @@ const STUB_APPLICATIONS = [
 ]
 
 const STUB_ORGANISATIONS = [
-  { id: '50000', name: 'Stub Organisation Ltd' },
-  { id: '50001', name: 'Beta Recycling Co' }
+  { id: 50000, name: 'Stub Organisation Ltd' },
+  { id: 50001, name: 'Beta Recycling Co' }
 ]
 
 const APP_PATH_RE =
