@@ -93,9 +93,50 @@ const STUB_APPLICATIONS = [
 ]
 
 const STUB_ORGANISATIONS = [
-  { id: 50000, name: 'Stub Organisation Ltd' },
-  { id: 50001, name: 'Beta Recycling Co' }
+  { id: 50001, name: 'Stub Organisation Ltd' },
+  { id: 50002, name: 'Beta Recycling Co' }
 ]
+
+export const STUB_ORG_MODELS = {
+  50001: {
+    orgId: 50001,
+    schemaVersion: 1,
+    version: 1,
+    companyDetails: { name: 'Stub Organisation Ltd' },
+    registrations: [
+      {
+        siteId: 'site001',
+        material: 'Plastic',
+        wasteProcessingType: 'reprocessor',
+        siteAddress: {
+          line1: 'Stub Organisation House, Site Lane 001',
+          town: 'Siteville',
+          postcode: 'SIT3 OO1',
+          country: 'England'
+        }
+      }
+    ]
+  },
+  50002: {
+    orgId: 50002,
+    schemaVersion: 1,
+    version: 1,
+    companyDetails: { name: 'Beta Recycling Co' },
+    registrations: [
+      {
+        siteId: 'site002',
+        material: 'Glass',
+        wasteProcessingType: 'reprocessor',
+        siteAddress: {
+          line1: 'Site Lane 002',
+          town: 'Siteville',
+          postcode: 'SIT3 OO2',
+          country: 'England'
+        }
+      }
+    ]
+  }
+}
 
 const APP_PATH_RE =
   /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+?)(?:\/([^/]+))?$/
@@ -143,7 +184,7 @@ export const stubApiClient = {
       const parts = endpoint.split('/')
       const organisationId = parts[parts.length - 4]
       const index = STUB_APPLICATIONS.findIndex(
-        (x) => x.organisationId === organisationId
+        (x) => String(x.organisationId) === String(organisationId)
       )
 
       return Promise.resolve({

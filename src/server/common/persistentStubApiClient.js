@@ -1,5 +1,5 @@
 import { config } from '../../config/config.js'
-import { stubApiClient } from './stub-api-client.js'
+import { stubApiClient, STUB_ORG_MODELS } from './stub-api-client.js'
 
 const BASE = '/api/v1/accreditation-applications'
 const STUB_BASE = '/api/v1/stub/accreditation-applications'
@@ -27,6 +27,29 @@ async function tryBackendPut(orgId, appId, data) {
   }
 }
 
+async function ensureOrgInBackend(orgId) {
+  try {
+    const res = await fetch(`${backendUrl()}/organisation/${orgId}`, {
+      signal: AbortSignal.timeout(TIMEOUT_MS)
+    })
+    if (res.ok) return
+
+    const model = STUB_ORG_MODELS[String(orgId)]
+    if (!model) return
+
+    await fetch(`${backendUrl()}/organisation/${orgId}/upsert`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(model),
+      signal: AbortSignal.timeout(TIMEOUT_MS)
+    })
+  } catch (err) {
+    console.warn(
+      `[persistentStubApiClient] ensureOrgInBackend failed: ${err.message}`
+    )
+  }
+}
+
 function parseAppSegment(endpoint) {
   const m = endpoint.match(APP_SEGMENT_RE)
   return m ? { orgId: m[1], appId: m[2] } : null
@@ -35,6 +58,19 @@ function parseAppSegment(endpoint) {
 export const persistentStubApiClient = {
   async get(endpoint) {
     if (endpoint === '/organisation') {
+      try {
+        const res = await fetch(`${backendUrl()}/organisation`, {
+          signal: AbortSignal.timeout(TIMEOUT_MS)
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (Array.isArray(data) && data.length > 0) return data
+        }
+      } catch (err) {
+        console.warn(
+          `[persistentStubApiClient] backend GET /organisation failed: ${err.message}`
+        )
+      }
       return stubApiClient.get(endpoint)
     }
 
@@ -81,10 +117,11 @@ export const persistentStubApiClient = {
 
   async post(endpoint, body) {
     if (/\/seed$/.test(endpoint)) {
-      const stubResult = await stubApiClient.post(endpoint, body)
       const parts = endpoint.split('/')
       const orgId = parts[parts.length - 4]
-      const appId = stubResult.ApplicationId
+      await ensureOrgInBackend(orgId)
+      const stubResult = await stubApiClient.post(endpoint, body)
+      const appId = stubResult.applicationId
       if (orgId && appId) {
         await tryBackendPut(orgId, appId, stubResult)
       }

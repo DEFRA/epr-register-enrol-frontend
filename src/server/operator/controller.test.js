@@ -1,6 +1,19 @@
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { config } from '../../config/config.js'
+import { apiClient } from '../common/api-client.js'
+
+const STUB_ORGS = [{ id: 50001, name: 'Stub Organisation Ltd' }]
+const STUB_APPS = [
+  {
+    applicationId: 'app001',
+    siteId: 'site001',
+    materialType: 'Plastic',
+    year: 2027,
+    organisationName: 'Stub Organisation Ltd',
+    applicationStatus: 'Started'
+  }
+]
 
 describe('#operatorController', () => {
   let server
@@ -18,6 +31,17 @@ describe('#operatorController', () => {
 
   afterAll(async () => {
     await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(() => {
+    vi.spyOn(apiClient, 'get').mockImplementation((endpoint) => {
+      if (endpoint === '/organisation') return Promise.resolve(STUB_ORGS)
+      return Promise.resolve(STUB_APPS)
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   test('Should provide expected response in English', async () => {
