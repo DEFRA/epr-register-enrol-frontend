@@ -314,6 +314,7 @@
     "taskList": {
       "title": "[Welsh] Accreditation task list",
       "headingPrefix": "[Welsh] Accredit to issue PRNs: UK",
+      "headingPrefixExporter": "[Welsh] Accredit to issue PERNs: UK",
       "headingSuffix": "[Welsh] packaging waste",
       "metadataYear": "[Welsh] For:",
       "metadataSite": "[Welsh] For reprocessing site:",
@@ -322,8 +323,11 @@
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
         "prns": "[Welsh] PRNs tonnage and authority to issue PRNs",
+        "perns": "[Welsh] PERNs tonnage and authority to issue PERNs",
         "businessPlan": "[Welsh] Business plan",
-        "samplingPlan": "[Welsh] Accreditation sampling and inspection plan"
+        "samplingPlan": "[Welsh] Accreditation sampling and inspection plan",
+        "overseasSites": "[Welsh] Overseas reprocessing sites",
+        "besEvidence": "[Welsh] Evidence of broadly equivalent standards (BES)"
       }
     },
     "operatorRegistration": {

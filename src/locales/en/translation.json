@@ -322,6 +322,7 @@
     "taskList": {
       "title": "Accreditation task list",
       "headingPrefix": "Accredit to issue PRNs: UK",
+      "headingPrefixExporter": "Accredit to issue PERNs: UK",
       "headingSuffix": "packaging waste",
       "metadataYear": "For:",
       "metadataSite": "For reprocessing site:",
@@ -330,8 +331,11 @@
       "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
         "prns": "PRNs tonnage and authority to issue PRNs",
+        "perns": "PERNs tonnage and authority to issue PERNs",
         "businessPlan": "Business plan",
-        "samplingPlan": "Accreditation sampling and inspection plan"
+        "samplingPlan": "Accreditation sampling and inspection plan",
+        "overseasSites": "Overseas reprocessing sites",
+        "besEvidence": "Evidence of broadly equivalent standards (BES)"
       }
     },
     "operatorRegistration": {

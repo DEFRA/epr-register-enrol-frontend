@@ -156,6 +156,130 @@ describe('#buildTaskListViewModel', () => {
     )
     expect(vm.saveAndComeLaterLink).toBe('/operator')
   })
+
+  test('reprocessor: isExporter flag is false', () => {
+    const vm = buildTaskListViewModel(makeApplication(), t)
+    expect(vm.isExporter).toBe(false)
+  })
+
+  describe('exporter journey', () => {
+    function makeExporterApp(overrides = {}) {
+      return makeApplication({
+        IsExporter: true,
+        SiteId: null,
+        MaterialType: 'Plastic',
+        OverseasSites: { SectionStatus: 'NotStarted' },
+        BesEvidence: { SectionStatus: 'NotStarted' },
+        ...overrides
+      })
+    }
+
+    test('builds 5 tasks', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.tasks).toHaveLength(5)
+    })
+
+    test('overseas sites and BES locked when sampling plan not complete', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.tasks[3].locked).toBe(true)
+      expect(vm.tasks[3].url).toBeNull()
+      expect(vm.tasks[4].locked).toBe(true)
+      expect(vm.tasks[4].url).toBeNull()
+    })
+
+    test('overseas sites unlocked when sampling plan complete', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          Tonnage: { SectionStatus: 'Completed' },
+          BusinessPlan: { SectionStatus: 'Completed' },
+          SamplingPlan: { SectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.tasks[3].locked).toBe(false)
+      expect(vm.tasks[3].url).toContain('/select-overseas-sites/')
+      expect(vm.tasks[4].locked).toBe(true)
+    })
+
+    test('BES unlocked when overseas sites complete', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          Tonnage: { SectionStatus: 'Completed' },
+          BusinessPlan: { SectionStatus: 'Completed' },
+          SamplingPlan: { SectionStatus: 'Completed' },
+          OverseasSites: { SectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.tasks[3].locked).toBe(false)
+      expect(vm.tasks[4].locked).toBe(false)
+      expect(vm.tasks[4].url).toContain('/upload-evidence-for-overseas-site/')
+    })
+
+    test('allComplete requires all 5 sections', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          Tonnage: { SectionStatus: 'Completed' },
+          BusinessPlan: { SectionStatus: 'Completed' },
+          SamplingPlan: { SectionStatus: 'Completed' },
+          OverseasSites: { SectionStatus: 'Completed' },
+          BesEvidence: { SectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.allComplete).toBe(true)
+      expect(vm.continueUrl).toContain('/submit-declaration/')
+    })
+
+    test('allComplete false when only 3 sections done', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          Tonnage: { SectionStatus: 'Completed' },
+          BusinessPlan: { SectionStatus: 'Completed' },
+          SamplingPlan: { SectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.allComplete).toBe(false)
+      expect(vm.continueUrl).toBeNull()
+    })
+
+    test('backlink omits siteId', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({ Year: CURRENT_YEAR }),
+        t
+      )
+      expect(vm.backLink).toBe(
+        `/operator-accreditation/test-operator-id/Plastic/${CURRENT_YEAR}`
+      )
+      expect(vm.backLink).not.toContain('null')
+    })
+
+    test('task[0] label uses perns key', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.tasks[0].label).toBe('perns')
+    })
+
+    test('null OverseasSites and BesEvidence treated as NotStarted', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({ OverseasSites: null, BesEvidence: null }),
+        t
+      )
+      expect(vm.tasks[3].statusTagText).toBe('NOT STARTED')
+      expect(vm.tasks[4].statusTagText).toBe('NOT STARTED')
+      expect(vm.allComplete).toBe(false)
+    })
+
+    test('isExporter flag set true in view model', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.isExporter).toBe(true)
+    })
+
+    test('metadata.site is null for exporter', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.metadata.site).toBeNull()
+    })
+  })
 })
 
 describe('#taskListGetController', () => {
@@ -386,6 +510,117 @@ describe('#taskListGetController', () => {
 
       expect(result).toContain('data-testid="back-link"')
       expect(result).toContain('href="/operator-accreditation"')
+    })
+
+    test('exporter: renders 5 task rows', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          IsExporter: true,
+          SiteId: null,
+          MaterialType: 'Plastic',
+          OverseasSites: { SectionStatus: 'NotStarted' },
+          BesEvidence: { SectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="task-prns"')
+      expect(result).toContain('data-testid="task-business-plan"')
+      expect(result).toContain('data-testid="task-sampling-plan"')
+      expect(result).toContain('data-testid="task-overseas-sites"')
+      expect(result).toContain('data-testid="task-bes-evidence"')
+    })
+
+    test('exporter: heading contains PERNs', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          IsExporter: true,
+          SiteId: null,
+          MaterialType: 'Plastic',
+          OverseasSites: { SectionStatus: 'NotStarted' },
+          BesEvidence: { SectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Accredit to issue PERNs: UK')
+    })
+
+    test('exporter: all 5 sections complete shows Continue button', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          IsExporter: true,
+          SiteId: null,
+          MaterialType: 'Plastic',
+          Tonnage: { SectionStatus: 'Completed' },
+          BusinessPlan: { SectionStatus: 'Completed' },
+          SamplingPlan: { SectionStatus: 'Completed' },
+          OverseasSites: { SectionStatus: 'Completed' },
+          BesEvidence: { SectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="continue-button"')
+    })
+
+    test('exporter: 3 sections complete does not show Continue button', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          IsExporter: true,
+          SiteId: null,
+          MaterialType: 'Plastic',
+          Tonnage: { SectionStatus: 'Completed' },
+          BusinessPlan: { SectionStatus: 'Completed' },
+          SamplingPlan: { SectionStatus: 'Completed' },
+          OverseasSites: { SectionStatus: 'NotStarted' },
+          BesEvidence: { SectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="continue-button"')
+    })
+
+    test('exporter: does not show site metadata row', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          IsExporter: true,
+          SiteId: null,
+          MaterialType: 'Plastic',
+          OverseasSites: { SectionStatus: 'NotStarted' },
+          BesEvidence: { SectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="metadata-site"')
     })
 
     test('returns 200 in Welsh locale', async () => {

@@ -19,68 +19,121 @@ export function buildTaskListViewModel(application, t) {
     Year,
     SiteId,
     SiteAddress,
+    OrganisationId,
     Tonnage,
     BusinessPlan,
-    SamplingPlan
+    SamplingPlan,
+    OverseasSites,
+    BesEvidence,
+    IsExporter
   } = application
 
   const materialDisplay = t(`pages.materialSelection.materials.${MaterialType}`)
-  const heading = `${t('pages.taskList.headingPrefix')} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
+  const headingPrefix = IsExporter
+    ? t('pages.taskList.headingPrefixExporter')
+    : t('pages.taskList.headingPrefix')
+  const heading = `${headingPrefix} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
 
-  const prnsComplete = (Tonnage?.SectionStatus ?? 'NotStarted') === 'Completed'
+  const tonnageComplete =
+    (Tonnage?.SectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =
     (BusinessPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
   const spComplete =
     (SamplingPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
 
-  const bpLocked = !prnsComplete
+  const bpLocked = !tonnageComplete
   const spLocked = !bpComplete
-  const allComplete = prnsComplete && bpComplete && spComplete
 
-  const prnsSt = sectionStatus(Tonnage?.SectionStatus)
+  const tonnageSt = sectionStatus(Tonnage?.SectionStatus)
   const bpSt = sectionStatus(BusinessPlan?.SectionStatus)
   const spSt = sectionStatus(SamplingPlan?.SectionStatus)
-  const backlink = `/operator-accreditation/${application.OrganisationId}/${SiteId}/${MaterialType}/${Year}`
-  const saveAndComeLaterlink = `/operator`
+
+  const backLink = IsExporter
+    ? `/operator-accreditation/${OrganisationId}/${MaterialType}/${Year}`
+    : `/operator-accreditation/${OrganisationId}/${SiteId}/${MaterialType}/${Year}`
+
+  const tasks = [
+    {
+      label: IsExporter
+        ? t('pages.taskList.tasks.perns')
+        : t('pages.taskList.tasks.prns'),
+      url: `/accreditation/tonnage/${ApplicationId}`,
+      locked: false,
+      statusTagText: tonnageSt.tagText,
+      statusTagClass: tonnageSt.tagClass,
+      testId: 'task-prns'
+    },
+    {
+      label: t('pages.taskList.tasks.businessPlan'),
+      url: bpLocked ? null : `/accreditation/business-plan/${ApplicationId}`,
+      locked: bpLocked,
+      statusTagText: bpSt.tagText,
+      statusTagClass: bpSt.tagClass,
+      testId: 'task-business-plan'
+    },
+    {
+      label: t('pages.taskList.tasks.samplingPlan'),
+      url: spLocked ? null : `/accreditation/sampling-plan/${ApplicationId}`,
+      locked: spLocked,
+      statusTagText: spSt.tagText,
+      statusTagClass: spSt.tagClass,
+      testId: 'task-sampling-plan'
+    }
+  ]
+
+  let allComplete = tonnageComplete && bpComplete && spComplete
+
+  if (IsExporter) {
+    const osComplete =
+      (OverseasSites?.SectionStatus ?? 'NotStarted') === 'Completed'
+    const besComplete =
+      (BesEvidence?.SectionStatus ?? 'NotStarted') === 'Completed'
+    const osLocked = !spComplete
+    const besLocked = !osComplete
+
+    const osSt = sectionStatus(OverseasSites?.SectionStatus)
+    const besSt = sectionStatus(BesEvidence?.SectionStatus)
+
+    tasks.push(
+      {
+        label: t('pages.taskList.tasks.overseasSites'),
+        url: osLocked
+          ? null
+          : `/accreditation/select-overseas-sites/${ApplicationId}`,
+        locked: osLocked,
+        statusTagText: osSt.tagText,
+        statusTagClass: osSt.tagClass,
+        testId: 'task-overseas-sites'
+      },
+      {
+        label: t('pages.taskList.tasks.besEvidence'),
+        url: besLocked
+          ? null
+          : `/accreditation/upload-evidence-for-overseas-site/${ApplicationId}`,
+        locked: besLocked,
+        statusTagText: besSt.tagText,
+        statusTagClass: besSt.tagClass,
+        testId: 'task-bes-evidence'
+      }
+    )
+
+    allComplete = allComplete && osComplete && besComplete
+  }
 
   return {
     heading,
+    isExporter: IsExporter ?? false,
     metadata: {
       year: Year,
-      site: SiteAddress ?? t('pages.taskList.siteNotSet')
+      site: IsExporter ? null : (SiteAddress ?? t('pages.taskList.siteNotSet'))
     },
-    tasks: [
-      {
-        label: t('pages.taskList.tasks.prns'),
-        url: `/accreditation/tonnage/${ApplicationId}`,
-        locked: false,
-        statusTagText: prnsSt.tagText,
-        statusTagClass: prnsSt.tagClass,
-        testId: 'task-prns'
-      },
-      {
-        label: t('pages.taskList.tasks.businessPlan'),
-        url: bpLocked ? null : `/accreditation/business-plan/${ApplicationId}`,
-        locked: bpLocked,
-        statusTagText: bpSt.tagText,
-        statusTagClass: bpSt.tagClass,
-        testId: 'task-business-plan'
-      },
-      {
-        label: t('pages.taskList.tasks.samplingPlan'),
-        url: spLocked ? null : `/accreditation/sampling-plan/${ApplicationId}`,
-        locked: spLocked,
-        statusTagText: spSt.tagText,
-        statusTagClass: spSt.tagClass,
-        testId: 'task-sampling-plan'
-      }
-    ],
+    tasks,
     allComplete,
     continueUrl: allComplete
       ? `/accreditation/submit-declaration/${ApplicationId}`
       : null,
-    backLink: backlink,
-    saveAndComeLaterLink: saveAndComeLaterlink
+    backLink,
+    saveAndComeLaterLink: '/operator'
   }
 }
 
