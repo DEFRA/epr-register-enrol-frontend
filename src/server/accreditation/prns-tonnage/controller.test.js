@@ -24,7 +24,7 @@ function makeApplication(overrides = {}) {
     MaterialType: 'Steel',
     Year: 2025,
     SiteId: 'site-001',
-    Prns: {
+    Tonnage: {
       PlannedTonnageBand: null,
       Authorisers: [],
       SectionStatus: 'NotStarted'
@@ -129,7 +129,10 @@ describe('#prnsTonnageController', () => {
     test('pre-populates radio when application has existing PlannedTonnageBand', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: { PlannedTonnageBand: 'UpTo1000', SectionStatus: 'InProgress' }
+          Tonnage: {
+            PlannedTonnageBand: 'UpTo1000',
+            SectionStatus: 'InProgress'
+          }
         })
       )
 
@@ -271,7 +274,7 @@ describe('#prnsTonnageController', () => {
       )
       expect(getSpy).toHaveBeenCalledOnce()
       expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/prns`),
+        expect.stringContaining(`${APPLICATION_ID}/tonnage`),
         { PlannedTonnageBand: 'UpTo1000' }
       )
     })

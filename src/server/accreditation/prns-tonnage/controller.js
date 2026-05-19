@@ -58,7 +58,7 @@ export const prnsTonnageGetController = {
       pageTitle: t('pages.prnsTonnage.title'),
       heading: buildHeading(application.MaterialType, t),
       tonnageOptions: buildTonnageOptions(
-        application.Prns?.PlannedTonnageBand ?? null,
+        application.Tonnage?.PlannedTonnageBand ?? null,
         t
       ),
       backLink: taskListUrl(applicationId)
@@ -115,9 +115,13 @@ export const prnsTonnagePostController = {
     }
 
     try {
-      await accreditationApiService.patchPrns(organisationId, applicationId, {
-        PlannedTonnageBand: plannedTonnageBand
-      })
+      await accreditationApiService.patchTonnage(
+        organisationId,
+        applicationId,
+        {
+          PlannedTonnageBand: plannedTonnageBand
+        }
+      )
     } catch (error) {
       request.server.logger.error(
         `Error saving PRNs tonnage for ${applicationId}: ${error.message}`

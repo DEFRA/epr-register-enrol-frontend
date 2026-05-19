@@ -25,7 +25,7 @@ function makeApplication(overrides = {}) {
     MaterialType: 'Steel',
     Year: CURRENT_YEAR,
     SiteId: 'site-abc',
-    Prns: { SectionStatus: 'NotStarted' },
+    Tonnage: { SectionStatus: 'NotStarted' },
     BusinessPlan: { SectionStatus: 'NotStarted' },
     SamplingPlan: { SectionStatus: 'NotStarted' },
     ...overrides
@@ -54,7 +54,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs Completed — business plan unlocked, sampling plan still locked', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: { SectionStatus: 'Completed' } }),
+      makeApplication({ Tonnage: { SectionStatus: 'Completed' } }),
       t
     )
 
@@ -73,7 +73,7 @@ describe('#buildTaskListViewModel', () => {
   test('PRNs + BusinessPlan Completed — sampling plan unlocked', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Prns: { SectionStatus: 'Completed' },
+        Tonnage: { SectionStatus: 'Completed' },
         BusinessPlan: { SectionStatus: 'Completed' }
       }),
       t
@@ -88,7 +88,7 @@ describe('#buildTaskListViewModel', () => {
   test('all sections Completed — allComplete true, continueUrl set', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Prns: { SectionStatus: 'Completed' },
+        Tonnage: { SectionStatus: 'Completed' },
         BusinessPlan: { SectionStatus: 'Completed' },
         SamplingPlan: { SectionStatus: 'Completed' }
       }),
@@ -102,7 +102,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs InProgress — tag shows IN PROGRESS with blue class', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: { SectionStatus: 'InProgress' } }),
+      makeApplication({ Tonnage: { SectionStatus: 'InProgress' } }),
       t
     )
 
@@ -131,7 +131,11 @@ describe('#buildTaskListViewModel', () => {
 
   test('null Prns/BusinessPlan/SamplingPlan treated as NotStarted', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: null, BusinessPlan: null, SamplingPlan: null }),
+      makeApplication({
+        Tonnage: null,
+        BusinessPlan: null,
+        SamplingPlan: null
+      }),
       t
     )
     expect(vm.allComplete).toBe(false)
@@ -226,7 +230,7 @@ describe('#taskListGetController', () => {
 
     test('shows IN PROGRESS tag when PRNs section is InProgress', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'InProgress' } })
+        makeApplication({ Tonnage: { SectionStatus: 'InProgress' } })
       )
 
       const { result } = await server.inject({
@@ -241,7 +245,7 @@ describe('#taskListGetController', () => {
 
     test('shows COMPLETED tag with green class', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'Completed' } })
+        makeApplication({ Tonnage: { SectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({
@@ -269,7 +273,7 @@ describe('#taskListGetController', () => {
     test('Continue button present when all sections are Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: { SectionStatus: 'Completed' },
+          Tonnage: { SectionStatus: 'Completed' },
           BusinessPlan: { SectionStatus: 'Completed' },
           SamplingPlan: { SectionStatus: 'Completed' }
         })
@@ -303,7 +307,7 @@ describe('#taskListGetController', () => {
 
     test('business plan row has link when PRNs complete (unlocked)', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'Completed' } })
+        makeApplication({ Tonnage: { SectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({

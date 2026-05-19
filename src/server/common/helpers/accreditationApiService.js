@@ -33,6 +33,12 @@ export const accreditationApiService = {
     )
   },
 
+  seedExporterApplication(organisationId, materialType, year) {
+    return call(() =>
+      apiClient.post(`${BASE}/${organisationId}/${materialType}/seed`, { year })
+    )
+  },
+
   listApplications(organisationId) {
     return call(() => apiClient.get(`${BASE}/${organisationId}`))
   },
@@ -41,9 +47,9 @@ export const accreditationApiService = {
     return call(() => apiClient.get(appBase(organisationId, applicationId)))
   },
 
-  patchPrns(organisationId, applicationId, body) {
+  patchTonnage(organisationId, applicationId, body) {
     return call(() =>
-      apiClient.patch(`${appBase(organisationId, applicationId)}/prns`, body)
+      apiClient.patch(`${appBase(organisationId, applicationId)}/tonnage`, body)
     )
   },
 
@@ -60,6 +66,50 @@ export const accreditationApiService = {
     return call(() =>
       apiClient.patch(
         `${appBase(organisationId, applicationId)}/sampling-plan`,
+        body
+      )
+    )
+  },
+
+  patchOverseasSites(organisationId, applicationId, body) {
+    return call(() =>
+      apiClient.patch(
+        `${appBase(organisationId, applicationId)}/overseas-sites`,
+        body
+      )
+    )
+  },
+
+  addBesEvidenceFile(organisationId, applicationId, siteId, body) {
+    return call(() =>
+      apiClient.post(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files`,
+        body
+      )
+    )
+  },
+
+  patchBesEvidence(organisationId, applicationId, siteId, body) {
+    return call(() =>
+      apiClient.patch(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence`,
+        body
+      )
+    )
+  },
+
+  deleteBesEvidenceFile(organisationId, applicationId, siteId, fileId) {
+    return call(() =>
+      apiClient.delete(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${fileId}`
+      )
+    )
+  },
+
+  patchBesEvidenceSection(organisationId, applicationId, body) {
+    return call(() =>
+      apiClient.patch(
+        `${appBase(organisationId, applicationId)}/bes-evidence`,
         body
       )
     )

@@ -36,7 +36,7 @@ function prnsCyaUrl(applicationId) {
 }
 
 function patchUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/prns`
+  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/tonnage`
 }
 
 function appUrl(organisationId, applicationId) {
@@ -51,7 +51,7 @@ function buildViewData(application, t, applicationId, opts = {}) {
   return {
     pageTitle: t('pages.prnsAuthority.title'),
     heading: buildHeading(application.MaterialType, application.SiteId, t),
-    authoriserRows: buildAuthoriserRows(application.Prns?.Authorisers, t),
+    authoriserRows: buildAuthoriserRows(application.Tonnage?.Authorisers, t),
     backLink: prnsTonnageUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     ...opts
@@ -121,7 +121,7 @@ export const prnsAuthorityPostController = {
       application.SiteId,
       t
     )
-    const currentAuthorisers = application.Prns?.Authorisers ?? []
+    const currentAuthorisers = application.Tonnage?.Authorisers ?? []
 
     if (submitAction === 'addAuthoriser') {
       const addErrors = {}

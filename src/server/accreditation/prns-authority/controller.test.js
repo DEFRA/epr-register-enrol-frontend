@@ -24,7 +24,7 @@ function makeApplication(overrides = {}) {
     MaterialType: 'Steel',
     Year: 2025,
     SiteId: 'site-001',
-    Prns: {
+    Tonnage: {
       PlannedTonnageBand: 'UpTo1000',
       Authorisers: [],
       SectionStatus: 'InProgress'
@@ -145,7 +145,7 @@ describe('#prnsAuthorityController', () => {
     test('renders authoriser table when authorisers exist', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             PlannedTonnageBand: 'UpTo1000',
             Authorisers: [
               { FullName: 'Jane Smith', Email: 'jane@example.com' }
@@ -169,7 +169,7 @@ describe('#prnsAuthorityController', () => {
     test('pre-checks saved authorisers', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             Authorisers: [
               { FullName: 'Jane Smith', Email: 'jane@example.com' }
             ],
@@ -235,7 +235,7 @@ describe('#prnsAuthorityController', () => {
         `/accreditation/prns-authority/${APPLICATION_ID}`
       )
       expect(apiClient.patch).toHaveBeenCalledWith(
-        expect.stringContaining('/prns'),
+        expect.stringContaining('/tonnage'),
         expect.objectContaining({
           Authorisers: expect.arrayContaining([
             expect.objectContaining({
@@ -304,7 +304,7 @@ describe('#prnsAuthorityController', () => {
     test('returns 400 with error when email is a duplicate', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             Authorisers: [
               { FullName: 'Jane Smith', Email: 'jane@example.com' }
             ],
@@ -350,7 +350,7 @@ describe('#prnsAuthorityController', () => {
     test('appends new authoriser to existing list', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             Authorisers: [{ FullName: 'Alice', Email: 'alice@example.com' }],
             SectionStatus: 'InProgress'
           }
@@ -378,7 +378,7 @@ describe('#prnsAuthorityController', () => {
     test('returns 400 error when no checkboxes selected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             Authorisers: [
               { FullName: 'Jane Smith', Email: 'jane@example.com' }
             ],
@@ -401,7 +401,7 @@ describe('#prnsAuthorityController', () => {
     test('patches with selected authorisers and redirects to prns-cya', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             Authorisers: [
               { FullName: 'Jane Smith', Email: 'jane@example.com' },
               { FullName: 'Bob', Email: 'bob@example.com' }
@@ -454,7 +454,7 @@ describe('#prnsAuthorityController', () => {
     test('returns 500 when PATCH fails during saveAndContinue', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             Authorisers: [
               { FullName: 'Jane Smith', Email: 'jane@example.com' }
             ],

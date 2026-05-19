@@ -34,7 +34,7 @@ function appUrl(organisationId, applicationId) {
 }
 
 function patchUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/prns`
+  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/tonnage`
 }
 
 export const prnsCyaGetController = {
@@ -59,8 +59,8 @@ export const prnsCyaGetController = {
       }).code(500)
     }
 
-    const tonnageBand = application.Prns?.PlannedTonnageBand ?? null
-    const authorisers = application.Prns?.Authorisers ?? []
+    const tonnageBand = application.Tonnage?.PlannedTonnageBand ?? null
+    const authorisers = application.Tonnage?.Authorisers ?? []
     const fromCYA = '?fromCYA=true'
 
     return renderPage(h, {
@@ -103,8 +103,8 @@ export const prnsCyaPostController = {
       }).code(500)
     }
 
-    const tonnageBand = application.Prns?.PlannedTonnageBand ?? null
-    const authorisers = application.Prns?.Authorisers ?? []
+    const tonnageBand = application.Tonnage?.PlannedTonnageBand ?? null
+    const authorisers = application.Tonnage?.Authorisers ?? []
     const fromCYA = '?fromCYA=true'
 
     try {

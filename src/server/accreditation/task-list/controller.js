@@ -19,7 +19,7 @@ export function buildTaskListViewModel(application, t) {
     Year,
     SiteId,
     SiteAddress,
-    Prns,
+    Tonnage,
     BusinessPlan,
     SamplingPlan
   } = application
@@ -27,7 +27,7 @@ export function buildTaskListViewModel(application, t) {
   const materialDisplay = t(`pages.materialSelection.materials.${MaterialType}`)
   const heading = `${t('pages.taskList.headingPrefix')} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
 
-  const prnsComplete = (Prns?.SectionStatus ?? 'NotStarted') === 'Completed'
+  const prnsComplete = (Tonnage?.SectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =
     (BusinessPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
   const spComplete =
@@ -37,7 +37,7 @@ export function buildTaskListViewModel(application, t) {
   const spLocked = !bpComplete
   const allComplete = prnsComplete && bpComplete && spComplete
 
-  const prnsSt = sectionStatus(Prns?.SectionStatus)
+  const prnsSt = sectionStatus(Tonnage?.SectionStatus)
   const bpSt = sectionStatus(BusinessPlan?.SectionStatus)
   const spSt = sectionStatus(SamplingPlan?.SectionStatus)
   const backlink = `/operator-accreditation/${application.OrganisationId}/${SiteId}/${MaterialType}/${Year}`

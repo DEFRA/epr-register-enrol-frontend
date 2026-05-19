@@ -24,7 +24,7 @@ function makeApplication(overrides = {}) {
     MaterialType: 'Steel',
     Year: 2025,
     SiteId: 'site-001',
-    Prns: {
+    Tonnage: {
       PlannedTonnageBand: 'UpTo1000',
       Authorisers: [{ FullName: 'Jane Smith', Email: 'jane@example.com' }],
       SectionStatus: 'InProgress'
@@ -163,7 +163,7 @@ describe('#prnsCyaController', () => {
     test('shows none selected when no authorisers', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: {
+          Tonnage: {
             PlannedTonnageBand: 'UpTo500',
             Authorisers: [],
             SectionStatus: 'InProgress'
@@ -225,7 +225,7 @@ describe('#prnsCyaController', () => {
         `/accreditation/task-list/${APPLICATION_ID}`
       )
       expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('/prns'),
+        expect.stringContaining('/tonnage'),
         expect.objectContaining({
           PlannedTonnageBand: 'UpTo1000',
           Authorisers: expect.arrayContaining([
