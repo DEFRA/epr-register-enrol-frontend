@@ -33,7 +33,7 @@
 
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
-      <p class="govuk-body">{{ t('pages.prnsAuthority.intro') }}</p>
+      <p class="govuk-body">{{ intro }}</p>
 
       <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
@@ -41,7 +41,7 @@
         <div class="govuk-form-group {% if errors.authorisers %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" id="authorisers-fieldset" {% if errors.authorisers %}aria-describedby="authorisers-error"{% endif %}>
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-              {{ t('pages.prnsAuthority.selectSubHeading') }}
+              {{ selectSubHeading }}
             </legend>
 
             {% if errors.authorisers %}

@@ -24,6 +24,7 @@ function makeApplication(overrides = {}) {
     MaterialType: 'Steel',
     Year: 2025,
     SiteId: 'site-001',
+    IsExporter: false,
     Tonnage: {
       PlannedTonnageBand: 'UpTo1000',
       Authorisers: [{ FullName: 'Jane Smith', Email: 'jane@example.com' }],
@@ -81,7 +82,7 @@ describe('#buildAuthorisersSummary', () => {
   })
 })
 
-describe('#prnsCyaController', () => {
+describe('#tonnageCyaController', () => {
   let server
 
   beforeAll(async () => {
@@ -108,13 +109,13 @@ describe('#prnsCyaController', () => {
     'x-test-user-type': 'operator'
   }
 
-  describe('GET /accreditation/prns-cya/{applicationId}', () => {
+  describe('GET /accreditation/tonnage-cya/{applicationId}', () => {
     test('returns 200 with page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -127,7 +128,7 @@ describe('#prnsCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -141,7 +142,7 @@ describe('#prnsCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -153,11 +154,27 @@ describe('#prnsCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
       expect(result).toContain('Jane Smith')
+    })
+
+    test('handles null Tonnage gracefully showing not-selected values', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ Tonnage: null })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="tonnage-value"')
+      expect(result).toContain('data-testid="authorisers-value"')
     })
 
     test('shows none selected when no authorisers', async () => {
@@ -173,7 +190,7 @@ describe('#prnsCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -185,7 +202,7 @@ describe('#prnsCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -194,12 +211,29 @@ describe('#prnsCyaController', () => {
       expect(result).toContain('data-testid="change-authority-link"')
     })
 
+    test('exporter GET shows PERN-specific row labels', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ IsExporter: true })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Tonnage of PERNs you plan to issue')
+      expect(result).toContain('request authority to issue PERNs')
+      expect(result).toContain('authority to issue PERNs')
+    })
+
     test('returns 500 when API fetch fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('network error'))
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -208,14 +242,14 @@ describe('#prnsCyaController', () => {
     })
   })
 
-  describe('POST /accreditation/prns-cya/{applicationId} - confirm', () => {
+  describe('POST /accreditation/tonnage-cya/{applicationId} - confirm', () => {
     test('PATCHes application and redirects to task list on confirm', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
@@ -241,7 +275,7 @@ describe('#prnsCyaController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
@@ -249,15 +283,47 @@ describe('#prnsCyaController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
+
+    test('returns 500 when GET fetch fails during confirm', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('network error'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('exporter confirm PATCH fails shows PERN labels in error page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ IsExporter: true })
+      )
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('save failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Tonnage of PERNs you plan to issue')
+    })
   })
 
-  describe('POST /accreditation/prns-cya/{applicationId} - saveAndComeLater', () => {
+  describe('POST /accreditation/tonnage-cya/{applicationId} - saveAndComeLater', () => {
     test('redirects to task list without calling PATCH', async () => {
       const patchSpy = vi.spyOn(apiClient, 'patch')
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-cya/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })

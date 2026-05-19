@@ -24,6 +24,7 @@ function makeApplication(overrides = {}) {
     MaterialType: 'Steel',
     Year: 2025,
     SiteId: 'site-001',
+    IsExporter: false,
     Tonnage: {
       PlannedTonnageBand: null,
       Authorisers: [],
@@ -67,7 +68,7 @@ describe('#buildTonnageOptions', () => {
   })
 })
 
-describe('#prnsTonnageController', () => {
+describe('#tonnageController', () => {
   let server
 
   beforeAll(async () => {
@@ -94,13 +95,13 @@ describe('#prnsTonnageController', () => {
     'x-test-user-type': 'operator'
   }
 
-  describe('GET /accreditation/prns-tonnage/{applicationId}', () => {
+  describe('GET /accreditation/tonnage/{applicationId}', () => {
     test('returns 200 with heading containing the material type', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -114,7 +115,7 @@ describe('#prnsTonnageController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -138,11 +139,10 @@ describe('#prnsTonnageController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
-      // Nunjucks renders: value="UpTo1000" followed (possibly with whitespace) by checked
       expect(result).toMatch(/value="UpTo1000"[\s\S]*?checked/)
     })
 
@@ -151,7 +151,7 @@ describe('#prnsTonnageController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -165,7 +165,7 @@ describe('#prnsTonnageController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -179,7 +179,7 @@ describe('#prnsTonnageController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -192,17 +192,31 @@ describe('#prnsTonnageController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/cy/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] How many PRNs do you plan to issue?')
     })
+
+    test('exporter sees PERNs heading suffix', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ IsExporter: true })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('PERNs do you plan to issue?')
+    })
   })
 
-  describe('GET task list hub — links to PRNs tonnage page', () => {
-    test('task list renders a link to the PRNs tonnage page for the PRNs task', async () => {
+  describe('GET task list hub — links to tonnage page', () => {
+    test('task list renders a link to the tonnage page for the PRNs task', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
@@ -213,19 +227,19 @@ describe('#prnsTonnageController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        `href="/accreditation/prns-tonnage/${APPLICATION_ID}"`
+        `href="/accreditation/tonnage/${APPLICATION_ID}"`
       )
       expect(result).toContain('data-testid="task-prns-link"')
     })
   })
 
-  describe('POST /accreditation/prns-tonnage/{applicationId}', () => {
+  describe('POST /accreditation/tonnage/{applicationId}', () => {
     test('returns 400 with validation error when no selection', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: { submitAction: 'saveAndContinue' }
       })
@@ -235,12 +249,28 @@ describe('#prnsTonnageController', () => {
       expect(result).toContain('Select how many PRNs you plan to issue')
     })
 
+    test('exporter gets PERN validation message when no selection', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ IsExporter: true })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Select how many PERNs you plan to issue')
+    })
+
     test('returns 400 with validation error when invalid value submitted', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           plannedTonnageBand: 'InvalidValue',
@@ -252,7 +282,7 @@ describe('#prnsTonnageController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('save-and-continue patches PRNs and redirects to prns-authority', async () => {
+    test('save-and-continue patches tonnage and redirects to tonnage-authority', async () => {
       const getSpy = vi
         .spyOn(apiClient, 'get')
         .mockResolvedValue(makeApplication())
@@ -260,7 +290,7 @@ describe('#prnsTonnageController', () => {
 
       const { headers, statusCode } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           plannedTonnageBand: 'UpTo1000',
@@ -270,7 +300,7 @@ describe('#prnsTonnageController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        `/accreditation/prns-authority/${APPLICATION_ID}`
+        `/accreditation/tonnage-authority/${APPLICATION_ID}`
       )
       expect(getSpy).toHaveBeenCalledOnce()
       expect(patchSpy).toHaveBeenCalledWith(
@@ -279,13 +309,13 @@ describe('#prnsTonnageController', () => {
       )
     })
 
-    test('save-and-come-back-later patches PRNs and redirects to task list', async () => {
+    test('save-and-come-back-later patches tonnage and redirects to task list', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { headers, statusCode } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           plannedTonnageBand: 'UpTo500',
@@ -306,7 +336,7 @@ describe('#prnsTonnageController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           plannedTonnageBand: 'UpTo500',
@@ -325,7 +355,7 @@ describe('#prnsTonnageController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           plannedTonnageBand: 'UpTo500',
@@ -343,7 +373,7 @@ describe('#prnsTonnageController', () => {
 
       const { result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-tonnage/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           plannedTonnageBand: 'Over10000',

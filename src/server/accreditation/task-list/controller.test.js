@@ -38,7 +38,7 @@ describe('#buildTaskListViewModel', () => {
 
     expect(vm.tasks[0].statusTagText).toBe('NOT STARTED')
     expect(vm.tasks[0].locked).toBe(false)
-    expect(vm.tasks[0].url).toContain('/prns-tonnage/')
+    expect(vm.tasks[0].url).toContain('/tonnage/')
 
     expect(vm.tasks[1].statusTagText).toBe('NOT STARTED')
     expect(vm.tasks[1].locked).toBe(true)

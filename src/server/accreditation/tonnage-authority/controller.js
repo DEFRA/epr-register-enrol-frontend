@@ -4,8 +4,10 @@ import { apiClient } from '../../common/api-client.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export function buildHeading(materialType, siteName, t) {
-  const prefix = t('pages.prnsAuthority.headingPrefix')
+export function buildHeading(materialType, siteName, isExporter, t) {
+  const prefix = isExporter
+    ? t('pages.prnsAuthority.headingPrefixExporter')
+    : t('pages.prnsAuthority.headingPrefix')
   const at = t('pages.prnsAuthority.headingAt')
   const material = materialType
     ? t(`pages.materialSelection.materials.${materialType}`)
@@ -27,12 +29,12 @@ function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
-function prnsTonnageUrl(applicationId) {
-  return `/accreditation/prns-tonnage/${applicationId}`
+function tonnageUrl(applicationId) {
+  return `/accreditation/tonnage/${applicationId}`
 }
 
-function prnsCyaUrl(applicationId) {
-  return `/accreditation/prns-cya/${applicationId}`
+function tonnageCyaUrl(applicationId) {
+  return `/accreditation/tonnage-cya/${applicationId}`
 }
 
 function patchUrl(organisationId, applicationId) {
@@ -44,21 +46,36 @@ function appUrl(organisationId, applicationId) {
 }
 
 function renderPage(h, viewData) {
-  return h.view('accreditation/prns-authority/index', viewData)
+  return h.view('accreditation/tonnage-authority/index', viewData)
 }
 
 function buildViewData(application, t, applicationId, opts = {}) {
+  const isExporter = application.IsExporter ?? false
   return {
-    pageTitle: t('pages.prnsAuthority.title'),
-    heading: buildHeading(application.MaterialType, application.SiteId, t),
+    pageTitle: isExporter
+      ? t('pages.prnsAuthority.titleExporter')
+      : t('pages.prnsAuthority.title'),
+    heading: buildHeading(
+      application.MaterialType,
+      application.SiteId,
+      isExporter,
+      t
+    ),
     authoriserRows: buildAuthoriserRows(application.Tonnage?.Authorisers, t),
-    backLink: prnsTonnageUrl(applicationId),
+    backLink: tonnageUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
+    isExporter,
+    intro: isExporter
+      ? t('pages.prnsAuthority.introExporter')
+      : t('pages.prnsAuthority.intro'),
+    selectSubHeading: isExporter
+      ? t('pages.prnsAuthority.selectSubHeadingExporter')
+      : t('pages.prnsAuthority.selectSubHeading'),
     ...opts
   }
 }
 
-export const prnsAuthorityGetController = {
+export const tonnageAuthorityGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
@@ -74,10 +91,13 @@ export const prnsAuthorityGetController = {
       )
       return renderPage(h, {
         pageTitle: t('pages.prnsAuthority.title'),
-        heading: buildHeading(null, null, t),
+        heading: buildHeading(null, null, false, t),
         authoriserRows: [],
-        backLink: prnsTonnageUrl(applicationId),
+        backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        isExporter: false,
+        intro: t('pages.prnsAuthority.intro'),
+        selectSubHeading: t('pages.prnsAuthority.selectSubHeading'),
         error: t('pages.prnsAuthority.validation.fetchError')
       }).code(500)
     }
@@ -86,7 +106,7 @@ export const prnsAuthorityGetController = {
   }
 }
 
-export const prnsAuthorityPostController = {
+export const tonnageAuthorityPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
@@ -108,19 +128,30 @@ export const prnsAuthorityPostController = {
       )
       return renderPage(h, {
         pageTitle: t('pages.prnsAuthority.title'),
-        heading: buildHeading(null, null, t),
+        heading: buildHeading(null, null, false, t),
         authoriserRows: [],
-        backLink: prnsTonnageUrl(applicationId),
+        backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        isExporter: false,
+        intro: t('pages.prnsAuthority.intro'),
+        selectSubHeading: t('pages.prnsAuthority.selectSubHeading'),
         error: t('pages.prnsAuthority.validation.fetchError')
       }).code(500)
     }
 
+    const isExporter = application.IsExporter ?? false
     const heading = buildHeading(
       application.MaterialType,
       application.SiteId,
+      isExporter,
       t
     )
+    const intro = isExporter
+      ? t('pages.prnsAuthority.introExporter')
+      : t('pages.prnsAuthority.intro')
+    const selectSubHeading = isExporter
+      ? t('pages.prnsAuthority.selectSubHeadingExporter')
+      : t('pages.prnsAuthority.selectSubHeading')
     const currentAuthorisers = application.Tonnage?.Authorisers ?? []
 
     if (submitAction === 'addAuthoriser') {
@@ -142,11 +173,16 @@ export const prnsAuthorityPostController = {
 
       if (Object.keys(addErrors).length > 0) {
         return renderPage(h, {
-          pageTitle: t('pages.prnsAuthority.title'),
+          pageTitle: isExporter
+            ? t('pages.prnsAuthority.titleExporter')
+            : t('pages.prnsAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
-          backLink: prnsTonnageUrl(applicationId),
+          backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
+          isExporter,
+          intro,
+          selectSubHeading,
           showAddForm: true,
           addErrors,
           newFullName: newFullName ?? '',
@@ -166,11 +202,16 @@ export const prnsAuthorityPostController = {
 
       if (Object.keys(addErrors).length > 0) {
         return renderPage(h, {
-          pageTitle: t('pages.prnsAuthority.title'),
+          pageTitle: isExporter
+            ? t('pages.prnsAuthority.titleExporter')
+            : t('pages.prnsAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
-          backLink: prnsTonnageUrl(applicationId),
+          backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
+          isExporter,
+          intro,
+          selectSubHeading,
           showAddForm: true,
           addErrors,
           newFullName: newFullName ?? '',
@@ -191,18 +232,23 @@ export const prnsAuthorityPostController = {
           `Error adding authoriser for ${applicationId}: ${err.message}`
         )
         return renderPage(h, {
-          pageTitle: t('pages.prnsAuthority.title'),
+          pageTitle: isExporter
+            ? t('pages.prnsAuthority.titleExporter')
+            : t('pages.prnsAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
-          backLink: prnsTonnageUrl(applicationId),
+          backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
+          isExporter,
+          intro,
+          selectSubHeading,
           showAddForm: true,
           newFullName: newFullName.trim(),
           newEmail: trimmedEmail,
           error: t('pages.prnsAuthority.validation.saveError')
         }).code(500)
       }
-      return h.redirect(`/accreditation/prns-authority/${applicationId}`)
+      return h.redirect(`/accreditation/tonnage-authority/${applicationId}`)
     }
 
     const checkedEmails = selectedEmails
@@ -213,14 +259,19 @@ export const prnsAuthorityPostController = {
 
     if (submitAction !== 'saveAndComeLater' && checkedEmails.length === 0) {
       return renderPage(h, {
-        pageTitle: t('pages.prnsAuthority.title'),
+        pageTitle: isExporter
+          ? t('pages.prnsAuthority.titleExporter')
+          : t('pages.prnsAuthority.title'),
         heading,
         authoriserRows: buildAuthoriserRows(currentAuthorisers, t).map((r) => ({
           ...r,
           checked: checkedEmails.includes(r.email)
         })),
-        backLink: prnsTonnageUrl(applicationId),
+        backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        isExporter,
+        intro,
+        selectSubHeading,
         errors: {
           authorisers: {
             text: t('pages.prnsAuthority.validation.selectAtLeastOne')
@@ -242,14 +293,19 @@ export const prnsAuthorityPostController = {
         `Error saving authorisers for ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.prnsAuthority.title'),
+        pageTitle: isExporter
+          ? t('pages.prnsAuthority.titleExporter')
+          : t('pages.prnsAuthority.title'),
         heading,
         authoriserRows: buildAuthoriserRows(currentAuthorisers, t).map((r) => ({
           ...r,
           checked: checkedEmails.includes(r.email)
         })),
-        backLink: prnsTonnageUrl(applicationId),
+        backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        isExporter,
+        intro,
+        selectSubHeading,
         errors: {
           authorisers: { text: t('pages.prnsAuthority.validation.saveError') }
         }
@@ -259,6 +315,6 @@ export const prnsAuthorityPostController = {
     if (submitAction === 'saveAndComeLater') {
       return h.redirect(taskListUrl(applicationId))
     }
-    return h.redirect(prnsCyaUrl(applicationId))
+    return h.redirect(tonnageCyaUrl(applicationId))
   }
 }

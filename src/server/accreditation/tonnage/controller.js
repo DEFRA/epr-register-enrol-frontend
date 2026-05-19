@@ -12,9 +12,11 @@ export function buildTonnageOptions(selectedTonnage, t) {
   }))
 }
 
-function buildHeading(materialType, t) {
+function buildHeading(materialType, isExporter, t) {
   const prefix = t('pages.prnsTonnage.headingPrefix')
-  const suffix = t('pages.prnsTonnage.headingSuffix')
+  const suffix = isExporter
+    ? t('pages.prnsTonnage.headingSuffixExporter')
+    : t('pages.prnsTonnage.headingSuffix')
   if (!materialType) return `${prefix} ${suffix}`
   const material = t(`pages.materialSelection.materials.${materialType}`)
   return `${prefix} ${material} ${suffix}`
@@ -25,10 +27,10 @@ function taskListUrl(applicationId) {
 }
 
 function renderForm(h, viewData) {
-  return h.view('accreditation/prns-tonnage/index', viewData)
+  return h.view('accreditation/tonnage/index', viewData)
 }
 
-export const prnsTonnageGetController = {
+export const tonnageGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
@@ -47,26 +49,31 @@ export const prnsTonnageGetController = {
       )
       return renderForm(h, {
         pageTitle: t('pages.prnsTonnage.title'),
-        heading: buildHeading(null, t),
+        heading: buildHeading(null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
         error: t('pages.prnsTonnage.validation.fetchError')
       }).code(500)
     }
 
+    const isExporter = application.IsExporter ?? false
+
     return renderForm(h, {
-      pageTitle: t('pages.prnsTonnage.title'),
-      heading: buildHeading(application.MaterialType, t),
+      pageTitle: isExporter
+        ? t('pages.prnsTonnage.titleExporter')
+        : t('pages.prnsTonnage.title'),
+      heading: buildHeading(application.MaterialType, isExporter, t),
       tonnageOptions: buildTonnageOptions(
         application.Tonnage?.PlannedTonnageBand ?? null,
         t
       ),
-      backLink: taskListUrl(applicationId)
+      backLink: taskListUrl(applicationId),
+      isExporter
     })
   }
 }
 
-export const prnsTonnagePostController = {
+export const tonnagePostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
@@ -87,7 +94,7 @@ export const prnsTonnagePostController = {
       )
       return renderForm(h, {
         pageTitle: t('pages.prnsTonnage.title'),
-        heading: buildHeading(null, t),
+        heading: buildHeading(null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
         errors: {
@@ -98,17 +105,24 @@ export const prnsTonnagePostController = {
       }).code(500)
     }
 
-    const heading = buildHeading(application.MaterialType, t)
+    const isExporter = application.IsExporter ?? false
+    const heading = buildHeading(application.MaterialType, isExporter, t)
+    const selectTonnageKey = isExporter
+      ? 'pages.prnsTonnage.validation.selectTonnageExporter'
+      : 'pages.prnsTonnage.validation.selectTonnage'
 
     if (!plannedTonnageBand || !TONNAGE_OPTIONS.includes(plannedTonnageBand)) {
       return renderForm(h, {
-        pageTitle: t('pages.prnsTonnage.title'),
+        pageTitle: isExporter
+          ? t('pages.prnsTonnage.titleExporter')
+          : t('pages.prnsTonnage.title'),
         heading,
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
+        isExporter,
         errors: {
           plannedTonnageBand: {
-            text: t('pages.prnsTonnage.validation.selectTonnage')
+            text: t(selectTonnageKey)
           }
         }
       }).code(400)
@@ -124,13 +138,16 @@ export const prnsTonnagePostController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error saving PRNs tonnage for ${applicationId}: ${error.message}`
+        `Error saving tonnage for ${applicationId}: ${error.message}`
       )
       return renderForm(h, {
-        pageTitle: t('pages.prnsTonnage.title'),
+        pageTitle: isExporter
+          ? t('pages.prnsTonnage.titleExporter')
+          : t('pages.prnsTonnage.title'),
         heading,
         tonnageOptions: buildTonnageOptions(plannedTonnageBand, t),
         backLink: taskListUrl(applicationId),
+        isExporter,
         errors: {
           plannedTonnageBand: {
             text: t('pages.prnsTonnage.validation.saveError')
@@ -143,6 +160,6 @@ export const prnsTonnagePostController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    return h.redirect(`/accreditation/prns-authority/${applicationId}`)
+    return h.redirect(`/accreditation/tonnage-authority/${applicationId}`)
   }
 }

@@ -15,12 +15,12 @@ import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { operatorDetails } from './operator-details/index.js'
 import { operatorOrganisationDetails } from './operator-organisation-details/index.js'
 import { taskList } from './accreditation/task-list/index.js'
-import { prnsTonnage } from './accreditation/prns-tonnage/index.js'
+import { tonnage } from './accreditation/tonnage/index.js'
 import { businessPlan } from './accreditation/business-plan/index.js'
 import { businessPlanDetail } from './accreditation/business-plan-detail/index.js'
 import { businessPlanCya } from './accreditation/business-plan-cya/index.js'
-import { prnsAuthority } from './accreditation/prns-authority/index.js'
-import { prnsCya } from './accreditation/prns-cya/index.js'
+import { tonnageAuthority } from './accreditation/tonnage-authority/index.js'
+import { tonnageCya } from './accreditation/tonnage-cya/index.js'
 import { fileUpload } from './file-upload/index.js'
 import { submitDeclaration } from './accreditation/submit-declaration/index.js'
 import { submitConfirmation } from './accreditation/submit-confirmation/index.js'
@@ -52,12 +52,12 @@ export const router = {
         operatorDetails,
         operatorOrganisationDetails,
         taskList,
-        prnsTonnage,
+        tonnage,
         businessPlan,
         businessPlanDetail,
         businessPlanCya,
-        prnsAuthority,
-        prnsCya,
+        tonnageAuthority,
+        tonnageCya,
         fileUpload,
         submitDeclaration,
         submitConfirmation,

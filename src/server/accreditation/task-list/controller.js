@@ -52,7 +52,7 @@ export function buildTaskListViewModel(application, t) {
     tasks: [
       {
         label: t('pages.taskList.tasks.prns'),
-        url: `/accreditation/prns-tonnage/${ApplicationId}`,
+        url: `/accreditation/tonnage/${ApplicationId}`,
         locked: false,
         statusTagText: prnsSt.tagText,
         statusTagClass: prnsSt.tagClass,
