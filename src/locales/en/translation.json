@@ -516,6 +516,13 @@
       "confirmButton": "Confirm",
       "noFiles": "No BES evidence files have been uploaded for this site.",
       "loadError": "Sorry, we were unable to load the site details. Please try again."
+    },
+    "checkSiteConditions": {
+      "title": "Check the site fulfils the conditions",
+      "heading": "Check the site fulfils the conditions",
+      "content": "[Content to be confirmed with subject matter experts]",
+      "confirmButton": "Confirm",
+      "loadError": "Sorry, we were unable to load the site details. Please try again."
     }
   },
   "navigation": {

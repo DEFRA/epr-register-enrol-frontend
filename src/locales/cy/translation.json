@@ -508,6 +508,13 @@
       "confirmButton": "[Welsh] Confirm",
       "noFiles": "[Welsh] No BES evidence files have been uploaded for this site.",
       "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again."
+    },
+    "checkSiteConditions": {
+      "title": "[Welsh] Check the site fulfils the conditions",
+      "heading": "[Welsh] Check the site fulfils the conditions",
+      "content": "[Welsh] [Content to be confirmed with subject matter experts]",
+      "confirmButton": "[Welsh] Confirm",
+      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again."
     }
   },
   "navigation": {
