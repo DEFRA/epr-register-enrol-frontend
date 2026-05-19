@@ -443,6 +443,71 @@
         "download": "[Welsh] Download file",
         "errorLoading": "[Welsh] Sorry, there was a problem loading the file details. Please try again."
       }
+    },
+    "uploadEvidenceList": {
+      "title": "[Welsh] Upload evidence of broadly equivalent standards",
+      "heading": "[Welsh] Upload evidence of broadly equivalent standards",
+      "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "[Welsh] Sorry, we were unable to complete the BES evidence section. Please try again.",
+      "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
+      "uploadLink": "[Welsh] Upload evidence",
+      "evidenceUploaded": "[Welsh] Uploaded",
+      "evidenceNotUploaded": "[Welsh] Not uploaded",
+      "continueButton": "[Welsh] Continue",
+      "table": {
+        "siteName": "[Welsh] Site name",
+        "country": "[Welsh] Country",
+        "evidenceStatus": "[Welsh] Evidence status",
+        "action": "[Welsh] Action"
+      }
+    },
+    "uploadBesEvidence": {
+      "title": "[Welsh] Upload BES evidence",
+      "heading": "[Welsh] Upload BES evidence for",
+      "fileLabel": "[Welsh] Upload a file",
+      "uploadButton": "[Welsh] Upload file",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "requirements": {
+        "intro": "[Welsh] The file must:",
+        "maxSize": "[Welsh] be smaller than 20MB",
+        "fileTypes": "[Welsh] be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG file"
+      },
+      "validFrom": "[Welsh] Start date of evidence",
+      "validTo": "[Welsh] End date of evidence",
+      "dateHint": "[Welsh] For example, 1 11 2026",
+      "validation": {
+        "noFile": "[Welsh] Select a file to upload",
+        "invalidType": "[Welsh] The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",
+        "fileTooLarge": "[Welsh] The selected file must be smaller than 20MB",
+        "validFromRequired": "[Welsh] Enter the start date of evidence",
+        "validToRequired": "[Welsh] Enter the end date of evidence",
+        "validToBeforeFrom": "[Welsh] The end date must be after the start date",
+        "invalidDate": "[Welsh] Enter a valid date",
+        "fetchError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
+        "uploadError": "[Welsh] Sorry, we were unable to upload the file. Please try again."
+      }
+    },
+    "uploadMoreEvidence": {
+      "title": "[Welsh] Upload more BES evidence",
+      "heading": "[Welsh] Do you want to upload more evidence",
+      "yes": "[Welsh] Yes",
+      "no": "[Welsh] No",
+      "continueButton": "[Welsh] Continue",
+      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
+      "saveError": "[Welsh] Sorry, we were unable to save your answer. Please try again.",
+      "validation": {
+        "required": "[Welsh] Select yes if you want to upload more evidence"
+      }
+    },
+    "cyaEvidenceForSite": {
+      "title": "[Welsh] Check your BES evidence",
+      "heading": "[Welsh] Check your BES evidence for",
+      "fileUploaded": "[Welsh] File uploaded",
+      "startDate": "[Welsh] Start date of evidence",
+      "endDate": "[Welsh] End date of evidence",
+      "confirmButton": "[Welsh] Confirm",
+      "noFiles": "[Welsh] No BES evidence files have been uploaded for this site.",
+      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again."
     }
   },
   "navigation": {

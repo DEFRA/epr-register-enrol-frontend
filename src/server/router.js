@@ -27,6 +27,10 @@ import { submitConfirmation } from './accreditation/submit-confirmation/index.js
 import { samplingPlanUpload } from './accreditation/sampling-plan-upload/index.js'
 import { selectOverseasSites } from './accreditation/select-overseas-sites/index.js'
 import { confirmOverseasSites } from './accreditation/confirm-overseas-sites/index.js'
+import { uploadEvidenceForOverseasSite } from './accreditation/upload-evidence-for-overseas-site/index.js'
+import { uploadBesEvidence } from './accreditation/upload-bes-evidence/index.js'
+import { uploadMoreEvidence } from './accreditation/upload-more-evidence/index.js'
+import { cyaEvidenceForOverseasSite } from './accreditation/cya-evidence-for-overseas-site/index.js'
 
 export const router = {
   plugin: {
@@ -65,7 +69,11 @@ export const router = {
         submitConfirmation,
         samplingPlanUpload,
         selectOverseasSites,
-        confirmOverseasSites
+        confirmOverseasSites,
+        uploadEvidenceForOverseasSite,
+        uploadBesEvidence,
+        uploadMoreEvidence,
+        cyaEvidenceForOverseasSite
       ])
 
       // Static assets

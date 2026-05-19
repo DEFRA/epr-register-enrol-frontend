@@ -1,0 +1,52 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <p>{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      {% if uploads and uploads.length > 0 %}
+        <dl class="govuk-summary-list" data-testid="evidence-list">
+          {% for upload in uploads %}
+            <div class="govuk-summary-list__row" data-testid="evidence-row-{{ upload.fileId }}">
+              <dt class="govuk-summary-list__key">{{ t('pages.cyaEvidenceForSite.fileUploaded') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="filename-{{ upload.fileId }}">{{ upload.filename }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.cyaEvidenceForSite.startDate') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="start-date-{{ upload.fileId }}">{{ upload.startDate }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.cyaEvidenceForSite.endDate') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="end-date-{{ upload.fileId }}">{{ upload.endDate }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+      {% else %}
+        <p class="govuk-body" data-testid="no-files-message">{{ t('pages.cyaEvidenceForSite.noFiles') }}</p>
+      {% endif %}
+
+      <form method="post" novalidate data-testid="confirm-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">
+          {{ t('pages.cyaEvidenceForSite.confirmButton') }}
+        </button>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

@@ -451,6 +451,71 @@
         "download": "Download file",
         "errorLoading": "Sorry, there was a problem loading the file details. Please try again."
       }
+    },
+    "uploadEvidenceList": {
+      "title": "Upload evidence of broadly equivalent standards",
+      "heading": "Upload evidence of broadly equivalent standards",
+      "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "Sorry, we were unable to complete the BES evidence section. Please try again.",
+      "noSites": "No overseas reprocessing sites are associated with this application.",
+      "uploadLink": "Upload evidence",
+      "evidenceUploaded": "Uploaded",
+      "evidenceNotUploaded": "Not uploaded",
+      "continueButton": "Continue",
+      "table": {
+        "siteName": "Site name",
+        "country": "Country",
+        "evidenceStatus": "Evidence status",
+        "action": "Action"
+      }
+    },
+    "uploadBesEvidence": {
+      "title": "Upload BES evidence",
+      "heading": "Upload BES evidence for",
+      "fileLabel": "Upload a file",
+      "uploadButton": "Upload file",
+      "saveAndComeLater": "Save and come back later",
+      "requirements": {
+        "intro": "The file must:",
+        "maxSize": "be smaller than 20MB",
+        "fileTypes": "be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG file"
+      },
+      "validFrom": "Start date of evidence",
+      "validTo": "End date of evidence",
+      "dateHint": "For example, 1 11 2026",
+      "validation": {
+        "noFile": "Select a file to upload",
+        "invalidType": "The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",
+        "fileTooLarge": "The selected file must be smaller than 20MB",
+        "validFromRequired": "Enter the start date of evidence",
+        "validToRequired": "Enter the end date of evidence",
+        "validToBeforeFrom": "The end date must be after the start date",
+        "invalidDate": "Enter a valid date",
+        "fetchError": "Sorry, we were unable to load the site details. Please try again.",
+        "uploadError": "Sorry, we were unable to upload the file. Please try again."
+      }
+    },
+    "uploadMoreEvidence": {
+      "title": "Upload more BES evidence",
+      "heading": "Do you want to upload more evidence",
+      "yes": "Yes",
+      "no": "No",
+      "continueButton": "Continue",
+      "loadError": "Sorry, we were unable to load the site details. Please try again.",
+      "saveError": "Sorry, we were unable to save your answer. Please try again.",
+      "validation": {
+        "required": "Select yes if you want to upload more evidence"
+      }
+    },
+    "cyaEvidenceForSite": {
+      "title": "Check your BES evidence",
+      "heading": "Check your BES evidence for",
+      "fileUploaded": "File uploaded",
+      "startDate": "Start date of evidence",
+      "endDate": "End date of evidence",
+      "confirmButton": "Confirm",
+      "noFiles": "No BES evidence files have been uploaded for this site.",
+      "loadError": "Sorry, we were unable to load the site details. Please try again."
     }
   },
   "navigation": {
