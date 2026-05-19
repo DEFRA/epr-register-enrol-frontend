@@ -185,6 +185,7 @@
       "title": "[Welsh] Business plan",
       "heading": "[Welsh] Business plan",
       "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
+      "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item. The regulator will expect you to follow this plan.",
       "saveAndContinue": "[Welsh] Save and continue",
       "saveAndComeLater": "[Welsh] Save and come back later",
       "fields": {

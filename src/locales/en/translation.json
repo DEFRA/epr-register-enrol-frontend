@@ -193,6 +193,7 @@
       "title": "Business plan",
       "heading": "Business plan",
       "intro": "Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
+      "introExporter": "Enter the percentage of PERN income you'll spend on each item. The regulator will expect you to follow this plan.",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
       "fields": {
