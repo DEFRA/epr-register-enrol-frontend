@@ -399,4 +399,158 @@ describe('#operatorAccreditationController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('[Welsh]')
   })
+
+  const makeExporterApp = (overrides = {}) => ({
+    ApplicationId: 'app-exp-001',
+    ApplicationStatus: 'Saved',
+    MaterialType: MATERIAL,
+    IsExporter: true,
+    Year: YEAR,
+    OrganisationName: 'Exporter Co',
+    ...overrides
+  })
+
+  const exporterUrl = `/operator-accreditation/${ORG_ID}/${MATERIAL}/${YEAR}`
+
+  describe('GET /operator-accreditation/{organisationId}/{materialType}/{year}', () => {
+    test('returns 200 when existing exporter application found', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('does not call seed when matching exporter application already exists', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('ignores reprocessor apps when finding exporter match', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        makeApp({ MaterialType: MATERIAL, Year: YEAR })
+      ])
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(makeExporterApp())
+
+      await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`/${MATERIAL}/seed`),
+        expect.objectContaining({ year: YEAR })
+      )
+    })
+
+    test('calls seedExporterApplication when no matching exporter app found', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(makeExporterApp())
+
+      await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`/${ORG_ID}/${MATERIAL}/seed`),
+        expect.objectContaining({ year: YEAR })
+      )
+    })
+
+    test('does NOT render site row for exporter', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="site-name"')
+    })
+
+    test('renders application summary without site row', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="application-summary"')
+      expect(result).toContain('data-testid="material-display"')
+      expect(result).toContain('data-testid="continue-button"')
+    })
+
+    test('reprocessor route still renders site row', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="site-name"')
+    })
+
+    test('returns 500 when listApplications throws', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-message"')
+    })
+
+    test('returns 500 when seedExporterApplication throws', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-message"')
+    })
+
+    test('returns 200 in Welsh locale', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/cy/operator-accreditation/${ORG_ID}/${MATERIAL}/${YEAR}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
 })
