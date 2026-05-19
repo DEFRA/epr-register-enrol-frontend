@@ -1,0 +1,52 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <p>{{ error }}</p>
+          </div>
+        </div>
+      {% else %}
+
+        <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+        {% if sites.length === 0 %}
+          <p class="govuk-body" data-testid="no-sites-message">
+            {{ t('pages.selectOverseasSites.noSites') }}
+          </p>
+        {% else %}
+          <table class="govuk-table" data-testid="sites-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.columns.siteName') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.columns.country') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for site in sites %}
+                <tr class="govuk-table__row" data-testid="site-row-{{ site.SiteId }}">
+                  <td class="govuk-table__cell" data-testid="site-name-{{ site.SiteId }}">{{ site.SiteName }}</td>
+                  <td class="govuk-table__cell" data-testid="site-country-{{ site.SiteId }}">{{ site.Country }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
+
+        <a href="{{ continueUrl }}" role="button" draggable="false"
+           class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+          {{ t('pages.selectOverseasSites.continueButton') }}
+        </a>
+
+      {% endif %}
+
+    </div>
+  </div>
+{% endblock %}

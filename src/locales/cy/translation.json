@@ -331,6 +331,26 @@
         "besEvidence": "[Welsh] Evidence of broadly equivalent standards (BES)"
       }
     },
+    "selectOverseasSites": {
+      "title": "[Welsh] Your overseas reprocessing sites",
+      "heading": "[Welsh] Your overseas reprocessing sites",
+      "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
+      "continueButton": "[Welsh] Continue",
+      "columns": {
+        "siteName": "[Welsh] Site name",
+        "country": "[Welsh] Country"
+      }
+    },
+    "confirmOverseasSites": {
+      "title": "[Welsh] Confirm your overseas reprocessing sites",
+      "heading": "[Welsh] Confirm your overseas reprocessing sites",
+      "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "[Welsh] Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
+      "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
+      "removeButton": "[Welsh] Remove",
+      "confirmButton": "[Welsh] Confirm and continue"
+    },
     "operatorRegistration": {
       "heading": "[Welsh] Operator Registration",
       "title": "[Welsh] Registration",

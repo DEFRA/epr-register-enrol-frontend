@@ -25,6 +25,8 @@ import { fileUpload } from './file-upload/index.js'
 import { submitDeclaration } from './accreditation/submit-declaration/index.js'
 import { submitConfirmation } from './accreditation/submit-confirmation/index.js'
 import { samplingPlanUpload } from './accreditation/sampling-plan-upload/index.js'
+import { selectOverseasSites } from './accreditation/select-overseas-sites/index.js'
+import { confirmOverseasSites } from './accreditation/confirm-overseas-sites/index.js'
 
 export const router = {
   plugin: {
@@ -61,7 +63,9 @@ export const router = {
         fileUpload,
         submitDeclaration,
         submitConfirmation,
-        samplingPlanUpload
+        samplingPlanUpload,
+        selectOverseasSites,
+        confirmOverseasSites
       ])
 
       // Static assets

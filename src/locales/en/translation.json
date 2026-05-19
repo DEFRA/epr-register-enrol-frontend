@@ -339,6 +339,26 @@
         "besEvidence": "Evidence of broadly equivalent standards (BES)"
       }
     },
+    "selectOverseasSites": {
+      "title": "Your overseas reprocessing sites",
+      "heading": "Your overseas reprocessing sites",
+      "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "noSites": "No overseas reprocessing sites are associated with this application.",
+      "continueButton": "Continue",
+      "columns": {
+        "siteName": "Site name",
+        "country": "Country"
+      }
+    },
+    "confirmOverseasSites": {
+      "title": "Confirm your overseas reprocessing sites",
+      "heading": "Confirm your overseas reprocessing sites",
+      "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
+      "noSites": "No overseas reprocessing sites are associated with this application.",
+      "removeButton": "Remove",
+      "confirmButton": "Confirm and continue"
+    },
     "operatorRegistration": {
       "heading": "Operator Registration",
       "title": "Registration",
