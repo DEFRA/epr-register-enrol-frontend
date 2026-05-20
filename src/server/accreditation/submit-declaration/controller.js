@@ -1,4 +1,5 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
+import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
@@ -54,9 +55,8 @@ export const submitDeclarationGetController = {
 export const submitDeclarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
+    const user = getUser(request)
+    const organisationId = user?.id
     const { applicationId } = request.params
     const {
       fullName,
@@ -121,13 +121,8 @@ export const submitDeclarationPostController = {
     }
 
     request.yar.set(
-<<<<<<< HEAD
       ACCREDITATION_SESSION_KEYS.accreditationReference,
-      response.AccreditationReference
-=======
-      ACCREDITATION_SESSION_KEYS.applicationReference,
-      response.applicationReference
->>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
+      response.accreditationReference
     )
     request.yar.clear(ACCREDITATION_SESSION_KEYS.declaration)
 

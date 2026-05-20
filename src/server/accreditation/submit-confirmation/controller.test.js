@@ -34,11 +34,10 @@ function makeApplication(overrides = {}) {
     year: 2025,
     siteId: 'site-001',
     applicationStatus: 'Sent',
-    applicationReference: 'EPR-ACC-2027-000001',
+    accreditationReference: 'EPR-ACC-2027-000001',
     prns: { sectionStatus: 'Completed' },
     businessPlan: { sectionStatus: 'Completed' },
-    samplingPlan: { sectionStatus: 'Completed', files: [] },
->>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
+    samplingPlan: { sectionStatus: 'Completed', Files: [] },
     ...overrides
   }
 }
@@ -75,11 +74,7 @@ describe('#submitConfirmationController', () => {
   ) {
     // Use the submit-declaration POST to seed the session with an applicationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
-<<<<<<< HEAD
-      AccreditationReference: reference,
-      ApplicationStatus: 'Sent'
-=======
-      applicationReference: reference,
+      accreditationReference: reference,
       applicationStatus: 'Sent'
 >>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
     })

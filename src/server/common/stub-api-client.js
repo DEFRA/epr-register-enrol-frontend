@@ -295,7 +295,7 @@ export const stubApiClient = {
         app.submittedBy = body ?? null
       }
       return Promise.resolve({
-        applicationReference: app?.applicationReference ?? 'REF-STUB-001'
+        accreditationReference: app?.accreditationReference ?? 'REF-STUB-001'
       })
     }
     if (/\/files$/.test(endpoint)) {
