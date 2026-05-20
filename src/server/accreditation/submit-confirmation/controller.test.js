@@ -16,16 +16,16 @@ const APPLICATION_ID = 'app-conf-001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    ApplicationStatus: 'Sent',
-    AccreditationReference: 'EPR-ACC-2027-000001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: { SectionStatus: 'Completed' },
-    SamplingPlan: { SectionStatus: 'Completed', Files: [] },
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    applicationStatus: 'Sent',
+    accreditationReference: 'EPR-ACC-2027-000001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: { sectionStatus: 'Completed' },
+    samplingPlan: { sectionStatus: 'Completed', Files: [] },
     ...overrides
   }
 }
@@ -62,8 +62,8 @@ describe('#submitConfirmationController', () => {
   ) {
     // Use the submit-declaration POST to seed the session with an applicationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
-      AccreditationReference: reference,
-      ApplicationStatus: 'Sent'
+      accreditationReference: reference,
+      applicationStatus: 'Sent'
     })
 
     const postResponse = await server.inject({

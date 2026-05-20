@@ -31,22 +31,22 @@ const t = (key) => {
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: {
-      NewInfrastructurePercent: 20,
-      PriceSupportPercent: 20,
-      BusinessCollectionsPercent: 20,
-      CommunicationsPercent: 20,
-      NewMarketsPercent: 10,
-      NewUsesPercent: 10,
-      SectionStatus: 'InProgress'
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: {
+      newInfrastructurePercent: 20,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 20,
+      communicationsPercent: 20,
+      newMarketsPercent: 10,
+      newUsesPercent: 10,
+      sectionStatus: 'InProgress'
     },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -349,7 +349,7 @@ describe('#businessPlanController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
-        expect.objectContaining({ NewInfrastructurePercent: 20 })
+        expect.objectContaining({ newInfrastructurePercent: 20 })
       )
     })
 

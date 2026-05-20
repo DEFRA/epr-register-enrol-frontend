@@ -30,7 +30,7 @@ export const submitConfirmationGetController = {
           organisationId,
           applicationId
         )
-        materialType = application.MaterialType
+        materialType = application.materialType
       } catch (err) {
         request.server.logger.error(
           `Error fetching application ${applicationId} for confirmation: ${err.message}`

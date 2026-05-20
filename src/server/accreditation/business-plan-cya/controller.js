@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const PERCENT_FIELDS = [
   'newInfrastructurePercent',
@@ -20,35 +20,16 @@ const DETAIL_FIELDS = [
   'newUsesDetail'
 ]
 
-const API_PERCENT_MAP = {
-  newInfrastructurePercent: 'NewInfrastructurePercent',
-  priceSupportPercent: 'PriceSupportPercent',
-  businessCollectionsPercent: 'BusinessCollectionsPercent',
-  communicationsPercent: 'CommunicationsPercent',
-  newMarketsPercent: 'NewMarketsPercent',
-  newUsesPercent: 'NewUsesPercent'
-}
-
-const API_DETAIL_MAP = {
-  newInfrastructureDetail: 'NewInfrastructureDetail',
-  priceSupportDetail: 'PriceSupportDetail',
-  businessCollectionsDetail: 'BusinessCollectionsDetail',
-  communicationsDetail: 'CommunicationsDetail',
-  newMarketsDetail: 'NewMarketsDetail',
-  newUsesDetail: 'NewUsesDetail'
-}
-
 export function buildSummaryRows(application, t, applicationId) {
-  const bp = application.BusinessPlan ?? {}
+  const bp = application.businessPlan ?? {}
   const fromCYA = '?fromCYA=true'
   const percentUrl = `/accreditation/business-plan/${applicationId}${fromCYA}`
   const detailUrl = `/accreditation/business-plan-detail/${applicationId}${fromCYA}`
 
   const percentRows = PERCENT_FIELDS.map((field) => {
-    const apiField = API_PERCENT_MAP[field]
     const value =
-      bp[apiField] !== undefined
-        ? `${bp[apiField]}%`
+      bp[field] !== undefined
+        ? `${bp[field]}%`
         : t('pages.businessPlanCya.notProvided')
     const label = t(`pages.businessPlanCya.fields.${field}`)
     return {
@@ -64,8 +45,7 @@ export function buildSummaryRows(application, t, applicationId) {
   })
 
   const detailRows = DETAIL_FIELDS.map((field) => {
-    const apiField = API_DETAIL_MAP[field]
-    const value = bp[apiField] || t('pages.businessPlanCya.notProvided')
+    const value = bp[field] || t('pages.businessPlanCya.notProvided')
     const percentField = field.replace('Detail', 'Percent')
     const label = t(`pages.businessPlanCya.fields.${percentField}`)
     return {
@@ -94,8 +74,9 @@ function renderPage(h, viewData) {
 export const businessPlanCyaGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -138,8 +119,9 @@ export const businessPlanCyaGetController = {
 export const businessPlanCyaPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const { submitAction = 'confirm' } = request.payload
 
@@ -166,13 +148,13 @@ export const businessPlanCyaPostController = {
       }).code(500)
     }
 
-    const bp = application.BusinessPlan ?? {}
-    const patchBody = { SectionStatus: 'Completed' }
+    const bp = application.businessPlan ?? {}
+    const patchBody = { sectionStatus: 'Completed' }
     for (const field of PERCENT_FIELDS) {
-      patchBody[API_PERCENT_MAP[field]] = bp[API_PERCENT_MAP[field]] ?? null
+      patchBody[field] = bp[field] ?? null
     }
     for (const field of DETAIL_FIELDS) {
-      patchBody[API_DETAIL_MAP[field]] = bp[API_DETAIL_MAP[field]] ?? ''
+      patchBody[field] = bp[field] ?? ''
     }
 
     try {

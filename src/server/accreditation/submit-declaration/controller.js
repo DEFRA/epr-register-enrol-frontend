@@ -97,7 +97,7 @@ export const submitDeclarationPostController = {
       response = await accreditationApiService.submitApplication(
         organisationId,
         applicationId,
-        { FullName: fullName.trim(), JobTitle: jobTitle.trim() }
+        { fullName: fullName.trim(), jobTitle: jobTitle.trim() }
       )
     } catch (err) {
       request.server.logger.error(
@@ -122,7 +122,7 @@ export const submitDeclarationPostController = {
 
     request.yar.set(
       ACCREDITATION_SESSION_KEYS.accreditationReference,
-      response.AccreditationReference
+      response.accreditationReference
     )
     request.yar.clear(ACCREDITATION_SESSION_KEYS.declaration)
 

@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 export const DETAIL_FIELDS = [
   'newInfrastructureDetail',
@@ -10,15 +10,6 @@ export const DETAIL_FIELDS = [
   'newMarketsDetail',
   'newUsesDetail'
 ]
-
-const API_FIELD_MAP = {
-  newInfrastructureDetail: 'NewInfrastructureDetail',
-  priceSupportDetail: 'PriceSupportDetail',
-  businessCollectionsDetail: 'BusinessCollectionsDetail',
-  communicationsDetail: 'CommunicationsDetail',
-  newMarketsDetail: 'NewMarketsDetail',
-  newUsesDetail: 'NewUsesDetail'
-}
 
 const MAX_CHARS = 500
 
@@ -82,11 +73,10 @@ function buildViewData(t, applicationId, payload, errors) {
 }
 
 function payloadFromApplication(application) {
-  const bp = application.BusinessPlan ?? {}
+  const bp = application.businessPlan ?? {}
   const payload = {}
   for (const field of DETAIL_FIELDS) {
-    const apiField = API_FIELD_MAP[field]
-    payload[field] = bp[apiField] ?? ''
+    payload[field] = bp[field] ?? ''
   }
   return payload
 }
@@ -94,8 +84,9 @@ function payloadFromApplication(application) {
 export const businessPlanDetailGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -124,8 +115,9 @@ export const businessPlanDetailGetController = {
 export const businessPlanDetailPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const { submitAction = 'saveAndContinue', ...fieldPayload } =
       request.payload
@@ -141,7 +133,7 @@ export const businessPlanDetailPostController = {
 
     const patchBody = {}
     for (const field of DETAIL_FIELDS) {
-      patchBody[API_FIELD_MAP[field]] = fieldPayload[field] ?? ''
+      patchBody[field] = fieldPayload[field] ?? ''
     }
 
     try {

@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -17,8 +17,8 @@ export function buildHeading(materialType, siteName, t) {
 export function buildAuthoriserRows(authorisers, t) {
   return (authorisers ?? []).map((a, i) => ({
     index: i,
-    fullName: a.FullName,
-    email: a.Email,
+    fullName: a.fullName,
+    email: a.email,
     checked: true
   }))
 }
@@ -50,8 +50,8 @@ function renderPage(h, viewData) {
 function buildViewData(application, t, applicationId, opts = {}) {
   return {
     pageTitle: t('pages.prnsAuthority.title'),
-    heading: buildHeading(application.MaterialType, application.SiteId, t),
-    authoriserRows: buildAuthoriserRows(application.Prns?.Authorisers, t),
+    heading: buildHeading(application.materialType, application.siteId, t),
+    authoriserRows: buildAuthoriserRows(application.prns?.authorisers, t),
     backLink: prnsTonnageUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     ...opts
@@ -61,8 +61,9 @@ function buildViewData(application, t, applicationId, opts = {}) {
 export const prnsAuthorityGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -89,8 +90,9 @@ export const prnsAuthorityGetController = {
 export const prnsAuthorityPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const {
       submitAction = 'saveAndContinue',
@@ -117,11 +119,11 @@ export const prnsAuthorityPostController = {
     }
 
     const heading = buildHeading(
-      application.MaterialType,
-      application.SiteId,
+      application.materialType,
+      application.siteId,
       t
     )
-    const currentAuthorisers = application.Prns?.Authorisers ?? []
+    const currentAuthorisers = application.prns?.authorisers ?? []
 
     if (submitAction === 'addAuthoriser') {
       const addErrors = {}
@@ -156,7 +158,7 @@ export const prnsAuthorityPostController = {
 
       const trimmedEmail = newEmail.trim()
       const isDuplicate = currentAuthorisers.some(
-        (a) => a.Email.toLowerCase() === trimmedEmail.toLowerCase()
+        (a) => a.email.toLowerCase() === trimmedEmail.toLowerCase()
       )
       if (isDuplicate) {
         addErrors.newEmail = {
@@ -180,11 +182,11 @@ export const prnsAuthorityPostController = {
 
       const updatedAuthorisers = [
         ...currentAuthorisers,
-        { FullName: newFullName.trim(), Email: trimmedEmail }
+        { fullName: newFullName.trim(), email: trimmedEmail }
       ]
       try {
         await apiClient.patch(patchUrl(organisationId, applicationId), {
-          Authorisers: updatedAuthorisers
+          authorisers: updatedAuthorisers
         })
       } catch (err) {
         request.server.logger.error(
@@ -230,12 +232,12 @@ export const prnsAuthorityPostController = {
     }
 
     const authorisersToSave = currentAuthorisers.filter((a) =>
-      checkedEmails.includes(a.Email)
+      checkedEmails.includes(a.email)
     )
 
     try {
       await apiClient.patch(patchUrl(organisationId, applicationId), {
-        Authorisers: authorisersToSave
+        authorisers: authorisersToSave
       })
     } catch (err) {
       request.server.logger.error(
