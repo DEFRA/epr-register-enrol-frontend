@@ -45,6 +45,7 @@ export const operatorAccreditationController = {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
     const { organisationId, siteId, materialType, year } = request.params
+    const { registrationReference } = request.query
     const yearInt = parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = '/operator/'
@@ -84,7 +85,8 @@ export const operatorAccreditationController = {
           organisationId,
           siteId,
           materialType,
-          yearInt
+          yearInt,
+          registrationReference
         )
       } catch (error) {
         request.server.logger.error(
