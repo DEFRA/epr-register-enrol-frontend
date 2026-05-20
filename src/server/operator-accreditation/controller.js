@@ -26,7 +26,8 @@ export function buildLandingViewModel(
   return {
     organisationName,
     accreditationYear,
-    registrationReference: application.RegistrationReference,
+    registrationReference:
+      application.registrationReference ?? application.applicationReference,
     siteName: siteAddress ?? t('pages.taskList.siteNotSet'),
     materialDisplay: t(
       `pages.operatorAccreditation.materials.${application.materialType}`
