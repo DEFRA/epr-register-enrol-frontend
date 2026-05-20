@@ -90,7 +90,13 @@ export const persistentStubApiClient = {
           `[persistentStubApiClient] backend GET list failed: ${err.message}`
         )
       }
-      return stubApiClient.get(endpoint)
+      const stubApps = await stubApiClient.get(endpoint)
+      for (const app of stubApps) {
+        if (String(app.organisationId) === orgId && app.applicationId) {
+          tryBackendPut(orgId, app.applicationId, app).catch(() => {})
+        }
+      }
+      return stubApps
     }
 
     const singleMatch = endpoint.match(SINGLE_RE)
