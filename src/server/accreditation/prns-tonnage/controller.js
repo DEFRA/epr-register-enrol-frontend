@@ -118,7 +118,7 @@ export const prnsTonnagePostController = {
 
     try {
       await accreditationApiService.patchPrns(organisationId, applicationId, {
-        plannedTonnageBand: plannedTonnageBand
+        plannedTonnageBand
       })
     } catch (error) {
       request.server.logger.error(

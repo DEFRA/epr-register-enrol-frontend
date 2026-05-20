@@ -112,7 +112,7 @@ export const prnsCyaPostController = {
     try {
       await apiClient.patch(patchUrl(organisationId, applicationId), {
         plannedTonnageBand: tonnageBand,
-        authorisers: authorisers,
+        authorisers,
         sectionStatus: 'Completed'
       })
     } catch (err) {

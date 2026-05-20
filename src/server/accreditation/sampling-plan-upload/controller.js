@@ -196,8 +196,8 @@ export const samplingPlanUploadPostController = {
 
       try {
         await accreditationApiService.addFile(organisationId, applicationId, {
-          filename: filename,
-          contentType: contentType
+          filename,
+          contentType
         })
       } catch (err) {
         request.server.logger.error(
@@ -243,7 +243,7 @@ export const samplingPlanUploadPostController = {
         await accreditationApiService.patchSamplingPlan(
           organisationId,
           applicationId,
-          { sectionStatus: sectionStatus }
+          { sectionStatus }
         )
       } catch (err) {
         request.server.logger.error(
