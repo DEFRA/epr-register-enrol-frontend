@@ -55,9 +55,9 @@
               <table class="govuk-table" data-testid="authorisers-table">
                 <thead class="govuk-table__head">
                   <tr class="govuk-table__row">
-                    <th scope="col" class="govuk-table__header">{{ t('pages.prnsAuthority.table.select') }}</th>
-                    <th scope="col" class="govuk-table__header">{{ t('pages.prnsAuthority.table.fullName') }}</th>
-                    <th scope="col" class="govuk-table__header">{{ t('pages.prnsAuthority.table.email') }}</th>
+                    <th scope="col" class="govuk-table__header">{{ t('pages.tonnageAuthority.table.select') }}</th>
+                    <th scope="col" class="govuk-table__header">{{ t('pages.tonnageAuthority.table.fullName') }}</th>
+                    <th scope="col" class="govuk-table__header">{{ t('pages.tonnageAuthority.table.email') }}</th>
                   </tr>
                 </thead>
                 <tbody class="govuk-table__body">
@@ -85,7 +85,7 @@
                 </tbody>
               </table>
             {% else %}
-              <p class="govuk-body" data-testid="no-authorisers-message">{{ t('pages.prnsAuthority.noAuthorisers') }}</p>
+              <p class="govuk-body" data-testid="no-authorisers-message">{{ t('pages.tonnageAuthority.noAuthorisers') }}</p>
             {% endif %}
 
           </fieldset>
@@ -93,12 +93,12 @@
 
         <details class="govuk-details" {% if showAddForm %}open{% endif %} data-testid="add-authoriser-details">
           <summary class="govuk-details__summary" data-testid="add-authoriser-toggle">
-            <span class="govuk-details__summary-text">{{ t('pages.prnsAuthority.addAuthoriserLabel') }}</span>
+            <span class="govuk-details__summary-text">{{ t('pages.tonnageAuthority.addAuthoriserLabel') }}</span>
           </summary>
           <div class="govuk-details__text">
 
             <div class="govuk-form-group {% if addErrors.newFullName %}govuk-form-group--error{% endif %}">
-              <label class="govuk-label" for="newFullName">{{ t('pages.prnsAuthority.addForm.fullName') }}</label>
+              <label class="govuk-label" for="newFullName">{{ t('pages.tonnageAuthority.addForm.fullName') }}</label>
               {% if addErrors.newFullName %}
                 <p id="newFullName-error" class="govuk-error-message" data-testid="new-full-name-error">
                   <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newFullName.text }}
@@ -115,7 +115,7 @@
             </div>
 
             <div class="govuk-form-group {% if addErrors.newEmail %}govuk-form-group--error{% endif %}">
-              <label class="govuk-label" for="newEmail">{{ t('pages.prnsAuthority.addForm.email') }}</label>
+              <label class="govuk-label" for="newEmail">{{ t('pages.tonnageAuthority.addForm.email') }}</label>
               {% if addErrors.newEmail %}
                 <p id="newEmail-error" class="govuk-error-message" data-testid="new-email-error">
                   <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newEmail.text }}
@@ -132,18 +132,18 @@
             </div>
 
             <button type="submit" name="submitAction" value="addAuthoriser" class="govuk-button govuk-button--secondary" data-testid="add-authoriser-button">
-              {{ t('pages.prnsAuthority.addAuthoriserButton') }}
+              {{ t('pages.tonnageAuthority.addAuthoriserButton') }}
             </button>
 
           </div>
         </details>
 
         <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-          {{ t('pages.prnsAuthority.saveAndContinue') }}
+          {{ t('pages.tonnageAuthority.saveAndContinue') }}
         </button>
 
         <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.prnsAuthority.saveAndComeLater') }}
+          {{ t('pages.tonnageAuthority.saveAndComeLater') }}
         </button>
 
       </form>

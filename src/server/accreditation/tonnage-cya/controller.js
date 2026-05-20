@@ -3,20 +3,20 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
 
 const TONNAGE_LABEL_KEYS = {
-  UpTo500: 'pages.prnsTonnage.options.UpTo500',
-  UpTo1000: 'pages.prnsTonnage.options.UpTo1000',
-  UpTo10000: 'pages.prnsTonnage.options.UpTo10000',
-  Over10000: 'pages.prnsTonnage.options.Over10000'
+  UpTo500: 'pages.tonnage.options.UpTo500',
+  UpTo1000: 'pages.tonnage.options.UpTo1000',
+  UpTo10000: 'pages.tonnage.options.UpTo10000',
+  Over10000: 'pages.tonnage.options.Over10000'
 }
 
 export function buildTonnageLabel(tonnageBand, t) {
   const key = TONNAGE_LABEL_KEYS[tonnageBand]
-  return key ? t(key) : t('pages.prnsCya.notSelected')
+  return key ? t(key) : t('pages.tonnageCya.notSelected')
 }
 
 export function buildAuthorisersSummary(authorisers, t) {
   if (!authorisers || authorisers.length === 0) {
-    return t('pages.prnsCya.noneSelected')
+    return t('pages.tonnageCya.noneSelected')
   }
   return authorisers.map((a) => a.FullName).join(', ')
 }
@@ -40,14 +40,14 @@ function patchUrl(organisationId, applicationId) {
 function buildCyaLabels(isExporter, t) {
   return {
     tonnageRowLabel: isExporter
-      ? t('pages.prnsCya.tonnageLabelExporter')
-      : t('pages.prnsCya.tonnageLabel'),
+      ? t('pages.tonnageCya.tonnageLabelExporter')
+      : t('pages.tonnageCya.tonnageLabel'),
     authorisersRowLabel: isExporter
-      ? t('pages.prnsCya.authorisersLabelExporter')
-      : t('pages.prnsCya.authorisersLabel'),
+      ? t('pages.tonnageCya.authorisersLabelExporter')
+      : t('pages.tonnageCya.authorisersLabel'),
     changeAuthorityContext: isExporter
-      ? t('pages.prnsCya.changeAuthorityContextExporter')
-      : t('pages.prnsCya.changeAuthorityContext')
+      ? t('pages.tonnageCya.changeAuthorityContextExporter')
+      : t('pages.tonnageCya.changeAuthorityContext')
   }
 }
 
@@ -66,10 +66,10 @@ export const tonnageCyaGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.prnsCya.title'),
-        heading: t('pages.prnsCya.heading'),
+        pageTitle: t('pages.tonnageCya.title'),
+        heading: t('pages.tonnageCya.heading'),
         backLink: taskListUrl(applicationId),
-        error: t('pages.prnsCya.validation.fetchError')
+        error: t('pages.tonnageCya.validation.fetchError')
       }).code(500)
     }
 
@@ -79,8 +79,8 @@ export const tonnageCyaGetController = {
     const fromCYA = '?fromCYA=true'
 
     return renderPage(h, {
-      pageTitle: t('pages.prnsCya.title'),
-      heading: t('pages.prnsCya.heading'),
+      pageTitle: t('pages.tonnageCya.title'),
+      heading: t('pages.tonnageCya.heading'),
       tonnageLabel: buildTonnageLabel(tonnageBand, t),
       authorisersSummary: buildAuthorisersSummary(authorisers, t),
       changeTonnageLink: `/accreditation/tonnage/${applicationId}${fromCYA}`,
@@ -113,10 +113,10 @@ export const tonnageCyaPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.prnsCya.title'),
-        heading: t('pages.prnsCya.heading'),
+        pageTitle: t('pages.tonnageCya.title'),
+        heading: t('pages.tonnageCya.heading'),
         backLink: taskListUrl(applicationId),
-        error: t('pages.prnsCya.validation.fetchError')
+        error: t('pages.tonnageCya.validation.fetchError')
       }).code(500)
     }
 
@@ -136,8 +136,8 @@ export const tonnageCyaPostController = {
         `Error confirming tonnage section for ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.prnsCya.title'),
-        heading: t('pages.prnsCya.heading'),
+        pageTitle: t('pages.tonnageCya.title'),
+        heading: t('pages.tonnageCya.heading'),
         tonnageLabel: buildTonnageLabel(tonnageBand, t),
         authorisersSummary: buildAuthorisersSummary(authorisers, t),
         changeTonnageLink: `/accreditation/tonnage/${applicationId}${fromCYA}`,
@@ -146,7 +146,7 @@ export const tonnageCyaPostController = {
         taskListLink: taskListUrl(applicationId),
         isExporter,
         ...buildCyaLabels(isExporter, t),
-        error: t('pages.prnsCya.validation.confirmError')
+        error: t('pages.tonnageCya.validation.confirmError')
       }).code(500)
     }
 

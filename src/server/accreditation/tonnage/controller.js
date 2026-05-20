@@ -7,16 +7,16 @@ export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
 export function buildTonnageOptions(selectedTonnage, t) {
   return TONNAGE_OPTIONS.map((value) => ({
     value,
-    text: t(`pages.prnsTonnage.options.${value}`),
+    text: t(`pages.tonnage.options.${value}`),
     checked: selectedTonnage === value
   }))
 }
 
 function buildHeading(materialType, isExporter, t) {
-  const prefix = t('pages.prnsTonnage.headingPrefix')
+  const prefix = t('pages.tonnage.headingPrefix')
   const suffix = isExporter
-    ? t('pages.prnsTonnage.headingSuffixExporter')
-    : t('pages.prnsTonnage.headingSuffix')
+    ? t('pages.tonnage.headingSuffixExporter')
+    : t('pages.tonnage.headingSuffix')
   if (!materialType) return `${prefix} ${suffix}`
   const material = t(`pages.materialSelection.materials.${materialType}`)
   return `${prefix} ${material} ${suffix}`
@@ -48,11 +48,11 @@ export const tonnageGetController = {
         `Error fetching application ${applicationId}: ${error.message}`
       )
       return renderForm(h, {
-        pageTitle: t('pages.prnsTonnage.title'),
+        pageTitle: t('pages.tonnage.title'),
         heading: buildHeading(null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
-        error: t('pages.prnsTonnage.validation.fetchError')
+        error: t('pages.tonnage.validation.fetchError')
       }).code(500)
     }
 
@@ -60,8 +60,8 @@ export const tonnageGetController = {
 
     return renderForm(h, {
       pageTitle: isExporter
-        ? t('pages.prnsTonnage.titleExporter')
-        : t('pages.prnsTonnage.title'),
+        ? t('pages.tonnage.titleExporter')
+        : t('pages.tonnage.title'),
       heading: buildHeading(application.MaterialType, isExporter, t),
       tonnageOptions: buildTonnageOptions(
         application.Tonnage?.PlannedTonnageBand ?? null,
@@ -93,13 +93,13 @@ export const tonnagePostController = {
         `Error fetching application ${applicationId}: ${error.message}`
       )
       return renderForm(h, {
-        pageTitle: t('pages.prnsTonnage.title'),
+        pageTitle: t('pages.tonnage.title'),
         heading: buildHeading(null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
         errors: {
           plannedTonnageBand: {
-            text: t('pages.prnsTonnage.validation.fetchError')
+            text: t('pages.tonnage.validation.fetchError')
           }
         }
       }).code(500)
@@ -108,14 +108,14 @@ export const tonnagePostController = {
     const isExporter = application.IsExporter ?? false
     const heading = buildHeading(application.MaterialType, isExporter, t)
     const selectTonnageKey = isExporter
-      ? 'pages.prnsTonnage.validation.selectTonnageExporter'
-      : 'pages.prnsTonnage.validation.selectTonnage'
+      ? 'pages.tonnage.validation.selectTonnageExporter'
+      : 'pages.tonnage.validation.selectTonnage'
 
     if (!plannedTonnageBand || !TONNAGE_OPTIONS.includes(plannedTonnageBand)) {
       return renderForm(h, {
         pageTitle: isExporter
-          ? t('pages.prnsTonnage.titleExporter')
-          : t('pages.prnsTonnage.title'),
+          ? t('pages.tonnage.titleExporter')
+          : t('pages.tonnage.title'),
         heading,
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
@@ -142,15 +142,15 @@ export const tonnagePostController = {
       )
       return renderForm(h, {
         pageTitle: isExporter
-          ? t('pages.prnsTonnage.titleExporter')
-          : t('pages.prnsTonnage.title'),
+          ? t('pages.tonnage.titleExporter')
+          : t('pages.tonnage.title'),
         heading,
         tonnageOptions: buildTonnageOptions(plannedTonnageBand, t),
         backLink: taskListUrl(applicationId),
         isExporter,
         errors: {
           plannedTonnageBand: {
-            text: t('pages.prnsTonnage.validation.saveError')
+            text: t('pages.tonnage.validation.saveError')
           }
         }
       }).code(500)

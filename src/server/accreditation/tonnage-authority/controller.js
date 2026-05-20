@@ -6,9 +6,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function buildHeading(materialType, siteName, isExporter, t) {
   const prefix = isExporter
-    ? t('pages.prnsAuthority.headingPrefixExporter')
-    : t('pages.prnsAuthority.headingPrefix')
-  const at = t('pages.prnsAuthority.headingAt')
+    ? t('pages.tonnageAuthority.headingPrefixExporter')
+    : t('pages.tonnageAuthority.headingPrefix')
+  const at = t('pages.tonnageAuthority.headingAt')
   const material = materialType
     ? t(`pages.materialSelection.materials.${materialType}`)
     : ''
@@ -53,8 +53,8 @@ function buildViewData(application, t, applicationId, opts = {}) {
   const isExporter = application.IsExporter ?? false
   return {
     pageTitle: isExporter
-      ? t('pages.prnsAuthority.titleExporter')
-      : t('pages.prnsAuthority.title'),
+      ? t('pages.tonnageAuthority.titleExporter')
+      : t('pages.tonnageAuthority.title'),
     heading: buildHeading(
       application.MaterialType,
       application.SiteId,
@@ -66,11 +66,11 @@ function buildViewData(application, t, applicationId, opts = {}) {
     taskListLink: taskListUrl(applicationId),
     isExporter,
     intro: isExporter
-      ? t('pages.prnsAuthority.introExporter')
-      : t('pages.prnsAuthority.intro'),
+      ? t('pages.tonnageAuthority.introExporter')
+      : t('pages.tonnageAuthority.intro'),
     selectSubHeading: isExporter
-      ? t('pages.prnsAuthority.selectSubHeadingExporter')
-      : t('pages.prnsAuthority.selectSubHeading'),
+      ? t('pages.tonnageAuthority.selectSubHeadingExporter')
+      : t('pages.tonnageAuthority.selectSubHeading'),
     ...opts
   }
 }
@@ -90,15 +90,15 @@ export const tonnageAuthorityGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.prnsAuthority.title'),
+        pageTitle: t('pages.tonnageAuthority.title'),
         heading: buildHeading(null, null, false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         isExporter: false,
-        intro: t('pages.prnsAuthority.intro'),
-        selectSubHeading: t('pages.prnsAuthority.selectSubHeading'),
-        error: t('pages.prnsAuthority.validation.fetchError')
+        intro: t('pages.tonnageAuthority.intro'),
+        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
+        error: t('pages.tonnageAuthority.validation.fetchError')
       }).code(500)
     }
 
@@ -127,15 +127,15 @@ export const tonnageAuthorityPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.prnsAuthority.title'),
+        pageTitle: t('pages.tonnageAuthority.title'),
         heading: buildHeading(null, null, false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         isExporter: false,
-        intro: t('pages.prnsAuthority.intro'),
-        selectSubHeading: t('pages.prnsAuthority.selectSubHeading'),
-        error: t('pages.prnsAuthority.validation.fetchError')
+        intro: t('pages.tonnageAuthority.intro'),
+        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
+        error: t('pages.tonnageAuthority.validation.fetchError')
       }).code(500)
     }
 
@@ -147,35 +147,35 @@ export const tonnageAuthorityPostController = {
       t
     )
     const intro = isExporter
-      ? t('pages.prnsAuthority.introExporter')
-      : t('pages.prnsAuthority.intro')
+      ? t('pages.tonnageAuthority.introExporter')
+      : t('pages.tonnageAuthority.intro')
     const selectSubHeading = isExporter
-      ? t('pages.prnsAuthority.selectSubHeadingExporter')
-      : t('pages.prnsAuthority.selectSubHeading')
+      ? t('pages.tonnageAuthority.selectSubHeadingExporter')
+      : t('pages.tonnageAuthority.selectSubHeading')
     const currentAuthorisers = application.Tonnage?.Authorisers ?? []
 
     if (submitAction === 'addAuthoriser') {
       const addErrors = {}
       if (!newFullName?.trim()) {
         addErrors.newFullName = {
-          text: t('pages.prnsAuthority.validation.nameRequired')
+          text: t('pages.tonnageAuthority.validation.nameRequired')
         }
       }
       if (!newEmail?.trim()) {
         addErrors.newEmail = {
-          text: t('pages.prnsAuthority.validation.emailRequired')
+          text: t('pages.tonnageAuthority.validation.emailRequired')
         }
       } else if (!EMAIL_RE.test(newEmail.trim())) {
         addErrors.newEmail = {
-          text: t('pages.prnsAuthority.validation.emailInvalid')
+          text: t('pages.tonnageAuthority.validation.emailInvalid')
         }
       }
 
       if (Object.keys(addErrors).length > 0) {
         return renderPage(h, {
           pageTitle: isExporter
-            ? t('pages.prnsAuthority.titleExporter')
-            : t('pages.prnsAuthority.title'),
+            ? t('pages.tonnageAuthority.titleExporter')
+            : t('pages.tonnageAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
           backLink: tonnageUrl(applicationId),
@@ -196,15 +196,15 @@ export const tonnageAuthorityPostController = {
       )
       if (isDuplicate) {
         addErrors.newEmail = {
-          text: t('pages.prnsAuthority.validation.emailDuplicate')
+          text: t('pages.tonnageAuthority.validation.emailDuplicate')
         }
       }
 
       if (Object.keys(addErrors).length > 0) {
         return renderPage(h, {
           pageTitle: isExporter
-            ? t('pages.prnsAuthority.titleExporter')
-            : t('pages.prnsAuthority.title'),
+            ? t('pages.tonnageAuthority.titleExporter')
+            : t('pages.tonnageAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
           backLink: tonnageUrl(applicationId),
@@ -233,8 +233,8 @@ export const tonnageAuthorityPostController = {
         )
         return renderPage(h, {
           pageTitle: isExporter
-            ? t('pages.prnsAuthority.titleExporter')
-            : t('pages.prnsAuthority.title'),
+            ? t('pages.tonnageAuthority.titleExporter')
+            : t('pages.tonnageAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
           backLink: tonnageUrl(applicationId),
@@ -245,7 +245,7 @@ export const tonnageAuthorityPostController = {
           showAddForm: true,
           newFullName: newFullName.trim(),
           newEmail: trimmedEmail,
-          error: t('pages.prnsAuthority.validation.saveError')
+          error: t('pages.tonnageAuthority.validation.saveError')
         }).code(500)
       }
       return h.redirect(`/accreditation/tonnage-authority/${applicationId}`)
@@ -260,8 +260,8 @@ export const tonnageAuthorityPostController = {
     if (submitAction !== 'saveAndComeLater' && checkedEmails.length === 0) {
       return renderPage(h, {
         pageTitle: isExporter
-          ? t('pages.prnsAuthority.titleExporter')
-          : t('pages.prnsAuthority.title'),
+          ? t('pages.tonnageAuthority.titleExporter')
+          : t('pages.tonnageAuthority.title'),
         heading,
         authoriserRows: buildAuthoriserRows(currentAuthorisers, t).map((r) => ({
           ...r,
@@ -274,7 +274,7 @@ export const tonnageAuthorityPostController = {
         selectSubHeading,
         errors: {
           authorisers: {
-            text: t('pages.prnsAuthority.validation.selectAtLeastOne')
+            text: t('pages.tonnageAuthority.validation.selectAtLeastOne')
           }
         }
       }).code(400)
@@ -294,8 +294,8 @@ export const tonnageAuthorityPostController = {
       )
       return renderPage(h, {
         pageTitle: isExporter
-          ? t('pages.prnsAuthority.titleExporter')
-          : t('pages.prnsAuthority.title'),
+          ? t('pages.tonnageAuthority.titleExporter')
+          : t('pages.tonnageAuthority.title'),
         heading,
         authoriserRows: buildAuthoriserRows(currentAuthorisers, t).map((r) => ({
           ...r,
@@ -307,7 +307,9 @@ export const tonnageAuthorityPostController = {
         intro,
         selectSubHeading,
         errors: {
-          authorisers: { text: t('pages.prnsAuthority.validation.saveError') }
+          authorisers: {
+            text: t('pages.tonnageAuthority.validation.saveError')
+          }
         }
       }).code(500)
     }
