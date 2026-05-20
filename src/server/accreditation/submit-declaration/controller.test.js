@@ -239,7 +239,6 @@ describe('#submitDeclarationController', () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'EPR-ACC-2027-000001',
         applicationStatus: 'Sent'
->>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
       })
 
       const { statusCode, headers } = await server.inject({
@@ -267,7 +266,6 @@ describe('#submitDeclarationController', () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'EPR-ACC-2027-000001',
         applicationStatus: 'Sent'
->>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
       })
 
       await server.inject({

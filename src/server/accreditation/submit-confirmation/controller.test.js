@@ -16,18 +16,6 @@ const APPLICATION_ID = 'app-conf-001'
 
 function makeApplication(overrides = {}) {
   return {
-<<<<<<< HEAD
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    ApplicationStatus: 'Sent',
-    AccreditationReference: 'EPR-ACC-2027-000001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: { SectionStatus: 'Completed' },
-    SamplingPlan: { SectionStatus: 'Completed', Files: [] },
-=======
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
     materialType: 'Steel',
@@ -76,7 +64,6 @@ describe('#submitConfirmationController', () => {
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
       accreditationReference: reference,
       applicationStatus: 'Sent'
->>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
     })
 
     const postResponse = await server.inject({

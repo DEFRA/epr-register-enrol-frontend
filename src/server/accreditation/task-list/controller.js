@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
+import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
-import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -14,7 +14,6 @@ function sectionStatus(value) {
 
 export function buildTaskListViewModel(application, t) {
   const {
-<<<<<<< HEAD
     ApplicationId,
     MaterialType,
     Year,
@@ -23,51 +22,37 @@ export function buildTaskListViewModel(application, t) {
     Prns,
     BusinessPlan,
     SamplingPlan
-=======
-    applicationId,
-    materialType,
-    year,
-    siteId,
-    prns,
-    businessPlan,
-    samplingPlan
->>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
   } = application
 
-  const materialDisplay = t(`pages.materialSelection.materials.${materialType}`)
+  const materialDisplay = t(`pages.materialSelection.materials.${MaterialType}`)
   const heading = `${t('pages.taskList.headingPrefix')} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
 
-  const prnsComplete = (prns?.sectionStatus ?? 'NotStarted') === 'Completed'
+  const prnsComplete = (Prns?.SectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =
-    (businessPlan?.sectionStatus ?? 'NotStarted') === 'Completed'
+    (BusinessPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
   const spComplete =
-    (samplingPlan?.sectionStatus ?? 'NotStarted') === 'Completed'
+    (SamplingPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
 
   const bpLocked = !prnsComplete
   const spLocked = !bpComplete
   const allComplete = prnsComplete && bpComplete && spComplete
 
-  const prnsSt = sectionStatus(prns?.sectionStatus)
-  const bpSt = sectionStatus(businessPlan?.sectionStatus)
-  const spSt = sectionStatus(samplingPlan?.sectionStatus)
-  const backlink = `/operator-accreditation/${application.organisationId}/${siteId}/${materialType}/${year}`
+  const prnsSt = sectionStatus(Prns?.SectionStatus)
+  const bpSt = sectionStatus(BusinessPlan?.SectionStatus)
+  const spSt = sectionStatus(SamplingPlan?.SectionStatus)
+  const backlink = `/operator-accreditation/${application.OrganisationId}/${SiteId}/${MaterialType}/${Year}`
   const saveAndComeLaterlink = `/operator`
 
   return {
     heading,
     metadata: {
-<<<<<<< HEAD
       year: Year,
       site: SiteAddress ?? t('pages.taskList.siteNotSet')
-=======
-      year,
-      site: siteId ?? t('pages.taskList.siteNotSet')
->>>>>>> 6010d4f (featrure/RA-119-Mongo-Persistence|Camelcase property mismatch fix)
     },
     tasks: [
       {
         label: t('pages.taskList.tasks.prns'),
-        url: `/accreditation/prns-tonnage/${applicationId}`,
+        url: `/accreditation/prns-tonnage/${ApplicationId}`,
         locked: false,
         statusTagText: prnsSt.tagText,
         statusTagClass: prnsSt.tagClass,
@@ -75,7 +60,7 @@ export function buildTaskListViewModel(application, t) {
       },
       {
         label: t('pages.taskList.tasks.businessPlan'),
-        url: bpLocked ? null : `/accreditation/business-plan/${applicationId}`,
+        url: bpLocked ? null : `/accreditation/business-plan/${ApplicationId}`,
         locked: bpLocked,
         statusTagText: bpSt.tagText,
         statusTagClass: bpSt.tagClass,
@@ -83,7 +68,7 @@ export function buildTaskListViewModel(application, t) {
       },
       {
         label: t('pages.taskList.tasks.samplingPlan'),
-        url: spLocked ? null : `/accreditation/sampling-plan/${applicationId}`,
+        url: spLocked ? null : `/accreditation/sampling-plan/${ApplicationId}`,
         locked: spLocked,
         statusTagText: spSt.tagText,
         statusTagClass: spSt.tagClass,
@@ -92,7 +77,7 @@ export function buildTaskListViewModel(application, t) {
     ],
     allComplete,
     continueUrl: allComplete
-      ? `/accreditation/submit-declaration/${applicationId}`
+      ? `/accreditation/submit-declaration/${ApplicationId}`
       : null,
     backLink: backlink,
     saveAndComeLaterLink: saveAndComeLaterlink
@@ -102,9 +87,8 @@ export function buildTaskListViewModel(application, t) {
 export const taskListGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
+    const user = getUser(request)
+    const organisationId = user?.id
     const { applicationId } = request.params
 
     let application

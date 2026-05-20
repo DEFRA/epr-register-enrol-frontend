@@ -1,7 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
+import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
-import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 export const ALLOWED_EXTENSIONS = [
   'pdf',
@@ -25,18 +25,18 @@ export function validateFileExtension(filename) {
 
 export function buildFilesViewModel(files) {
   return (files ?? []).map((f) => ({
-    filename: f.filename ?? '',
-    fileId: f.fileId ?? '',
-    uploadedAt: f.uploadedAt
-      ? new Date(f.uploadedAt).toLocaleDateString('en-GB')
+    filename: f.Filename ?? '',
+    fileId: f.FileId ?? '',
+    uploadedAt: f.UploadedAt
+      ? new Date(f.UploadedAt).toLocaleDateString('en-GB')
       : '',
-    uploadedBy: f.uploadedBy ?? '',
-    scanStatus: f.scanStatus ?? 'Pending'
+    uploadedBy: f.UploadedBy ?? '',
+    scanStatus: f.ScanStatus ?? 'Pending'
   }))
 }
 
 export function hasEligibleFile(files) {
-  return (files ?? []).some((f) => (f.scanStatus ?? 'Pending') !== 'Infected')
+  return (files ?? []).some((f) => (f.ScanStatus ?? 'Pending') !== 'Infected')
 }
 
 function appUrl(organisationId, applicationId) {
@@ -85,9 +85,8 @@ export async function samplingPlanUpload413Handler(request, h) {
 export const samplingPlanUploadGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
+    const user = getUser(request)
+    const organisationId = user?.id
     const { applicationId } = request.params
 
     let application
@@ -107,7 +106,7 @@ export const samplingPlanUploadGetController = {
       }).code(500)
     }
 
-    const files = buildFilesViewModel(application.samplingPlan?.files)
+    const files = buildFilesViewModel(application.SamplingPlan?.Files)
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
@@ -122,9 +121,8 @@ export const samplingPlanUploadGetController = {
 export const samplingPlanUploadPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
+    const user = getUser(request)
+    const organisationId = user?.id
     const { applicationId } = request.params
     const { action, fileId } = request.payload ?? {}
 
@@ -145,8 +143,8 @@ export const samplingPlanUploadPostController = {
       }).code(500)
     }
 
-    const files = buildFilesViewModel(application.samplingPlan?.files)
-    const rawFiles = application.samplingPlan?.files ?? []
+    const files = buildFilesViewModel(application.SamplingPlan?.Files)
+    const rawFiles = application.SamplingPlan?.Files ?? []
 
     function baseView(overrides = {}) {
       return {
@@ -196,8 +194,8 @@ export const samplingPlanUploadPostController = {
 
       try {
         await accreditationApiService.addFile(organisationId, applicationId, {
-          filename,
-          contentType
+          Filename: filename,
+          ContentType: contentType
         })
       } catch (err) {
         request.server.logger.error(
@@ -243,7 +241,7 @@ export const samplingPlanUploadPostController = {
         await accreditationApiService.patchSamplingPlan(
           organisationId,
           applicationId,
-          { sectionStatus }
+          { SectionStatus: sectionStatus }
         )
       } catch (err) {
         request.server.logger.error(
@@ -273,7 +271,7 @@ export const samplingPlanUploadPostController = {
       await accreditationApiService.patchSamplingPlan(
         organisationId,
         applicationId,
-        { sectionStatus: 'Completed' }
+        { SectionStatus: 'Completed' }
       )
     } catch (err) {
       request.server.logger.error(
