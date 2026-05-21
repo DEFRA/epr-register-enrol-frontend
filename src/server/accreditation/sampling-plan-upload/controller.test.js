@@ -18,6 +18,11 @@ import {
   ALLOWED_EXTENSIONS,
   MAX_FILE_BYTES
 } from './controller.js'
+import { initUpload } from '../../common/helpers/upload/init-upload.js'
+
+vi.mock('../../common/helpers/upload/init-upload.js', () => ({
+  initUpload: vi.fn()
+}))
 
 const APPLICATION_ID = 'app-sampling-001'
 
@@ -169,6 +174,11 @@ describe('#samplingPlanUploadController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(initUpload).mockResolvedValue({
+      uploadId: 'stub-test-id',
+      uploadUrl: 'http://stub/upload/stub-test-id',
+      statusUrl: 'http://stub/status/stub-test-id'
+    })
   })
 
   const operatorHeaders = {
@@ -560,7 +570,6 @@ describe('#samplingPlanUploadController', () => {
 
     test('valid file initiates CDP upload and redirects to status page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      global.fetch = vi.fn().mockResolvedValue({ ok: true })
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
@@ -575,15 +584,6 @@ describe('#samplingPlanUploadController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/sampling-plan/${APPLICATION_ID}/status`
-      )
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/stub/cdp-upload/'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: expect.objectContaining({
-            'x-filename': 'sampling-plan.png'
-          })
-        })
       )
     })
 
@@ -619,11 +619,9 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
-    test('CDP proxy failure returns 500 with uploadError', async () => {
+    test('initUpload failure returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      global.fetch = vi
-        .fn()
-        .mockResolvedValue({ ok: false, status: 500, statusText: 'Error' })
+      vi.mocked(initUpload).mockRejectedValueOnce(new Error('CDP unavailable'))
 
       const { statusCode, result } = await server.inject({
         method: 'POST',

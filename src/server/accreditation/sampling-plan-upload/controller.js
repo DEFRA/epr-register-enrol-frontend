@@ -4,6 +4,7 @@ import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
+import { stubSetFile } from '../../common/helpers/upload/stub-uploader.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -185,29 +186,33 @@ export const samplingPlanUploadPostController = {
         ).code(500)
       }
 
-      try {
-        const proxyResponse = await fetch(uploadDetail.uploadUrl, {
-          method: 'POST',
-          body: uploadedFile,
-          duplex: 'half',
-          headers: {
-            'x-filename': filename,
-            'Content-Type': contentType
-          }
-        })
-        if (!proxyResponse.ok) {
-          throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
-        }
-      } catch (err) {
-        request.server.logger.error(
-          `Error proxying file for ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          baseView({
-            fileError: t('pages.samplingPlanUpload.validation.uploadError')
+      if (config.get('fileUpload.uploaderStubEnabled')) {
+        stubSetFile(uploadDetail.uploadId, { filename, contentType })
+      } else {
+        try {
+          const proxyResponse = await fetch(uploadDetail.uploadUrl, {
+            method: 'POST',
+            body: uploadedFile,
+            duplex: 'half',
+            headers: {
+              'x-filename': filename,
+              'Content-Type': contentType
+            }
           })
-        ).code(500)
+          if (!proxyResponse.ok) {
+            throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
+          }
+        } catch (err) {
+          request.server.logger.error(
+            `Error proxying file for ${applicationId}: ${err.message}`
+          )
+          return renderPage(
+            h,
+            baseView({
+              fileError: t('pages.samplingPlanUpload.validation.uploadError')
+            })
+          ).code(500)
+        }
       }
 
       request.yar.set(SAMPLING_PLAN_UPLOAD_SESSION_KEY, {
