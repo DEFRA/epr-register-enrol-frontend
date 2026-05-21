@@ -1,6 +1,11 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { config } from '../../../config/config.js'
+import { initUpload } from '../../common/helpers/upload/init-upload.js'
+import { stubSetFile } from '../../common/helpers/upload/stub-uploader.js'
+
+export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
 export const ALLOWED_EXTENSIONS = [
   'pdf',
@@ -59,44 +64,6 @@ function buildViewData(t, applicationId, siteId, siteName, payload, errors) {
     validToYear: payload?.validToYear ?? '',
     ...errors
   }
-}
-
-export const uploadBesEvidenceGet413Handler = async (request, h) => {
-  const { response } = request
-  if (!response.isBoom || response.output.statusCode !== 413) {
-    return h.continue
-  }
-  const { t } = getLocaleAndTranslator(request)
-  const { applicationId, siteId } = request.params
-  const user = getUser(request)
-  const organisationId = user?.id
-  const siteIdInt = parseInt(siteId, 10)
-
-  let siteName = ''
-  try {
-    const application = await accreditationApiService.getApplication(
-      organisationId,
-      applicationId
-    )
-    const site = application.overseasSites?.sites?.find(
-      (s) => s.siteId === siteIdInt
-    )
-    siteName = site?.siteName ?? ''
-  } catch (_) {}
-
-  return renderPage(
-    h,
-    buildViewData(
-      t,
-      applicationId,
-      siteId,
-      siteName,
-      {},
-      {
-        fileError: t('pages.uploadBesEvidence.validation.fileTooLarge')
-      }
-    )
-  ).code(400)
 }
 
 export const uploadBesEvidenceGetController = {
@@ -256,21 +223,21 @@ export const uploadBesEvidencePostController = {
       ).code(400)
     }
 
+    const besEvidenceValidFromDate = validFrom.toISOString()
+    const besEvidenceExpiryDate = validTo.toISOString()
+
+    let uploadDetail
     try {
-      await accreditationApiService.addBesEvidenceFile(
-        organisationId,
-        applicationId,
-        siteIdInt,
-        {
-          filename,
-          contentType,
-          besEvidenceValidFromDate: validFrom.toISOString(),
-          besEvidenceExpiryDate: validTo.toISOString()
-        }
-      )
+      uploadDetail = await initUpload({
+        s3Bucket: config.get('fileUpload.s3Bucket'),
+        s3Path: `accreditation/bes-evidence/${applicationId}/${siteId}`,
+        metadata: { besEvidenceValidFromDate, besEvidenceExpiryDate },
+        mimeTypes: ALLOWED_EXTENSIONS.map((ext) => `.${ext}`),
+        maxFileSize: MAX_FILE_BYTES
+      })
     } catch (err) {
       request.server.logger.error(
-        `Error uploading BES evidence file for site ${siteId} on ${applicationId}: ${err.message}`
+        `Error initiating BES evidence upload for site ${siteId} on ${applicationId}: ${err.message}`
       )
       return renderPage(
         h,
@@ -278,6 +245,96 @@ export const uploadBesEvidencePostController = {
           fileError: t('pages.uploadBesEvidence.validation.uploadError')
         })
       ).code(500)
+    }
+
+    if (config.get('fileUpload.uploaderStubEnabled')) {
+      stubSetFile(uploadDetail.uploadId, { filename, contentType })
+    } else {
+      try {
+        const proxyResponse = await fetch(uploadDetail.uploadUrl, {
+          method: 'POST',
+          body: uploadedFile,
+          duplex: 'half',
+          headers: {
+            'x-filename': filename,
+            'Content-Type': contentType
+          }
+        })
+        if (!proxyResponse.ok) {
+          throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
+        }
+      } catch (err) {
+        request.server.logger.error(
+          `Error proxying BES evidence file for site ${siteId} on ${applicationId}: ${err.message}`
+        )
+        return renderPage(
+          h,
+          buildViewData(t, applicationId, siteId, siteName, payload, {
+            fileError: t('pages.uploadBesEvidence.validation.uploadError')
+          })
+        ).code(500)
+      }
+    }
+
+    request.yar.set(BES_EVIDENCE_UPLOAD_SESSION_KEY, {
+      statusUrl: uploadDetail.statusUrl,
+      applicationId,
+      siteId: siteIdInt,
+      organisationId,
+      besEvidenceValidFromDate,
+      besEvidenceExpiryDate
+    })
+
+    return h.redirect(
+      `/accreditation/upload-bes-evidence/${applicationId}/${siteId}/status`
+    )
+  }
+}
+
+export const besEvidenceCdpStatusController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId, siteId } = request.params
+    const uploadStatus = request.pre.uploadStatus
+
+    if (uploadStatus?.uploadStatus !== 'ready') {
+      return h.view('accreditation/upload-bes-evidence/status', {
+        pageTitle: t('pages.uploadBesEvidence.status.title'),
+        heading: t('pages.uploadBesEvidence.status.heading')
+      })
+    }
+
+    const fileInput = uploadStatus.form?.file
+    const session = request.yar.get(BES_EVIDENCE_UPLOAD_SESSION_KEY)
+    request.yar.clear(BES_EVIDENCE_UPLOAD_SESSION_KEY)
+
+    if (fileInput?.hasError) {
+      return h.redirect(
+        `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
+      )
+    }
+
+    const scanStatus =
+      fileInput?.fileStatus === 'complete' ? 'Clean' : 'Infected'
+
+    try {
+      await accreditationApiService.addBesEvidenceFile(
+        session?.organisationId,
+        session?.applicationId ?? applicationId,
+        session?.siteId ?? parseInt(siteId, 10),
+        {
+          filename: fileInput?.filename,
+          contentType: fileInput?.contentType ?? fileInput?.detectedContentType,
+          scanStatus,
+          fileId: fileInput?.fileId,
+          besEvidenceValidFromDate: session?.besEvidenceValidFromDate,
+          besEvidenceExpiryDate: session?.besEvidenceExpiryDate
+        }
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error saving BES evidence file for site ${siteId} on ${applicationId}: ${err.message}`
+      )
     }
 
     return h.redirect(uploadMoreUrl(applicationId, siteId))

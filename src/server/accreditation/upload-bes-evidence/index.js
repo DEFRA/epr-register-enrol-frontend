@@ -1,9 +1,11 @@
 import {
   uploadBesEvidenceGetController,
   uploadBesEvidencePostController,
-  uploadBesEvidenceGet413Handler
+  besEvidenceCdpStatusController,
+  BES_EVIDENCE_UPLOAD_SESSION_KEY
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
 
 const uploadOptions = {
   ...requireOperator,
@@ -12,10 +14,12 @@ const uploadOptions = {
     output: 'data',
     parse: true,
     multipart: { output: 'stream' }
-  },
-  ext: {
-    onPreResponse: { method: uploadBesEvidenceGet413Handler }
   }
+}
+
+const statusOptions = {
+  ...requireOperator,
+  pre: [provideUploadStatusFromSession(BES_EVIDENCE_UPLOAD_SESSION_KEY)]
 }
 
 export const uploadBesEvidence = {
@@ -46,6 +50,18 @@ export const uploadBesEvidence = {
           path: '/{language}/accreditation/upload-bes-evidence/{applicationId}/{siteId}',
           options: uploadOptions,
           ...uploadBesEvidencePostController
+        },
+        {
+          method: 'GET',
+          path: '/accreditation/upload-bes-evidence/{applicationId}/{siteId}/status',
+          options: statusOptions,
+          ...besEvidenceCdpStatusController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/upload-bes-evidence/{applicationId}/{siteId}/status',
+          options: statusOptions,
+          ...besEvidenceCdpStatusController
         }
       ])
     }

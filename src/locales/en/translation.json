@@ -283,6 +283,12 @@
         "clean": "Clean",
         "infected": "Infected"
       },
+      "status": {
+        "title": "Uploading file",
+        "heading": "Uploading file",
+        "message": "Your file is being scanned for viruses. This may take a few seconds.",
+        "doNotClose": "Do not close this page."
+      },
       "validation": {
         "noFile": "Select a file to upload",
         "invalidType": "The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
@@ -483,6 +489,12 @@
       "validFrom": "Start date of evidence",
       "validTo": "End date of evidence",
       "dateHint": "For example, 1 11 2026",
+      "status": {
+        "title": "Uploading file",
+        "heading": "Uploading file",
+        "message": "Your file is being scanned for viruses. This may take a few seconds.",
+        "doNotClose": "Do not close this page."
+      },
       "validation": {
         "noFile": "Select a file to upload",
         "invalidType": "The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",

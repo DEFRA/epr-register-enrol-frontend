@@ -52,7 +52,7 @@ const STUB_APPLICATIONS = [
   {
     organisationId: 50003,
     applicationId: 'app003',
-    accreditationReference: 'R26ER5000390068PL',
+    accreditationReference: 'APP2027ER5000390GL',
     applicationStatus: 'Started',
     materialType: 'Glass',
     siteId: 'site003',
@@ -469,13 +469,13 @@ export const stubApiClient = {
         const siteId = parseInt(appMatch[2], 10)
         const site = app?.overseasSites?.sites?.find((s) => s.siteId === siteId)
         const newFile = {
-          fileId: `stub-bes-${Date.now()}`,
+          fileId: body?.fileId ?? `stub-bes-${Date.now()}`,
           filename: body?.filename ?? 'unknown',
           besEvidenceValidFromDate: body?.besEvidenceValidFromDate ?? null,
           besEvidenceExpiryDate: body?.besEvidenceExpiryDate ?? null,
           uploadedAt: new Date().toISOString(),
           uploadedBy: 'Stub User',
-          scanStatus: 'Clean'
+          scanStatus: body?.scanStatus ?? 'Clean'
         }
         if (site) {
           if (!site.besEvidence) {
@@ -493,11 +493,11 @@ export const stubApiClient = {
     if (/\/files$/.test(endpoint)) {
       const app = findApplication(endpoint)
       const newFile = {
-        fileId: `stub-file-${Date.now()}`,
+        fileId: body?.fileId ?? `stub-file-${Date.now()}`,
         filename: body?.filename ?? 'unknown',
         uploadedAt: new Date().toISOString(),
         uploadedBy: 'Stub User',
-        scanStatus: 'Clean'
+        scanStatus: body?.scanStatus ?? 'Clean'
       }
       if (app) {
         if (!app.samplingPlan.files) app.samplingPlan.files = []
