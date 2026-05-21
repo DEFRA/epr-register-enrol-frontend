@@ -250,6 +250,7 @@ export const uploadBesEvidencePostController = {
       const proxyResponse = await fetch(uploadDetail.uploadUrl, {
         method: 'POST',
         body: uploadedFile,
+        duplex: 'half',
         headers: {
           'x-filename': filename,
           'Content-Type': contentType
