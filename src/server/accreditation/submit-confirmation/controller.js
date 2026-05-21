@@ -22,21 +22,17 @@ export const submitConfirmationGetController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let materialType = request.yar.get(ACCREDITATION_SESSION_KEYS.materialType)
-
-    if (!materialType) {
-      try {
-        const application = await accreditationApiService.getApplication(
-          organisationId,
-          applicationId
-        )
-        materialType = application.materialType
-      } catch (err) {
-        request.server.logger.error(
-          `Error fetching application ${applicationId} for confirmation: ${err.message}`
-        )
-        materialType = ''
-      }
+    let materialType = ''
+    try {
+      const application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+      materialType = application.materialType ?? ''
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId} for confirmation: ${err.message}`
+      )
     }
 
     const materialDisplay = materialType

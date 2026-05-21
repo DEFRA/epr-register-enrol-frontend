@@ -52,7 +52,7 @@ const STUB_APPLICATIONS = [
   {
     organisationId: 50003,
     applicationId: 'app003',
-    accreditationReference: 'R26ER5000390068PL',
+    accreditationReference: 'APP2027ER5000390GL',
     applicationStatus: 'Started',
     materialType: 'Glass',
     siteId: 'site003',
