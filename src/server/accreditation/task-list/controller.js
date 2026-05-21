@@ -14,45 +14,45 @@ function sectionStatus(value) {
 
 export function buildTaskListViewModel(application, t) {
   const {
-    ApplicationId,
-    MaterialType,
-    Year,
-    SiteId,
-    SiteAddress,
-    Prns,
-    BusinessPlan,
-    SamplingPlan
+    ApplicationId: applicationId,
+    MaterialType: materialType,
+    Year: year,
+    // siteId,
+    SiteAddress: siteAddress,
+    Prns: prns,
+    BusinessPlan: businessPlan,
+    SamplingPlan: samplingPlan
   } = application
 
-  const materialDisplay = t(`pages.materialSelection.materials.${MaterialType}`)
+  const materialDisplay = t(`pages.materialSelection.materials.${materialType}`)
   const heading = `${t('pages.taskList.headingPrefix')} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
 
-  const prnsComplete = (Prns?.SectionStatus ?? 'NotStarted') === 'Completed'
+  const prnsComplete = (prns?.SectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =
-    (BusinessPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
+    (businessPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
   const spComplete =
-    (SamplingPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
+    (samplingPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
 
   const bpLocked = !prnsComplete
   const spLocked = !bpComplete
   const allComplete = prnsComplete && bpComplete && spComplete
 
-  const prnsSt = sectionStatus(Prns?.SectionStatus)
-  const bpSt = sectionStatus(BusinessPlan?.SectionStatus)
-  const spSt = sectionStatus(SamplingPlan?.SectionStatus)
-  const backlink = `/operator-accreditation/${application.OrganisationId}/${SiteId}/${MaterialType}/${Year}`
+  const prnsSt = sectionStatus(prns?.SectionStatus)
+  const bpSt = sectionStatus(businessPlan?.SectionStatus)
+  const spSt = sectionStatus(samplingPlan?.SectionStatus)
+  const backlink = `/operator-accreditation/${application.OrganisationId}/${application.SiteId}/${application.MaterialType}/${application.Year}`
   const saveAndComeLaterlink = `/operator`
 
   return {
     heading,
     metadata: {
-      year: Year,
-      site: SiteAddress ?? t('pages.taskList.siteNotSet')
+      year: year,
+      site: siteAddress ?? t('pages.taskList.siteNotSet')
     },
     tasks: [
       {
         label: t('pages.taskList.tasks.prns'),
-        url: `/accreditation/prns-tonnage/${ApplicationId}`,
+        url: `/accreditation/prns-tonnage/${applicationId}`,
         locked: false,
         statusTagText: prnsSt.tagText,
         statusTagClass: prnsSt.tagClass,
@@ -60,7 +60,7 @@ export function buildTaskListViewModel(application, t) {
       },
       {
         label: t('pages.taskList.tasks.businessPlan'),
-        url: bpLocked ? null : `/accreditation/business-plan/${ApplicationId}`,
+        url: bpLocked ? null : `/accreditation/business-plan/${applicationId}`,
         locked: bpLocked,
         statusTagText: bpSt.tagText,
         statusTagClass: bpSt.tagClass,
@@ -68,7 +68,7 @@ export function buildTaskListViewModel(application, t) {
       },
       {
         label: t('pages.taskList.tasks.samplingPlan'),
-        url: spLocked ? null : `/accreditation/sampling-plan/${ApplicationId}`,
+        url: spLocked ? null : `/accreditation/sampling-plan/${applicationId}`,
         locked: spLocked,
         statusTagText: spSt.tagText,
         statusTagClass: spSt.tagClass,
@@ -77,7 +77,7 @@ export function buildTaskListViewModel(application, t) {
     ],
     allComplete,
     continueUrl: allComplete
-      ? `/accreditation/submit-declaration/${ApplicationId}`
+      ? `/accreditation/submit-declaration/${applicationId}`
       : null,
     backLink: backlink,
     saveAndComeLaterLink: saveAndComeLaterlink
