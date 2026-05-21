@@ -15,33 +15,33 @@ import { apiClient } from '../../common/api-client.js'
 const APPLICATION_ID = 'app-cos-001'
 
 const SITE_ONE = {
-  SiteId: 900001,
-  SiteName: 'Site Alpha',
-  SiteAddress: '123 Test St',
-  Country: 'Germany',
-  IsEu: true,
-  IsOECD: true
+  siteId: 900001,
+  siteName: 'Site Alpha',
+  siteAddress: '123 Test St',
+  country: 'Germany',
+  isEu: true,
+  isOecd: true
 }
 
 const SITE_TWO = {
-  SiteId: 900002,
-  SiteName: 'Site Beta',
-  SiteAddress: '456 Test Ave',
-  Country: 'Chad',
-  IsEu: false,
-  IsOECD: false
+  siteId: 900002,
+  siteName: 'Site Beta',
+  siteAddress: '456 Test Ave',
+  country: 'Chad',
+  isEu: false,
+  isOecd: false
 }
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Plastic',
-    Year: 2027,
-    IsExporter: true,
-    OverseasSites: {
-      SectionStatus: 'NotStarted',
-      Sites: [SITE_ONE, SITE_TWO]
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Plastic',
+    year: 2027,
+    isExporter: true,
+    overseasSites: {
+      sectionStatus: 'NotStarted',
+      sites: [SITE_ONE, SITE_TWO]
     },
     ...overrides
   }
@@ -117,10 +117,10 @@ describe('#confirmOverseasSitesController', () => {
       expect(result).toContain('data-testid="confirm-button"')
     })
 
-    test('shows no-sites message when Sites array is empty', async () => {
+    test('shows no-sites message when sites array is empty', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: { SectionStatus: 'NotStarted', Sites: [] }
+          overseasSites: { sectionStatus: 'NotStarted', sites: [] }
         })
       )
 
@@ -133,10 +133,10 @@ describe('#confirmOverseasSitesController', () => {
       expect(result).toContain('data-testid="no-sites-message"')
     })
 
-    test('handles null OverseasSites.Sites gracefully', async () => {
+    test('handles null overseasSites.sites gracefully', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: { SectionStatus: 'NotStarted', Sites: null }
+          overseasSites: { sectionStatus: 'NotStarted', sites: null }
         })
       )
 
@@ -208,10 +208,10 @@ describe('#confirmOverseasSitesController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('remove action handles null OverseasSites.Sites gracefully', async () => {
+    test('remove action handles null overseasSites.sites gracefully', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: { SectionStatus: 'NotStarted', Sites: null }
+          overseasSites: { sectionStatus: 'NotStarted', sites: null }
         })
       )
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
@@ -226,7 +226,7 @@ describe('#confirmOverseasSitesController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/overseas-sites`),
-        expect.objectContaining({ Sites: [] })
+        expect.objectContaining({ sites: [] })
       )
       expect(headers.location).toContain(
         `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
@@ -251,16 +251,16 @@ describe('#confirmOverseasSitesController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/overseas-sites`),
         expect.objectContaining({
-          Sites: expect.arrayContaining([
-            expect.objectContaining({ SiteId: 900002 })
+          sites: expect.arrayContaining([
+            expect.objectContaining({ siteId: 900002 })
           ])
         })
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.anything(),
         expect.not.objectContaining({
-          Sites: expect.arrayContaining([
-            expect.objectContaining({ SiteId: 900001 })
+          sites: expect.arrayContaining([
+            expect.objectContaining({ siteId: 900001 })
           ])
         })
       )
@@ -298,7 +298,7 @@ describe('#confirmOverseasSitesController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/overseas-sites`),
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     })
 

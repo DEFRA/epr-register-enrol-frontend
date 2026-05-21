@@ -36,7 +36,7 @@ export const selectOverseasSitesGetController = {
         .code(500)
     }
 
-    const sites = application.OverseasSites?.Sites ?? []
+    const sites = application.overseasSites?.sites ?? []
 
     return h.view('accreditation/select-overseas-sites/index', {
       pageTitle: t('pages.selectOverseasSites.title'),

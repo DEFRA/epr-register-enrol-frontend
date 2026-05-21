@@ -20,14 +20,14 @@ const t = (key) => key.split('.').pop()
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: CURRENT_YEAR,
-    SiteId: 'site-abc',
-    Tonnage: { SectionStatus: 'NotStarted' },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: CURRENT_YEAR,
+    siteId: 'site-abc',
+    prns: { sectionStatus: 'NotStarted' },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -54,7 +54,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs Completed — business plan unlocked, sampling plan still locked', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Tonnage: { SectionStatus: 'Completed' } }),
+      makeApplication({ prns: { sectionStatus: 'Completed' } }),
       t
     )
 
@@ -73,8 +73,8 @@ describe('#buildTaskListViewModel', () => {
   test('PRNs + BusinessPlan Completed — sampling plan unlocked', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Tonnage: { SectionStatus: 'Completed' },
-        BusinessPlan: { SectionStatus: 'Completed' }
+        prns: { sectionStatus: 'Completed' },
+        businessPlan: { sectionStatus: 'Completed' }
       }),
       t
     )
@@ -88,9 +88,9 @@ describe('#buildTaskListViewModel', () => {
   test('all sections Completed — allComplete true, continueUrl set', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Tonnage: { SectionStatus: 'Completed' },
-        BusinessPlan: { SectionStatus: 'Completed' },
-        SamplingPlan: { SectionStatus: 'Completed' }
+        prns: { sectionStatus: 'Completed' },
+        businessPlan: { sectionStatus: 'Completed' },
+        samplingPlan: { sectionStatus: 'Completed' }
       }),
       t
     )
@@ -102,7 +102,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs InProgress — tag shows IN PROGRESS with blue class', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Tonnage: { SectionStatus: 'InProgress' } }),
+      makeApplication({ prns: { sectionStatus: 'InProgress' } }),
       t
     )
 
@@ -117,24 +117,24 @@ describe('#buildTaskListViewModel', () => {
 
   test('metadata contains year and site', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Year: 2026, SiteAddress: '123 Test Street' }),
+      makeApplication({ year: 2026, siteAddress: '123 Test Street' }),
       t
     )
     expect(vm.metadata.year).toBe(2026)
     expect(vm.metadata.site).toBe('123 Test Street')
   })
 
-  test('null SiteId falls back to siteNotSet translation', () => {
-    const vm = buildTaskListViewModel(makeApplication({ SiteId: null }), t)
+  test('null siteId falls back to siteNotSet translation', () => {
+    const vm = buildTaskListViewModel(makeApplication({ siteId: null }), t)
     expect(vm.metadata.site).toBe('siteNotSet')
   })
 
-  test('null Prns/BusinessPlan/SamplingPlan treated as NotStarted', () => {
+  test('null prns/businessPlan/samplingPlan treated as NotStarted', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Tonnage: null,
-        BusinessPlan: null,
-        SamplingPlan: null
+        prns: null,
+        businessPlan: null,
+        samplingPlan: null
       }),
       t
     )
@@ -165,11 +165,11 @@ describe('#buildTaskListViewModel', () => {
   describe('exporter journey', () => {
     function makeExporterApp(overrides = {}) {
       return makeApplication({
-        IsExporter: true,
-        SiteId: null,
-        MaterialType: 'Plastic',
-        OverseasSites: { SectionStatus: 'NotStarted' },
-        BesEvidence: { SectionStatus: 'NotStarted' },
+        isExporter: true,
+        siteId: null,
+        materialType: 'Plastic',
+        overseasSites: { sectionStatus: 'NotStarted' },
+        besEvidence: { sectionStatus: 'NotStarted' },
         ...overrides
       })
     }
@@ -190,9 +190,9 @@ describe('#buildTaskListViewModel', () => {
     test('overseas sites unlocked when sampling plan complete', () => {
       const vm = buildTaskListViewModel(
         makeExporterApp({
-          Tonnage: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' }
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
         }),
         t
       )
@@ -204,10 +204,10 @@ describe('#buildTaskListViewModel', () => {
     test('BES unlocked when overseas sites complete', () => {
       const vm = buildTaskListViewModel(
         makeExporterApp({
-          Tonnage: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' },
-          OverseasSites: { SectionStatus: 'Completed' }
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'Completed' }
         }),
         t
       )
@@ -219,11 +219,11 @@ describe('#buildTaskListViewModel', () => {
     test('allComplete requires all 5 sections', () => {
       const vm = buildTaskListViewModel(
         makeExporterApp({
-          Tonnage: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' },
-          OverseasSites: { SectionStatus: 'Completed' },
-          BesEvidence: { SectionStatus: 'Completed' }
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'Completed' },
+          besEvidence: { sectionStatus: 'Completed' }
         }),
         t
       )
@@ -234,9 +234,9 @@ describe('#buildTaskListViewModel', () => {
     test('allComplete false when only 3 sections done', () => {
       const vm = buildTaskListViewModel(
         makeExporterApp({
-          Tonnage: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' }
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
         }),
         t
       )
@@ -246,7 +246,7 @@ describe('#buildTaskListViewModel', () => {
 
     test('backlink omits siteId', () => {
       const vm = buildTaskListViewModel(
-        makeExporterApp({ Year: CURRENT_YEAR }),
+        makeExporterApp({ year: CURRENT_YEAR }),
         t
       )
       expect(vm.backLink).toBe(
@@ -260,9 +260,9 @@ describe('#buildTaskListViewModel', () => {
       expect(vm.tasks[0].label).toBe('perns')
     })
 
-    test('null OverseasSites and BesEvidence treated as NotStarted', () => {
+    test('null overseasSites and besEvidence treated as NotStarted', () => {
       const vm = buildTaskListViewModel(
-        makeExporterApp({ OverseasSites: null, BesEvidence: null }),
+        makeExporterApp({ overseasSites: null, besEvidence: null }),
         t
       )
       expect(vm.tasks[3].statusTagText).toBe('NOT STARTED')
@@ -354,7 +354,7 @@ describe('#taskListGetController', () => {
 
     test('shows IN PROGRESS tag when PRNs section is InProgress', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Tonnage: { SectionStatus: 'InProgress' } })
+        makeApplication({ prns: { sectionStatus: 'InProgress' } })
       )
 
       const { result } = await server.inject({
@@ -369,7 +369,7 @@ describe('#taskListGetController', () => {
 
     test('shows COMPLETED tag with green class', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Tonnage: { SectionStatus: 'Completed' } })
+        makeApplication({ prns: { sectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({
@@ -397,9 +397,9 @@ describe('#taskListGetController', () => {
     test('Continue button present when all sections are Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Tonnage: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' }
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
         })
       )
 
@@ -431,7 +431,7 @@ describe('#taskListGetController', () => {
 
     test('business plan row has link when PRNs complete (unlocked)', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Tonnage: { SectionStatus: 'Completed' } })
+        makeApplication({ prns: { sectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({
@@ -470,7 +470,7 @@ describe('#taskListGetController', () => {
 
     test('renders year and site metadata', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Year: 2026, SiteId: 'site-123' })
+        makeApplication({ year: 2026, siteId: 'site-123' })
       )
 
       const { result } = await server.inject({
@@ -515,11 +515,11 @@ describe('#taskListGetController', () => {
     test('exporter: renders 5 task rows', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          IsExporter: true,
-          SiteId: null,
-          MaterialType: 'Plastic',
-          OverseasSites: { SectionStatus: 'NotStarted' },
-          BesEvidence: { SectionStatus: 'NotStarted' }
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
         })
       )
 
@@ -540,11 +540,11 @@ describe('#taskListGetController', () => {
     test('exporter: heading contains PERNs', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          IsExporter: true,
-          SiteId: null,
-          MaterialType: 'Plastic',
-          OverseasSites: { SectionStatus: 'NotStarted' },
-          BesEvidence: { SectionStatus: 'NotStarted' }
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
         })
       )
 
@@ -560,14 +560,14 @@ describe('#taskListGetController', () => {
     test('exporter: all 5 sections complete shows Continue button', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          IsExporter: true,
-          SiteId: null,
-          MaterialType: 'Plastic',
-          Tonnage: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' },
-          OverseasSites: { SectionStatus: 'Completed' },
-          BesEvidence: { SectionStatus: 'Completed' }
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'Completed' },
+          besEvidence: { sectionStatus: 'Completed' }
         })
       )
 
@@ -583,14 +583,14 @@ describe('#taskListGetController', () => {
     test('exporter: 3 sections complete does not show Continue button', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          IsExporter: true,
-          SiteId: null,
-          MaterialType: 'Plastic',
-          Tonnage: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' },
-          OverseasSites: { SectionStatus: 'NotStarted' },
-          BesEvidence: { SectionStatus: 'NotStarted' }
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
         })
       )
 
@@ -606,11 +606,11 @@ describe('#taskListGetController', () => {
     test('exporter: does not show site metadata row', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          IsExporter: true,
-          SiteId: null,
-          MaterialType: 'Plastic',
-          OverseasSites: { SectionStatus: 'NotStarted' },
-          BesEvidence: { SectionStatus: 'NotStarted' }
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
         })
       )
 

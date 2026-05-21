@@ -78,10 +78,10 @@ export const uploadBesEvidenceGet413Handler = async (request, h) => {
       organisationId,
       applicationId
     )
-    const site = application.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === siteIdInt
+    const site = application.overseasSites?.sites?.find(
+      (s) => s.siteId === siteIdInt
     )
-    siteName = site?.SiteName ?? ''
+    siteName = site?.siteName ?? ''
   } catch (_) {}
 
   return renderPage(
@@ -132,10 +132,10 @@ export const uploadBesEvidenceGetController = {
       ).code(500)
     }
 
-    const site = application.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === siteIdInt
+    const site = application.overseasSites?.sites?.find(
+      (s) => s.siteId === siteIdInt
     )
-    const siteName = site?.SiteName ?? ''
+    const siteName = site?.siteName ?? ''
 
     return renderPage(
       h,
@@ -171,10 +171,10 @@ export const uploadBesEvidencePostController = {
       ).code(500)
     }
 
-    const site = application.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === siteIdInt
+    const site = application.overseasSites?.sites?.find(
+      (s) => s.siteId === siteIdInt
     )
-    const siteName = site?.SiteName ?? ''
+    const siteName = site?.siteName ?? ''
 
     if (payload.action === 'saveAndComeLater') {
       return h.redirect(taskListUrl(applicationId))
@@ -262,10 +262,10 @@ export const uploadBesEvidencePostController = {
         applicationId,
         siteIdInt,
         {
-          Filename: filename,
-          ContentType: contentType,
-          BESEvidenceValidFromDate: validFrom.toISOString(),
-          BESEvidenceExpiryDate: validTo.toISOString()
+          filename,
+          contentType,
+          besEvidenceValidFromDate: validFrom.toISOString(),
+          besEvidenceExpiryDate: validTo.toISOString()
         }
       )
     } catch (err) {

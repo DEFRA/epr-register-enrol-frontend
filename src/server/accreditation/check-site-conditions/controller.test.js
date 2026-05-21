@@ -17,22 +17,22 @@ const SITE_ID = '900001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Plastic',
-    Year: 2027,
-    IsExporter: true,
-    OverseasSites: {
-      SectionStatus: 'InProgress',
-      Sites: [
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Plastic',
+    year: 2027,
+    isExporter: true,
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
         {
-          SiteId: 900001,
-          SiteName: 'Site Alpha',
-          Country: 'Germany'
+          siteId: 900001,
+          siteName: 'Site Alpha',
+          country: 'Germany'
         }
       ]
     },
-    BesEvidence: { SectionStatus: 'NotStarted' },
+    besEvidence: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }

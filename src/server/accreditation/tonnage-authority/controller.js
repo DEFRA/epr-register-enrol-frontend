@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -19,8 +20,8 @@ export function buildHeading(materialType, siteName, isExporter, t) {
 export function buildAuthoriserRows(authorisers, t) {
   return (authorisers ?? []).map((a, i) => ({
     index: i,
-    fullName: a.FullName,
-    email: a.Email,
+    fullName: a.fullName,
+    email: a.email,
     checked: true
   }))
 }
@@ -50,18 +51,18 @@ function renderPage(h, viewData) {
 }
 
 function buildViewData(application, t, applicationId, opts = {}) {
-  const isExporter = application.IsExporter ?? false
+  const isExporter = application.isExporter ?? false
   return {
     pageTitle: isExporter
       ? t('pages.tonnageAuthority.titleExporter')
       : t('pages.tonnageAuthority.title'),
     heading: buildHeading(
-      application.MaterialType,
-      application.SiteId,
+      application.materialType,
+      application.siteId,
       isExporter,
       t
     ),
-    authoriserRows: buildAuthoriserRows(application.Tonnage?.Authorisers, t),
+    authoriserRows: buildAuthoriserRows(application.prns?.authorisers, t),
     backLink: tonnageUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     isExporter,
@@ -78,8 +79,9 @@ function buildViewData(application, t, applicationId, opts = {}) {
 export const tonnageAuthorityGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -139,10 +141,10 @@ export const tonnageAuthorityPostController = {
       }).code(500)
     }
 
-    const isExporter = application.IsExporter ?? false
+    const isExporter = application.isExporter ?? false
     const heading = buildHeading(
-      application.MaterialType,
-      application.SiteId,
+      application.materialType,
+      application.siteId,
       isExporter,
       t
     )
@@ -152,7 +154,7 @@ export const tonnageAuthorityPostController = {
     const selectSubHeading = isExporter
       ? t('pages.tonnageAuthority.selectSubHeadingExporter')
       : t('pages.tonnageAuthority.selectSubHeading')
-    const currentAuthorisers = application.Tonnage?.Authorisers ?? []
+    const currentAuthorisers = application.prns?.authorisers ?? []
 
     if (submitAction === 'addAuthoriser') {
       const addErrors = {}
@@ -192,7 +194,7 @@ export const tonnageAuthorityPostController = {
 
       const trimmedEmail = newEmail.trim()
       const isDuplicate = currentAuthorisers.some(
-        (a) => a.Email.toLowerCase() === trimmedEmail.toLowerCase()
+        (a) => a.email.toLowerCase() === trimmedEmail.toLowerCase()
       )
       if (isDuplicate) {
         addErrors.newEmail = {
@@ -221,11 +223,11 @@ export const tonnageAuthorityPostController = {
 
       const updatedAuthorisers = [
         ...currentAuthorisers,
-        { FullName: newFullName.trim(), Email: trimmedEmail }
+        { fullName: newFullName.trim(), email: trimmedEmail }
       ]
       try {
         await apiClient.patch(patchUrl(organisationId, applicationId), {
-          Authorisers: updatedAuthorisers
+          authorisers: updatedAuthorisers
         })
       } catch (err) {
         request.server.logger.error(
@@ -281,12 +283,12 @@ export const tonnageAuthorityPostController = {
     }
 
     const authorisersToSave = currentAuthorisers.filter((a) =>
-      checkedEmails.includes(a.Email)
+      checkedEmails.includes(a.email)
     )
 
     try {
       await apiClient.patch(patchUrl(organisationId, applicationId), {
-        Authorisers: authorisersToSave
+        authorisers: authorisersToSave
       })
     } catch (err) {
       request.server.logger.error(
@@ -307,9 +309,7 @@ export const tonnageAuthorityPostController = {
         intro,
         selectSubHeading,
         errors: {
-          authorisers: {
-            text: t('pages.tonnageAuthority.validation.saveError')
-          }
+          authorisers: { text: t('pages.prnsAuthority.validation.saveError') }
         }
       }).code(500)
     }

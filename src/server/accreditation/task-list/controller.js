@@ -14,50 +14,49 @@ function sectionStatus(value) {
 
 export function buildTaskListViewModel(application, t) {
   const {
-    ApplicationId,
-    MaterialType,
-    Year,
-    SiteId,
-    SiteAddress,
-    OrganisationId,
-    Tonnage,
-    BusinessPlan,
-    SamplingPlan,
-    OverseasSites,
-    BesEvidence,
-    IsExporter
+    applicationId,
+    materialType,
+    year,
+    siteId,
+    siteAddress,
+    organisationId,
+    prns,
+    businessPlan,
+    samplingPlan,
+    overseasSites,
+    besEvidence,
+    isExporter
   } = application
 
-  const materialDisplay = t(`pages.materialSelection.materials.${MaterialType}`)
-  const headingPrefix = IsExporter
+  const materialDisplay = t(`pages.materialSelection.materials.${materialType}`)
+  const headingPrefix = isExporter
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')
   const heading = `${headingPrefix} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
 
-  const tonnageComplete =
-    (Tonnage?.SectionStatus ?? 'NotStarted') === 'Completed'
+  const tonnageComplete = (prns?.sectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =
-    (BusinessPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
+    (businessPlan?.sectionStatus ?? 'NotStarted') === 'Completed'
   const spComplete =
-    (SamplingPlan?.SectionStatus ?? 'NotStarted') === 'Completed'
+    (samplingPlan?.sectionStatus ?? 'NotStarted') === 'Completed'
 
   const bpLocked = !tonnageComplete
   const spLocked = !bpComplete
 
-  const tonnageSt = sectionStatus(Tonnage?.SectionStatus)
-  const bpSt = sectionStatus(BusinessPlan?.SectionStatus)
-  const spSt = sectionStatus(SamplingPlan?.SectionStatus)
+  const tonnageSt = sectionStatus(prns?.sectionStatus)
+  const bpSt = sectionStatus(businessPlan?.sectionStatus)
+  const spSt = sectionStatus(samplingPlan?.sectionStatus)
 
-  const backLink = IsExporter
-    ? `/operator-accreditation/${OrganisationId}/${MaterialType}/${Year}`
-    : `/operator-accreditation/${OrganisationId}/${SiteId}/${MaterialType}/${Year}`
+  const backLink = isExporter
+    ? `/operator-accreditation/${organisationId}/${materialType}/${year}`
+    : `/operator-accreditation/${organisationId}/${siteId}/${materialType}/${year}`
 
   const tasks = [
     {
-      label: IsExporter
+      label: isExporter
         ? t('pages.taskList.tasks.perns')
         : t('pages.taskList.tasks.prns'),
-      url: `/accreditation/tonnage/${ApplicationId}`,
+      url: `/accreditation/tonnage/${applicationId}`,
       locked: false,
       statusTagText: tonnageSt.tagText,
       statusTagClass: tonnageSt.tagClass,
@@ -65,7 +64,7 @@ export function buildTaskListViewModel(application, t) {
     },
     {
       label: t('pages.taskList.tasks.businessPlan'),
-      url: bpLocked ? null : `/accreditation/business-plan/${ApplicationId}`,
+      url: bpLocked ? null : `/accreditation/business-plan/${applicationId}`,
       locked: bpLocked,
       statusTagText: bpSt.tagText,
       statusTagClass: bpSt.tagClass,
@@ -73,7 +72,7 @@ export function buildTaskListViewModel(application, t) {
     },
     {
       label: t('pages.taskList.tasks.samplingPlan'),
-      url: spLocked ? null : `/accreditation/sampling-plan/${ApplicationId}`,
+      url: spLocked ? null : `/accreditation/sampling-plan/${applicationId}`,
       locked: spLocked,
       statusTagText: spSt.tagText,
       statusTagClass: spSt.tagClass,
@@ -83,23 +82,23 @@ export function buildTaskListViewModel(application, t) {
 
   let allComplete = tonnageComplete && bpComplete && spComplete
 
-  if (IsExporter) {
+  if (isExporter) {
     const osComplete =
-      (OverseasSites?.SectionStatus ?? 'NotStarted') === 'Completed'
+      (overseasSites?.sectionStatus ?? 'NotStarted') === 'Completed'
     const besComplete =
-      (BesEvidence?.SectionStatus ?? 'NotStarted') === 'Completed'
+      (besEvidence?.sectionStatus ?? 'NotStarted') === 'Completed'
     const osLocked = !spComplete
     const besLocked = !osComplete
 
-    const osSt = sectionStatus(OverseasSites?.SectionStatus)
-    const besSt = sectionStatus(BesEvidence?.SectionStatus)
+    const osSt = sectionStatus(overseasSites?.sectionStatus)
+    const besSt = sectionStatus(besEvidence?.sectionStatus)
 
     tasks.push(
       {
         label: t('pages.taskList.tasks.overseasSites'),
         url: osLocked
           ? null
-          : `/accreditation/select-overseas-sites/${ApplicationId}`,
+          : `/accreditation/select-overseas-sites/${applicationId}`,
         locked: osLocked,
         statusTagText: osSt.tagText,
         statusTagClass: osSt.tagClass,
@@ -109,7 +108,7 @@ export function buildTaskListViewModel(application, t) {
         label: t('pages.taskList.tasks.besEvidence'),
         url: besLocked
           ? null
-          : `/accreditation/upload-evidence-for-overseas-site/${ApplicationId}`,
+          : `/accreditation/upload-evidence-for-overseas-site/${applicationId}`,
         locked: besLocked,
         statusTagText: besSt.tagText,
         statusTagClass: besSt.tagClass,
@@ -122,15 +121,15 @@ export function buildTaskListViewModel(application, t) {
 
   return {
     heading,
-    isExporter: IsExporter ?? false,
+    isExporter: isExporter ?? false,
     metadata: {
-      year: Year,
-      site: IsExporter ? null : (SiteAddress ?? t('pages.taskList.siteNotSet'))
+      year: year,
+      site: isExporter ? null : (siteAddress ?? t('pages.taskList.siteNotSet'))
     },
     tasks,
     allComplete,
     continueUrl: allComplete
-      ? `/accreditation/submit-declaration/${ApplicationId}`
+      ? `/accreditation/submit-declaration/${applicationId}`
       : null,
     backLink,
     saveAndComeLaterLink: '/operator'

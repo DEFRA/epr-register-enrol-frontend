@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 
-// Each describe reloads the module to avoid cross-test mutation of stub state.
+// Each describe() reloads the module to avoid cross-test mutation of stub state.
 // vi.resetModules() + dynamic import gives a clean in-memory store per group.
 
 async function freshStub() {
@@ -10,26 +10,26 @@ async function freshStub() {
 }
 
 describe('stubApiClient.post — seed', () => {
-  test('reprocessor seed (8-part URL) sets IsExporter: false', async () => {
+  test('reprocessor seed (8-part URL) sets isExporter: false', async () => {
     const stub = await freshStub()
     const result = await stub.post(
-      '/api/v1/accreditation-applications/org001/site001/Plastic/seed',
+      '/api/v1/accreditation-applications/100001/site001/Plastic/seed',
       { year: 2027 }
     )
-    expect(result.IsExporter).toBe(false)
-    expect(result.ApplicationStatus).toBe('Saved')
-    expect(result.Year).toBe(2027)
+    expect(result.isExporter).toBe(false)
+    expect(result.applicationStatus).toBe('Saved')
+    expect(result.year).toBe(2027)
   })
 
-  test('exporter seed (7-part URL) sets IsExporter: true', async () => {
+  test('exporter seed (7-part URL) sets isExporter: true', async () => {
     const stub = await freshStub()
     const result = await stub.post(
-      '/api/v1/accreditation-applications/org005exp/Plastic/seed',
+      '/api/v1/accreditation-applications/50005/Plastic/seed',
       { year: 2027 }
     )
-    expect(result.IsExporter).toBe(true)
-    expect(result.ApplicationStatus).toBe('Saved')
-    expect(result.Year).toBe(2027)
+    expect(result.isExporter).toBe(true)
+    expect(result.applicationStatus).toBe('Saved')
+    expect(result.year).toBe(2027)
   })
 })
 
@@ -41,51 +41,51 @@ describe('stubApiClient.post — BES evidence file upload', () => {
   })
 
   const BES_URL =
-    '/api/v1/accreditation-applications/org006exp/app006exp/overseas-sites/900003/bes-evidence/files'
+    '/api/v1/accreditation-applications/50006/app006exp/overseas-sites/900003/bes-evidence/files'
 
-  test('returns a FileId for a known app+site', async () => {
+  test('returns a fileId for a known app+site', async () => {
     const result = await stub.post(BES_URL, {
-      Filename: 'evidence.pdf',
-      BESEvidenceValidFromDate: '2026-01-01T00:00:00Z',
-      BESEvidenceExpiryDate: '2027-01-01T00:00:00Z'
+      filename: 'evidence.pdf',
+      besEvidenceValidFromDate: '2026-01-01T00:00:00Z',
+      besEvidenceExpiryDate: '2027-01-01T00:00:00Z'
     })
-    expect(result.FileId).toMatch(/^stub-bes-/)
+    expect(result.fileId).toMatch(/^stub-bes-/)
   })
 
-  test('appends file to the site BESEvidenceUploads array', async () => {
-    await stub.post(BES_URL, { Filename: 'doc.pdf' })
+  test('appends file to the site besEvidenceUploads array', async () => {
+    await stub.post(BES_URL, { filename: 'doc.pdf' })
 
     const app = await stub.get(
-      '/api/v1/accreditation-applications/org006exp/app006exp'
+      '/api/v1/accreditation-applications/50006/app006exp'
     )
-    const site = app.OverseasSites.Sites.find((s) => s.SiteId === 900003)
-    expect(site.BESEvidence.BESEvidenceUploads).toHaveLength(1)
-    expect(site.BESEvidence.BESEvidenceUploads[0].Filename).toBe('doc.pdf')
+    const site = app.overseasSites.sites.find((s) => s.siteId === 900003)
+    expect(site.besEvidence.besEvidenceUploads).toHaveLength(1)
+    expect(site.besEvidence.besEvidenceUploads[0].filename).toBe('doc.pdf')
   })
 
-  test('stores BESEvidenceValidFromDate and BESEvidenceExpiryDate on the file', async () => {
+  test('stores besEvidenceValidFromDate and besEvidenceExpiryDate on the file', async () => {
     await stub.post(BES_URL, {
-      Filename: 'cert.pdf',
-      BESEvidenceValidFromDate: '2026-03-01T00:00:00Z',
-      BESEvidenceExpiryDate: '2027-03-01T00:00:00Z'
+      filename: 'cert.pdf',
+      besEvidenceValidFromDate: '2026-03-01T00:00:00Z',
+      besEvidenceExpiryDate: '2027-03-01T00:00:00Z'
     })
 
     const app = await stub.get(
-      '/api/v1/accreditation-applications/org006exp/app006exp'
+      '/api/v1/accreditation-applications/50006/app006exp'
     )
-    const site = app.OverseasSites.Sites.find((s) => s.SiteId === 900003)
-    const file = site.BESEvidence.BESEvidenceUploads[0]
-    expect(file.BESEvidenceValidFromDate).toBe('2026-03-01T00:00:00Z')
-    expect(file.BESEvidenceExpiryDate).toBe('2027-03-01T00:00:00Z')
-    expect(file.ScanStatus).toBe('Clean')
+    const site = app.overseasSites.sites.find((s) => s.siteId === 900003)
+    const file = site.besEvidence.besEvidenceUploads[0]
+    expect(file.besEvidenceValidFromDate).toBe('2026-03-01T00:00:00Z')
+    expect(file.besEvidenceExpiryDate).toBe('2027-03-01T00:00:00Z')
+    expect(file.scanStatus).toBe('Clean')
   })
 
-  test('no-op and still returns FileId when siteId not found', async () => {
+  test('no-op and still returns fileId when siteId not found', async () => {
     const result = await stub.post(
-      '/api/v1/accreditation-applications/org006exp/app006exp/overseas-sites/999999/bes-evidence/files',
-      { Filename: 'ignored.pdf' }
+      '/api/v1/accreditation-applications/50006/app006exp/overseas-sites/999999/bes-evidence/files',
+      { filename: 'ignored.pdf' }
     )
-    expect(result.FileId).toMatch(/^stub-bes-/)
+    expect(result.fileId).toMatch(/^stub-bes-/)
   })
 })
 
@@ -97,21 +97,21 @@ describe('stubApiClient.patch — BES evidence', () => {
   })
 
   const BES_PATCH_URL =
-    '/api/v1/accreditation-applications/org006exp/app006exp/overseas-sites/900003/bes-evidence'
+    '/api/v1/accreditation-applications/50006/app006exp/overseas-sites/900003/bes-evidence'
 
-  test('merges body into site BESEvidence', async () => {
-    await stub.patch(BES_PATCH_URL, { DoYouWantToUploadMoreEvidence: true })
+  test('merges body into site besEvidence', async () => {
+    await stub.patch(BES_PATCH_URL, { doYouWantToUploadMoreEvidence: true })
 
     const app = await stub.get(
-      '/api/v1/accreditation-applications/org006exp/app006exp'
+      '/api/v1/accreditation-applications/50006/app006exp'
     )
-    const site = app.OverseasSites.Sites.find((s) => s.SiteId === 900003)
-    expect(site.BESEvidence.DoYouWantToUploadMoreEvidence).toBe(true)
+    const site = app.overseasSites.sites.find((s) => s.siteId === 900003)
+    expect(site.besEvidence.doYouWantToUploadMoreEvidence).toBe(true)
   })
 
   test('returns empty object', async () => {
     const result = await stub.patch(BES_PATCH_URL, {
-      DoYouWantToUploadMoreEvidence: false
+      doYouWantToUploadMoreEvidence: false
     })
     expect(result).toEqual({})
   })
@@ -120,7 +120,7 @@ describe('stubApiClient.patch — BES evidence', () => {
     await expect(
       stub.patch(
         '/api/v1/accreditation-applications/org006exp/app006exp/overseas-sites/999999/bes-evidence',
-        { DoYouWantToUploadMoreEvidence: true }
+        { doYouWantToUploadMoreEvidence: true }
       )
     ).resolves.toEqual({})
   })
@@ -133,29 +133,29 @@ describe('stubApiClient.delete — BES evidence file', () => {
     stub = await freshStub()
   })
 
-  test('removes the file from BESEvidenceUploads', async () => {
+  test('removes the file from besEvidenceUploads', async () => {
     const app = await stub.get(
-      '/api/v1/accreditation-applications/org004exp/app004exp'
+      '/api/v1/accreditation-applications/50004/app004exp'
     )
-    const site = app.OverseasSites?.Sites?.find((s) => s.SiteId === 900001)
-    expect(site?.BESEvidence?.BESEvidenceUploads).toHaveLength(1)
+    const site = app.overseasSites?.sites?.find((s) => s.siteId === 900001)
+    expect(site?.besEvidence?.besEvidenceUploads).toHaveLength(1)
 
     await stub.delete(
-      '/api/v1/accreditation-applications/org004exp/app004exp/overseas-sites/900001/bes-evidence/files/file003'
+      '/api/v1/accreditation-applications/50004/app004exp/overseas-sites/900001/bes-evidence/files/file003'
     )
 
     const updated = await stub.get(
-      '/api/v1/accreditation-applications/org004exp/app004exp'
+      '/api/v1/accreditation-applications/50004/app004exp'
     )
-    const updatedSite = updated.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === 900001
+    const updatedSite = updated.overseasSites?.sites?.find(
+      (s) => s.siteId === 900001
     )
-    expect(updatedSite?.BESEvidence?.BESEvidenceUploads).toHaveLength(0)
+    expect(updatedSite?.besEvidence?.besEvidenceUploads).toHaveLength(0)
   })
 
   test('returns undefined', async () => {
     const result = await stub.delete(
-      '/api/v1/accreditation-applications/org004exp/app004exp/overseas-sites/900001/bes-evidence/files/file003'
+      '/api/v1/accreditation-applications/50004/app004exp/overseas-sites/900001/bes-evidence/files/file003'
     )
     expect(result).toBeUndefined()
   })
@@ -163,7 +163,7 @@ describe('stubApiClient.delete — BES evidence file', () => {
   test('no-op when fileId not found', async () => {
     await expect(
       stub.delete(
-        '/api/v1/accreditation-applications/org004exp/app004exp/overseas-sites/900001/bes-evidence/files/nonexistent'
+        '/api/v1/accreditation-applications/50004/app004exp/overseas-sites/900001/bes-evidence/files/nonexistent'
       )
     ).resolves.toBeUndefined()
   })

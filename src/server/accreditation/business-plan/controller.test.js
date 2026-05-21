@@ -31,22 +31,22 @@ const t = (key) => {
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: {
-      NewInfrastructurePercent: 20,
-      PriceSupportPercent: 20,
-      BusinessCollectionsPercent: 20,
-      CommunicationsPercent: 20,
-      NewMarketsPercent: 10,
-      NewUsesPercent: 10,
-      SectionStatus: 'InProgress'
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: {
+      newInfrastructurePercent: 20,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 20,
+      communicationsPercent: 20,
+      newMarketsPercent: 10,
+      newUsesPercent: 10,
+      sectionStatus: 'InProgress'
     },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -63,8 +63,8 @@ function validPayload() {
 }
 
 describe('#parsePercent', () => {
-  test('returns null for empty string', () => {
-    expect(parsePercent('')).toBeNull()
+  test('returns 0 for empty string', () => {
+    expect(parsePercent('')).toBe(0)
   })
 
   test('returns null for null', () => {
@@ -129,10 +129,11 @@ describe('#validateBusinessPlanFields', () => {
     expect(errors.newMarketsPercent.text).toContain('between 0 and 100')
   })
 
-  test('returns field error for empty field when save-and-continue', () => {
+  test('empty field treated as 0, triggers sum error when save-and-continue', () => {
     const payload = { ...validPayload(), newMarketsPercent: '' }
     const { errors } = validateBusinessPlanFields(payload, t, false)
-    expect(errors.newMarketsPercent).toBeDefined()
+    expect(errors.newMarketsPercent).toBeUndefined()
+    expect(errors._sum).toBeDefined()
   })
 
   test('no error for empty field when skipSumCheck (save-and-come-later)', () => {
@@ -304,7 +305,7 @@ describe('#businessPlanController', () => {
 
     test('exporter GET shows PERN intro text', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ IsExporter: true })
+        makeApplication({ isExporter: true })
       )
 
       const { result, statusCode } = await server.inject({
@@ -386,7 +387,7 @@ describe('#businessPlanController', () => {
 
     test('exporter POST validation error shows PERN intro text', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ IsExporter: true })
+        makeApplication({ isExporter: true })
       )
 
       const { statusCode, result } = await server.inject({
@@ -418,7 +419,7 @@ describe('#businessPlanController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
-        expect.objectContaining({ NewInfrastructurePercent: 20 })
+        expect.objectContaining({ newInfrastructurePercent: 20 })
       )
     })
 

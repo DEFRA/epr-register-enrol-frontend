@@ -16,29 +16,29 @@ const APPLICATION_ID = 'app-sos-001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Plastic',
-    Year: 2027,
-    IsExporter: true,
-    OverseasSites: {
-      SectionStatus: 'NotStarted',
-      Sites: [
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Plastic',
+    year: 2027,
+    isExporter: true,
+    overseasSites: {
+      sectionStatus: 'NotStarted',
+      sites: [
         {
-          SiteId: 900001,
-          SiteName: 'Site Alpha',
-          SiteAddress: '123 Test St',
-          Country: 'Germany',
-          IsEu: true,
-          IsOECD: true
+          siteId: 900001,
+          siteName: 'Site Alpha',
+          siteAddress: '123 Test St',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true
         },
         {
-          SiteId: 900002,
-          SiteName: 'Site Beta',
-          SiteAddress: '456 Test Ave',
-          Country: 'Chad',
-          IsEu: false,
-          IsOECD: false
+          siteId: 900002,
+          siteName: 'Site Beta',
+          siteAddress: '456 Test Ave',
+          country: 'Chad',
+          isEu: false,
+          isOecd: false
         }
       ]
     },
@@ -104,10 +104,10 @@ describe('#selectOverseasSitesGetController', () => {
       expect(result).toContain('Chad')
     })
 
-    test('shows no-sites message when OverseasSites.Sites is empty', async () => {
+    test('shows no-sites message when overseasSites.sites is empty', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: { SectionStatus: 'NotStarted', Sites: [] }
+          overseasSites: { sectionStatus: 'NotStarted', sites: [] }
         })
       )
 
@@ -121,9 +121,9 @@ describe('#selectOverseasSitesGetController', () => {
       expect(result).not.toContain('data-testid="sites-table"')
     })
 
-    test('handles null OverseasSites gracefully', async () => {
+    test('handles null overseasSites gracefully', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ OverseasSites: null })
+        makeApplication({ overseasSites: null })
       )
 
       const { result, statusCode } = await server.inject({

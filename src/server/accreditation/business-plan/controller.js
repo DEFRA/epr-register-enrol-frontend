@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 export const BUSINESS_PLAN_FIELDS = [
   'newInfrastructurePercent',
@@ -11,20 +11,14 @@ export const BUSINESS_PLAN_FIELDS = [
   'newUsesPercent'
 ]
 
-const API_FIELD_MAP = {
-  newInfrastructurePercent: 'NewInfrastructurePercent',
-  priceSupportPercent: 'PriceSupportPercent',
-  businessCollectionsPercent: 'BusinessCollectionsPercent',
-  communicationsPercent: 'CommunicationsPercent',
-  newMarketsPercent: 'NewMarketsPercent',
-  newUsesPercent: 'NewUsesPercent'
-}
-
 export function parsePercent(value) {
-  if (value === undefined || value === null || String(value).trim() === '') {
+  if (value === undefined || value === null) {
     return null
   }
   const trimmed = String(value).trim()
+  if (trimmed === '') {
+    return 0
+  }
   if (!/^\d+$/.test(trimmed)) {
     return NaN
   }
@@ -119,11 +113,10 @@ function buildViewData(t, applicationId, payload, errors, isExporter = false) {
 }
 
 function payloadFromApplication(application) {
-  const bp = application.BusinessPlan ?? {}
+  const bp = application.businessPlan ?? {}
   const payload = {}
   for (const field of BUSINESS_PLAN_FIELDS) {
-    const apiField = API_FIELD_MAP[field]
-    payload[field] = bp[apiField] !== undefined ? String(bp[apiField]) : ''
+    payload[field] = bp[field] !== undefined ? String(bp[field]) : ''
   }
   return payload
 }
@@ -131,8 +124,9 @@ function payloadFromApplication(application) {
 export const businessPlanGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -151,7 +145,7 @@ export const businessPlanGetController = {
       }).code(500)
     }
 
-    const isExporter = application.IsExporter ?? false
+    const isExporter = application.isExporter ?? false
 
     return renderPage(
       h,
@@ -169,8 +163,9 @@ export const businessPlanGetController = {
 export const businessPlanPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const { submitAction = 'saveAndContinue', ...fieldPayload } =
       request.payload
@@ -191,7 +186,7 @@ export const businessPlanPostController = {
       }).code(500)
     }
 
-    const isExporter = application.IsExporter ?? false
+    const isExporter = application.isExporter ?? false
 
     const isSaveAndComeLater = submitAction === 'saveAndComeLater'
     const { errors, values } = validateBusinessPlanFields(
@@ -208,7 +203,7 @@ export const businessPlanPostController = {
 
     const patchBody = {}
     for (const field of BUSINESS_PLAN_FIELDS) {
-      patchBody[API_FIELD_MAP[field]] = values[field] ?? null
+      patchBody[field] = values[field] ?? null
     }
 
     try {

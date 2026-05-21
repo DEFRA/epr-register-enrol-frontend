@@ -17,10 +17,10 @@ function formatDate(isoString) {
 
 function mapUploads(uploads) {
   return (uploads ?? []).map((u) => ({
-    fileId: u.FileId ?? '',
-    filename: u.Filename ?? '',
-    startDate: formatDate(u.BESEvidenceValidFromDate),
-    endDate: formatDate(u.BESEvidenceExpiryDate)
+    fileId: u.fileId ?? '',
+    filename: u.filename ?? '',
+    startDate: formatDate(u.besEvidenceValidFromDate),
+    endDate: formatDate(u.besEvidenceExpiryDate)
   }))
 }
 
@@ -66,11 +66,11 @@ export const cyaEvidenceForSiteGetController = {
       ).code(500)
     }
 
-    const site = application.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === siteIdInt
+    const site = application.overseasSites?.sites?.find(
+      (s) => s.siteId === siteIdInt
     )
-    const siteName = site?.SiteName ?? ''
-    const uploads = mapUploads(site?.BESEvidence?.BESEvidenceUploads)
+    const siteName = site?.siteName ?? ''
+    const uploads = mapUploads(site?.besEvidence?.besEvidenceUploads)
 
     return renderPage(
       h,

@@ -17,32 +17,32 @@ const SITE_ID = '900001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Plastic',
-    Year: 2027,
-    IsExporter: true,
-    OverseasSites: {
-      SectionStatus: 'InProgress',
-      Sites: [
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Plastic',
+    year: 2027,
+    isExporter: true,
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
         {
-          SiteId: 900001,
-          SiteName: 'Site Alpha',
-          Country: 'Germany',
-          BESEvidence: {
-            BESEvidenceUploads: [
+          siteId: 900001,
+          siteName: 'Site Alpha',
+          country: 'Germany',
+          besEvidence: {
+            besEvidenceUploads: [
               {
-                FileId: 'file-bes-001',
-                Filename: 'evidence.pdf',
-                BESEvidenceValidFromDate: '2026-01-01T00:00:00Z',
-                BESEvidenceExpiryDate: '2027-01-01T00:00:00Z'
+                fileId: 'file-bes-001',
+                filename: 'evidence.pdf',
+                besEvidenceValidFromDate: '2026-01-01T00:00:00Z',
+                besEvidenceExpiryDate: '2027-01-01T00:00:00Z'
               }
             ]
           }
         }
       ]
     },
-    BesEvidence: { SectionStatus: 'NotStarted' },
+    besEvidence: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -107,20 +107,20 @@ describe('#cyaEvidenceForSiteController', () => {
     test('handles uploads with null dates and missing fields gracefully', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: {
-            SectionStatus: 'InProgress',
-            Sites: [
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
               {
-                SiteId: 900001,
-                SiteName: 'Site Alpha',
-                Country: 'Germany',
-                BESEvidence: {
-                  BESEvidenceUploads: [
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                country: 'Germany',
+                besEvidence: {
+                  besEvidenceUploads: [
                     {
-                      FileId: null,
-                      Filename: null,
-                      BESEvidenceValidFromDate: null,
-                      BESEvidenceExpiryDate: null
+                      fileId: null,
+                      filename: null,
+                      besEvidenceValidFromDate: null,
+                      besEvidenceExpiryDate: null
                     }
                   ]
                 }
@@ -156,14 +156,14 @@ describe('#cyaEvidenceForSiteController', () => {
     test('shows no-files message when site has no uploads', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: {
-            SectionStatus: 'InProgress',
-            Sites: [
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
               {
-                SiteId: 900001,
-                SiteName: 'Site Alpha',
-                Country: 'Germany',
-                BESEvidence: { BESEvidenceUploads: [] }
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                country: 'Germany',
+                besEvidence: { besEvidenceUploads: [] }
               }
             ]
           }
@@ -182,14 +182,14 @@ describe('#cyaEvidenceForSiteController', () => {
     test('handles null BESEvidenceUploads gracefully', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: {
-            SectionStatus: 'InProgress',
-            Sites: [
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
               {
-                SiteId: 900001,
-                SiteName: 'Site Alpha',
-                Country: 'Germany',
-                BESEvidence: { BESEvidenceUploads: null }
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                country: 'Germany',
+                besEvidence: { besEvidenceUploads: null }
               }
             ]
           }

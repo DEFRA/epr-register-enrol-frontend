@@ -19,19 +19,19 @@ const t = (key) => key.split('.').pop()
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    IsExporter: false,
-    Tonnage: {
-      PlannedTonnageBand: 'UpTo1000',
-      Authorisers: [{ FullName: 'Jane Smith', Email: 'jane@example.com' }],
-      SectionStatus: 'InProgress'
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    isExporter: false,
+    prns: {
+      plannedTonnageBand: 'UpTo1000',
+      authorisers: [{ fullName: 'Jane Smith', email: 'jane@example.com' }],
+      sectionStatus: 'InProgress'
     },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -63,7 +63,7 @@ describe('#buildAuthorisersSummary', () => {
   test('returns single name', () => {
     expect(
       buildAuthorisersSummary(
-        [{ FullName: 'Jane Smith', Email: 'jane@example.com' }],
+        [{ fullName: 'Jane Smith', email: 'jane@example.com' }],
         t
       )
     ).toBe('Jane Smith')
@@ -72,8 +72,8 @@ describe('#buildAuthorisersSummary', () => {
   test('returns comma-separated names for multiple authorisers', () => {
     const result = buildAuthorisersSummary(
       [
-        { FullName: 'Jane Smith', Email: 'j@example.com' },
-        { FullName: 'Bob Jones', Email: 'b@example.com' }
+        { fullName: 'Jane Smith', email: 'j@example.com' },
+        { fullName: 'Bob Jones', email: 'b@example.com' }
       ],
       t
     )
@@ -161,9 +161,9 @@ describe('#tonnageCyaController', () => {
       expect(result).toContain('Jane Smith')
     })
 
-    test('handles null Tonnage gracefully showing not-selected values', async () => {
+    test('handles null prns gracefully showing not-selected values', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Tonnage: null })
+        makeApplication({ prns: null })
       )
 
       const { result, statusCode } = await server.inject({
@@ -180,10 +180,10 @@ describe('#tonnageCyaController', () => {
     test('shows none selected when no authorisers', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Tonnage: {
-            PlannedTonnageBand: 'UpTo500',
-            Authorisers: [],
-            SectionStatus: 'InProgress'
+          prns: {
+            plannedTonnageBand: 'UpTo500',
+            authorisers: [],
+            sectionStatus: 'InProgress'
           }
         })
       )
@@ -213,7 +213,7 @@ describe('#tonnageCyaController', () => {
 
     test('exporter GET shows PERN-specific row labels', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ IsExporter: true })
+        makeApplication({ isExporter: true })
       )
 
       const { result, statusCode } = await server.inject({
@@ -261,9 +261,9 @@ describe('#tonnageCyaController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining('/tonnage'),
         expect.objectContaining({
-          PlannedTonnageBand: 'UpTo1000',
-          Authorisers: expect.arrayContaining([
-            expect.objectContaining({ FullName: 'Jane Smith' })
+          plannedTonnageBand: 'UpTo1000',
+          authorisers: expect.arrayContaining([
+            expect.objectContaining({ fullName: 'Jane Smith' })
           ])
         })
       )
@@ -300,7 +300,7 @@ describe('#tonnageCyaController', () => {
 
     test('exporter confirm PATCH fails shows PERN labels in error page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ IsExporter: true })
+        makeApplication({ isExporter: true })
       )
       vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('save failed'))
 

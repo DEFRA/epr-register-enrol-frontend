@@ -24,16 +24,16 @@
       {% else %}
         <dl class="govuk-summary-list" data-testid="sites-list">
           {% for site in sites %}
-            <div class="govuk-summary-list__row" data-testid="site-row-{{ site.SiteId }}">
-              <dt class="govuk-summary-list__key" data-testid="site-name-{{ site.SiteId }}">{{ site.SiteName }}</dt>
-              <dd class="govuk-summary-list__value" data-testid="site-country-{{ site.SiteId }}">{{ site.Country }}</dd>
+            <div class="govuk-summary-list__row" data-testid="site-row-{{ site.siteId }}">
+              <dt class="govuk-summary-list__key" data-testid="site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="site-country-{{ site.siteId }}">{{ site.country }}</dd>
               <dd class="govuk-summary-list__actions">
-                <form method="post" style="display:inline" data-testid="remove-form-{{ site.SiteId }}">
+                <form method="post" style="display:inline" data-testid="remove-form-{{ site.siteId }}">
                   <input type="hidden" name="crumb" value="{{ crumb }}">
-                  <input type="hidden" name="siteId" value="{{ site.SiteId }}">
+                  <input type="hidden" name="siteId" value="{{ site.siteId }}">
                   <button type="submit" name="submitAction" value="remove"
                           class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
-                          data-testid="remove-button-{{ site.SiteId }}">
+                          data-testid="remove-button-{{ site.siteId }}">
                     {{ t('pages.confirmOverseasSites.removeButton') }}
                   </button>
                 </form>

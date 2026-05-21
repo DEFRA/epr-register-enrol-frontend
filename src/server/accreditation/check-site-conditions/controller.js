@@ -50,10 +50,10 @@ export const checkSiteConditionsGetController = {
       ).code(500)
     }
 
-    const site = application.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === siteIdInt
+    const site = application.overseasSites?.sites?.find(
+      (s) => s.siteId === siteIdInt
     )
-    const siteName = site?.SiteName ?? ''
+    const siteName = site?.siteName ?? ''
 
     return renderPage(
       h,

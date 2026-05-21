@@ -5,6 +5,6 @@ export const ACCREDITATION_SESSION_KEYS = {
   siteId: 'accreditation.siteId',
   year: 'accreditation.year',
   declaration: 'accreditation.declaration',
-  registrationReference: 'accreditation.registrationReference',
+  applicationReference: 'accreditation.applicationReference',
   accreditationReference: 'accreditation.accreditationReference'
 }

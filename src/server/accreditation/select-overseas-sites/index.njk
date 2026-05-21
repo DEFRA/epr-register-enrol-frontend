@@ -31,9 +31,9 @@
             </thead>
             <tbody class="govuk-table__body">
               {% for site in sites %}
-                <tr class="govuk-table__row" data-testid="site-row-{{ site.SiteId }}">
-                  <td class="govuk-table__cell" data-testid="site-name-{{ site.SiteId }}">{{ site.SiteName }}</td>
-                  <td class="govuk-table__cell" data-testid="site-country-{{ site.SiteId }}">{{ site.Country }}</td>
+                <tr class="govuk-table__row" data-testid="site-row-{{ site.siteId }}">
+                  <td class="govuk-table__cell" data-testid="site-name-{{ site.siteId }}">{{ site.siteName }}</td>
+                  <td class="govuk-table__cell" data-testid="site-country-{{ site.siteId }}">{{ site.country }}</td>
                 </tr>
               {% endfor %}
             </tbody>

@@ -19,19 +19,19 @@ const t = (key) => key.split('.').pop()
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    IsExporter: false,
-    Tonnage: {
-      PlannedTonnageBand: null,
-      Authorisers: [],
-      SectionStatus: 'NotStarted'
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    isExporter: false,
+    prns: {
+      plannedTonnageBand: null,
+      authorisers: [],
+      sectionStatus: 'NotStarted'
     },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -130,9 +130,9 @@ describe('#tonnageController', () => {
     test('pre-populates radio when application has existing PlannedTonnageBand', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Tonnage: {
-            PlannedTonnageBand: 'UpTo1000',
-            SectionStatus: 'InProgress'
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            sectionStatus: 'InProgress'
           }
         })
       )
@@ -202,7 +202,7 @@ describe('#tonnageController', () => {
 
     test('exporter sees PERNs heading suffix', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ IsExporter: true })
+        makeApplication({ isExporter: true })
       )
 
       const { result } = await server.inject({
@@ -251,7 +251,7 @@ describe('#tonnageController', () => {
 
     test('exporter gets PERN validation message when no selection', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ IsExporter: true })
+        makeApplication({ isExporter: true })
       )
 
       const { result, statusCode } = await server.inject({
@@ -305,7 +305,7 @@ describe('#tonnageController', () => {
       expect(getSpy).toHaveBeenCalledOnce()
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/tonnage`),
-        { PlannedTonnageBand: 'UpTo1000' }
+        { plannedTonnageBand: 'UpTo1000' }
       )
     })
 

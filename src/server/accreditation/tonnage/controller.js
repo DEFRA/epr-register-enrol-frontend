@@ -56,15 +56,15 @@ export const tonnageGetController = {
       }).code(500)
     }
 
-    const isExporter = application.IsExporter ?? false
+    const isExporter = application.isExporter ?? false
 
     return renderForm(h, {
       pageTitle: isExporter
         ? t('pages.tonnage.titleExporter')
         : t('pages.tonnage.title'),
-      heading: buildHeading(application.MaterialType, isExporter, t),
+      heading: buildHeading(application.materialType, isExporter, t),
       tonnageOptions: buildTonnageOptions(
-        application.Tonnage?.PlannedTonnageBand ?? null,
+        application.prns?.plannedTonnageBand ?? null,
         t
       ),
       backLink: taskListUrl(applicationId),
@@ -105,8 +105,8 @@ export const tonnagePostController = {
       }).code(500)
     }
 
-    const isExporter = application.IsExporter ?? false
-    const heading = buildHeading(application.MaterialType, isExporter, t)
+    const isExporter = application.isExporter ?? false
+    const heading = buildHeading(application.materialType, isExporter, t)
     const selectTonnageKey = isExporter
       ? 'pages.tonnage.validation.selectTonnageExporter'
       : 'pages.tonnage.validation.selectTonnage'
@@ -133,7 +133,7 @@ export const tonnagePostController = {
         organisationId,
         applicationId,
         {
-          PlannedTonnageBand: plannedTonnageBand
+          plannedTonnageBand
         }
       )
     } catch (error) {

@@ -23,26 +23,26 @@ const SITE_ID = '900001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Plastic',
-    Year: 2027,
-    IsExporter: true,
-    OverseasSites: {
-      SectionStatus: 'InProgress',
-      Sites: [
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Plastic',
+    year: 2027,
+    isExporter: true,
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
         {
-          SiteId: 900001,
-          SiteName: 'Site Alpha',
-          SiteAddress: '123 Test St',
-          Country: 'Germany',
-          IsEu: true,
-          IsOECD: true,
-          BESEvidence: { BESEvidenceUploads: [] }
+          siteId: 900001,
+          siteName: 'Site Alpha',
+          siteAddress: '123 Test St',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: { besEvidenceUploads: [] }
         }
       ]
     },
-    BesEvidence: { SectionStatus: 'NotStarted' },
+    besEvidence: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -393,8 +393,8 @@ describe('#uploadBesEvidenceController', () => {
           `${APPLICATION_ID}/overseas-sites/900001/bes-evidence/files`
         ),
         expect.objectContaining({
-          Filename: 'evidence.pdf',
-          ContentType: 'application/pdf'
+          filename: 'evidence.pdf',
+          contentType: 'application/pdf'
         })
       )
     })

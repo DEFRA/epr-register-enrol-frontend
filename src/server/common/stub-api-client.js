@@ -1,311 +1,396 @@
 const STUB_APPLICATIONS = [
   {
-    OrganisationId: 'org001',
-    ApplicationId: 'app001',
-    SiteId: 'site001',
-    IsExporter: false,
-    RegistrationReference: 'R26ER5000390068PL',
-    AccreditationReference: 'APP2027ER5000390PL',
-    ApplicationStatus: 'NotStarted',
-    MaterialType: 'Plastic',
-    SiteAddress: 'UNIT 5, BL4 7AQ, UK',
-    OrganisationName: 'NEWDEV RECYCLING LIMITED',
-    Year: 2027,
-    DateSent: null,
-    SubmittedBy: null,
-    Tonnage: {
-      SectionStatus: 'NotStarted',
-      PlannedTonnageBand: null,
-      Authorisers: []
+    organisationId: 50001,
+    applicationId: 'app001',
+    registrationReference: 'R26ER5000390068PL',
+    accreditationReference: 'APP2027ER5000390PL',
+    applicationStatus: 'NotStarted',
+    materialType: 'Plastic',
+    siteId: 'site001',
+    siteAddress: 'UNIT 5, BL4 7AQ, UK',
+    organisationName: 'NEWDEV RECYCLING LIMITED',
+    year: 2027,
+    dateSent: null,
+    submittedBy: null,
+    prns: {
+      sectionStatus: 'NotStarted',
+      plannedTonnageBand: null,
+      authorisers: []
     },
-    BusinessPlan: {
-      SectionStatus: 'NotStarted',
-      NewInfrastructurePercent: 0,
-      PriceSupportPercent: 0,
-      BusinessCollectionsPercent: 0,
-      CommunicationsPercent: 0,
-      NewMarketsPercent: 0,
-      NewUsesPercent: 0
+    businessPlan: {
+      sectionStatus: 'NotStarted',
+      newInfrastructurePercent: 0,
+      priceSupportPercent: 0,
+      businessCollectionsPercent: 0,
+      communicationsPercent: 0,
+      newMarketsPercent: 0,
+      newUsesPercent: 0
     },
-    SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
+    samplingPlan: { sectionStatus: 'NotStarted', files: [] }
   },
   {
-    OrganisationId: 'org002',
-    ApplicationId: 'app002',
-    RegistrationReference: 'R26ER5000390068PL',
-    AccreditationReference: 'APP2027ER5000390GL',
-    ApplicationStatus: 'Started',
-    IsExporter: false,
-    MaterialType: 'Glass',
-    SiteId: 'site002',
-    SiteAddress: 'Site Lane 002, Siteville, SIT3 OO2',
-    OrganisationName: 'Beta Recycling Co',
-    Year: 2027,
-    DateSent: null,
-    SubmittedBy: null,
-    Tonnage: {
-      SectionStatus: 'NotStarted',
-      PlannedTonnageBand: null,
-      Authorisers: []
+    organisationId: 50002,
+    applicationId: 'app002',
+    registrationReference: 'R26ER5000390068PL',
+    accreditationReference: 'APP2027ER5000390GL',
+    applicationStatus: 'Started',
+    materialType: 'Glass',
+    siteId: 'site002',
+    siteAddress: 'Site Lane 002, Siteville, SIT3 OO2',
+    organisationName: 'Beta Recycling Co',
+    year: 2027,
+    dateSent: null,
+    submittedBy: null,
+    prns: {
+      sectionStatus: 'NotStarted',
+      plannedTonnageBand: null,
+      authorisers: []
     },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted', Files: [] }
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted', files: [] }
   },
   {
-    OrganisationId: 'org004exp',
-    ApplicationId: 'app004exp',
-    AccreditationReference: 'APP2027ER5000390SL',
-    ApplicationStatus: 'Started',
-    IsExporter: true,
-    MaterialType: 'Steel',
-    SiteId: null,
-    SiteAddress: null,
-    OrganisationName: 'Export Steel Ltd.',
-    Year: 2027,
-    DateSent: '2026-12-01T10:00:00Z',
-    SubmittedBy: 'Jane Doe',
-    Tonnage: {
-      SectionStatus: 'Completed',
-      PlannedTonnageBand: 'UpTo1000',
-      Authorisers: [{ FullName: 'Jane Doe', Email: 'jane@deltagreen.co.uk' }]
+    organisationId: 50003,
+    applicationId: 'app003',
+    accreditationReference: 'R26ER5000390068PL',
+    applicationStatus: 'Started',
+    materialType: 'Glass',
+    siteId: 'site003',
+    siteAddress: 'The Laundry, Siteville, SIT3 OO2',
+    organisationName: 'Delta Green Recycling Co',
+    year: 2027,
+    dateSent: '2026-12-01T10:00:00Z',
+    submittedBy: 'Jane Doe',
+    prns: {
+      sectionStatus: 'Completed',
+      plannedTonnageBand: 'UpTo1000',
+      authorisers: [{ fullName: 'Jane Doe', email: 'jane@deltagreen.co.uk' }]
     },
-    BusinessPlan: {
-      SectionStatus: 'Completed',
-      NewInfrastructurePercent: 30,
-      PriceSupportPercent: 20,
-      BusinessCollectionsPercent: 15,
-      CommunicationsPercent: 10,
-      NewMarketsPercent: 15,
-      NewUsesPercent: 10,
-      NewInfrastructureDetail:
+    businessPlan: {
+      sectionStatus: 'Completed',
+      newInfrastructurePercent: 30,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 15,
+      communicationsPercent: 10,
+      newMarketsPercent: 15,
+      newUsesPercent: 10,
+      newInfrastructureDetail:
         'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
-      PriceSupportDetail:
+      priceSupportDetail:
         'Price support payments to collectors to maintain viability of glass collection routes.',
-      BusinessCollectionsDetail:
+      businessCollectionsDetail:
         'Expansion of commercial and industrial glass collection services across the region.',
-      CommunicationsDetail:
+      communicationsDetail:
         'Public awareness campaign promoting glass recycling and correct bin usage.',
-      NewMarketsDetail:
+      newMarketsDetail:
         'Development of relationships with construction sector to use recycled glass aggregate.',
-      NewUsesDetail:
+      newUsesDetail:
         'Trials of cullet use in road surfacing and insulation manufacturing.'
     },
-    SamplingPlan: {
-      SectionStatus: 'Started',
-      Files: [
+    samplingPlan: {
+      sectionStatus: 'Started',
+      files: [
         {
-          FileId: 'file003',
-          Filename: 'code-nightmare-green.pdf',
-          UploadedAt: '2026-11-01T12:00:00Z',
-          UploadedBy: 'Jane Doe',
-          ScanStatus: 'Clean'
+          fileId: 'file003',
+          filename: 'code-nightmare-green.pdf',
+          uploadedAt: '2026-11-01T12:00:00Z',
+          uploadedBy: 'Jane Doe',
+          scanStatus: 'Clean'
         }
       ]
     },
-    OverseasSites: {
-      SectionStatus: 'InProgress',
-      Sites: [
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
         {
-          SiteId: 900001,
-          SiteName: 'Site 1',
-          SiteAddress: 'Address 123',
-          Country: 'Germany',
-          IsEu: true,
-          IsOECD: true,
-          BESEvidence: {
-            BESEvidenceUploads: [
+          siteId: 900001,
+          siteName: 'Site 1',
+          siteAddress: 'Address 123',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [
               {
-                BESEvidenceValidFromDate: '2026-11-01T12:00:00Z',
-                BESEvidenceExpiryDate: '2027-11-30T12:00:00Z',
-                FileId: 'file003',
-                Filename: 'code-nightmare-green.pdf',
-                UploadedAt: '2026-11-01T12:00:00Z',
-                UploadedBy: 'Jane Doe',
-                ScanStatus: 'Clean'
+                besEvidenceValidFromDate: '2026-11-01T12:00:00Z',
+                besEvidenceExpiryDate: '2027-11-30T12:00:00Z',
+                fileId: 'file003',
+                filename: 'code-nightmare-green.pdf',
+                uploadedAt: '2026-11-01T12:00:00Z',
+                uploadedBy: 'Jane Doe',
+                scanStatus: 'Clean'
               }
             ],
-            // DoYouWantToUploadMoreEvidence: false triggers check-your-answers;
-            // the loop continues while true
-            DoYouWantToUploadMoreEvidence: false
+            doYouWantToUploadMoreEvidence: false
           }
         },
         {
-          SiteId: 900002,
-          SiteName: 'Site 2',
-          SiteAddress: 'Address 456',
-          Country: 'Chad',
-          IsEu: false
+          siteId: 900002,
+          siteName: 'Site 2',
+          siteAddress: 'Address 456',
+          country: 'Chad',
+          isEu: false
         }
       ]
     },
-    BesEvidence: { SectionStatus: 'NotStarted' }
+    besEvidence: { sectionStatus: 'NotStarted' }
   },
+
   {
-    OrganisationId: 'org003',
-    ApplicationId: 'app003',
-    AccreditationReference: 'APP2027ER5000390GL',
-    ApplicationStatus: 'Started',
-    IsExporter: false,
-    MaterialType: 'Glass',
-    SiteId: 'site003',
-    SiteAddress: 'The Laundry, Siteville, SIT3 OO2',
-    OrganisationName: 'Delta Green Recycling Co',
-    Year: 2027,
-    DateSent: '2026-12-01T10:00:00Z',
-    SubmittedBy: 'Jane Doe',
-    Tonnage: {
-      SectionStatus: 'Completed',
-      PlannedTonnageBand: 'UpTo1000',
-      Authorisers: [{ FullName: 'Jane Doe', Email: 'jane@deltagreen.co.uk' }]
+    organisationId: 50004,
+    applicationId: 'app004exp',
+    accreditationReference: 'APP2027ER5000390SL',
+    applicationStatus: 'Started',
+    isExporter: true,
+    materialType: 'Steel',
+    siteId: null,
+    siteAddress: null,
+    organisationName: 'Export Steel Ltd.',
+    year: 2027,
+    dateSent: '2026-12-01T10:00:00Z',
+    submittedBy: 'Jane Doe',
+    prns: {
+      sectionStatus: 'Completed',
+      plannedTonnageBand: 'UpTo1000',
+      authorisers: [{ fullName: 'Jane Doe', email: 'jane@deltagreen.co.uk' }]
     },
-    BusinessPlan: {
-      SectionStatus: 'Completed',
-      NewInfrastructurePercent: 30,
-      PriceSupportPercent: 20,
-      BusinessCollectionsPercent: 15,
-      CommunicationsPercent: 10,
-      NewMarketsPercent: 15,
-      NewUsesPercent: 10,
-      NewInfrastructureDetail:
+    businessPlan: {
+      sectionStatus: 'Completed',
+      newInfrastructurePercent: 30,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 15,
+      communicationsPercent: 10,
+      newMarketsPercent: 15,
+      newUsesPercent: 10,
+      newInfrastructureDetail:
         'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
-      PriceSupportDetail:
+      priceSupportDetail:
         'Price support payments to collectors to maintain viability of glass collection routes.',
-      BusinessCollectionsDetail:
+      businessCollectionsDetail:
         'Expansion of commercial and industrial glass collection services across the region.',
-      CommunicationsDetail:
+      communicationsDetail:
         'Public awareness campaign promoting glass recycling and correct bin usage.',
-      NewMarketsDetail:
+      newMarketsDetail:
         'Development of relationships with construction sector to use recycled glass aggregate.',
-      NewUsesDetail:
+      newUsesDetail:
         'Trials of cullet use in road surfacing and insulation manufacturing.'
     },
-    SamplingPlan: {
-      SectionStatus: 'Completed',
-      Files: [
+    samplingPlan: {
+      sectionStatus: 'Started',
+      files: [
         {
-          FileId: 'file003',
-          Filename: 'code-nightmare-green.pdf',
-          UploadedAt: '2026-11-01T12:00:00Z',
-          UploadedBy: 'Jane Doe',
-          ScanStatus: 'Clean'
-        }
-      ]
-    }
-  },
-  {
-    OrganisationId: 'org005exp',
-    ApplicationId: 'app005exp',
-    AccreditationReference: 'APP2027ER5000391PL',
-    ApplicationStatus: 'Started',
-    IsExporter: true,
-    MaterialType: 'Plastic',
-    SiteId: null,
-    SiteAddress: null,
-    OrganisationName: 'Plastic Exports Ltd.',
-    Year: 2027,
-    DateSent: null,
-    SubmittedBy: null,
-    Tonnage: {
-      SectionStatus: 'NotStarted',
-      PlannedTonnageBand: null,
-      Authorisers: []
-    },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted', Files: [] },
-    OverseasSites: {
-      SectionStatus: 'NotStarted',
-      Sites: []
-    },
-    BesEvidence: { SectionStatus: 'NotStarted' }
-  },
-  {
-    OrganisationId: 'org006exp',
-    ApplicationId: 'app006exp',
-    AccreditationReference: 'APP2027ER5000392GL',
-    ApplicationStatus: 'Started',
-    IsExporter: true,
-    MaterialType: 'Glass',
-    SiteId: null,
-    SiteAddress: null,
-    OrganisationName: 'Global Glass Exports Co.',
-    Year: 2027,
-    DateSent: null,
-    SubmittedBy: null,
-    Tonnage: {
-      SectionStatus: 'Completed',
-      PlannedTonnageBand: 'UpTo10000',
-      Authorisers: [
-        { FullName: 'Alice Green', Email: 'alice@globalglassexp.co.uk' }
-      ]
-    },
-    BusinessPlan: {
-      SectionStatus: 'Completed',
-      NewInfrastructurePercent: 20,
-      PriceSupportPercent: 20,
-      BusinessCollectionsPercent: 20,
-      CommunicationsPercent: 20,
-      NewMarketsPercent: 10,
-      NewUsesPercent: 10
-    },
-    SamplingPlan: {
-      SectionStatus: 'Completed',
-      Files: [
-        {
-          FileId: 'file006',
-          Filename: 'sampling-plan-glass.pdf',
-          UploadedAt: '2026-12-01T10:00:00Z',
-          UploadedBy: 'Alice Green',
-          ScanStatus: 'Clean'
+          fileId: 'file003',
+          filename: 'code-nightmare-green.pdf',
+          uploadedAt: '2026-11-01T12:00:00Z',
+          uploadedBy: 'Jane Doe',
+          scanStatus: 'Clean'
         }
       ]
     },
-    OverseasSites: {
-      SectionStatus: 'InProgress',
-      Sites: [
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
         {
-          SiteId: 900003,
-          SiteName: 'Rotterdam Recycling BV',
-          SiteAddress: 'Industrieweg 44, Rotterdam',
-          Country: 'Netherlands',
-          IsEu: true,
-          IsOECD: true,
-          BESEvidence: {
-            BESEvidenceUploads: [],
-            DoYouWantToUploadMoreEvidence: false
+          siteId: 900001,
+          siteName: 'Site 1',
+          siteAddress: 'Address 123',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [
+              {
+                besEvidenceValidFromDate: '2026-11-01T12:00:00Z',
+                besEvidenceExpiryDate: '2027-11-30T12:00:00Z',
+                fileId: 'file003',
+                filename: 'code-nightmare-green.pdf',
+                uploadedAt: '2026-11-01T12:00:00Z',
+                uploadedBy: 'Jane Doe',
+                scanStatus: 'Clean'
+              }
+            ],
+            doYouWantToUploadMoreEvidence: false
           }
         },
         {
-          SiteId: 900004,
-          SiteName: 'Berlin Glass GmbH',
-          SiteAddress: 'Recyclingstraße 12, Berlin',
-          Country: 'Germany',
-          IsEu: true,
-          IsOECD: true,
-          BESEvidence: {
-            BESEvidenceUploads: [],
-            DoYouWantToUploadMoreEvidence: false
+          siteId: 900002,
+          siteName: 'Site 2',
+          siteAddress: 'Address 456',
+          country: 'Chad',
+          isEu: false
+        }
+      ]
+    },
+    besEvidence: { sectionStatus: 'InProgress' }
+  },
+  {
+    organisationId: 50005,
+    applicationId: 'app005exp',
+    registrationReference: 'R26ER5000390068PL',
+    accreditationReference: 'APP2027ER5000391PL',
+    applicationStatus: 'Started',
+    isExporter: true,
+    materialType: 'Plastic',
+    siteId: null,
+    siteAddress: null,
+    organisationName: 'Plastic Exports Ltd.',
+    year: 2027,
+    dateSent: null,
+    submittedBy: null,
+    prns: {
+      sectionStatus: 'NotStarted',
+      plannedTonnageBand: null,
+      authorisers: []
+    },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: {
+      sectionStatus: 'Started',
+      files: [
+        {
+          fileId: 'file005',
+          filename: 'code5-nightmare-green.pdf',
+          uploadedAt: '2026-11-01T12:00:00Z',
+          uploadedBy: 'Jane Doe',
+          scanStatus: 'Clean'
+        }
+      ]
+    },
+    overseasSites: {
+      sectionStatus: 'NotStarted',
+      sites: []
+    },
+    besEvidence: { sectionStatus: 'NotStarted' }
+  },
+  {
+    organisationId: 50006,
+    applicationId: 'app006exp',
+    accreditationReference: 'APP2027ER5000392GL',
+    applicationStatus: 'Started',
+    isExporter: true,
+    materialType: 'Glass',
+    siteId: null,
+    siteAddress: null,
+    organisationName: 'Global Glass Exports Co.',
+    year: 2027,
+    dateSent: null,
+    submittedBy: null,
+    prns: {
+      sectionStatus: 'Completed',
+      plannedTonnageBand: 'UpTo10000',
+      authorisers: [
+        { fullName: 'Alice Green', email: 'alice@globalglassexp.co.uk' }
+      ]
+    },
+    businessPlan: {
+      sectionStatus: 'Completed',
+      newInfrastructurePercent: 20,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 20,
+      communicationsPercent: 20,
+      newMarketsPercent: 10,
+      newUsesPercent: 10
+    },
+    samplingPlan: {
+      sectionStatus: 'Completed',
+      files: [
+        {
+          fileId: 'file006',
+          filename: 'sampling-plan-glass.pdf',
+          uploadedAt: '2026-12-01T10:00:00Z',
+          uploadedBy: 'Alice Green',
+          scanStatus: 'Clean'
+        }
+      ]
+    },
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
+        {
+          siteId: 900003,
+          siteName: 'Rotterdam Recycling BV',
+          siteAddress: 'Industrieweg 44, Rotterdam',
+          country: 'Netherlands',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [],
+            doYouWantToUploadMoreEvidence: false
+          }
+        },
+        {
+          siteId: 900004,
+          siteName: 'Berlin Glass GmbH',
+          siteAddress: 'Recyclingstraße 12, Berlin',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [],
+            doYouWantToUploadMoreEvidence: false
           }
         }
       ]
     },
-    BesEvidence: { SectionStatus: 'NotStarted' }
+    besEvidence: { sectionStatus: 'NotStarted' }
   }
 ]
 
 const STUB_ORGANISATIONS = [
-  { id: 'org001', name: 'Stub Organisation Ltd' },
-  { id: 'org002', name: 'Beta Recycling Co' }
+  { id: 50001, name: 'NEWDEV RECYCLING LIMITED' },
+  { id: 50002, name: 'Delta Green Recycling Co' }
 ]
+
+export const STUB_ORG_MODELS = {
+  50001: {
+    orgId: 50001,
+    schemaVersion: 1,
+    version: 1,
+    companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
+    registrations: [
+      {
+        siteId: 'site001',
+        material: 'Plastic',
+        wasteProcessingType: 'reprocessor',
+        siteAddress: {
+          line1: 'UNIT 5, BL4 7AQ, UK',
+          town: 'Siteville',
+          postcode: 'SIT3 OO1',
+          country: 'England'
+        }
+      }
+    ]
+  },
+  50002: {
+    orgId: 50002,
+    schemaVersion: 1,
+    version: 1,
+    companyDetails: { name: 'Delta Green Recycling Co' },
+    registrations: [
+      {
+        siteId: 'site002',
+        material: 'Glass',
+        wasteProcessingType: 'reprocessor',
+        siteAddress: {
+          line1: 'Site Lane 002',
+          town: 'Siteville',
+          postcode: 'SIT3 OO2',
+          country: 'England'
+        }
+      }
+    ]
+  }
+}
 
 const APP_PATH_RE =
   /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+?)(?:\/([^/]+))?$/
 
 const SECTION_KEY_MAP = {
-  tonnage: 'Tonnage',
-  'business-plan': 'BusinessPlan',
-  'sampling-plan': 'SamplingPlan',
-  'overseas-sites': 'OverseasSites',
-  'bes-evidence': 'BesEvidence'
+  prns: 'prns',
+  tonnage: 'prns',
+  'business-plan': 'businessPlan',
+  'sampling-plan': 'samplingPlan',
+  'overseas-sites': 'overseasSites',
+  'bes-evidence': 'besEvidence'
 }
 
 function findApplication(endpoint) {
@@ -314,7 +399,7 @@ function findApplication(endpoint) {
     return null
   }
   return (
-    STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
+    STUB_APPLICATIONS.find((a) => a.applicationId === match[1]) ??
     STUB_APPLICATIONS[0]
   )
 }
@@ -323,7 +408,7 @@ function findApplicationAndSection(endpoint) {
   const match = endpoint.match(APP_PATH_RE)
   if (!match) return { app: null, section: null }
   const app =
-    STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
+    STUB_APPLICATIONS.find((a) => a.applicationId === match[1]) ??
     STUB_APPLICATIONS[0]
   return { app, section: match[2] ?? null }
 }
@@ -350,26 +435,26 @@ export const stubApiClient = {
         ? parts[parts.length - 3]
         : parts[parts.length - 4]
       const index = STUB_APPLICATIONS.findIndex(
-        (x) => x.OrganisationId === organisationId
+        (x) => String(x.organisationId) === String(organisationId)
       )
 
       return Promise.resolve({
         ...STUB_APPLICATIONS[index],
-        OrganisationId: organisationId,
-        IsExporter: isExporterSeed,
-        Year: body?.year ?? new Date().getFullYear(),
-        ApplicationStatus: 'Saved'
+        organisationId: organisationId,
+        isExporter: isExporterSeed,
+        year: body?.year ?? new Date().getFullYear(),
+        applicationStatus: 'Saved'
       })
     }
     if (/\/submit$/.test(endpoint)) {
       const app = findApplication(endpoint)
       if (app) {
-        app.ApplicationStatus = 'Sent'
-        app.DateSent = new Date().toISOString()
-        app.SubmittedBy = body ?? null
+        app.applicationStatus = 'Sent'
+        app.dateSent = new Date().toISOString()
+        app.submittedBy = body ?? null
       }
       return Promise.resolve({
-        AccreditationReference: app?.AccreditationReference ?? 'REF-STUB-001'
+        accreditationReference: app?.accreditationReference ?? 'REF-STUB-001'
       })
     }
     // BES evidence file upload: /overseas-sites/{siteId}/bes-evidence/files
@@ -379,46 +464,46 @@ export const stubApiClient = {
       )
       if (appMatch) {
         const app = STUB_APPLICATIONS.find(
-          (a) => a.ApplicationId === appMatch[1]
+          (a) => a.applicationId === appMatch[1]
         )
         const siteId = parseInt(appMatch[2], 10)
-        const site = app?.OverseasSites?.Sites?.find((s) => s.SiteId === siteId)
+        const site = app?.overseasSites?.sites?.find((s) => s.siteId === siteId)
         const newFile = {
-          FileId: `stub-bes-${Date.now()}`,
-          Filename: body?.Filename ?? 'unknown',
-          BESEvidenceValidFromDate: body?.BESEvidenceValidFromDate ?? null,
-          BESEvidenceExpiryDate: body?.BESEvidenceExpiryDate ?? null,
-          UploadedAt: new Date().toISOString(),
-          UploadedBy: 'Stub User',
-          ScanStatus: 'Clean'
+          fileId: `stub-bes-${Date.now()}`,
+          filename: body?.filename ?? 'unknown',
+          besEvidenceValidFromDate: body?.besEvidenceValidFromDate ?? null,
+          besEvidenceExpiryDate: body?.besEvidenceExpiryDate ?? null,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: 'Stub User',
+          scanStatus: 'Clean'
         }
         if (site) {
-          if (!site.BESEvidence) {
-            site.BESEvidence = { BESEvidenceUploads: [] }
+          if (!site.besEvidence) {
+            site.besEvidence = { besEvidenceUploads: [] }
           }
-          if (!site.BESEvidence.BESEvidenceUploads) {
-            site.BESEvidence.BESEvidenceUploads = []
+          if (!site.besEvidence.besEvidenceUploads) {
+            site.besEvidence.besEvidenceUploads = []
           }
-          site.BESEvidence.BESEvidenceUploads.push(newFile)
+          site.besEvidence.besEvidenceUploads.push(newFile)
         }
-        return Promise.resolve({ FileId: newFile.FileId })
+        return Promise.resolve({ fileId: newFile.fileId })
       }
     }
     // Sampling plan file upload: /files
     if (/\/files$/.test(endpoint)) {
       const app = findApplication(endpoint)
       const newFile = {
-        FileId: `stub-file-${Date.now()}`,
-        Filename: body?.Filename ?? 'unknown',
-        UploadedAt: new Date().toISOString(),
-        UploadedBy: 'Stub User',
-        ScanStatus: 'Clean'
+        fileId: `stub-file-${Date.now()}`,
+        filename: body?.filename ?? 'unknown',
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: 'Stub User',
+        scanStatus: 'Clean'
       }
       if (app) {
-        if (!app.SamplingPlan.Files) app.SamplingPlan.Files = []
-        app.SamplingPlan.Files.push(newFile)
+        if (!app.samplingPlan.files) app.samplingPlan.files = []
+        app.samplingPlan.files.push(newFile)
       }
-      return Promise.resolve({ FileId: newFile.FileId })
+      return Promise.resolve({ fileId: newFile.fileId })
     }
     return Promise.resolve({})
   },
@@ -431,13 +516,13 @@ export const stubApiClient = {
       )
       if (appMatch) {
         const app = STUB_APPLICATIONS.find(
-          (a) => a.ApplicationId === appMatch[1]
+          (a) => a.applicationId === appMatch[1]
         )
         const siteId = parseInt(appMatch[2], 10)
-        const site = app?.OverseasSites?.Sites?.find((s) => s.SiteId === siteId)
+        const site = app?.overseasSites?.sites?.find((s) => s.siteId === siteId)
         if (site) {
-          if (!site.BESEvidence) site.BESEvidence = {}
-          Object.assign(site.BESEvidence, body)
+          if (!site.besEvidence) site.besEvidence = {}
+          Object.assign(site.besEvidence, body)
         }
       }
       return Promise.resolve({})
@@ -459,13 +544,13 @@ export const stubApiClient = {
       /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+)\/overseas-sites\/(\d+)\/bes-evidence\/files\/([^/]+)$/
     )
     if (besMatch) {
-      const app = STUB_APPLICATIONS.find((a) => a.ApplicationId === besMatch[1])
+      const app = STUB_APPLICATIONS.find((a) => a.applicationId === besMatch[1])
       const siteId = parseInt(besMatch[2], 10)
-      const site = app?.OverseasSites?.Sites?.find((s) => s.SiteId === siteId)
-      if (site?.BESEvidence?.BESEvidenceUploads) {
-        site.BESEvidence.BESEvidenceUploads =
-          site.BESEvidence.BESEvidenceUploads.filter(
-            (f) => f.FileId !== besMatch[3]
+      const site = app?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+      if (site?.besEvidence?.besEvidenceUploads) {
+        site.besEvidence.besEvidenceUploads =
+          site.besEvidence.besEvidenceUploads.filter(
+            (f) => f.fileId !== besMatch[3]
           )
       }
       return Promise.resolve(undefined)
@@ -476,11 +561,11 @@ export const stubApiClient = {
     )
     if (match) {
       const app =
-        STUB_APPLICATIONS.find((a) => a.ApplicationId === match[1]) ??
+        STUB_APPLICATIONS.find((a) => a.applicationId === match[1]) ??
         STUB_APPLICATIONS[0]
-      if (app.SamplingPlan?.Files) {
-        app.SamplingPlan.Files = app.SamplingPlan.Files.filter(
-          (f) => f.FileId !== match[2]
+      if (app.samplingPlan?.files) {
+        app.samplingPlan.files = app.samplingPlan.files.filter(
+          (f) => f.fileId !== match[2]
         )
       }
     }

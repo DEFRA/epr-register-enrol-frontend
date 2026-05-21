@@ -56,7 +56,7 @@ export const confirmOverseasSitesGetController = {
       ).code(500)
     }
 
-    const sites = application.OverseasSites?.Sites ?? []
+    const sites = application.overseasSites?.sites ?? []
 
     return renderPage(h, buildViewData(t, applicationId, sites, null))
   }
@@ -91,16 +91,16 @@ export const confirmOverseasSitesPostController = {
       ).code(500)
     }
 
-    const sites = application.OverseasSites?.Sites ?? []
+    const sites = application.overseasSites?.sites ?? []
 
     if (submitAction === 'remove') {
       const siteIdInt = parseInt(siteId, 10)
-      const updatedSites = sites.filter((s) => s.SiteId !== siteIdInt)
+      const updatedSites = sites.filter((s) => s.siteId !== siteIdInt)
       try {
         await accreditationApiService.patchOverseasSites(
           organisationId,
           applicationId,
-          { Sites: updatedSites }
+          { sites: updatedSites }
         )
       } catch (err) {
         request.server.logger.error(
@@ -123,7 +123,7 @@ export const confirmOverseasSitesPostController = {
       await accreditationApiService.patchOverseasSites(
         organisationId,
         applicationId,
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     } catch (err) {
       request.server.logger.error(

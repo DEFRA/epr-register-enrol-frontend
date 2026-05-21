@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const TONNAGE_LABEL_KEYS = {
   UpTo500: 'pages.tonnage.options.UpTo500',
@@ -18,7 +18,7 @@ export function buildAuthorisersSummary(authorisers, t) {
   if (!authorisers || authorisers.length === 0) {
     return t('pages.tonnageCya.noneSelected')
   }
-  return authorisers.map((a) => a.FullName).join(', ')
+  return authorisers.map((a) => a.fullName).join(', ')
 }
 
 function taskListUrl(applicationId) {
@@ -54,8 +54,9 @@ function buildCyaLabels(isExporter, t) {
 export const tonnageCyaGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -73,9 +74,9 @@ export const tonnageCyaGetController = {
       }).code(500)
     }
 
-    const isExporter = application.IsExporter ?? false
-    const tonnageBand = application.Tonnage?.PlannedTonnageBand ?? null
-    const authorisers = application.Tonnage?.Authorisers ?? []
+    const isExporter = application.isExporter ?? false
+    const tonnageBand = application.prns?.plannedTonnageBand ?? null
+    const authorisers = application.prns?.authorisers ?? []
     const fromCYA = '?fromCYA=true'
 
     return renderPage(h, {
@@ -96,8 +97,9 @@ export const tonnageCyaGetController = {
 export const tonnageCyaPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const { submitAction = 'confirm' } = request.payload
 
@@ -120,16 +122,16 @@ export const tonnageCyaPostController = {
       }).code(500)
     }
 
-    const isExporter = application.IsExporter ?? false
-    const tonnageBand = application.Tonnage?.PlannedTonnageBand ?? null
-    const authorisers = application.Tonnage?.Authorisers ?? []
+    const isExporter = application.isExporter ?? false
+    const tonnageBand = application.prns?.plannedTonnageBand ?? null
+    const authorisers = application.prns?.authorisers ?? []
     const fromCYA = '?fromCYA=true'
 
     try {
       await apiClient.patch(patchUrl(organisationId, applicationId), {
-        PlannedTonnageBand: tonnageBand,
-        Authorisers: authorisers,
-        SectionStatus: 'Completed'
+        plannedTonnageBand: tonnageBand,
+        authorisers,
+        sectionStatus: 'Completed'
       })
     } catch (err) {
       request.server.logger.error(

@@ -19,11 +19,11 @@ function renderPage(h, viewData) {
 
 function mapSites(t, applicationId, rawSites) {
   return (rawSites ?? []).map((s) => ({
-    siteId: s.SiteId,
-    siteName: s.SiteName ?? '',
-    country: s.Country ?? '',
-    hasEvidence: (s.BESEvidence?.BESEvidenceUploads?.length ?? 0) > 0,
-    uploadUrl: uploadUrl(applicationId, s.SiteId)
+    siteId: s.siteId,
+    siteName: s.siteName ?? '',
+    country: s.country ?? '',
+    hasEvidence: (s.besEvidence?.besEvidenceUploads?.length ?? 0) > 0,
+    uploadUrl: uploadUrl(applicationId, s.siteId)
   }))
 }
 
@@ -65,7 +65,7 @@ export const uploadEvidenceListGetController = {
       ).code(500)
     }
 
-    const sites = mapSites(t, applicationId, application.OverseasSites?.Sites)
+    const sites = mapSites(t, applicationId, application.overseasSites?.sites)
     return renderPage(h, buildViewData(t, applicationId, sites, null))
   }
 }
@@ -98,13 +98,13 @@ export const uploadEvidenceListPostController = {
       ).code(500)
     }
 
-    const sites = mapSites(t, applicationId, application.OverseasSites?.Sites)
+    const sites = mapSites(t, applicationId, application.overseasSites?.sites)
 
     try {
       await accreditationApiService.patchBesEvidenceSection(
         organisationId,
         applicationId,
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     } catch (err) {
       request.server.logger.error(

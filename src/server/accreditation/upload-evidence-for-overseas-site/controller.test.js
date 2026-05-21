@@ -15,46 +15,46 @@ import { apiClient } from '../../common/api-client.js'
 const APPLICATION_ID = 'app-uel-001'
 
 const SITE_WITH_EVIDENCE = {
-  SiteId: 900001,
-  SiteName: 'Site Alpha',
-  SiteAddress: '123 Test St',
-  Country: 'Germany',
-  IsEu: true,
-  IsOECD: true,
-  BESEvidence: {
-    BESEvidenceUploads: [
+  siteId: 900001,
+  siteName: 'Site Alpha',
+  siteAddress: '123 Test St',
+  country: 'Germany',
+  isEu: true,
+  isOecd: true,
+  besEvidence: {
+    besEvidenceUploads: [
       {
-        FileId: 'file001',
-        Filename: 'evidence.pdf',
-        BESEvidenceValidFromDate: '2026-01-01T00:00:00Z',
-        BESEvidenceExpiryDate: '2027-01-01T00:00:00Z'
+        fileId: 'file001',
+        filename: 'evidence.pdf',
+        besEvidenceValidFromDate: '2026-01-01T00:00:00Z',
+        besEvidenceExpiryDate: '2027-01-01T00:00:00Z'
       }
     ]
   }
 }
 
 const SITE_WITHOUT_EVIDENCE = {
-  SiteId: 900002,
-  SiteName: 'Site Beta',
-  SiteAddress: '456 Test Ave',
-  Country: 'Chad',
-  IsEu: false,
-  IsOECD: false,
-  BESEvidence: { BESEvidenceUploads: [] }
+  siteId: 900002,
+  siteName: 'Site Beta',
+  siteAddress: '456 Test Ave',
+  country: 'Chad',
+  isEu: false,
+  isOecd: false,
+  besEvidence: { besEvidenceUploads: [] }
 }
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Plastic',
-    Year: 2027,
-    IsExporter: true,
-    OverseasSites: {
-      SectionStatus: 'InProgress',
-      Sites: [SITE_WITH_EVIDENCE, SITE_WITHOUT_EVIDENCE]
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Plastic',
+    year: 2027,
+    isExporter: true,
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [SITE_WITH_EVIDENCE, SITE_WITHOUT_EVIDENCE]
     },
-    BesEvidence: { SectionStatus: 'NotStarted' },
+    besEvidence: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -159,10 +159,10 @@ describe('#uploadEvidenceListController', () => {
       )
     })
 
-    test('shows no-sites message when OverseasSites.Sites is empty', async () => {
+    test('shows no-sites message when overseasSites.sites is empty', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: { SectionStatus: 'NotStarted', Sites: [] }
+          overseasSites: { sectionStatus: 'NotStarted', sites: [] }
         })
       )
 
@@ -179,9 +179,9 @@ describe('#uploadEvidenceListController', () => {
     test('handles sites with null optional fields gracefully', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: {
-            SectionStatus: 'InProgress',
-            Sites: [{ SiteId: 900003 }]
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [{ siteId: 900003 }]
           }
         })
       )
@@ -198,10 +198,10 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('Not uploaded')
     })
 
-    test('handles null OverseasSites.Sites gracefully', async () => {
+    test('handles null overseasSites.sites gracefully', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          OverseasSites: { SectionStatus: 'NotStarted', Sites: null }
+          overseasSites: { sectionStatus: 'NotStarted', sites: null }
         })
       )
 
@@ -289,7 +289,7 @@ describe('#uploadEvidenceListController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/bes-evidence`),
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     })
 

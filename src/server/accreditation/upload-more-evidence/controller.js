@@ -56,10 +56,10 @@ export const uploadMoreEvidenceGetController = {
       ).code(500)
     }
 
-    const site = application.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === siteIdInt
+    const site = application.overseasSites?.sites?.find(
+      (s) => s.siteId === siteIdInt
     )
-    const siteName = site?.SiteName ?? ''
+    const siteName = site?.siteName ?? ''
 
     return renderPage(
       h,
@@ -100,10 +100,10 @@ export const uploadMoreEvidencePostController = {
       ).code(500)
     }
 
-    const site = application.OverseasSites?.Sites?.find(
-      (s) => s.SiteId === siteIdInt
+    const site = application.overseasSites?.sites?.find(
+      (s) => s.siteId === siteIdInt
     )
-    const siteName = site?.SiteName ?? ''
+    const siteName = site?.siteName ?? ''
 
     if (!answer) {
       return renderPage(
@@ -128,7 +128,7 @@ export const uploadMoreEvidencePostController = {
         organisationId,
         applicationId,
         siteIdInt,
-        { DoYouWantToUploadMoreEvidence: false }
+        { doYouWantToUploadMoreEvidence: false }
       )
     } catch (err) {
       request.server.logger.error(
