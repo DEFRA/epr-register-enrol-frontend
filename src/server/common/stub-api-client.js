@@ -2,9 +2,9 @@ const STUB_APPLICATIONS = [
   {
     organisationId: 50001,
     applicationId: 'app001',
-    registrationReference: 'APP2027ER5000390PL',
-    accreditationReference: 'R26ER5000390068PL',
-    applicationStatus: 'Started',
+    registrationReference: 'R26ER5000390068PL',
+    accreditationReference: 'APP2027ER5000390PL',
+    applicationStatus: 'NotStarted',
     materialType: 'Plastic',
     siteId: 'site001',
     siteAddress: 'UNIT 5, BL4 7AQ, UK',
@@ -29,7 +29,7 @@ const STUB_APPLICATIONS = [
     samplingPlan: { sectionStatus: 'NotStarted', files: [] }
   },
   {
-    organisationId: 50001,
+    organisationId: 50002,
     applicationId: 'app002',
     registrationReference: 'R26ER5000390068PL',
     accreditationReference: 'APP2027ER5000390GL',
@@ -50,7 +50,7 @@ const STUB_APPLICATIONS = [
     samplingPlan: { sectionStatus: 'NotStarted', files: [] }
   },
   {
-    organisationId: 50002,
+    organisationId: 50003,
     applicationId: 'app003',
     accreditationReference: 'R26ER5000390068PL',
     applicationStatus: 'Started',
@@ -98,14 +98,50 @@ const STUB_APPLICATIONS = [
           scanStatus: 'Clean'
         }
       ]
-    }
+    },
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
+        {
+          siteId: 900001,
+          siteName: 'Site 1',
+          siteAddress: 'Address 123',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [
+              {
+                besEvidenceValidFromDate: '2026-11-01T12:00:00Z',
+                besEvidenceExpiryDate: '2027-11-30T12:00:00Z',
+                fileId: 'file003',
+                filename: 'code-nightmare-green.pdf',
+                uploadedAt: '2026-11-01T12:00:00Z',
+                uploadedBy: 'Jane Doe',
+                scanStatus: 'Clean'
+              }
+            ],
+            doYouWantToUploadMoreEvidence: false
+          }
+        },
+        {
+          siteId: 900002,
+          siteName: 'Site 2',
+          siteAddress: 'Address 456',
+          country: 'Chad',
+          isEu: false
+        }
+      ]
+    },
+    besEvidence: { sectionStatus: 'NotStarted' }
   },
 
   {
-    organisationId: 50003,
+    organisationId: 50004,
     applicationId: 'app004exp',
     accreditationReference: 'APP2027ER5000390SL',
     applicationStatus: 'Started',
+    isExporter: true,
     materialType: 'Steel',
     siteId: null,
     siteAddress: null,
@@ -113,7 +149,7 @@ const STUB_APPLICATIONS = [
     year: 2027,
     dateSent: '2026-12-01T10:00:00Z',
     submittedBy: 'Jane Doe',
-    tonnage: {
+    prns: {
       sectionStatus: 'Completed',
       plannedTonnageBand: 'UpTo1000',
       authorisers: [{ fullName: 'Jane Doe', email: 'jane@deltagreen.co.uk' }]
@@ -151,37 +187,151 @@ const STUB_APPLICATIONS = [
         }
       ]
     },
-    overseasSites: [
-      {
-        siteName: 'Site 1',
-        siteAddress: 'Address 123',
-        country: 'Germany',
-        isEu: true,
-        isOECD: true,
-        bESEvidence: {
-          bESEvidenceUploads: [
-            {
-              bESEvidenceValidFromDate: '2026-11-01T12:00:00Z',
-              bESEvidenceExpiryDate: '2027-11-30T12:00:00Z',
-              fileId: 'file003',
-              filename: 'code-nightmare-green.pdf',
-              uploadedAt: '2026-11-01T12:00:00Z',
-              uploadedBy: 'Jane Doe',
-              scanStatus: 'Clean'
-            }
-          ],
-          doYouWantToUploadMoreEvidence: false
-          //No (it’s always no, as answering no to this question is the trigger for the check your answers page appearing)
-          //we loop until they say No/false to this question, when they say no we stop uplaoding more files and take them to the check answers page
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
+        {
+          siteId: 900001,
+          siteName: 'Site 1',
+          siteAddress: 'Address 123',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [
+              {
+                besEvidenceValidFromDate: '2026-11-01T12:00:00Z',
+                besEvidenceExpiryDate: '2027-11-30T12:00:00Z',
+                fileId: 'file003',
+                filename: 'code-nightmare-green.pdf',
+                uploadedAt: '2026-11-01T12:00:00Z',
+                uploadedBy: 'Jane Doe',
+                scanStatus: 'Clean'
+              }
+            ],
+            doYouWantToUploadMoreEvidence: false
+          }
+        },
+        {
+          siteId: 900002,
+          siteName: 'Site 2',
+          siteAddress: 'Address 456',
+          country: 'Chad',
+          isEu: false
         }
-      },
-      {
-        siteName: 'Site 2',
-        siteAddress: 'Address 456',
-        country: 'Chad',
-        isEu: false
-      }
-    ]
+      ]
+    },
+    besEvidence: { sectionStatus: 'InProgress' }
+  },
+  {
+    organisationId: 50005,
+    applicationId: 'app005exp',
+    registrationReference: 'R26ER5000390068PL',
+    accreditationReference: 'APP2027ER5000391PL',
+    applicationStatus: 'Started',
+    isExporter: true,
+    materialType: 'Plastic',
+    siteId: null,
+    siteAddress: null,
+    organisationName: 'Plastic Exports Ltd.',
+    year: 2027,
+    dateSent: null,
+    submittedBy: null,
+    prns: {
+      sectionStatus: 'NotStarted',
+      plannedTonnageBand: null,
+      authorisers: []
+    },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: {
+      sectionStatus: 'Started',
+      files: [
+        {
+          fileId: 'file005',
+          filename: 'code5-nightmare-green.pdf',
+          uploadedAt: '2026-11-01T12:00:00Z',
+          uploadedBy: 'Jane Doe',
+          scanStatus: 'Clean'
+        }
+      ]
+    },
+    overseasSites: {
+      sectionStatus: 'NotStarted',
+      sites: []
+    },
+    besEvidence: { sectionStatus: 'NotStarted' }
+  },
+  {
+    organisationId: 50006,
+    applicationId: 'app006exp',
+    accreditationReference: 'APP2027ER5000392GL',
+    applicationStatus: 'Started',
+    isExporter: true,
+    materialType: 'Glass',
+    siteId: null,
+    siteAddress: null,
+    organisationName: 'Global Glass Exports Co.',
+    year: 2027,
+    dateSent: null,
+    submittedBy: null,
+    prns: {
+      sectionStatus: 'Completed',
+      plannedTonnageBand: 'UpTo10000',
+      authorisers: [
+        { fullName: 'Alice Green', email: 'alice@globalglassexp.co.uk' }
+      ]
+    },
+    businessPlan: {
+      sectionStatus: 'Completed',
+      newInfrastructurePercent: 20,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 20,
+      communicationsPercent: 20,
+      newMarketsPercent: 10,
+      newUsesPercent: 10
+    },
+    samplingPlan: {
+      sectionStatus: 'Completed',
+      files: [
+        {
+          fileId: 'file006',
+          filename: 'sampling-plan-glass.pdf',
+          uploadedAt: '2026-12-01T10:00:00Z',
+          uploadedBy: 'Alice Green',
+          scanStatus: 'Clean'
+        }
+      ]
+    },
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
+        {
+          siteId: 900003,
+          siteName: 'Rotterdam Recycling BV',
+          siteAddress: 'Industrieweg 44, Rotterdam',
+          country: 'Netherlands',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [],
+            doYouWantToUploadMoreEvidence: false
+          }
+        },
+        {
+          siteId: 900004,
+          siteName: 'Berlin Glass GmbH',
+          siteAddress: 'Recyclingstraße 12, Berlin',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [],
+            doYouWantToUploadMoreEvidence: false
+          }
+        }
+      ]
+    },
+    besEvidence: { sectionStatus: 'NotStarted' }
   }
 ]
 
@@ -236,8 +386,11 @@ const APP_PATH_RE =
 
 const SECTION_KEY_MAP = {
   prns: 'prns',
+  tonnage: 'prns',
   'business-plan': 'businessPlan',
-  'sampling-plan': 'samplingPlan'
+  'sampling-plan': 'samplingPlan',
+  'overseas-sites': 'overseasSites',
+  'bes-evidence': 'besEvidence'
 }
 
 function findApplication(endpoint) {
@@ -275,14 +428,20 @@ export const stubApiClient = {
   post(endpoint, body) {
     if (/\/seed$/.test(endpoint)) {
       const parts = endpoint.split('/')
-      const organisationId = parts[parts.length - 4]
+      // Exporter seed: /{orgId}/{material}/seed — 7 parts total
+      // Reprocessor seed: /{orgId}/{siteId}/{material}/seed — 8 parts total
+      const isExporterSeed = parts.length === 7
+      const organisationId = isExporterSeed
+        ? parts[parts.length - 3]
+        : parts[parts.length - 4]
       const index = STUB_APPLICATIONS.findIndex(
         (x) => String(x.organisationId) === String(organisationId)
       )
 
       return Promise.resolve({
         ...STUB_APPLICATIONS[index],
-        organisationId,
+        organisationId: organisationId,
+        isExporter: isExporterSeed,
         year: body?.year ?? new Date().getFullYear(),
         applicationStatus: 'Saved'
       })
@@ -298,6 +457,39 @@ export const stubApiClient = {
         accreditationReference: app?.accreditationReference ?? 'REF-STUB-001'
       })
     }
+    // BES evidence file upload: /overseas-sites/{siteId}/bes-evidence/files
+    if (/\/overseas-sites\/\d+\/bes-evidence\/files$/.test(endpoint)) {
+      const appMatch = endpoint.match(
+        /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+)\/overseas-sites\/(\d+)\/bes-evidence\/files/
+      )
+      if (appMatch) {
+        const app = STUB_APPLICATIONS.find(
+          (a) => a.applicationId === appMatch[1]
+        )
+        const siteId = parseInt(appMatch[2], 10)
+        const site = app?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+        const newFile = {
+          fileId: `stub-bes-${Date.now()}`,
+          filename: body?.filename ?? 'unknown',
+          besEvidenceValidFromDate: body?.besEvidenceValidFromDate ?? null,
+          besEvidenceExpiryDate: body?.besEvidenceExpiryDate ?? null,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: 'Stub User',
+          scanStatus: 'Clean'
+        }
+        if (site) {
+          if (!site.besEvidence) {
+            site.besEvidence = { besEvidenceUploads: [] }
+          }
+          if (!site.besEvidence.besEvidenceUploads) {
+            site.besEvidence.besEvidenceUploads = []
+          }
+          site.besEvidence.besEvidenceUploads.push(newFile)
+        }
+        return Promise.resolve({ fileId: newFile.fileId })
+      }
+    }
+    // Sampling plan file upload: /files
     if (/\/files$/.test(endpoint)) {
       const app = findApplication(endpoint)
       const newFile = {
@@ -317,6 +509,24 @@ export const stubApiClient = {
   },
 
   patch(endpoint, body) {
+    // BES evidence patch: /overseas-sites/{siteId}/bes-evidence
+    if (/\/overseas-sites\/\d+\/bes-evidence$/.test(endpoint)) {
+      const appMatch = endpoint.match(
+        /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+)\/overseas-sites\/(\d+)\/bes-evidence/
+      )
+      if (appMatch) {
+        const app = STUB_APPLICATIONS.find(
+          (a) => a.applicationId === appMatch[1]
+        )
+        const siteId = parseInt(appMatch[2], 10)
+        const site = app?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+        if (site) {
+          if (!site.besEvidence) site.besEvidence = {}
+          Object.assign(site.besEvidence, body)
+        }
+      }
+      return Promise.resolve({})
+    }
     const { app, section } = findApplicationAndSection(endpoint)
     if (!app || !section) return Promise.resolve({})
     const key = SECTION_KEY_MAP[section]
@@ -329,6 +539,23 @@ export const stubApiClient = {
   },
 
   delete(endpoint) {
+    // BES evidence file delete: /overseas-sites/{siteId}/bes-evidence/files/{fileId}
+    const besMatch = endpoint.match(
+      /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+)\/overseas-sites\/(\d+)\/bes-evidence\/files\/([^/]+)$/
+    )
+    if (besMatch) {
+      const app = STUB_APPLICATIONS.find((a) => a.applicationId === besMatch[1])
+      const siteId = parseInt(besMatch[2], 10)
+      const site = app?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+      if (site?.besEvidence?.besEvidenceUploads) {
+        site.besEvidence.besEvidenceUploads =
+          site.besEvidence.besEvidenceUploads.filter(
+            (f) => f.fileId !== besMatch[3]
+          )
+      }
+      return Promise.resolve(undefined)
+    }
+    // Sampling plan file delete: /files/{fileId}
     const match = endpoint.match(
       /\/api\/v1\/accreditation-applications\/[^/]+\/([^/]+)\/files\/([^/]+)$/
     )

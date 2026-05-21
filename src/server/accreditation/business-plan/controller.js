@@ -12,10 +12,13 @@ export const BUSINESS_PLAN_FIELDS = [
 ]
 
 export function parsePercent(value) {
-  if (value === undefined || value === null || String(value).trim() === '') {
+  if (value === undefined || value === null) {
     return null
   }
   const trimmed = String(value).trim()
+  if (trimmed === '') {
+    return 0
+  }
   if (!/^\d+$/.test(trimmed)) {
     return NaN
   }
@@ -94,11 +97,13 @@ function renderPage(h, viewData) {
   return h.view('accreditation/business-plan/index', viewData)
 }
 
-function buildViewData(t, applicationId, payload, errors) {
+function buildViewData(t, applicationId, payload, errors, isExporter = false) {
   return {
     pageTitle: t('pages.businessPlan.title'),
     heading: t('pages.businessPlan.heading'),
-    intro: t('pages.businessPlan.intro'),
+    intro: isExporter
+      ? t('pages.businessPlan.introExporter')
+      : t('pages.businessPlan.intro'),
     backLink: taskListUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     fieldInputs: buildFieldInputs(payload, errors, t),
@@ -140,9 +145,17 @@ export const businessPlanGetController = {
       }).code(500)
     }
 
+    const isExporter = application.isExporter ?? false
+
     return renderPage(
       h,
-      buildViewData(t, applicationId, payloadFromApplication(application), {})
+      buildViewData(
+        t,
+        applicationId,
+        payloadFromApplication(application),
+        {},
+        isExporter
+      )
     )
   }
 }
@@ -157,6 +170,24 @@ export const businessPlanPostController = {
     const { submitAction = 'saveAndContinue', ...fieldPayload } =
       request.payload
 
+    let application
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId}: ${err.message}`
+      )
+      return renderPage(h, {
+        ...buildViewData(t, applicationId, fieldPayload, {}),
+        error: t('pages.businessPlan.validation.fetchError')
+      }).code(500)
+    }
+
+    const isExporter = application.isExporter ?? false
+
     const isSaveAndComeLater = submitAction === 'saveAndComeLater'
     const { errors, values } = validateBusinessPlanFields(
       fieldPayload,
@@ -166,7 +197,7 @@ export const businessPlanPostController = {
 
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, errors)
+        ...buildViewData(t, applicationId, fieldPayload, errors, isExporter)
       }).code(400)
     }
 
@@ -186,7 +217,7 @@ export const businessPlanPostController = {
         `Error saving business plan for ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, {}),
+        ...buildViewData(t, applicationId, fieldPayload, {}, isExporter),
         error: t('pages.businessPlan.validation.saveError')
       }).code(500)
     }

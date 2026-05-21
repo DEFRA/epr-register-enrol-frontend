@@ -63,8 +63,8 @@ function validPayload() {
 }
 
 describe('#parsePercent', () => {
-  test('returns null for empty string', () => {
-    expect(parsePercent('')).toBeNull()
+  test('returns 0 for empty string', () => {
+    expect(parsePercent('')).toBe(0)
   })
 
   test('returns null for null', () => {
@@ -129,10 +129,11 @@ describe('#validateBusinessPlanFields', () => {
     expect(errors.newMarketsPercent.text).toContain('between 0 and 100')
   })
 
-  test('returns field error for empty field when save-and-continue', () => {
+  test('empty field treated as 0, triggers sum error when save-and-continue', () => {
     const payload = { ...validPayload(), newMarketsPercent: '' }
     const { errors } = validateBusinessPlanFields(payload, t, false)
-    expect(errors.newMarketsPercent).toBeDefined()
+    expect(errors.newMarketsPercent).toBeUndefined()
+    expect(errors._sum).toBeDefined()
   })
 
   test('no error for empty field when skipSumCheck (save-and-come-later)', () => {
@@ -248,6 +249,21 @@ describe('#businessPlanController', () => {
       expect(result).toContain('value="20"')
     })
 
+    test('renders empty inputs when BusinessPlan fields are undefined', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ BusinessPlan: { SectionStatus: 'NotStarted' } })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('value=""')
+    })
+
     test('back link points to task list hub', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -286,10 +302,42 @@ describe('#businessPlanController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
     })
+
+    test('exporter GET shows PERN intro text', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('PERN income')
+      expect(result).not.toContain('PRN income')
+    })
   })
 
   describe('POST /accreditation/business-plan/{applicationId} - save-and-continue', () => {
+    test('returns 500 when application GET fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
     test('returns 400 with error summary when all fields are empty', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
@@ -302,6 +350,8 @@ describe('#businessPlanController', () => {
     })
 
     test('returns 400 when percentages do not sum to 100', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
@@ -318,6 +368,8 @@ describe('#businessPlanController', () => {
     })
 
     test('returns 400 with field error for non-numeric input', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
@@ -333,7 +385,25 @@ describe('#businessPlanController', () => {
       expect(result).toContain('data-testid="field-error-newMarketsPercent"')
     })
 
+    test('exporter POST validation error shows PERN intro text', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('PERN income')
+      expect(result).not.toContain('PRN income')
+    })
+
     test('patches and redirects to business-plan-detail on valid save-and-continue', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
@@ -354,6 +424,7 @@ describe('#businessPlanController', () => {
     })
 
     test('returns 500 with error when PATCH fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('save failed'))
 
       const { statusCode, result } = await server.inject({
@@ -370,6 +441,7 @@ describe('#businessPlanController', () => {
 
   describe('POST /accreditation/business-plan/{applicationId} - save-and-come-later', () => {
     test('patches partial data and redirects to task list without sum-to-100 error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
@@ -395,6 +467,8 @@ describe('#businessPlanController', () => {
     })
 
     test('returns 400 when non-numeric value present even on save-and-come-later', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,

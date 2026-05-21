@@ -22,21 +22,21 @@
       <dl class="govuk-summary-list" data-testid="summary-list">
 
         <div class="govuk-summary-list__row" data-testid="tonnage-row">
-          <dt class="govuk-summary-list__key">{{ t('pages.prnsCya.tonnageLabel') }}</dt>
+          <dt class="govuk-summary-list__key">{{ tonnageRowLabel }}</dt>
           <dd class="govuk-summary-list__value" data-testid="tonnage-value">{{ tonnageLabel }}</dd>
           <dd class="govuk-summary-list__actions">
             <a class="govuk-link" href="{{ changeTonnageLink }}" data-testid="change-tonnage-link">
-              {{ t('pages.prnsCya.change') }}<span class="govuk-visually-hidden"> {{ t('pages.prnsCya.changeTonnageContext') }}</span>
+              {{ t('pages.tonnageCya.change') }}<span class="govuk-visually-hidden"> {{ t('pages.prnsCya.changeTonnageContext') }}</span>
             </a>
           </dd>
         </div>
 
         <div class="govuk-summary-list__row" data-testid="authorisers-row">
-          <dt class="govuk-summary-list__key">{{ t('pages.prnsCya.authorisersLabel') }}</dt>
+          <dt class="govuk-summary-list__key">{{ authorisersRowLabel }}</dt>
           <dd class="govuk-summary-list__value" data-testid="authorisers-value">{{ authorisersSummary }}</dd>
           <dd class="govuk-summary-list__actions">
             <a class="govuk-link" href="{{ changeAuthorityLink }}" data-testid="change-authority-link">
-              {{ t('pages.prnsCya.change') }}<span class="govuk-visually-hidden"> {{ t('pages.prnsCya.changeAuthorityContext') }}</span>
+              {{ t('pages.tonnageCya.change') }}<span class="govuk-visually-hidden"> {{ changeAuthorityContext }}</span>
             </a>
           </dd>
         </div>
@@ -47,11 +47,11 @@
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
         <button type="submit" name="submitAction" value="confirm" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">
-          {{ t('pages.prnsCya.confirmAndContinue') }}
+          {{ t('pages.tonnageCya.confirmAndContinue') }}
         </button>
 
         <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.prnsCya.saveAndComeLater') }}
+          {{ t('pages.tonnageCya.saveAndComeLater') }}
         </button>
 
       </form>

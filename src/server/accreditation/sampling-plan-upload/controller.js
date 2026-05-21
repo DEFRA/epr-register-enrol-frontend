@@ -25,18 +25,18 @@ export function validateFileExtension(filename) {
 
 export function buildFilesViewModel(files) {
   return (files ?? []).map((f) => ({
-    filename: f.Filename ?? '',
-    fileId: f.FileId ?? '',
-    uploadedAt: f.UploadedAt
-      ? new Date(f.UploadedAt).toLocaleDateString('en-GB')
+    filename: f.filename ?? '',
+    fileId: f.fileId ?? '',
+    uploadedAt: f.uploadedAt
+      ? new Date(f.uploadedAt).toLocaleDateString('en-GB')
       : '',
-    uploadedBy: f.UploadedBy ?? '',
-    scanStatus: f.ScanStatus ?? 'Pending'
+    uploadedBy: f.uploadedBy ?? '',
+    scanStatus: f.scanStatus ?? 'Pending'
   }))
 }
 
 export function hasEligibleFile(files) {
-  return (files ?? []).some((f) => (f.ScanStatus ?? 'Pending') !== 'Infected')
+  return (files ?? []).some((f) => (f.scanStatus ?? 'Pending') !== 'Infected')
 }
 
 function appUrl(organisationId, applicationId) {
@@ -67,7 +67,7 @@ export async function samplingPlanUpload413Handler(request, h) {
     const application = await apiClient.get(
       appUrl(organisationId, applicationId)
     )
-    files = buildFilesViewModel(application.SamplingPlan?.Files)
+    files = buildFilesViewModel(application.samplingPlan?.files)
   } catch (_) {
     // render with empty file list if fetch fails
   }
@@ -106,7 +106,7 @@ export const samplingPlanUploadGetController = {
       }).code(500)
     }
 
-    const files = buildFilesViewModel(application.SamplingPlan?.Files)
+    const files = buildFilesViewModel(application.samplingPlan?.files)
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
@@ -143,8 +143,8 @@ export const samplingPlanUploadPostController = {
       }).code(500)
     }
 
-    const files = buildFilesViewModel(application.SamplingPlan?.Files)
-    const rawFiles = application.SamplingPlan?.Files ?? []
+    const files = buildFilesViewModel(application.samplingPlan?.files)
+    const rawFiles = application.samplingPlan?.files ?? []
 
     function baseView(overrides = {}) {
       return {
@@ -194,8 +194,8 @@ export const samplingPlanUploadPostController = {
 
       try {
         await accreditationApiService.addFile(organisationId, applicationId, {
-          Filename: filename,
-          ContentType: contentType
+          filename,
+          contentType
         })
       } catch (err) {
         request.server.logger.error(
@@ -241,7 +241,7 @@ export const samplingPlanUploadPostController = {
         await accreditationApiService.patchSamplingPlan(
           organisationId,
           applicationId,
-          { SectionStatus: sectionStatus }
+          { sectionStatus }
         )
       } catch (err) {
         request.server.logger.error(
@@ -271,7 +271,7 @@ export const samplingPlanUploadPostController = {
       await accreditationApiService.patchSamplingPlan(
         organisationId,
         applicationId,
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     } catch (err) {
       request.server.logger.error(

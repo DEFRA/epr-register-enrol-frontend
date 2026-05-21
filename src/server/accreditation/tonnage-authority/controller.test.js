@@ -24,6 +24,7 @@ function makeApplication(overrides = {}) {
     materialType: 'Steel',
     year: 2025,
     siteId: 'site-001',
+    isExporter: false,
     prns: {
       plannedTonnageBand: 'UpTo1000',
       authorisers: [],
@@ -37,20 +38,26 @@ function makeApplication(overrides = {}) {
 
 describe('#buildHeading', () => {
   test('builds heading with material and site', () => {
-    const heading = buildHeading('Steel', 'Site A', t)
+    const heading = buildHeading('Steel', 'Site A', false, t)
     expect(heading).toContain('Steel')
     expect(heading).toContain('Site A')
   })
 
   test('uses siteNotSet fallback when no site', () => {
-    const heading = buildHeading('Steel', null, t)
+    const heading = buildHeading('Steel', null, false, t)
     expect(heading).toContain('siteNotSet')
   })
 
   test('handles null materialType gracefully', () => {
-    const heading = buildHeading(null, null, t)
+    const heading = buildHeading(null, null, false, t)
     expect(heading).toBeDefined()
     expect(typeof heading).toBe('string')
+  })
+
+  test('uses exporter prefix when isExporter is true', () => {
+    const heading = buildHeading('Plastic', 'Site B', true, t)
+    expect(heading).toContain('headingPrefixExporter')
+    expect(heading).toContain('Plastic')
   })
 })
 
@@ -88,7 +95,7 @@ describe('#buildAuthoriserRows', () => {
   })
 })
 
-describe('#prnsAuthorityController', () => {
+describe('#tonnageAuthorityController', () => {
   let server
 
   beforeAll(async () => {
@@ -115,13 +122,13 @@ describe('#prnsAuthorityController', () => {
     'x-test-user-type': 'operator'
   }
 
-  describe('GET /accreditation/prns-authority/{applicationId}', () => {
+  describe('GET /accreditation/tonnage-authority/{applicationId}', () => {
     test('returns 200 with page heading containing material and site', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -135,7 +142,7 @@ describe('#prnsAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -157,7 +164,7 @@ describe('#prnsAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -180,7 +187,7 @@ describe('#prnsAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -192,7 +199,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -205,23 +212,39 @@ describe('#prnsAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
       expect(result).toContain('data-testid="add-authoriser-details"')
       expect(result).toContain('data-testid="add-authoriser-button"')
     })
+
+    test('exporter GET shows PERN-specific intro and subheading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('authority to issue PERNs')
+      expect(result).toContain('issue PERNs on this system')
+    })
   })
 
-  describe('POST /accreditation/prns-authority/{applicationId} - addAuthoriser', () => {
+  describe('POST /accreditation/tonnage-authority/{applicationId} - addAuthoriser', () => {
     test('adds authoriser and redirects to same page on valid input', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
@@ -232,10 +255,10 @@ describe('#prnsAuthorityController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toContain(
-        `/accreditation/prns-authority/${APPLICATION_ID}`
+        `/accreditation/tonnage-authority/${APPLICATION_ID}`
       )
       expect(apiClient.patch).toHaveBeenCalledWith(
-        expect.stringContaining('/prns'),
+        expect.stringContaining('/tonnage'),
         expect.objectContaining({
           authorisers: expect.arrayContaining([
             expect.objectContaining({
@@ -252,7 +275,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
@@ -270,7 +293,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
@@ -288,7 +311,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
@@ -315,7 +338,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
@@ -334,7 +357,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
@@ -360,7 +383,7 @@ describe('#prnsAuthorityController', () => {
 
       await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
@@ -374,7 +397,7 @@ describe('#prnsAuthorityController', () => {
     })
   })
 
-  describe('POST /accreditation/prns-authority/{applicationId} - saveAndContinue', () => {
+  describe('POST /accreditation/tonnage-authority/{applicationId} - saveAndContinue', () => {
     test('returns 400 error when no checkboxes selected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -389,7 +412,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: { submitAction: 'saveAndContinue' }
       })
@@ -414,7 +437,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
@@ -424,7 +447,7 @@ describe('#prnsAuthorityController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toContain(
-        `/accreditation/prns-cya/${APPLICATION_ID}`
+        `/accreditation/tonnage-cya/${APPLICATION_ID}`
       )
       const patchBody = patchSpy.mock.calls[0][1]
       expect(patchBody.authorisers).toHaveLength(1)
@@ -432,14 +455,14 @@ describe('#prnsAuthorityController', () => {
     })
   })
 
-  describe('POST /accreditation/prns-authority/{applicationId} - saveAndComeLater', () => {
+  describe('POST /accreditation/tonnage-authority/{applicationId} - saveAndComeLater', () => {
     test('patches and redirects to task list without requiring selection', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })
@@ -466,7 +489,7 @@ describe('#prnsAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/prns-authority/${APPLICATION_ID}`,
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
@@ -476,6 +499,43 @@ describe('#prnsAuthorityController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('returns 500 when GET fetch fails on POST', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('network error'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('exporter addAuthoriser validation error shows 400', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          newFullName: '',
+          newEmail: ''
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="new-full-name-error"')
     })
   })
 })

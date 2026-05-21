@@ -121,3 +121,83 @@ export const operatorAccreditationController = {
     })
   }
 }
+
+export const operatorAccreditationExporterController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const user = getUser(request)
+    const { organisationId, materialType, year } = request.params
+    const yearInt = parseInt(year, 10)
+    const userName = user?.name
+    const reExBackLink = '/operator/'
+
+    const errorView = (message) =>
+      h
+        .view('operator-accreditation/index', {
+          pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
+          heading: t('pages.operatorAccreditation.seedErrorHeading'),
+          userName,
+          reExBackUrl: '#',
+          error: message
+        })
+        .code(500)
+
+    let applications
+    try {
+      applications =
+        await accreditationApiService.listApplications(organisationId)
+    } catch (error) {
+      request.server.logger.error(
+        `Error fetching accreditation applications: ${error.message}`
+      )
+      return errorView(t('pages.operatorAccreditation.seedError'))
+    }
+
+    let application = applications.find(
+      (app) =>
+        app.isExporter === true &&
+        app.materialType === materialType &&
+        app.year === yearInt
+    )
+
+    if (!application) {
+      try {
+        application = await accreditationApiService.seedExporterApplication(
+          organisationId,
+          materialType,
+          yearInt
+        )
+      } catch (error) {
+        request.server.logger.error(
+          `Error seeding exporter accreditation application: ${error.message}`
+        )
+        return errorView(t('pages.operatorAccreditation.seedError'))
+      }
+    }
+
+    const organisationName = application.organisationName
+
+    request.yar.set(
+      ACCREDITATION_SESSION_KEYS.accreditationId,
+      application.applicationId
+    )
+    request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
+    request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
+    request.yar.set(ACCREDITATION_SESSION_KEYS.year, yearInt)
+
+    const viewModel = buildLandingViewModel(
+      application,
+      organisationName,
+      null,
+      yearInt,
+      t
+    )
+
+    return h.view('operator-accreditation/index', {
+      pageTitle: t('pages.operatorAccreditation.title'),
+      reExBackUrl: reExBackLink,
+      isExporter: true,
+      ...viewModel
+    })
+  }
+}

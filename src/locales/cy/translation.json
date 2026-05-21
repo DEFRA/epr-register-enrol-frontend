@@ -106,14 +106,17 @@
         "Plastic": "[Welsh] Plastic"
       }
     },
-    "prnsTonnage": {
+    "tonnage": {
       "title": "[Welsh] How many PRNs do you plan to issue?",
+      "titleExporter": "[Welsh] How many PERNs do you plan to issue?",
       "headingPrefix": "[Welsh] How many",
       "headingSuffix": "[Welsh] PRNs do you plan to issue?",
+      "headingSuffixExporter": "[Welsh] PERNs do you plan to issue?",
       "saveAndContinue": "[Welsh] Save and continue",
       "saveAndComeLater": "[Welsh] Save and come back later",
       "validation": {
         "selectTonnage": "[Welsh] Select how many PRNs you plan to issue",
+        "selectTonnageExporter": "[Welsh] Select how many PERNs you plan to issue",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "saveError": "[Welsh] Sorry, there was a problem saving your selection. Please try again."
       },
@@ -124,12 +127,16 @@
         "Over10000": "[Welsh] Over 10,000 tonnes"
       }
     },
-    "prnsAuthority": {
+    "tonnageAuthority": {
       "title": "[Welsh] Authority to issue PRNs",
+      "titleExporter": "[Welsh] Authority to issue PERNs",
       "headingPrefix": "[Welsh] Authority to issue PRNs for",
+      "headingPrefixExporter": "[Welsh] Authority to issue PERNs for",
       "headingAt": "[Welsh] at",
       "intro": "[Welsh] You can choose the people you want to have authority to issue PRNs. The people you choose will be able to issue PRNs on this system.",
+      "introExporter": "[Welsh] You can choose the people you want to have authority to issue PERNs. The people you choose will be able to issue PERNs on this system.",
       "selectSubHeading": "[Welsh] Select who you want to have authority to issue PRNs — You can select more than one.",
+      "selectSubHeadingExporter": "[Welsh] Select who you want to have authority to issue PERNs — You can select more than one.",
       "noAuthorisers": "[Welsh] No authorisers added yet. Use the form below to add someone.",
       "addAuthoriserLabel": "[Welsh] Add a new authoriser",
       "addAuthoriserButton": "[Welsh] Add authoriser",
@@ -154,14 +161,17 @@
         "saveError": "[Welsh] Sorry, there was a problem saving your selection. Please try again."
       }
     },
-    "prnsCya": {
+    "tonnageCya": {
       "title": "[Welsh] Check your answers before continuing",
       "heading": "[Welsh] Check your answers before continuing",
       "tonnageLabel": "[Welsh] Tonnage of PRNs you plan to issue",
+      "tonnageLabelExporter": "[Welsh] Tonnage of PERNs you plan to issue",
       "authorisersLabel": "[Welsh] People you want to request authority to issue PRNs",
+      "authorisersLabelExporter": "[Welsh] People you want to request authority to issue PERNs",
       "change": "[Welsh] Change",
       "changeTonnageContext": "[Welsh] planned tonnage",
       "changeAuthorityContext": "[Welsh] authority to issue PRNs",
+      "changeAuthorityContextExporter": "[Welsh] authority to issue PERNs",
       "notSelected": "[Welsh] Not selected",
       "noneSelected": "[Welsh] None selected",
       "confirmAndContinue": "[Welsh] Confirm and continue",
@@ -175,6 +185,7 @@
       "title": "[Welsh] Business plan",
       "heading": "[Welsh] Business plan",
       "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
+      "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item. The regulator will expect you to follow this plan.",
       "saveAndContinue": "[Welsh] Save and continue",
       "saveAndComeLater": "[Welsh] Save and come back later",
       "fields": {
@@ -304,6 +315,7 @@
     "taskList": {
       "title": "[Welsh] Accreditation task list",
       "headingPrefix": "[Welsh] Accredit to issue PRNs: UK",
+      "headingPrefixExporter": "[Welsh] Accredit to issue PERNs: UK",
       "headingSuffix": "[Welsh] packaging waste",
       "metadataYear": "[Welsh] For:",
       "metadataSite": "[Welsh] For reprocessing site:",
@@ -312,9 +324,32 @@
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
         "prns": "[Welsh] PRNs tonnage and authority to issue PRNs",
+        "perns": "[Welsh] PERNs tonnage and authority to issue PERNs",
         "businessPlan": "[Welsh] Business plan",
-        "samplingPlan": "[Welsh] Accreditation sampling and inspection plan"
+        "samplingPlan": "[Welsh] Accreditation sampling and inspection plan",
+        "overseasSites": "[Welsh] Overseas reprocessing sites",
+        "besEvidence": "[Welsh] Evidence of broadly equivalent standards (BES)"
       }
+    },
+    "selectOverseasSites": {
+      "title": "[Welsh] Your overseas reprocessing sites",
+      "heading": "[Welsh] Your overseas reprocessing sites",
+      "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
+      "continueButton": "[Welsh] Continue",
+      "columns": {
+        "siteName": "[Welsh] Site name",
+        "country": "[Welsh] Country"
+      }
+    },
+    "confirmOverseasSites": {
+      "title": "[Welsh] Confirm your overseas reprocessing sites",
+      "heading": "[Welsh] Confirm your overseas reprocessing sites",
+      "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "[Welsh] Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
+      "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
+      "removeButton": "[Welsh] Remove",
+      "confirmButton": "[Welsh] Confirm and continue"
     },
     "operatorRegistration": {
       "heading": "[Welsh] Operator Registration",
@@ -408,6 +443,78 @@
         "download": "[Welsh] Download file",
         "errorLoading": "[Welsh] Sorry, there was a problem loading the file details. Please try again."
       }
+    },
+    "uploadEvidenceList": {
+      "title": "[Welsh] Upload evidence of broadly equivalent standards",
+      "heading": "[Welsh] Upload evidence of broadly equivalent standards",
+      "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "[Welsh] Sorry, we were unable to complete the BES evidence section. Please try again.",
+      "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
+      "uploadLink": "[Welsh] Upload evidence",
+      "evidenceUploaded": "[Welsh] Uploaded",
+      "evidenceNotUploaded": "[Welsh] Not uploaded",
+      "continueButton": "[Welsh] Continue",
+      "table": {
+        "siteName": "[Welsh] Site name",
+        "country": "[Welsh] Country",
+        "evidenceStatus": "[Welsh] Evidence status",
+        "action": "[Welsh] Action"
+      }
+    },
+    "uploadBesEvidence": {
+      "title": "[Welsh] Upload BES evidence",
+      "heading": "[Welsh] Upload BES evidence for",
+      "fileLabel": "[Welsh] Upload a file",
+      "uploadButton": "[Welsh] Upload file",
+      "saveAndComeLater": "[Welsh] Save and come back later",
+      "requirements": {
+        "intro": "[Welsh] The file must:",
+        "maxSize": "[Welsh] be smaller than 20MB",
+        "fileTypes": "[Welsh] be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG file"
+      },
+      "validFrom": "[Welsh] Start date of evidence",
+      "validTo": "[Welsh] End date of evidence",
+      "dateHint": "[Welsh] For example, 1 11 2026",
+      "validation": {
+        "noFile": "[Welsh] Select a file to upload",
+        "invalidType": "[Welsh] The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",
+        "fileTooLarge": "[Welsh] The selected file must be smaller than 20MB",
+        "validFromRequired": "[Welsh] Enter the start date of evidence",
+        "validToRequired": "[Welsh] Enter the end date of evidence",
+        "validToBeforeFrom": "[Welsh] The end date must be after the start date",
+        "invalidDate": "[Welsh] Enter a valid date",
+        "fetchError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
+        "uploadError": "[Welsh] Sorry, we were unable to upload the file. Please try again."
+      }
+    },
+    "uploadMoreEvidence": {
+      "title": "[Welsh] Upload more BES evidence",
+      "heading": "[Welsh] Do you want to upload more evidence",
+      "yes": "[Welsh] Yes",
+      "no": "[Welsh] No",
+      "continueButton": "[Welsh] Continue",
+      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
+      "saveError": "[Welsh] Sorry, we were unable to save your answer. Please try again.",
+      "validation": {
+        "required": "[Welsh] Select yes if you want to upload more evidence"
+      }
+    },
+    "cyaEvidenceForSite": {
+      "title": "[Welsh] Check your BES evidence",
+      "heading": "[Welsh] Check your BES evidence for",
+      "fileUploaded": "[Welsh] File uploaded",
+      "startDate": "[Welsh] Start date of evidence",
+      "endDate": "[Welsh] End date of evidence",
+      "confirmButton": "[Welsh] Confirm",
+      "noFiles": "[Welsh] No BES evidence files have been uploaded for this site.",
+      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again."
+    },
+    "checkSiteConditions": {
+      "title": "[Welsh] Check the site fulfils the conditions",
+      "heading": "[Welsh] Check the site fulfils the conditions",
+      "content": "[Welsh] [Content to be confirmed with subject matter experts]",
+      "confirmButton": "[Welsh] Confirm",
+      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again."
     }
   },
   "navigation": {
