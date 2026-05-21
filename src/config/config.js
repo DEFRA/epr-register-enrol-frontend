@@ -338,6 +338,12 @@ export const config = convict({
       format: String,
       default: 'http://localhost:4566',
       env: 'FILE_UPLOAD_S3_ENDPOINT'
+    },
+    uploaderStubEnabled: {
+      doc: 'Use stub CDP uploader instead of real CDP service (for local dev)',
+      format: Boolean,
+      default: true,
+      env: 'CDP_UPLOADER_STUB_ENABLED'
     }
   }
 })

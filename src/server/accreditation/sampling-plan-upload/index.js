@@ -1,9 +1,11 @@
 import {
   samplingPlanUploadGetController,
   samplingPlanUploadPostController,
-  samplingPlanUpload413Handler
+  samplingPlanCdpStatusController,
+  SAMPLING_PLAN_UPLOAD_SESSION_KEY
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
 
 const uploadOptions = {
   ...requireOperator,
@@ -12,10 +14,12 @@ const uploadOptions = {
     output: 'data',
     parse: true,
     multipart: { output: 'stream' }
-  },
-  ext: {
-    onPreResponse: { method: samplingPlanUpload413Handler }
   }
+}
+
+const statusOptions = {
+  ...requireOperator,
+  pre: [provideUploadStatusFromSession(SAMPLING_PLAN_UPLOAD_SESSION_KEY)]
 }
 
 export const samplingPlanUpload = {
@@ -46,6 +50,18 @@ export const samplingPlanUpload = {
           path: '/{language}/accreditation/sampling-plan/{applicationId}',
           options: uploadOptions,
           ...samplingPlanUploadPostController
+        },
+        {
+          method: 'GET',
+          path: '/accreditation/sampling-plan/{applicationId}/status',
+          options: statusOptions,
+          ...samplingPlanCdpStatusController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/sampling-plan/{applicationId}/status',
+          options: statusOptions,
+          ...samplingPlanCdpStatusController
         }
       ])
     }

@@ -10,6 +10,7 @@ describe('#initUpload', () => {
   test('calls CDP uploader /initiate and returns parsed JSON on success', async () => {
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'fileUpload.uploaderStubEnabled') return false
       if (key === 'fileUpload.cdpUploaderUrl') return 'http://uploader'
       return originalGet(key)
     })
@@ -44,6 +45,7 @@ describe('#initUpload', () => {
   test('throws when CDP uploader returns non-OK response', async () => {
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'fileUpload.uploaderStubEnabled') return false
       if (key === 'fileUpload.cdpUploaderUrl') return 'http://uploader'
       return originalGet(key)
     })

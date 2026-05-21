@@ -1,6 +1,10 @@
 import { config } from '../../../../config/config.js'
+import { stubInitiate } from './stub-uploader.js'
 
 export async function initUpload(options = {}) {
+  if (config.get('fileUpload.uploaderStubEnabled')) {
+    return stubInitiate(options)
+  }
   const {
     redirect,
     callback,

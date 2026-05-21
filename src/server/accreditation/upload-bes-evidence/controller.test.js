@@ -371,11 +371,9 @@ describe('#uploadBesEvidenceController', () => {
       expect(result).toContain('The end date must be after the start date')
     })
 
-    test('valid file and dates redirects to upload-more-evidence', async () => {
+    test('valid file and dates initiates CDP upload and redirects to status page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const postSpy = vi
-        .spyOn(apiClient, 'post')
-        .mockResolvedValue({ FileId: 'new-bes-001' })
+      global.fetch = vi.fn().mockResolvedValue({ ok: true })
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
@@ -386,22 +384,22 @@ describe('#uploadBesEvidenceController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toContain(
-        `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`
       )
-      expect(postSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          `${APPLICATION_ID}/overseas-sites/900001/bes-evidence/files`
-        ),
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/stub/cdp-upload/'),
         expect.objectContaining({
-          filename: 'evidence.pdf',
-          contentType: 'application/pdf'
+          method: 'POST',
+          headers: expect.objectContaining({ 'x-filename': 'evidence.pdf' })
         })
       )
     })
 
-    test('returns 500 when addBesEvidenceFile fails', async () => {
+    test('CDP proxy failure returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('upload failed'))
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue({ ok: false, status: 500, statusText: 'Error' })
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -412,62 +410,6 @@ describe('#uploadBesEvidenceController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="file-error"')
-    })
-  })
-
-  describe('POST /accreditation/upload-bes-evidence/{applicationId}/{siteId} — 413 payload too large', () => {
-    const largeBoundary = 'test-boundary-413-bes'
-    const largeContentType = `multipart/form-data; boundary=${largeBoundary}`
-
-    function buildOversizePayload() {
-      const CRLF = '\r\n'
-      const oversizeBytes = Buffer.alloc(22 * 1024 * 1024, 'x')
-      return Buffer.concat([
-        Buffer.from(
-          `--${largeBoundary}${CRLF}` +
-            `Content-Disposition: form-data; name="action"${CRLF}` +
-            CRLF +
-            `uploadFile${CRLF}`
-        ),
-        Buffer.from(
-          `--${largeBoundary}${CRLF}` +
-            `Content-Disposition: form-data; name="file"; filename="large.pdf"${CRLF}` +
-            `Content-Type: application/pdf${CRLF}` +
-            CRLF
-        ),
-        oversizeBytes,
-        Buffer.from(CRLF),
-        Buffer.from(`--${largeBoundary}--${CRLF}`)
-      ])
-    }
-
-    test('returns 400 with fileTooLarge error', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': largeContentType },
-        payload: buildOversizePayload()
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="file-error"')
-      expect(result).toContain('The selected file must be smaller than 20MB')
-    })
-
-    test('renders 400 with empty site name when GET fails during 413 handling', async () => {
-      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': largeContentType },
-        payload: buildOversizePayload()
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('The selected file must be smaller than 20MB')
     })
   })
 })

@@ -2,6 +2,10 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { config } from '../../../config/config.js'
+import { initUpload } from '../../common/helpers/upload/init-upload.js'
+
+export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
 export const ALLOWED_EXTENSIONS = [
   'pdf',
@@ -49,37 +53,6 @@ function taskListUrl(applicationId) {
 
 function renderPage(h, viewData) {
   return h.view('accreditation/sampling-plan-upload/index', viewData)
-}
-
-export async function samplingPlanUpload413Handler(request, h) {
-  const { response } = request
-  if (!response.isBoom || response.output.statusCode !== 413) {
-    return h.continue
-  }
-
-  const { t } = getLocaleAndTranslator(request)
-  const user = getUser(request)
-  const organisationId = user?.id
-  const { applicationId } = request.params
-
-  let files = []
-  try {
-    const application = await apiClient.get(
-      appUrl(organisationId, applicationId)
-    )
-    files = buildFilesViewModel(application.samplingPlan?.files)
-  } catch (_) {
-    // render with empty file list if fetch fails
-  }
-
-  return renderPage(h, {
-    pageTitle: t('pages.samplingPlanUpload.title'),
-    heading: t('pages.samplingPlanUpload.heading'),
-    backLink: taskListUrl(applicationId),
-    taskListLink: taskListUrl(applicationId),
-    files,
-    fileError: t('pages.samplingPlanUpload.validation.fileTooLarge')
-  }).code(400)
 }
 
 export const samplingPlanUploadGetController = {
@@ -192,14 +165,17 @@ export const samplingPlanUploadPostController = {
         ).code(400)
       }
 
+      let uploadDetail
       try {
-        await accreditationApiService.addFile(organisationId, applicationId, {
-          filename,
-          contentType
+        uploadDetail = await initUpload({
+          s3Bucket: config.get('fileUpload.s3Bucket'),
+          s3Path: `accreditation/sampling-plan/${applicationId}`,
+          mimeTypes: ALLOWED_EXTENSIONS.map((ext) => `.${ext}`),
+          maxFileSize: MAX_FILE_BYTES
         })
       } catch (err) {
         request.server.logger.error(
-          `Error uploading file for ${applicationId}: ${err.message}`
+          `Error initiating upload for ${applicationId}: ${err.message}`
         )
         return renderPage(
           h,
@@ -209,7 +185,37 @@ export const samplingPlanUploadPostController = {
         ).code(500)
       }
 
-      return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
+      try {
+        const proxyResponse = await fetch(uploadDetail.uploadUrl, {
+          method: 'POST',
+          body: uploadedFile,
+          headers: {
+            'x-filename': filename,
+            'Content-Type': contentType
+          }
+        })
+        if (!proxyResponse.ok) {
+          throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
+        }
+      } catch (err) {
+        request.server.logger.error(
+          `Error proxying file for ${applicationId}: ${err.message}`
+        )
+        return renderPage(
+          h,
+          baseView({
+            fileError: t('pages.samplingPlanUpload.validation.uploadError')
+          })
+        ).code(500)
+      }
+
+      request.yar.set(SAMPLING_PLAN_UPLOAD_SESSION_KEY, {
+        statusUrl: uploadDetail.statusUrl,
+        applicationId,
+        organisationId
+      })
+
+      return h.redirect(`/accreditation/sampling-plan/${applicationId}/status`)
     }
 
     if (action === 'deleteFile') {
@@ -284,5 +290,50 @@ export const samplingPlanUploadPostController = {
     }
 
     return h.redirect(taskListUrl(applicationId))
+  }
+}
+
+export const samplingPlanCdpStatusController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
+    const uploadStatus = request.pre.uploadStatus
+
+    if (uploadStatus?.uploadStatus !== 'ready') {
+      return h.view('accreditation/sampling-plan-upload/status', {
+        pageTitle: t('pages.samplingPlanUpload.status.title'),
+        heading: t('pages.samplingPlanUpload.status.heading')
+      })
+    }
+
+    const fileInput = uploadStatus.form?.file
+    const session = request.yar.get(SAMPLING_PLAN_UPLOAD_SESSION_KEY)
+    request.yar.clear(SAMPLING_PLAN_UPLOAD_SESSION_KEY)
+
+    if (fileInput?.hasError) {
+      return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
+    }
+
+    const scanStatus =
+      fileInput?.fileStatus === 'complete' ? 'Clean' : 'Infected'
+
+    try {
+      await accreditationApiService.addFile(
+        session?.organisationId,
+        session?.applicationId ?? applicationId,
+        {
+          filename: fileInput?.filename,
+          contentType: fileInput?.contentType ?? fileInput?.detectedContentType,
+          scanStatus,
+          fileId: fileInput?.fileId
+        }
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error saving uploaded file for ${applicationId}: ${err.message}`
+      )
+    }
+
+    return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
   }
 }

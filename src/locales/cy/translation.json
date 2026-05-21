@@ -275,6 +275,12 @@
         "clean": "[Welsh] Clean",
         "infected": "[Welsh] Infected"
       },
+      "status": {
+        "title": "[Welsh] Uploading file",
+        "heading": "[Welsh] Uploading file",
+        "message": "[Welsh] Your file is being scanned for viruses. This may take a few seconds.",
+        "doNotClose": "[Welsh] Do not close this page."
+      },
       "validation": {
         "noFile": "[Welsh] Select a file to upload",
         "invalidType": "[Welsh] The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
@@ -475,6 +481,12 @@
       "validFrom": "[Welsh] Start date of evidence",
       "validTo": "[Welsh] End date of evidence",
       "dateHint": "[Welsh] For example, 1 11 2026",
+      "status": {
+        "title": "[Welsh] Uploading file",
+        "heading": "[Welsh] Uploading file",
+        "message": "[Welsh] Your file is being scanned for viruses. This may take a few seconds.",
+        "doNotClose": "[Welsh] Do not close this page."
+      },
       "validation": {
         "noFile": "[Welsh] Select a file to upload",
         "invalidType": "[Welsh] The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",

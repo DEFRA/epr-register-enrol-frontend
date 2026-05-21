@@ -558,11 +558,9 @@ describe('#samplingPlanUploadController', () => {
       return Buffer.concat(buffers)
     }
 
-    test('valid file redirects to GET and calls addFile with filename and contentType', async () => {
+    test('valid file initiates CDP upload and redirects to status page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const postSpy = vi
-        .spyOn(apiClient, 'post')
-        .mockResolvedValue({ FileId: 'new-file-123' })
+      global.fetch = vi.fn().mockResolvedValue({ ok: true })
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
@@ -576,13 +574,15 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        `/accreditation/sampling-plan/${APPLICATION_ID}`
+        `/accreditation/sampling-plan/${APPLICATION_ID}/status`
       )
-      expect(postSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/files`),
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/stub/cdp-upload/'),
         expect.objectContaining({
-          filename: 'sampling-plan.png',
-          contentType: 'image/png'
+          method: 'POST',
+          headers: expect.objectContaining({
+            'x-filename': 'sampling-plan.png'
+          })
         })
       )
     })
@@ -619,9 +619,11 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
-    test('addFile API failure returns 500 with uploadError', async () => {
+    test('CDP proxy failure returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('Upload failed'))
+      global.fetch = vi
+        .fn()
+        .mockResolvedValue({ ok: false, status: 500, statusText: 'Error' })
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -652,85 +654,6 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
-    })
-  })
-
-  describe('POST /accreditation/sampling-plan/{applicationId} — 413 payload too large', () => {
-    const boundary = 'test-boundary-413'
-    const multipartContentType = `multipart/form-data; boundary=${boundary}`
-
-    function buildOversizePayload() {
-      const CRLF = '\r\n'
-      const oversizeBytes = Buffer.alloc(22 * 1024 * 1024, 'x')
-      return Buffer.concat([
-        Buffer.from(
-          `--${boundary}${CRLF}` +
-            `Content-Disposition: form-data; name="action"${CRLF}` +
-            CRLF +
-            `uploadFile${CRLF}`
-        ),
-        Buffer.from(
-          `--${boundary}${CRLF}` +
-            `Content-Disposition: form-data; name="file"; filename="large.pdf"${CRLF}` +
-            `Content-Type: application/pdf${CRLF}` +
-            CRLF
-        ),
-        oversizeBytes,
-        Buffer.from(CRLF),
-        Buffer.from(`--${boundary}--${CRLF}`)
-      ])
-    }
-
-    test('returns 400 with fileTooLarge error when payload exceeds maxBytes', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildOversizePayload()
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="file-error"')
-      expect(result).toContain('The selected file must be smaller than 20MB')
-    })
-
-    test('renders existing files on 413 response', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          samplingPlan: {
-            sectionStatus: 'InProgress',
-            files: [makeFile({ filename: 'existing-plan.pdf' })]
-          }
-        })
-      )
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildOversizePayload()
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('existing-plan.pdf')
-    })
-
-    test('renders 400 with empty file list when GET fails during 413 handling', async () => {
-      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildOversizePayload()
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="file-error"')
-      expect(result).toContain('The selected file must be smaller than 20MB')
-      expect(result).not.toContain('data-testid="uploaded-files-table"')
     })
   })
 })

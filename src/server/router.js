@@ -1,5 +1,7 @@
 import inert from '@hapi/inert'
 
+import { config } from '../config/config.js'
+import { stubCdp } from './stub-cdp/index.js'
 import { home } from './home/index.js'
 import { about } from './about/index.js'
 import { health } from './health/index.js'
@@ -44,6 +46,10 @@ export const router = {
 
       // Auth routes (login, callback, logout, stub chooser)
       await server.register([authRoutes])
+
+      if (config.get('fileUpload.uploaderStubEnabled')) {
+        await server.register(stubCdp)
+      }
 
       // Application specific routes, add your own routes here
       await server.register([
