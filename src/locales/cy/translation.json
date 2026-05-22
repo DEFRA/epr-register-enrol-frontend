@@ -333,13 +333,17 @@
     },
     "selectOverseasSites": {
       "title": "[Welsh] Your overseas reprocessing sites",
-      "heading": "[Welsh] Your overseas reprocessing sites",
+      "heading": "[Welsh] Select the overseas reprocessing sites to include in this accreditation",
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "continueButton": "[Welsh] Continue",
       "columns": {
         "siteName": "[Welsh] Site name",
         "country": "[Welsh] Country"
+      },
+      "validation": {
+        "noSitesSelected": "[Welsh] Select at least one overseas reprocessing site",
+        "saveError": "[Welsh] Sorry, we were unable to save your site selection. Please try again."
       }
     },
     "confirmOverseasSites": {

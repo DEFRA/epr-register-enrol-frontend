@@ -312,6 +312,7 @@ const STUB_APPLICATIONS = [
           country: 'Netherlands',
           isEu: true,
           isOecd: true,
+          selected: true,
           besEvidence: {
             besEvidenceUploads: [],
             doYouWantToUploadMoreEvidence: false
@@ -324,6 +325,20 @@ const STUB_APPLICATIONS = [
           country: 'Germany',
           isEu: true,
           isOecd: true,
+          selected: true,
+          besEvidence: {
+            besEvidenceUploads: [],
+            doYouWantToUploadMoreEvidence: false
+          }
+        },
+        {
+          siteId: 900005,
+          siteName: 'Paris Verre SAS',
+          siteAddress: '8 Rue du Recyclage, Paris',
+          country: 'France',
+          isEu: true,
+          isOecd: true,
+          selected: false,
           besEvidence: {
             besEvidenceUploads: [],
             doYouWantToUploadMoreEvidence: false

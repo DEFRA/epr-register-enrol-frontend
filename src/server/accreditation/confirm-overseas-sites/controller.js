@@ -56,7 +56,9 @@ export const confirmOverseasSitesGetController = {
       ).code(500)
     }
 
-    const sites = application.overseasSites?.sites ?? []
+    const sites = (application.overseasSites?.sites ?? []).filter(
+      (s) => s.selected !== false
+    )
 
     return renderPage(h, buildViewData(t, applicationId, sites, null))
   }
@@ -91,11 +93,14 @@ export const confirmOverseasSitesPostController = {
       ).code(500)
     }
 
-    const sites = application.overseasSites?.sites ?? []
+    const allSites = application.overseasSites?.sites ?? []
+    const sites = allSites.filter((s) => s.selected !== false)
 
     if (submitAction === 'remove') {
       const siteIdInt = parseInt(siteId, 10)
-      const updatedSites = sites.filter((s) => s.siteId !== siteIdInt)
+      const updatedSites = allSites.map((s) =>
+        s.siteId === siteIdInt ? { ...s, selected: false } : s
+      )
       try {
         await accreditationApiService.patchOverseasSites(
           organisationId,
