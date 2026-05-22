@@ -252,15 +252,8 @@ describe('#confirmOverseasSitesController', () => {
         expect.stringContaining(`${APPLICATION_ID}/overseas-sites`),
         expect.objectContaining({
           sites: expect.arrayContaining([
+            expect.objectContaining({ siteId: 900001, selected: false }),
             expect.objectContaining({ siteId: 900002 })
-          ])
-        })
-      )
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.not.objectContaining({
-          sites: expect.arrayContaining([
-            expect.objectContaining({ siteId: 900001 })
           ])
         })
       )

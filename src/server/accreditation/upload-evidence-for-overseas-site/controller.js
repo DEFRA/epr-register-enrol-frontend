@@ -65,7 +65,10 @@ export const uploadEvidenceListGetController = {
       ).code(500)
     }
 
-    const sites = mapSites(t, applicationId, application.overseasSites?.sites)
+    const selectedSites = (application.overseasSites?.sites ?? []).filter(
+      (s) => s.selected !== false
+    )
+    const sites = mapSites(t, applicationId, selectedSites)
     return renderPage(h, buildViewData(t, applicationId, sites, null))
   }
 }
@@ -98,7 +101,10 @@ export const uploadEvidenceListPostController = {
       ).code(500)
     }
 
-    const sites = mapSites(t, applicationId, application.overseasSites?.sites)
+    const selectedSites = (application.overseasSites?.sites ?? []).filter(
+      (s) => s.selected !== false
+    )
+    const sites = mapSites(t, applicationId, selectedSites)
 
     try {
       await accreditationApiService.patchBesEvidenceSection(

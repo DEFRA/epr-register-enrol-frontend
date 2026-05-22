@@ -347,13 +347,17 @@
     },
     "selectOverseasSites": {
       "title": "Your overseas reprocessing sites",
-      "heading": "Your overseas reprocessing sites",
+      "heading": "Select the overseas reprocessing sites to include in this accreditation",
       "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "continueButton": "Continue",
       "columns": {
         "siteName": "Site name",
         "country": "Country"
+      },
+      "validation": {
+        "noSitesSelected": "Select at least one overseas reprocessing site",
+        "saveError": "Sorry, we were unable to save your site selection. Please try again."
       }
     },
     "confirmOverseasSites": {

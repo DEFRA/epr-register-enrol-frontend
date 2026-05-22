@@ -6,44 +6,75 @@
 
       <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
 
-      {% if error %}
+      {% if error and sites.length === 0 %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
           <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
           <div class="govuk-error-summary__body">
             <p>{{ error }}</p>
           </div>
         </div>
-      {% else %}
+      {% endif %}
+
+      {% if sites.length === 0 %}
 
         <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+        <p class="govuk-body" data-testid="no-sites-message">
+          {{ t('pages.selectOverseasSites.noSites') }}
+        </p>
 
-        {% if sites.length === 0 %}
-          <p class="govuk-body" data-testid="no-sites-message">
-            {{ t('pages.selectOverseasSites.noSites') }}
-          </p>
-        {% else %}
-          <table class="govuk-table" data-testid="sites-table">
-            <thead class="govuk-table__head">
-              <tr class="govuk-table__row">
-                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.columns.siteName') }}</th>
-                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.columns.country') }}</th>
-              </tr>
-            </thead>
-            <tbody class="govuk-table__body">
-              {% for site in sites %}
-                <tr class="govuk-table__row" data-testid="site-row-{{ site.siteId }}">
-                  <td class="govuk-table__cell" data-testid="site-name-{{ site.siteId }}">{{ site.siteName }}</td>
-                  <td class="govuk-table__cell" data-testid="site-country-{{ site.siteId }}">{{ site.country }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      {% else %}
+
+        {% if error %}
+          <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                <li><a href="#site-checkboxes">{{ error }}</a></li>
+              </ul>
+            </div>
+          </div>
         {% endif %}
 
-        <a href="{{ continueUrl }}" role="button" draggable="false"
-           class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-          {{ t('pages.selectOverseasSites.continueButton') }}
-        </a>
+        <form method="post" data-testid="select-sites-form">
+          <input type="hidden" name="crumb" value="{{ crumb }}">
+
+          <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
+            <fieldset class="govuk-fieldset">
+              <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+                <h1 class="govuk-fieldset__heading" data-testid="page-heading">{{ heading }}</h1>
+              </legend>
+
+              {% if error %}
+                <p class="govuk-error-message" id="site-checkboxes-error" data-testid="sites-error">
+                  <span class="govuk-visually-hidden">Error:</span> {{ error }}
+                </p>
+              {% endif %}
+
+              <div class="govuk-checkboxes" data-module="govuk-checkboxes" id="site-checkboxes">
+                {% for site in sites %}
+                  <div class="govuk-checkboxes__item">
+                    <input class="govuk-checkboxes__input"
+                           id="site-{{ site.siteId }}"
+                           name="siteIds"
+                           type="checkbox"
+                           value="{{ site.siteId }}"
+                           data-testid="site-checkbox-{{ site.siteId }}"
+                           {% if site.selected %}checked{% endif %}>
+                    <label class="govuk-label govuk-checkboxes__label" for="site-{{ site.siteId }}"
+                           data-testid="site-label-{{ site.siteId }}">
+                      {{ site.siteName }} — {{ site.country }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </fieldset>
+          </div>
+
+          <button type="submit" class="govuk-button" data-module="govuk-button"
+                  data-testid="continue-button">
+            {{ t('pages.selectOverseasSites.continueButton') }}
+          </button>
+        </form>
 
       {% endif %}
 
