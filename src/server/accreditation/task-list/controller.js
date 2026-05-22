@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
+//import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -124,9 +125,7 @@ export function buildTaskListViewModel(application, t) {
     isExporter: exporterIsNotNull,
     metadata: {
       year,
-      site: exporterIsNotNull
-        ? null
-        : (siteAddress ?? t('pages.taskList.siteNotSet'))
+      site: exporterIsNotNull ? null : (siteAddress ?? t('pages.taskList.siteNotSet'))
     },
     tasks,
     allComplete,
@@ -141,8 +140,13 @@ export function buildTaskListViewModel(application, t) {
 export const taskListGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    //const user = getUser(request)
+
+    // const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
     const { applicationId } = request.params
 
     let application
