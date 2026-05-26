@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -40,8 +40,9 @@ function buildViewData(t, applicationId, sites, error) {
 export const uploadEvidenceListGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -76,8 +77,9 @@ export const uploadEvidenceListGetController = {
 export const uploadEvidenceListPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application

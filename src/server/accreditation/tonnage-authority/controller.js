@@ -1,5 +1,4 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
@@ -111,8 +110,9 @@ export const tonnageAuthorityGetController = {
 export const tonnageAuthorityPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const {
       submitAction = 'saveAndContinue',
