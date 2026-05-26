@@ -44,6 +44,11 @@ export function hasEligibleFile(files) {
   return (files ?? []).some((f) => (f.scanStatus ?? 'Pending') !== 'Infected')
 }
 
+function decodeField(field) {
+  if (typeof field === 'string') return field
+  return field?.payload?.toString()
+}
+
 function appUrl(organisationId, applicationId) {
   return `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
 }
@@ -100,7 +105,8 @@ export const samplingPlanUploadPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId } = request.params
-    const { action, fileId } = request.payload ?? {}
+    const action = decodeField(request.payload?.action)
+    const fileId = decodeField(request.payload?.fileId)
 
     let application
     try {
