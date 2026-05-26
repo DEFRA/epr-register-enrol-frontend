@@ -118,13 +118,15 @@ export function buildTaskListViewModel(application, t) {
 
     allComplete = allComplete && osComplete && besComplete
   }
-
+  const exporterIsNotNull = isExporter ?? false
   return {
     heading,
-    isExporter: isExporter ?? false,
+    isExporter: exporterIsNotNull,
     metadata: {
-      year: year,
-      site: isExporter ? null : (siteAddress ?? t('pages.taskList.siteNotSet'))
+      year,
+      site: exporterIsNotNull
+        ? null
+        : (siteAddress ?? t('pages.taskList.siteNotSet'))
     },
     tasks,
     allComplete,

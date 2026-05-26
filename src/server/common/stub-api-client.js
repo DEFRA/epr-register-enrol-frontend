@@ -469,7 +469,7 @@ export const stubApiClient = {
 
       return Promise.resolve({
         ...STUB_APPLICATIONS[index],
-        organisationId: organisationId,
+        organisationId,
         isExporter: isExporterSeed,
         year: body?.year ?? new Date().getFullYear(),
         applicationStatus: 'Saved'
