@@ -257,7 +257,21 @@ const STUB_APPLICATIONS = [
     },
     overseasSites: {
       sectionStatus: 'NotStarted',
-      sites: []
+      sites: [
+        {
+          siteId: 900001,
+          siteName: 'Rotterdam Recycling BV',
+          siteAddress: 'Industrieweg 44, Rotterdam',
+          country: 'Netherlands',
+          isEu: true,
+          isOecd: true,
+          selected: true,
+          besEvidence: {
+            besEvidenceUploads: [],
+            doYouWantToUploadMoreEvidence: false
+          }
+        }
+      ]
     },
     besEvidence: { sectionStatus: 'NotStarted' }
   },
