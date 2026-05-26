@@ -257,7 +257,21 @@ const STUB_APPLICATIONS = [
     },
     overseasSites: {
       sectionStatus: 'NotStarted',
-      sites: []
+      sites: [
+        {
+          siteId: 900001,
+          siteName: 'Rotterdam Recycling BV',
+          siteAddress: 'Industrieweg 44, Rotterdam',
+          country: 'Netherlands',
+          isEu: true,
+          isOecd: true,
+          selected: true,
+          besEvidence: {
+            besEvidenceUploads: [],
+            doYouWantToUploadMoreEvidence: false
+          }
+        }
+      ]
     },
     besEvidence: { sectionStatus: 'NotStarted' }
   },
@@ -455,7 +469,7 @@ export const stubApiClient = {
 
       return Promise.resolve({
         ...STUB_APPLICATIONS[index],
-        organisationId: organisationId,
+        organisationId,
         isExporter: isExporterSeed,
         year: body?.year ?? new Date().getFullYear(),
         applicationStatus: 'Saved'
