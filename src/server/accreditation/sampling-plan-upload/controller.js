@@ -135,11 +135,10 @@ export const samplingPlanUploadPostController = {
 
     if (action === 'uploadFile') {
       const uploadedFile = request.payload.file
-      const filename = uploadedFile?.hapi?.filename ?? ''
+      const filename = uploadedFile?.filename ?? ''
       const contentType =
-        uploadedFile?.hapi?.headers?.['content-type'] ??
-        'application/octet-stream'
-      const fileSize = uploadedFile?.length ?? 0
+        uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
+      const fileSize = uploadedFile?.payload?.length ?? 0
 
       if (!filename) {
         return renderPage(
@@ -194,7 +193,7 @@ export const samplingPlanUploadPostController = {
         try {
           const proxyResponse = await fetch(uploadDetail.uploadUrl, {
             method: 'POST',
-            body: uploadedFile,
+            body: uploadedFile.payload,
             duplex: 'half',
             headers: {
               'x-filename': filename,
