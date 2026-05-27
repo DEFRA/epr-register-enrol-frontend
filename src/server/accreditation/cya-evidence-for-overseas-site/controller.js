@@ -1,6 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 function evidenceListUrl(applicationId) {
   return `/accreditation/upload-evidence-for-overseas-site/${applicationId}`
@@ -38,8 +38,9 @@ function buildViewData(t, applicationId, siteId, siteName, uploads, error) {
 export const cyaEvidenceForSiteGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId, siteId } = request.params
     const siteIdInt = parseInt(siteId, 10)
 

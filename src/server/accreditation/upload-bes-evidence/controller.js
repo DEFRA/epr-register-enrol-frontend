@@ -1,9 +1,9 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { stubSetFile } from '../../common/helpers/upload/stub-uploader.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -69,8 +69,9 @@ function buildViewData(t, applicationId, siteId, siteName, payload, errors) {
 export const uploadBesEvidenceGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId, siteId } = request.params
     const siteIdInt = parseInt(siteId, 10)
 
@@ -114,8 +115,9 @@ export const uploadBesEvidenceGetController = {
 export const uploadBesEvidencePostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId, siteId } = request.params
     const siteIdInt = parseInt(siteId, 10)
     const payload = request.payload ?? {}

@@ -1,10 +1,10 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { stubSetFile } from '../../common/helpers/upload/stub-uploader.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -44,6 +44,11 @@ export function hasEligibleFile(files) {
   return (files ?? []).some((f) => (f.scanStatus ?? 'Pending') !== 'Infected')
 }
 
+function decodeField(field) {
+  if (typeof field === 'string') return field
+  return field?.payload?.toString()
+}
+
 function appUrl(organisationId, applicationId) {
   return `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
 }
@@ -59,8 +64,9 @@ function renderPage(h, viewData) {
 export const samplingPlanUploadGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -95,10 +101,12 @@ export const samplingPlanUploadGetController = {
 export const samplingPlanUploadPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
-    const { action, fileId } = request.payload ?? {}
+    const action = decodeField(request.payload?.action)
+    const fileId = decodeField(request.payload?.fileId)
 
     let application
     try {
@@ -133,11 +141,10 @@ export const samplingPlanUploadPostController = {
 
     if (action === 'uploadFile') {
       const uploadedFile = request.payload.file
-      const filename = uploadedFile?.hapi?.filename ?? ''
+      const filename = uploadedFile?.filename ?? ''
       const contentType =
-        uploadedFile?.hapi?.headers?.['content-type'] ??
-        'application/octet-stream'
-      const fileSize = uploadedFile?.length ?? 0
+        uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
+      const fileSize = uploadedFile?.payload?.length ?? 0
 
       if (!filename) {
         return renderPage(
@@ -192,7 +199,7 @@ export const samplingPlanUploadPostController = {
         try {
           const proxyResponse = await fetch(uploadDetail.uploadUrl, {
             method: 'POST',
-            body: uploadedFile,
+            body: uploadedFile.payload,
             duplex: 'half',
             headers: {
               'x-filename': filename,

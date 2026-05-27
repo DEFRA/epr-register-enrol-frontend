@@ -60,7 +60,7 @@ describe('#submitConfirmationController', () => {
   async function getSessionCookieWithReference(
     reference = 'EPR-ACC-2027-000001'
   ) {
-    // Use the submit-declaration POST to seed the session with an applicationReference
+    // Use the submit-declaration POST to seed the session with an accreditationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
       accreditationReference: reference,
       applicationStatus: 'Sent'
