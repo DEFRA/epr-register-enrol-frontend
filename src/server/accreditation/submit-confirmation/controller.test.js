@@ -62,7 +62,7 @@ describe('#submitConfirmationController', () => {
   ) {
     // Use the submit-declaration POST to seed the session with an applicationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
-      accreditationReference: reference,
+      applicationReference: reference,
       applicationStatus: 'Sent'
     })
 
