@@ -237,7 +237,7 @@ describe('#submitDeclarationController', () => {
 
     test('calls submitApplication and redirects to confirmation on valid data', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
-        accreditationReference: 'EPR-ACC-2027-000001',
+        applicationReference: 'EPR-ACC-2027-000001',
         applicationStatus: 'Sent'
       })
 
@@ -264,7 +264,7 @@ describe('#submitDeclarationController', () => {
 
     test('trims whitespace from inputs before submitting', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
-        accreditationReference: 'EPR-ACC-2027-000001',
+        applicationReference: 'EPR-ACC-2027-000001',
         applicationStatus: 'Sent'
       })
 
