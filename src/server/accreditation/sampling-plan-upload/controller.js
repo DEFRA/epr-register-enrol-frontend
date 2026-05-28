@@ -20,6 +20,18 @@ export const ALLOWED_EXTENSIONS = [
   'msg'
 ]
 
+export const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'text/csv',
+  'image/png',
+  'image/tiff',
+  'image/jpeg',
+  'application/vnd.ms-outlook'
+]
+
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
 export function validateFileExtension(filename) {
@@ -176,9 +188,10 @@ export const samplingPlanUploadPostController = {
       let uploadDetail
       try {
         uploadDetail = await initUpload({
+          redirect: `${config.get('auth.callbackBaseUrl')}/accreditation/sampling-plan/${applicationId}/status`,
           s3Bucket: config.get('fileUpload.s3Bucket'),
           s3Path: `accreditation/sampling-plan/${applicationId}`,
-          mimeTypes: ALLOWED_EXTENSIONS.map((ext) => `.${ext}`),
+          mimeTypes: ALLOWED_MIME_TYPES,
           maxFileSize: MAX_FILE_BYTES
         })
       } catch (err) {
