@@ -423,9 +423,10 @@ describe('#businessPlanController', () => {
       )
     })
 
-    test('returns 500 with error when PATCH fails', async () => {
+    test('returns 500 service-problem page when PATCH fails with server error', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('save failed'))
+      const err = Object.assign(new Error('save failed'), { status: 500 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -435,7 +436,7 @@ describe('#businessPlanController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('data-testid="try-again-link"')
     })
   })
 

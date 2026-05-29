@@ -349,9 +349,10 @@ describe('#tonnageController', () => {
       expect(patchSpy).not.toHaveBeenCalled()
     })
 
-    test('returns 500 with error when PATCH fails', async () => {
+    test('returns 500 service-problem page when PATCH fails with server error', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('Save failed'))
+      const err = Object.assign(new Error('Save failed'), { status: 500 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -364,24 +365,7 @@ describe('#tonnageController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
-    })
-
-    test('PATCH error re-renders with previously selected radio', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('Save failed'))
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/tonnage/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: {
-          plannedTonnageBand: 'Over10000',
-          submitAction: 'saveAndContinue'
-        }
-      })
-
-      expect(result).toContain('value="Over10000"')
+      expect(result).toContain('data-testid="try-again-link"')
     })
   })
 })

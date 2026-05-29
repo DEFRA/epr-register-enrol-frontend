@@ -285,8 +285,9 @@ describe('#submitDeclarationController', () => {
       })
     })
 
-    test('returns 500 with error summary when submitApplication API fails', async () => {
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('API error'))
+    test('returns 500 service-problem page when submitApplication API fails with server error', async () => {
+      const err = Object.assign(new Error('API error'), { status: 500 })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -300,24 +301,7 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
-    })
-
-    test('re-renders with submitted field values on API error', async () => {
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('API error'))
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: {
-          fullName: 'Jane Smith',
-          jobTitle: 'Manager',
-          submitAction: 'submit'
-        }
-      })
-
-      expect(result).toContain('value="Jane Smith"')
+      expect(result).toContain('data-testid="try-again-link"')
     })
   })
 })
