@@ -548,7 +548,11 @@
     "save": "Cadw",
     "errorSummaryTitle": "[Welsh] There is a problem",
     "error": "[Welsh] Error",
-    "warning": "[Welsh] Warning"
+    "warning": "[Welsh] Warning",
+    "errors": {
+      "serviceTitle": "[Welsh] Sorry, there is a problem with the service",
+      "tryAgain": "[Welsh] Try again"
+    }
   },
   "languageSwitcher": {
     "english": "English",

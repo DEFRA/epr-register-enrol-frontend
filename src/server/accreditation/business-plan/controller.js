@@ -216,10 +216,18 @@ export const businessPlanPostController = {
       request.server.logger.error(
         `Error saving business plan for ${applicationId}: ${err.message}`
       )
+      if (!err.status || err.status >= 500) {
+        return h
+          .view('errors/service-problem', {
+            pageTitle: t('common.errors.serviceTitle'),
+            retryUrl: request.path
+          })
+          .code(500)
+      }
       return renderPage(h, {
         ...buildViewData(t, applicationId, fieldPayload, {}, isExporter),
         error: t('pages.businessPlan.validation.saveError')
-      }).code(500)
+      }).code(400)
     }
 
     if (isSaveAndComeLater) {

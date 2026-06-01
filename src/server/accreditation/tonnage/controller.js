@@ -142,6 +142,14 @@ export const tonnagePostController = {
       request.server.logger.error(
         `Error saving tonnage for ${applicationId}: ${error.message}`
       )
+      if (!error.status || error.status >= 500) {
+        return h
+          .view('errors/service-problem', {
+            pageTitle: t('common.errors.serviceTitle'),
+            retryUrl: request.path
+          })
+          .code(500)
+      }
       return renderForm(h, {
         pageTitle: isExporter
           ? t('pages.tonnage.titleExporter')
@@ -155,7 +163,7 @@ export const tonnagePostController = {
             text: t('pages.tonnage.validation.saveError')
           }
         }
-      }).code(500)
+      }).code(400)
     }
 
     if (submitAction === 'saveAndComeLater') {

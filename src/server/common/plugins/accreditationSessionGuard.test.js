@@ -65,20 +65,29 @@ describe('guard handler behaviour', () => {
     }
   })
 
-  function runGuard(path, accreditationId) {
-    const request = {
-      path,
-      yar: {
-        get: vi.fn((key) =>
-          key === ACCREDITATION_SESSION_KEYS.accreditationId
-            ? accreditationId
-            : null
-        )
-      }
+  function makeYarWithFlash(accreditationId) {
+    return {
+      get: vi.fn((key) =>
+        key === ACCREDITATION_SESSION_KEYS.accreditationId
+          ? accreditationId
+          : null
+      ),
+      flash: vi.fn()
     }
+  }
+
+  function runGuard(path, accreditationId) {
+    const yar = makeYarWithFlash(accreditationId)
+    const request = { path, yar }
 
     if (!shouldGuardPath(request.path)) return h.continue
-    if (!hasValidSession(request.yar)) return h.redirect('/').takeover()
+    if (!hasValidSession(request.yar)) {
+      request.yar.flash(
+        'notification',
+        'Your session has expired. Please sign in again to continue.'
+      )
+      return h.redirect('/operator').takeover()
+    }
     return h.continue
   }
 
@@ -94,15 +103,15 @@ describe('guard handler behaviour', () => {
     expect(h.redirect).not.toHaveBeenCalled()
   })
 
-  test('accreditation route without session redirects to /', () => {
+  test('accreditation route without session redirects to /operator', () => {
     const result = runGuard('/accreditation/task-list/abc', null)
-    expect(h.redirect).toHaveBeenCalledWith('/')
+    expect(h.redirect).toHaveBeenCalledWith('/operator')
     expect(result).toBe('redirect-response')
   })
 
-  test('accreditation route with empty session redirects to /', () => {
+  test('accreditation route with empty session redirects to /operator', () => {
     runGuard('/accreditation/business-plan/abc', '')
-    expect(h.redirect).toHaveBeenCalledWith('/')
+    expect(h.redirect).toHaveBeenCalledWith('/operator')
   })
 
   test('Welsh accreditation route with valid session passes through', () => {
@@ -111,10 +120,26 @@ describe('guard handler behaviour', () => {
     expect(h.redirect).not.toHaveBeenCalled()
   })
 
-  test('Welsh accreditation route without session redirects to /', () => {
+  test('Welsh accreditation route without session redirects to /operator', () => {
     const result = runGuard('/cy/accreditation/task-list/abc', null)
-    expect(h.redirect).toHaveBeenCalledWith('/')
+    expect(h.redirect).toHaveBeenCalledWith('/operator')
     expect(result).toBe('redirect-response')
+  })
+
+  test('writes session-expiry flash before redirecting', () => {
+    const yar = makeYarWithFlash(null)
+    const request = { path: '/accreditation/task-list/abc', yar }
+    if (shouldGuardPath(request.path) && !hasValidSession(request.yar)) {
+      request.yar.flash(
+        'notification',
+        'Your session has expired. Please sign in again to continue.'
+      )
+      h.redirect('/operator').takeover()
+    }
+    expect(yar.flash).toHaveBeenCalledWith(
+      'notification',
+      'Your session has expired. Please sign in again to continue.'
+    )
   })
 })
 
@@ -129,7 +154,8 @@ describe('accreditationSessionGuard plugin registration', () => {
         key === ACCREDITATION_SESSION_KEYS.accreditationId
           ? accreditationId
           : null
-      )
+      ),
+      flash: vi.fn()
     }
   }
 
@@ -195,7 +221,18 @@ describe('accreditationSessionGuard plugin registration', () => {
     const callback = registerAndGetCallback()
     const h = makeH()
     callback({ path: '/accreditation/task-list/app-1', yar: makeYar(null) }, h)
-    expect(h.redirect).toHaveBeenCalledWith('/')
+    expect(h.redirect).toHaveBeenCalledWith('/operator')
+  })
+
+  test('registered callback writes flash notification before redirecting', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const yar = makeYar(null)
+    callback({ path: '/accreditation/task-list/app-1', yar }, h)
+    expect(yar.flash).toHaveBeenCalledWith(
+      'notification',
+      'Your session has expired. Please sign in again to continue.'
+    )
   })
 
   test('registered callback passes through Welsh accreditation routes with valid session', () => {
@@ -216,6 +253,6 @@ describe('accreditationSessionGuard plugin registration', () => {
       { path: '/cy/accreditation/task-list/app-1', yar: makeYar(null) },
       h
     )
-    expect(h.redirect).toHaveBeenCalledWith('/')
+    expect(h.redirect).toHaveBeenCalledWith('/operator')
   })
 })

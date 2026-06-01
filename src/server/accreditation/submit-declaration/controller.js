@@ -103,6 +103,14 @@ export const submitDeclarationPostController = {
       request.server.logger.error(
         `Error submitting application ${applicationId}: ${err.message}`
       )
+      if (!err.status || err.status >= 500) {
+        return h
+          .view('errors/service-problem', {
+            pageTitle: t('common.errors.serviceTitle'),
+            retryUrl: request.path
+          })
+          .code(500)
+      }
       return renderPage(h, {
         pageTitle: t('pages.submitDeclaration.title'),
         heading: t('pages.submitDeclaration.heading'),
@@ -117,7 +125,7 @@ export const submitDeclarationPostController = {
         fullName: fullName ?? '',
         jobTitle: jobTitle ?? '',
         error: t('pages.submitDeclaration.validation.submitError')
-      }).code(500)
+      }).code(400)
     }
 
     request.yar.set(

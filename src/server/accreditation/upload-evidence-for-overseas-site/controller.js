@@ -118,6 +118,14 @@ export const uploadEvidenceListPostController = {
       request.server.logger.error(
         `Error completing BES evidence section for ${applicationId}: ${err.message}`
       )
+      if (!err.status || err.status >= 500) {
+        return h
+          .view('errors/service-problem', {
+            pageTitle: t('common.errors.serviceTitle'),
+            retryUrl: request.path
+          })
+          .code(500)
+      }
       return renderPage(
         h,
         buildViewData(
@@ -126,7 +134,7 @@ export const uploadEvidenceListPostController = {
           sites,
           t('pages.uploadEvidenceList.saveError')
         )
-      ).code(500)
+      ).code(400)
     }
 
     return h.redirect(taskListUrl(applicationId))

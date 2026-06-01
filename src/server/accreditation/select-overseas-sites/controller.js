@@ -129,6 +129,14 @@ export const selectOverseasSitesPostController = {
       request.server.logger.error(
         `Error saving overseas site selection for ${applicationId}: ${err.message}`
       )
+      if (!err.status || err.status >= 500) {
+        return h
+          .view('errors/service-problem', {
+            pageTitle: t('common.errors.serviceTitle'),
+            retryUrl: request.path
+          })
+          .code(500)
+      }
       return renderPage(
         h,
         buildViewData(
@@ -137,7 +145,7 @@ export const selectOverseasSitesPostController = {
           rawSites.map((s) => ({ ...s, selected: selectedIds.has(s.siteId) })),
           t('pages.selectOverseasSites.validation.saveError')
         )
-      ).code(500)
+      ).code(400)
     }
 
     return h.redirect(confirmOverseasSitesUrl(applicationId))

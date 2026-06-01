@@ -556,7 +556,11 @@
     "save": "Save",
     "errorSummaryTitle": "There is a problem",
     "error": "Error",
-    "warning": "Warning"
+    "warning": "Warning",
+    "errors": {
+      "serviceTitle": "Sorry, there is a problem with the service",
+      "tryAgain": "Try again"
+    }
   },
   "languageSwitcher": {
     "english": "English",
