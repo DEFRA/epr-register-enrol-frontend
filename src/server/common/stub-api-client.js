@@ -60,7 +60,11 @@ const STUB_APPLICATIONS = [
     organisationName: 'Delta Green Recycling Co',
     year: 2027,
     dateSent: '2026-12-01T10:00:00Z',
-    submittedBy: 'Jane Doe',
+    submittedBy: {
+      name: 'Jane Doe',
+      email: 'jane@deltagreen.co.uk',
+      jobTitle: 'Director'
+    },
     prns: {
       sectionStatus: 'Completed',
       plannedTonnageBand: 'UpTo1000',
@@ -148,7 +152,11 @@ const STUB_APPLICATIONS = [
     organisationName: 'Export Steel Ltd.',
     year: 2027,
     dateSent: '2026-12-01T10:00:00Z',
-    submittedBy: 'Jane Doe',
+    submittedBy: {
+      name: 'Jane Doe',
+      email: 'jane@deltagreen.co.uk',
+      jobTitle: 'Director'
+    },
     prns: {
       sectionStatus: 'Completed',
       plannedTonnageBand: 'UpTo1000',
@@ -480,7 +488,13 @@ export const stubApiClient = {
       if (app) {
         app.applicationStatus = 'Sent'
         app.dateSent = new Date().toISOString()
-        app.submittedBy = body ?? null
+        app.submittedBy = body
+          ? {
+              name: body.fullName ?? '',
+              email: body.email ?? '',
+              jobTitle: body.jobTitle ?? ''
+            }
+          : null
       }
       return Promise.resolve({
         accreditationReference: app?.accreditationReference ?? 'REF-STUB-001'

@@ -258,7 +258,11 @@ describe('#submitDeclarationController', () => {
       )
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/submit`),
-        { fullName: 'Jane Smith', jobTitle: 'Senior Manager' }
+        {
+          fullName: 'Jane Smith',
+          jobTitle: 'Senior Manager',
+          email: 'operator@test.example'
+        }
       )
     })
 
@@ -281,7 +285,8 @@ describe('#submitDeclarationController', () => {
 
       expect(postSpy).toHaveBeenCalledWith(expect.any(String), {
         fullName: 'Jane Smith',
-        jobTitle: 'Senior Manager'
+        jobTitle: 'Senior Manager',
+        email: 'operator@test.example'
       })
     })
 

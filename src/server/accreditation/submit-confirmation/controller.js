@@ -52,7 +52,8 @@ export const submitConfirmationGetController = {
       viewInvoice: t('pages.submitConfirmation.viewInvoice'),
       returnHome: t('pages.submitConfirmation.returnHome'),
       accreditationReference,
-      materialDisplay
+      materialDisplay,
+      applicationId
     })
   }
 }

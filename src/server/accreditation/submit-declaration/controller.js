@@ -1,4 +1,5 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
+import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
@@ -54,6 +55,7 @@ export const submitDeclarationGetController = {
 export const submitDeclarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
+    const user = getUser(request)
     const organisationId = request.yar.get(
       ACCREDITATION_SESSION_KEYS.organisationId
     )
@@ -97,7 +99,11 @@ export const submitDeclarationPostController = {
       response = await accreditationApiService.submitApplication(
         organisationId,
         applicationId,
-        { fullName: fullName.trim(), jobTitle: jobTitle.trim() }
+        {
+          fullName: fullName.trim(),
+          jobTitle: jobTitle.trim(),
+          email: user?.email ?? ''
+        }
       )
     } catch (err) {
       request.server.logger.error(
