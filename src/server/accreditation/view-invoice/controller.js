@@ -1,5 +1,4 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 
 const BANK_DETAILS = {
@@ -23,7 +22,7 @@ export const viewInvoiceGetController = {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
 
-    const organisationId = getUser(request)?.id
+    const organisationId = request.yar.get('invoice.organisationId')
 
     let application
     try {
@@ -47,6 +46,8 @@ export const viewInvoiceGetController = {
     const materialDisplay = application.materialType
       ? t(`pages.materialSelection.materials.${application.materialType}`)
       : ''
+
+    request.yar.clear('invoice.organisationId')
 
     const submittedBy = application.submittedBy ?? {}
 

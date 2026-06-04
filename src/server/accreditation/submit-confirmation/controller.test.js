@@ -73,6 +73,7 @@ describe('#submitConfirmationController', () => {
       payload: {
         fullName: 'Jane Smith',
         jobTitle: 'Manager',
+        email: 'jane@example.com',
         submitAction: 'submit'
       }
     })

@@ -39,6 +39,7 @@ export const submitConfirmationGetController = {
       ? t(`pages.materialSelection.materials.${materialType}`)
       : ''
 
+    request.yar.set('invoice.organisationId', organisationId)
     Object.values(ACCREDITATION_SESSION_KEYS).forEach((key) =>
       request.yar.clear(key)
     )

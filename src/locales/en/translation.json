@@ -308,11 +308,14 @@
       "warningText": "Your organisation may face enforcement action if the data is inaccurate.",
       "fullNameLabel": "Enter your full name",
       "jobTitleLabel": "Enter your job title",
+      "emailLabel": "Enter your email address",
       "submitButton": "Submit application",
       "saveAndComeLater": "Save and come back later",
       "validation": {
         "fullNameRequired": "Enter your full name",
         "jobTitleRequired": "Enter your job title",
+        "emailRequired": "Enter your email address",
+        "emailInvalid": "Enter an email address in the correct format, like name@example.com",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "submitError": "Sorry, there was a problem submitting your application. Please try again."
       }

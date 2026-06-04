@@ -300,11 +300,14 @@
       "warningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
       "fullNameLabel": "[Welsh] Enter your full name",
       "jobTitleLabel": "[Welsh] Enter your job title",
+      "emailLabel": "[Welsh] Enter your email address",
       "submitButton": "[Welsh] Submit application",
       "saveAndComeLater": "[Welsh] Save and come back later",
       "validation": {
         "fullNameRequired": "[Welsh] Enter your full name",
         "jobTitleRequired": "[Welsh] Enter your job title",
+        "emailRequired": "[Welsh] Enter your email address",
+        "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again."
       }
