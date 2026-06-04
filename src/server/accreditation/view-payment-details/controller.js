@@ -18,7 +18,7 @@ function siteNameFromAddress(siteAddress) {
   return siteAddress.split(',')[0].trim()
 }
 
-export const viewInvoiceGetController = {
+export const viewPaymentDetailsGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
@@ -35,13 +35,13 @@ export const viewInvoiceGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId} for invoice: ${err.message}`
+        `Error fetching application ${applicationId} for payment details: ${err.message}`
       )
       return h
-        .view('accreditation/view-invoice/index', {
-          pageTitle: t('pages.viewInvoice.title'),
+        .view('accreditation/view-payment-details/index', {
+          pageTitle: t('pages.viewPaymentDetails.title'),
           backLink: confirmationUrl(applicationId),
-          error: t('pages.viewInvoice.loadError')
+          error: t('pages.viewPaymentDetails.loadError')
         })
         .code(500)
     }
@@ -52,8 +52,8 @@ export const viewInvoiceGetController = {
 
     const submittedBy = application.submittedBy ?? {}
 
-    return h.view('accreditation/view-invoice/index', {
-      pageTitle: t('pages.viewInvoice.title'),
+    return h.view('accreditation/view-payment-details/index', {
+      pageTitle: t('pages.viewPaymentDetails.title'),
       backLink: confirmationUrl(applicationId),
       siteName: siteNameFromAddress(application.siteAddress),
       materialDisplay,

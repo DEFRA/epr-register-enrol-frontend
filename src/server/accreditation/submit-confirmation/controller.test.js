@@ -138,7 +138,7 @@ describe('#submitConfirmationController', () => {
       })
 
       expect(result).toContain('data-testid="payment-text"')
-      expect(result).toContain('data-testid="view-invoice-link"')
+      expect(result).toContain('data-testid="view-payment-details-link"')
       expect(result).toContain('data-testid="return-home-link"')
     })
 

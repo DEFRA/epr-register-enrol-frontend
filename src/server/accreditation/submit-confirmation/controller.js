@@ -45,7 +45,7 @@ export const submitConfirmationGetController = {
       panelBodyPrefix: t('pages.submitConfirmation.panelBodyPrefix'),
       panelBodySuffix: t('pages.submitConfirmation.panelBodySuffix'),
       paymentText: t('pages.submitConfirmation.paymentText'),
-      viewInvoice: t('pages.submitConfirmation.viewInvoice'),
+      viewInvoice: t('pages.submitConfirmation.viewPaymentDetails'),
       returnHome: t('pages.submitConfirmation.returnHome'),
       accreditationReference,
       materialDisplay,

@@ -325,12 +325,12 @@
       "panelHeading": "Application submitted",
       "panelBodyPrefix": "Your application reference for",
       "panelBodySuffix": "is",
-      "paymentText": "Now pay the application fee. The regulator will only review your application after you've paid.",
-      "viewInvoice": "View invoice",
+      "paymentText": "Now pay the application charge. The regulator will only review your application after you've paid.",
+      "viewPaymentDetails": "View payment details",
       "returnHome": "Return to home page"
     },
-    "viewInvoice": {
-      "title": "View invoice",
+    "viewPaymentDetails": {
+      "title": "View payment details",
       "backLink": "Back to accreditation details",
       "bannerTitle": "Success",
       "bannerHeading": "Application submitted to the Environment Agency",
@@ -349,9 +349,12 @@
       "accountNumber": "Account number",
       "accountName": "Account name",
       "paymentReference": "Payment reference",
+      "cardPayments": "Card payments",
+      "cardPaymentsBody": "A card payment can be taken over the phone. Please contact your account manager to arrange taking a card payment over the phone.",
       "overseasPayments": "Overseas payments",
       "overseasPaymentsBody": "If you are paying from overseas, contact the Environment Agency for international payment details.",
-      "loadError": "Sorry, we were unable to load the invoice. Please try again."
+      "downloadPdf": "Download PDF",
+      "loadError": "Sorry, we were unable to load the payment details. Please try again."
     },
     "taskList": {
       "title": "Accreditation task list",

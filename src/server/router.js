@@ -34,7 +34,7 @@ import { uploadBesEvidence } from './accreditation/upload-bes-evidence/index.js'
 import { uploadMoreEvidence } from './accreditation/upload-more-evidence/index.js'
 import { cyaEvidenceForOverseasSite } from './accreditation/cya-evidence-for-overseas-site/index.js'
 import { checkSiteConditions } from './accreditation/check-site-conditions/index.js'
-import { viewInvoice } from './accreditation/view-invoice/index.js'
+import { viewPaymentDetails } from './accreditation/view-payment-details/index.js'
 
 export const router = {
   plugin: {
@@ -83,7 +83,7 @@ export const router = {
         uploadMoreEvidence,
         cyaEvidenceForOverseasSite,
         checkSiteConditions,
-        viewInvoice
+        viewPaymentDetails
       ])
 
       // Static assets

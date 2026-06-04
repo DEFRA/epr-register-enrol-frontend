@@ -31,7 +31,7 @@ function makeApplication(overrides = {}) {
   }
 }
 
-describe('#viewInvoiceController', () => {
+describe('#viewPaymentDetailsController', () => {
   let server
 
   beforeAll(async () => {
@@ -58,13 +58,13 @@ describe('#viewInvoiceController', () => {
     'x-test-user-type': 'operator'
   }
 
-  describe('GET /accreditation/view-invoice/{applicationId}', () => {
+  describe('GET /accreditation/view-payment-details/{applicationId}', () => {
     test('returns 200 and renders page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -77,7 +77,7 @@ describe('#viewInvoiceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -91,7 +91,7 @@ describe('#viewInvoiceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -105,7 +105,7 @@ describe('#viewInvoiceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -118,7 +118,7 @@ describe('#viewInvoiceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -137,7 +137,7 @@ describe('#viewInvoiceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -151,7 +151,7 @@ describe('#viewInvoiceController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -165,7 +165,7 @@ describe('#viewInvoiceController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -178,7 +178,7 @@ describe('#viewInvoiceController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -191,7 +191,7 @@ describe('#viewInvoiceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
@@ -205,12 +205,12 @@ describe('#viewInvoiceController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/view-invoice/${APPLICATION_ID}`,
+        url: `/cy/accreditation/view-payment-details/${APPLICATION_ID}`,
         headers: operatorHeaders
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('[Welsh] View invoice')
+      expect(result).toContain('[Welsh] View payment details')
     })
   })
 })
