@@ -1,5 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const BANK_DETAILS = {
   sortCode: '30 94 30',
@@ -22,7 +23,9 @@ export const viewInvoiceGetController = {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
 
-    const organisationId = request.yar.get('invoice.organisationId')
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
 
     let application
     try {
@@ -46,8 +49,6 @@ export const viewInvoiceGetController = {
     const materialDisplay = application.materialType
       ? t(`pages.materialSelection.materials.${application.materialType}`)
       : ''
-
-    request.yar.clear('invoice.organisationId')
 
     const submittedBy = application.submittedBy ?? {}
 

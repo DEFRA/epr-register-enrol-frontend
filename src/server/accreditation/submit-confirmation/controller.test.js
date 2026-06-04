@@ -142,11 +142,10 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('data-testid="return-home-link"')
     })
 
-    test('redirects to task list on second visit after session is cleared', async () => {
+    test('can be revisited — session is not cleared on render', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference()
 
-      // First visit — renders and clears session
       const firstResponse = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
@@ -155,20 +154,20 @@ describe('#submitConfirmationController', () => {
       expect(firstResponse.statusCode).toBe(statusCodes.ok)
 
       const updatedCookie = firstResponse.headers['set-cookie']
-      const clearedCookie = Array.isArray(updatedCookie)
+      const persistedCookie = Array.isArray(updatedCookie)
         ? updatedCookie[0].split(';')[0]
         : updatedCookie
           ? updatedCookie.split(';')[0]
           : cookie
 
-      // Second visit — session cleared, redirects
+      // Second visit — session still valid, page renders again
       const { statusCode } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: clearedCookie }
+        headers: { ...operatorHeaders, Cookie: persistedCookie }
       })
 
-      expect(statusCode).toBe(statusCodes.redirect)
+      expect(statusCode).toBe(statusCodes.ok)
     })
 
     test('renders confirmation without materialDisplay when API fallback fails', async () => {
