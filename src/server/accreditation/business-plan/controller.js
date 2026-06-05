@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
 
 export const BUSINESS_PLAN_FIELDS = [
   'newInfrastructurePercent',
@@ -113,10 +114,14 @@ function buildViewData(t, applicationId, payload, errors, isExporter = false) {
 }
 
 function payloadFromApplication(application) {
-  const bp = application.businessPlan ?? {}
   const payload = {}
   for (const field of BUSINESS_PLAN_FIELDS) {
-    payload[field] = bp[field] !== undefined ? String(bp[field]) : ''
+    const item = findBpItem(
+      application.businessPlan,
+      PERCENT_FIELD_TO_CATEGORY[field]
+    )
+    payload[field] =
+      item.percentSpent !== undefined ? String(item.percentSpent) : ''
   }
   return payload
 }
@@ -201,9 +206,11 @@ export const businessPlanPostController = {
       }).code(400)
     }
 
-    const patchBody = {}
-    for (const field of BUSINESS_PLAN_FIELDS) {
-      patchBody[field] = values[field] ?? null
+    const patchBody = {
+      items: BUSINESS_PLAN_FIELDS.map((field) => ({
+        category: PERCENT_FIELD_TO_CATEGORY[field],
+        percentSpent: values[field] ?? null
+      }))
     }
 
     try {

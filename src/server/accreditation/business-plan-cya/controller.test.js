@@ -268,7 +268,15 @@ describe('#businessPlanCyaController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
-        expect.objectContaining({ newInfrastructurePercent: 40 })
+        expect.objectContaining({
+          sectionStatus: 'Completed',
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              category: 'newInfrastructure',
+              percentSpent: 40
+            })
+          ])
+        })
       )
     })
 

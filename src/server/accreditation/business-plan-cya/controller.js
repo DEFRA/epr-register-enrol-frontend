@@ -1,6 +1,11 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import {
+  findBpItem,
+  PERCENT_FIELD_TO_CATEGORY,
+  DETAIL_FIELD_TO_CATEGORY
+} from '../business-plan/helpers.js'
 
 const PERCENT_FIELDS = [
   'newInfrastructurePercent',
@@ -21,15 +26,16 @@ const DETAIL_FIELDS = [
 ]
 
 export function buildSummaryRows(application, t, applicationId) {
-  const bp = application.businessPlan ?? {}
+  const bp = application.businessPlan
   const fromCYA = '?fromCYA=true'
   const percentUrl = `/accreditation/business-plan/${applicationId}${fromCYA}`
   const detailUrl = `/accreditation/business-plan-detail/${applicationId}${fromCYA}`
 
   const percentRows = PERCENT_FIELDS.map((field) => {
+    const item = findBpItem(bp, PERCENT_FIELD_TO_CATEGORY[field])
     const value =
-      bp[field] !== undefined
-        ? `${bp[field]}%`
+      item.percentSpent !== undefined
+        ? `${item.percentSpent}%`
         : t('pages.businessPlanCya.notProvided')
     const label = t(`pages.businessPlanCya.fields.${field}`)
     return {
@@ -45,7 +51,9 @@ export function buildSummaryRows(application, t, applicationId) {
   })
 
   const detailRows = DETAIL_FIELDS.map((field) => {
-    const value = bp[field] || t('pages.businessPlanCya.notProvided')
+    const item = findBpItem(bp, DETAIL_FIELD_TO_CATEGORY[field])
+    const value =
+      item.detailedDescription || t('pages.businessPlanCya.notProvided')
     const percentField = field.replace('Detail', 'Percent')
     const label = t(`pages.businessPlanCya.fields.${percentField}`)
     return {
@@ -148,14 +156,17 @@ export const businessPlanCyaPostController = {
       }).code(500)
     }
 
-    const bp = application.businessPlan ?? {}
-    const patchBody = { sectionStatus: 'Completed' }
-    for (const field of PERCENT_FIELDS) {
-      patchBody[field] = bp[field] ?? null
-    }
-    for (const field of DETAIL_FIELDS) {
-      patchBody[field] = bp[field] ?? ''
-    }
+    const bp = application.businessPlan
+    const items = PERCENT_FIELDS.map((field) => {
+      const category = PERCENT_FIELD_TO_CATEGORY[field]
+      const item = findBpItem(bp, category)
+      return {
+        category,
+        percentSpent: item.percentSpent ?? null,
+        detailedDescription: item.detailedDescription ?? ''
+      }
+    })
+    const patchBody = { sectionStatus: 'Completed', items }
 
     try {
       await accreditationApiService.patchBusinessPlan(

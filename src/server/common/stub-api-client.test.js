@@ -10,26 +10,26 @@ async function freshStub() {
 }
 
 describe('stubApiClient.post — seed', () => {
-  test('reprocessor seed (8-part URL) sets isExporter: false', async () => {
+  test('reprocessor seed (8-part URL) sets wasteProcessingType: reprocessor', async () => {
     const stub = await freshStub()
     const result = await stub.post(
       '/api/v1/accreditation-applications/100001/site001/Plastic/seed',
       { year: 2027 }
     )
-    expect(result.isExporter).toBe(false)
+    expect(result.wasteProcessingType).toBe('reprocessor')
     expect(result.applicationStatus).toBe('Saved')
-    expect(result.year).toBe(2027)
+    expect(result.yearlyMetrics.year).toBe('2027')
   })
 
-  test('exporter seed (7-part URL) sets isExporter: true', async () => {
+  test('exporter seed (7-part URL) sets wasteProcessingType: exporter', async () => {
     const stub = await freshStub()
     const result = await stub.post(
       '/api/v1/accreditation-applications/50005/Plastic/seed',
       { year: 2027 }
     )
-    expect(result.isExporter).toBe(true)
+    expect(result.wasteProcessingType).toBe('exporter')
     expect(result.applicationStatus).toBe('Saved')
-    expect(result.year).toBe(2027)
+    expect(result.yearlyMetrics.year).toBe('2027')
   })
 })
 

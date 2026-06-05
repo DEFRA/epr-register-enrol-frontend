@@ -23,61 +23,192 @@ async function call(fn) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Schema normalisation
+// ---------------------------------------------------------------------------
+
+const BP_CATEGORIES = [
+  {
+    category: 'newInfrastructure',
+    percent: 'newInfrastructurePercent',
+    detail: 'newInfrastructureDetail'
+  },
+  {
+    category: 'priceSupport',
+    percent: 'priceSupportPercent',
+    detail: 'priceSupportDetail'
+  },
+  {
+    category: 'businessCollections',
+    percent: 'businessCollectionsPercent',
+    detail: 'businessCollectionsDetail'
+  },
+  {
+    category: 'communications',
+    percent: 'communicationsPercent',
+    detail: 'communicationsDetail'
+  },
+  {
+    category: 'newMarkets',
+    percent: 'newMarketsPercent',
+    detail: 'newMarketsDetail'
+  },
+  {
+    category: 'newUses',
+    percent: 'newUsesPercent',
+    detail: 'newUsesDetail'
+  }
+]
+
+function normalizeBp(bp) {
+  if (!bp) return { sectionStatus: 'NotStarted', items: [] }
+  if (bp.items !== undefined) return bp
+  // Legacy flat format → convert to { sectionStatus, items }
+  const { sectionStatus = 'NotStarted' } = bp
+  const items = BP_CATEGORIES.map(({ category, percent, detail }) => ({
+    category,
+    percentSpent: bp[percent] ?? 0,
+    detailedDescription: bp[detail] ?? ''
+  }))
+  return { sectionStatus, items }
+}
+
+function normalizeApplication(item) {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return item
+  const sa = item.siteAddress
+  const siteAddress =
+    sa && typeof sa === 'object'
+      ? [sa.line1, sa.town, sa.postcode].filter(Boolean).join(', ')
+      : typeof sa === 'string'
+        ? sa
+        : null
+  return {
+    ...item,
+    // item.id = internal UUID used in URLs; item.applicationId = human-readable ref (new schema)
+    applicationId: item.id?.toString() ?? item.applicationId,
+    // new schema: item.applicationId holds the human-readable ref (APP2027...GL)
+    // legacy data: item.accreditationReference holds it
+    accreditationReference: item.id
+      ? (item.applicationId ?? null)
+      : (item.accreditationReference ?? null),
+    organisationId: item.orgId ?? item.organisationId,
+    organisationName: item.companyName ?? item.organisationName ?? '',
+    materialType: item.material
+      ? item.material.charAt(0).toUpperCase() + item.material.slice(1)
+      : (item.materialType ?? ''),
+    isExporter:
+      item.wasteProcessingType !== undefined
+        ? item.wasteProcessingType === 'exporter'
+        : (item.isExporter ?? false),
+    siteAddress,
+    siteId: item.siteId ?? null,
+    year: item.yearlyMetrics?.year
+      ? parseInt(item.yearlyMetrics.year, 10)
+      : typeof item.year === 'string'
+        ? parseInt(item.year, 10)
+        : (item.year ?? null),
+    dateSent: item.formSubmissionTime ?? item.dateSent ?? null,
+    applicationStatus: item.applicationStatus,
+    registrationReference:
+      item.wasteRegistrationNumber ?? item.registrationReference ?? null,
+    submittedBy: item.submitterContactDetails
+      ? {
+          name: item.submitterContactDetails.fullName ?? '',
+          email: item.submitterContactDetails.email ?? '',
+          jobTitle: item.submitterContactDetails.role ?? ''
+        }
+      : (item.submittedBy ?? null),
+    prns: item.prnIssuance
+      ? {
+          sectionStatus: item.prnIssuance.sectionStatus ?? 'NotStarted',
+          plannedTonnageBand: item.prnIssuance.plannedIssuance ?? null,
+          authorisers: item.prnIssuance.signatories ?? []
+        }
+      : item.prns,
+    businessPlan: normalizeBp(item.businessPlan),
+    samplingPlan: item.samplingPlan,
+    overseasSites: item.overseasSites,
+    besEvidence: item.besEvidence
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Service
+// ---------------------------------------------------------------------------
+
 export const accreditationApiService = {
   seedApplication(organisationId, siteId, materialType, year) {
-    return call(() =>
-      apiClient.post(
+    return call(async () => {
+      const r = await apiClient.post(
         `${BASE}/${organisationId}/${siteId}/${materialType}/seed`,
         { year }
       )
-    )
+      return normalizeApplication(r)
+    })
   },
 
   seedExporterApplication(organisationId, materialType, year) {
-    return call(() =>
-      apiClient.post(`${BASE}/${organisationId}/${materialType}/seed`, { year })
-    )
+    return call(async () => {
+      const r = await apiClient.post(
+        `${BASE}/${organisationId}/${materialType}/seed`,
+        { year }
+      )
+      return normalizeApplication(r)
+    })
   },
 
   listApplications(organisationId) {
-    return call(() => apiClient.get(`${BASE}/${organisationId}`))
+    return call(async () => {
+      const r = await apiClient.get(`${BASE}/${organisationId}`)
+      return Array.isArray(r) ? r.map(normalizeApplication) : r
+    })
   },
 
   getApplication(organisationId, applicationId) {
-    return call(() => apiClient.get(appBase(organisationId, applicationId)))
+    return call(async () => {
+      const r = await apiClient.get(appBase(organisationId, applicationId))
+      return normalizeApplication(r)
+    })
   },
 
   patchTonnage(organisationId, applicationId, body) {
-    return call(() =>
-      apiClient.patch(`${appBase(organisationId, applicationId)}/tonnage`, body)
-    )
+    return call(async () => {
+      const r = await apiClient.patch(
+        `${appBase(organisationId, applicationId)}/tonnage`,
+        body
+      )
+      return normalizeApplication(r)
+    })
   },
 
   patchBusinessPlan(organisationId, applicationId, body) {
-    return call(() =>
-      apiClient.patch(
+    return call(async () => {
+      const r = await apiClient.patch(
         `${appBase(organisationId, applicationId)}/business-plan`,
         body
       )
-    )
+      return normalizeApplication(r)
+    })
   },
 
   patchSamplingPlan(organisationId, applicationId, body) {
-    return call(() =>
-      apiClient.patch(
+    return call(async () => {
+      const r = await apiClient.patch(
         `${appBase(organisationId, applicationId)}/sampling-plan`,
         body
       )
-    )
+      return normalizeApplication(r)
+    })
   },
 
   patchOverseasSites(organisationId, applicationId, body) {
-    return call(() =>
-      apiClient.patch(
+    return call(async () => {
+      const r = await apiClient.patch(
         `${appBase(organisationId, applicationId)}/overseas-sites`,
         body
       )
-    )
+      return normalizeApplication(r)
+    })
   },
 
   addBesEvidenceFile(organisationId, applicationId, siteId, body) {
@@ -107,12 +238,13 @@ export const accreditationApiService = {
   },
 
   patchBesEvidenceSection(organisationId, applicationId, body) {
-    return call(() =>
-      apiClient.patch(
+    return call(async () => {
+      const r = await apiClient.patch(
         `${appBase(organisationId, applicationId)}/bes-evidence`,
         body
       )
-    )
+      return normalizeApplication(r)
+    })
   },
 
   submitApplication(organisationId, applicationId, body) {
