@@ -1,6 +1,10 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import {
+  findBpItem,
+  DETAIL_FIELD_TO_CATEGORY
+} from '../business-plan/helpers.js'
 
 export const DETAIL_FIELDS = [
   'newInfrastructureDetail',
@@ -73,10 +77,13 @@ function buildViewData(t, applicationId, payload, errors) {
 }
 
 function payloadFromApplication(application) {
-  const bp = application.businessPlan ?? {}
   const payload = {}
   for (const field of DETAIL_FIELDS) {
-    payload[field] = bp[field] ?? ''
+    const item = findBpItem(
+      application.businessPlan,
+      DETAIL_FIELD_TO_CATEGORY[field]
+    )
+    payload[field] = item.detailedDescription ?? ''
   }
   return payload
 }
@@ -131,9 +138,11 @@ export const businessPlanDetailPostController = {
       }).code(400)
     }
 
-    const patchBody = {}
-    for (const field of DETAIL_FIELDS) {
-      patchBody[field] = fieldPayload[field] ?? ''
+    const patchBody = {
+      items: DETAIL_FIELDS.map((field) => ({
+        category: DETAIL_FIELD_TO_CATEGORY[field],
+        detailedDescription: fieldPayload[field] ?? ''
+      }))
     }
 
     try {

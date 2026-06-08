@@ -121,7 +121,7 @@ export const persistentStubApiClient = {
       const orgId = parts[parts.length - 4]
       await ensureOrgInBackend(orgId)
       const stubResult = await stubApiClient.post(endpoint, body)
-      const appId = stubResult.applicationId
+      const appId = stubResult.id ?? stubResult.applicationId
       if (orgId && appId) {
         await tryBackendPut(orgId, appId, stubResult)
       }
