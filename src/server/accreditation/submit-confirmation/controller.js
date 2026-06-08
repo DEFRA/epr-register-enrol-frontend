@@ -39,20 +39,17 @@ export const submitConfirmationGetController = {
       ? t(`pages.materialSelection.materials.${materialType}`)
       : ''
 
-    Object.values(ACCREDITATION_SESSION_KEYS).forEach((key) =>
-      request.yar.clear(key)
-    )
-
     return h.view('accreditation/submit-confirmation/index', {
       pageTitle: t('pages.submitConfirmation.title'),
       panelHeading: t('pages.submitConfirmation.panelHeading'),
       panelBodyPrefix: t('pages.submitConfirmation.panelBodyPrefix'),
       panelBodySuffix: t('pages.submitConfirmation.panelBodySuffix'),
       paymentText: t('pages.submitConfirmation.paymentText'),
-      viewInvoice: t('pages.submitConfirmation.viewInvoice'),
+      viewInvoice: t('pages.submitConfirmation.viewPaymentDetails'),
       returnHome: t('pages.submitConfirmation.returnHome'),
       accreditationReference,
-      materialDisplay
+      materialDisplay,
+      applicationId
     })
   }
 }
