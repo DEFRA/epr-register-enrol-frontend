@@ -1,0 +1,115 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('pages.viewPaymentDetails.backLink') }}</a>
+
+      {% if error %}
+        <p class="govuk-body govuk-error-message" data-testid="load-error">{{ error }}</p>
+      {% else %}
+
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="govuk-notification-banner-title" data-module="govuk-notification-banner" data-testid="success-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
+              {{ t('pages.viewPaymentDetails.bannerTitle') }}
+            </h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading" data-testid="banner-heading">
+              {{ t('pages.viewPaymentDetails.bannerHeading') }}
+            </p>
+            <p class="govuk-body" data-testid="banner-email">
+              {{ t('pages.viewPaymentDetails.bannerEmailSent') }}
+              <a href="mailto:{{ submitterEmail }}" class="govuk-link">{{ submitterEmail }}</a>
+              {% if submitterName %}({{ submitterName }}){% endif %}.
+            </p>
+          </div>
+        </div>
+
+        <span class="govuk-caption-l" data-testid="site-name">{{ siteName }}</span>
+        <h1 class="govuk-heading-l" data-testid="page-heading">
+          {{ t('pages.viewPaymentDetails.paymentFor') }} {{ materialDisplay }} {{ t('pages.viewPaymentDetails.headingSuffix') }}
+        </h1>
+
+        <p class="govuk-body" data-testid="payment-instruction-prefix">
+          {{ t('pages.viewPaymentDetails.paymentInstructionPrefix') }}
+        </p>
+        <p class="govuk-body" data-testid="payment-instruction-suffix">
+          {{ t('pages.viewPaymentDetails.paymentInstructionSuffix') }}
+        </p>
+
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+        <h2 class="govuk-heading-m" data-testid="bank-transfer-heading">
+          {{ t('pages.viewPaymentDetails.payByBankTransfer') }}
+        </h2>
+
+        <p class="govuk-body">{{ t('pages.viewPaymentDetails.bankTransferInstruction') }}</p>
+
+        <details class="govuk-details" data-testid="how-long-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.howLongDoPaymentsTake') }}</span>
+          </summary>
+          <div class="govuk-details__text">
+            {{ t('pages.viewPaymentDetails.howLongDoPaymentsTakeBody') }}
+          </div>
+        </details>
+
+        <h3 class="govuk-heading-s" data-testid="bank-details-heading">
+          {{ t('pages.viewPaymentDetails.bankDetailsHeading') }}
+        </h3>
+
+        <dl class="govuk-summary-list" data-testid="bank-details-list">
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.amount') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-amount">{{ bankDetails.amount }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.sortCode') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-sort-code">{{ bankDetails.sortCode }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.accountNumber') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-account-number">{{ bankDetails.accountNumber }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.accountName') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-account-name">{{ bankDetails.accountName }}</dd>
+          </div>
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.paymentReference') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-payment-reference">{{ paymentReference }}</dd>
+          </div>
+        </dl>
+
+        <details class="govuk-details" data-testid="card-payments-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.cardPayments') }}</span>
+          </summary>
+          <div class="govuk-details__text">
+            {{ t('pages.viewPaymentDetails.cardPaymentsBody') }}
+          </div>
+        </details>
+
+        <details class="govuk-details" data-testid="overseas-payments-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.overseasPayments') }}</span>
+          </summary>
+          <div class="govuk-details__text">
+            {{ t('pages.viewPaymentDetails.overseasPaymentsBody') }}
+          </div>
+        </details>
+
+        <p class="govuk-body">
+          <a href="javascript:window.print()" class="govuk-link" data-testid="download-pdf-link">
+            {{ t('pages.viewPaymentDetails.downloadPdf') }}
+          </a>
+        </p>
+
+      {% endif %}
+
+    </div>
+  </div>
+{% endblock %}

@@ -14,7 +14,9 @@ function renderPage(h, viewData) {
   return h.view('accreditation/submit-declaration/index', viewData)
 }
 
-export function validateDeclaration(fullName, jobTitle, t) {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+export function validateDeclaration(fullName, jobTitle, email, t) {
   const errors = {}
   if (!fullName?.trim()) {
     errors.fullName = {
@@ -24,6 +26,15 @@ export function validateDeclaration(fullName, jobTitle, t) {
   if (!jobTitle?.trim()) {
     errors.jobTitle = {
       text: t('pages.submitDeclaration.validation.jobTitleRequired')
+    }
+  }
+  if (!email?.trim()) {
+    errors.email = {
+      text: t('pages.submitDeclaration.validation.emailRequired')
+    }
+  } else if (!EMAIL_REGEX.test(email.trim())) {
+    errors.email = {
+      text: t('pages.submitDeclaration.validation.emailInvalid')
     }
   }
   return errors
@@ -44,9 +55,11 @@ export const submitDeclarationGetController = {
       warningText: t('pages.submitDeclaration.warningText'),
       fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
       jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
+      emailLabel: t('pages.submitDeclaration.emailLabel'),
       backLink: taskListUrl(applicationId),
       fullName: saved.fullName ?? '',
-      jobTitle: saved.jobTitle ?? ''
+      jobTitle: saved.jobTitle ?? '',
+      email: saved.email ?? ''
     })
   }
 }
@@ -61,18 +74,20 @@ export const submitDeclarationPostController = {
     const {
       fullName,
       jobTitle,
+      email,
       submitAction = 'submit'
     } = request.payload ?? {}
 
     if (submitAction === 'saveAndComeLater') {
       request.yar.set(ACCREDITATION_SESSION_KEYS.declaration, {
         fullName: fullName ?? '',
-        jobTitle: jobTitle ?? ''
+        jobTitle: jobTitle ?? '',
+        email: email ?? ''
       })
       return h.redirect(taskListUrl(applicationId))
     }
 
-    const errors = validateDeclaration(fullName, jobTitle, t)
+    const errors = validateDeclaration(fullName, jobTitle, email, t)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
@@ -85,9 +100,11 @@ export const submitDeclarationPostController = {
         warningText: t('pages.submitDeclaration.warningText'),
         fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
         jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
+        emailLabel: t('pages.submitDeclaration.emailLabel'),
         backLink: taskListUrl(applicationId),
         fullName: fullName ?? '',
         jobTitle: jobTitle ?? '',
+        email: email ?? '',
         errors
       }).code(400)
     }
@@ -97,7 +114,11 @@ export const submitDeclarationPostController = {
       response = await accreditationApiService.submitApplication(
         organisationId,
         applicationId,
-        { fullName: fullName.trim(), jobTitle: jobTitle.trim() }
+        {
+          fullName: fullName.trim(),
+          jobTitle: jobTitle.trim(),
+          email: email.trim()
+        }
       )
     } catch (err) {
       request.server.logger.error(
@@ -121,9 +142,11 @@ export const submitDeclarationPostController = {
         warningText: t('pages.submitDeclaration.warningText'),
         fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
         jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
+        emailLabel: t('pages.submitDeclaration.emailLabel'),
         backLink: taskListUrl(applicationId),
         fullName: fullName ?? '',
         jobTitle: jobTitle ?? '',
+        email: email ?? '',
         error: t('pages.submitDeclaration.validation.submitError')
       }).code(400)
     }
