@@ -1,5 +1,5 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -35,14 +35,6 @@ function tonnageUrl(applicationId) {
 
 function tonnageCyaUrl(applicationId) {
   return `/accreditation/tonnage-cya/${applicationId}`
-}
-
-function patchUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/tonnage`
-}
-
-function appUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
 }
 
 function renderPage(h, viewData) {
@@ -85,7 +77,10 @@ export const tonnageAuthorityGetController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -123,7 +118,10 @@ export const tonnageAuthorityPostController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -226,9 +224,11 @@ export const tonnageAuthorityPostController = {
         { fullName: newFullName.trim(), email: trimmedEmail }
       ]
       try {
-        await apiClient.patch(patchUrl(organisationId, applicationId), {
-          authorisers: updatedAuthorisers
-        })
+        await accreditationApiService.patchTonnage(
+          organisationId,
+          applicationId,
+          { signatories: updatedAuthorisers }
+        )
       } catch (err) {
         request.server.logger.error(
           `Error adding authoriser for ${applicationId}: ${err.message}`
@@ -287,9 +287,13 @@ export const tonnageAuthorityPostController = {
     )
 
     try {
-      await apiClient.patch(patchUrl(organisationId, applicationId), {
-        authorisers: authorisersToSave
-      })
+      await accreditationApiService.patchTonnage(
+        organisationId,
+        applicationId,
+        {
+          signatories: authorisersToSave
+        }
+      )
     } catch (err) {
       request.server.logger.error(
         `Error saving authorisers for ${applicationId}: ${err.message}`

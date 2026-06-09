@@ -1,5 +1,5 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 const TONNAGE_LABEL_KEYS = {
@@ -29,14 +29,6 @@ function renderPage(h, viewData) {
   return h.view('accreditation/tonnage-cya/index', viewData)
 }
 
-function appUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
-}
-
-function patchUrl(organisationId, applicationId) {
-  return `/api/v1/accreditation-applications/${organisationId}/${applicationId}/tonnage`
-}
-
 function buildCyaLabels(isExporter, t) {
   return {
     tonnageRowLabel: isExporter
@@ -61,7 +53,10 @@ export const tonnageCyaGetController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -109,7 +104,10 @@ export const tonnageCyaPostController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -128,11 +126,15 @@ export const tonnageCyaPostController = {
     const fromCYA = '?fromCYA=true'
 
     try {
-      await apiClient.patch(patchUrl(organisationId, applicationId), {
-        plannedTonnageBand: tonnageBand,
-        authorisers,
-        sectionStatus: 'Completed'
-      })
+      await accreditationApiService.patchTonnage(
+        organisationId,
+        applicationId,
+        {
+          plannedIssuance: tonnageBand,
+          signatories: authorisers,
+          sectionStatus: 'Completed'
+        }
+      )
     } catch (err) {
       request.server.logger.error(
         `Error confirming tonnage section for ${applicationId}: ${err.message}`

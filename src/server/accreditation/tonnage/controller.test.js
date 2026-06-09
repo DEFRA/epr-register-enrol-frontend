@@ -305,7 +305,7 @@ describe('#tonnageController', () => {
       expect(getSpy).toHaveBeenCalledOnce()
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/tonnage`),
-        { plannedTonnageBand: 'UpTo1000' }
+        { plannedIssuance: 'UpTo1000' }
       )
     })
 

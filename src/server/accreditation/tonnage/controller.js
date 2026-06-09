@@ -135,7 +135,7 @@ export const tonnagePostController = {
         organisationId,
         applicationId,
         {
-          plannedTonnageBand
+          plannedIssuance: plannedTonnageBand
         }
       )
     } catch (error) {
