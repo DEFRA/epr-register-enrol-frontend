@@ -261,8 +261,8 @@ describe('#tonnageCyaController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining('/tonnage'),
         expect.objectContaining({
-          plannedTonnageBand: 'UpTo1000',
-          authorisers: expect.arrayContaining([
+          plannedIssuance: 'UpTo1000',
+          signatories: expect.arrayContaining([
             expect.objectContaining({ fullName: 'Jane Smith' })
           ])
         })

@@ -260,7 +260,7 @@ describe('#tonnageAuthorityController', () => {
       expect(apiClient.patch).toHaveBeenCalledWith(
         expect.stringContaining('/tonnage'),
         expect.objectContaining({
-          authorisers: expect.arrayContaining([
+          signatories: expect.arrayContaining([
             expect.objectContaining({
               fullName: 'Jane Smith',
               email: 'jane@example.com'
@@ -393,7 +393,7 @@ describe('#tonnageAuthorityController', () => {
       })
 
       const patchBody = patchSpy.mock.calls[0][1]
-      expect(patchBody.authorisers).toHaveLength(2)
+      expect(patchBody.signatories).toHaveLength(2)
     })
   })
 
@@ -450,8 +450,8 @@ describe('#tonnageAuthorityController', () => {
         `/accreditation/tonnage-cya/${APPLICATION_ID}`
       )
       const patchBody = patchSpy.mock.calls[0][1]
-      expect(patchBody.authorisers).toHaveLength(1)
-      expect(patchBody.authorisers[0].email).toBe('jane@example.com')
+      expect(patchBody.signatories).toHaveLength(1)
+      expect(patchBody.signatories[0].email).toBe('jane@example.com')
     })
   })
 
