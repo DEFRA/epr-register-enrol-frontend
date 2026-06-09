@@ -310,7 +310,8 @@ export const besEvidenceCdpStatusController = {
     if (uploadStatus?.uploadStatus !== 'ready') {
       return h.view('accreditation/upload-bes-evidence/status', {
         pageTitle: t('pages.uploadBesEvidence.status.title'),
-        heading: t('pages.uploadBesEvidence.status.heading')
+        heading: t('pages.uploadBesEvidence.status.heading'),
+        processingStatus: uploadStatus?.processingStatus ?? 'preprocessing'
       })
     }
 
@@ -325,7 +326,7 @@ export const besEvidenceCdpStatusController = {
     }
 
     const scanStatus =
-      fileInput?.fileStatus === 'complete' ? 'Clean' : 'Infected'
+      uploadStatus.processingStatus === 'validated' ? 'Clean' : 'Infected'
 
     try {
       await accreditationApiService.addBesEvidenceFile(

@@ -323,7 +323,8 @@ export const samplingPlanCdpStatusController = {
     if (uploadStatus?.uploadStatus !== 'ready') {
       return h.view('accreditation/sampling-plan-upload/status', {
         pageTitle: t('pages.samplingPlanUpload.status.title'),
-        heading: t('pages.samplingPlanUpload.status.heading')
+        heading: t('pages.samplingPlanUpload.status.heading'),
+        processingStatus: uploadStatus?.processingStatus ?? 'preprocessing'
       })
     }
 
@@ -336,7 +337,7 @@ export const samplingPlanCdpStatusController = {
     }
 
     const scanStatus =
-      fileInput?.fileStatus === 'complete' ? 'Clean' : 'Infected'
+      uploadStatus.processingStatus === 'validated' ? 'Clean' : 'Infected'
 
     try {
       await accreditationApiService.addFile(

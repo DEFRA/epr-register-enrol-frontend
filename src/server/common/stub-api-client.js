@@ -546,10 +546,14 @@ export const stubApiClient = {
       const fileUploadId = statusMatch[1]
       const fileData = stubPendingUploads.get(fileUploadId)
       if (!fileData) {
-        return Promise.resolve({ uploadStatus: 'pending' })
+        return Promise.resolve({
+          uploadStatus: 'pending',
+          processingStatus: 'preprocessing'
+        })
       }
       return Promise.resolve({
         uploadStatus: 'ready',
+        processingStatus: 'validated',
         form: {
           file: {
             filename: fileData.filename ?? 'unknown',
