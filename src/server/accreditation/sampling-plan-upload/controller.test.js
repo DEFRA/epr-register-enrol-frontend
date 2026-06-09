@@ -175,10 +175,11 @@ describe('#samplingPlanUploadController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(initUpload).mockResolvedValue({
-      uploadId: 'stub-test-id',
+      fileUploadId: 'stub-test-id',
       uploadUrl: 'http://stub/upload/stub-test-id',
       statusUrl: 'http://stub/status/stub-test-id'
     })
+    global.fetch = vi.fn().mockResolvedValue({ ok: true })
   })
 
   const operatorHeaders = {

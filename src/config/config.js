@@ -321,12 +321,6 @@ export const config = convict({
     }
   },
   fileUpload: {
-    cdpUploaderUrl: {
-      doc: 'Base URL for the CDP uploader service',
-      format: String,
-      default: 'http://localhost:7337',
-      env: 'CDP_UPLOADER_URL'
-    },
     s3Bucket: {
       doc: 'S3 bucket name for file uploads',
       format: String,
@@ -338,12 +332,6 @@ export const config = convict({
       format: String,
       default: 'http://localhost:4566',
       env: 'FILE_UPLOAD_S3_ENDPOINT'
-    },
-    uploaderStubEnabled: {
-      doc: 'Use stub CDP uploader instead of real CDP service (for local dev)',
-      format: Boolean,
-      default: true,
-      env: 'CDP_UPLOADER_STUB_ENABLED'
     }
   }
 })
