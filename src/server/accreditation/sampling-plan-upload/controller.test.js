@@ -175,10 +175,11 @@ describe('#samplingPlanUploadController', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(initUpload).mockResolvedValue({
-      uploadId: 'stub-test-id',
+      fileUploadId: 'stub-test-id',
       uploadUrl: 'http://stub/upload/stub-test-id',
       statusUrl: 'http://stub/status/stub-test-id'
     })
+    global.fetch = vi.fn().mockResolvedValue({ ok: true })
   })
 
   const operatorHeaders = {
@@ -652,6 +653,117 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+    })
+  })
+
+  describe('GET /accreditation/sampling-plan/{applicationId}/status', () => {
+    const boundary = 'test-boundary-status'
+    const multipartContentType = `multipart/form-data; boundary=${boundary}`
+
+    function buildFilePayload() {
+      const CRLF = '\r\n'
+      return Buffer.concat([
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="action"${CRLF}${CRLF}uploadFile${CRLF}`
+        ),
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="file"; filename="plan.pdf"${CRLF}` +
+            `Content-Type: application/pdf${CRLF}${CRLF}`
+        ),
+        Buffer.from('file-content'),
+        Buffer.from(`${CRLF}--${boundary}--${CRLF}`)
+      ])
+    }
+
+    async function getStatusCookie() {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildFilePayload()
+      })
+      const raw = postResponse.headers['set-cookie']
+      return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+    }
+
+    test('returns polling view when upload is preprocessing', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'pending',
+        processingStatus: 'preprocessing'
+      })
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="status-message"')
+    })
+
+    test('saves Clean scanStatus and redirects when processingStatus is validated', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: {
+          file: {
+            filename: 'plan.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-validated',
+            fileStatus: 'complete'
+          }
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}`
+      )
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ scanStatus: 'Clean' })
+      )
+    })
+
+    test('saves Infected scanStatus when processingStatus is rejected', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'rejected',
+        form: {
+          file: {
+            filename: 'virus.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-rejected',
+            fileStatus: 'rejected'
+          }
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ scanStatus: 'Infected' })
+      )
     })
   })
 })

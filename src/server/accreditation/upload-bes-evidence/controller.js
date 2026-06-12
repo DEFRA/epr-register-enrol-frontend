@@ -2,7 +2,6 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
-import { stubSetFile } from '../../common/helpers/upload/stub-uploader.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
@@ -243,8 +242,8 @@ export const uploadBesEvidencePostController = {
     let uploadDetail
     try {
       uploadDetail = await initUpload({
-        redirect: `${config.get('auth.callbackBaseUrl')}/accreditation/upload-bes-evidence/${applicationId}/${siteId}/status`,
-        s3Bucket: config.get('fileUpload.s3Bucket'),
+        initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/initiate`,
+        redirectUrl: `${config.get('auth.callbackBaseUrl')}/accreditation/upload-bes-evidence/${applicationId}/${siteId}/status`,
         s3Path: `accreditation/bes-evidence/${applicationId}/${siteId}`,
         metadata: { besEvidenceValidFromDate, besEvidenceExpiryDate },
         mimeTypes: ALLOWED_MIME_TYPES,
@@ -262,33 +261,29 @@ export const uploadBesEvidencePostController = {
       ).code(500)
     }
 
-    if (config.get('fileUpload.uploaderStubEnabled')) {
-      stubSetFile(uploadDetail.uploadId, { filename, contentType })
-    } else {
-      try {
-        const proxyResponse = await fetch(uploadDetail.uploadUrl, {
-          method: 'POST',
-          body: uploadedFile,
-          duplex: 'half',
-          headers: {
-            'x-filename': filename,
-            'Content-Type': contentType
-          }
-        })
-        if (!proxyResponse.ok) {
-          throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
+    try {
+      const proxyResponse = await fetch(uploadDetail.uploadUrl, {
+        method: 'POST',
+        body: uploadedFile,
+        duplex: 'half',
+        headers: {
+          'x-filename': filename,
+          'Content-Type': contentType
         }
-      } catch (err) {
-        request.server.logger.error(
-          `Error proxying BES evidence file for site ${siteId} on ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          buildViewData(t, applicationId, siteId, siteName, payload, {
-            fileError: t('pages.uploadBesEvidence.validation.uploadError')
-          })
-        ).code(500)
+      })
+      if (!proxyResponse.ok) {
+        throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
       }
+    } catch (err) {
+      request.server.logger.error(
+        `Error proxying BES evidence file for site ${siteId} on ${applicationId}: ${err.message}`
+      )
+      return renderPage(
+        h,
+        buildViewData(t, applicationId, siteId, siteName, payload, {
+          fileError: t('pages.uploadBesEvidence.validation.uploadError')
+        })
+      ).code(500)
     }
 
     request.yar.set(BES_EVIDENCE_UPLOAD_SESSION_KEY, {
@@ -315,7 +310,8 @@ export const besEvidenceCdpStatusController = {
     if (uploadStatus?.uploadStatus !== 'ready') {
       return h.view('accreditation/upload-bes-evidence/status', {
         pageTitle: t('pages.uploadBesEvidence.status.title'),
-        heading: t('pages.uploadBesEvidence.status.heading')
+        heading: t('pages.uploadBesEvidence.status.heading'),
+        processingStatus: uploadStatus?.processingStatus ?? 'preprocessing'
       })
     }
 
@@ -330,7 +326,7 @@ export const besEvidenceCdpStatusController = {
     }
 
     const scanStatus =
-      fileInput?.fileStatus === 'complete' ? 'Clean' : 'Infected'
+      uploadStatus.processingStatus === 'validated' ? 'Clean' : 'Infected'
 
     try {
       await accreditationApiService.addBesEvidenceFile(

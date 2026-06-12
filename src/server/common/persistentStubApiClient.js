@@ -57,6 +57,21 @@ function parseAppSegment(endpoint) {
 
 export const persistentStubApiClient = {
   async get(endpoint) {
+    // CDP upload status — try real backend first, fall back to in-memory stub
+    if (/\/files\/[^/]+\/status$/.test(endpoint)) {
+      try {
+        const res = await fetch(`${backendUrl()}${endpoint}`, {
+          signal: AbortSignal.timeout(TIMEOUT_MS)
+        })
+        if (res.ok) return res.json()
+      } catch (err) {
+        console.warn(
+          `[persistentStubApiClient] backend GET ${endpoint} failed: ${err.message}`
+        )
+      }
+      return stubApiClient.get(endpoint)
+    }
+
     if (endpoint === '/organisation') {
       try {
         const res = await fetch(`${backendUrl()}/organisation`, {
@@ -116,6 +131,23 @@ export const persistentStubApiClient = {
   },
 
   async post(endpoint, body) {
+    if (/\/files\/initiate$/.test(endpoint)) {
+      try {
+        const res = await fetch(`${backendUrl()}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(TIMEOUT_MS)
+        })
+        if (res.ok) return res.json()
+      } catch (err) {
+        console.warn(
+          `[persistentStubApiClient] backend POST ${endpoint} failed: ${err.message}`
+        )
+      }
+      return stubApiClient.post(endpoint, body)
+    }
+
     if (/\/seed$/.test(endpoint)) {
       const parts = endpoint.split('/')
       const orgId = parts[parts.length - 4]

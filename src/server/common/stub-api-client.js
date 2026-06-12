@@ -531,8 +531,40 @@ function mergeBpItems(existing, incoming) {
   return merged
 }
 
+// In-memory store for stub CDP upload sessions (fileUploadId → scan result)
+const stubPendingUploads = new Map()
+
+export function stubCompleteUpload(fileUploadId, fileData) {
+  stubPendingUploads.set(fileUploadId, fileData)
+}
+
 export const stubApiClient = {
   get(endpoint) {
+    // CDP upload status — returns ready once stubCompleteUpload has been called
+    const statusMatch = endpoint.match(/\/files\/([^/]+)\/status$/)
+    if (statusMatch) {
+      const fileUploadId = statusMatch[1]
+      const fileData = stubPendingUploads.get(fileUploadId)
+      if (!fileData) {
+        return Promise.resolve({
+          uploadStatus: 'pending',
+          processingStatus: 'preprocessing'
+        })
+      }
+      return Promise.resolve({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: {
+          file: {
+            filename: fileData.filename ?? 'unknown',
+            contentType: fileData.contentType ?? 'application/octet-stream',
+            fileStatus: 'complete',
+            fileId: `stub-file-${fileUploadId}`
+          }
+        }
+      })
+    }
+
     if (endpoint === '/organisation') {
       return Promise.resolve(STUB_ORGANISATIONS)
     }
@@ -560,6 +592,21 @@ export const stubApiClient = {
   },
 
   post(endpoint, body) {
+    // CDP upload initiation — returns stub uploadUrl/statusUrl for local dev
+    if (/\/files\/initiate$/.test(endpoint)) {
+      const fileUploadId = `stub-upload-${Date.now()}`
+      // Derive a status path from the endpoint (swap /initiate for /status)
+      const statusPath = endpoint.replace(
+        /\/files\/initiate$/,
+        `/files/${fileUploadId}/status`
+      )
+      return Promise.resolve({
+        fileUploadId,
+        uploadUrl: `http://localhost:3000/api/stub/upload/${fileUploadId}`,
+        statusUrl: `http://localhost:3000${statusPath}`
+      })
+    }
+
     if (/\/seed$/.test(endpoint)) {
       const parts = endpoint.split('/')
       const isExporterSeed = parts.length === 7
