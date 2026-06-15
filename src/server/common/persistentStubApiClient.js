@@ -132,19 +132,6 @@ export const persistentStubApiClient = {
 
   async post(endpoint, body) {
     if (/\/files\/initiate$/.test(endpoint)) {
-      try {
-        const res = await fetch(`${backendUrl()}${endpoint}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal: AbortSignal.timeout(TIMEOUT_MS)
-        })
-        if (res.ok) return res.json()
-      } catch (err) {
-        console.warn(
-          `[persistentStubApiClient] backend POST ${endpoint} failed: ${err.message}`
-        )
-      }
       return stubApiClient.post(endpoint, body)
     }
 
