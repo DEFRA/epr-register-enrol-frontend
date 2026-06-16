@@ -14,7 +14,7 @@ import { apiClient } from '../common/api-client.js'
 import { buildLandingViewModel } from './controller.js'
 
 const ORG_ID = 'org-123'
-const SITE_ID = 'site001'
+const REGISTRATION_ID = 'REG001'
 const MATERIAL = 'Steel'
 const YEAR = 2026
 
@@ -22,7 +22,7 @@ const makeApp = (overrides = {}) => ({
   applicationId: 'app-id-001',
   applicationStatus: 'Saved',
   materialType: MATERIAL,
-  siteId: SITE_ID,
+  registrationId: REGISTRATION_ID,
   year: YEAR,
   ...overrides
 })
@@ -179,7 +179,7 @@ describe('#operatorAccreditationController', () => {
     'x-test-user-type': 'operator'
   }
 
-  const baseUrl = `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`
+  const baseUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
 
   test('returns 200 when existing application found for site/material/year', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
@@ -212,7 +212,7 @@ describe('#operatorAccreditationController', () => {
 
   test('calls seedApplication when no matching application found for site/material/year', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ siteId: 'other-site' })
+      makeApp({ registrationId: 'other-ref' })
     ])
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())
 
@@ -223,7 +223,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(postSpy).toHaveBeenCalledWith(
-      expect.stringContaining(`/${SITE_ID}/${MATERIAL}/seed`),
+      expect.stringContaining(`/${REGISTRATION_ID}/${MATERIAL}/seed`),
       expect.objectContaining({ year: YEAR })
     )
   })
@@ -379,7 +379,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/2026`,
+      url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2026`,
       headers: operatorHeaders
     })
 
@@ -392,7 +392,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: `/cy/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`,
+      url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
       headers: operatorHeaders
     })
 
@@ -507,7 +507,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`,
+        url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
         headers: operatorHeaders
       })
 

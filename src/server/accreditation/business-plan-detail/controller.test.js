@@ -33,7 +33,7 @@ function makeApplication(overrides = {}) {
     organisationId: 'test-operator-id',
     materialType: 'Steel',
     year: 2025,
-    siteId: 'site-001',
+    registrationId: 'REG001',
     prns: { sectionStatus: 'Completed' },
     businessPlan: {
       newInfrastructurePercent: 20,

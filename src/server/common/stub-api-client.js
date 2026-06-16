@@ -26,7 +26,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'NotStarted',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
-        siteId: 'site001',
+        registrationId: 'REG001',
         siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
         wasteRegistrationNumber: 'R26ER5000390068PL',
         yearlyMetrics: { year: '2027' },
@@ -55,7 +55,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
-        siteId: 'site002',
+        registrationId: 'REG002',
         siteAddress: {
           line1: 'Site Lane 002',
           town: 'Siteville',
@@ -85,7 +85,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
-        siteId: 'site003',
+        registrationId: 'REG003',
         siteAddress: {
           line1: 'The Laundry',
           town: 'Siteville',

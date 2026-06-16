@@ -101,7 +101,7 @@ function normalizeApplication(item) {
         ? item.wasteProcessingType === 'exporter'
         : (item.isExporter ?? false),
     siteAddress,
-    siteId: item.siteId ?? null,
+    registrationId: item.registrationId ?? null,
     year: item.yearlyMetrics?.year
       ? parseInt(item.yearlyMetrics.year, 10)
       : typeof item.year === 'string'
@@ -110,7 +110,7 @@ function normalizeApplication(item) {
     dateSent: item.formSubmissionTime ?? item.dateSent ?? null,
     applicationStatus: item.applicationStatus,
     registrationReference:
-      item.wasteRegistrationNumber ?? item.registrationReference ?? null,
+      item.registrationId ?? item.wasteRegistrationNumber ?? null,
     submittedBy: item.submitterContactDetails
       ? {
           name: item.submitterContactDetails.fullName ?? '',
@@ -137,10 +137,10 @@ function normalizeApplication(item) {
 // ---------------------------------------------------------------------------
 
 export const accreditationApiService = {
-  seedApplication(organisationId, siteId, materialType, year) {
+  seedApplication(organisationId, registrationId, materialType, year) {
     return call(async () => {
       const r = await apiClient.post(
-        `${BASE}/${organisationId}/${siteId}/${materialType}/seed`,
+        `${BASE}/${organisationId}/${registrationId}/${materialType}/seed`,
         { year }
       )
       return normalizeApplication(r)

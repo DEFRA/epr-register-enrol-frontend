@@ -26,8 +26,8 @@ export function buildLandingViewModel(
   return {
     organisationName,
     accreditationYear,
-    registrationReference:
-      application.registrationReference ?? application.applicationReference,
+    registrationId:
+      application.registrationId ?? application.applicationReference,
     siteName: siteAddress ?? t('pages.taskList.siteNotSet'),
     materialDisplay: t(
       `pages.operatorAccreditation.materials.${application.materialType}`
@@ -44,7 +44,8 @@ export const operatorAccreditationController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
-    const { organisationId, siteId, materialType, year } = request.params
+    const { organisationId, registrationId, materialType, year } =
+      request.params
     const yearInt = parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = '/operator/'
@@ -73,7 +74,7 @@ export const operatorAccreditationController = {
 
     let application = applications.find(
       (app) =>
-        app.siteId === siteId &&
+        app.registrationId === registrationId &&
         app.materialType === materialType &&
         app.year === yearInt
     )
@@ -82,7 +83,7 @@ export const operatorAccreditationController = {
       try {
         application = await accreditationApiService.seedApplication(
           organisationId,
-          siteId,
+          registrationId,
           materialType,
           yearInt
         )
@@ -103,7 +104,7 @@ export const operatorAccreditationController = {
     )
     request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
     request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
-    request.yar.set(ACCREDITATION_SESSION_KEYS.siteId, siteId)
+    request.yar.set(ACCREDITATION_SESSION_KEYS.registrationId, registrationId)
     request.yar.set(ACCREDITATION_SESSION_KEYS.year, yearInt)
 
     const viewModel = buildLandingViewModel(
