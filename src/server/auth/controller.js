@@ -160,16 +160,17 @@ export async function operatorCallbackController(request, h) {
 // --- Logout ---
 
 export async function logoutController(request, h) {
-  const stubEnabled = config.get('auth.stubEnabled')
   const user = request.yar.get('user')
+  const idToken = request.yar.get('idToken')
 
-  // If stub auth or no operator session, just clear and redirect to login.
-  if (stubEnabled || user?.userType !== 'operator') {
+  // Only do federated logout when we have an id_token — that means the user
+  // authenticated via real Defra ID (stub users never get one).
+  if (!idToken || user?.userType !== 'operator') {
     request.yar.clear('user')
+    request.yar.clear('idToken')
     return h.redirect('/auth/operator/login')
   }
 
-  const idToken = request.yar.get('idToken')
   const provider = getDefraIdConfig(config)
   const { endSessionUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
 
@@ -182,9 +183,7 @@ export async function logoutController(request, h) {
   const params = new URLSearchParams({
     post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout`
   })
-  if (idToken) {
-    params.set('id_token_hint', idToken)
-  }
+  params.set('id_token_hint', idToken)
 
   return h.redirect(`${endSessionUrl}?${params}`)
 }
