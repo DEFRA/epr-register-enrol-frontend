@@ -288,9 +288,16 @@ export const config = convict({
         sensitive: true
       },
       discoveryUrl: {
+        doc: 'Full OIDC metadata URL for Defra ID — used to discover authorization_endpoint and token_endpoint',
         format: String,
         default: '',
         env: 'DEFRA_ID_DISCOVERY_URL'
+      },
+      serviceId: {
+        doc: 'Defra ID service ID provided during onboarding',
+        format: String,
+        default: '',
+        env: 'DEFRA_ID_SERVICE_ID'
       }
     },
     callbackBaseUrl: {
