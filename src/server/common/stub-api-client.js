@@ -193,6 +193,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'steel',
         wasteProcessingType: 'exporter',
+        registrationId: 'REG004',
         siteId: null,
         siteAddress: null,
         wasteRegistrationNumber: null,
@@ -300,6 +301,7 @@ const STUB_ORG_DOCS = [
         siteId: null,
         siteAddress: null,
         wasteRegistrationNumber: 'R26ER5000390068PL',
+        registrationId: 'REG005',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
         submitterContactDetails: null,
@@ -356,6 +358,7 @@ const STUB_ORG_DOCS = [
         siteId: null,
         siteAddress: null,
         wasteRegistrationNumber: null,
+        registrationId: 'REG006',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
         submitterContactDetails: null,
@@ -452,7 +455,7 @@ export const STUB_ORG_MODELS = {
     companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
     registrations: [
       {
-        siteId: 'site001',
+        registrationId: 'REG001',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
         siteAddress: {
@@ -471,7 +474,7 @@ export const STUB_ORG_MODELS = {
     companyDetails: { name: 'Delta Green Recycling Co' },
     registrations: [
       {
-        siteId: 'site002',
+        registrationId: 'REG002',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
         siteAddress: {
