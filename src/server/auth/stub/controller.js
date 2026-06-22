@@ -1,3 +1,5 @@
+import { config } from '../../../config/config.js'
+
 export const STUB_USERS = {
   regulator: [
     {
@@ -27,7 +29,14 @@ export function stubLoginGetController(request, h) {
     return h.redirect('/auth/stub/login?type=regulator')
   }
 
-  return h.view('auth/stub/login', { type, users })
+  const defraIdConfigured =
+    type === 'operator' &&
+    !!(
+      config.get('auth.defraId.discoveryUrl') &&
+      config.get('auth.defraId.clientId')
+    )
+
+  return h.view('auth/stub/login', { type, users, defraIdConfigured })
 }
 
 export async function stubLoginPostController(request, h) {

@@ -58,17 +58,18 @@ The operator flow is identical, using Defra ID endpoints instead.
 
 ## Environment variables
 
-| Variable                 | Description                                                                                                 | Default                 |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `ENVIRONMENT`            | Deployment environment (`local`, `dev`, `test`, `perf-test`, `ext-test`, `infra-dev`, `management`, `prod`) | `local`                 |
-| `AUTH_STUB_ENABLED`      | Enable stub auth. Defaults `true` when `ENVIRONMENT != prod`                                                | `true`                  |
-| `AUTH_CALLBACK_BASE_URL` | Base URL used to construct OAuth callback redirect URIs                                                     | `http://localhost:3000` |
-| `AZURE_CLIENT_ID`        | Azure Entra ID client ID                                                                                    | _(empty)_               |
-| `AZURE_CLIENT_SECRET`    | Azure Entra ID client secret                                                                                | _(empty)_               |
-| `AZURE_TENANT_ID`        | Azure Entra ID tenant ID                                                                                    | _(empty)_               |
-| `DEFRA_ID_CLIENT_ID`     | Defra ID client ID                                                                                          | _(empty)_               |
-| `DEFRA_ID_CLIENT_SECRET` | Defra ID client secret                                                                                      | _(empty)_               |
-| `DEFRA_ID_DISCOVERY_URL` | Defra ID OIDC base URL (authorize/token/userinfo paths appended)                                            | _(empty)_               |
+| Variable                 | Description                                                                                                                                                                                                                                                           | Default                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `ENVIRONMENT`            | Deployment environment (`local`, `dev`, `test`, `perf-test`, `ext-test`, `infra-dev`, `management`, `prod`)                                                                                                                                                           | `local`                 |
+| `AUTH_STUB_ENABLED`      | Enable stub auth. Defaults `true` when `ENVIRONMENT != prod`                                                                                                                                                                                                          | `true`                  |
+| `AUTH_CALLBACK_BASE_URL` | Base URL used to construct OAuth callback redirect URIs                                                                                                                                                                                                               | `http://localhost:3000` |
+| `AZURE_CLIENT_ID`        | Azure Entra ID client ID                                                                                                                                                                                                                                              | _(empty)_               |
+| `AZURE_CLIENT_SECRET`    | Azure Entra ID client secret                                                                                                                                                                                                                                          | _(empty)_               |
+| `AZURE_TENANT_ID`        | Azure Entra ID tenant ID                                                                                                                                                                                                                                              | _(empty)_               |
+| `DEFRA_ID_CLIENT_ID`     | Defra ID application (client) ID                                                                                                                                                                                                                                      | _(empty)_               |
+| `DEFRA_ID_CLIENT_SECRET` | Defra ID client secret                                                                                                                                                                                                                                                | _(empty)_               |
+| `DEFRA_ID_SERVICE_ID`    | Defra ID service ID provided during onboarding                                                                                                                                                                                                                        | _(empty)_               |
+| `DEFRA_ID_DISCOVERY_URL` | Full OIDC metadata URL for Defra ID. The app fetches this on first use to discover `authorization_endpoint` and `token_endpoint`. e.g. CPDEV: `https://your-account.cpdev.cui.defra.gov.uk/idphub/b2c/b2c_1a_cui_cpdev_signupsignin/.well-known/openid-configuration` | _(empty)_               |
 
 ---
 

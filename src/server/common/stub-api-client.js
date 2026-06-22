@@ -26,7 +26,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'NotStarted',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
-        siteId: 'site001',
+        registrationId: 'REG001',
         siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
         wasteRegistrationNumber: 'R26ER5000390068PL',
         yearlyMetrics: { year: '2027' },
@@ -55,7 +55,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
-        siteId: 'site002',
+        registrationId: 'REG002',
         siteAddress: {
           line1: 'Site Lane 002',
           town: 'Siteville',
@@ -85,7 +85,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
-        siteId: 'site003',
+        registrationId: 'REG003',
         siteAddress: {
           line1: 'The Laundry',
           town: 'Siteville',
@@ -193,6 +193,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'steel',
         wasteProcessingType: 'exporter',
+        registrationId: 'REG004',
         siteId: null,
         siteAddress: null,
         wasteRegistrationNumber: null,
@@ -300,6 +301,7 @@ const STUB_ORG_DOCS = [
         siteId: null,
         siteAddress: null,
         wasteRegistrationNumber: 'R26ER5000390068PL',
+        registrationId: 'REG005',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
         submitterContactDetails: null,
@@ -356,6 +358,7 @@ const STUB_ORG_DOCS = [
         siteId: null,
         siteAddress: null,
         wasteRegistrationNumber: null,
+        registrationId: 'REG006',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
         submitterContactDetails: null,
@@ -452,7 +455,7 @@ export const STUB_ORG_MODELS = {
     companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
     registrations: [
       {
-        siteId: 'site001',
+        registrationId: 'REG001',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
         siteAddress: {
@@ -471,7 +474,7 @@ export const STUB_ORG_MODELS = {
     companyDetails: { name: 'Delta Green Recycling Co' },
     registrations: [
       {
-        siteId: 'site002',
+        registrationId: 'REG002',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
         siteAddress: {
@@ -531,8 +534,40 @@ function mergeBpItems(existing, incoming) {
   return merged
 }
 
+// In-memory store for stub CDP upload sessions (fileUploadId → scan result)
+const stubPendingUploads = new Map()
+
+export function stubCompleteUpload(fileUploadId, fileData) {
+  stubPendingUploads.set(fileUploadId, fileData)
+}
+
 export const stubApiClient = {
   get(endpoint) {
+    // CDP upload status — returns ready once stubCompleteUpload has been called
+    const statusMatch = endpoint.match(/\/files\/([^/]+)\/status$/)
+    if (statusMatch) {
+      const fileUploadId = statusMatch[1]
+      const fileData = stubPendingUploads.get(fileUploadId)
+      if (!fileData) {
+        return Promise.resolve({
+          uploadStatus: 'pending',
+          processingStatus: 'preprocessing'
+        })
+      }
+      return Promise.resolve({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: {
+          file: {
+            filename: fileData.filename ?? 'unknown',
+            contentType: fileData.contentType ?? 'application/octet-stream',
+            fileStatus: 'complete',
+            fileId: `stub-file-${fileUploadId}`
+          }
+        }
+      })
+    }
+
     if (endpoint === '/organisation') {
       return Promise.resolve(STUB_ORGANISATIONS)
     }
@@ -560,6 +595,21 @@ export const stubApiClient = {
   },
 
   post(endpoint, body) {
+    // CDP upload initiation — returns stub uploadUrl/statusUrl for local dev
+    if (/\/files\/initiate$/.test(endpoint)) {
+      const fileUploadId = `stub-upload-${Date.now()}`
+      // Derive a status path from the endpoint (swap /initiate for /status)
+      const statusPath = endpoint.replace(
+        /\/files\/initiate$/,
+        `/files/${fileUploadId}/status`
+      )
+      return Promise.resolve({
+        fileUploadId,
+        uploadUrl: `http://localhost:3000/api/stub/upload/${fileUploadId}`,
+        statusUrl: `http://localhost:3000${statusPath}`
+      })
+    }
+
     if (/\/seed$/.test(endpoint)) {
       const parts = endpoint.split('/')
       const isExporterSeed = parts.length === 7

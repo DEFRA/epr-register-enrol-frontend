@@ -1,64 +1,77 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
-import { config } from '../../../../config/config.js'
+import { apiClient } from '../../api-client.js'
+
+vi.mock('../../api-client.js', () => ({
+  apiClient: { post: vi.fn() }
+}))
 
 describe('#initUpload', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.restoreAllMocks()
   })
 
-  test('calls CDP uploader /initiate and returns parsed JSON on success', async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'fileUpload.uploaderStubEnabled') return false
-      if (key === 'fileUpload.cdpUploaderUrl') return 'http://uploader'
-      return originalGet(key)
-    })
-
+  test('calls apiClient.post with initiateUrl and body fields', async () => {
     const mockResponse = {
-      uploadUrl: 'http://uploader/upload/abc',
-      uploadId: 'abc',
-      statusUrl: 'http://uploader/status/abc'
+      fileUploadId: 'abc-123',
+      uploadUrl: 'http://backend/upload/abc-123',
+      statusUrl: 'http://backend/status/abc-123'
     }
-
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => mockResponse
-    })
+    vi.mocked(apiClient.post).mockResolvedValue(mockResponse)
 
     const { initUpload } = await import('./init-upload.js')
     const result = await initUpload({
-      redirect: '/file-upload/upload-status',
-      s3Bucket: 'test-bucket',
-      s3Path: 'file-uploads/Steel/2025',
-      maxFileSize: 1024 * 1024 * 100,
+      initiateUrl:
+        '/api/v1/accreditation-applications/org1/app1/files/initiate',
+      redirectUrl: '/accreditation/sampling-plan/app1/status',
+      s3Path: 'accreditation/sampling-plan/app1',
+      maxFileSize: 1024 * 1024 * 20,
       mimeTypes: ['application/pdf']
     })
 
     expect(result).toEqual(mockResponse)
-    expect(global.fetch).toHaveBeenCalledWith(
-      'http://uploader/initiate',
-      expect.objectContaining({ method: 'POST' })
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/v1/accreditation-applications/org1/app1/files/initiate',
+      {
+        redirectUrl: '/accreditation/sampling-plan/app1/status',
+        s3Path: 'accreditation/sampling-plan/app1',
+        maxFileSize: 1024 * 1024 * 20,
+        mimeTypes: ['application/pdf'],
+        metadata: undefined
+      }
     )
   })
 
-  test('throws when CDP uploader returns non-OK response', async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'fileUpload.uploaderStubEnabled') return false
-      if (key === 'fileUpload.cdpUploaderUrl') return 'http://uploader'
-      return originalGet(key)
+  test('passes metadata when provided', async () => {
+    vi.mocked(apiClient.post).mockResolvedValue({})
+
+    const { initUpload } = await import('./init-upload.js')
+    await initUpload({
+      initiateUrl: '/api/v1/file-uploads/initiate',
+      metadata: { siteId: '900001' }
     })
 
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error'
-    })
+    expect(apiClient.post).toHaveBeenCalledWith(
+      '/api/v1/file-uploads/initiate',
+      expect.objectContaining({ metadata: { siteId: '900001' } })
+    )
+  })
+
+  test('throws when initiateUrl is missing', async () => {
+    const { initUpload } = await import('./init-upload.js')
+    await expect(initUpload({})).rejects.toThrow(
+      'initUpload: initiateUrl is required'
+    )
+    expect(apiClient.post).not.toHaveBeenCalled()
+  })
+
+  test('propagates errors from apiClient.post', async () => {
+    vi.mocked(apiClient.post).mockRejectedValue(
+      new Error('Backend unavailable')
+    )
 
     const { initUpload } = await import('./init-upload.js')
     await expect(
-      initUpload({ redirect: '/test', s3Bucket: 'bucket', s3Path: 'path' })
-    ).rejects.toThrow('CDP uploader initiate failed')
+      initUpload({ initiateUrl: '/api/v1/file-uploads/initiate' })
+    ).rejects.toThrow('Backend unavailable')
   })
 })

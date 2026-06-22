@@ -1,7 +1,7 @@
 import inert from '@hapi/inert'
 
 import { config } from '../config/config.js'
-import { stubCdp } from './stub-cdp/index.js'
+import { stubCompleteUpload } from './common/stub-api-client.js'
 import { home } from './home/index.js'
 import { about } from './about/index.js'
 import { health } from './health/index.js'
@@ -48,8 +48,24 @@ export const router = {
       // Auth routes (login, callback, logout, stub chooser)
       await server.register([authRoutes])
 
-      if (config.get('fileUpload.uploaderStubEnabled')) {
-        await server.register(stubCdp)
+      if (config.get('api.stubEnabled')) {
+        server.route({
+          method: 'POST',
+          path: '/api/stub/upload/{fileUploadId}',
+          options: {
+            auth: false,
+            plugins: { crumb: false },
+            payload: { output: 'data', parse: false }
+          },
+          handler(request, h) {
+            const { fileUploadId } = request.params
+            const filename = request.headers['x-filename'] ?? 'unknown'
+            const contentType =
+              request.headers['content-type'] ?? 'application/octet-stream'
+            stubCompleteUpload(fileUploadId, { filename, contentType })
+            return h.response({}).code(200)
+          }
+        })
       }
 
       // Application specific routes, add your own routes here

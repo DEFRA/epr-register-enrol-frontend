@@ -43,10 +43,10 @@ describe('#redirectToLogin', () => {
       expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
     })
 
-    test('redirects to regulator login for a 401 with no scope (default)', () => {
+    test('redirects to operator login for a 401 with no scope (default)', () => {
       const h = mockH()
       redirectToLogin(mockRequest(401), h)
-      expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
+      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
     })
 
     test('does not redirect for a 403 — returns h.continue', () => {
