@@ -100,6 +100,14 @@ Install application dependencies:
 npm install
 ```
 
+Copy the example environment file and fill in any values you need:
+
+```bash
+cp .env.example .env
+```
+
+`.env` is loaded automatically by nodemon when you run `npm run dev` — no shell exports needed. See `.env.example` for all available variables and their defaults.
+
 ### Development
 
 To run the application in `development` mode run:
@@ -110,7 +118,7 @@ npm run dev
 
 ### Development without a backend
 
-To run the frontend without a running backend API, enable the stub API client:
+To run the frontend without a running backend API, set `API_STUB_ENABLED=true` in your `.env` file, or pass it inline:
 
 ```bash
 API_STUB_ENABLED=true npm run dev

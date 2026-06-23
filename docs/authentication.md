@@ -75,7 +75,7 @@ The operator flow is identical, using Defra ID endpoints instead.
 
 ## Local development
 
-Start the app normally (`npm run dev`). With `ENVIRONMENT=local` (the default), stub auth is automatically enabled.
+Copy `.env.example` to `.env` and run `npm run dev`. With `ENVIRONMENT=local` (the default), stub auth is automatically enabled. The dev server loads `.env` automatically via `--env-file-if-exists`.
 
 1. Visit any protected route (e.g. `/`) — redirected to `/auth/regulator/login`.
 2. That redirects to `/auth/stub/login?type=regulator`.
@@ -85,6 +85,17 @@ Start the app normally (`npm run dev`). With `ENVIRONMENT=local` (the default), 
 To test as an operator: visit `/auth/operator/login` or use the "Switch to operator login" link.
 
 To log out: visit `/auth/logout`.
+
+### Using a real OAuth provider in dev
+
+When `AUTH_STUB_ENABLED=true`, you can optionally authenticate against a real OAuth provider alongside the stub chooser by setting the relevant credentials in `.env`:
+
+| Provider | Variables to set | Button shown |
+| -------- | ---------------- | ------------ |
+| Defra ID (operators) | `DEFRA_ID_CLIENT_ID`, `DEFRA_ID_CLIENT_SECRET`, `DEFRA_ID_DISCOVERY_URL`, `DEFRA_ID_SERVICE_ID` | Sign in with Defra ID |
+| Azure Entra ID (regulators) | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID` | Sign in with Entra ID |
+
+The button appears on the stub chooser and initiates the real OAuth flow. Stub users are still available if you don't set the credentials.
 
 ---
 
