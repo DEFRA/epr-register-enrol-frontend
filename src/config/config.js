@@ -259,19 +259,19 @@ export const config = convict({
       clientId: {
         format: String,
         default: '',
-        env: 'AZURE_CLIENT_ID',
+        env: 'ENTRA_CLIENT_ID',
         sensitive: true
       },
       clientSecret: {
         format: String,
         default: '',
-        env: 'AZURE_CLIENT_SECRET',
+        env: 'ENTRA_CLIENT_SECRET',
         sensitive: true
       },
       tenantId: {
         format: String,
         default: '',
-        env: 'AZURE_TENANT_ID'
+        env: 'ENTRA_TENANT_ID'
       }
     },
     defraId: {
