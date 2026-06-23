@@ -404,15 +404,16 @@ describe('#operatorAccreditationController', () => {
     applicationId: 'app-exp-001',
     applicationStatus: 'Saved',
     materialType: MATERIAL,
+    registrationId: REGISTRATION_ID,
     isExporter: true,
     year: YEAR,
     organisationName: 'Exporter Co',
     ...overrides
   })
 
-  const exporterUrl = `/operator-accreditation/${ORG_ID}/${MATERIAL}/${YEAR}`
+  const exporterUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter`
 
-  describe('GET /operator-accreditation/{organisationId}/{materialType}/{year}', () => {
+  describe('GET /operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter', () => {
     test('returns 200 when existing exporter application found', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
 
@@ -438,27 +439,7 @@ describe('#operatorAccreditationController', () => {
       expect(postSpy).not.toHaveBeenCalled()
     })
 
-    test('ignores reprocessor apps when finding exporter match', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
-        makeApp({ MaterialType: MATERIAL, Year: YEAR })
-      ])
-      const postSpy = vi
-        .spyOn(apiClient, 'post')
-        .mockResolvedValue(makeExporterApp())
-
-      await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        headers: operatorHeaders
-      })
-
-      expect(postSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`/${MATERIAL}/seed`),
-        expect.objectContaining({ year: YEAR })
-      )
-    })
-
-    test('calls seedExporterApplication when no matching exporter app found', async () => {
+    test('calls seedApplication when no matching exporter app found', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([])
       const postSpy = vi
         .spyOn(apiClient, 'post')
@@ -471,7 +452,7 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(postSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`/${ORG_ID}/${MATERIAL}/seed`),
+        expect.stringContaining(`/${REGISTRATION_ID}/${MATERIAL}/seed`),
         expect.objectContaining({ year: YEAR })
       )
     })
@@ -527,7 +508,7 @@ describe('#operatorAccreditationController', () => {
       expect(result).toContain('data-testid="error-message"')
     })
 
-    test('returns 500 when seedExporterApplication throws', async () => {
+    test('returns 500 when seed throws', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([])
       vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
 
@@ -546,7 +527,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/cy/operator-accreditation/${ORG_ID}/${MATERIAL}/${YEAR}`,
+        url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter`,
         headers: operatorHeaders
       })
 

@@ -127,7 +127,8 @@ export const operatorAccreditationExporterController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
-    const { organisationId, materialType, year } = request.params
+    const { organisationId, registrationId, materialType, year } =
+      request.params
     const yearInt = parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = '/operator/'
@@ -156,15 +157,16 @@ export const operatorAccreditationExporterController = {
 
     let application = applications.find(
       (app) =>
-        app.isExporter === true &&
+        app.registrationId === registrationId &&
         app.materialType === materialType &&
         app.year === yearInt
     )
 
     if (!application) {
       try {
-        application = await accreditationApiService.seedExporterApplication(
+        application = await accreditationApiService.seedApplication(
           organisationId,
+          registrationId,
           materialType,
           yearInt
         )
@@ -184,6 +186,7 @@ export const operatorAccreditationExporterController = {
     )
     request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
     request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
+    request.yar.set(ACCREDITATION_SESSION_KEYS.registrationId, registrationId)
     request.yar.set(ACCREDITATION_SESSION_KEYS.year, yearInt)
 
     const viewModel = buildLandingViewModel(
