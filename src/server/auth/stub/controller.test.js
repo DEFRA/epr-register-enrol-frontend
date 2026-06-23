@@ -31,7 +31,8 @@ describe('#stubLoginController', () => {
         if (key === 'auth.basicUsr') return 'test'
         if (key === 'auth.basicPasswd') return 'test123'
         if (key === 'auth.azureEntraId.clientId') return 'test-client-id'
-        if (key === 'auth.azureEntraId.tenantId') return 'Defradev.onmicrosoft.com'
+        if (key === 'auth.azureEntraId.tenantId')
+          return 'Defradev.onmicrosoft.com'
         return realConfigGet(key)
       })
       entraServer = await createServer()
@@ -79,7 +80,8 @@ describe('#stubLoginController', () => {
         if (key === 'auth.basicUsr') return 'test'
         if (key === 'auth.basicPasswd') return 'test123'
         if (key === 'auth.azureEntraId.clientId') return 'test-client-id'
-        if (key === 'auth.azureEntraId.tenantId') return 'Defradev.onmicrosoft.com'
+        if (key === 'auth.azureEntraId.tenantId')
+          return 'Defradev.onmicrosoft.com'
         return realConfigGet(key)
       })
 

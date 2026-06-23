@@ -43,7 +43,12 @@ export function stubLoginGetController(request, h) {
       config.get('auth.azureEntraId.tenantId')
     )
 
-  return h.view('auth/stub/login', { type, users, defraIdConfigured, entraIdConfigured })
+  return h.view('auth/stub/login', {
+    type,
+    users,
+    defraIdConfigured,
+    entraIdConfigured
+  })
 }
 
 export async function stubLoginPostController(request, h) {
