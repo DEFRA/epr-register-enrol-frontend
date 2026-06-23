@@ -22,6 +22,9 @@ const APPLICATION_ID = 'app-bpd-001'
 const t = (key) => {
   const last = key.split('.').pop()
   if (last === 'tooLong') return '{field} must be 500 characters or fewer'
+  if (last === 'requiredWhenPercent') {
+    return 'Enter a description when you have allocated a percentage to this category'
+  }
   if (last === 'optional') return '(optional)'
   if (last === 'characterCountHint') return 'You can enter up to 500 characters'
   return last
@@ -82,6 +85,46 @@ describe('#validateDetailFields', () => {
     const errors = validateDetailFields(payload, t)
     expect(errors.newInfrastructureDetail).toBeDefined()
     expect(errors.priceSupportDetail).toBeUndefined()
+  })
+
+  test('returns error when percentage > 0 and detail is empty', () => {
+    const application = makeApplication()
+    const errors = validateDetailFields(
+      { priceSupportDetail: '' },
+      t,
+      application
+    )
+    expect(errors.priceSupportDetail).toBeDefined()
+    expect(errors.priceSupportDetail.text).toContain('allocated a percentage')
+  })
+
+  test('no error when percentage is 0 and detail is empty', () => {
+    const application = makeApplication({
+      businessPlan: {
+        newInfrastructurePercent: 0,
+        priceSupportPercent: 20,
+        businessCollectionsPercent: 20,
+        communicationsPercent: 20,
+        newMarketsPercent: 20,
+        newUsesPercent: 20,
+        sectionStatus: 'InProgress'
+      }
+    })
+    const errors = validateDetailFields(
+      { newInfrastructureDetail: '' },
+      t,
+      application
+    )
+    expect(errors.newInfrastructureDetail).toBeUndefined()
+  })
+
+  test('no percentage check when application is null', () => {
+    const errors = validateDetailFields(
+      { newInfrastructureDetail: '' },
+      t,
+      null
+    )
+    expect(errors.newInfrastructureDetail).toBeUndefined()
   })
 })
 
@@ -235,6 +278,7 @@ describe('#businessPlanDetailController', () => {
 
   describe('POST /accreditation/business-plan-detail/{applicationId} - save-and-continue', () => {
     test('patches all detail fields and redirects to business-plan-cya', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
@@ -243,11 +287,11 @@ describe('#businessPlanDetailController', () => {
         headers: operatorHeaders,
         payload: {
           newInfrastructureDetail: 'Sorting lines investment',
-          priceSupportDetail: '',
-          businessCollectionsDetail: '',
-          communicationsDetail: '',
-          newMarketsDetail: '',
-          newUsesDetail: '',
+          priceSupportDetail: 'Price support for collectors',
+          businessCollectionsDetail: 'Expanding commercial collections',
+          communicationsDetail: 'Public awareness campaigns',
+          newMarketsDetail: 'Construction sector partnerships',
+          newUsesDetail: 'Insulation manufacturing trials',
           submitAction: 'saveAndContinue'
         }
       })
@@ -292,7 +336,20 @@ describe('#businessPlanDetailController', () => {
       )
     })
 
-    test('returns 200 and submits with all fields empty (all optional)', async () => {
+    test('submits with all fields empty when all percentages are zero', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          businessPlan: {
+            newInfrastructurePercent: 0,
+            priceSupportPercent: 0,
+            businessCollectionsPercent: 0,
+            communicationsPercent: 0,
+            newMarketsPercent: 0,
+            newUsesPercent: 0,
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
       vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode } = await server.inject({
@@ -313,7 +370,42 @@ describe('#businessPlanDetailController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
     })
 
+    test('returns 400 when percentage > 0 but detail is empty', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: '',
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
     test('returns 500 service-problem page when PATCH fails with server error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          businessPlan: {
+            newInfrastructurePercent: 0,
+            priceSupportPercent: 0,
+            businessCollectionsPercent: 0,
+            communicationsPercent: 0,
+            newMarketsPercent: 0,
+            newUsesPercent: 0,
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
       const err = Object.assign(new Error('save failed'), { status: 500 })
       vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
 

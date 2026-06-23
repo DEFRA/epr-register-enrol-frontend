@@ -230,6 +230,7 @@
       },
       "validation": {
         "tooLong": "{field} must be 500 characters or fewer",
+        "requiredWhenPercent": "Enter a description when you have allocated a percentage to this category",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "saveError": "Sorry, there was a problem saving your business plan detail. Please try again."
       }
