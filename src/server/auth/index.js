@@ -59,6 +59,28 @@ export const authRoutes = {
           ])
         }
 
+        // If Entra ID credentials are configured, also offer real Entra ID login
+        // alongside the stub chooser.
+        if (
+          config.get('auth.azureEntraId.clientId') &&
+          config.get('auth.azureEntraId.tenantId')
+        ) {
+          server.route([
+            {
+              method: 'GET',
+              path: '/auth/regulator/entra-id',
+              options: { auth: false },
+              handler: regulatorLoginController
+            },
+            {
+              method: 'GET',
+              path: '/auth/regulator/callback',
+              options: { auth: false },
+              handler: regulatorCallbackController
+            }
+          ])
+        }
+
         await server.register([stubAuthRoutes])
       } else {
         server.route([

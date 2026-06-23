@@ -22,7 +22,7 @@ function makeApplication(overrides = {}) {
     year: 2025,
     siteId: 'site-001',
     applicationStatus: 'Sent',
-    accreditationReference: 'EPR-ACC-2027-000001',
+    accreditationReference: 'RA-000000001',
     prns: { sectionStatus: 'Completed' },
     businessPlan: { sectionStatus: 'Completed' },
     samplingPlan: { sectionStatus: 'Completed', Files: [] },
@@ -57,9 +57,7 @@ describe('#submitConfirmationController', () => {
     'x-test-user-type': 'operator'
   }
 
-  async function getSessionCookieWithReference(
-    reference = 'EPR-ACC-2027-000001'
-  ) {
+  async function getSessionCookieWithReference(reference = 'RA-000000001') {
     // Use the submit-declaration POST to seed the session with an accreditationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
       accreditationReference: reference,
@@ -115,7 +113,7 @@ describe('#submitConfirmationController', () => {
 
     test('displays the application reference in the panel', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const cookie = await getSessionCookieWithReference('EPR-ACC-2027-000001')
+      const cookie = await getSessionCookieWithReference('RA-000000001')
 
       const { result } = await server.inject({
         method: 'GET',
@@ -124,7 +122,7 @@ describe('#submitConfirmationController', () => {
       })
 
       expect(result).toContain('data-testid="application-reference"')
-      expect(result).toContain('EPR-ACC-2027-000001')
+      expect(result).toContain('RA-000000001')
     })
 
     test('displays payment text and action links', async () => {
@@ -183,7 +181,7 @@ describe('#submitConfirmationController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="confirmation-panel"')
-      expect(result).toContain('EPR-ACC-2027-000001')
+      expect(result).toContain('RA-000000001')
     })
 
     test('returns 200 in Welsh locale', async () => {

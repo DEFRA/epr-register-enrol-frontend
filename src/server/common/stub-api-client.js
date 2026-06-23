@@ -26,7 +26,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'NotStarted',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
-        registrationId: 'REG001',
+        registrationId: 'aaa000000000000000050001',
         siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
         wasteRegistrationNumber: 'R26ER5000390068PL',
         yearlyMetrics: { year: '2027' },
@@ -55,7 +55,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
-        registrationId: 'REG002',
+        registrationId: 'aaa000000000000000050002',
         siteAddress: {
           line1: 'Site Lane 002',
           town: 'Siteville',
@@ -85,7 +85,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
-        registrationId: 'REG003',
+        registrationId: 'aaa000000000000000050003',
         siteAddress: {
           line1: 'The Laundry',
           town: 'Siteville',
@@ -193,8 +193,7 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'steel',
         wasteProcessingType: 'exporter',
-        registrationId: 'REG004',
-        siteId: null,
+        registrationId: 'aaa000000000000000050004',
         siteAddress: null,
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
@@ -298,10 +297,9 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'plastic',
         wasteProcessingType: 'exporter',
-        siteId: null,
+        registrationId: 'aaa000000000000000050005',
         siteAddress: null,
         wasteRegistrationNumber: 'R26ER5000390068PL',
-        registrationId: 'REG005',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
         submitterContactDetails: null,
@@ -355,10 +353,9 @@ const STUB_ORG_DOCS = [
         applicationStatus: 'Started',
         material: 'glass',
         wasteProcessingType: 'exporter',
-        siteId: null,
+        registrationId: 'aaa000000000000000050006',
         siteAddress: null,
         wasteRegistrationNumber: null,
-        registrationId: 'REG006',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
         submitterContactDetails: null,
@@ -644,12 +641,14 @@ export const stubApiClient = {
               role: body.jobTitle ?? body.role ?? ''
             }
           }
+          const ref = `RA-${String(Math.floor(Math.random() * 1e9)).padStart(9, '0')}`
+          item.accreditationReference = ref
           return Promise.resolve({
-            accreditationReference: item.applicationId
+            accreditationReference: ref
           })
         }
       }
-      return Promise.resolve({ accreditationReference: 'REF-STUB-001' })
+      return Promise.resolve({ accreditationReference: 'RA-000000001' })
     }
 
     if (/\/overseas-sites\/\d+\/bes-evidence\/files$/.test(endpoint)) {

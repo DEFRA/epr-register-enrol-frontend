@@ -23,13 +23,13 @@ export const operatorAccreditation = {
         },
         {
           method: 'GET',
-          path: '/operator-accreditation/{organisationId}/{materialType}/{year}',
+          path: '/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter',
           options: requireOperator,
           ...operatorAccreditationExporterController
         },
         {
           method: 'GET',
-          path: '/{language}/operator-accreditation/{organisationId}/{materialType}/{year}',
+          path: '/{language}/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter',
           options: requireOperator,
           ...operatorAccreditationExporterController
         }
