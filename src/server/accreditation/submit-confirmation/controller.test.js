@@ -16,16 +16,16 @@ const APPLICATION_ID = 'app-conf-001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    ApplicationStatus: 'Sent',
-    AccreditationReference: 'EPR-ACC-2027-000001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: { SectionStatus: 'Completed' },
-    SamplingPlan: { SectionStatus: 'Completed', Files: [] },
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    siteId: 'site-001',
+    applicationStatus: 'Sent',
+    accreditationReference: 'EPR-ACC-2027-000001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: { sectionStatus: 'Completed' },
+    samplingPlan: { sectionStatus: 'Completed', Files: [] },
     ...overrides
   }
 }
@@ -60,10 +60,10 @@ describe('#submitConfirmationController', () => {
   async function getSessionCookieWithReference(
     reference = 'EPR-ACC-2027-000001'
   ) {
-    // Use the submit-declaration POST to seed the session with an applicationReference
+    // Use the submit-declaration POST to seed the session with an accreditationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
-      AccreditationReference: reference,
-      ApplicationStatus: 'Sent'
+      accreditationReference: reference,
+      applicationStatus: 'Sent'
     })
 
     const postResponse = await server.inject({
@@ -73,6 +73,7 @@ describe('#submitConfirmationController', () => {
       payload: {
         fullName: 'Jane Smith',
         jobTitle: 'Manager',
+        email: 'jane@example.com',
         submitAction: 'submit'
       }
     })
@@ -137,15 +138,14 @@ describe('#submitConfirmationController', () => {
       })
 
       expect(result).toContain('data-testid="payment-text"')
-      expect(result).toContain('data-testid="view-invoice-link"')
+      expect(result).toContain('data-testid="view-payment-details-link"')
       expect(result).toContain('data-testid="return-home-link"')
     })
 
-    test('redirects to task list on second visit after session is cleared', async () => {
+    test('can be revisited — session is not cleared on render', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference()
 
-      // First visit — renders and clears session
       const firstResponse = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
@@ -154,20 +154,20 @@ describe('#submitConfirmationController', () => {
       expect(firstResponse.statusCode).toBe(statusCodes.ok)
 
       const updatedCookie = firstResponse.headers['set-cookie']
-      const clearedCookie = Array.isArray(updatedCookie)
+      const persistedCookie = Array.isArray(updatedCookie)
         ? updatedCookie[0].split(';')[0]
         : updatedCookie
           ? updatedCookie.split(';')[0]
           : cookie
 
-      // Second visit — session cleared, redirects
+      // Second visit — session still valid, page renders again
       const { statusCode } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: clearedCookie }
+        headers: { ...operatorHeaders, Cookie: persistedCookie }
       })
 
-      expect(statusCode).toBe(statusCodes.redirect)
+      expect(statusCode).toBe(statusCodes.ok)
     })
 
     test('renders confirmation without materialDisplay when API fallback fails', async () => {

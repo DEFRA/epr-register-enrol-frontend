@@ -29,28 +29,28 @@ const t = (key) => {
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2025,
-    SiteId: 'site-001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: {
-      NewInfrastructurePercent: 20,
-      PriceSupportPercent: 20,
-      BusinessCollectionsPercent: 20,
-      CommunicationsPercent: 20,
-      NewMarketsPercent: 10,
-      NewUsesPercent: 10,
-      NewInfrastructureDetail: 'Investing in sorting lines',
-      PriceSupportDetail: '',
-      BusinessCollectionsDetail: '',
-      CommunicationsDetail: '',
-      NewMarketsDetail: '',
-      NewUsesDetail: '',
-      SectionStatus: 'InProgress'
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2025,
+    registrationId: 'REG001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: {
+      newInfrastructurePercent: 20,
+      priceSupportPercent: 20,
+      businessCollectionsPercent: 20,
+      communicationsPercent: 20,
+      newMarketsPercent: 10,
+      newUsesPercent: 10,
+      newInfrastructureDetail: 'Investing in sorting lines',
+      priceSupportDetail: '',
+      businessCollectionsDetail: '',
+      communicationsDetail: '',
+      newMarketsDetail: '',
+      newUsesDetail: '',
+      sectionStatus: 'InProgress'
     },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -259,7 +259,12 @@ describe('#businessPlanDetailController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
         expect.objectContaining({
-          NewInfrastructureDetail: 'Sorting lines investment'
+          items: expect.arrayContaining([
+            expect.objectContaining({
+              category: 'newInfrastructure',
+              detailedDescription: 'Sorting lines investment'
+            })
+          ])
         })
       )
     })
@@ -308,8 +313,9 @@ describe('#businessPlanDetailController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
     })
 
-    test('returns 500 with error when PATCH fails', async () => {
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('save failed'))
+    test('returns 500 service-problem page when PATCH fails with server error', async () => {
+      const err = Object.assign(new Error('save failed'), { status: 500 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -327,7 +333,7 @@ describe('#businessPlanDetailController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('data-testid="try-again-link"')
     })
   })
 

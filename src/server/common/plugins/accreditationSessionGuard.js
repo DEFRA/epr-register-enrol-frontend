@@ -28,7 +28,11 @@ export const accreditationSessionGuard = {
         }
 
         if (!hasValidSession(request.yar)) {
-          return h.redirect('/').takeover()
+          request.yar.flash(
+            'notification',
+            'Your session has expired. Please sign in again to continue.'
+          )
+          return h.redirect('/operator').takeover()
         }
 
         return h.continue

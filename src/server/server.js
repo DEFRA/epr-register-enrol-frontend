@@ -86,7 +86,11 @@ export async function createServer() {
         // Skip validation in test mode so server.inject() calls work without a token.
         // In all other modes CSRF validation is enforced on state-changing requests.
         skip: () => config.get('isTest'),
-        addToViewContext: true
+        addToViewContext: true,
+        cookieOptions: {
+          isSecure: config.get('session.cookie.secure'),
+          path: '/'
+        }
       }
     },
     accreditationSessionGuard,

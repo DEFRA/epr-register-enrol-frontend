@@ -14,16 +14,16 @@ import { apiClient } from '../common/api-client.js'
 import { buildLandingViewModel } from './controller.js'
 
 const ORG_ID = 'org-123'
-const SITE_ID = 'site001'
+const REGISTRATION_ID = 'REG001'
 const MATERIAL = 'Steel'
 const YEAR = 2026
 
 const makeApp = (overrides = {}) => ({
-  ApplicationId: 'app-id-001',
-  ApplicationStatus: 'Saved',
-  MaterialType: MATERIAL,
-  SiteId: SITE_ID,
-  Year: YEAR,
+  applicationId: 'app-id-001',
+  applicationStatus: 'Saved',
+  materialType: MATERIAL,
+  registrationId: REGISTRATION_ID,
+  year: YEAR,
   ...overrides
 })
 
@@ -32,7 +32,7 @@ describe('#buildLandingViewModel', () => {
 
   test('Saved maps to grey tag', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Saved' }),
+      makeApp({ applicationStatus: 'Saved' }),
       'Org Name',
       'siteAddr',
       2027,
@@ -43,7 +43,7 @@ describe('#buildLandingViewModel', () => {
 
   test('Started maps to blue tag', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Started' }),
+      makeApp({ applicationStatus: 'Started' }),
       'Org Name',
       'siteAddr',
       2027,
@@ -54,7 +54,7 @@ describe('#buildLandingViewModel', () => {
 
   test('Sent maps to turquoise tag', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Sent' }),
+      makeApp({ applicationStatus: 'Sent' }),
       'Org Name',
       'siteAddr',
       2027,
@@ -65,7 +65,7 @@ describe('#buildLandingViewModel', () => {
 
   test('Approved maps to green tag', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Approved' }),
+      makeApp({ applicationStatus: 'Approved' }),
       'Org Name',
       'siteAddr',
       2027,
@@ -76,7 +76,7 @@ describe('#buildLandingViewModel', () => {
 
   test('Rejected maps to red tag', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Rejected' }),
+      makeApp({ applicationStatus: 'Rejected' }),
       'Org Name',
       'siteAddr',
       2027,
@@ -87,7 +87,7 @@ describe('#buildLandingViewModel', () => {
 
   test('unknown status maps to empty tagClass', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Unknown' }),
+      makeApp({ applicationStatus: 'Unknown' }),
       'Org Name',
       'siteAddr',
       2027,
@@ -98,7 +98,7 @@ describe('#buildLandingViewModel', () => {
 
   test('siteName uses SiteAddr when present', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Unknown' }),
+      makeApp({ applicationStatus: 'Unknown' }),
       'Org Name',
       'siteAddr',
       2027,
@@ -109,7 +109,7 @@ describe('#buildLandingViewModel', () => {
 
   test('siteName falls back to translation key when is null', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationStatus: 'Unknown' }),
+      makeApp({ applicationStatus: 'Unknown' }),
       'Org Name',
       null,
       2027,
@@ -120,7 +120,7 @@ describe('#buildLandingViewModel', () => {
 
   test('taskListUrl contains applicationId', () => {
     const vm = buildLandingViewModel(
-      makeApp({ ApplicationId: 'app-xyz' }),
+      makeApp({ applicationId: 'app-xyz' }),
       'Org',
       null,
       2027,
@@ -131,7 +131,7 @@ describe('#buildLandingViewModel', () => {
 
   test('materialDisplay comes from translation', () => {
     const vm = buildLandingViewModel(
-      makeApp({ MaterialType: 'Steel' }),
+      makeApp({ materialType: 'Steel' }),
       'Org',
       'siteAddr',
       2027,
@@ -142,7 +142,7 @@ describe('#buildLandingViewModel', () => {
 
   test('organisationName is passed through', () => {
     const vm = buildLandingViewModel(
-      makeApp({ MaterialType: 'Steel' }),
+      makeApp({ materialType: 'Steel' }),
       'Organisation Name',
       'siteAddr',
       2027,
@@ -179,11 +179,11 @@ describe('#operatorAccreditationController', () => {
     'x-test-user-type': 'operator'
   }
 
-  const baseUrl = `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`
+  const baseUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
 
   test('returns 200 when existing application found for site/material/year', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ ApplicationStatus: 'Started' })
+      makeApp({ applicationStatus: 'Started' })
     ])
     vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
@@ -212,7 +212,7 @@ describe('#operatorAccreditationController', () => {
 
   test('calls seedApplication when no matching application found for site/material/year', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ SiteId: 'other-site' })
+      makeApp({ registrationId: 'other-ref' })
     ])
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())
 
@@ -223,7 +223,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(postSpy).toHaveBeenCalledWith(
-      expect.stringContaining(`/${SITE_ID}/${MATERIAL}/seed`),
+      expect.stringContaining(`/${REGISTRATION_ID}/${MATERIAL}/seed`),
       expect.objectContaining({ year: YEAR })
     )
   })
@@ -269,7 +269,7 @@ describe('#operatorAccreditationController', () => {
 
   test('renders status tag with correct class for Started', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ ApplicationStatus: 'Started' })
+      makeApp({ applicationStatus: 'Started' })
     ])
 
     const { result } = await server.inject({
@@ -372,14 +372,14 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('data-testid="error-message"')
   })
 
-  test('year URL param is compared as integer against app.Year', async () => {
-    const app2026 = makeApp({ Year: 2026 })
-    const app2025 = makeApp({ ApplicationId: 'app-2025', Year: 2025 })
+  test('year URL param is compared as integer against app.year', async () => {
+    const app2026 = makeApp({ year: 2026 })
+    const app2025 = makeApp({ applicationId: 'app-2025', year: 2025 })
     vi.spyOn(apiClient, 'get').mockResolvedValue([app2025, app2026])
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: `/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/2026`,
+      url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2026`,
       headers: operatorHeaders
     })
 
@@ -392,11 +392,165 @@ describe('#operatorAccreditationController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: `/cy/operator-accreditation/${ORG_ID}/${SITE_ID}/${MATERIAL}/${YEAR}`,
+      url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
       headers: operatorHeaders
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('[Welsh]')
+  })
+
+  const makeExporterApp = (overrides = {}) => ({
+    applicationId: 'app-exp-001',
+    applicationStatus: 'Saved',
+    materialType: MATERIAL,
+    isExporter: true,
+    year: YEAR,
+    organisationName: 'Exporter Co',
+    ...overrides
+  })
+
+  const exporterUrl = `/operator-accreditation/${ORG_ID}/${MATERIAL}/${YEAR}`
+
+  describe('GET /operator-accreditation/{organisationId}/{materialType}/{year}', () => {
+    test('returns 200 when existing exporter application found', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('does not call seed when matching exporter application already exists', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('ignores reprocessor apps when finding exporter match', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        makeApp({ MaterialType: MATERIAL, Year: YEAR })
+      ])
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(makeExporterApp())
+
+      await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`/${MATERIAL}/seed`),
+        expect.objectContaining({ year: YEAR })
+      )
+    })
+
+    test('calls seedExporterApplication when no matching exporter app found', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(makeExporterApp())
+
+      await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`/${ORG_ID}/${MATERIAL}/seed`),
+        expect.objectContaining({ year: YEAR })
+      )
+    })
+
+    test('does NOT render site row for exporter', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="site-name"')
+    })
+
+    test('renders application summary without site row', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="application-summary"')
+      expect(result).toContain('data-testid="material-display"')
+      expect(result).toContain('data-testid="continue-button"')
+    })
+
+    test('reprocessor route still renders site row', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="site-name"')
+    })
+
+    test('returns 500 when listApplications throws', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-message"')
+    })
+
+    test('returns 500 when seedExporterApplication throws', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-message"')
+    })
+
+    test('returns 200 in Welsh locale', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/cy/operator-accreditation/${ORG_ID}/${MATERIAL}/${YEAR}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
   })
 })

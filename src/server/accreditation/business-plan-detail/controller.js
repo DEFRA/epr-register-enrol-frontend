@@ -1,6 +1,10 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import {
+  findBpItem,
+  DETAIL_FIELD_TO_CATEGORY
+} from '../business-plan/helpers.js'
 
 export const DETAIL_FIELDS = [
   'newInfrastructureDetail',
@@ -10,15 +14,6 @@ export const DETAIL_FIELDS = [
   'newMarketsDetail',
   'newUsesDetail'
 ]
-
-const API_FIELD_MAP = {
-  newInfrastructureDetail: 'NewInfrastructureDetail',
-  priceSupportDetail: 'PriceSupportDetail',
-  businessCollectionsDetail: 'BusinessCollectionsDetail',
-  communicationsDetail: 'CommunicationsDetail',
-  newMarketsDetail: 'NewMarketsDetail',
-  newUsesDetail: 'NewUsesDetail'
-}
 
 const MAX_CHARS = 500
 
@@ -82,11 +77,13 @@ function buildViewData(t, applicationId, payload, errors) {
 }
 
 function payloadFromApplication(application) {
-  const bp = application.BusinessPlan ?? {}
   const payload = {}
   for (const field of DETAIL_FIELDS) {
-    const apiField = API_FIELD_MAP[field]
-    payload[field] = bp[apiField] ?? ''
+    const item = findBpItem(
+      application.businessPlan,
+      DETAIL_FIELD_TO_CATEGORY[field]
+    )
+    payload[field] = item.detailedDescription ?? ''
   }
   return payload
 }
@@ -94,8 +91,9 @@ function payloadFromApplication(application) {
 export const businessPlanDetailGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -124,8 +122,9 @@ export const businessPlanDetailGetController = {
 export const businessPlanDetailPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const { submitAction = 'saveAndContinue', ...fieldPayload } =
       request.payload
@@ -139,9 +138,11 @@ export const businessPlanDetailPostController = {
       }).code(400)
     }
 
-    const patchBody = {}
-    for (const field of DETAIL_FIELDS) {
-      patchBody[API_FIELD_MAP[field]] = fieldPayload[field] ?? ''
+    const patchBody = {
+      items: DETAIL_FIELDS.map((field) => ({
+        category: DETAIL_FIELD_TO_CATEGORY[field],
+        detailedDescription: fieldPayload[field] ?? ''
+      }))
     }
 
     try {
@@ -154,10 +155,18 @@ export const businessPlanDetailPostController = {
       request.server.logger.error(
         `Error saving business plan detail for ${applicationId}: ${err.message}`
       )
+      if (!err.status || err.status >= 500) {
+        return h
+          .view('errors/service-problem', {
+            pageTitle: t('common.errors.serviceTitle'),
+            retryUrl: request.path
+          })
+          .code(500)
+      }
       return renderPage(h, {
         ...buildViewData(t, applicationId, fieldPayload, {}),
         error: t('pages.businessPlanDetail.validation.saveError')
-      }).code(500)
+      }).code(400)
     }
 
     if (isSaveAndComeLater) {

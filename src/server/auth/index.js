@@ -36,6 +36,29 @@ export const authRoutes = {
             handler: (_, h) => h.redirect('/auth/stub/login?type=operator')
           }
         ])
+
+        // If Defra ID credentials are configured, also offer real Defra ID login
+        // alongside the stub chooser.
+        if (
+          config.get('auth.defraId.discoveryUrl') &&
+          config.get('auth.defraId.clientId')
+        ) {
+          server.route([
+            {
+              method: 'GET',
+              path: '/auth/operator/defra-id',
+              options: { auth: false },
+              handler: operatorLoginController
+            },
+            {
+              method: 'GET',
+              path: '/auth/operator/callback',
+              options: { auth: false },
+              handler: operatorCallbackController
+            }
+          ])
+        }
+
         await server.register([stubAuthRoutes])
       } else {
         server.route([

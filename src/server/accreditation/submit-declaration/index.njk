@@ -21,6 +21,9 @@
                   {% if errors.jobTitle %}
                     <li><a href="#jobTitle">{{ errors.jobTitle.text }}</a></li>
                   {% endif %}
+                  {% if errors.email %}
+                    <li><a href="#email">{{ errors.email.text }}</a></li>
+                  {% endif %}
                 </ul>
               {% endif %}
             </div>
@@ -80,6 +83,25 @@
                  value="{{ jobTitle }}"
                  {% if errors.jobTitle %}aria-describedby="jobTitle-error"{% endif %}
                  data-testid="job-title-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.email %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label govuk-label--s" for="email">
+            {{ emailLabel }}
+          </label>
+          {% if errors.email %}
+            <p id="email-error" class="govuk-error-message" data-testid="email-error">
+              <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.email.text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input{% if errors.email %} govuk-input--error{% endif %}"
+                 id="email"
+                 name="email"
+                 type="email"
+                 autocomplete="email"
+                 value="{{ email }}"
+                 {% if errors.email %}aria-describedby="email-error"{% endif %}
+                 data-testid="email-input">
         </div>
 
         <button type="submit" name="submitAction" value="submit" class="govuk-button" data-module="govuk-button" data-testid="submit-button">

@@ -1,7 +1,11 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { config } from '../../../config/config.js'
+import { initUpload } from '../../common/helpers/upload/init-upload.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+
+export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
 export const ALLOWED_EXTENSIONS = [
   'pdf',
@@ -15,6 +19,18 @@ export const ALLOWED_EXTENSIONS = [
   'msg'
 ]
 
+export const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'text/csv',
+  'image/png',
+  'image/tiff',
+  'image/jpeg',
+  'application/vnd.ms-outlook'
+]
+
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
 export function validateFileExtension(filename) {
@@ -25,18 +41,23 @@ export function validateFileExtension(filename) {
 
 export function buildFilesViewModel(files) {
   return (files ?? []).map((f) => ({
-    filename: f.Filename ?? '',
-    fileId: f.FileId ?? '',
-    uploadedAt: f.UploadedAt
-      ? new Date(f.UploadedAt).toLocaleDateString('en-GB')
+    filename: f.filename ?? '',
+    fileId: f.fileId ?? '',
+    uploadedAt: f.uploadedAt
+      ? new Date(f.uploadedAt).toLocaleDateString('en-GB')
       : '',
-    uploadedBy: f.UploadedBy ?? '',
-    scanStatus: f.ScanStatus ?? 'Pending'
+    uploadedBy: f.uploadedBy ?? '',
+    scanStatus: f.scanStatus ?? 'Pending'
   }))
 }
 
 export function hasEligibleFile(files) {
-  return (files ?? []).some((f) => (f.ScanStatus ?? 'Pending') !== 'Infected')
+  return (files ?? []).some((f) => (f.scanStatus ?? 'Pending') !== 'Infected')
+}
+
+function decodeField(field) {
+  if (typeof field === 'string') return field
+  return field?.payload?.toString()
 }
 
 function appUrl(organisationId, applicationId) {
@@ -51,42 +72,12 @@ function renderPage(h, viewData) {
   return h.view('accreditation/sampling-plan-upload/index', viewData)
 }
 
-export async function samplingPlanUpload413Handler(request, h) {
-  const { response } = request
-  if (!response.isBoom || response.output.statusCode !== 413) {
-    return h.continue
-  }
-
-  const { t } = getLocaleAndTranslator(request)
-  const user = getUser(request)
-  const organisationId = user?.id
-  const { applicationId } = request.params
-
-  let files = []
-  try {
-    const application = await apiClient.get(
-      appUrl(organisationId, applicationId)
-    )
-    files = buildFilesViewModel(application.SamplingPlan?.Files)
-  } catch (_) {
-    // render with empty file list if fetch fails
-  }
-
-  return renderPage(h, {
-    pageTitle: t('pages.samplingPlanUpload.title'),
-    heading: t('pages.samplingPlanUpload.heading'),
-    backLink: taskListUrl(applicationId),
-    taskListLink: taskListUrl(applicationId),
-    files,
-    fileError: t('pages.samplingPlanUpload.validation.fileTooLarge')
-  }).code(400)
-}
-
 export const samplingPlanUploadGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -106,7 +97,7 @@ export const samplingPlanUploadGetController = {
       }).code(500)
     }
 
-    const files = buildFilesViewModel(application.SamplingPlan?.Files)
+    const files = buildFilesViewModel(application.samplingPlan?.files)
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
@@ -121,10 +112,12 @@ export const samplingPlanUploadGetController = {
 export const samplingPlanUploadPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
-    const { action, fileId } = request.payload ?? {}
+    const action = decodeField(request.payload?.action)
+    const fileId = decodeField(request.payload?.fileId)
 
     let application
     try {
@@ -143,8 +136,8 @@ export const samplingPlanUploadPostController = {
       }).code(500)
     }
 
-    const files = buildFilesViewModel(application.SamplingPlan?.Files)
-    const rawFiles = application.SamplingPlan?.Files ?? []
+    const files = buildFilesViewModel(application.samplingPlan?.files)
+    const rawFiles = application.samplingPlan?.files ?? []
 
     function baseView(overrides = {}) {
       return {
@@ -159,11 +152,10 @@ export const samplingPlanUploadPostController = {
 
     if (action === 'uploadFile') {
       const uploadedFile = request.payload.file
-      const filename = uploadedFile?.hapi?.filename ?? ''
+      const filename = uploadedFile?.filename ?? ''
       const contentType =
-        uploadedFile?.hapi?.headers?.['content-type'] ??
-        'application/octet-stream'
-      const fileSize = uploadedFile?.length ?? 0
+        uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
+      const fileSize = uploadedFile?.payload?.length ?? 0
 
       if (!filename) {
         return renderPage(
@@ -192,14 +184,18 @@ export const samplingPlanUploadPostController = {
         ).code(400)
       }
 
+      let uploadDetail
       try {
-        await accreditationApiService.addFile(organisationId, applicationId, {
-          Filename: filename,
-          ContentType: contentType
+        uploadDetail = await initUpload({
+          initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/initiate`,
+          redirectUrl: `${config.get('auth.callbackBaseUrl')}/accreditation/sampling-plan/${applicationId}/status`,
+          s3Path: `accreditation/sampling-plan/${applicationId}`,
+          mimeTypes: ALLOWED_MIME_TYPES,
+          maxFileSize: MAX_FILE_BYTES
         })
       } catch (err) {
         request.server.logger.error(
-          `Error uploading file for ${applicationId}: ${err.message}`
+          `Error initiating upload for ${applicationId}: ${err.message}`
         )
         return renderPage(
           h,
@@ -209,7 +205,38 @@ export const samplingPlanUploadPostController = {
         ).code(500)
       }
 
-      return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
+      try {
+        const proxyResponse = await fetch(uploadDetail.uploadUrl, {
+          method: 'POST',
+          body: uploadedFile.payload,
+          duplex: 'half',
+          headers: {
+            'x-filename': filename,
+            'Content-Type': contentType
+          }
+        })
+        if (!proxyResponse.ok) {
+          throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
+        }
+      } catch (err) {
+        request.server.logger.error(
+          `Error proxying file for ${applicationId}: ${err.message}`
+        )
+        return renderPage(
+          h,
+          baseView({
+            fileError: t('pages.samplingPlanUpload.validation.uploadError')
+          })
+        ).code(500)
+      }
+
+      request.yar.set(SAMPLING_PLAN_UPLOAD_SESSION_KEY, {
+        statusUrl: uploadDetail.statusUrl,
+        applicationId,
+        organisationId
+      })
+
+      return h.redirect(`/accreditation/sampling-plan/${applicationId}/status`)
     }
 
     if (action === 'deleteFile') {
@@ -241,7 +268,7 @@ export const samplingPlanUploadPostController = {
         await accreditationApiService.patchSamplingPlan(
           organisationId,
           applicationId,
-          { SectionStatus: sectionStatus }
+          { sectionStatus }
         )
       } catch (err) {
         request.server.logger.error(
@@ -271,7 +298,7 @@ export const samplingPlanUploadPostController = {
       await accreditationApiService.patchSamplingPlan(
         organisationId,
         applicationId,
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     } catch (err) {
       request.server.logger.error(
@@ -284,5 +311,51 @@ export const samplingPlanUploadPostController = {
     }
 
     return h.redirect(taskListUrl(applicationId))
+  }
+}
+
+export const samplingPlanCdpStatusController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
+    const uploadStatus = request.pre.uploadStatus
+
+    if (uploadStatus?.uploadStatus !== 'ready') {
+      return h.view('accreditation/sampling-plan-upload/status', {
+        pageTitle: t('pages.samplingPlanUpload.status.title'),
+        heading: t('pages.samplingPlanUpload.status.heading'),
+        processingStatus: uploadStatus?.processingStatus ?? 'preprocessing'
+      })
+    }
+
+    const fileInput = uploadStatus.form?.file
+    const session = request.yar.get(SAMPLING_PLAN_UPLOAD_SESSION_KEY)
+    request.yar.clear(SAMPLING_PLAN_UPLOAD_SESSION_KEY)
+
+    if (fileInput?.hasError) {
+      return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
+    }
+
+    const scanStatus =
+      uploadStatus.processingStatus === 'validated' ? 'Clean' : 'Infected'
+
+    try {
+      await accreditationApiService.addFile(
+        session?.organisationId,
+        session?.applicationId ?? applicationId,
+        {
+          filename: fileInput?.filename,
+          contentType: fileInput?.contentType ?? fileInput?.detectedContentType,
+          scanStatus,
+          fileId: fileInput?.fileId
+        }
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error saving uploaded file for ${applicationId}: ${err.message}`
+      )
+    }
+
+    return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
   }
 }

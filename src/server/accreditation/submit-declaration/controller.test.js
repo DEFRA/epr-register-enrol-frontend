@@ -18,41 +18,66 @@ const APPLICATION_ID = 'app-decl-001'
 const t = (key) => key.split('.').pop()
 
 describe('#validateDeclaration', () => {
-  test('returns no errors when fullName and jobTitle provided', () => {
-    expect(validateDeclaration('Jane Smith', 'Manager', t)).toEqual({})
+  test('returns no errors when all fields are provided', () => {
+    expect(
+      validateDeclaration('Jane Smith', 'Manager', 'jane@example.com', t)
+    ).toEqual({})
   })
 
   test('returns fullName error when fullName is empty string', () => {
-    const errors = validateDeclaration('', 'Manager', t)
+    const errors = validateDeclaration('', 'Manager', 'jane@example.com', t)
     expect(errors.fullName).toBeDefined()
     expect(errors.fullName.text).toBe('fullNameRequired')
   })
 
   test('returns fullName error when fullName is whitespace only', () => {
-    const errors = validateDeclaration('   ', 'Manager', t)
+    const errors = validateDeclaration('   ', 'Manager', 'jane@example.com', t)
     expect(errors.fullName).toBeDefined()
   })
 
   test('returns fullName error when fullName is null', () => {
-    const errors = validateDeclaration(null, 'Manager', t)
+    const errors = validateDeclaration(null, 'Manager', 'jane@example.com', t)
     expect(errors.fullName).toBeDefined()
   })
 
   test('returns jobTitle error when jobTitle is empty string', () => {
-    const errors = validateDeclaration('Jane Smith', '', t)
+    const errors = validateDeclaration('Jane Smith', '', 'jane@example.com', t)
     expect(errors.jobTitle).toBeDefined()
     expect(errors.jobTitle.text).toBe('jobTitleRequired')
   })
 
   test('returns jobTitle error when jobTitle is whitespace only', () => {
-    const errors = validateDeclaration('Jane Smith', '   ', t)
+    const errors = validateDeclaration(
+      'Jane Smith',
+      '   ',
+      'jane@example.com',
+      t
+    )
     expect(errors.jobTitle).toBeDefined()
   })
 
-  test('returns both errors when fullName and jobTitle are missing', () => {
-    const errors = validateDeclaration('', '', t)
+  test('returns email error when email is empty', () => {
+    const errors = validateDeclaration('Jane Smith', 'Manager', '', t)
+    expect(errors.email).toBeDefined()
+    expect(errors.email.text).toBe('emailRequired')
+  })
+
+  test('returns email error when email is invalid format', () => {
+    const errors = validateDeclaration(
+      'Jane Smith',
+      'Manager',
+      'not-an-email',
+      t
+    )
+    expect(errors.email).toBeDefined()
+    expect(errors.email.text).toBe('emailInvalid')
+  })
+
+  test('returns all three errors when all fields are missing', () => {
+    const errors = validateDeclaration('', '', '', t)
     expect(errors.fullName).toBeDefined()
     expect(errors.jobTitle).toBeDefined()
+    expect(errors.email).toBeDefined()
   })
 })
 
@@ -95,7 +120,7 @@ describe('#submitDeclarationController', () => {
       expect(result).toContain('data-testid="page-heading"')
     })
 
-    test('renders full name and job title inputs', async () => {
+    test('renders full name, job title, and email inputs', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
@@ -104,6 +129,7 @@ describe('#submitDeclarationController', () => {
 
       expect(result).toContain('data-testid="full-name-input"')
       expect(result).toContain('data-testid="job-title-input"')
+      expect(result).toContain('data-testid="email-input"')
     })
 
     test('renders submit and save-and-come-back buttons', async () => {
@@ -137,6 +163,7 @@ describe('#submitDeclarationController', () => {
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Senior Manager',
+          email: 'jane@example.com',
           submitAction: 'saveAndComeLater'
         }
       })
@@ -154,6 +181,7 @@ describe('#submitDeclarationController', () => {
 
       expect(result).toContain('value="Jane Smith"')
       expect(result).toContain('value="Senior Manager"')
+      expect(result).toContain('value="jane@example.com"')
     })
 
     test('returns 200 in Welsh locale', async () => {
@@ -179,6 +207,7 @@ describe('#submitDeclarationController', () => {
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Manager',
+          email: 'jane@example.com',
           submitAction: 'saveAndComeLater'
         }
       })
@@ -197,7 +226,12 @@ describe('#submitDeclarationController', () => {
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { fullName: '', jobTitle: 'Manager', submitAction: 'submit' }
+        payload: {
+          fullName: '',
+          jobTitle: 'Manager',
+          email: 'jane@example.com',
+          submitAction: 'submit'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
@@ -213,6 +247,7 @@ describe('#submitDeclarationController', () => {
         payload: {
           fullName: 'Jane Smith',
           jobTitle: '',
+          email: 'jane@example.com',
           submitAction: 'submit'
         }
       })
@@ -222,23 +257,64 @@ describe('#submitDeclarationController', () => {
       expect(result).toContain('data-testid="job-title-error"')
     })
 
-    test('returns 400 when both fields are missing', async () => {
+    test('returns 400 with error when email is missing', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Manager',
+          email: '',
+          submitAction: 'submit'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('data-testid="email-error"')
+    })
+
+    test('returns 400 with error when email format is invalid', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Manager',
+          email: 'not-an-email',
+          submitAction: 'submit'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="email-error"')
+    })
+
+    test('returns 400 when all fields are missing', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { fullName: '', jobTitle: '', submitAction: 'submit' }
+        payload: {
+          fullName: '',
+          jobTitle: '',
+          email: '',
+          submitAction: 'submit'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="full-name-error"')
       expect(result).toContain('data-testid="job-title-error"')
+      expect(result).toContain('data-testid="email-error"')
     })
 
     test('calls submitApplication and redirects to confirmation on valid data', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
-        AccreditationReference: 'EPR-ACC-2027-000001',
-        ApplicationStatus: 'Sent'
+        accreditationReference: 'EPR-ACC-2027-000001',
+        applicationStatus: 'Sent'
       })
 
       const { statusCode, headers } = await server.inject({
@@ -248,6 +324,7 @@ describe('#submitDeclarationController', () => {
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Senior Manager',
+          email: 'jane@example.com',
           submitAction: 'submit'
         }
       })
@@ -258,14 +335,18 @@ describe('#submitDeclarationController', () => {
       )
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/submit`),
-        { FullName: 'Jane Smith', JobTitle: 'Senior Manager' }
+        {
+          fullName: 'Jane Smith',
+          jobTitle: 'Senior Manager',
+          email: 'jane@example.com'
+        }
       )
     })
 
     test('trims whitespace from inputs before submitting', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
-        AccreditationReference: 'EPR-ACC-2027-000001',
-        ApplicationStatus: 'Sent'
+        accreditationReference: 'EPR-ACC-2027-000001',
+        applicationStatus: 'Sent'
       })
 
       await server.inject({
@@ -275,18 +356,21 @@ describe('#submitDeclarationController', () => {
         payload: {
           fullName: '  Jane Smith  ',
           jobTitle: '  Senior Manager  ',
+          email: '  jane@example.com  ',
           submitAction: 'submit'
         }
       })
 
       expect(postSpy).toHaveBeenCalledWith(expect.any(String), {
-        FullName: 'Jane Smith',
-        JobTitle: 'Senior Manager'
+        fullName: 'Jane Smith',
+        jobTitle: 'Senior Manager',
+        email: 'jane@example.com'
       })
     })
 
-    test('returns 500 with error summary when submitApplication API fails', async () => {
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('API error'))
+    test('returns 500 service-problem page when submitApplication API fails with server error', async () => {
+      const err = Object.assign(new Error('API error'), { status: 500 })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -295,29 +379,13 @@ describe('#submitDeclarationController', () => {
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Manager',
+          email: 'jane@example.com',
           submitAction: 'submit'
         }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
-    })
-
-    test('re-renders with submitted field values on API error', async () => {
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('API error'))
-
-      const { result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: {
-          fullName: 'Jane Smith',
-          jobTitle: 'Manager',
-          submitAction: 'submit'
-        }
-      })
-
-      expect(result).toContain('value="Jane Smith"')
+      expect(result).toContain('data-testid="try-again-link"')
     })
   })
 })

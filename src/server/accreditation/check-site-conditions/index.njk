@@ -1,0 +1,37 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <p>{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      {% if siteName %}
+        <p class="govuk-body" data-testid="site-name">{{ siteName }}</p>
+      {% endif %}
+
+      <p class="govuk-body" data-testid="placeholder-content">{{ t('pages.checkSiteConditions.content') }}</p>
+
+      <form method="post" novalidate data-testid="confirm-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">
+          {{ t('pages.checkSiteConditions.confirmButton') }}
+        </button>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

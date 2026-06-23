@@ -1,5 +1,4 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
@@ -10,8 +9,9 @@ function taskListUrl(applicationId) {
 export const submitConfirmationGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     const accreditationReference = request.yar.get(
@@ -22,30 +22,22 @@ export const submitConfirmationGetController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let materialType = request.yar.get(ACCREDITATION_SESSION_KEYS.materialType)
-
-    if (!materialType) {
-      try {
-        const application = await accreditationApiService.getApplication(
-          organisationId,
-          applicationId
-        )
-        materialType = application.MaterialType
-      } catch (err) {
-        request.server.logger.error(
-          `Error fetching application ${applicationId} for confirmation: ${err.message}`
-        )
-        materialType = ''
-      }
+    let materialType = ''
+    try {
+      const application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+      materialType = application.materialType ?? ''
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId} for confirmation: ${err.message}`
+      )
     }
 
     const materialDisplay = materialType
       ? t(`pages.materialSelection.materials.${materialType}`)
       : ''
-
-    Object.values(ACCREDITATION_SESSION_KEYS).forEach((key) =>
-      request.yar.clear(key)
-    )
 
     return h.view('accreditation/submit-confirmation/index', {
       pageTitle: t('pages.submitConfirmation.title'),
@@ -53,10 +45,11 @@ export const submitConfirmationGetController = {
       panelBodyPrefix: t('pages.submitConfirmation.panelBodyPrefix'),
       panelBodySuffix: t('pages.submitConfirmation.panelBodySuffix'),
       paymentText: t('pages.submitConfirmation.paymentText'),
-      viewInvoice: t('pages.submitConfirmation.viewInvoice'),
+      viewInvoice: t('pages.submitConfirmation.viewPaymentDetails'),
       returnHome: t('pages.submitConfirmation.returnHome'),
       accreditationReference,
-      materialDisplay
+      materialDisplay,
+      applicationId
     })
   }
 }

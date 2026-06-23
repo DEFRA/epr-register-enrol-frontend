@@ -13,12 +13,11 @@ export const fileUploadFormGetController = {
       return h.redirect('/file-upload/add')
     }
 
-    const s3Bucket = config.get('fileUpload.s3Bucket')
     const appBaseUrl = config.get('auth.callbackBaseUrl')
 
     const uploadDetail = await initUpload({
-      redirect: `${appBaseUrl}/file-upload/upload-status`,
-      s3Bucket,
+      initiateUrl: '/api/v1/file-uploads/initiate',
+      redirectUrl: `${appBaseUrl}/file-upload/upload-status`,
       s3Path: `file-uploads/${session.material}/${session.year}`,
       maxFileSize: 1024 * 1024 * 100,
       mimeTypes: [
@@ -32,7 +31,7 @@ export const fileUploadFormGetController = {
 
     request.yar.set(FILE_UPLOAD_SESSION_KEY, {
       ...session,
-      uploadId: uploadDetail.uploadId,
+      uploadId: uploadDetail.fileUploadId,
       statusUrl: uploadDetail.statusUrl
     })
 

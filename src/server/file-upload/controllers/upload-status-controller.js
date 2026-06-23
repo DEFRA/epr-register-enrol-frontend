@@ -32,11 +32,12 @@ export const fileUploadStatusController = {
         return h.redirect('/file-upload/upload')
       }
 
-      const cdpFileStatusToScanStatus = {
-        complete: 'Clean',
+      const processingStatusToScanStatus = {
+        validated: 'Clean',
         rejected: 'Infected'
       }
-      const scanStatus = cdpFileStatusToScanStatus[fileInput.fileStatus]
+      const scanStatus =
+        processingStatusToScanStatus[uploadStatus.processingStatus]
 
       if (!scanStatus) {
         request.yar.flash('error', t('pages.fileUpload.upload.saveError'))
@@ -71,7 +72,8 @@ export const fileUploadStatusController = {
 
     return h.view('file-upload/views/upload-status', {
       pageTitle: t('pages.fileUpload.status.title'),
-      heading: t('pages.fileUpload.status.heading')
+      heading: t('pages.fileUpload.status.heading'),
+      processingStatus: uploadStatus?.processingStatus ?? 'preprocessing'
     })
   }
 }

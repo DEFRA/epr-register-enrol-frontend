@@ -1,0 +1,53 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <p>{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate data-testid="more-evidence-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset">
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
+              <h1 class="govuk-fieldset__heading" data-testid="page-heading">{{ heading }}</h1>
+            </legend>
+
+            <div class="govuk-radios" data-module="govuk-radios">
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="answer-yes" name="answer" type="radio" value="yes" {% if answer === 'yes' %}checked{% endif %} data-testid="answer-yes">
+                <label class="govuk-label govuk-radios__label" for="answer-yes">
+                  {{ t('pages.uploadMoreEvidence.yes') }}
+                </label>
+              </div>
+              <div class="govuk-radios__item">
+                <input class="govuk-radios__input" id="answer-no" name="answer" type="radio" value="no" {% if answer === 'no' %}checked{% endif %} data-testid="answer-no">
+                <label class="govuk-label govuk-radios__label" for="answer-no">
+                  {{ t('pages.uploadMoreEvidence.no') }}
+                </label>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+          {{ t('pages.uploadMoreEvidence.continueButton') }}
+        </button>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

@@ -18,21 +18,26 @@ import {
   ALLOWED_EXTENSIONS,
   MAX_FILE_BYTES
 } from './controller.js'
+import { initUpload } from '../../common/helpers/upload/init-upload.js'
+
+vi.mock('../../common/helpers/upload/init-upload.js', () => ({
+  initUpload: vi.fn()
+}))
 
 const APPLICATION_ID = 'app-sampling-001'
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: 2027,
-    SiteId: 'site-001',
-    Prns: { SectionStatus: 'Completed' },
-    BusinessPlan: { SectionStatus: 'Completed' },
-    SamplingPlan: {
-      SectionStatus: 'NotStarted',
-      Files: []
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: 2027,
+    siteId: 'site-001',
+    prns: { sectionStatus: 'Completed' },
+    businessPlan: { sectionStatus: 'Completed' },
+    samplingPlan: {
+      sectionStatus: 'NotStarted',
+      files: []
     },
     ...overrides
   }
@@ -40,12 +45,12 @@ function makeApplication(overrides = {}) {
 
 function makeFile(overrides = {}) {
   return {
-    FileId: 'file-001',
-    Filename: 'sampling-plan.pdf',
-    ContentType: 'application/pdf',
-    UploadedAt: '2027-03-01T10:00:00Z',
-    UploadedBy: 'test-operator-id',
-    ScanStatus: 'Pending',
+    fileId: 'file-001',
+    filename: 'sampling-plan.pdf',
+    contentType: 'application/pdf',
+    uploadedAt: '2027-03-01T10:00:00Z',
+    uploadedBy: 'test-operator-id',
+    scanStatus: 'Pending',
     ...overrides
   }
 }
@@ -101,26 +106,26 @@ describe('#buildFilesViewModel', () => {
     expect(buildFilesViewModel(undefined)).toEqual([])
   })
 
-  test('defaults ScanStatus to Pending when missing', () => {
-    const result = buildFilesViewModel([{ FileId: 'x', Filename: 'a.pdf' }])
+  test('defaults scanStatus to Pending when missing', () => {
+    const result = buildFilesViewModel([{ fileId: 'x', filename: 'a.pdf' }])
     expect(result[0].scanStatus).toBe('Pending')
   })
 })
 
 describe('#hasEligibleFile', () => {
   test('returns true when at least one Pending file exists', () => {
-    expect(hasEligibleFile([makeFile({ ScanStatus: 'Pending' })])).toBe(true)
+    expect(hasEligibleFile([makeFile({ scanStatus: 'Pending' })])).toBe(true)
   })
 
   test('returns true when at least one Clean file exists', () => {
-    expect(hasEligibleFile([makeFile({ ScanStatus: 'Clean' })])).toBe(true)
+    expect(hasEligibleFile([makeFile({ scanStatus: 'Clean' })])).toBe(true)
   })
 
   test('returns false when all files are Infected', () => {
     expect(
       hasEligibleFile([
-        makeFile({ ScanStatus: 'Infected' }),
-        makeFile({ ScanStatus: 'Infected' })
+        makeFile({ scanStatus: 'Infected' }),
+        makeFile({ scanStatus: 'Infected' })
       ])
     ).toBe(false)
   })
@@ -128,8 +133,8 @@ describe('#hasEligibleFile', () => {
   test('returns true when mixed Infected and Clean', () => {
     expect(
       hasEligibleFile([
-        makeFile({ ScanStatus: 'Infected' }),
-        makeFile({ ScanStatus: 'Clean' })
+        makeFile({ scanStatus: 'Infected' }),
+        makeFile({ scanStatus: 'Clean' })
       ])
     ).toBe(true)
   })
@@ -169,6 +174,12 @@ describe('#samplingPlanUploadController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(initUpload).mockResolvedValue({
+      fileUploadId: 'stub-test-id',
+      uploadUrl: 'http://stub/upload/stub-test-id',
+      statusUrl: 'http://stub/status/stub-test-id'
+    })
+    global.fetch = vi.fn().mockResolvedValue({ ok: true })
   })
 
   const operatorHeaders = {
@@ -222,9 +233,9 @@ describe('#samplingPlanUploadController', () => {
     test('renders uploaded files table when files exist', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile()]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile()]
           }
         })
       )
@@ -242,9 +253,9 @@ describe('#samplingPlanUploadController', () => {
     test('shows Scanning tag for Pending file', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile({ ScanStatus: 'Pending' })]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Pending' })]
           }
         })
       )
@@ -321,9 +332,9 @@ describe('#samplingPlanUploadController', () => {
     test('returns 400 when all files are Infected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile({ ScanStatus: 'Infected' })]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Infected' })]
           }
         })
       )
@@ -344,9 +355,9 @@ describe('#samplingPlanUploadController', () => {
     test('patches SectionStatus Completed and redirects to task list when eligible file exists', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile({ ScanStatus: 'Pending' })]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Pending' })]
           }
         })
       )
@@ -365,16 +376,16 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { SectionStatus: 'Completed' }
+        { sectionStatus: 'Completed' }
       )
     })
 
     test('returns 500 when patch fails on saveAndContinue', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile()]
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile()]
           }
         })
       )
@@ -396,9 +407,9 @@ describe('#samplingPlanUploadController', () => {
     test('patches InProgress and redirects to task list when files exist', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'NotStarted',
-            Files: [makeFile()]
+          samplingPlan: {
+            sectionStatus: 'NotStarted',
+            files: [makeFile()]
           }
         })
       )
@@ -417,7 +428,7 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { SectionStatus: 'InProgress' }
+        { sectionStatus: 'InProgress' }
       )
     })
 
@@ -434,7 +445,7 @@ describe('#samplingPlanUploadController', () => {
 
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { SectionStatus: 'NotStarted' }
+        { sectionStatus: 'NotStarted' }
       )
     })
 
@@ -558,11 +569,8 @@ describe('#samplingPlanUploadController', () => {
       return Buffer.concat(buffers)
     }
 
-    test('valid file redirects to GET and calls addFile with filename and contentType', async () => {
+    test('valid file initiates CDP upload and redirects to status page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const postSpy = vi
-        .spyOn(apiClient, 'post')
-        .mockResolvedValue({ FileId: 'new-file-123' })
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
@@ -576,14 +584,7 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        `/accreditation/sampling-plan/${APPLICATION_ID}`
-      )
-      expect(postSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/files`),
-        expect.objectContaining({
-          Filename: 'sampling-plan.png',
-          ContentType: 'image/png'
-        })
+        `/accreditation/sampling-plan/${APPLICATION_ID}/status`
       )
     })
 
@@ -619,9 +620,9 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
-    test('addFile API failure returns 500 with uploadError', async () => {
+    test('initUpload failure returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('Upload failed'))
+      vi.mocked(initUpload).mockRejectedValueOnce(new Error('CDP unavailable'))
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -655,82 +656,114 @@ describe('#samplingPlanUploadController', () => {
     })
   })
 
-  describe('POST /accreditation/sampling-plan/{applicationId} — 413 payload too large', () => {
-    const boundary = 'test-boundary-413'
+  describe('GET /accreditation/sampling-plan/{applicationId}/status', () => {
+    const boundary = 'test-boundary-status'
     const multipartContentType = `multipart/form-data; boundary=${boundary}`
 
-    function buildOversizePayload() {
+    function buildFilePayload() {
       const CRLF = '\r\n'
-      const oversizeBytes = Buffer.alloc(22 * 1024 * 1024, 'x')
       return Buffer.concat([
         Buffer.from(
           `--${boundary}${CRLF}` +
-            `Content-Disposition: form-data; name="action"${CRLF}` +
-            CRLF +
-            `uploadFile${CRLF}`
+            `Content-Disposition: form-data; name="action"${CRLF}${CRLF}uploadFile${CRLF}`
         ),
         Buffer.from(
           `--${boundary}${CRLF}` +
-            `Content-Disposition: form-data; name="file"; filename="large.pdf"${CRLF}` +
-            `Content-Type: application/pdf${CRLF}` +
-            CRLF
+            `Content-Disposition: form-data; name="file"; filename="plan.pdf"${CRLF}` +
+            `Content-Type: application/pdf${CRLF}${CRLF}`
         ),
-        oversizeBytes,
-        Buffer.from(CRLF),
-        Buffer.from(`--${boundary}--${CRLF}`)
+        Buffer.from('file-content'),
+        Buffer.from(`${CRLF}--${boundary}--${CRLF}`)
       ])
     }
 
-    test('returns 400 with fileTooLarge error when payload exceeds maxBytes', async () => {
+    async function getStatusCookie() {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-
-      const { statusCode, result } = await server.inject({
+      const postResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
         headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildOversizePayload()
+        payload: buildFilePayload()
+      })
+      const raw = postResponse.headers['set-cookie']
+      return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+    }
+
+    test('returns polling view when upload is preprocessing', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'pending',
+        processingStatus: 'preprocessing'
       })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="file-error"')
-      expect(result).toContain('The selected file must be smaller than 20MB')
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="status-message"')
     })
 
-    test('renders existing files on 413 response', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          SamplingPlan: {
-            SectionStatus: 'InProgress',
-            Files: [makeFile({ Filename: 'existing-plan.pdf' })]
+    test('saves Clean scanStatus and redirects when processingStatus is validated', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: {
+          file: {
+            filename: 'plan.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-validated',
+            fileStatus: 'complete'
           }
-        })
-      )
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildOversizePayload()
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
       })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('existing-plan.pdf')
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}`
+      )
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ scanStatus: 'Clean' })
+      )
     })
 
-    test('renders 400 with empty file list when GET fails during 413 handling', async () => {
-      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+    test('saves Infected scanStatus when processingStatus is rejected', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'rejected',
+        form: {
+          file: {
+            filename: 'virus.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-rejected',
+            fileStatus: 'rejected'
+          }
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildOversizePayload()
+      await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
       })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="file-error"')
-      expect(result).toContain('The selected file must be smaller than 20MB')
-      expect(result).not.toContain('data-testid="uploaded-files-table"')
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ scanStatus: 'Infected' })
+      )
     })
   })
 })

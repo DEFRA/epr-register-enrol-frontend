@@ -88,13 +88,108 @@ describe('accreditationApiService', () => {
     })
   })
 
-  describe('patchPrns', () => {
-    test('calls PATCH prns endpoint', async () => {
+  describe('patchTonnage', () => {
+    test('calls PATCH tonnage endpoint', async () => {
       apiClient.patch.mockResolvedValue({ ApplicationId: APP_ID })
       const body = { PlannedTonnageBand: 'UpTo500' }
-      await accreditationApiService.patchPrns(ORG_ID, APP_ID, body)
+      await accreditationApiService.patchTonnage(ORG_ID, APP_ID, body)
       expect(apiClient.patch).toHaveBeenCalledWith(
-        `${BASE}/${ORG_ID}/${APP_ID}/prns`,
+        `${BASE}/${ORG_ID}/${APP_ID}/tonnage`,
+        body
+      )
+    })
+  })
+
+  describe('seedExporterApplication', () => {
+    test('calls POST to exporter seed endpoint without siteId', async () => {
+      apiClient.post.mockResolvedValue({ ApplicationId: APP_ID })
+      await accreditationApiService.seedExporterApplication(
+        ORG_ID,
+        'Steel',
+        2027
+      )
+      expect(apiClient.post).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/Steel/seed`,
+        { year: 2027 }
+      )
+    })
+  })
+
+  describe('patchOverseasSites', () => {
+    test('calls PATCH overseas-sites endpoint', async () => {
+      apiClient.patch.mockResolvedValue({})
+      const body = { SectionStatus: 'Completed' }
+      await accreditationApiService.patchOverseasSites(ORG_ID, APP_ID, body)
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites`,
+        body
+      )
+    })
+  })
+
+  describe('addBesEvidenceFile', () => {
+    test('calls POST to BES evidence files endpoint for a site', async () => {
+      apiClient.post.mockResolvedValue({ FileId: 'bes-file-1' })
+      const body = {
+        Filename: 'evidence.pdf',
+        BESEvidenceValidFromDate: '2026-01-01T00:00:00Z'
+      }
+      await accreditationApiService.addBesEvidenceFile(
+        ORG_ID,
+        APP_ID,
+        900001,
+        body
+      )
+      expect(apiClient.post).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/bes-evidence/files`,
+        body
+      )
+    })
+  })
+
+  describe('patchBesEvidence', () => {
+    test('calls PATCH BES evidence endpoint for a site', async () => {
+      apiClient.patch.mockResolvedValue({})
+      const body = { DoYouWantToUploadMoreEvidence: false }
+      await accreditationApiService.patchBesEvidence(
+        ORG_ID,
+        APP_ID,
+        900001,
+        body
+      )
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/bes-evidence`,
+        body
+      )
+    })
+  })
+
+  describe('deleteBesEvidenceFile', () => {
+    test('calls DELETE BES evidence file endpoint', async () => {
+      apiClient.delete.mockResolvedValue(undefined)
+      await accreditationApiService.deleteBesEvidenceFile(
+        ORG_ID,
+        APP_ID,
+        900001,
+        'bes-file-1'
+      )
+      expect(apiClient.delete).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/bes-evidence/files/bes-file-1`
+      )
+    })
+  })
+
+  describe('patchBesEvidenceSection', () => {
+    test('calls PATCH bes-evidence endpoint for section status', async () => {
+      apiClient.patch.mockResolvedValue({})
+      const body = { SectionStatus: 'Completed' }
+      await accreditationApiService.patchBesEvidenceSection(
+        ORG_ID,
+        APP_ID,
+        body
+      )
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/bes-evidence`,
         body
       )
     })

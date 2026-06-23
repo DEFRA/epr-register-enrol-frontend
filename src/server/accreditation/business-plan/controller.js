@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
 
 export const BUSINESS_PLAN_FIELDS = [
   'newInfrastructurePercent',
@@ -11,20 +12,14 @@ export const BUSINESS_PLAN_FIELDS = [
   'newUsesPercent'
 ]
 
-const API_FIELD_MAP = {
-  newInfrastructurePercent: 'NewInfrastructurePercent',
-  priceSupportPercent: 'PriceSupportPercent',
-  businessCollectionsPercent: 'BusinessCollectionsPercent',
-  communicationsPercent: 'CommunicationsPercent',
-  newMarketsPercent: 'NewMarketsPercent',
-  newUsesPercent: 'NewUsesPercent'
-}
-
 export function parsePercent(value) {
-  if (value === undefined || value === null || String(value).trim() === '') {
+  if (value === undefined || value === null) {
     return null
   }
   const trimmed = String(value).trim()
+  if (trimmed === '') {
+    return 0
+  }
   if (!/^\d+$/.test(trimmed)) {
     return NaN
   }
@@ -103,11 +98,13 @@ function renderPage(h, viewData) {
   return h.view('accreditation/business-plan/index', viewData)
 }
 
-function buildViewData(t, applicationId, payload, errors) {
+function buildViewData(t, applicationId, payload, errors, isExporter = false) {
   return {
     pageTitle: t('pages.businessPlan.title'),
     heading: t('pages.businessPlan.heading'),
-    intro: t('pages.businessPlan.intro'),
+    intro: isExporter
+      ? t('pages.businessPlan.introExporter')
+      : t('pages.businessPlan.intro'),
     backLink: taskListUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     fieldInputs: buildFieldInputs(payload, errors, t),
@@ -117,11 +114,14 @@ function buildViewData(t, applicationId, payload, errors) {
 }
 
 function payloadFromApplication(application) {
-  const bp = application.BusinessPlan ?? {}
   const payload = {}
   for (const field of BUSINESS_PLAN_FIELDS) {
-    const apiField = API_FIELD_MAP[field]
-    payload[field] = bp[apiField] !== undefined ? String(bp[apiField]) : ''
+    const item = findBpItem(
+      application.businessPlan,
+      PERCENT_FIELD_TO_CATEGORY[field]
+    )
+    payload[field] =
+      item.percentSpent !== undefined ? String(item.percentSpent) : ''
   }
   return payload
 }
@@ -129,8 +129,9 @@ function payloadFromApplication(application) {
 export const businessPlanGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
 
     let application
@@ -149,9 +150,17 @@ export const businessPlanGetController = {
       }).code(500)
     }
 
+    const isExporter = application.isExporter ?? false
+
     return renderPage(
       h,
-      buildViewData(t, applicationId, payloadFromApplication(application), {})
+      buildViewData(
+        t,
+        applicationId,
+        payloadFromApplication(application),
+        {},
+        isExporter
+      )
     )
   }
 }
@@ -159,11 +168,30 @@ export const businessPlanGetController = {
 export const businessPlanPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const organisationId = user?.id
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
     const { submitAction = 'saveAndContinue', ...fieldPayload } =
       request.payload
+
+    let application
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId}: ${err.message}`
+      )
+      return renderPage(h, {
+        ...buildViewData(t, applicationId, fieldPayload, {}),
+        error: t('pages.businessPlan.validation.fetchError')
+      }).code(500)
+    }
+
+    const isExporter = application.isExporter ?? false
 
     const isSaveAndComeLater = submitAction === 'saveAndComeLater'
     const { errors, values } = validateBusinessPlanFields(
@@ -174,13 +202,15 @@ export const businessPlanPostController = {
 
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, errors)
+        ...buildViewData(t, applicationId, fieldPayload, errors, isExporter)
       }).code(400)
     }
 
-    const patchBody = {}
-    for (const field of BUSINESS_PLAN_FIELDS) {
-      patchBody[API_FIELD_MAP[field]] = values[field] ?? null
+    const patchBody = {
+      items: BUSINESS_PLAN_FIELDS.map((field) => ({
+        category: PERCENT_FIELD_TO_CATEGORY[field],
+        percentSpent: values[field] ?? null
+      }))
     }
 
     try {
@@ -193,10 +223,18 @@ export const businessPlanPostController = {
       request.server.logger.error(
         `Error saving business plan for ${applicationId}: ${err.message}`
       )
+      if (!err.status || err.status >= 500) {
+        return h
+          .view('errors/service-problem', {
+            pageTitle: t('common.errors.serviceTitle'),
+            retryUrl: request.path
+          })
+          .code(500)
+      }
       return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, {}),
+        ...buildViewData(t, applicationId, fieldPayload, {}, isExporter),
         error: t('pages.businessPlan.validation.saveError')
-      }).code(500)
+      }).code(400)
     }
 
     if (isSaveAndComeLater) {

@@ -114,14 +114,17 @@
         "Plastic": "Plastic"
       }
     },
-    "prnsTonnage": {
+    "tonnage": {
       "title": "How many PRNs do you plan to issue?",
+      "titleExporter": "How many PERNs do you plan to issue?",
       "headingPrefix": "How many",
       "headingSuffix": "PRNs do you plan to issue?",
+      "headingSuffixExporter": "PERNs do you plan to issue?",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
       "validation": {
         "selectTonnage": "Select how many PRNs you plan to issue",
+        "selectTonnageExporter": "Select how many PERNs you plan to issue",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "saveError": "Sorry, there was a problem saving your selection. Please try again."
       },
@@ -132,12 +135,16 @@
         "Over10000": "Over 10,000 tonnes"
       }
     },
-    "prnsAuthority": {
+    "tonnageAuthority": {
       "title": "Authority to issue PRNs",
+      "titleExporter": "Authority to issue PERNs",
       "headingPrefix": "Authority to issue PRNs for",
+      "headingPrefixExporter": "Authority to issue PERNs for",
       "headingAt": "at",
       "intro": "You can choose the people you want to have authority to issue PRNs. The people you choose will be able to issue PRNs on this system.",
+      "introExporter": "You can choose the people you want to have authority to issue PERNs. The people you choose will be able to issue PERNs on this system.",
       "selectSubHeading": "Select who you want to have authority to issue PRNs — You can select more than one.",
+      "selectSubHeadingExporter": "Select who you want to have authority to issue PERNs — You can select more than one.",
       "noAuthorisers": "No authorisers added yet. Use the form below to add someone.",
       "addAuthoriserLabel": "Add a new authoriser",
       "addAuthoriserButton": "Add authoriser",
@@ -162,14 +169,17 @@
         "saveError": "Sorry, there was a problem saving your selection. Please try again."
       }
     },
-    "prnsCya": {
+    "tonnageCya": {
       "title": "Check your answers before continuing",
       "heading": "Check your answers before continuing",
       "tonnageLabel": "Tonnage of PRNs you plan to issue",
+      "tonnageLabelExporter": "Tonnage of PERNs you plan to issue",
       "authorisersLabel": "People you want to request authority to issue PRNs",
+      "authorisersLabelExporter": "People you want to request authority to issue PERNs",
       "change": "Change",
       "changeTonnageContext": "planned tonnage",
       "changeAuthorityContext": "authority to issue PRNs",
+      "changeAuthorityContextExporter": "authority to issue PERNs",
       "notSelected": "Not selected",
       "noneSelected": "None selected",
       "confirmAndContinue": "Confirm and continue",
@@ -183,6 +193,7 @@
       "title": "Business plan",
       "heading": "Business plan",
       "intro": "Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
+      "introExporter": "Enter the percentage of PERN income you'll spend on each item. The regulator will expect you to follow this plan.",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
       "fields": {
@@ -272,6 +283,12 @@
         "clean": "Clean",
         "infected": "Infected"
       },
+      "status": {
+        "title": "Uploading file",
+        "heading": "Uploading file",
+        "message": "Your file is being scanned for viruses. This may take a few seconds.",
+        "doNotClose": "Do not close this page."
+      },
       "validation": {
         "noFile": "Select a file to upload",
         "invalidType": "The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
@@ -291,11 +308,14 @@
       "warningText": "Your organisation may face enforcement action if the data is inaccurate.",
       "fullNameLabel": "Enter your full name",
       "jobTitleLabel": "Enter your job title",
+      "emailLabel": "Enter your email address",
       "submitButton": "Submit application",
       "saveAndComeLater": "Save and come back later",
       "validation": {
         "fullNameRequired": "Enter your full name",
         "jobTitleRequired": "Enter your job title",
+        "emailRequired": "Enter your email address",
+        "emailInvalid": "Enter an email address in the correct format, like name@example.com",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "submitError": "Sorry, there was a problem submitting your application. Please try again."
       }
@@ -305,13 +325,41 @@
       "panelHeading": "Application submitted",
       "panelBodyPrefix": "Your application reference for",
       "panelBodySuffix": "is",
-      "paymentText": "Now pay the application fee. The regulator will only review your application after you've paid.",
-      "viewInvoice": "View invoice",
+      "paymentText": "Now pay the application charge. The regulator will only review your application after you've paid.",
+      "viewPaymentDetails": "View payment details",
       "returnHome": "Return to home page"
+    },
+    "viewPaymentDetails": {
+      "title": "View payment details",
+      "backLink": "Back to accreditation details",
+      "bannerTitle": "Success",
+      "bannerHeading": "Application submitted to the Environment Agency",
+      "bannerEmailSent": "A confirmation email has been sent to",
+      "paymentFor": "Payment for",
+      "headingSuffix": "reaccreditation",
+      "paymentInstructionPrefix": "The regulator will only review the application after payment has been made.",
+      "paymentInstructionSuffix": "You'll receive a notification once payment has been received and the application is in review.",
+      "payByBankTransfer": "Pay by bank transfer",
+      "bankTransferInstruction": "You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
+      "howLongDoPaymentsTake": "How long do payments take?",
+      "howLongDoPaymentsTakeBody": "Bank transfers can take 3 to 5 working days to be received.",
+      "bankDetailsHeading": "Bank details for the regulator",
+      "amount": "Amount",
+      "sortCode": "Sort code",
+      "accountNumber": "Account number",
+      "accountName": "Account name",
+      "paymentReference": "Payment reference",
+      "cardPayments": "Card payments",
+      "cardPaymentsBody": "A card payment can be taken over the phone. Please contact your account manager to arrange taking a card payment over the phone.",
+      "overseasPayments": "Overseas payments",
+      "overseasPaymentsBody": "If you are paying from overseas, contact the Environment Agency for international payment details.",
+      "downloadPdf": "Download PDF",
+      "loadError": "Sorry, we were unable to load the payment details. Please try again."
     },
     "taskList": {
       "title": "Accreditation task list",
       "headingPrefix": "Accredit to issue PRNs: UK",
+      "headingPrefixExporter": "Accredit to issue PERNs: UK",
       "headingSuffix": "packaging waste",
       "metadataYear": "For:",
       "metadataSite": "For reprocessing site:",
@@ -320,9 +368,36 @@
       "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
         "prns": "PRNs tonnage and authority to issue PRNs",
+        "perns": "PERNs tonnage and authority to issue PERNs",
         "businessPlan": "Business plan",
-        "samplingPlan": "Accreditation sampling and inspection plan"
+        "samplingPlan": "Accreditation sampling and inspection plan",
+        "overseasSites": "Overseas reprocessing sites",
+        "besEvidence": "Evidence of broadly equivalent standards (BES)"
       }
+    },
+    "selectOverseasSites": {
+      "title": "Your overseas reprocessing sites",
+      "heading": "Select the overseas reprocessing sites to include in this accreditation",
+      "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "noSites": "No overseas reprocessing sites are associated with this application.",
+      "continueButton": "Continue",
+      "columns": {
+        "siteName": "Site name",
+        "country": "Country"
+      },
+      "validation": {
+        "noSitesSelected": "Select at least one overseas reprocessing site",
+        "saveError": "Sorry, we were unable to save your site selection. Please try again."
+      }
+    },
+    "confirmOverseasSites": {
+      "title": "Confirm your overseas reprocessing sites",
+      "heading": "Confirm your overseas reprocessing sites",
+      "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
+      "noSites": "No overseas reprocessing sites are associated with this application.",
+      "removeButton": "Remove",
+      "confirmButton": "Confirm and continue"
     },
     "operatorRegistration": {
       "heading": "Operator Registration",
@@ -416,6 +491,84 @@
         "download": "Download file",
         "errorLoading": "Sorry, there was a problem loading the file details. Please try again."
       }
+    },
+    "uploadEvidenceList": {
+      "title": "Upload evidence of broadly equivalent standards",
+      "heading": "Upload evidence of broadly equivalent standards",
+      "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
+      "saveError": "Sorry, we were unable to complete the BES evidence section. Please try again.",
+      "noSites": "No overseas reprocessing sites are associated with this application.",
+      "uploadLink": "Upload evidence",
+      "evidenceUploaded": "Uploaded",
+      "evidenceNotUploaded": "Not uploaded",
+      "continueButton": "Continue",
+      "table": {
+        "siteName": "Site name",
+        "country": "Country",
+        "evidenceStatus": "Evidence status",
+        "action": "Action"
+      }
+    },
+    "uploadBesEvidence": {
+      "title": "Upload BES evidence",
+      "heading": "Upload BES evidence for",
+      "fileLabel": "Upload a file",
+      "uploadButton": "Upload file",
+      "saveAndComeLater": "Save and come back later",
+      "requirements": {
+        "intro": "The file must:",
+        "maxSize": "be smaller than 20MB",
+        "fileTypes": "be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG file"
+      },
+      "validFrom": "Start date of evidence",
+      "validTo": "End date of evidence",
+      "dateHint": "For example, 1 11 2026",
+      "status": {
+        "title": "Uploading file",
+        "heading": "Uploading file",
+        "message": "Your file is being scanned for viruses. This may take a few seconds.",
+        "doNotClose": "Do not close this page."
+      },
+      "validation": {
+        "noFile": "Select a file to upload",
+        "invalidType": "The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",
+        "fileTooLarge": "The selected file must be smaller than 20MB",
+        "validFromRequired": "Enter the start date of evidence",
+        "validToRequired": "Enter the end date of evidence",
+        "validToBeforeFrom": "The end date must be after the start date",
+        "invalidDate": "Enter a valid date",
+        "fetchError": "Sorry, we were unable to load the site details. Please try again.",
+        "uploadError": "Sorry, we were unable to upload the file. Please try again."
+      }
+    },
+    "uploadMoreEvidence": {
+      "title": "Upload more BES evidence",
+      "heading": "Do you want to upload more evidence",
+      "yes": "Yes",
+      "no": "No",
+      "continueButton": "Continue",
+      "loadError": "Sorry, we were unable to load the site details. Please try again.",
+      "saveError": "Sorry, we were unable to save your answer. Please try again.",
+      "validation": {
+        "required": "Select yes if you want to upload more evidence"
+      }
+    },
+    "cyaEvidenceForSite": {
+      "title": "Check your BES evidence",
+      "heading": "Check your BES evidence for",
+      "fileUploaded": "File uploaded",
+      "startDate": "Start date of evidence",
+      "endDate": "End date of evidence",
+      "confirmButton": "Confirm",
+      "noFiles": "No BES evidence files have been uploaded for this site.",
+      "loadError": "Sorry, we were unable to load the site details. Please try again."
+    },
+    "checkSiteConditions": {
+      "title": "Check the site fulfils the conditions",
+      "heading": "Check the site fulfils the conditions",
+      "content": "[Content to be confirmed with subject matter experts]",
+      "confirmButton": "Confirm",
+      "loadError": "Sorry, we were unable to load the site details. Please try again."
     }
   },
   "navigation": {
@@ -433,7 +586,11 @@
     "save": "Save",
     "errorSummaryTitle": "There is a problem",
     "error": "Error",
-    "warning": "Warning"
+    "warning": "Warning",
+    "errors": {
+      "serviceTitle": "Sorry, there is a problem with the service",
+      "tryAgain": "Try again"
+    }
   },
   "languageSwitcher": {
     "english": "English",

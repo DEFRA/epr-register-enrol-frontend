@@ -20,14 +20,14 @@ const t = (key) => key.split('.').pop()
 
 function makeApplication(overrides = {}) {
   return {
-    ApplicationId: APPLICATION_ID,
-    OrganisationId: 'test-operator-id',
-    MaterialType: 'Steel',
-    Year: CURRENT_YEAR,
-    SiteId: 'site-abc',
-    Prns: { SectionStatus: 'NotStarted' },
-    BusinessPlan: { SectionStatus: 'NotStarted' },
-    SamplingPlan: { SectionStatus: 'NotStarted' },
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    materialType: 'Steel',
+    year: CURRENT_YEAR,
+    siteId: 'site-abc',
+    prns: { sectionStatus: 'NotStarted' },
+    businessPlan: { sectionStatus: 'NotStarted' },
+    samplingPlan: { sectionStatus: 'NotStarted' },
     ...overrides
   }
 }
@@ -38,7 +38,7 @@ describe('#buildTaskListViewModel', () => {
 
     expect(vm.tasks[0].statusTagText).toBe('NOT STARTED')
     expect(vm.tasks[0].locked).toBe(false)
-    expect(vm.tasks[0].url).toContain('/prns-tonnage/')
+    expect(vm.tasks[0].url).toContain('/tonnage/')
 
     expect(vm.tasks[1].statusTagText).toBe('NOT STARTED')
     expect(vm.tasks[1].locked).toBe(true)
@@ -54,7 +54,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs Completed — business plan unlocked, sampling plan still locked', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: { SectionStatus: 'Completed' } }),
+      makeApplication({ prns: { sectionStatus: 'Completed' } }),
       t
     )
 
@@ -73,8 +73,8 @@ describe('#buildTaskListViewModel', () => {
   test('PRNs + BusinessPlan Completed — sampling plan unlocked', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Prns: { SectionStatus: 'Completed' },
-        BusinessPlan: { SectionStatus: 'Completed' }
+        prns: { sectionStatus: 'Completed' },
+        businessPlan: { sectionStatus: 'Completed' }
       }),
       t
     )
@@ -88,9 +88,9 @@ describe('#buildTaskListViewModel', () => {
   test('all sections Completed — allComplete true, continueUrl set', () => {
     const vm = buildTaskListViewModel(
       makeApplication({
-        Prns: { SectionStatus: 'Completed' },
-        BusinessPlan: { SectionStatus: 'Completed' },
-        SamplingPlan: { SectionStatus: 'Completed' }
+        prns: { sectionStatus: 'Completed' },
+        businessPlan: { sectionStatus: 'Completed' },
+        samplingPlan: { sectionStatus: 'Completed' }
       }),
       t
     )
@@ -102,7 +102,7 @@ describe('#buildTaskListViewModel', () => {
 
   test('PRNs InProgress — tag shows IN PROGRESS with blue class', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: { SectionStatus: 'InProgress' } }),
+      makeApplication({ prns: { sectionStatus: 'InProgress' } }),
       t
     )
 
@@ -117,21 +117,25 @@ describe('#buildTaskListViewModel', () => {
 
   test('metadata contains year and site', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Year: 2026, SiteAddress: '123 Test Street' }),
+      makeApplication({ year: 2026, siteAddress: '123 Test Street' }),
       t
     )
     expect(vm.metadata.year).toBe(2026)
     expect(vm.metadata.site).toBe('123 Test Street')
   })
 
-  test('null SiteId falls back to siteNotSet translation', () => {
-    const vm = buildTaskListViewModel(makeApplication({ SiteId: null }), t)
+  test('null siteId falls back to siteNotSet translation', () => {
+    const vm = buildTaskListViewModel(makeApplication({ siteId: null }), t)
     expect(vm.metadata.site).toBe('siteNotSet')
   })
 
-  test('null Prns/BusinessPlan/SamplingPlan treated as NotStarted', () => {
+  test('null prns/businessPlan/samplingPlan treated as NotStarted', () => {
     const vm = buildTaskListViewModel(
-      makeApplication({ Prns: null, BusinessPlan: null, SamplingPlan: null }),
+      makeApplication({
+        prns: null,
+        businessPlan: null,
+        samplingPlan: null
+      }),
       t
     )
     expect(vm.allComplete).toBe(false)
@@ -151,6 +155,130 @@ describe('#buildTaskListViewModel', () => {
       '/operator-accreditation/test-operator-id/site-abc/Steel/2026'
     )
     expect(vm.saveAndComeLaterLink).toBe('/operator')
+  })
+
+  test('reprocessor: isExporter flag is false', () => {
+    const vm = buildTaskListViewModel(makeApplication(), t)
+    expect(vm.isExporter).toBe(false)
+  })
+
+  describe('exporter journey', () => {
+    function makeExporterApp(overrides = {}) {
+      return makeApplication({
+        isExporter: true,
+        siteId: null,
+        materialType: 'Plastic',
+        overseasSites: { sectionStatus: 'NotStarted' },
+        besEvidence: { sectionStatus: 'NotStarted' },
+        ...overrides
+      })
+    }
+
+    test('builds 5 tasks', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.tasks).toHaveLength(5)
+    })
+
+    test('overseas sites and BES locked when sampling plan not complete', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.tasks[3].locked).toBe(true)
+      expect(vm.tasks[3].url).toBeNull()
+      expect(vm.tasks[4].locked).toBe(true)
+      expect(vm.tasks[4].url).toBeNull()
+    })
+
+    test('overseas sites unlocked when sampling plan complete', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.tasks[3].locked).toBe(false)
+      expect(vm.tasks[3].url).toContain('/select-overseas-sites/')
+      expect(vm.tasks[4].locked).toBe(true)
+    })
+
+    test('BES unlocked when overseas sites complete', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.tasks[3].locked).toBe(false)
+      expect(vm.tasks[4].locked).toBe(false)
+      expect(vm.tasks[4].url).toContain('/upload-evidence-for-overseas-site/')
+    })
+
+    test('allComplete requires all 5 sections', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'Completed' },
+          besEvidence: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.allComplete).toBe(true)
+      expect(vm.continueUrl).toContain('/submit-declaration/')
+    })
+
+    test('allComplete false when only 3 sections done', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+      expect(vm.allComplete).toBe(false)
+      expect(vm.continueUrl).toBeNull()
+    })
+
+    test('backlink omits siteId', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({ year: CURRENT_YEAR }),
+        t
+      )
+      expect(vm.backLink).toBe(
+        `/operator-accreditation/test-operator-id/Plastic/${CURRENT_YEAR}`
+      )
+      expect(vm.backLink).not.toContain('null')
+    })
+
+    test('task[0] label uses perns key', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.tasks[0].label).toBe('perns')
+    })
+
+    test('null overseasSites and besEvidence treated as NotStarted', () => {
+      const vm = buildTaskListViewModel(
+        makeExporterApp({ overseasSites: null, besEvidence: null }),
+        t
+      )
+      expect(vm.tasks[3].statusTagText).toBe('NOT STARTED')
+      expect(vm.tasks[4].statusTagText).toBe('NOT STARTED')
+      expect(vm.allComplete).toBe(false)
+    })
+
+    test('isExporter flag set true in view model', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.isExporter).toBe(true)
+    })
+
+    test('metadata.site is null for exporter', () => {
+      const vm = buildTaskListViewModel(makeExporterApp(), t)
+      expect(vm.metadata.site).toBeNull()
+    })
   })
 })
 
@@ -226,7 +354,7 @@ describe('#taskListGetController', () => {
 
     test('shows IN PROGRESS tag when PRNs section is InProgress', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'InProgress' } })
+        makeApplication({ prns: { sectionStatus: 'InProgress' } })
       )
 
       const { result } = await server.inject({
@@ -241,7 +369,7 @@ describe('#taskListGetController', () => {
 
     test('shows COMPLETED tag with green class', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'Completed' } })
+        makeApplication({ prns: { sectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({
@@ -269,9 +397,9 @@ describe('#taskListGetController', () => {
     test('Continue button present when all sections are Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          Prns: { SectionStatus: 'Completed' },
-          BusinessPlan: { SectionStatus: 'Completed' },
-          SamplingPlan: { SectionStatus: 'Completed' }
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
         })
       )
 
@@ -303,7 +431,7 @@ describe('#taskListGetController', () => {
 
     test('business plan row has link when PRNs complete (unlocked)', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Prns: { SectionStatus: 'Completed' } })
+        makeApplication({ prns: { sectionStatus: 'Completed' } })
       )
 
       const { result } = await server.inject({
@@ -342,7 +470,7 @@ describe('#taskListGetController', () => {
 
     test('renders year and site metadata', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ Year: 2026, SiteId: 'site-123' })
+        makeApplication({ year: 2026, siteId: 'site-123' })
       )
 
       const { result } = await server.inject({
@@ -382,6 +510,117 @@ describe('#taskListGetController', () => {
 
       expect(result).toContain('data-testid="back-link"')
       expect(result).toContain('href="/operator-accreditation"')
+    })
+
+    test('exporter: renders 5 task rows', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="task-prns"')
+      expect(result).toContain('data-testid="task-business-plan"')
+      expect(result).toContain('data-testid="task-sampling-plan"')
+      expect(result).toContain('data-testid="task-overseas-sites"')
+      expect(result).toContain('data-testid="task-bes-evidence"')
+    })
+
+    test('exporter: heading contains PERNs', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Accredit to issue PERNs: UK')
+    })
+
+    test('exporter: all 5 sections complete shows Continue button', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'Completed' },
+          besEvidence: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="continue-button"')
+    })
+
+    test('exporter: 3 sections complete does not show Continue button', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="continue-button"')
+    })
+
+    test('exporter: does not show site metadata row', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          isExporter: true,
+          siteId: null,
+          materialType: 'Plastic',
+          overseasSites: { sectionStatus: 'NotStarted' },
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="metadata-site"')
     })
 
     test('returns 200 in Welsh locale', async () => {
