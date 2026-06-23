@@ -36,7 +36,14 @@ export function stubLoginGetController(request, h) {
       config.get('auth.defraId.clientId')
     )
 
-  return h.view('auth/stub/login', { type, users, defraIdConfigured })
+  const entraIdConfigured =
+    type === 'regulator' &&
+    !!(
+      config.get('auth.azureEntraId.clientId') &&
+      config.get('auth.azureEntraId.tenantId')
+    )
+
+  return h.view('auth/stub/login', { type, users, defraIdConfigured, entraIdConfigured })
 }
 
 export async function stubLoginPostController(request, h) {
