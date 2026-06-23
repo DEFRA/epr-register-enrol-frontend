@@ -502,6 +502,9 @@
       "uploadLink": "Upload evidence",
       "evidenceUploaded": "Uploaded",
       "evidenceNotUploaded": "Not uploaded",
+      "notRequiredEu": "Not required for EU",
+      "notRequiredOecd": "Not required for OECD",
+      "incompleteEvidence": "All non-EU, non-OECD sites must have evidence uploaded before continuing.",
       "continueButton": "Continue",
       "table": {
         "siteName": "Site name",

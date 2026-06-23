@@ -11,6 +11,7 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
+import { besEvidenceRequired, evidenceStatus } from './controller.js'
 
 const APPLICATION_ID = 'app-uel-001'
 
@@ -58,6 +59,62 @@ function makeApplication(overrides = {}) {
     ...overrides
   }
 }
+
+const t = (key) => key.split('.').pop()
+
+describe('#besEvidenceRequired', () => {
+  test('returns true for non-EU non-OECD site', () => {
+    expect(besEvidenceRequired({ isEu: false, isOecd: false })).toBe(true)
+  })
+
+  test('returns false for EU site', () => {
+    expect(besEvidenceRequired({ isEu: true, isOecd: false })).toBe(false)
+  })
+
+  test('returns false for OECD site', () => {
+    expect(besEvidenceRequired({ isEu: false, isOecd: true })).toBe(false)
+  })
+
+  test('returns false for EU+OECD site', () => {
+    expect(besEvidenceRequired({ isEu: true, isOecd: true })).toBe(false)
+  })
+})
+
+describe('#evidenceStatus', () => {
+  test('returns Not required for EU when isEu', () => {
+    const result = evidenceStatus({ isEu: true, isOecd: true }, t)
+    expect(result.text).toBe('notRequiredEu')
+    expect(result.tagClass).toBe('govuk-tag--blue')
+  })
+
+  test('returns Not required for OECD when isOecd but not isEu', () => {
+    const result = evidenceStatus({ isEu: false, isOecd: true }, t)
+    expect(result.text).toBe('notRequiredOecd')
+    expect(result.tagClass).toBe('govuk-tag--blue')
+  })
+
+  test('returns Uploaded when non-EU non-OECD with evidence', () => {
+    const result = evidenceStatus(
+      {
+        isEu: false,
+        isOecd: false,
+        besEvidence: { besEvidenceUploads: [{ fileId: 'f1' }] }
+      },
+      t
+    )
+    expect(result.text).toBe('evidenceUploaded')
+    expect(result.tagClass).toBe('govuk-tag--green')
+  })
+
+  test('returns Not uploaded when non-EU non-OECD without evidence', () => {
+    const result = evidenceStatus(
+      { isEu: false, isOecd: false, besEvidence: { besEvidenceUploads: [] } },
+      t
+    )
+    expect(result.text).toBe('evidenceNotUploaded')
+    expect(result.tagClass).toBe('govuk-tag--grey')
+  })
+})
 
 describe('#uploadEvidenceListController', () => {
   let server
@@ -117,7 +174,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('Site Beta')
     })
 
-    test('shows uploaded evidence status for site with evidence', async () => {
+    test('shows Not required for EU status for EU site', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -127,10 +184,10 @@ describe('#uploadEvidenceListController', () => {
       })
 
       expect(result).toContain('data-testid="evidence-status-900001"')
-      expect(result).toContain('Uploaded')
+      expect(result).toContain('Not required for EU')
     })
 
-    test('shows not-uploaded evidence status for site without evidence', async () => {
+    test('shows not-uploaded evidence status for non-EU non-OECD site', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -143,7 +200,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('Not uploaded')
     })
 
-    test('renders upload links for each site', async () => {
+    test('EU site has no upload link', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -152,10 +209,21 @@ describe('#uploadEvidenceListController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="upload-link-900001"')
+      expect(result).not.toContain('data-testid="upload-link-900001"')
+    })
+
+    test('non-EU non-OECD site has upload link', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
       expect(result).toContain('data-testid="upload-link-900002"')
       expect(result).toContain(
-        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/900001`
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/900002`
       )
     })
 
@@ -272,8 +340,22 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('patches BES evidence section as Completed and redirects to task list', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+    test('patches BES evidence section as Completed when all required sites have evidence', async () => {
+      const allComplete = makeApplication({
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [
+            SITE_WITH_EVIDENCE,
+            {
+              ...SITE_WITHOUT_EVIDENCE,
+              besEvidence: {
+                besEvidenceUploads: [{ fileId: 'f1', filename: 'ev.pdf' }]
+              }
+            }
+          ]
+        }
+      })
+      vi.spyOn(apiClient, 'get').mockResolvedValue(allComplete)
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
@@ -293,8 +375,49 @@ describe('#uploadEvidenceListController', () => {
       )
     })
 
-    test('returns 500 service-problem page when PATCH fails with server error', async () => {
+    test('returns 400 when non-EU non-OECD site has no evidence', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {}
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('must have evidence uploaded')
+    })
+
+    test('allows complete when only EU/OECD sites exist (no evidence needed)', async () => {
+      const euOnly = makeApplication({
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [SITE_WITH_EVIDENCE]
+        }
+      })
+      vi.spyOn(apiClient, 'get').mockResolvedValue(euOnly)
+      vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {}
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('returns 500 service-problem page when PATCH fails with server error', async () => {
+      const allComplete = makeApplication({
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [SITE_WITH_EVIDENCE]
+        }
+      })
+      vi.spyOn(apiClient, 'get').mockResolvedValue(allComplete)
       const err = Object.assign(new Error('patch failed'), { status: 500 })
       vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
 

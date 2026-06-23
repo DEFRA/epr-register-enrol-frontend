@@ -494,6 +494,9 @@
       "uploadLink": "[Welsh] Upload evidence",
       "evidenceUploaded": "[Welsh] Uploaded",
       "evidenceNotUploaded": "[Welsh] Not uploaded",
+      "notRequiredEu": "[Welsh] Not required for EU",
+      "notRequiredOecd": "[Welsh] Not required for OECD",
+      "incompleteEvidence": "[Welsh] All non-EU, non-OECD sites must have evidence uploaded before continuing.",
       "continueButton": "[Welsh] Continue",
       "table": {
         "siteName": "[Welsh] Site name",

@@ -35,17 +35,15 @@
                 <td class="govuk-table__cell">{{ site.siteName }}</td>
                 <td class="govuk-table__cell">{{ site.country }}</td>
                 <td class="govuk-table__cell" data-testid="evidence-status-{{ site.siteId }}">
-                  {% if site.hasEvidence %}
-                    <strong class="govuk-tag govuk-tag--green">{{ t('pages.uploadEvidenceList.evidenceUploaded') }}</strong>
-                  {% else %}
-                    <strong class="govuk-tag govuk-tag--grey">{{ t('pages.uploadEvidenceList.evidenceNotUploaded') }}</strong>
-                  {% endif %}
+                  <strong class="govuk-tag {{ site.evidenceStatusClass }}">{{ site.evidenceStatusText }}</strong>
                 </td>
-                <td class="govuk-table__cell">
-                  <a href="{{ site.uploadUrl }}" class="govuk-link" data-testid="upload-link-{{ site.siteId }}">
-                    {{ t('pages.uploadEvidenceList.uploadLink') }}
-                    <span class="govuk-visually-hidden"> for {{ site.siteName }}</span>
-                  </a>
+                <td class="govuk-table__cell" data-testid="action-{{ site.siteId }}">
+                  {% if site.uploadUrl %}
+                    <a href="{{ site.uploadUrl }}" class="govuk-link" data-testid="upload-link-{{ site.siteId }}">
+                      {{ t('pages.uploadEvidenceList.uploadLink') }}
+                      <span class="govuk-visually-hidden"> for {{ site.siteName }}</span>
+                    </a>
+                  {% endif %}
                 </td>
               </tr>
             {% endfor %}
