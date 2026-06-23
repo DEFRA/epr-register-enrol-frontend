@@ -452,7 +452,7 @@ export const STUB_ORG_MODELS = {
     companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
     registrations: [
       {
-        siteId: 'site001',
+        registrationId: 'REG001',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
         siteAddress: {
@@ -471,7 +471,7 @@ export const STUB_ORG_MODELS = {
     companyDetails: { name: 'Delta Green Recycling Co' },
     registrations: [
       {
-        siteId: 'site002',
+        registrationId: 'REG002',
         material: 'glass',
         wasteProcessingType: 'reprocessor',
         siteAddress: {

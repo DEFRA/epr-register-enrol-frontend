@@ -54,7 +54,7 @@ export const router = {
           path: '/api/stub/upload/{fileUploadId}',
           options: {
             auth: false,
-            plugins: { crumb: { skip: true } },
+            plugins: { crumb: false },
             payload: { output: 'data', parse: false }
           },
           handler(request, h) {
