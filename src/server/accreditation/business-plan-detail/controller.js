@@ -17,7 +17,7 @@ export const DETAIL_FIELDS = [
 
 const MAX_CHARS = 500
 
-export function validateDetailFields(payload, t) {
+export function validateDetailFields(payload, t, application) {
   const errors = {}
 
   for (const field of DETAIL_FIELDS) {
@@ -30,22 +30,40 @@ export function validateDetailFields(payload, t) {
           label
         )
       }
+    } else if (application && !value.trim()) {
+      const category = DETAIL_FIELD_TO_CATEGORY[field]
+      const item = findBpItem(application.businessPlan, category)
+      if ((item.percentSpent ?? 0) > 0) {
+        errors[field] = {
+          text: t('pages.businessPlanDetail.validation.requiredWhenPercent')
+        }
+      }
     }
   }
 
   return errors
 }
 
-export function buildTextareaInputs(payload, errors, t) {
-  return DETAIL_FIELDS.map((field) => ({
-    id: field,
-    name: field,
-    value: payload[field] ?? '',
-    label: `${t(`pages.businessPlanDetail.fields.${field}`)} ${t('pages.businessPlanDetail.optional')}`,
-    hint: t('pages.businessPlanDetail.characterCountHint'),
-    maxlength: MAX_CHARS,
-    errorMessage: errors[field] ? { text: errors[field].text } : undefined
-  }))
+export function buildTextareaInputs(payload, errors, t, application) {
+  return DETAIL_FIELDS.map((field) => {
+    const category = DETAIL_FIELD_TO_CATEGORY[field]
+    const item = application
+      ? findBpItem(application.businessPlan, category)
+      : {}
+    const isRequired = (item.percentSpent ?? 0) > 0
+    const label = isRequired
+      ? t(`pages.businessPlanDetail.fields.${field}`)
+      : `${t(`pages.businessPlanDetail.fields.${field}`)} ${t('pages.businessPlanDetail.optional')}`
+    return {
+      id: field,
+      name: field,
+      value: payload[field] ?? '',
+      label,
+      hint: t('pages.businessPlanDetail.characterCountHint'),
+      maxlength: MAX_CHARS,
+      errorMessage: errors[field] ? { text: errors[field].text } : undefined
+    }
+  })
 }
 
 function taskListUrl(applicationId) {
@@ -64,14 +82,14 @@ function renderPage(h, viewData) {
   return h.view('accreditation/business-plan-detail/index', viewData)
 }
 
-function buildViewData(t, applicationId, payload, errors) {
+function buildViewData(t, applicationId, payload, errors, application) {
   return {
     pageTitle: t('pages.businessPlanDetail.title'),
     heading: t('pages.businessPlanDetail.heading'),
     intro: t('pages.businessPlanDetail.intro'),
     backLink: businessPlanUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
-    textareaInputs: buildTextareaInputs(payload, errors, t),
+    textareaInputs: buildTextareaInputs(payload, errors, t, application),
     errors
   }
 }
@@ -114,7 +132,13 @@ export const businessPlanDetailGetController = {
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, payloadFromApplication(application), {})
+      buildViewData(
+        t,
+        applicationId,
+        payloadFromApplication(application),
+        {},
+        application
+      )
     )
   }
 }
@@ -130,11 +154,28 @@ export const businessPlanDetailPostController = {
       request.payload
 
     const isSaveAndComeLater = submitAction === 'saveAndComeLater'
-    const errors = validateDetailFields(fieldPayload, t)
+
+    let application
+    if (!isSaveAndComeLater) {
+      try {
+        application = await accreditationApiService.getApplication(
+          organisationId,
+          applicationId
+        )
+      } catch {
+        // If fetch fails, skip percentage-based validation
+      }
+    }
+
+    const errors = validateDetailFields(
+      fieldPayload,
+      t,
+      isSaveAndComeLater ? null : application
+    )
 
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, errors)
+        ...buildViewData(t, applicationId, fieldPayload, errors, application)
       }).code(400)
     }
 
@@ -164,7 +205,7 @@ export const businessPlanDetailPostController = {
           .code(500)
       }
       return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, {}),
+        ...buildViewData(t, applicationId, fieldPayload, {}, application),
         error: t('pages.businessPlanDetail.validation.saveError')
       }).code(400)
     }

@@ -17,14 +17,49 @@ function renderPage(h, viewData) {
   )
 }
 
+export function besEvidenceRequired(site) {
+  return !site.isEu && !site.isOecd
+}
+
+export function evidenceStatus(site, t) {
+  if (site.isEu) {
+    return {
+      text: t('pages.uploadEvidenceList.notRequiredEu'),
+      tagClass: 'govuk-tag--blue'
+    }
+  }
+  if (site.isOecd) {
+    return {
+      text: t('pages.uploadEvidenceList.notRequiredOecd'),
+      tagClass: 'govuk-tag--blue'
+    }
+  }
+  if ((site.besEvidence?.besEvidenceUploads?.length ?? 0) > 0) {
+    return {
+      text: t('pages.uploadEvidenceList.evidenceUploaded'),
+      tagClass: 'govuk-tag--green'
+    }
+  }
+  return {
+    text: t('pages.uploadEvidenceList.evidenceNotUploaded'),
+    tagClass: 'govuk-tag--grey'
+  }
+}
+
 function mapSites(t, applicationId, rawSites) {
-  return (rawSites ?? []).map((s) => ({
-    siteId: s.siteId,
-    siteName: s.siteName ?? '',
-    country: s.country ?? '',
-    hasEvidence: (s.besEvidence?.besEvidenceUploads?.length ?? 0) > 0,
-    uploadUrl: uploadUrl(applicationId, s.siteId)
-  }))
+  return (rawSites ?? []).map((s) => {
+    const required = besEvidenceRequired(s)
+    const status = evidenceStatus(s, t)
+    return {
+      siteId: s.siteId,
+      siteName: s.siteName ?? '',
+      country: s.country ?? '',
+      evidenceRequired: required,
+      evidenceStatusText: status.text,
+      evidenceStatusClass: status.tagClass,
+      uploadUrl: required ? uploadUrl(applicationId, s.siteId) : null
+    }
+  })
 }
 
 function buildViewData(t, applicationId, sites, error) {
@@ -107,6 +142,23 @@ export const uploadEvidenceListPostController = {
       (s) => s.selected !== false
     )
     const sites = mapSites(t, applicationId, selectedSites)
+
+    const incomplete = selectedSites.some(
+      (s) =>
+        besEvidenceRequired(s) &&
+        (s.besEvidence?.besEvidenceUploads?.length ?? 0) === 0
+    )
+    if (incomplete) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          sites,
+          t('pages.uploadEvidenceList.incompleteEvidence')
+        )
+      ).code(400)
+    }
 
     try {
       await accreditationApiService.patchBesEvidenceSection(
