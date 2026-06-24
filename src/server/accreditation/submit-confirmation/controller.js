@@ -17,6 +17,9 @@ export const submitConfirmationGetController = {
     const accreditationReference = request.yar.get(
       ACCREDITATION_SESSION_KEYS.accreditationReference
     )
+    const caseManagementReference = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.caseManagementReference
+    )
 
     if (!accreditationReference) {
       return h.redirect(taskListUrl(applicationId))
@@ -44,10 +47,12 @@ export const submitConfirmationGetController = {
       panelHeading: t('pages.submitConfirmation.panelHeading'),
       panelBodyPrefix: t('pages.submitConfirmation.panelBodyPrefix'),
       panelBodySuffix: t('pages.submitConfirmation.panelBodySuffix'),
+      caseReferenceLabel: t('pages.submitConfirmation.caseReferenceLabel'),
       paymentText: t('pages.submitConfirmation.paymentText'),
       viewInvoice: t('pages.submitConfirmation.viewPaymentDetails'),
       returnHome: t('pages.submitConfirmation.returnHome'),
       accreditationReference,
+      caseManagementReference,
       materialDisplay,
       applicationId
     })

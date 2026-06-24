@@ -317,6 +317,7 @@
       "panelHeading": "[Welsh] Application submitted",
       "panelBodyPrefix": "[Welsh] Your application reference for",
       "panelBodySuffix": "[Welsh] is",
+      "caseReferenceLabel": "[Welsh] Your case reference is",
       "paymentText": "[Welsh] Now pay the application charge. The regulator will only review your application after you've paid.",
       "viewPaymentDetails": "[Welsh] View payment details",
       "returnHome": "[Welsh] Return to home page"
