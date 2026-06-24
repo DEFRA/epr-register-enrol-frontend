@@ -94,7 +94,8 @@ services:
       SQS_SCAN_RESULTS_CALLBACK: http://localhost:4566/000000000000/cdp-uploader-scan-results-callback.fifo
       SQS_DOWNLOAD_REQUESTS: http://localhost:4566/000000000000/cdp-uploader-download-requests
       SQS_MOCK_CLAMAV: http://localhost:4566/000000000000/mock-clamav
-      CONSUMER_BUCKETS: epr-register-enrol-file-uploads
+      CONSUMER_BUCKETS: epr-register-enrol-file-uploads,epr-register-enrol-sampling-plans,epr-register-enrol-bes-evidence
+
   ################################################################################
   #
   # Add the services you want to test below.
@@ -118,6 +119,7 @@ services:
         condition: service_healthy
     links:
       - 'floci:floci'
+
     ports:
       - 3000:3000
     healthcheck:
@@ -130,9 +132,20 @@ services:
     image: defradigital/epr-register-enrol-backend:${EPR_REGISTER_ENROL_BACKEND:-latest}
     environment:
       - PORT=8080
+    env_file:
+      - ./docker/config/defaults.env
+      - ./docker/config/operator-be.env
     depends_on:
       redis:
         condition: service_healthy
+      floci:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      mongodb-init:
+        condition: service_completed_successfully
+      cdp-uploader:
+        condition: service_started
     ports:
       - 8080:8080
     healthcheck:
