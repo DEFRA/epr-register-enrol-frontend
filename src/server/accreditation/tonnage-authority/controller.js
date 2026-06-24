@@ -227,7 +227,7 @@ export const tonnageAuthorityPostController = {
         await accreditationApiService.patchTonnage(
           organisationId,
           applicationId,
-          { signatories: updatedAuthorisers }
+          { authorisers: updatedAuthorisers }
         )
       } catch (err) {
         request.server.logger.error(
@@ -291,7 +291,7 @@ export const tonnageAuthorityPostController = {
         organisationId,
         applicationId,
         {
-          signatories: authorisersToSave
+          authorisers: authorisersToSave
         }
       )
     } catch (err) {
