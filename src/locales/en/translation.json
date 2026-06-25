@@ -326,6 +326,7 @@
       "panelHeading": "Application submitted",
       "panelBodyPrefix": "Your application reference for",
       "panelBodySuffix": "is",
+      "caseReferenceLabel": "Your case reference is",
       "paymentText": "Now pay the application charge. The regulator will only review your application after you've paid.",
       "viewPaymentDetails": "View payment details",
       "returnHome": "Return to home page"
