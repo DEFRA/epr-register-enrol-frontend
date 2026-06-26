@@ -1,8 +1,6 @@
 name: Check Pull Request
 
 on:
-  schedule:
-    - cron: '0 7 * * 1'
   pull_request:
     branches:
       - main
@@ -27,6 +25,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+
+      - name: Security audit
+        run: npm run security-audit
+
       - run: |
           npm ci
           npm run build:frontend
@@ -34,18 +36,61 @@ jobs:
           npm run lint
           npm test
 
-      - name: Security audit
-        run: npm run security-audit
-
       - name: Test Docker Image Build
         run: |
           set +e
-          docker build --no-cache --tag cdp-node-frontend-template .
+          docker build --no-cache --tag epr-register-enrol-frontend .
           exit $?
 
-#      - name: SonarCloud Scan
-#        if: github.actor != 'dependabot[bot]'
-#        uses: SonarSource/sonarqube-scan-action@v5.3.1 #  (or check latest version on https://github.com/marketplace/actions/official-sonarqube-scan)
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  test-e2e:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check for matching e2e test branch
+        id: e2e-branch
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if git ls-remote --heads https://github.com/DEFRA/epr-register-enrol-fe-tests.git "$BRANCH" | grep -q .; then
+            echo "ref=$BRANCH" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build frontend docker image
+        run: docker build -t defradigital/epr-register-enrol-frontend:${{ github.sha }} .
+
+      - name: Check for matching backend branch
+        id: be-branch
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if git ls-remote --heads https://github.com/DEFRA/epr-register-enrol-backend.git "$BRANCH" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout and build matching backend
+        if: steps.be-branch.outputs.exists == 'true'
+        id: build-be
+        run: |
+          git clone --branch ${{ github.head_ref }} --depth 1 https://github.com/DEFRA/epr-register-enrol-backend.git _be
+          cd _be
+          SHA=$(git rev-parse --short HEAD)
+          docker build -t defradigital/epr-register-enrol-backend:$SHA .
+          echo "tag=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Run e2e tests on ${{ steps.e2e-branch.outputs.ref }}
+        uses: DEFRA/epr-register-enrol-fe-tests/run-journey-tests@main
+        with:
+          management-fe: ${{ github.sha }}
+          management-be: ${{ steps.build-be.outputs.tag }}
+          branch: ${{ steps.e2e-branch.outputs.ref }}
+
+      # - name: SonarCloud Scan
+      #   if: github.actor != 'dependabot[bot]'
+      #   uses: SonarSource/sonarqube-scan-action@v5.3.1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

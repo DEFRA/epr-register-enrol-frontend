@@ -1,107 +1,158 @@
+################################################################################
+# Docker Compose file for starting up the service for testing in GitHub workflow
+# This template provides comparable infrastructure to the real environment.
+#   - mongodb
+#   - redis
+#   - localstack (s3, sqs, sns)
+#
+# Both mongo and localstack have init scripts included for setting up resources
+# on startup. These scripts are in docker/scripts.
+#
+# It also includes a selenium-chrome container for running the browser headless.
+#
+# The services being tested can either be started up here using the latest
+# builds from dockerhub.
+# In the example each service has a .env config file in docker/config/
+# Services can reference each other by their container names.
+# e.g. http://cdp-example-node-backend:3001/
+#
+################################################################################
 services:
-  localstack:
-    image: localstack/localstack:3.0.2
+  ################################################################################
+  # Headless browser, used by the test suite to actually run the tests against the
+  # containers.
+  selenium-chrome:
+    image: selenium/standalone-chrome:123.0
+    platform: linux/amd64
     ports:
-      - '4566:4566' # LocalStack Gateway
-      - '4510-4559:4510-4559' # external services port range
-    env_file:
-      - 'compose/aws.env'
-    environment:
-      DEBUG: ${DEBUG:-1}
-      LS_LOG: WARN # Localstack DEBUG Level
-      SERVICES: s3,sqs,sns,firehose
-      LOCALSTACK_HOST: 127.0.0.1
+      - 4444:4444
+
+  ################################################################################
+  mongodb:
+    image: mongo:6
     volumes:
-      - '${TMPDIR:-/tmp}/localstack:/var/lib/localstack'
-      - ./compose/start-localstack.sh:/etc/localstack/init/ready.d/start-localstack.sh
+      - ./docker/scripts/mongodb:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ['CMD', 'curl', 'localhost:4566']
+      test: ['CMD', 'mongosh', '--eval', 'db.hello().ok']
       interval: 5s
       start_period: 5s
       retries: 3
-    networks:
-      - cdp-tenant
-
-  redis:
-    image: redis:7.2.3-alpine3.18
-    ports:
-      - '6379:6379'
-    restart: always
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'PING']
-      interval: 5s
-      start_period: 2s
-      retries: 5
-    networks:
-      - cdp-tenant
-
-  mongodb:
-    image: mongo:6.0.13
-    networks:
-      - cdp-tenant
-    ports:
-      - '27017:27017'
-    healthcheck:
-      test: ['CMD', 'mongosh', '--eval', 'db.adminCommand("ping")']
-      interval: 5s
-      start_period: 5s
-      retries: 5
-
-    volumes:
-      - mongodb-data:/data
-    restart: always
 
   ################################################################################
 
-  epr-register-enrol-frontend:
-    build: ./
+  floci:
+    image: hectorvent/floci:1.5.5-aws
+    environment:
+      - FLOCI_DEFAULT_REGION=eu-west-2
+    env_file:
+      - ./docker/config/defaults.env
+
+    ################################################################################
+  redis:
+    image: redis:7
+    restart: always
+    command: redis-server --requirepass E2eTestRedisPassword
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'redis-cli',
+          '-a',
+          'E2eTestRedisPassword',
+          '--no-auth-warning',
+          'PING'
+        ]
+      interval: 5s
+      start_period: 2s
+      retries: 5
+
+  ################################################################################
+  cdp-uploader:
+    image: defradigital/cdp-uploader:${CDP_UPLOADER_VERSION:-latest}
     ports:
-      - '3000:3000'
-    links:
-      - 'localstack:localstack'
-      - 'redis:redis'
+      - '7337:7337'
     depends_on:
-      localstack:
+      floci:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+    links:
+      - 'floci:localstack'
+      - 'redis:redis'
     env_file:
-      - 'compose/aws.env'
+      - './docker/config/defaults.env'
     environment:
-      PORT: 3000
+      PORT: 7337
       NODE_ENV: development
       REDIS_HOST: redis
-      LOCALSTACK_ENDPOINT: http://localstack:4566
       USE_SINGLE_INSTANCE_CACHE: true
-      API_BASE_URL: http://epr-register-enrol-backend:8080
-    networks:
-      - cdp-tenant
+      MOCK_VIRUS_SCAN_ENABLED: true
+      MOCK_VIRUS_RESULT_DELAY: 3
+      SQS_ENDPOINT: http://floci:4566
+      S3_ENDPOINT: http://floci:4566
+      SQS_SCAN_RESULTS: http://localhost:4566/000000000000/cdp-clamav-results
+      SQS_SCAN_RESULTS_CALLBACK: http://localhost:4566/000000000000/cdp-uploader-scan-results-callback.fifo
+      SQS_DOWNLOAD_REQUESTS: http://localhost:4566/000000000000/cdp-uploader-download-requests
+      SQS_MOCK_CLAMAV: http://localhost:4566/000000000000/mock-clamav
+      CONSUMER_BUCKETS: epr-register-enrol-file-uploads,epr-register-enrol-sampling-plans,epr-register-enrol-bes-evidence
 
-  epr-register-enrol-backend:
-    image: defradigital/epr-register-enrol-backend:${EPR_REGISTER_ENROL_BACKEND:-latest}
-    platform: linux/amd64
+  ################################################################################
+  #
+  # Add the services you want to test below.
+  #
+  ################################################################################
+  epr-register-enrol-frontend:
+    image: defradigital/epr-register-enrol-frontend:${EPR_REGISTER_ENROL_FRONTEND:-latest}
+    env_file:
+      - ./docker/config/defaults.env
+      - ./docker/config/operator-fe.env
     environment:
-      - PORT=8080
-      - LOCALSTACK_ENDPOINT='http://localstack:4566'
-      - MONGO_URI='mongodb://mongodb:27017/'
-
+      - PORT=3000
+      - API_STUB_ENABLED=true
+      - CDP_UPLOADER_STUB_ENABLED=true
     depends_on:
+      epr-register-enrol-backend:
+        condition: service_started
       redis:
         condition: service_healthy
+      floci:
+        condition: service_healthy
+    links:
+      - 'floci:floci'
+
     ports:
-      - 8080:8080
+      - 3000:3000
     healthcheck:
-      test: ['CMD', 'curl', 'http://epr-register-enrol-backend:8080/health']
+      test: ['CMD', 'curl', 'http://localhost:3000/health']
       interval: 3s
       start_period: 2s
       retries: 3
-    networks:
-      - cdp-tenant
+  ################################################################################
+  epr-register-enrol-backend:
+    image: defradigital/epr-register-enrol-backend:${EPR_REGISTER_ENROL_BACKEND:-latest}
+    environment:
+      - PORT=8080
+    env_file:
+      - ./docker/config/defaults.env
+      - ./docker/config/operator-be.env
+    depends_on:
+      redis:
+        condition: service_healthy
+      floci:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
+      mongodb-init:
+        condition: service_completed_successfully
+      cdp-uploader:
+        condition: service_started
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ['CMD', 'curl', 'http://localhost:8080/health']
+      interval: 3s
+      start_period: 2s
+      retries: 3
 
-################################################################################
 volumes:
   mongodb-data:
-
-networks:
-  cdp-tenant:
-    driver: bridge
