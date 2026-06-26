@@ -206,11 +206,9 @@ export const businessPlanPostController = {
       }).code(400)
     }
 
-    const patchBody = {
-      items: BUSINESS_PLAN_FIELDS.map((field) => ({
-        category: PERCENT_FIELD_TO_CATEGORY[field],
-        percentSpent: values[field] ?? null
-      }))
+    const patchBody = { isPartialSave: true }
+    for (const field of BUSINESS_PLAN_FIELDS) {
+      patchBody[field] = values[field] ?? null
     }
 
     try {

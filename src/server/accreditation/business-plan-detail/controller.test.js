@@ -303,12 +303,7 @@ describe('#businessPlanDetailController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
         expect.objectContaining({
-          items: expect.arrayContaining([
-            expect.objectContaining({
-              category: 'newInfrastructure',
-              detailedDescription: 'Sorting lines investment'
-            })
-          ])
+          newInfrastructureDetail: 'Sorting lines investment'
         })
       )
     })
