@@ -157,16 +157,17 @@ export const businessPlanCyaPostController = {
     }
 
     const bp = application.businessPlan
-    const items = PERCENT_FIELDS.map((field) => {
+    const patchBody = {}
+    for (const field of PERCENT_FIELDS) {
       const category = PERCENT_FIELD_TO_CATEGORY[field]
       const item = findBpItem(bp, category)
-      return {
-        category,
-        percentSpent: item.percentSpent ?? null,
-        detailedDescription: item.detailedDescription ?? ''
-      }
-    })
-    const patchBody = { sectionStatus: 'Completed', items }
+      patchBody[field] = item.percentSpent ?? null
+    }
+    for (const field of DETAIL_FIELDS) {
+      const category = DETAIL_FIELD_TO_CATEGORY[field]
+      const item = findBpItem(bp, category)
+      patchBody[field] = item.detailedDescription ?? ''
+    }
 
     try {
       await accreditationApiService.patchBusinessPlan(

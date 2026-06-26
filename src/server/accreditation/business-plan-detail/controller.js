@@ -179,11 +179,9 @@ export const businessPlanDetailPostController = {
       }).code(400)
     }
 
-    const patchBody = {
-      items: DETAIL_FIELDS.map((field) => ({
-        category: DETAIL_FIELD_TO_CATEGORY[field],
-        detailedDescription: fieldPayload[field] ?? ''
-      }))
+    const patchBody = {}
+    for (const field of DETAIL_FIELDS) {
+      patchBody[field] = fieldPayload[field] ?? ''
     }
 
     try {
