@@ -15,7 +15,7 @@ function makeBpItems(percents = {}, details = {}) {
   }))
 }
 
-const STUB_ORG_DOCS = [
+export const STUB_ORG_DOCS = [
   {
     orgId: 50001,
     companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
@@ -238,7 +238,7 @@ const STUB_ORG_DOCS = [
           )
         },
         samplingPlan: {
-          sectionStatus: 'Started',
+          sectionStatus: 'Completed',
           files: [
             {
               fileId: 'file003',
@@ -310,7 +310,7 @@ const STUB_ORG_DOCS = [
         },
         businessPlan: { sectionStatus: 'NotStarted', items: [] },
         samplingPlan: {
-          sectionStatus: 'Started',
+          sectionStatus: 'Completed',
           files: [
             {
               fileId: 'file005',
@@ -440,8 +440,8 @@ const STUB_ORG_DOCS = [
 ]
 
 const STUB_ORGANISATIONS = [
-  { id: 50001, name: 'NEWDEV RECYCLING LIMITED' },
-  { id: 50002, name: 'Beta Recycling Co' }
+  { orgId: 50001, companyDetails: { name: 'NEWDEV RECYCLING LIMITED' } },
+  { orgId: 50002, companyDetails: { name: 'Beta Recycling Co' } }
 ]
 
 export const STUB_ORG_MODELS = {

@@ -1,5 +1,18 @@
 import { config } from '../../config/config.js'
-import { stubApiClient, STUB_ORG_MODELS } from './stub-api-client.js'
+import {
+  stubApiClient,
+  STUB_ORG_MODELS,
+  STUB_ORG_DOCS
+} from './stub-api-client.js'
+
+function overlayOrgName(items) {
+  return items.map((item) => {
+    const doc = STUB_ORG_DOCS.find(
+      (d) => String(d.orgId) === String(item.orgId)
+    )
+    return doc ? { ...item, companyName: doc.companyDetails?.name } : item
+  })
+}
 
 const BASE = '/api/v1/accreditation-applications'
 const STUB_BASE = '/api/v1/stub/accreditation-applications'
@@ -98,7 +111,9 @@ export const persistentStubApiClient = {
         })
         if (res.ok) {
           const data = await res.json()
-          if (Array.isArray(data) && data.length > 0) return data
+          if (Array.isArray(data) && data.length > 0) {
+            return overlayOrgName(data)
+          }
         }
       } catch (err) {
         console.warn(
