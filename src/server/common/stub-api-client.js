@@ -498,6 +498,24 @@ const SECTION_KEY_MAP = {
   'bes-evidence': 'besEvidence'
 }
 
+const BP_PERCENT_FIELD_CATEGORY = {
+  newInfrastructurePercent: 'newInfrastructure',
+  priceSupportPercent: 'priceSupport',
+  businessCollectionsPercent: 'businessCollections',
+  communicationsPercent: 'communications',
+  newMarketsPercent: 'newMarkets',
+  newUsesPercent: 'newUses'
+}
+
+const BP_DETAIL_FIELD_CATEGORY = {
+  newInfrastructureDetail: 'newInfrastructure',
+  priceSupportDetail: 'priceSupport',
+  businessCollectionsDetail: 'businessCollections',
+  communicationsDetail: 'communications',
+  newMarketsDetail: 'newMarkets',
+  newUsesDetail: 'newUses'
+}
+
 function findOrgDoc(orgId) {
   return STUB_ORG_DOCS.find((d) => String(d.orgId) === String(orgId)) ?? null
 }
@@ -736,6 +754,30 @@ export const stubApiClient = {
         item.businessPlan.items = mergeBpItems(
           item.businessPlan.items,
           body.items
+        )
+      }
+      const flatUpdates = {}
+      for (const [field, category] of Object.entries(
+        BP_PERCENT_FIELD_CATEGORY
+      )) {
+        if (body[field] !== undefined) {
+          flatUpdates[category] ??= { category }
+          flatUpdates[category].percentSpent = body[field]
+        }
+      }
+      for (const [field, category] of Object.entries(
+        BP_DETAIL_FIELD_CATEGORY
+      )) {
+        if (body[field] !== undefined) {
+          flatUpdates[category] ??= { category }
+          flatUpdates[category].detailedDescription = body[field]
+        }
+      }
+      if (Object.keys(flatUpdates).length > 0) {
+        if (!item.businessPlan.items) item.businessPlan.items = []
+        item.businessPlan.items = mergeBpItems(
+          item.businessPlan.items,
+          Object.values(flatUpdates)
         )
       }
       if (body.sectionStatus !== undefined) {
