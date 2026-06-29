@@ -126,6 +126,54 @@ describe('stubApiClient.patch — BES evidence', () => {
   })
 })
 
+describe('stubApiClient.patch — tonnage section', () => {
+  let stub
+
+  beforeEach(async () => {
+    stub = await freshStub()
+  })
+
+  const PATCH_URL = '/api/v1/accreditation-applications/50001/app001/tonnage'
+
+  test('patching authorisers persists them as prnIssuance.signatories', async () => {
+    const authorisers = [{ name: 'Alice', email: 'alice@example.com' }]
+    await stub.patch(PATCH_URL, { authorisers })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.signatories).toEqual(authorisers)
+  })
+
+  test('patching plannedTonnageBand persists it as prnIssuance.plannedIssuance', async () => {
+    await stub.patch(PATCH_URL, { plannedTonnageBand: 'UpTo1000' })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.plannedIssuance).toBe('UpTo1000')
+  })
+
+  test('subsequent GET returns updated signatories (normaliser picks them up)', async () => {
+    const authorisers = [
+      { name: 'Bob', email: 'bob@example.com' },
+      { name: 'Carol', email: 'carol@example.com' }
+    ]
+    await stub.patch(PATCH_URL, {
+      authorisers,
+      plannedTonnageBand: 'UpTo5000',
+      sectionStatus: 'InProgress'
+    })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.signatories).toEqual(authorisers)
+    expect(app.prnIssuance.plannedIssuance).toBe('UpTo5000')
+    expect(app.prnIssuance.sectionStatus).toBe('InProgress')
+  })
+})
+
 describe('stubApiClient.delete — BES evidence file', () => {
   let stub
 

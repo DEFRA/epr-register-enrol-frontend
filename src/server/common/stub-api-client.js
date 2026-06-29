@@ -741,6 +741,17 @@ export const stubApiClient = {
       if (body.sectionStatus !== undefined) {
         item.businessPlan.sectionStatus = body.sectionStatus
       }
+    } else if (section === 'tonnage') {
+      if (!item.prnIssuance) item.prnIssuance = {}
+      if (body.authorisers !== undefined) {
+        item.prnIssuance.signatories = body.authorisers
+      }
+      if (body.plannedTonnageBand !== undefined) {
+        item.prnIssuance.plannedIssuance = body.plannedTonnageBand
+      }
+      if (body.sectionStatus !== undefined) {
+        item.prnIssuance.sectionStatus = body.sectionStatus
+      }
     } else {
       const key = SECTION_KEY_MAP[section]
       if (key) Object.assign(item[key], body)
