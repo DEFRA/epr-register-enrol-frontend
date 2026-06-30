@@ -126,6 +126,139 @@ describe('stubApiClient.patch — BES evidence', () => {
   })
 })
 
+describe('stubApiClient.patch — business-plan flat fields', () => {
+  let stub
+
+  beforeEach(async () => {
+    stub = await freshStub()
+  })
+
+  const PATCH_URL =
+    '/api/v1/accreditation-applications/50002/app002/business-plan'
+  const GET_URL = '/api/v1/accreditation-applications/50002/app002'
+
+  test('flat percent fields are stored as items[].percentSpent', async () => {
+    await stub.patch(PATCH_URL, {
+      isPartialSave: true,
+      newInfrastructurePercent: 20,
+      priceSupportPercent: 15,
+      businessCollectionsPercent: 25,
+      communicationsPercent: 10,
+      newMarketsPercent: 15,
+      newUsesPercent: 15
+    })
+
+    const app = await stub.get(GET_URL)
+    const infra = app.businessPlan.items.find(
+      (i) => i.category === 'newInfrastructure'
+    )
+    expect(infra.percentSpent).toBe(20)
+    const comms = app.businessPlan.items.find(
+      (i) => i.category === 'communications'
+    )
+    expect(comms.percentSpent).toBe(10)
+  })
+
+  test('flat detail fields are stored as items[].detailedDescription', async () => {
+    await stub.patch(PATCH_URL, {
+      newInfrastructureDetail: 'Build new plant',
+      priceSupportDetail: 'Market support'
+    })
+
+    const app = await stub.get(GET_URL)
+    const infra = app.businessPlan.items.find(
+      (i) => i.category === 'newInfrastructure'
+    )
+    expect(infra.detailedDescription).toBe('Build new plant')
+  })
+
+  test('mixed percent + detail patch merges into same item', async () => {
+    await stub.patch(PATCH_URL, {
+      newInfrastructurePercent: 30,
+      newInfrastructureDetail: 'New facility'
+    })
+
+    const app = await stub.get(GET_URL)
+    const infra = app.businessPlan.items.find(
+      (i) => i.category === 'newInfrastructure'
+    )
+    expect(infra.percentSpent).toBe(30)
+    expect(infra.detailedDescription).toBe('New facility')
+  })
+
+  test('second patch merges without clobbering existing items', async () => {
+    await stub.patch(PATCH_URL, { newInfrastructurePercent: 40 })
+    await stub.patch(PATCH_URL, { priceSupportPercent: 60 })
+
+    const app = await stub.get(GET_URL)
+    const items = app.businessPlan.items
+    expect(
+      items.find((i) => i.category === 'newInfrastructure').percentSpent
+    ).toBe(40)
+    expect(items.find((i) => i.category === 'priceSupport').percentSpent).toBe(
+      60
+    )
+  })
+
+  test('body.items array path still works (no regression)', async () => {
+    await stub.patch(PATCH_URL, {
+      items: [{ category: 'newMarkets', percentSpent: 100 }]
+    })
+
+    const app = await stub.get(GET_URL)
+    const item = app.businessPlan.items.find((i) => i.category === 'newMarkets')
+    expect(item.percentSpent).toBe(100)
+  })
+})
+
+describe('stubApiClient.patch — tonnage section', () => {
+  let stub
+
+  beforeEach(async () => {
+    stub = await freshStub()
+  })
+
+  const PATCH_URL = '/api/v1/accreditation-applications/50001/app001/tonnage'
+
+  test('patching authorisers persists them as prnIssuance.signatories', async () => {
+    const authorisers = [{ name: 'Alice', email: 'alice@example.com' }]
+    await stub.patch(PATCH_URL, { authorisers })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.signatories).toEqual(authorisers)
+  })
+
+  test('patching plannedTonnageBand persists it as prnIssuance.plannedIssuance', async () => {
+    await stub.patch(PATCH_URL, { plannedTonnageBand: 'UpTo1000' })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.plannedIssuance).toBe('UpTo1000')
+  })
+
+  test('subsequent GET returns updated signatories (normaliser picks them up)', async () => {
+    const authorisers = [
+      { name: 'Bob', email: 'bob@example.com' },
+      { name: 'Carol', email: 'carol@example.com' }
+    ]
+    await stub.patch(PATCH_URL, {
+      authorisers,
+      plannedTonnageBand: 'UpTo5000',
+      sectionStatus: 'InProgress'
+    })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.signatories).toEqual(authorisers)
+    expect(app.prnIssuance.plannedIssuance).toBe('UpTo5000')
+    expect(app.prnIssuance.sectionStatus).toBe('InProgress')
+  })
+})
+
 describe('stubApiClient.delete — BES evidence file', () => {
   let stub
 
