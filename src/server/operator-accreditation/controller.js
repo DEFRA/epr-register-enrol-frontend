@@ -89,7 +89,7 @@ export const operatorAccreditationController = {
         )
       } catch (error) {
         request.server.logger.error(
-          `Error seeding accreditation application: ${error.message}`
+          `Error seeding accreditation application for org=${organisationId} registration=${registrationId} material=${materialType} year=${yearInt}: ${error.message} status=${error.status} response=${error.response}`
         )
         return errorView(t('pages.operatorAccreditation.seedError'))
       }
@@ -172,7 +172,7 @@ export const operatorAccreditationExporterController = {
         )
       } catch (error) {
         request.server.logger.error(
-          `Error seeding exporter accreditation application: ${error.message}`
+          `Error seeding exporter accreditation application for org=${organisationId} registration=${registrationId} material=${materialType} year=${yearInt}: ${error.message} status=${error.status} response=${error.response}`
         )
         return errorView(t('pages.operatorAccreditation.seedError'))
       }
