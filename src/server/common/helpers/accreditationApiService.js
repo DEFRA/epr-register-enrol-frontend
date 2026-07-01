@@ -11,6 +11,7 @@ function normaliseError(err) {
   const message = err.message ?? 'Unknown error'
   const normalised = new Error(message)
   normalised.status = status
+  normalised.response = err.response
   normalised.isApiError = true
   return normalised
 }
