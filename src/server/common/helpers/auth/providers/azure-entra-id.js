@@ -6,7 +6,6 @@ export function getAzureEntraIdConfig(config) {
   return {
     authUrl: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize`,
     tokenUrl: `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`,
-    profileUrl: 'https://graph.microsoft.com/v1.0/me',
     scopes: ['openid', 'profile', 'email'],
     clientId: config.get('auth.azureEntraId.clientId'),
     clientSecret: config.get('auth.azureEntraId.clientSecret'),

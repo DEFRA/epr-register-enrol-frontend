@@ -74,22 +74,20 @@ export async function regulatorCallbackController(request, h) {
     return h.redirect('/auth/regulator/login')
   }
 
-  const { access_token: accessToken } = await tokenResponse.json()
+  const { id_token: idToken } = await tokenResponse.json()
 
-  const profileResponse = await fetch(provider.profileUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  })
-
-  if (!profileResponse.ok) {
+  if (!idToken) {
     return h.redirect('/auth/regulator/login')
   }
 
-  const profile = await profileResponse.json()
+  const payload = JSON.parse(
+    Buffer.from(idToken.split('.')[1], 'base64url').toString()
+  )
 
   const user = {
-    id: profile.id,
-    email: profile.mail || profile.userPrincipalName,
-    name: profile.displayName,
+    id: payload.oid,
+    email: payload.email || payload.preferred_username,
+    name: payload.name,
     userType: 'regulator'
   }
 
