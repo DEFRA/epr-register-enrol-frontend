@@ -39,7 +39,10 @@ export function buildLandingViewModel(
       `pages.operatorAccreditation.statuses.${application.applicationStatus}`
     ),
     statusTagClass: config.tagClass,
-    taskListUrl: `/accreditation/task-list/${application.applicationId}`
+    taskListUrl: `/accreditation/task-list/${application.applicationId}`,
+    // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
+    // submitted, or no linked work item) and 'sent' both render nothing extra.
+    notificationFailedBanner: application.notificationStatus === 'failed'
   }
 }
 

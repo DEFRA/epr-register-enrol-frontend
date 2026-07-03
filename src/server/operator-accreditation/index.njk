@@ -49,6 +49,16 @@
               </strong>
             </dd>
           </div>
+          {% if notificationFailedBanner %}
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.notificationStatusLabel') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="notification-status">
+                <strong class="govuk-tag govuk-tag--red" data-testid="notification-status-tag">
+                  {{ t('pages.operatorAccreditation.notificationFailedLabel') }}
+                </strong>
+              </dd>
+            </div>
+          {% endif %}
         </dl>
 
         <a href="{{ taskListUrl }}" role="button" draggable="false"
