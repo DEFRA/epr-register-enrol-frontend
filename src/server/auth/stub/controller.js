@@ -16,7 +16,18 @@ export const STUB_USERS = {
       name: 'Stub Operator',
       email: 'operator@stub.example',
       userType: 'operator',
-      roles: ['user']
+      roles: ['user'],
+      // Defra ID relationship shape: `relationshipId:organisationId:organisationName`.
+      // Covers the organisations present in the stub API data (50001–50006).
+      currentRelationshipId: 'stub-rel-50001',
+      relationships: [
+        'stub-rel-50001:50001:NEWDEV RECYCLING LIMITED',
+        'stub-rel-50002:50002:Beta Recycling Co',
+        'stub-rel-50003:50003:Stub Org 50003',
+        'stub-rel-50004:50004:Stub Org 50004',
+        'stub-rel-50005:50005:Stub Org 50005',
+        'stub-rel-50006:50006:Stub Org 50006'
+      ]
     }
   ]
 }
