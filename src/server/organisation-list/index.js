@@ -1,3 +1,4 @@
+import { requireRegulator } from '../common/helpers/auth/auth-scopes.js'
 import { organisationListController } from './controller.js'
 
 /**
@@ -13,11 +14,13 @@ export const organisationList = {
         {
           method: 'GET',
           path: '/organisation-list',
+          options: requireRegulator,
           ...organisationListController
         },
         {
           method: 'GET',
           path: '/{language}/organisation-list',
+          options: requireRegulator,
           ...organisationListController
         }
       ])

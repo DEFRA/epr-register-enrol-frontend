@@ -1,3 +1,4 @@
+import { requireRegulator } from '../common/helpers/auth/auth-scopes.js'
 import { worklistItemsController } from './controller.js'
 
 /**
@@ -13,11 +14,13 @@ export const worklistItems = {
         {
           method: 'GET',
           path: '/worklist-items',
+          options: requireRegulator,
           ...worklistItemsController
         },
         {
           method: 'GET',
           path: '/{language}/worklist-items',
+          options: requireRegulator,
           ...worklistItemsController
         }
       ])
