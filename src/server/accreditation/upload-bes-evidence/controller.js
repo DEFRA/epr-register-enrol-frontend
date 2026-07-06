@@ -266,12 +266,13 @@ export const uploadBesEvidencePostController = {
         method: 'POST',
         body: uploadedFile.payload,
         duplex: 'half',
+        redirect: 'manual',
         headers: {
           'x-filename': filename,
           'Content-Type': contentType
         }
       })
-      if (!proxyResponse.ok) {
+      if (!proxyResponse.ok && proxyResponse.type !== 'opaqueredirect') {
         throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
       }
     } catch (err) {

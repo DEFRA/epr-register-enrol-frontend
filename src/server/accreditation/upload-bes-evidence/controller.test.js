@@ -398,6 +398,47 @@ describe('#uploadBesEvidenceController', () => {
       )
     })
 
+    test('CDP redirect response (opaqueredirect) is treated as a successful upload', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 302,
+        type: 'opaqueredirect'
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload()
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`
+      )
+    })
+
+    test('genuine CDP proxy failure still returns 500 with uploadError', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        type: 'basic'
+      })
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload()
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('unable to upload the file')
+    })
+
     test('initUpload failure returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       vi.mocked(initUpload).mockRejectedValueOnce(new Error('CDP unavailable'))
