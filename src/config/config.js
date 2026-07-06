@@ -307,6 +307,14 @@ export const config = convict({
       env: 'AUTH_CALLBACK_BASE_URL'
     }
   },
+  fileUpload: {
+    s3Bucket: {
+      doc: 'CDP-provisioned S3 bucket that uploaded files are stored in',
+      format: String,
+      default: 'epr-register-enrol-file-uploads',
+      env: 'FILE_UPLOAD_S3_BUCKET'
+    }
+  },
   api: {
     stubEnabled: {
       doc: 'Use stub API client instead of real API (for local dev without a running backend)',

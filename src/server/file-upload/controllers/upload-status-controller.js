@@ -1,5 +1,6 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
+import { config } from '../../../config/config.js'
 import { FILE_UPLOAD_SESSION_KEY } from '../constants.js'
 import { fileUploadApiService } from '../helpers/file-upload-api-service.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
@@ -57,6 +58,7 @@ export const fileUploadStatusController = {
           Filename: fileInput.filename,
           ContentType: fileInput.contentType,
           S3Key: s3Key,
+          S3Bucket: fileInput.s3Bucket ?? config.get('fileUpload.s3Bucket'),
           ScanStatus: scanStatus
         })
       } catch (err) {

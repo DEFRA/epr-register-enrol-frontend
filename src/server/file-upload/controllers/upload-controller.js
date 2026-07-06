@@ -19,6 +19,7 @@ export const fileUploadFormGetController = {
       initiateUrl: '/api/v1/file-uploads/initiate',
       redirectUrl: `${appBaseUrl}/file-upload/upload-status`,
       s3Path: `file-uploads/${session.material}/${session.year}`,
+      s3Bucket: config.get('fileUpload.s3Bucket'),
       maxFileSize: 1024 * 1024 * 100,
       mimeTypes: [
         'application/pdf',
