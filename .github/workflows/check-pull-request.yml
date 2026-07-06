@@ -84,8 +84,8 @@ jobs:
       - name: Run e2e tests on ${{ steps.e2e-branch.outputs.ref }}
         uses: DEFRA/epr-register-enrol-fe-tests/run-journey-tests@main
         with:
-          management-fe: ${{ github.sha }}
-          management-be: ${{ steps.build-be.outputs.tag }}
+          epr-register-enrol-fe: ${{ github.sha }}
+          epr-register-enrol-be: ${{ steps.build-be.outputs.tag }}
           branch: ${{ steps.e2e-branch.outputs.ref }}
 
       # - name: SonarCloud Scan
