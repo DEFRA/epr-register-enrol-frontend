@@ -4,6 +4,7 @@ export async function initUpload({
   initiateUrl,
   redirectUrl,
   s3Path,
+  s3Bucket,
   mimeTypes,
   maxFileSize,
   metadata
@@ -14,6 +15,7 @@ export async function initUpload({
   return apiClient.post(initiateUrl, {
     redirectUrl,
     s3Path,
+    s3Bucket,
     mimeTypes,
     maxFileSize,
     metadata

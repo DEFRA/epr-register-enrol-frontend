@@ -24,6 +24,7 @@ describe('#initUpload', () => {
         '/api/v1/accreditation-applications/org1/app1/files/initiate',
       redirectUrl: '/accreditation/sampling-plan/app1/status',
       s3Path: 'accreditation/sampling-plan/app1',
+      s3Bucket: 'test-bucket',
       maxFileSize: 1024 * 1024 * 20,
       mimeTypes: ['application/pdf']
     })
@@ -34,6 +35,7 @@ describe('#initUpload', () => {
       {
         redirectUrl: '/accreditation/sampling-plan/app1/status',
         s3Path: 'accreditation/sampling-plan/app1',
+        s3Bucket: 'test-bucket',
         maxFileSize: 1024 * 1024 * 20,
         mimeTypes: ['application/pdf'],
         metadata: undefined

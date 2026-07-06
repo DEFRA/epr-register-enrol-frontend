@@ -241,9 +241,10 @@ export const uploadBesEvidencePostController = {
     let uploadDetail
     try {
       uploadDetail = await initUpload({
-        initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/initiate`,
+        initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/bes-evidence/initiate`,
         redirectUrl: `${config.get('auth.callbackBaseUrl')}/accreditation/upload-bes-evidence/${applicationId}/${siteId}/status`,
         s3Path: `accreditation/bes-evidence/${applicationId}/${siteId}`,
+        s3Bucket: config.get('fileUpload.s3Bucket'),
         metadata: { besEvidenceValidFromDate, besEvidenceExpiryDate },
         mimeTypes: ALLOWED_MIME_TYPES,
         maxFileSize: MAX_FILE_BYTES

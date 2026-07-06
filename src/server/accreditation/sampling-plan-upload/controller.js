@@ -190,6 +190,7 @@ export const samplingPlanUploadPostController = {
           initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/initiate`,
           redirectUrl: `${config.get('auth.callbackBaseUrl')}/accreditation/sampling-plan/${applicationId}/status`,
           s3Path: `accreditation/sampling-plan/${applicationId}`,
+          s3Bucket: config.get('fileUpload.s3Bucket'),
           mimeTypes: ALLOWED_MIME_TYPES,
           maxFileSize: MAX_FILE_BYTES
         })
