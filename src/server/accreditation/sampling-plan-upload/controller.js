@@ -3,6 +3,7 @@ import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
+import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
@@ -207,25 +208,12 @@ export const samplingPlanUploadPostController = {
       }
 
       try {
-        // cdp-uploader's /upload-and-scan responds with a redirect meant for an end-user's
-        // browser to follow to the app's own "redirect" page. This is a server-to-server
-        // proxy upload though, not a browser request, so that redirect must not be followed —
-        // it resolves against cdp-uploader's own host, not ours, and 404s there. A redirect
-        // response here means the upload itself was accepted; only a genuine non-2xx/3xx
-        // response is a real failure.
-        const proxyResponse = await fetch(uploadDetail.uploadUrl, {
-          method: 'POST',
-          body: uploadedFile.payload,
-          duplex: 'half',
-          redirect: 'manual',
-          headers: {
-            'x-filename': filename,
-            'Content-Type': contentType
-          }
+        await proxyUploadToCdp({
+          uploadUrl: uploadDetail.uploadUrl,
+          payload: uploadedFile.payload,
+          filename,
+          contentType
         })
-        if (!proxyResponse.ok && proxyResponse.type !== 'opaqueredirect') {
-          throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
-        }
       } catch (err) {
         request.server.logger.error(
           `Error proxying file for ${applicationId}: ${err.message}`
