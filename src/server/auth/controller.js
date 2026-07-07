@@ -7,6 +7,7 @@ import {
   getDefraIdConfig,
   getDefraIdEndpoints
 } from '../common/helpers/auth/providers/defra-id.js'
+import { verifyDefraIdToken } from '../common/helpers/auth/providers/defra-id-token.js'
 
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
@@ -152,6 +153,7 @@ export async function regulatorCallbackController(request, h) {
 export async function operatorCallbackController(request, h) {
   const { code, state } = request.query
   const storedState = request.yar.get('oauthState')
+  const storedNonce = request.yar.get('oauthNonce')
 
   if (!code || !state || state !== storedState) {
     return h.redirect('/auth/operator/login')
@@ -160,8 +162,14 @@ export async function operatorCallbackController(request, h) {
   request.yar.clear('oauthState')
   request.yar.clear('oauthNonce')
 
+  if (!storedNonce) {
+    return h.redirect('/auth/operator/login')
+  }
+
   const provider = getDefraIdConfig(config)
-  const { tokenUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
+  const { tokenUrl, jwksUri, issuer } = await getDefraIdEndpoints(
+    provider.discoveryUrl
+  )
 
   const tokenResponse = await fetch(tokenUrl, {
     method: 'POST',
@@ -186,20 +194,26 @@ export async function operatorCallbackController(request, h) {
     return h.redirect('/auth/operator/login')
   }
 
-  // Defra ID B2C returns all profile claims in the id_token JWT payload.
-  // We decode (not verify) the payload — the token was just received over TLS from the token endpoint.
-  const payload = JSON.parse(
-    Buffer.from(idToken.split('.')[1], 'base64url').toString()
-  )
+  let claims
+  try {
+    claims = await verifyDefraIdToken(idToken, {
+      jwksUri,
+      issuer,
+      audience: provider.clientId,
+      expectedNonce: storedNonce
+    })
+  } catch {
+    return h.redirect('/auth/operator/login')
+  }
 
   const user = {
-    id: payload.sub,
-    email: payload.email,
-    name: `${payload.firstName} ${payload.lastName}`.trim(),
-    contactId: payload.contactId,
-    currentRelationshipId: payload.currentRelationshipId,
-    relationships: payload.relationships ?? [],
-    roles: payload.roles ?? [],
+    id: claims.sub,
+    email: claims.email,
+    name: `${claims.firstName ?? ''} ${claims.lastName ?? ''}`.trim(),
+    contactId: claims.contactId,
+    currentRelationshipId: claims.currentRelationshipId,
+    relationships: claims.relationships ?? [],
+    roles: claims.roles ?? [],
     userType: 'operator'
   }
 

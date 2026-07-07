@@ -31,7 +31,9 @@ export async function getDefraIdEndpoints(discoveryUrl) {
   endpointCache = {
     authUrl: doc.authorization_endpoint,
     tokenUrl: doc.token_endpoint,
-    endSessionUrl: doc.end_session_endpoint
+    endSessionUrl: doc.end_session_endpoint,
+    jwksUri: doc.jwks_uri,
+    issuer: doc.issuer
   }
   return endpointCache
 }
