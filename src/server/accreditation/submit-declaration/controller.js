@@ -122,7 +122,7 @@ export const submitDeclarationPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error submitting application ${applicationId}: ${err.message}`
+        `Error submitting application ${applicationId}: ${err.message}${err.response ? ` - response: ${err.response}` : ''}`
       )
       if (!err.status || err.status >= 500) {
         return h
