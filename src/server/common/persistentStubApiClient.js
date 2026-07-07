@@ -70,18 +70,13 @@ function parseAppSegment(endpoint) {
 
 export const persistentStubApiClient = {
   async get(endpoint) {
-    // CDP upload status — try real backend first, fall back to in-memory stub
+    // CDP upload status — always use the stub. /files/initiate (see post() below)
+    // never calls the real backend, so every fileUploadId this client hands out is
+    // stub-only; the real backend has no record of it and its status endpoint
+    // returns 200 "pending" for any unrecognised id rather than an error, so
+    // trying the backend here previously masked the stub's real "ready" result
+    // behind a false-positive "pending" that the poll loop never recovered from.
     if (/\/files\/[^/]+\/status$/.test(endpoint)) {
-      try {
-        const res = await fetch(`${backendUrl()}${endpoint}`, {
-          signal: AbortSignal.timeout(TIMEOUT_MS)
-        })
-        if (res.ok) return res.json()
-      } catch (err) {
-        console.warn(
-          `[persistentStubApiClient] backend GET ${endpoint} failed: ${err.message}`
-        )
-      }
       return stubApiClient.get(endpoint)
     }
 
