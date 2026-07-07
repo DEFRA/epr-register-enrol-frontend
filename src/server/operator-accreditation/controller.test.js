@@ -150,6 +150,44 @@ describe('#buildLandingViewModel', () => {
     )
     expect(vm.organisationName).toBe('Organisation Name')
   })
+
+  test('notificationFailedBanner is true when notificationStatus is failed', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ notificationStatus: 'failed' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.notificationFailedBanner).toBe(true)
+  })
+
+  test('notificationFailedBanner is false when notificationStatus is sent', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ notificationStatus: 'sent' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.notificationFailedBanner).toBe(false)
+  })
+
+  test('notificationFailedBanner is false when notificationStatus is null', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ notificationStatus: null }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.notificationFailedBanner).toBe(false)
+  })
+
+  test('notificationFailedBanner is false when notificationStatus is absent', () => {
+    const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
+    expect(vm.notificationFailedBanner).toBe(false)
+  })
 })
 
 describe('#operatorAccreditationController', () => {
@@ -344,6 +382,61 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(result).not.toContain('data-testid="applications-list"')
+  })
+
+  test('renders notification status row when notificationStatus is failed', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ notificationStatus: 'failed' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="notification-status"')
+    expect(result).toContain('Failed to send')
+  })
+
+  test('does not render notification status row when notificationStatus is sent', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ notificationStatus: 'sent' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain('data-testid="notification-status"')
+  })
+
+  test('does not render notification status row when notificationStatus is null', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ notificationStatus: null })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain('data-testid="notification-status"')
+  })
+
+  test('does not render notification status row when notificationStatus is absent', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain('data-testid="notification-status"')
   })
 
   test('returns 500 error view when listApplications throws', async () => {

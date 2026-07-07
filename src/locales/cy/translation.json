@@ -67,6 +67,8 @@
       "siteLabel": "[Welsh] Site",
       "materialLabel": "[Welsh] Material",
       "statusLabel": "[Welsh] Application status",
+      "notificationStatusLabel": "[Welsh] Notification status",
+      "notificationFailedLabel": "[Welsh] Failed to send",
       "continueButton": "[Welsh] Continue",
       "seedErrorHeading": "[Welsh] There is a problem",
       "seedError": "[Welsh] We were unable to start your application. Please try again.",

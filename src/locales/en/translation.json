@@ -73,6 +73,8 @@
       "siteLabel": "Site",
       "materialLabel": "Material",
       "statusLabel": "Application status",
+      "notificationStatusLabel": "Notification status",
+      "notificationFailedLabel": "Failed to send",
       "yearLabel": "Accreditation Year",
       "continueButton": "Continue",
       "seedErrorHeading": "There is a problem",
