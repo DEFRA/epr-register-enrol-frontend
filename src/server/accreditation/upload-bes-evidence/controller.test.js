@@ -419,6 +419,31 @@ describe('#uploadBesEvidenceController', () => {
       )
     })
 
+    test('literal 3xx response with a non-opaque type (CDP proxy) is treated as a successful upload', async () => {
+      // Regression guard: when routed through CDP's outbound proxy, fetch's
+      // manual-redirect-to-opaque-response conversion doesn't reliably happen, so the
+      // real 302/type 'basic' comes through instead of type 'opaqueredirect'. This
+      // must still be treated as success, not a failure.
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 302,
+        type: 'basic'
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload()
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`
+      )
+    })
+
     test('genuine CDP proxy failure still returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       global.fetch = vi.fn().mockResolvedValue({
