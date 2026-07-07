@@ -1,5 +1,8 @@
+import Boom from '@hapi/boom'
+
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
+import { userCanAccessOrganisation } from '../common/helpers/auth/organisation-access.js'
 import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
 
@@ -49,6 +52,10 @@ export const operatorAccreditationController = {
     const yearInt = parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = '/operator/'
+
+    if (!userCanAccessOrganisation(user, organisationId)) {
+      throw Boom.forbidden('You do not have access to this organisation')
+    }
 
     const errorView = (message) =>
       h
@@ -132,6 +139,10 @@ export const operatorAccreditationExporterController = {
     const yearInt = parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = '/operator/'
+
+    if (!userCanAccessOrganisation(user, organisationId)) {
+      throw Boom.forbidden('You do not have access to this organisation')
+    }
 
     const errorView = (message) =>
       h

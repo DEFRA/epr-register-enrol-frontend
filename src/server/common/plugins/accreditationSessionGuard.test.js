@@ -2,6 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   shouldGuardPath,
   hasValidSession,
+  hasOrganisationAccess,
   accreditationSessionGuard
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
@@ -50,6 +51,41 @@ describe('hasValidSession', () => {
 
   test('returns false when accreditationId is empty string', () => {
     expect(hasValidSession(makeYar(''))).toBe(false)
+  })
+})
+
+describe('hasOrganisationAccess', () => {
+  function makeYar(organisationId) {
+    return {
+      get: vi.fn((key) =>
+        key === ACCREDITATION_SESSION_KEYS.organisationId
+          ? organisationId
+          : null
+      )
+    }
+  }
+
+  const relatedUser = {
+    userType: 'operator',
+    relationships: ['rel-1:50001:First Org', 'rel-2:50002:Second Org']
+  }
+
+  test('returns true when no organisation id is in the session', () => {
+    expect(hasOrganisationAccess(makeYar(null), relatedUser)).toBe(true)
+  })
+
+  test('returns true when the session org is one the user is related to', () => {
+    expect(hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(true)
+  })
+
+  test('returns false when the session org is not one the user is related to', () => {
+    expect(hasOrganisationAccess(makeYar('99999'), relatedUser)).toBe(false)
+  })
+
+  test('returns false when the user has no relationships', () => {
+    expect(
+      hasOrganisationAccess(makeYar('50001'), { userType: 'operator' })
+    ).toBe(false)
   })
 })
 
@@ -254,5 +290,64 @@ describe('accreditationSessionGuard plugin registration', () => {
       h
     )
     expect(h.redirect).toHaveBeenCalledWith('/operator')
+  })
+
+  function makeYarWithOrg(accreditationId, organisationId) {
+    return {
+      get: vi.fn((key) => {
+        if (key === ACCREDITATION_SESSION_KEYS.accreditationId) {
+          return accreditationId
+        }
+        if (key === ACCREDITATION_SESSION_KEYS.organisationId) {
+          return organisationId
+        }
+        return null
+      }),
+      flash: vi.fn()
+    }
+  }
+
+  test('registered callback allows access when session org matches user relationship', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = callback(
+      {
+        path: '/accreditation/task-list/app-1',
+        yar: makeYarWithOrg('app-1', '50001'),
+        auth: {
+          credentials: {
+            userType: 'operator',
+            relationships: ['rel-1:50001:First Org']
+          }
+        }
+      },
+      h
+    )
+    expect(result).toBe(h.continue)
+  })
+
+  test('registered callback throws 403 when session org is not one the user is related to', () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/task-list/app-1',
+      yar: makeYarWithOrg('app-1', '99999'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50001:First Org']
+        }
+      }
+    }
+
+    let thrown
+    try {
+      callback(request, h)
+    } catch (err) {
+      thrown = err
+    }
+
+    expect(thrown?.isBoom).toBe(true)
+    expect(thrown?.output?.statusCode).toBe(403)
   })
 })

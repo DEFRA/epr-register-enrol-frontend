@@ -181,6 +181,21 @@ describe('#operatorAccreditationController', () => {
 
   const baseUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
 
+  test('returns 403 when operator is not related to the organisation', async () => {
+    const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.forbidden)
+    expect(getSpy).not.toHaveBeenCalled()
+    expect(postSpy).not.toHaveBeenCalled()
+  })
+
   test('returns 200 when existing application found for site/material/year', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
       makeApp({ applicationStatus: 'Started' })
@@ -414,6 +429,21 @@ describe('#operatorAccreditationController', () => {
   const exporterUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter`
 
   describe('GET /operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter', () => {
+    test('returns 403 when operator is not related to the organisation', async () => {
+      const getSpy = vi
+        .spyOn(apiClient, 'get')
+        .mockResolvedValue([makeExporterApp()])
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(getSpy).not.toHaveBeenCalled()
+    })
+
     test('returns 200 when existing exporter application found', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
 

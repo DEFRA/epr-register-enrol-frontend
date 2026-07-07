@@ -16,7 +16,10 @@ export const TEST_OPERATOR = {
   email: 'operator@test.example',
   name: 'Test Operator',
   userType: 'operator',
-  scope: ['operator']
+  scope: ['operator'],
+  // Defra ID relationship shape: `relationshipId:organisationId:organisationName`.
+  currentRelationshipId: 'rel-test-operator',
+  relationships: ['rel-test-operator:org-123:Test Operator Org']
 }
 
 // Default test user — kept for backwards compatibility
