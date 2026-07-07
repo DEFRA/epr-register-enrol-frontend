@@ -223,10 +223,7 @@ export const samplingPlanUploadPostController = {
             'Content-Type': contentType
           }
         })
-        const isRedirect =
-          proxyResponse.type === 'opaqueredirect' ||
-          (proxyResponse.status >= 300 && proxyResponse.status < 400)
-        if (!proxyResponse.ok && !isRedirect) {
+        if (!proxyResponse.ok && proxyResponse.type !== 'opaqueredirect') {
           throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
         }
       } catch (err) {

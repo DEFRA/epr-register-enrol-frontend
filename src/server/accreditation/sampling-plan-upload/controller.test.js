@@ -588,6 +588,53 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
+    test('CDP redirect response (opaqueredirect) is treated as a successful upload', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 302,
+        type: 'opaqueredirect'
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/status`
+      )
+    })
+
+    test('genuine CDP proxy failure still returns 500 with uploadError', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        type: 'basic'
+      })
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('problem uploading your file')
+    })
+
     test('empty filename returns 400 with noFile error', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
