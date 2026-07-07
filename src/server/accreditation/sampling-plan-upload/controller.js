@@ -223,7 +223,13 @@ export const samplingPlanUploadPostController = {
             'Content-Type': contentType
           }
         })
-        if (!proxyResponse.ok && proxyResponse.type !== 'opaqueredirect') {
+        // Node's fetch doesn't reliably set type: 'opaqueredirect' for a redirect:'manual'
+        // response in this runtime — it returns the real 3xx status directly instead — so
+        // the status range must be checked too, not just the type.
+        const isRedirect =
+          proxyResponse.type === 'opaqueredirect' ||
+          (proxyResponse.status >= 300 && proxyResponse.status < 400)
+        if (!proxyResponse.ok && !isRedirect) {
           throw new Error(`CDP proxy upload failed: ${proxyResponse.status}`)
         }
       } catch (err) {

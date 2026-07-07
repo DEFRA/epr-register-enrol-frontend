@@ -612,6 +612,30 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
+    test('CDP redirect response without opaqueredirect type is still treated as success', async () => {
+      // Regression guard: this runtime's fetch doesn't reliably set `type` to
+      // 'opaqueredirect' for a redirect:'manual' response — only the real 3xx status is
+      // reliable. A type-only check (matching the mock above, which sets both fields
+      // together) would pass that test while still 500ing on every real upload.
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 302 })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/status`
+      )
+    })
+
     test('genuine CDP proxy failure still returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       global.fetch = vi.fn().mockResolvedValue({
