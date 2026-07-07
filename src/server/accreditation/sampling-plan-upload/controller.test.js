@@ -667,6 +667,57 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
+    test('CDP redirect response from proxy upload is treated as success, not failure', async () => {
+      // Regression guard: cdp-uploader's /upload-and-scan responds with a redirect meant for
+      // an end-user's browser, not our server-to-server proxy fetch. Previously this was
+      // treated as a failure (since a 3xx isn't `ok`), causing every real upload to 500 and
+      // never reach the status page at all.
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 302,
+        type: 'opaqueredirect'
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/status`
+      )
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ redirect: 'manual' })
+      )
+    })
+
+    test('genuine non-2xx/3xx proxy response still returns 500 with uploadError', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 })
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('problem uploading your file')
+    })
+
     test('initUpload failure returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       vi.mocked(initUpload).mockRejectedValueOnce(new Error('CDP unavailable'))

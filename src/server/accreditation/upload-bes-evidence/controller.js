@@ -262,6 +262,12 @@ export const uploadBesEvidencePostController = {
     }
 
     try {
+      // cdp-uploader's /upload-and-scan responds with a redirect meant for an end-user's
+      // browser to follow to the app's own "redirect" page. This is a server-to-server
+      // proxy upload though, not a browser request, so that redirect must not be followed —
+      // it resolves against cdp-uploader's own host, not ours, and 404s there. A redirect
+      // response here means the upload itself was accepted; only a genuine non-2xx/3xx
+      // response is a real failure.
       const proxyResponse = await fetch(uploadDetail.uploadUrl, {
         method: 'POST',
         body: uploadedFile.payload,
