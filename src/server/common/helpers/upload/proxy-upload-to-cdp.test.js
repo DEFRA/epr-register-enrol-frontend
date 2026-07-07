@@ -1,5 +1,4 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest'
-import { getGlobalDispatcher } from 'undici'
 import { proxyUploadToCdp } from './proxy-upload-to-cdp.js'
 
 describe('#proxyUploadToCdp', () => {
@@ -37,12 +36,12 @@ describe('#proxyUploadToCdp', () => {
     ).resolves.toBeUndefined()
   })
 
-  test('resolves for a literal 3xx response with a non-opaque type — the CDP proxy case', async () => {
-    // Regression guard: when the request is routed through CDP's mandatory outbound
-    // proxy, the manual-redirect-to-opaque-response conversion doesn't reliably
-    // happen, so the real 302/type 'basic' comes through instead of type
-    // 'opaqueredirect'. This must still be treated as a successful upload, not a
-    // failure — this was the cause of every real upload failing in CDP.
+  test("resolves for a literal 3xx response with a non-opaque type — Node fetch's real behaviour", async () => {
+    // Regression guard: Node's native fetch() doesn't collapse a manual-redirect 3xx
+    // into an opaque-redirect response the way the Fetch spec describes for browsers —
+    // the real status/type come through instead. This must still be treated as a
+    // successful upload, not a failure — this was the cause of every real upload
+    // failing against cdp-uploader.
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 302,
@@ -93,7 +92,6 @@ describe('#proxyUploadToCdp', () => {
         body: Buffer.from('file-bytes'),
         duplex: 'half',
         redirect: 'manual',
-        dispatcher: getGlobalDispatcher(),
         headers: {
           'x-filename': 'plan.pdf',
           'Content-Type': 'application/pdf'

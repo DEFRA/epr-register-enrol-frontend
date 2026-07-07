@@ -1,5 +1,3 @@
-import { getGlobalDispatcher } from 'undici'
-
 // cdp-uploader's /upload-and-scan responds with a redirect meant for an end-user's
 // browser to follow to the app's own "redirect" page. This is a server-to-server
 // proxy upload though, not a browser request, so that redirect must not be followed —
@@ -7,14 +5,11 @@ import { getGlobalDispatcher } from 'undici'
 // response here means the upload itself was accepted; only a genuine failure response
 // means the upload didn't go through.
 //
-// A spec-compliant `fetch()` with `redirect: 'manual'` collapses a 3xx response into
-// an opaque-redirect response (`type: 'opaqueredirect'`, `status: 0`), but in CDP that
-// conversion doesn't happen reliably once the request is routed through the
-// platform's mandatory outbound proxy — the real 3xx status comes through instead.
-// Checking the status range directly, rather than relying on `type`, is correct
-// whichever shape the runtime returns. `dispatcher` is passed explicitly (rather than
-// relying on undici's global dispatcher being picked up implicitly) so the upload is
-// deterministically routed through the same proxy as everything else in CDP.
+// The WHATWG Fetch spec says a `redirect: 'manual'` request should collapse a 3xx
+// response into an opaque-redirect response (`type: 'opaqueredirect'`, `status: 0`),
+// but Node's native `fetch()` doesn't do that conversion — it returns the real status
+// and a normal `type` (e.g. 'basic'). Checking the status range directly, rather than
+// relying on `type`, is what actually works against Node's fetch implementation.
 export async function proxyUploadToCdp({
   uploadUrl,
   payload,
@@ -26,7 +21,6 @@ export async function proxyUploadToCdp({
     body: payload,
     duplex: 'half',
     redirect: 'manual',
-    dispatcher: getGlobalDispatcher(),
     headers: {
       'x-filename': filename,
       'Content-Type': contentType
