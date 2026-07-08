@@ -11,14 +11,15 @@ import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
-import { getLinkedDefraOrganisationId } from '../common/helpers/reex-organisation-service.js'
+import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { buildLandingViewModel } from './controller.js'
 
-// The URL org id is a ReEx-internal id resolved to a linked Defra org id before
-// the relationship check. Echo it here so the URL org (org-123, which the test
-// operator is related to) authorises and any other org (not-my-org) is forbidden.
+// The controller delegates the access decision to operatorCanAccessOrganisation
+// (resolve-linked-id + relationship check + fail-closed), which is unit-tested in
+// reex-organisation-service. Here we stub it to allow the URL org (org-123) and
+// deny any other org (not-my-org).
 vi.mock('../common/helpers/reex-organisation-service.js', () => ({
-  getLinkedDefraOrganisationId: vi.fn()
+  operatorCanAccessOrganisation: vi.fn()
 }))
 
 const ORG_ID = 'org-123'
@@ -218,7 +219,9 @@ describe('#operatorAccreditationController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    getLinkedDefraOrganisationId.mockImplementation(async (orgId) => orgId)
+    operatorCanAccessOrganisation.mockImplementation(
+      async (_user, orgId) => orgId === ORG_ID
+    )
   })
 
   const operatorHeaders = {

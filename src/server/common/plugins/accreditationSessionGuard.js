@@ -2,8 +2,7 @@ import Boom from '@hapi/boom'
 
 import { config } from '../../../config/config.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
-import { userIsRelatedToDefraOrg } from '../helpers/auth/organisation-access.js'
-import { getLinkedDefraOrganisationId } from '../helpers/reex-organisation-service.js'
+import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -26,14 +25,12 @@ export function hasValidSession(yar) {
 // organisation id (cached) before comparing against the operator's relationships.
 // Absent org id means nothing to enforce here — the entry controller guards
 // initial access.
-export async function hasOrganisationAccess(yar, user) {
+export async function hasOrganisationAccess(yar, user, logger) {
   const organisationId = yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
   if (!organisationId) {
     return true
   }
-  const linkedDefraOrganisationId =
-    await getLinkedDefraOrganisationId(organisationId)
-  return userIsRelatedToDefraOrg(user, linkedDefraOrganisationId)
+  return operatorCanAccessOrganisation(user, organisationId, { logger })
 }
 
 export const accreditationSessionGuard = {
@@ -59,7 +56,8 @@ export const accreditationSessionGuard = {
 
         const allowed = await hasOrganisationAccess(
           request.yar,
-          request.auth?.credentials
+          request.auth?.credentials,
+          request.logger
         )
         if (!allowed) {
           throw Boom.forbidden('You do not have access to this organisation')

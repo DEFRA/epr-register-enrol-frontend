@@ -7,19 +7,17 @@ import {
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
 import { config } from '../../../config/config.js'
-import { getLinkedDefraOrganisationId } from '../helpers/reex-organisation-service.js'
+import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
 
+// The guard delegates the resolve-and-compare (and fail-closed handling) to
+// operatorCanAccessOrganisation, which is unit-tested in reex-organisation-service.
+// Here we stub it to control the allow/deny outcome.
 vi.mock('../helpers/reex-organisation-service.js', () => ({
-  getLinkedDefraOrganisationId: vi.fn()
+  operatorCanAccessOrganisation: vi.fn()
 }))
 
-// The URL/session org id is a ReEx-internal id; the guard resolves its linked
-// Defra org id via ReEx before comparing to relationships. Stub the lookup to
-// echo the org id so a session org of e.g. 50002 maps to Defra org 50002.
 beforeEach(() => {
-  getLinkedDefraOrganisationId.mockImplementation(async (id) =>
-    id === undefined || id === null ? null : Number(id)
-  )
+  operatorCanAccessOrganisation.mockResolvedValue(true)
 })
 
 describe('shouldGuardPath', () => {
@@ -84,31 +82,31 @@ describe('hasOrganisationAccess', () => {
     relationships: ['rel-1:50001:First Org', 'rel-2:50002:Second Org']
   }
 
-  test('returns true when no organisation id is in the session', async () => {
+  test('returns true when no organisation id is in the session, without a ReEx lookup', async () => {
     expect(await hasOrganisationAccess(makeYar(null), relatedUser)).toBe(true)
+    expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
   })
 
-  test('returns true when the linked Defra org is one the user is related to', async () => {
+  test('delegates to operatorCanAccessOrganisation with the session org, user and logger', async () => {
+    const logger = { error: vi.fn() }
+    await hasOrganisationAccess(makeYar('50002'), relatedUser, logger)
+    expect(operatorCanAccessOrganisation).toHaveBeenCalledWith(
+      relatedUser,
+      '50002',
+      { logger }
+    )
+  })
+
+  test('returns true when operatorCanAccessOrganisation allows', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(true)
     expect(await hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(
       true
     )
   })
 
-  test('returns false when the linked Defra org is not one the user is related to', async () => {
+  test('returns false when operatorCanAccessOrganisation denies', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(false)
     expect(await hasOrganisationAccess(makeYar('99999'), relatedUser)).toBe(
-      false
-    )
-  })
-
-  test('returns false when the user has no relationships', async () => {
-    expect(
-      await hasOrganisationAccess(makeYar('50001'), { userType: 'operator' })
-    ).toBe(false)
-  })
-
-  test('returns false when ReEx records no linked Defra org', async () => {
-    getLinkedDefraOrganisationId.mockResolvedValueOnce(null)
-    expect(await hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(
       false
     )
   })
@@ -332,7 +330,8 @@ describe('accreditationSessionGuard plugin registration', () => {
     }
   }
 
-  test('registered callback allows access when linked Defra org matches user relationship', async () => {
+  test('registered callback allows access when operatorCanAccessOrganisation allows', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(true)
     const callback = registerAndGetCallback()
     const h = makeH()
     const result = await callback(
@@ -351,7 +350,8 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(result).toBe(h.continue)
   })
 
-  test('registered callback throws 403 when linked Defra org is not one the user is related to', async () => {
+  test('registered callback throws 403 when operatorCanAccessOrganisation denies', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(false)
     const callback = registerAndGetCallback()
     const h = makeH()
     const request = {
