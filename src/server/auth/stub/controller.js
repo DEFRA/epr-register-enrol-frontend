@@ -27,7 +27,7 @@ export const STUB_USERS = {
         'stub-rel-50004:50004:Stub Org 50004',
         'stub-rel-50005:50005:Stub Org 50005',
         'stub-rel-50006:50006:Stub Org 50006',
-        'stub-rel-6a2fcd74e16883c137d01188:6a2fcd74e16883c137d01188:Bednar - Frami Limited xTklApuT'
+        'stub-rel-67b9e8fc-2235-431a-a7b9-80663c81b6ff:67b9e8fc-2235-431a-a7b9-80663c81b6ff:Bednar - Frami Limited xTklApuT'
       ]
     }
   ]

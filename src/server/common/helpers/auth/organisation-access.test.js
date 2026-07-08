@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest'
 import {
   getUserOrganisationIds,
-  userCanAccessOrganisation
+  userIsRelatedToDefraOrg
 } from './organisation-access.js'
 
 const user = {
@@ -39,28 +39,28 @@ describe('getUserOrganisationIds', () => {
   })
 })
 
-describe('userCanAccessOrganisation', () => {
-  test('returns true when the org id matches a relationship', () => {
-    expect(userCanAccessOrganisation(user, '50002')).toBe(true)
+describe('userIsRelatedToDefraOrg', () => {
+  test('returns true when the linked Defra org id matches a relationship', () => {
+    expect(userIsRelatedToDefraOrg(user, '50002')).toBe(true)
   })
 
-  test('matches when the org id is passed as a number', () => {
-    expect(userCanAccessOrganisation(user, 50002)).toBe(true)
+  test('matches when the linked Defra org id is passed as a number', () => {
+    expect(userIsRelatedToDefraOrg(user, 50002)).toBe(true)
   })
 
-  test('returns false when the org id is not in any relationship', () => {
-    expect(userCanAccessOrganisation(user, '99999')).toBe(false)
+  test('returns false when the linked Defra org id is not in any relationship', () => {
+    expect(userIsRelatedToDefraOrg(user, '99999')).toBe(false)
   })
 
   test('returns false for a user with no relationships', () => {
-    expect(userCanAccessOrganisation({}, '50001')).toBe(false)
+    expect(userIsRelatedToDefraOrg({}, '50001')).toBe(false)
   })
 
-  test('returns false when organisationId is undefined', () => {
-    expect(userCanAccessOrganisation(user, undefined)).toBe(false)
+  test('returns false when the linked Defra org id is undefined (no ReEx link)', () => {
+    expect(userIsRelatedToDefraOrg(user, undefined)).toBe(false)
   })
 
-  test('returns false when organisationId is null', () => {
-    expect(userCanAccessOrganisation(user, null)).toBe(false)
+  test('returns false when the linked Defra org id is null (no ReEx link)', () => {
+    expect(userIsRelatedToDefraOrg(user, null)).toBe(false)
   })
 })

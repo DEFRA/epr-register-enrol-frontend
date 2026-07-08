@@ -2,7 +2,8 @@ import Boom from '@hapi/boom'
 
 import { config } from '../../../config/config.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
-import { userCanAccessOrganisation } from '../helpers/auth/organisation-access.js'
+import { userIsRelatedToDefraOrg } from '../helpers/auth/organisation-access.js'
+import { getLinkedDefraOrganisationId } from '../helpers/reex-organisation-service.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -21,14 +22,18 @@ export function hasValidSession(yar) {
 // operator's Defra ID relationships when the accreditation was entered, but we
 // re-check it on every downstream accreditation request so a tampered or shared
 // session cannot be used to act on an organisation the user is not related to.
+// The URL/session org id is a ReEx-internal id, so we resolve its linked Defra
+// organisation id (cached) before comparing against the operator's relationships.
 // Absent org id means nothing to enforce here — the entry controller guards
 // initial access.
-export function hasOrganisationAccess(yar, user) {
+export async function hasOrganisationAccess(yar, user) {
   const organisationId = yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
   if (!organisationId) {
     return true
   }
-  return userCanAccessOrganisation(user, organisationId)
+  const linkedDefraOrganisationId =
+    await getLinkedDefraOrganisationId(organisationId)
+  return userIsRelatedToDefraOrg(user, linkedDefraOrganisationId)
 }
 
 export const accreditationSessionGuard = {
@@ -39,7 +44,7 @@ export const accreditationSessionGuard = {
         return
       }
 
-      server.ext('onPreHandler', (request, h) => {
+      server.ext('onPreHandler', async (request, h) => {
         if (!shouldGuardPath(request.path)) {
           return h.continue
         }
@@ -52,7 +57,11 @@ export const accreditationSessionGuard = {
           return h.redirect('/operator').takeover()
         }
 
-        if (!hasOrganisationAccess(request.yar, request.auth?.credentials)) {
+        const allowed = await hasOrganisationAccess(
+          request.yar,
+          request.auth?.credentials
+        )
+        if (!allowed) {
           throw Boom.forbidden('You do not have access to this organisation')
         }
 

@@ -7,6 +7,20 @@ import {
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
 import { config } from '../../../config/config.js'
+import { getLinkedDefraOrganisationId } from '../helpers/reex-organisation-service.js'
+
+vi.mock('../helpers/reex-organisation-service.js', () => ({
+  getLinkedDefraOrganisationId: vi.fn()
+}))
+
+// The URL/session org id is a ReEx-internal id; the guard resolves its linked
+// Defra org id via ReEx before comparing to relationships. Stub the lookup to
+// echo the org id so a session org of e.g. 50002 maps to Defra org 50002.
+beforeEach(() => {
+  getLinkedDefraOrganisationId.mockImplementation(async (id) =>
+    id === undefined || id === null ? null : Number(id)
+  )
+})
 
 describe('shouldGuardPath', () => {
   test('returns true for /accreditation/ routes', () => {
@@ -70,22 +84,33 @@ describe('hasOrganisationAccess', () => {
     relationships: ['rel-1:50001:First Org', 'rel-2:50002:Second Org']
   }
 
-  test('returns true when no organisation id is in the session', () => {
-    expect(hasOrganisationAccess(makeYar(null), relatedUser)).toBe(true)
+  test('returns true when no organisation id is in the session', async () => {
+    expect(await hasOrganisationAccess(makeYar(null), relatedUser)).toBe(true)
   })
 
-  test('returns true when the session org is one the user is related to', () => {
-    expect(hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(true)
+  test('returns true when the linked Defra org is one the user is related to', async () => {
+    expect(await hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(
+      true
+    )
   })
 
-  test('returns false when the session org is not one the user is related to', () => {
-    expect(hasOrganisationAccess(makeYar('99999'), relatedUser)).toBe(false)
+  test('returns false when the linked Defra org is not one the user is related to', async () => {
+    expect(await hasOrganisationAccess(makeYar('99999'), relatedUser)).toBe(
+      false
+    )
   })
 
-  test('returns false when the user has no relationships', () => {
+  test('returns false when the user has no relationships', async () => {
     expect(
-      hasOrganisationAccess(makeYar('50001'), { userType: 'operator' })
+      await hasOrganisationAccess(makeYar('50001'), { userType: 'operator' })
     ).toBe(false)
+  })
+
+  test('returns false when ReEx records no linked Defra org', async () => {
+    getLinkedDefraOrganisationId.mockResolvedValueOnce(null)
+    expect(await hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(
+      false
+    )
   })
 })
 
@@ -234,18 +259,18 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(mockServer.ext).not.toHaveBeenCalled()
   })
 
-  test('registered callback passes through non-accreditation routes', () => {
+  test('registered callback passes through non-accreditation routes', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback({ path: '/health', yar: makeYar('app-1') }, h)
+    const result = await callback({ path: '/health', yar: makeYar('app-1') }, h)
     expect(result).toBe(h.continue)
     expect(h.redirect).not.toHaveBeenCalled()
   })
 
-  test('registered callback passes through accreditation routes with valid session', () => {
+  test('registered callback passes through accreditation routes with valid session', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback(
+    const result = await callback(
       { path: '/accreditation/task-list/app-1', yar: makeYar('app-1') },
       h
     )
@@ -271,10 +296,10 @@ describe('accreditationSessionGuard plugin registration', () => {
     )
   })
 
-  test('registered callback passes through Welsh accreditation routes with valid session', () => {
+  test('registered callback passes through Welsh accreditation routes with valid session', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback(
+    const result = await callback(
       { path: '/cy/accreditation/task-list/app-1', yar: makeYar('app-1') },
       h
     )
@@ -307,10 +332,10 @@ describe('accreditationSessionGuard plugin registration', () => {
     }
   }
 
-  test('registered callback allows access when session org matches user relationship', () => {
+  test('registered callback allows access when linked Defra org matches user relationship', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback(
+    const result = await callback(
       {
         path: '/accreditation/task-list/app-1',
         yar: makeYarWithOrg('app-1', '50001'),
@@ -326,7 +351,7 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(result).toBe(h.continue)
   })
 
-  test('registered callback throws 403 when session org is not one the user is related to', () => {
+  test('registered callback throws 403 when linked Defra org is not one the user is related to', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
     const request = {
@@ -342,7 +367,7 @@ describe('accreditationSessionGuard plugin registration', () => {
 
     let thrown
     try {
-      callback(request, h)
+      await callback(request, h)
     } catch (err) {
       thrown = err
     }

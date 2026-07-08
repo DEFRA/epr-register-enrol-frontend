@@ -17,3 +17,6 @@ tsconfig.tsbuildinfo
 .dolt/
 *.db
 .beads-credential-key
+
+# beads issue tracker local store
+.beads/

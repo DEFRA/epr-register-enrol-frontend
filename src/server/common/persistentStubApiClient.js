@@ -80,6 +80,33 @@ export const persistentStubApiClient = {
       return stubApiClient.get(endpoint)
     }
 
+    // ReEx linked-Defra-org lookup used by the operator accreditation
+    // authorisation check. Try the real backend; fall back to an echo stub
+    // (linked Defra org id == ReEx org id) which matches the seeded stub
+    // operator's relationships so local dev stays authorised.
+    const defraLinkMatch = endpoint.match(
+      /^\/api\/v1\/organisations\/([^/]+)\/defra-link$/
+    )
+    if (defraLinkMatch) {
+      const orgId = defraLinkMatch[1]
+      try {
+        const res = await fetch(
+          `${backendUrl()}/api/v1/organisations/${orgId}/defra-link`,
+          { signal: AbortSignal.timeout(TIMEOUT_MS) }
+        )
+        if (res.ok) return res.json()
+      } catch (err) {
+        console.warn(
+          `[persistentStubApiClient] backend GET defra-link failed: ${err.message}`
+        )
+      }
+      const parsed = Number(orgId)
+      return {
+        organisationId: orgId,
+        linkedDefraOrganisationId: Number.isNaN(parsed) ? null : parsed
+      }
+    }
+
     if (endpoint === '/organisation') {
       try {
         const res = await fetch(`${backendUrl()}/organisation`, {
