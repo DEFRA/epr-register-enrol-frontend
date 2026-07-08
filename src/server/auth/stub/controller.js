@@ -1,4 +1,8 @@
 import { config } from '../../../config/config.js'
+import {
+  STUB_OPERATOR_RELATIONSHIPS,
+  STUB_OPERATOR_CURRENT_RELATIONSHIP_ID
+} from '../../common/stub-operator-orgs.js'
 
 export const STUB_USERS = {
   regulator: [
@@ -17,18 +21,10 @@ export const STUB_USERS = {
       email: 'operator@stub.example',
       userType: 'operator',
       roles: ['user'],
-      // Defra ID relationship shape: `relationshipId:organisationId:organisationName`.
-      // Covers the organisations present in the stub API data (50001–50006).
-      currentRelationshipId: 'stub-rel-50001',
-      relationships: [
-        'stub-rel-50001:50001:NEWDEV RECYCLING LIMITED',
-        'stub-rel-50002:50002:Beta Recycling Co',
-        'stub-rel-50003:50003:Stub Org 50003',
-        'stub-rel-50004:50004:Stub Org 50004',
-        'stub-rel-50005:50005:Stub Org 50005',
-        'stub-rel-50006:50006:Stub Org 50006',
-        'stub-rel-67b9e8fc-2235-431a-a7b9-80663c81b6ff:67b9e8fc-2235-431a-a7b9-80663c81b6ff:Bednar - Frami Limited xTklApuT'
-      ]
+      // Relationships (and the /defra-link map) are derived from the shared
+      // STUB_OPERATOR_ORGS fixture so they cannot drift apart.
+      currentRelationshipId: STUB_OPERATOR_CURRENT_RELATIONSHIP_ID,
+      relationships: STUB_OPERATOR_RELATIONSHIPS
     }
   ]
 }
