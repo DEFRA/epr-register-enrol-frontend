@@ -121,4 +121,17 @@ describe('#catchAll', () => {
       statusCodes.internalServerError
     )
   })
+
+  test('Should provide distinct "service unavailable" page and log for 503', () => {
+    catchAll(mockRequest(statusCodes.serviceUnavailable), mockToolkit)
+
+    expect(mockErrorLogger).toHaveBeenCalledWith(mockStack)
+    expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
+      pageTitle: 'Sorry, the service is unavailable',
+      heading: 'Sorry, the service is unavailable',
+      message:
+        'You will be able to use the service later. Try again in a few minutes.'
+    })
+    expect(mockToolkitCode).toHaveBeenCalledWith(statusCodes.serviceUnavailable)
+  })
 })

@@ -115,18 +115,15 @@ describe('operatorCanAccessOrganisation', () => {
     ).toBe(false)
   })
 
-  test('fails closed (denies) and logs when resolution throws', async () => {
+  test('throws a 503 (service unavailable) and logs when resolution fails', async () => {
     const logger = { error: vi.fn() }
     const resolveLinkedId = vi.fn(async () => {
       throw new Error('ReEx down')
     })
 
-    expect(
-      await operatorCanAccessOrganisation(user, 'reex-1', {
-        resolveLinkedId,
-        logger
-      })
-    ).toBe(false)
+    await expect(
+      operatorCanAccessOrganisation(user, 'reex-1', { resolveLinkedId, logger })
+    ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 503 } })
     expect(logger.error).toHaveBeenCalledOnce()
   })
 

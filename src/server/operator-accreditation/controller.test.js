@@ -7,6 +7,7 @@ import {
   vi,
   beforeEach
 } from 'vitest'
+import Boom from '@hapi/boom'
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { config } from '../../config/config.js'
@@ -244,6 +245,23 @@ describe('#operatorAccreditationController', () => {
     expect(statusCode).toBe(statusCodes.forbidden)
     expect(getSpy).not.toHaveBeenCalled()
     expect(postSpy).not.toHaveBeenCalled()
+  })
+
+  test('renders the service-unavailable page (503) when the access check is unavailable', async () => {
+    operatorCanAccessOrganisation.mockRejectedValueOnce(
+      Boom.serverUnavailable()
+    )
+    const getSpy = vi.spyOn(apiClient, 'get')
+
+    const { statusCode, result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.serviceUnavailable)
+    expect(result).toContain('the service is unavailable')
+    expect(getSpy).not.toHaveBeenCalled()
   })
 
   test('returns 200 when existing application found for site/material/year', async () => {

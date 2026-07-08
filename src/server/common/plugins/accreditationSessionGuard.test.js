@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
+import Boom from '@hapi/boom'
 import {
   shouldGuardPath,
   hasValidSession,
@@ -109,6 +110,14 @@ describe('hasOrganisationAccess', () => {
     expect(await hasOrganisationAccess(makeYar('99999'), relatedUser)).toBe(
       false
     )
+  })
+
+  test('propagates a service-unavailable error (does not swallow it into a deny)', async () => {
+    const boom = Boom.serverUnavailable()
+    operatorCanAccessOrganisation.mockRejectedValueOnce(boom)
+    await expect(
+      hasOrganisationAccess(makeYar('50002'), relatedUser)
+    ).rejects.toBe(boom)
   })
 })
 
@@ -374,5 +383,32 @@ describe('accreditationSessionGuard plugin registration', () => {
 
     expect(thrown?.isBoom).toBe(true)
     expect(thrown?.output?.statusCode).toBe(403)
+  })
+
+  test('registered callback surfaces a 503 (not a 403) when the access check is unavailable', async () => {
+    operatorCanAccessOrganisation.mockRejectedValueOnce(
+      Boom.serverUnavailable()
+    )
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/task-list/app-1',
+      yar: makeYarWithOrg('app-1', '50002'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50002:Second Org']
+        }
+      }
+    }
+
+    let thrown
+    try {
+      await callback(request, h)
+    } catch (err) {
+      thrown = err
+    }
+
+    expect(thrown?.output?.statusCode).toBe(503)
   })
 })
