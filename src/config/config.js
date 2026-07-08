@@ -334,6 +334,14 @@ export const config = convict({
       default: 5000,
       env: 'API_TIMEOUT'
     }
+  },
+  reex: {
+    orgDefraLinkCacheTtl: {
+      doc: "How long (ms) to cache an organisation's linked Defra organisation id from ReEx before re-fetching. Used by the operator accreditation authorisation check.",
+      format: Number,
+      default: 3600000,
+      env: 'REEX_ORG_DEFRA_LINK_CACHE_TTL'
+    }
   }
 })
 

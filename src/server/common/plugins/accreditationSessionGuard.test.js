@@ -1,4 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
+import Boom from '@hapi/boom'
 import {
   shouldGuardPath,
   hasValidSession,
@@ -7,6 +8,18 @@ import {
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
 import { config } from '../../../config/config.js'
+import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
+
+// The guard delegates the resolve-and-compare (and fail-closed handling) to
+// operatorCanAccessOrganisation, which is unit-tested in reex-organisation-service.
+// Here we stub it to control the allow/deny outcome.
+vi.mock('../helpers/reex-organisation-service.js', () => ({
+  operatorCanAccessOrganisation: vi.fn()
+}))
+
+beforeEach(() => {
+  operatorCanAccessOrganisation.mockResolvedValue(true)
+})
 
 describe('shouldGuardPath', () => {
   test('returns true for /accreditation/ routes', () => {
@@ -70,22 +83,41 @@ describe('hasOrganisationAccess', () => {
     relationships: ['rel-1:50001:First Org', 'rel-2:50002:Second Org']
   }
 
-  test('returns true when no organisation id is in the session', () => {
-    expect(hasOrganisationAccess(makeYar(null), relatedUser)).toBe(true)
+  test('returns true when no organisation id is in the session, without a ReEx lookup', async () => {
+    expect(await hasOrganisationAccess(makeYar(null), relatedUser)).toBe(true)
+    expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
   })
 
-  test('returns true when the session org is one the user is related to', () => {
-    expect(hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(true)
+  test('delegates to operatorCanAccessOrganisation with the session org, user and logger', async () => {
+    const logger = { error: vi.fn() }
+    await hasOrganisationAccess(makeYar('50002'), relatedUser, logger)
+    expect(operatorCanAccessOrganisation).toHaveBeenCalledWith(
+      relatedUser,
+      '50002',
+      { logger }
+    )
   })
 
-  test('returns false when the session org is not one the user is related to', () => {
-    expect(hasOrganisationAccess(makeYar('99999'), relatedUser)).toBe(false)
+  test('returns true when operatorCanAccessOrganisation allows', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(true)
+    expect(await hasOrganisationAccess(makeYar('50002'), relatedUser)).toBe(
+      true
+    )
   })
 
-  test('returns false when the user has no relationships', () => {
-    expect(
-      hasOrganisationAccess(makeYar('50001'), { userType: 'operator' })
-    ).toBe(false)
+  test('returns false when operatorCanAccessOrganisation denies', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(false)
+    expect(await hasOrganisationAccess(makeYar('99999'), relatedUser)).toBe(
+      false
+    )
+  })
+
+  test('propagates a service-unavailable error (does not swallow it into a deny)', async () => {
+    const boom = Boom.serverUnavailable()
+    operatorCanAccessOrganisation.mockRejectedValueOnce(boom)
+    await expect(
+      hasOrganisationAccess(makeYar('50002'), relatedUser)
+    ).rejects.toBe(boom)
   })
 })
 
@@ -234,18 +266,18 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(mockServer.ext).not.toHaveBeenCalled()
   })
 
-  test('registered callback passes through non-accreditation routes', () => {
+  test('registered callback passes through non-accreditation routes', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback({ path: '/health', yar: makeYar('app-1') }, h)
+    const result = await callback({ path: '/health', yar: makeYar('app-1') }, h)
     expect(result).toBe(h.continue)
     expect(h.redirect).not.toHaveBeenCalled()
   })
 
-  test('registered callback passes through accreditation routes with valid session', () => {
+  test('registered callback passes through accreditation routes with valid session', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback(
+    const result = await callback(
       { path: '/accreditation/task-list/app-1', yar: makeYar('app-1') },
       h
     )
@@ -271,10 +303,10 @@ describe('accreditationSessionGuard plugin registration', () => {
     )
   })
 
-  test('registered callback passes through Welsh accreditation routes with valid session', () => {
+  test('registered callback passes through Welsh accreditation routes with valid session', async () => {
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback(
+    const result = await callback(
       { path: '/cy/accreditation/task-list/app-1', yar: makeYar('app-1') },
       h
     )
@@ -307,10 +339,11 @@ describe('accreditationSessionGuard plugin registration', () => {
     }
   }
 
-  test('registered callback allows access when session org matches user relationship', () => {
+  test('registered callback allows access when operatorCanAccessOrganisation allows', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(true)
     const callback = registerAndGetCallback()
     const h = makeH()
-    const result = callback(
+    const result = await callback(
       {
         path: '/accreditation/task-list/app-1',
         yar: makeYarWithOrg('app-1', '50001'),
@@ -326,7 +359,8 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(result).toBe(h.continue)
   })
 
-  test('registered callback throws 403 when session org is not one the user is related to', () => {
+  test('registered callback throws 403 when operatorCanAccessOrganisation denies', async () => {
+    operatorCanAccessOrganisation.mockResolvedValueOnce(false)
     const callback = registerAndGetCallback()
     const h = makeH()
     const request = {
@@ -342,12 +376,39 @@ describe('accreditationSessionGuard plugin registration', () => {
 
     let thrown
     try {
-      callback(request, h)
+      await callback(request, h)
     } catch (err) {
       thrown = err
     }
 
     expect(thrown?.isBoom).toBe(true)
     expect(thrown?.output?.statusCode).toBe(403)
+  })
+
+  test('registered callback surfaces a 503 (not a 403) when the access check is unavailable', async () => {
+    operatorCanAccessOrganisation.mockRejectedValueOnce(
+      Boom.serverUnavailable()
+    )
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/task-list/app-1',
+      yar: makeYarWithOrg('app-1', '50002'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50002:Second Org']
+        }
+      }
+    }
+
+    let thrown
+    try {
+      await callback(request, h)
+    } catch (err) {
+      thrown = err
+    }
+
+    expect(thrown?.output?.statusCode).toBe(503)
   })
 })

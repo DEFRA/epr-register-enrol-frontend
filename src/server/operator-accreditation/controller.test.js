@@ -7,11 +7,21 @@ import {
   vi,
   beforeEach
 } from 'vitest'
+import Boom from '@hapi/boom'
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
+import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { buildLandingViewModel } from './controller.js'
+
+// The controller delegates the access decision to operatorCanAccessOrganisation
+// (resolve-linked-id + relationship check + fail-closed), which is unit-tested in
+// reex-organisation-service. Here we stub it to allow the URL org (org-123) and
+// deny any other org (not-my-org).
+vi.mock('../common/helpers/reex-organisation-service.js', () => ({
+  operatorCanAccessOrganisation: vi.fn()
+}))
 
 const ORG_ID = 'org-123'
 const REGISTRATION_ID = 'REG001'
@@ -210,6 +220,9 @@ describe('#operatorAccreditationController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    operatorCanAccessOrganisation.mockImplementation(
+      async (_user, orgId) => orgId === ORG_ID
+    )
   })
 
   const operatorHeaders = {
@@ -232,6 +245,23 @@ describe('#operatorAccreditationController', () => {
     expect(statusCode).toBe(statusCodes.forbidden)
     expect(getSpy).not.toHaveBeenCalled()
     expect(postSpy).not.toHaveBeenCalled()
+  })
+
+  test('renders the service-unavailable page (503) when the access check is unavailable', async () => {
+    operatorCanAccessOrganisation.mockRejectedValueOnce(
+      Boom.serverUnavailable()
+    )
+    const getSpy = vi.spyOn(apiClient, 'get')
+
+    const { statusCode, result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.serviceUnavailable)
+    expect(result).toContain('the service is unavailable')
+    expect(getSpy).not.toHaveBeenCalled()
   })
 
   test('returns 200 when existing application found for site/material/year', async () => {

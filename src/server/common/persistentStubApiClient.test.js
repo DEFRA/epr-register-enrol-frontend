@@ -64,3 +64,60 @@ describe('#persistentStubApiClient CDP upload status', () => {
     stubGetSpy.mockRestore()
   })
 })
+
+describe('#persistentStubApiClient defra-link', () => {
+  let fetchSpy
+
+  beforeEach(() => {
+    // Force the backend-unreachable path so the stub map is exercised.
+    fetchSpy = vi
+      .spyOn(global, 'fetch')
+      .mockRejectedValue(new Error('backend down'))
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('maps a numeric ReEx org id to the same Defra org id', async () => {
+    const result = await persistentStubApiClient.get(
+      '/api/v1/organisations/50002/defra-link'
+    )
+    expect(result).toEqual({
+      organisationId: '50002',
+      linkedDefraOrganisationId: '50002'
+    })
+  })
+
+  test('maps the ObjectId-shaped ReEx org id to its distinct Defra UUID', async () => {
+    const result = await persistentStubApiClient.get(
+      '/api/v1/organisations/6a2fcd74e16883c137d01188/defra-link'
+    )
+    expect(result.linkedDefraOrganisationId).toBe(
+      '67b9e8fc-2235-431a-a7b9-80663c81b6ff'
+    )
+  })
+
+  test('returns a null link for an unmapped org id (fails closed)', async () => {
+    const result = await persistentStubApiClient.get(
+      '/api/v1/organisations/not-a-real-org/defra-link'
+    )
+    expect(result.linkedDefraOrganisationId).toBeNull()
+  })
+
+  test('passes through the real backend response when reachable', async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        organisationId: '50002',
+        linkedDefraOrganisationId: 909999
+      })
+    })
+
+    const result = await persistentStubApiClient.get(
+      '/api/v1/organisations/50002/defra-link'
+    )
+    expect(result.linkedDefraOrganisationId).toBe(909999)
+  })
+})

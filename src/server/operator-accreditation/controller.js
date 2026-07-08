@@ -2,7 +2,7 @@ import Boom from '@hapi/boom'
 
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
-import { userCanAccessOrganisation } from '../common/helpers/auth/organisation-access.js'
+import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
 
@@ -56,7 +56,14 @@ export const operatorAccreditationController = {
     const userName = user?.name
     const reExBackLink = '/operator/'
 
-    if (!userCanAccessOrganisation(user, organisationId)) {
+    const canAccess = await operatorCanAccessOrganisation(
+      user,
+      organisationId,
+      {
+        logger: request.logger
+      }
+    )
+    if (!canAccess) {
       throw Boom.forbidden('You do not have access to this organisation')
     }
 
@@ -143,7 +150,14 @@ export const operatorAccreditationExporterController = {
     const userName = user?.name
     const reExBackLink = '/operator/'
 
-    if (!userCanAccessOrganisation(user, organisationId)) {
+    const canAccess = await operatorCanAccessOrganisation(
+      user,
+      organisationId,
+      {
+        logger: request.logger
+      }
+    )
+    if (!canAccess) {
       throw Boom.forbidden('You do not have access to this organisation')
     }
 

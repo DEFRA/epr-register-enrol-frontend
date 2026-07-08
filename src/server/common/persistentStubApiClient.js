@@ -4,6 +4,7 @@ import {
   STUB_ORG_MODELS,
   STUB_ORG_DOCS
 } from './stub-api-client.js'
+import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
 
 function overlayOrgName(items) {
   return items.map((item) => {
@@ -22,6 +23,7 @@ const LIST_RE = new RegExp(`^${BASE}/([^/]+)$`)
 const SINGLE_RE = new RegExp(`^${BASE}/([^/]+)/([^/]+)$`)
 const APP_SEGMENT_RE = new RegExp(`^${BASE}/([^/]+)/([^/]+)/`)
 const DELETE_FILE_RE = new RegExp(`^${BASE}/([^/]+)/([^/]+)/files/[^/]+$`)
+const DEFRA_LINK_RE = /^\/api\/v1\/organisations\/([^/]+)\/defra-link$/
 
 function backendUrl() {
   return config.get('api.baseUrl')
@@ -78,6 +80,29 @@ export const persistentStubApiClient = {
     // behind a false-positive "pending" that the poll loop never recovered from.
     if (/\/files\/[^/]+\/status$/.test(endpoint)) {
       return stubApiClient.get(endpoint)
+    }
+
+    // ReEx linked-Defra-org lookup used by the operator accreditation
+    // authorisation check. Try the real backend; fall back to the STUB_DEFRA_LINKS
+    // map so pure-stub local dev authorises exactly the operator's orgs.
+    const defraLinkMatch = endpoint.match(DEFRA_LINK_RE)
+    if (defraLinkMatch) {
+      const orgId = defraLinkMatch[1]
+      try {
+        const res = await fetch(
+          `${backendUrl()}/api/v1/organisations/${orgId}/defra-link`,
+          { signal: AbortSignal.timeout(TIMEOUT_MS) }
+        )
+        if (res.ok) return res.json()
+      } catch (err) {
+        console.warn(
+          `[persistentStubApiClient] backend GET defra-link failed: ${err.message}`
+        )
+      }
+      return {
+        organisationId: orgId,
+        linkedDefraOrganisationId: STUB_DEFRA_LINKS[orgId] ?? null
+      }
     }
 
     if (endpoint === '/organisation') {
