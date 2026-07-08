@@ -22,6 +22,24 @@ const LIST_RE = new RegExp(`^${BASE}/([^/]+)$`)
 const SINGLE_RE = new RegExp(`^${BASE}/([^/]+)/([^/]+)$`)
 const APP_SEGMENT_RE = new RegExp(`^${BASE}/([^/]+)/([^/]+)/`)
 const DELETE_FILE_RE = new RegExp(`^${BASE}/([^/]+)/([^/]+)/files/[^/]+$`)
+const DEFRA_LINK_RE = /^\/api\/v1\/organisations\/([^/]+)\/defra-link$/
+
+// Maps a ReEx (URL) organisation id to the linked Defra organisation id ReEx
+// would return for it, mirroring the org links on the operator page
+// (src/server/operator/index.njk) and the stub operator's relationships
+// (src/server/auth/stub/controller.js). Used only when the real backend is not
+// reachable, so pure-stub local dev authorises exactly the operator's orgs
+// regardless of id shape (numeric orgs link to themselves; the ObjectId-shaped
+// org links to a distinct UUID, matching the real ReEx-vs-Defra id split).
+const STUB_DEFRA_LINKS = {
+  50001: 50001,
+  50002: 50002,
+  50003: 50003,
+  50004: 50004,
+  50005: 50005,
+  50006: 50006,
+  '6a2fcd74e16883c137d01188': '67b9e8fc-2235-431a-a7b9-80663c81b6ff'
+}
 
 function backendUrl() {
   return config.get('api.baseUrl')
@@ -81,12 +99,9 @@ export const persistentStubApiClient = {
     }
 
     // ReEx linked-Defra-org lookup used by the operator accreditation
-    // authorisation check. Try the real backend; fall back to an echo stub
-    // (linked Defra org id == ReEx org id) which matches the seeded stub
-    // operator's relationships so local dev stays authorised.
-    const defraLinkMatch = endpoint.match(
-      /^\/api\/v1\/organisations\/([^/]+)\/defra-link$/
-    )
+    // authorisation check. Try the real backend; fall back to the STUB_DEFRA_LINKS
+    // map so pure-stub local dev authorises exactly the operator's orgs.
+    const defraLinkMatch = endpoint.match(DEFRA_LINK_RE)
     if (defraLinkMatch) {
       const orgId = defraLinkMatch[1]
       try {
@@ -100,10 +115,9 @@ export const persistentStubApiClient = {
           `[persistentStubApiClient] backend GET defra-link failed: ${err.message}`
         )
       }
-      const parsed = Number(orgId)
       return {
         organisationId: orgId,
-        linkedDefraOrganisationId: Number.isNaN(parsed) ? null : parsed
+        linkedDefraOrganisationId: STUB_DEFRA_LINKS[orgId] ?? null
       }
     }
 
