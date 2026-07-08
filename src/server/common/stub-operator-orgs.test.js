@@ -11,7 +11,7 @@ import {
 
 describe('STUB_DEFRA_LINKS', () => {
   test('maps each ReEx org id to its linked Defra org id', () => {
-    expect(STUB_DEFRA_LINKS['50002']).toBe(50002)
+    expect(STUB_DEFRA_LINKS['50002']).toBe('50002')
     expect(STUB_DEFRA_LINKS['6a2fcd74e16883c137d01188']).toBe(
       '67b9e8fc-2235-431a-a7b9-80663c81b6ff'
     )

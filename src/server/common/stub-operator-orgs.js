@@ -15,13 +15,17 @@
  * Numeric orgs link to themselves (ReEx id == Defra id); the ObjectId-shaped
  * test org links to a distinct UUID, mirroring the real ReEx-vs-Defra id split.
  */
+// defraOrgId is a Defra ID organisation id — a string (a UUID in production).
+// The numeric-looking ids below are kept readable for the pure-stub orgs; the
+// ObjectId-shaped org uses a real-shaped UUID to exercise the ReEx-id != Defra-id
+// case. Both are strings, matching the backend's string contract.
 export const STUB_OPERATOR_ORGS = [
-  { reExOrgId: '50001', defraOrgId: 50001, name: 'NEWDEV RECYCLING LIMITED' },
-  { reExOrgId: '50002', defraOrgId: 50002, name: 'Beta Recycling Co' },
-  { reExOrgId: '50003', defraOrgId: 50003, name: 'Delta Green Ltd' },
-  { reExOrgId: '50004', defraOrgId: 50004, name: 'Stub Org 50004' },
-  { reExOrgId: '50005', defraOrgId: 50005, name: 'Stub Org 50005' },
-  { reExOrgId: '50006', defraOrgId: 50006, name: 'Stub Org 50006' },
+  { reExOrgId: '50001', defraOrgId: '50001', name: 'NEWDEV RECYCLING LIMITED' },
+  { reExOrgId: '50002', defraOrgId: '50002', name: 'Beta Recycling Co' },
+  { reExOrgId: '50003', defraOrgId: '50003', name: 'Delta Green Ltd' },
+  { reExOrgId: '50004', defraOrgId: '50004', name: 'Stub Org 50004' },
+  { reExOrgId: '50005', defraOrgId: '50005', name: 'Stub Org 50005' },
+  { reExOrgId: '50006', defraOrgId: '50006', name: 'Stub Org 50006' },
   {
     reExOrgId: '6a2fcd74e16883c137d01188',
     defraOrgId: '67b9e8fc-2235-431a-a7b9-80663c81b6ff',

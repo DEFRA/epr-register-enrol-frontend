@@ -86,7 +86,7 @@ describe('#persistentStubApiClient defra-link', () => {
     )
     expect(result).toEqual({
       organisationId: '50002',
-      linkedDefraOrganisationId: 50002
+      linkedDefraOrganisationId: '50002'
     })
   })
 

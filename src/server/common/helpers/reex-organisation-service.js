@@ -15,7 +15,7 @@ import { config } from '../../../config/config.js'
  * so repeated requests across an accreditation journey do not re-hit ReEx.
  */
 
-// organisationId -> { linkedDefraOrganisationId: number|null, expiresAt: number }
+// organisationId -> { linkedDefraOrganisationId: string|null, expiresAt: number }
 const cache = new Map()
 
 function ttl() {
