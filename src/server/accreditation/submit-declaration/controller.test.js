@@ -387,5 +387,32 @@ describe('#submitDeclarationController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="try-again-link"')
     })
+
+    test('logs the API error response body when submitApplication fails', async () => {
+      const err = Object.assign(new Error('API request failed: 500'), {
+        status: 500,
+        response: '{"message":"upstream case management failure"}'
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+      const loggerSpy = vi.spyOn(server.logger, 'error')
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Manager',
+          email: 'jane@example.com',
+          submitAction: 'submit'
+        }
+      })
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'response: {"message":"upstream case management failure"}'
+        )
+      )
+    })
   })
 })
