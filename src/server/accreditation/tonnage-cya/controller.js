@@ -130,8 +130,8 @@ export const tonnageCyaPostController = {
         organisationId,
         applicationId,
         {
-          plannedIssuance: tonnageBand,
-          signatories: authorisers,
+          plannedTonnageBand: tonnageBand,
+          authorisers,
           sectionStatus: 'Completed'
         }
       )
