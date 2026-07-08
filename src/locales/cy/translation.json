@@ -253,11 +253,11 @@
       }
     },
     "samplingPlanUpload": {
-      "title": "[Welsh] Upload accreditation sampling and inspection plan",
-      "heading": "[Welsh] Upload accreditation sampling and inspection plan",
+      "title": "[Welsh] Upload accreditation sampling and inspection plan - part 2",
+      "heading": "[Welsh] Upload accreditation sampling and inspection plan - part 2",
       "requirements": {
-        "intro": "[Welsh] The file must be:",
-        "maxSize": "[Welsh] no more than 20MB",
+        "intro": "[Welsh] The file(s) must be:",
+        "maxSize": "[Welsh] no more than 20MB each",
         "fileTypes": "[Welsh] one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
       "uploadedFilesHeading": "[Welsh] Uploaded files",
