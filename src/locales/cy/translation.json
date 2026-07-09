@@ -177,7 +177,7 @@
       "notSelected": "[Welsh] Not selected",
       "noneSelected": "[Welsh] None selected",
       "confirmAndContinue": "Cadarnhau a pharhau",
-      "saveAndComeLater": "[Welsh] Save and continue later",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "validation": {
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "confirmError": "[Welsh] Sorry, there was a problem confirming your answers. Please try again."
@@ -186,8 +186,9 @@
     "businessPlan": {
       "title": "[Welsh] Business plan",
       "heading": "[Welsh] Business plan",
-      "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
-      "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item. The regulator will expect you to follow this plan.",
+      "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item.",
+      "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item.",
+      "regulatorPlan": "[Welsh] The regulator will expect you to follow this plan.",
       "saveAndContinue": "Cadw a pharhau",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "fields": {
@@ -239,7 +240,7 @@
       "changePercentContext": "[Welsh] percentage for {field}",
       "changeDetailContext": "[Welsh] detail for {field}",
       "confirmAndContinue": "[Welsh] Confirm and continue",
-      "saveAndComeLater": "[Welsh] Save and continue later",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "fields": {
         "newInfrastructurePercent": "[Welsh] New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportPercent": "[Welsh] Price support for buying packaging waste or selling recycled packaging waste",
@@ -318,11 +319,10 @@
     },
     "submitConfirmation": {
       "title": "[Welsh] Application submitted",
-      "panelHeading": "[Welsh] Application submitted",
-      "panelBodyPrefix": "[Welsh] Your application reference for",
-      "panelBodySuffix": "[Welsh] is",
+      "panelHeading": "[Welsh]  Now pay the application charge",
+      "panelBodyPrefix": "[Welsh] Application reference for",
       "caseReferenceLabel": "[Welsh] Your case reference is",
-      "paymentText": "[Welsh] Now pay the application charge. The regulator will only review your application after you've paid.",
+      "paymentText": "[Welsh] The regulator will only review your application after you've paid.",
       "viewPaymentDetails": "[Welsh] View payment details",
       "returnHome": "[Welsh] Return to home page"
     },
