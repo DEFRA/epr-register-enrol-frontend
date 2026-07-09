@@ -222,6 +222,7 @@
       "characterCountHint": "You can enter up to 500 characters",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
+      "hint": "Enter a whole percentage",
       "fields": {
         "newInfrastructureDetail": "New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportDetail": "Price support for buying packaging waste or selling recycled packaging waste",

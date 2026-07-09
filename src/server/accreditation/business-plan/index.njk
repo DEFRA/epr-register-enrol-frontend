@@ -45,6 +45,7 @@
             <label class="govuk-label" for="{{ input.id }}">
               {{ input.label }}
             </label>
+            <span class="govuk-hint">{{ hint }}</span>
             {% if input.errorMessage %}
               <p id="{{ input.id }}-error" class="govuk-error-message" data-testid="field-error-{{ input.id }}">
                 <span class="govuk-visually-hidden">Error:</span>
