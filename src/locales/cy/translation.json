@@ -189,6 +189,7 @@
       "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item.",
       "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item.",
       "regulatorPlan": "[Welsh] The regulator will expect you to follow this plan.",
+      "enterWholePercent": "[Welsh] Enter a whole percentage",
       "saveAndContinue": "Cadw a pharhau",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "fields": {

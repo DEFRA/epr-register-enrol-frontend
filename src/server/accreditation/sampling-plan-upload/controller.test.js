@@ -200,7 +200,23 @@ describe('#samplingPlanUploadController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
       expect(result).toContain(
-        'Upload accreditation sampling and inspection plan'
+        'Upload accreditation sampling and inspection plan - part 2 - Steel'
+      )
+    })
+
+    test('appends the material type to the heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ materialType: 'Glass' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'Upload accreditation sampling and inspection plan - part 2 - Glass'
       )
     })
 
