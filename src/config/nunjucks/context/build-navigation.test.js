@@ -18,11 +18,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'About',
         href: '/about'
-      },
-      {
-        current: false,
-        text: 'File Upload',
-        href: '/file-upload'
       }
     ])
   })
@@ -38,11 +33,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'About',
         href: '/about'
-      },
-      {
-        current: false,
-        text: 'File Upload',
-        href: '/file-upload'
       }
     ])
   })
