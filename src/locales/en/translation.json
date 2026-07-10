@@ -95,6 +95,10 @@
         "Glass": "Glass",
         "Paper": "Paper",
         "Plastic": "Plastic"
+      },
+      "glassRecyclingProcess": {
+        "glass_re_melt": "Remelt",
+        "glass_other": "Other"
       }
     },
     "materialSelection": {
@@ -114,6 +118,10 @@
         "Glass": "Glass",
         "Paper": "Paper",
         "Plastic": "Plastic"
+      },
+      "glassRecyclingProcess": {
+        "glass_re_melt": "Remelt",
+        "glass_other": "Other"
       }
     },
     "tonnage": {

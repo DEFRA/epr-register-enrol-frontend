@@ -270,7 +270,8 @@ describe('#businessPlanCyaController', () => {
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
         expect.objectContaining({
           newInfrastructurePercent: 40,
-          newInfrastructureDetail: 'Investing in sorting lines'
+          newInfrastructureDetail: 'Investing in sorting lines',
+          sectionStatus: 'Completed'
         })
       )
     })

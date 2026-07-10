@@ -23,7 +23,7 @@ function makeApplication(overrides = {}) {
     organisationId: 'test-operator-id',
     materialType: 'Steel',
     year: 2025,
-    siteId: 'site-001',
+    siteAddress: 'Site Lane 002, Siteville, SIT3 OO2',
     isExporter: false,
     prns: {
       plannedTonnageBand: 'UpTo1000',
@@ -38,26 +38,37 @@ function makeApplication(overrides = {}) {
 
 describe('#buildHeading', () => {
   test('builds heading with material and site', () => {
-    const heading = buildHeading('Steel', 'Site A', false, t)
+    const heading = buildHeading('Steel', null, 'Site A', false, t)
     expect(heading).toContain('Steel')
     expect(heading).toContain('Site A')
   })
 
   test('uses siteNotSet fallback when no site', () => {
-    const heading = buildHeading('Steel', null, false, t)
+    const heading = buildHeading('Steel', null, null, false, t)
     expect(heading).toContain('siteNotSet')
   })
 
   test('handles null materialType gracefully', () => {
-    const heading = buildHeading(null, null, false, t)
+    const heading = buildHeading(null, null, null, false, t)
     expect(heading).toBeDefined()
     expect(typeof heading).toBe('string')
   })
 
   test('uses exporter prefix when isExporter is true', () => {
-    const heading = buildHeading('Plastic', 'Site B', true, t)
+    const heading = buildHeading('Plastic', null, 'Site B', true, t)
     expect(heading).toContain('headingPrefixExporter')
     expect(heading).toContain('Plastic')
+  })
+
+  test('appends glass recycling process suffix for glass material', () => {
+    const heading = buildHeading('Glass', 'glass_re_melt', 'Site A', false, t)
+    expect(heading).toContain('Glass - glass_re_melt')
+  })
+
+  test('ignores glass recycling process for non-glass material', () => {
+    const heading = buildHeading('Steel', 'glass_re_melt', 'Site A', false, t)
+    expect(heading).toContain('Steel')
+    expect(heading).not.toContain('glass_re_melt')
   })
 })
 
@@ -135,6 +146,22 @@ describe('#tonnageAuthorityController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
       expect(result).toContain('Steel')
+      expect(result).toContain('Site Lane 002')
+    })
+
+    test('shows siteNotSet fallback when application has no siteAddress', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ siteAddress: null })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="page-heading"')
+      expect(result).toContain('Not set')
     })
 
     test('shows no-authorisers message when authorisers list is empty', async () => {

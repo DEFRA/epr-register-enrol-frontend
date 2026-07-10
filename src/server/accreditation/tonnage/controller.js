@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { buildMaterialDisplay } from '../../common/helpers/material-display.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
 
@@ -12,13 +13,13 @@ export function buildTonnageOptions(selectedTonnage, t) {
   }))
 }
 
-function buildHeading(materialType, isExporter, t) {
+function buildHeading(materialType, glassRecyclingProcess, isExporter, t) {
   const prefix = t('pages.tonnage.headingPrefix')
   const suffix = isExporter
     ? t('pages.tonnage.headingSuffixExporter')
     : t('pages.tonnage.headingSuffix')
   if (!materialType) return `${prefix} ${suffix}`
-  const material = t(`pages.materialSelection.materials.${materialType}`)
+  const material = buildMaterialDisplay(materialType, glassRecyclingProcess, t)
   return `${prefix} ${material} ${suffix}`
 }
 
@@ -50,7 +51,7 @@ export const tonnageGetController = {
       )
       return renderForm(h, {
         pageTitle: t('pages.tonnage.title'),
-        heading: buildHeading(null, false, t),
+        heading: buildHeading(null, null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
         error: t('pages.tonnage.validation.fetchError')
@@ -63,7 +64,12 @@ export const tonnageGetController = {
       pageTitle: isExporter
         ? t('pages.tonnage.titleExporter')
         : t('pages.tonnage.title'),
-      heading: buildHeading(application.materialType, isExporter, t),
+      heading: buildHeading(
+        application.materialType,
+        application.glassRecyclingProcess,
+        isExporter,
+        t
+      ),
       tonnageOptions: buildTonnageOptions(
         application.prns?.plannedTonnageBand ?? null,
         t
@@ -96,7 +102,7 @@ export const tonnagePostController = {
       )
       return renderForm(h, {
         pageTitle: t('pages.tonnage.title'),
-        heading: buildHeading(null, false, t),
+        heading: buildHeading(null, null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
         errors: {
@@ -108,7 +114,12 @@ export const tonnagePostController = {
     }
 
     const isExporter = application.isExporter ?? false
-    const heading = buildHeading(application.materialType, isExporter, t)
+    const heading = buildHeading(
+      application.materialType,
+      application.glassRecyclingProcess,
+      isExporter,
+      t
+    )
     const selectTonnageKey = isExporter
       ? 'pages.tonnage.validation.selectTonnageExporter'
       : 'pages.tonnage.validation.selectTonnage'

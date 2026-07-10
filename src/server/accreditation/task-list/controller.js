@@ -2,6 +2,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 //import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { buildMaterialDisplay } from '../../common/helpers/material-display.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -17,6 +18,7 @@ export function buildTaskListViewModel(application, t) {
   const {
     applicationId,
     materialType,
+    glassRecyclingProcess,
     year,
     siteId,
     siteAddress,
@@ -29,7 +31,11 @@ export function buildTaskListViewModel(application, t) {
     isExporter
   } = application
 
-  const materialDisplay = t(`pages.materialSelection.materials.${materialType}`)
+  const materialDisplay = buildMaterialDisplay(
+    materialType,
+    glassRecyclingProcess,
+    t
+  )
   const headingPrefix = isExporter
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')

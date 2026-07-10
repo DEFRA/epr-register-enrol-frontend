@@ -115,6 +115,17 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.heading).toContain('Steel')
   })
 
+  test('builds heading with glass recycling process suffix', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({
+        materialType: 'Glass',
+        glassRecyclingProcess: 'glass_re_melt'
+      }),
+      t
+    )
+    expect(vm.heading).toContain('Glass - glass_re_melt')
+  })
+
   test('metadata contains year and site', () => {
     const vm = buildTaskListViewModel(
       makeApplication({ year: 2026, siteAddress: '123 Test Street' }),

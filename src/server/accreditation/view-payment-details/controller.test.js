@@ -144,6 +144,20 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).toContain('Glass')
     })
 
+    test('renders glass recycling process suffix when set', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ glassRecyclingProcess: 'glass_re_melt' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Glass - Remelt')
+    })
+
     test('handles missing submittedBy gracefully — no crash', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({ submittedBy: null })

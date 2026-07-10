@@ -5,6 +5,7 @@ import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { buildMaterialDisplay } from '../../common/helpers/material-display.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -102,8 +103,10 @@ export const samplingPlanUploadGetController = {
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
-    const materialDisplay = t(
-      `pages.materialSelection.materials.${application.materialType}`
+    const materialDisplay = buildMaterialDisplay(
+      application.materialType,
+      application.glassRecyclingProcess,
+      t
     )
 
     return renderPage(h, {

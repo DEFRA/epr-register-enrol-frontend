@@ -87,6 +87,10 @@
         "Glass": "Gwydr",
         "Paper": "Papur",
         "Plastic": "Plastig"
+      },
+      "glassRecyclingProcess": {
+        "glass_re_melt": "[Welsh] Remelt",
+        "glass_other": "[Welsh] Other"
       }
     },
     "materialSelection": {
@@ -106,6 +110,10 @@
         "Glass": "Gwydr",
         "Paper": "Papur",
         "Plastic": "Plastig"
+      },
+      "glassRecyclingProcess": {
+        "glass_re_melt": "[Welsh] Remelt",
+        "glass_other": "[Welsh] Other"
       }
     },
     "tonnage": {

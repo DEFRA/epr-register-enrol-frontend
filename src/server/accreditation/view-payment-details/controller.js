@@ -1,6 +1,8 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { buildMaterialDisplay } from '../../common/helpers/material-display.js'
+import { siteNameFromAddress } from '../../common/helpers/site-name.js'
 
 const BANK_DETAILS = {
   sortCode: '30 94 30',
@@ -11,11 +13,6 @@ const BANK_DETAILS = {
 
 function confirmationUrl(applicationId) {
   return `/accreditation/submit-confirmation/${applicationId}`
-}
-
-function siteNameFromAddress(siteAddress) {
-  if (!siteAddress) return ''
-  return siteAddress.split(',')[0].trim()
 }
 
 export const viewPaymentDetailsGetController = {
@@ -47,7 +44,11 @@ export const viewPaymentDetailsGetController = {
     }
 
     const materialDisplay = application.materialType
-      ? t(`pages.materialSelection.materials.${application.materialType}`)
+      ? buildMaterialDisplay(
+          application.materialType,
+          application.glassRecyclingProcess,
+          t
+        )
       : ''
 
     const submittedBy = application.submittedBy ?? {}

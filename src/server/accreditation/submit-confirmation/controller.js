@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { buildMaterialDisplay } from '../../common/helpers/material-display.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -26,12 +27,14 @@ export const submitConfirmationGetController = {
     }
 
     let materialType = ''
+    let glassRecyclingProcess = null
     try {
       const application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
       materialType = application.materialType ?? ''
+      glassRecyclingProcess = application.glassRecyclingProcess ?? null
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId} for confirmation: ${err.message}`
@@ -39,7 +42,7 @@ export const submitConfirmationGetController = {
     }
 
     const materialDisplay = materialType
-      ? t(`pages.materialSelection.materials.${materialType}`)
+      ? buildMaterialDisplay(materialType, glassRecyclingProcess, t)
       : ''
 
     return h.view('accreditation/submit-confirmation/index', {

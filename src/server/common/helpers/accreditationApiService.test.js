@@ -86,6 +86,28 @@ describe('accreditationApiService', () => {
         accreditationApiService.getApplication(ORG_ID, 'missing')
       ).rejects.toMatchObject({ status: 404, isApiError: true })
     })
+
+    test('passes through glassRecyclingProcess when present', async () => {
+      apiClient.get.mockResolvedValue({
+        id: APP_ID,
+        material: 'glass',
+        glassRecyclingProcess: 'glass_re_melt'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.glassRecyclingProcess).toBe('glass_re_melt')
+    })
+
+    test('normalises missing glassRecyclingProcess to null', async () => {
+      apiClient.get.mockResolvedValue({ id: APP_ID, material: 'steel' })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.glassRecyclingProcess).toBeNull()
+    })
   })
 
   describe('patchTonnage', () => {

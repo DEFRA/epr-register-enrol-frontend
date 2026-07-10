@@ -5,6 +5,7 @@ import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
+import { buildMaterialDisplay } from '../common/helpers/material-display.js'
 
 const STATUS_CONFIG = {
   Saved: { tagClass: 'govuk-tag--grey' },
@@ -32,8 +33,10 @@ export function buildLandingViewModel(
     registrationId:
       application.registrationId ?? application.applicationReference,
     siteName: siteAddress ?? t('pages.taskList.siteNotSet'),
-    materialDisplay: t(
-      `pages.operatorAccreditation.materials.${application.materialType}`
+    materialDisplay: buildMaterialDisplay(
+      application.materialType,
+      application.glassRecyclingProcess,
+      t
     ),
     statusLabel: t(
       `pages.operatorAccreditation.statuses.${application.applicationStatus}`

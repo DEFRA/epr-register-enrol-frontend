@@ -97,6 +97,7 @@ function normalizeApplication(item) {
     materialType: item.material
       ? item.material.charAt(0).toUpperCase() + item.material.slice(1)
       : (item.materialType ?? ''),
+    glassRecyclingProcess: item.glassRecyclingProcess ?? null,
     isExporter:
       item.wasteProcessingType !== undefined
         ? item.wasteProcessingType === 'exporter'

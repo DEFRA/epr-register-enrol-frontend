@@ -111,6 +111,24 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('data-testid="panel-heading"')
     })
 
+    test('shows glass recycling process suffix in the panel body', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          materialType: 'Glass',
+          glassRecyclingProcess: 'glass_other'
+        })
+      )
+      const cookie = await getSessionCookieWithReference()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(result).toContain('Glass - Other')
+    })
+
     test('displays the application reference in the panel', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference('RA-000000001')

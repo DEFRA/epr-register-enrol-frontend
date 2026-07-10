@@ -168,6 +168,7 @@ export const businessPlanCyaPostController = {
       const item = findBpItem(bp, category)
       patchBody[field] = item.detailedDescription ?? ''
     }
+    patchBody.sectionStatus = 'Completed'
 
     try {
       await accreditationApiService.patchBusinessPlan(

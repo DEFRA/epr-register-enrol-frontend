@@ -150,6 +150,17 @@ describe('#buildLandingViewModel', () => {
     expect(vm.materialDisplay).toBe('Steel')
   })
 
+  test('materialDisplay includes glass recycling process suffix', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ materialType: 'Glass', glassRecyclingProcess: 'glass_other' }),
+      'Org',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.materialDisplay).toBe('Glass - glass_other')
+  })
+
   test('organisationName is passed through', () => {
     const vm = buildLandingViewModel(
       makeApp({ materialType: 'Steel' }),

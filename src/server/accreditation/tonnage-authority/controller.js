@@ -1,16 +1,24 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { buildMaterialDisplay } from '../../common/helpers/material-display.js'
+import { siteNameFromAddress } from '../../common/helpers/site-name.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export function buildHeading(materialType, siteName, isExporter, t) {
+export function buildHeading(
+  materialType,
+  glassRecyclingProcess,
+  siteName,
+  isExporter,
+  t
+) {
   const prefix = isExporter
     ? t('pages.tonnageAuthority.headingPrefixExporter')
     : t('pages.tonnageAuthority.headingPrefix')
   const at = t('pages.tonnageAuthority.headingAt')
   const material = materialType
-    ? t(`pages.materialSelection.materials.${materialType}`)
+    ? buildMaterialDisplay(materialType, glassRecyclingProcess, t)
     : ''
   const site = siteName || t('pages.taskList.siteNotSet')
   return `${prefix} ${material} ${at}: ${site}`
@@ -49,7 +57,8 @@ function buildViewData(application, t, applicationId, opts = {}) {
       : t('pages.tonnageAuthority.title'),
     heading: buildHeading(
       application.materialType,
-      application.siteId,
+      application.glassRecyclingProcess,
+      siteNameFromAddress(application.siteAddress),
       isExporter,
       t
     ),
@@ -87,7 +96,7 @@ export const tonnageAuthorityGetController = {
       )
       return renderPage(h, {
         pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(null, null, false, t),
+        heading: buildHeading(null, null, null, false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
@@ -128,7 +137,7 @@ export const tonnageAuthorityPostController = {
       )
       return renderPage(h, {
         pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(null, null, false, t),
+        heading: buildHeading(null, null, null, false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
@@ -142,7 +151,8 @@ export const tonnageAuthorityPostController = {
     const isExporter = application.isExporter ?? false
     const heading = buildHeading(
       application.materialType,
-      application.siteId,
+      application.glassRecyclingProcess,
+      siteNameFromAddress(application.siteAddress),
       isExporter,
       t
     )
