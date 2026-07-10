@@ -60,11 +60,6 @@ describe('context and cache', () => {
               current: false,
               text: 'About',
               href: '/about'
-            },
-            {
-              current: false,
-              text: 'File Upload',
-              href: '/file-upload'
             }
           ],
           serviceName: 'epr-register-enrol-frontend',
@@ -169,11 +164,6 @@ describe('context and cache', () => {
               current: false,
               text: 'About',
               href: '/about'
-            },
-            {
-              current: false,
-              text: 'File Upload',
-              href: '/file-upload'
             }
           ],
           serviceName: 'epr-register-enrol-frontend',

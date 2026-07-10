@@ -194,10 +194,12 @@
     "businessPlan": {
       "title": "Business plan",
       "heading": "Business plan",
-      "intro": "Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
-      "introExporter": "Enter the percentage of PERN income you'll spend on each item. The regulator will expect you to follow this plan.",
+      "intro": "Enter the percentage of PRN income you'll spend on each item.",
+      "introExporter": "Enter the percentage of PERN income you'll spend on each item.",
+      "regulatorPlan": "The regulator will expect you to follow this plan.",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
+      "enterWholePercent": "Enter a whole percentage",
       "fields": {
         "newInfrastructurePercent": "New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportPercent": "Price support for buying packaging waste or selling recycled packaging waste",
@@ -222,6 +224,7 @@
       "characterCountHint": "You can enter up to 500 characters",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
+
       "fields": {
         "newInfrastructureDetail": "New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportDetail": "Price support for buying packaging waste or selling recycled packaging waste",
@@ -325,11 +328,10 @@
     },
     "submitConfirmation": {
       "title": "Application submitted",
-      "panelHeading": "Application submitted",
-      "panelBodyPrefix": "Your application reference for",
-      "panelBodySuffix": "is",
+      "panelHeading": "Now pay the application charge",
+      "panelBodyPrefix": "Application reference for",
       "caseReferenceLabel": "Your case reference is",
-      "paymentText": "Now pay the application charge. The regulator will only review your application after you've paid.",
+      "paymentText": "The regulator will only review your application after you've paid.",
       "viewPaymentDetails": "View payment details",
       "returnHome": "Return to home page"
     },

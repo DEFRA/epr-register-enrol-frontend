@@ -80,13 +80,13 @@
         "Rejected": "[Welsh] REJECTED"
       },
       "materials": {
-        "Steel": "[Welsh] Steel",
-        "Wood": "[Welsh] Wood",
-        "Aluminium": "[Welsh] Aluminium",
+        "Steel": "Dur",
+        "Wood": "Pren",
+        "Aluminium": "Alwminiwm",
         "Fibre": "[Welsh] Fibre",
-        "Glass": "[Welsh] Glass",
-        "Paper": "[Welsh] Paper",
-        "Plastic": "[Welsh] Plastic"
+        "Glass": "Gwydr",
+        "Paper": "Papur",
+        "Plastic": "Plastig"
       }
     },
     "materialSelection": {
@@ -99,13 +99,13 @@
         "createError": "[Welsh] Sorry, we were unable to create your application. Please try again."
       },
       "materials": {
-        "Steel": "[Welsh] Steel",
-        "Wood": "[Welsh] Wood",
-        "Aluminium": "[Welsh] Aluminium",
+        "Steel": "Dur",
+        "Wood": "Pren",
+        "Aluminium": "Alwminiwm",
         "Fibre": "[Welsh] Fibre",
-        "Glass": "[Welsh] Glass",
-        "Paper": "[Welsh] Paper",
-        "Plastic": "[Welsh] Plastic"
+        "Glass": "Gwydr",
+        "Paper": "Papur",
+        "Plastic": "Plastig"
       }
     },
     "tonnage": {
@@ -114,8 +114,8 @@
       "headingPrefix": "[Welsh] How many",
       "headingSuffix": "[Welsh] PRNs do you plan to issue?",
       "headingSuffixExporter": "[Welsh] PERNs do you plan to issue?",
-      "saveAndContinue": "[Welsh] Save and continue",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "saveAndContinue": "Cadw a pharhau",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "validation": {
         "selectTonnage": "[Welsh] Select how many PRNs you plan to issue",
         "selectTonnageExporter": "[Welsh] Select how many PERNs you plan to issue",
@@ -142,8 +142,8 @@
       "noAuthorisers": "[Welsh] No authorisers added yet. Use the form below to add someone.",
       "addAuthoriserLabel": "[Welsh] Add a new authoriser",
       "addAuthoriserButton": "[Welsh] Add authoriser",
-      "saveAndContinue": "[Welsh] Save and continue",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "saveAndContinue": "Cadw a pharhau",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "table": {
         "select": "[Welsh] Select",
         "fullName": "[Welsh] Full name",
@@ -176,8 +176,8 @@
       "changeAuthorityContextExporter": "[Welsh] authority to issue PERNs",
       "notSelected": "[Welsh] Not selected",
       "noneSelected": "[Welsh] None selected",
-      "confirmAndContinue": "[Welsh] Confirm and continue",
-      "saveAndComeLater": "[Welsh] Save and continue later",
+      "confirmAndContinue": "Cadarnhau a pharhau",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "validation": {
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "confirmError": "[Welsh] Sorry, there was a problem confirming your answers. Please try again."
@@ -186,10 +186,12 @@
     "businessPlan": {
       "title": "[Welsh] Business plan",
       "heading": "[Welsh] Business plan",
-      "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item. The regulator will expect you to follow this plan.",
-      "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item. The regulator will expect you to follow this plan.",
-      "saveAndContinue": "[Welsh] Save and continue",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item.",
+      "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item.",
+      "regulatorPlan": "[Welsh] The regulator will expect you to follow this plan.",
+      "enterWholePercent": "[Welsh] Enter a whole percentage",
+      "saveAndContinue": "Cadw a pharhau",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "fields": {
         "newInfrastructurePercent": "[Welsh] New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportPercent": "[Welsh] Price support for buying packaging waste or selling recycled packaging waste",
@@ -212,8 +214,9 @@
       "intro": "[Welsh] It's optional, but it can help the regulator to better understand your plans.",
       "optional": "[Welsh] (optional)",
       "characterCountHint": "[Welsh] You can enter up to 500 characters",
-      "saveAndContinue": "[Welsh] Save and continue",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "saveAndContinue": "Cadw a pharhau",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
+      "hint": "[Welsh] Enter a whole percentage",
       "fields": {
         "newInfrastructureDetail": "[Welsh] New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportDetail": "[Welsh] Price support for buying packaging waste or selling recycled packaging waste",
@@ -238,7 +241,7 @@
       "changePercentContext": "[Welsh] percentage for {field}",
       "changeDetailContext": "[Welsh] detail for {field}",
       "confirmAndContinue": "[Welsh] Confirm and continue",
-      "saveAndComeLater": "[Welsh] Save and continue later",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "fields": {
         "newInfrastructurePercent": "[Welsh] New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportPercent": "[Welsh] Price support for buying packaging waste or selling recycled packaging waste",
@@ -262,15 +265,15 @@
       },
       "uploadedFilesHeading": "[Welsh] Uploaded files",
       "fileLabel": "[Welsh] Choose a file to upload",
-      "uploadButton": "[Welsh] Upload file",
+      "uploadButton": "Uwchlwytho ffeil",
       "deleteFile": "[Welsh] Delete",
-      "saveAndContinue": "[Welsh] Save and continue",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "saveAndContinue": "Cadw a pharhau",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "table": {
         "filename": "[Welsh] Filename",
         "dateUploaded": "[Welsh] Date uploaded",
-        "uploadedBy": "[Welsh] Uploaded by",
-        "status": "[Welsh] Status",
+        "uploadedBy": "Uwchlwythwyd gan",
+        "status": "Statws",
         "action": "[Welsh] Action"
       },
       "scanStatus": {
@@ -279,8 +282,8 @@
         "infected": "[Welsh] Infected"
       },
       "status": {
-        "title": "[Welsh] Uploading file",
-        "heading": "[Welsh] Uploading file",
+        "title": "Wrthi’n uwchlwytho ffeil",
+        "heading": "Wrthi’n uwchlwytho ffeil",
         "message": "[Welsh] Your file is being scanned for viruses. This may take a few seconds.",
         "doNotClose": "[Welsh] Do not close this page."
       },
@@ -301,13 +304,13 @@
       "declarationSubHeading": "[Welsh] Declaration",
       "declarationText": "[Welsh] By entering your name and submitting your application, you confirm that the information you have provided is accurate.",
       "warningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
-      "fullNameLabel": "[Welsh] Enter your full name",
+      "fullNameLabel": "Rhowch eich enw llawn",
       "jobTitleLabel": "[Welsh] Enter your job title",
       "emailLabel": "[Welsh] Enter your email address",
       "submitButton": "[Welsh] Submit application",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "validation": {
-        "fullNameRequired": "[Welsh] Enter your full name",
+        "fullNameRequired": "Rhowch eich enw llawn",
         "jobTitleRequired": "[Welsh] Enter your job title",
         "emailRequired": "[Welsh] Enter your email address",
         "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
@@ -317,18 +320,17 @@
     },
     "submitConfirmation": {
       "title": "[Welsh] Application submitted",
-      "panelHeading": "[Welsh] Application submitted",
-      "panelBodyPrefix": "[Welsh] Your application reference for",
-      "panelBodySuffix": "[Welsh] is",
+      "panelHeading": "[Welsh]  Now pay the application charge",
+      "panelBodyPrefix": "[Welsh] Application reference for",
       "caseReferenceLabel": "[Welsh] Your case reference is",
-      "paymentText": "[Welsh] Now pay the application charge. The regulator will only review your application after you've paid.",
+      "paymentText": "[Welsh] The regulator will only review your application after you've paid.",
       "viewPaymentDetails": "[Welsh] View payment details",
       "returnHome": "[Welsh] Return to home page"
     },
     "viewPaymentDetails": {
       "title": "[Welsh] View payment details",
       "backLink": "[Welsh] Back to accreditation details",
-      "bannerTitle": "[Welsh] Success",
+      "bannerTitle": "Llwyddiant",
       "bannerHeading": "[Welsh] Application submitted to the Environment Agency",
       "bannerEmailSent": "[Welsh] A confirmation email has been sent to",
       "paymentFor": "[Welsh] Payment for",
@@ -360,7 +362,7 @@
       "metadataYear": "[Welsh] For:",
       "metadataSite": "[Welsh] For reprocessing site:",
       "siteNotSet": "[Welsh] Not set",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
         "prns": "[Welsh] PRNs tonnage and authority to issue PRNs",
@@ -513,7 +515,7 @@
       "heading": "[Welsh] Upload BES evidence for",
       "fileLabel": "[Welsh] Upload a file",
       "uploadButton": "[Welsh] Upload file",
-      "saveAndComeLater": "[Welsh] Save and come back later",
+      "saveAndComeLater": "Cadw a chwblhau wedyn",
       "requirements": {
         "intro": "[Welsh] The file must:",
         "maxSize": "[Welsh] be smaller than 20MB",
@@ -583,12 +585,12 @@
     "back": "Yn ôl",
     "continue": "Parhau",
     "save": "Cadw",
-    "errorSummaryTitle": "[Welsh] There is a problem",
-    "error": "[Welsh] Error",
-    "warning": "[Welsh] Warning",
+    "errorSummaryTitle": "Mae yna broblem",
+    "error": "Gwall",
+    "warning": "Rhybudd",
     "errors": {
-      "serviceTitle": "[Welsh] Sorry, there is a problem with the service",
-      "tryAgain": "[Welsh] Try again"
+      "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda'r gwasanaeth",
+      "tryAgain": "Trio eto"
     }
   },
   "languageSwitcher": {

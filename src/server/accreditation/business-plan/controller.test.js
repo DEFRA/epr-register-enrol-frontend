@@ -303,6 +303,45 @@ describe('#businessPlanController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
+    test('shows the regulator plan reminder text', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'The regulator will expect you to follow this plan.'
+      )
+    })
+
+    test('shows the whole-percentage hint on each field', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      const matches = result.match(/Enter a whole percentage/g) ?? []
+      expect(matches).toHaveLength(BUSINESS_PLAN_FIELDS.length)
+    })
+
+    test('shows the Welsh whole-percentage hint in Welsh locale', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/cy/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('[Welsh] Enter a whole percentage')
+    })
+
     test('exporter GET shows PERN intro text', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({ isExporter: true })

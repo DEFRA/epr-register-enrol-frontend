@@ -125,6 +125,21 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('RA-000000001')
     })
 
+    test('panel heading prompts payment, and body has no trailing "is" suffix', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const cookie = await getSessionCookieWithReference('RA-000000001')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(result).toContain('Now pay the application charge')
+      expect(result).toContain('Application reference for')
+      expect(result).not.toContain('Your application reference for')
+    })
+
     test('displays payment text and action links', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference()

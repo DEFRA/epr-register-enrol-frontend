@@ -37,6 +37,8 @@
 
       <p class="govuk-body" data-testid="intro-text">{{ intro }}</p>
 
+      <p class="govuk-body">{{ t('pages.businessPlan.regulatorPlan') }}</p>
+
       <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
@@ -44,6 +46,9 @@
           <div class="govuk-form-group {% if input.errorMessage %}govuk-form-group--error{% endif %}" data-testid="field-group-{{ input.id }}">
             <label class="govuk-label" for="{{ input.id }}">
               {{ input.label }}
+            </label>
+            <label class="govuk-hint">
+              {{ t('pages.businessPlan.enterWholePercent') }}
             </label>
             {% if input.errorMessage %}
               <p id="{{ input.id }}-error" class="govuk-error-message" data-testid="field-error-{{ input.id }}">
@@ -60,7 +65,9 @@
                 inputmode="numeric"
                 value="{{ input.value }}"
                 aria-describedby="{% if input.errorMessage %}{{ input.id }}-error{% endif %}"
-                data-testid="input-{{ input.id }}">
+                data-testid="input-{{ input.id }}"
+
+              >
               <div class="govuk-input__suffix" aria-hidden="true">%</div>
             </div>
           </div>

@@ -83,7 +83,10 @@ export const samplingPlanUploadGetController = {
 
     let application
     try {
-      application = await apiClient.get(appUrl(organisationId, applicationId))
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
     } catch (err) {
       request.server.logger.error(
         `Error fetching application ${applicationId}: ${err.message}`
@@ -99,10 +102,13 @@ export const samplingPlanUploadGetController = {
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
+    const materialDisplay = t(
+      `pages.materialSelection.materials.${application.materialType}`
+    )
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
-      heading: t('pages.samplingPlanUpload.heading'),
+      heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
       backLink: taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files
