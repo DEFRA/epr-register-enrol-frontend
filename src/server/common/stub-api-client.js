@@ -23,7 +23,7 @@ export const STUB_ORG_DOCS = [
       {
         id: 'app001',
         applicationId: 'APP2027ER5000390PL',
-        applicationStatus: 'NotStarted',
+        applicationStatus: 'Saved',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050001',
