@@ -157,7 +157,7 @@ export const businessPlanCyaPostController = {
     }
 
     const bp = application.businessPlan
-    const patchBody = {}
+    const patchBody = { sectionStatus: 'Completed' }
     for (const field of PERCENT_FIELDS) {
       const category = PERCENT_FIELD_TO_CATEGORY[field]
       const item = findBpItem(bp, category)
