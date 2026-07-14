@@ -128,6 +128,26 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.tasks[0].statusTagClass).toBe('govuk-tag--blue')
   })
 
+  test('PRNs Submitted — tag shows SUBMITTED with green class', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ prns: { sectionStatus: 'Submitted' } }),
+      t
+    )
+
+    expect(vm.tasks[0].statusTagText).toBe('SUBMITTED')
+    expect(vm.tasks[0].statusTagClass).toBe('govuk-tag--green')
+  })
+
+  test('PRNs Queried — tag shows QUERIED with orange class', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ prns: { sectionStatus: 'Queried' } }),
+      t
+    )
+
+    expect(vm.tasks[0].statusTagText).toBe('QUERIED')
+    expect(vm.tasks[0].statusTagClass).toBe('govuk-tag--orange')
+  })
+
   test('builds heading with material name', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
     expect(vm.heading).toContain('Steel')
@@ -431,6 +451,40 @@ describe('#taskListGetController', () => {
       expect(result).toContain(
         `/accreditation/submit-declaration/${APPLICATION_ID}`
       )
+    })
+
+    test('Continue button and save-and-come-later link hidden when application is Submitted, even with all sections complete', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="save-come-back-link"')
+    })
+
+    test('save-and-come-later link shown when application is not yet Submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Saved' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="save-come-back-link"')
     })
 
     test('business plan row has no link when PRNs not complete (locked)', async () => {

@@ -18,11 +18,12 @@
       {% else %}
         <h1 class="govuk-heading-l" data-testid="page-heading">{{ organisationName }}: reapply for {{ materialDisplay }} accreditation</h1>
 
-
+        {% if displayReapplyAccreditationText %}
+          <div class="govuk-inset-text">
             <p class="govuk-body">You can now reapply for accreditation for this material.</p>
             <p class="govuk-body">Submit the application by 30 September 2026 to get accreditation approval from 1 January 2027.</p>
-
-
+          </div>
+        {% endif %}
 
         <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-testid="application-summary">
           <div class="govuk-summary-list__row">
