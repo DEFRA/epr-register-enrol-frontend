@@ -53,7 +53,14 @@
           {% endfor %}
         </ul>
 
-        {% if not isSubmitted %}
+        {% if isSubmitted %}
+          <p class="govuk-body" data-testid="submitted-text">{{ t('pages.taskList.submittedText') }}</p>
+          <p class="govuk-body">
+            <a href="{{ viewPaymentDetailsLink }}" class="govuk-link" data-testid="view-payment-details-link">
+              {{ t('pages.taskList.viewPaymentDetailsLink') }}
+            </a>
+          </p>
+        {% else %}
           {% if allComplete %}
             <a href="{{ continueUrl }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
               {{ t('common.continue') }}

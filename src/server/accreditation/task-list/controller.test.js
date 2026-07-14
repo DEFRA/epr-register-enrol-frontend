@@ -118,6 +118,14 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.isSubmitted).toBe(false)
   })
 
+  test('viewPaymentDetailsLink contains applicationId', () => {
+    const vm = buildTaskListViewModel(makeApplication(), t)
+
+    expect(vm.viewPaymentDetailsLink).toBe(
+      `/accreditation/view-payment-details/${APPLICATION_ID}`
+    )
+  })
+
   test('PRNs InProgress — tag shows IN PROGRESS with blue class', () => {
     const vm = buildTaskListViewModel(
       makeApplication({ prns: { sectionStatus: 'InProgress' } }),
@@ -471,6 +479,43 @@ describe('#taskListGetController', () => {
 
       expect(result).not.toContain('data-testid="continue-button"')
       expect(result).not.toContain('data-testid="save-come-back-link"')
+    })
+
+    test('submitted text and view-payment-details link shown when application is Submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Submitted' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'This reapplication for accreditation has been submitted'
+      )
+      expect(result).toContain('data-testid="view-payment-details-link"')
+      expect(result).toContain(
+        `/accreditation/view-payment-details/${APPLICATION_ID}`
+      )
+    })
+
+    test('submitted text and view-payment-details link NOT shown when application is not yet Submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Saved' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain(
+        'This reapplication for accreditation has been submitted'
+      )
+      expect(result).not.toContain('data-testid="view-payment-details-link"')
     })
 
     test('save-and-come-later link shown when application is not yet Submitted', async () => {

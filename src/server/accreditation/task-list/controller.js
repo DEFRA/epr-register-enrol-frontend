@@ -139,7 +139,8 @@ export function buildTaskListViewModel(application, t) {
       : null,
     backLink,
     saveAndComeLaterLink: '/operator',
-    isSubmitted
+    isSubmitted,
+    viewPaymentDetailsLink: `/accreditation/view-payment-details/${applicationId}`
   }
 }
 
