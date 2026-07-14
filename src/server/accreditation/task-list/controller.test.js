@@ -100,6 +100,24 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.tasks.every((task) => !task.locked)).toBe(true)
   })
 
+  test('applicationStatus Submitted — isSubmitted true', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'Submitted' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(true)
+  })
+
+  test('applicationStatus Saved — isSubmitted false', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'Saved' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(false)
+  })
+
   test('PRNs InProgress — tag shows IN PROGRESS with blue class', () => {
     const vm = buildTaskListViewModel(
       makeApplication({ prns: { sectionStatus: 'InProgress' } }),

@@ -650,7 +650,7 @@ export const stubApiClient = {
         const doc = findOrgDoc(parsed.orgId)
         const item = doc?.accreditations.find((a) => a.id === parsed.itemId)
         if (item) {
-          item.applicationStatus = 'Sent'
+          item.applicationStatus = 'Submitted'
           item.formSubmissionTime = new Date().toISOString()
           if (body) {
             item.submitterContactDetails = {

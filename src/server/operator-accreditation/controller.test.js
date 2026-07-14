@@ -62,15 +62,26 @@ describe('#buildLandingViewModel', () => {
     expect(vm.statusTagClass).toBe('govuk-tag--blue')
   })
 
-  test('Sent maps to turquoise tag', () => {
+  test('Submitted maps to green tag', () => {
     const vm = buildLandingViewModel(
-      makeApp({ applicationStatus: 'Sent' }),
+      makeApp({ applicationStatus: 'Submitted' }),
       'Org Name',
       'siteAddr',
       2027,
       t
     )
-    expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
+    expect(vm.statusTagClass).toBe('govuk-tag--green')
+  })
+
+  test('Queried maps to orange tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'Queried' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.statusTagClass).toBe('govuk-tag--orange')
   })
 
   test('Approved maps to green tag', () => {

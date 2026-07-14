@@ -75,7 +75,8 @@
       "statuses": {
         "Saved": "[Welsh] NOT STARTED",
         "Started": "[Welsh] IN PROGRESS",
-        "Sent": "[Welsh] SUBMITTED",
+        "Submitted": "[Welsh] SUBMITTED",
+        "Queried": "[Welsh] QUERIED",
         "Approved": "[Welsh] WITH REGULATOR",
         "Rejected": "[Welsh] REJECTED"
       },

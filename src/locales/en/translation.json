@@ -83,7 +83,8 @@
         "Saved": "NOT STARTED",
         "Started": "IN PROGRESS",
         "NotStarted": "NOT STARTED",
-        "Sent": "SUBMITTED",
+        "Submitted": "SUBMITTED",
+        "Queried": "QUERIED",
         "Approved": "WITH REGULATOR",
         "Rejected": "REJECTED"
       },

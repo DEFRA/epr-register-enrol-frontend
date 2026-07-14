@@ -21,7 +21,7 @@ function makeApplication(overrides = {}) {
     materialType: 'Steel',
     year: 2025,
     siteId: 'site-001',
-    applicationStatus: 'Sent',
+    applicationStatus: 'Submitted',
     accreditationReference: 'RA-000000001',
     prns: { sectionStatus: 'Completed' },
     businessPlan: { sectionStatus: 'Completed' },
@@ -61,7 +61,7 @@ describe('#submitConfirmationController', () => {
     // Use the submit-declaration POST to seed the session with an accreditationReference
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
       accreditationReference: reference,
-      applicationStatus: 'Sent'
+      applicationStatus: 'Submitted'
     })
 
     const postResponse = await server.inject({

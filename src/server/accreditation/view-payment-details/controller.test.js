@@ -21,7 +21,7 @@ function makeApplication(overrides = {}) {
     materialType: 'Glass',
     siteAddress: 'North Road, Siteville, SI1 1AA',
     accreditationReference: 'APP2027ER5000390GL',
-    applicationStatus: 'Sent',
+    applicationStatus: 'Submitted',
     submittedBy: {
       name: 'Rosina Campbell',
       email: 'rosina@gws.com',

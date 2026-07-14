@@ -53,18 +53,19 @@
           {% endfor %}
         </ul>
 
-        {% if allComplete %}
-          <a href="{{ continueUrl }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-            {{ t('common.continue') }}
-          </a>
+        {% if not isSubmitted %}
+          {% if allComplete %}
+            <a href="{{ continueUrl }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+              {{ t('common.continue') }}
+            </a>
+          {% endif %}
+
+          <p class="govuk-body">
+            <a href="{{ saveAndComeLaterLink }}" class="govuk-link" data-testid="save-come-back-link">
+              {{ t('pages.taskList.saveAndComeLater') }}
+            </a>
+          </p>
         {% endif %}
-
-        <p class="govuk-body">
-          <a href="{{ saveAndComeLaterLink }}" class="govuk-link" data-testid="save-come-back-link">
-            {{ t('pages.taskList.saveAndComeLater') }}
-          </a>
-        </p>
-
       {% endif %}
 
     </div>
