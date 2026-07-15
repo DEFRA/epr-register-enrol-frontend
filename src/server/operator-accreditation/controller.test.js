@@ -62,15 +62,26 @@ describe('#buildLandingViewModel', () => {
     expect(vm.statusTagClass).toBe('govuk-tag--blue')
   })
 
-  test('Sent maps to turquoise tag', () => {
+  test('Submitted maps to green tag', () => {
     const vm = buildLandingViewModel(
-      makeApp({ applicationStatus: 'Sent' }),
+      makeApp({ applicationStatus: 'Submitted' }),
       'Org Name',
       'siteAddr',
       2027,
       t
     )
-    expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
+    expect(vm.statusTagClass).toBe('govuk-tag--green')
+  })
+
+  test('Queried maps to orange tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'Queried' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.statusTagClass).toBe('govuk-tag--orange')
   })
 
   test('Approved maps to green tag', () => {
@@ -363,6 +374,86 @@ describe('#operatorAccreditationController', () => {
 
     expect(result).toContain('govuk-tag--blue')
     expect(result).toContain('IN PROGRESS')
+  })
+
+  test('reapply text is shown when application status is Saved', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Saved' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain(
+      'You can now reapply for accreditation for this material.'
+    )
+  })
+
+  test('reapply text is shown when application status is Started', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Started' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain(
+      'You can now reapply for accreditation for this material.'
+    )
+  })
+
+  test('reapply text is NOT shown when application status is Submitted', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Submitted' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain(
+      'You can now reapply for accreditation for this material.'
+    )
+  })
+
+  test('reapply text is NOT shown when application status is Approved', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Approved' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain(
+      'You can now reapply for accreditation for this material.'
+    )
+  })
+
+  test('reapply text is NOT shown when application status is Rejected', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Rejected' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain(
+      'You can now reapply for accreditation for this material.'
+    )
   })
 
   test('Continue button links to task-list with applicationId', async () => {

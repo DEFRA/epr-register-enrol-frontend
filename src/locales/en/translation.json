@@ -83,7 +83,8 @@
         "Saved": "NOT STARTED",
         "Started": "IN PROGRESS",
         "NotStarted": "NOT STARTED",
-        "Sent": "SUBMITTED",
+        "Submitted": "SUBMITTED",
+        "Queried": "QUERIED",
         "Approved": "WITH REGULATOR",
         "Rejected": "REJECTED"
       },
@@ -371,6 +372,8 @@
       "metadataSite": "For reprocessing site:",
       "siteNotSet": "Not set",
       "saveAndComeLater": "Save and come back later",
+      "submittedText": "This reapplication for accreditation has been submitted",
+      "viewPaymentDetailsLink": "View payment details",
       "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
         "prns": "PRNs tonnage and authority to issue PRNs",

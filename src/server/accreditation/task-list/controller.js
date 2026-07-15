@@ -6,7 +6,9 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
   InProgress: { tagText: 'IN PROGRESS', tagClass: 'govuk-tag--blue' },
-  Completed: { tagText: 'COMPLETED', tagClass: 'govuk-tag--green' }
+  Completed: { tagText: 'COMPLETED', tagClass: 'govuk-tag--green' },
+  Submitted: { tagText: 'SUBMITTED', tagClass: 'govuk-tag--green' },
+  Queried: { tagText: 'QUERIED', tagClass: 'govuk-tag--orange' }
 }
 
 function sectionStatus(value) {
@@ -82,6 +84,7 @@ export function buildTaskListViewModel(application, t) {
   ]
 
   let allComplete = tonnageComplete && bpComplete && spComplete
+  const isSubmitted = application.applicationStatus === 'Submitted'
 
   if (isExporter) {
     const osComplete =
@@ -135,7 +138,9 @@ export function buildTaskListViewModel(application, t) {
       ? `/accreditation/submit-declaration/${applicationId}`
       : null,
     backLink,
-    saveAndComeLaterLink: '/operator'
+    saveAndComeLaterLink: '/operator',
+    isSubmitted,
+    viewPaymentDetailsLink: `/accreditation/view-payment-details/${applicationId}`
   }
 }
 

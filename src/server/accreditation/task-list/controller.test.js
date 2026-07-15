@@ -100,6 +100,32 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.tasks.every((task) => !task.locked)).toBe(true)
   })
 
+  test('applicationStatus Submitted — isSubmitted true', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'Submitted' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(true)
+  })
+
+  test('applicationStatus Saved — isSubmitted false', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'Saved' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(false)
+  })
+
+  test('viewPaymentDetailsLink contains applicationId', () => {
+    const vm = buildTaskListViewModel(makeApplication(), t)
+
+    expect(vm.viewPaymentDetailsLink).toBe(
+      `/accreditation/view-payment-details/${APPLICATION_ID}`
+    )
+  })
+
   test('PRNs InProgress — tag shows IN PROGRESS with blue class', () => {
     const vm = buildTaskListViewModel(
       makeApplication({ prns: { sectionStatus: 'InProgress' } }),
@@ -108,6 +134,26 @@ describe('#buildTaskListViewModel', () => {
 
     expect(vm.tasks[0].statusTagText).toBe('IN PROGRESS')
     expect(vm.tasks[0].statusTagClass).toBe('govuk-tag--blue')
+  })
+
+  test('PRNs Submitted — tag shows SUBMITTED with green class', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ prns: { sectionStatus: 'Submitted' } }),
+      t
+    )
+
+    expect(vm.tasks[0].statusTagText).toBe('SUBMITTED')
+    expect(vm.tasks[0].statusTagClass).toBe('govuk-tag--green')
+  })
+
+  test('PRNs Queried — tag shows QUERIED with orange class', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ prns: { sectionStatus: 'Queried' } }),
+      t
+    )
+
+    expect(vm.tasks[0].statusTagText).toBe('QUERIED')
+    expect(vm.tasks[0].statusTagClass).toBe('govuk-tag--orange')
   })
 
   test('builds heading with material name', () => {
@@ -413,6 +459,77 @@ describe('#taskListGetController', () => {
       expect(result).toContain(
         `/accreditation/submit-declaration/${APPLICATION_ID}`
       )
+    })
+
+    test('Continue button and save-and-come-later link hidden when application is Submitted, even with all sections complete', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="save-come-back-link"')
+    })
+
+    test('submitted text and view-payment-details link shown when application is Submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Submitted' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'This reapplication for accreditation has been submitted'
+      )
+      expect(result).toContain('data-testid="view-payment-details-link"')
+      expect(result).toContain(
+        `/accreditation/view-payment-details/${APPLICATION_ID}`
+      )
+    })
+
+    test('submitted text and view-payment-details link NOT shown when application is not yet Submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Saved' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain(
+        'This reapplication for accreditation has been submitted'
+      )
+      expect(result).not.toContain('data-testid="view-payment-details-link"')
+    })
+
+    test('save-and-come-later link shown when application is not yet Submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Saved' })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="save-come-back-link"')
     })
 
     test('business plan row has no link when PRNs not complete (locked)', async () => {

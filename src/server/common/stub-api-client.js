@@ -23,7 +23,7 @@ export const STUB_ORG_DOCS = [
       {
         id: 'app001',
         applicationId: 'APP2027ER5000390PL',
-        applicationStatus: 'NotStarted',
+        applicationStatus: 'Saved',
         material: 'plastic',
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050001',
@@ -650,7 +650,7 @@ export const stubApiClient = {
         const doc = findOrgDoc(parsed.orgId)
         const item = doc?.accreditations.find((a) => a.id === parsed.itemId)
         if (item) {
-          item.applicationStatus = 'Sent'
+          item.applicationStatus = 'Submitted'
           item.formSubmissionTime = new Date().toISOString()
           if (body) {
             item.submitterContactDetails = {

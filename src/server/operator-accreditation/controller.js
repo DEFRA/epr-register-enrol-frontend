@@ -11,7 +11,8 @@ const STATUS_CONFIG = {
   Started: { tagClass: 'govuk-tag--blue' },
   NotStarted: { tagClass: 'govuk-tag--grey' },
   InProgress: { tagClass: 'govuk-tag--blue' },
-  Sent: { tagClass: 'govuk-tag--turquoise' },
+  Submitted: { tagClass: 'govuk-tag--green' },
+  Queried: { tagClass: 'govuk-tag--orange' },
   Approved: { tagClass: 'govuk-tag--green' },
   Rejected: { tagClass: 'govuk-tag--red' }
 }
@@ -42,7 +43,10 @@ export function buildLandingViewModel(
     taskListUrl: `/accreditation/task-list/${application.applicationId}`,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
-    notificationFailedBanner: application.notificationStatus === 'failed'
+    notificationFailedBanner: application.notificationStatus === 'failed',
+    displayReapplyAccreditationText:
+      application.applicationStatus === 'Saved' ||
+      application.applicationStatus === 'Started'
   }
 }
 

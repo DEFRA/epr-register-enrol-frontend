@@ -75,7 +75,8 @@
       "statuses": {
         "Saved": "[Welsh] NOT STARTED",
         "Started": "[Welsh] IN PROGRESS",
-        "Sent": "[Welsh] SUBMITTED",
+        "Submitted": "[Welsh] SUBMITTED",
+        "Queried": "[Welsh] QUERIED",
         "Approved": "[Welsh] WITH REGULATOR",
         "Rejected": "[Welsh] REJECTED"
       },
@@ -363,6 +364,8 @@
       "metadataSite": "[Welsh] For reprocessing site:",
       "siteNotSet": "[Welsh] Not set",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
+      "submittedText": "[Welsh] This reapplication for accreditation has been submitted",
+      "viewPaymentDetailsLink": "[Welsh] View payment details",
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
         "prns": "[Welsh] PRNs tonnage and authority to issue PRNs",
