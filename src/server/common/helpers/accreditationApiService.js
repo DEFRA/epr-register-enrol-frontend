@@ -87,11 +87,11 @@ function normalizeApplication(item) {
     ...item,
     // item.id = internal UUID used in URLs; item.applicationId = human-readable ref (new schema)
     applicationId: item.id?.toString() ?? item.applicationId,
-    // new schema: item.applicationId holds the human-readable ref (APP2027...GL)
-    // legacy data: item.accreditationReference holds it
-    accreditationReference: item.id
-      ? (item.applicationId ?? null)
-      : (item.accreditationReference ?? null),
+    // new schema: item.applicationReference holds the human-readable ref (APP2027...GL),
+    // set by the backend once the application is submitted.
+    // legacy/stub data: item.accreditationReference holds it instead.
+    accreditationReference:
+      item.applicationReference ?? item.accreditationReference ?? null,
     organisationId: item.orgId ?? item.organisationId,
     organisationName: item.companyName ?? item.organisationName ?? '',
     materialType: item.material

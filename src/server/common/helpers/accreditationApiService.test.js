@@ -86,6 +86,37 @@ describe('accreditationApiService', () => {
         accreditationApiService.getApplication(ORG_ID, 'missing')
       ).rejects.toMatchObject({ status: 404, isApiError: true })
     })
+
+    test('accreditationReference comes from applicationReference on real backend responses', async () => {
+      apiClient.get.mockResolvedValue({
+        applicationReference: 'APP2027ER5000390GL'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.accreditationReference).toBe('APP2027ER5000390GL')
+    })
+
+    test('accreditationReference falls back to legacy/stub accreditationReference field', async () => {
+      apiClient.get.mockResolvedValue({
+        accreditationReference: 'RA-000000001'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.accreditationReference).toBe('RA-000000001')
+    })
+
+    test('accreditationReference is null when neither field is present', async () => {
+      apiClient.get.mockResolvedValue({})
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.accreditationReference).toBeNull()
+    })
   })
 
   describe('patchTonnage', () => {
