@@ -107,7 +107,9 @@
         "Glass": "Gwydr",
         "Paper": "Papur",
         "Plastic": "Plastig"
-      }
+      },
+      "glassRemelt": "[Welsh] Glass - Remelt",
+      "glassOther": "[Welsh] Glass - Other"
     },
     "tonnage": {
       "title": "[Welsh] How many PRNs do you plan to issue?",
@@ -338,6 +340,8 @@
       "headingSuffix": "[Welsh] reaccreditation",
       "paymentInstructionPrefix": "[Welsh] The regulator will only review the application after payment has been made.",
       "paymentInstructionSuffix": "[Welsh] You'll receive a notification once payment has been received and the application is in review.",
+      "amountDue": "[Welsh] Amount due",
+      "description": "[Welsh] Description",
       "payByBankTransfer": "[Welsh] Pay by bank transfer",
       "bankTransferInstruction": "[Welsh] You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
       "howLongDoPaymentsTake": "[Welsh] How long do payments take?",
