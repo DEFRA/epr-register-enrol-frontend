@@ -582,7 +582,7 @@ function generateApplicationReference({ orgId, postcode, material, year }) {
   const materialPrefix = (material ?? '').slice(0, 2)
 
   const reference =
-    `APP${yearSuffix}${agency}${orgId ?? ''}${postcodeSuffix}${materialPrefix}`.toUpperCase()
+    `AP${yearSuffix}${agency}${orgId ?? ''}${postcodeSuffix}${materialPrefix}`.toUpperCase()
 
   return reference.slice(0, APPLICATION_REFERENCE_MAX_LENGTH)
 }
