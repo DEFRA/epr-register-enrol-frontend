@@ -115,7 +115,9 @@
         "Glass": "Glass",
         "Paper": "Paper",
         "Plastic": "Plastic"
-      }
+      },
+      "glassRemelt": "Glass - Remelt",
+      "glassOther": "Glass - Other"
     },
     "tonnage": {
       "title": "How many PRNs do you plan to issue?",
@@ -346,6 +348,8 @@
       "headingSuffix": "reaccreditation",
       "paymentInstructionPrefix": "The regulator will only review the application after payment has been made.",
       "paymentInstructionSuffix": "You'll receive a notification once payment has been received and the application is in review.",
+      "amountDue": "Amount due",
+      "description": "Description",
       "payByBankTransfer": "Pay by bank transfer",
       "bankTransferInstruction": "You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
       "howLongDoPaymentsTake": "How long do payments take?",

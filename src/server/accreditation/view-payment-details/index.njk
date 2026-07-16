@@ -42,6 +42,22 @@
 
         <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 
+        <h2 class="govuk-heading-m" data-testid="amount-due">
+          {{ t('pages.viewPaymentDetails.amountDue') }}: {{ paymentDetails.amount | formatCurrency }}
+        </h2>
+        <h3 class="govuk-heading-s" data-testid="description-heading">
+          {{ t('pages.viewPaymentDetails.description') }}
+        </h3>
+        <p>
+        {{ paymentDetails.amountTonnageDue | formatCurrency }} for {{ paymentDetails.tonnageDisplay }} accreditation for {{ paymentDetails.materialName }}
+        {% if paymentDetails.numberOfORSs > 0 %}
+          <br/>
+          {{ paymentDetails.amountOrsDue | formatCurrency }} for {{ paymentDetails.numberOfORSs }} Overseas Sites
+        {% endif %}
+        </p>
+
+        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
         <h2 class="govuk-heading-m" data-testid="bank-transfer-heading">
           {{ t('pages.viewPaymentDetails.payByBankTransfer') }}
         </h2>
@@ -64,19 +80,19 @@
         <dl class="govuk-summary-list" data-testid="bank-details-list">
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.amount') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="bank-amount">{{ bankDetails.amount }}</dd>
+            <dd class="govuk-summary-list__value" data-testid="bank-amount">{{ paymentDetails.amount | formatCurrency }}</dd>
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.sortCode') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="bank-sort-code">{{ bankDetails.sortCode }}</dd>
+            <dd class="govuk-summary-list__value" data-testid="bank-sort-code">{{ paymentDetails.sortCode }}</dd>
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.accountNumber') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="bank-account-number">{{ bankDetails.accountNumber }}</dd>
+            <dd class="govuk-summary-list__value" data-testid="bank-account-number">{{ paymentDetails.accountNumber }}</dd>
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.accountName') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="bank-account-name">{{ bankDetails.accountName }}</dd>
+            <dd class="govuk-summary-list__value" data-testid="bank-account-name">{{ paymentDetails.accountName }}</dd>
           </div>
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.paymentReference') }}</dt>
