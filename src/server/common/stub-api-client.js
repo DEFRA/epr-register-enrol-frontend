@@ -84,6 +84,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000390GL',
         applicationStatus: 'Started',
         material: 'glass',
+        glassRecyclingProcess: 'glass_re_melt',
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050003',
         siteAddress: {
@@ -144,42 +145,7 @@ export const STUB_ORG_DOCS = [
               scanStatus: 'Clean'
             }
           ]
-        },
-        overseasSites: {
-          sectionStatus: 'InProgress',
-          sites: [
-            {
-              siteId: 900001,
-              siteName: 'Site 1',
-              siteAddress: 'Address 123',
-              country: 'Germany',
-              isEu: true,
-              isOecd: true,
-              besEvidence: {
-                besEvidenceUploads: [
-                  {
-                    besEvidenceValidFromDate: '2026-11-01T12:00:00Z',
-                    besEvidenceExpiryDate: '2027-11-30T12:00:00Z',
-                    fileId: 'file003',
-                    filename: 'code-nightmare-green.pdf',
-                    uploadedAt: '2026-11-01T12:00:00Z',
-                    uploadedBy: 'Jane Doe',
-                    scanStatus: 'Clean'
-                  }
-                ],
-                doYouWantToUploadMoreEvidence: false
-              }
-            },
-            {
-              siteId: 900002,
-              siteName: 'Site 2',
-              siteAddress: 'Address 456',
-              country: 'Chad',
-              isEu: false
-            }
-          ]
-        },
-        besEvidence: { sectionStatus: 'NotStarted' }
+        }
       }
     ]
   },

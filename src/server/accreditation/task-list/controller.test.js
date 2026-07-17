@@ -161,6 +161,50 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.heading).toContain('Steel')
   })
 
+  test('glass with glass_re_melt process uses the remelt display name', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({
+        materialType: 'Glass',
+        glassRecyclingProcess: 'glass_re_melt'
+      }),
+      t
+    )
+    expect(vm.heading).toContain('glassRemelt')
+  })
+
+  test('glass with glass_other process uses the other display name', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({
+        materialType: 'Glass',
+        glassRecyclingProcess: 'glass_other'
+      }),
+      t
+    )
+    expect(vm.heading).toContain('glassOther')
+  })
+
+  test('glass with no recycling process falls back to the generic material name', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ materialType: 'Glass' }),
+      t
+    )
+    expect(vm.heading).toContain('Glass')
+    expect(vm.heading).not.toContain('glassRemelt')
+    expect(vm.heading).not.toContain('glassOther')
+  })
+
+  test('non-glass material ignores glassRecyclingProcess entirely', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({
+        materialType: 'Steel',
+        glassRecyclingProcess: 'glass_re_melt'
+      }),
+      t
+    )
+    expect(vm.heading).toContain('Steel')
+    expect(vm.heading).not.toContain('glassRemelt')
+  })
+
   test('metadata contains year and site', () => {
     const vm = buildTaskListViewModel(
       makeApplication({ year: 2026, siteAddress: '123 Test Street' }),
