@@ -161,6 +161,56 @@ describe('#buildLandingViewModel', () => {
     expect(vm.materialDisplay).toBe('Steel')
   })
 
+  test('glass with glass_re_melt process uses the remelt display name', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        materialType: 'Glass',
+        glassRecyclingProcess: 'glass_re_melt'
+      }),
+      'Org',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.materialDisplay).toBe('glassRemelt')
+  })
+
+  test('glass with glass_other process uses the other display name', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ materialType: 'Glass', glassRecyclingProcess: 'glass_other' }),
+      'Org',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.materialDisplay).toBe('glassOther')
+  })
+
+  test('glass with no recycling process falls back to the generic material name', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ materialType: 'Glass' }),
+      'Org',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.materialDisplay).toBe('Glass')
+  })
+
+  test('non-glass material ignores glassRecyclingProcess entirely', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        materialType: 'Steel',
+        glassRecyclingProcess: 'glass_re_melt'
+      }),
+      'Org',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.materialDisplay).toBe('Steel')
+  })
+
   test('organisationName is passed through', () => {
     const vm = buildLandingViewModel(
       makeApp({ materialType: 'Steel' }),

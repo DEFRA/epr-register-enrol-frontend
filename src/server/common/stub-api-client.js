@@ -84,6 +84,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000390GL',
         applicationStatus: 'Started',
         material: 'glass',
+        glassRecyclingProcess: 'glass_re_melt',
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050003',
         siteAddress: {
@@ -144,42 +145,7 @@ export const STUB_ORG_DOCS = [
               scanStatus: 'Clean'
             }
           ]
-        },
-        overseasSites: {
-          sectionStatus: 'InProgress',
-          sites: [
-            {
-              siteId: 900001,
-              siteName: 'Site 1',
-              siteAddress: 'Address 123',
-              country: 'Germany',
-              isEu: true,
-              isOecd: true,
-              besEvidence: {
-                besEvidenceUploads: [
-                  {
-                    besEvidenceValidFromDate: '2026-11-01T12:00:00Z',
-                    besEvidenceExpiryDate: '2027-11-30T12:00:00Z',
-                    fileId: 'file003',
-                    filename: 'code-nightmare-green.pdf',
-                    uploadedAt: '2026-11-01T12:00:00Z',
-                    uploadedBy: 'Jane Doe',
-                    scanStatus: 'Clean'
-                  }
-                ],
-                doYouWantToUploadMoreEvidence: false
-              }
-            },
-            {
-              siteId: 900002,
-              siteName: 'Site 2',
-              siteAddress: 'Address 456',
-              country: 'Chad',
-              isEu: false
-            }
-          ]
-        },
-        besEvidence: { sectionStatus: 'NotStarted' }
+        }
       }
     ]
   },
@@ -536,6 +502,57 @@ function parseEndpoint(endpoint) {
   return { orgId: match[1], itemId: match[2], section: match[3] ?? null }
 }
 
+// RA-318: mirrors ManagementBe's ApplicationReferenceGenerator format so local/dev
+// testing sees realistic references — this stub never calls a real ManagementBe, so it
+// must fabricate one itself rather than leaving it to a downstream service.
+const SCOTLAND_POSTCODE_PREFIXES = [
+  'AB',
+  'DD',
+  'DG',
+  'EH',
+  'FK',
+  'G',
+  'HS',
+  'IV',
+  'KA',
+  'KW',
+  'KY',
+  'ML',
+  'PA',
+  'PH',
+  'TD',
+  'ZE'
+]
+const WALES_POSTCODE_PREFIXES = ['CF', 'CH', 'LD', 'LL', 'NP', 'SA', 'SY']
+const NI_POSTCODE_PREFIX = 'BT'
+const APPLICATION_REFERENCE_MAX_LENGTH = 18
+
+function extractPostcodeAreaCode(postcode) {
+  const match = postcode?.trim().match(/^[A-Za-z]+/)
+  return match ? match[0].toUpperCase() : null
+}
+
+function resolveAgencyCode(postcode) {
+  const area = extractPostcodeAreaCode(postcode)
+  if (!area) return 'EA'
+  if (area === NI_POSTCODE_PREFIX) return 'NI'
+  if (SCOTLAND_POSTCODE_PREFIXES.includes(area)) return 'SE'
+  if (WALES_POSTCODE_PREFIXES.includes(area)) return 'NR'
+  return 'EA'
+}
+
+function generateApplicationReference({ orgId, postcode, material, year }) {
+  const yearSuffix = String(year ?? new Date().getFullYear()).slice(-2)
+  const agency = resolveAgencyCode(postcode)
+  const postcodeSuffix = (postcode ?? '').replace(/\s/g, '').slice(-3)
+  const materialPrefix = (material ?? '').slice(0, 2)
+
+  const reference =
+    `AP${yearSuffix}${agency}${orgId ?? ''}${postcodeSuffix}${materialPrefix}`.toUpperCase()
+
+  return reference.slice(0, APPLICATION_REFERENCE_MAX_LENGTH)
+}
+
 function mergeBpItems(existing, incoming) {
   const merged = [...existing]
   for (const incomingItem of incoming) {
@@ -659,14 +676,21 @@ export const stubApiClient = {
               role: body.jobTitle ?? body.role ?? ''
             }
           }
-          const ref = `RA-${String(Math.floor(Math.random() * 1e9)).padStart(9, '0')}`
+          const ref = generateApplicationReference({
+            orgId: doc.orgId,
+            postcode: item.siteAddress?.postcode,
+            material: item.material,
+            year: item.yearlyMetrics?.year
+          })
           item.accreditationReference = ref
           return Promise.resolve({
             accreditationReference: ref
           })
         }
       }
-      return Promise.resolve({ accreditationReference: 'RA-000000001' })
+      return Promise.resolve({
+        accreditationReference: generateApplicationReference({})
+      })
     }
 
     if (/\/overseas-sites\/\d+\/bes-evidence\/files$/.test(endpoint)) {
