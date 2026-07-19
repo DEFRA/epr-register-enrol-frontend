@@ -83,6 +83,8 @@ function normalizeApplication(item) {
       : typeof sa === 'string'
         ? sa
         : null
+  const sitePostcode =
+    sa && typeof sa === 'object' ? (sa.postcode ?? null) : null
   return {
     ...item,
     // item.id = internal UUID used in URLs; item.applicationId = human-readable ref (new schema)
@@ -102,6 +104,7 @@ function normalizeApplication(item) {
         ? item.wasteProcessingType === 'exporter'
         : (item.isExporter ?? false),
     siteAddress,
+    sitePostcode,
     registrationId: item.registrationId ?? null,
     year: item.yearlyMetrics?.year
       ? parseInt(item.yearlyMetrics.year, 10)
