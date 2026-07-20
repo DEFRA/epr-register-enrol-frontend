@@ -3,6 +3,7 @@
  * Provided as an example, remove or modify as required.
  */
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
+import { isOperator, isRegulator } from '../common/helpers/auth/get-user.js'
 
 export const homeController = {
   handler(request, h) {
@@ -13,7 +14,9 @@ export const homeController = {
 
     return h.view('home/index', {
       pageTitle,
-      heading
+      heading,
+      isOperator: isOperator(request),
+      isRegulator: isRegulator(request)
     })
   }
 }

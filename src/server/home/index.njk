@@ -10,7 +10,12 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
         <ul class="govuk-list govuk-list--bullet">
+          {% if isOperator %}
           <li><a href="/operator" class="govuk-link">[WIP] Operator Journey Selection</a></li>
+          {% endif %}
+          {% if isRegulator %}
+          <li><a href="/regulator" class="govuk-link">[WIP] Regulator Journey Selection</a></li>
+          {% endif %}
         </ul>
       </div>
     </div>
