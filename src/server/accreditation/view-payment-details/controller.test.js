@@ -114,7 +114,7 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).toContain('APP2027ER5000390GL')
     })
 
-    test('renders static bank details', async () => {
+    test('renders England bank details by default (no derivable postcode)', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -124,10 +124,12 @@ describe('#viewPaymentDetailsController', () => {
       })
 
       expect(result).toContain('data-testid="bank-sort-code"')
-      expect(result).toContain('30 94 30')
+      expect(result).toContain('60-70-80')
       expect(result).toContain('data-testid="bank-account-number"')
-      expect(result).toContain('00733445')
+      expect(result).toContain('10014411')
       expect(result).toContain('data-testid="bank-account-name"')
+      expect(result).toContain('EA RECEIPTS')
+      expect(result).toContain('data-testid="bank-company-name"')
       expect(result).toContain('Environment Agency')
       expect(result).toContain('data-testid="bank-amount"')
       expect(result).toContain('£546')
@@ -408,6 +410,162 @@ describe('#viewPaymentDetailsController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] View payment details')
+    })
+
+    describe('nation-specific bank details', () => {
+      const cases = [
+        {
+          nation: 'Scotland',
+          siteAddress: {
+            line1: '1 High St',
+            town: 'Edinburgh',
+            postcode: 'EH1 1AA'
+          },
+          expectPresent: {
+            'bank-sort-code': '83 – 34 – 00',
+            'bank-account-number': '00137187',
+            'bank-account-name': 'Scottish Environment Protection Agency',
+            'bank-name':
+              'Royal Bank of Scotland, 30 Nicholson Street, Edinburgh, EH8 9DL'
+          },
+          expectAbsentTestIds: ['bank-company-name', 'bank-company-address']
+        },
+        {
+          nation: 'Wales',
+          siteAddress: {
+            line1: '1 Bay Rd',
+            town: 'Cardiff',
+            postcode: 'CF10 1AA'
+          },
+          expectPresent: {
+            'bank-sort-code': '60-70-80',
+            'bank-account-number': '10014438',
+            'bank-company-name': 'Natural Resources Wales',
+            'bank-name':
+              'RBS, National Westminster bank plc, 2 ½ Devonshire Square, London, EC2M 4BA',
+            'bank-company-address':
+              'Income department, PO BOX 663, Cardiff, CF24 0TP'
+          },
+          expectAbsentTestIds: ['bank-account-name']
+        },
+        {
+          nation: 'Northern Ireland',
+          siteAddress: {
+            line1: '1 High St',
+            town: 'Belfast',
+            postcode: 'BT1 1AA'
+          },
+          expectPresent: {
+            'bank-sort-code': '95-01-21',
+            'bank-account-number': '61253506',
+            'bank-account-name': 'DAERA',
+            'bank-name':
+              'Danske bank, PO BOX 183 Donegall Square West, Belfast, BT1 6JS'
+          },
+          expectAbsentTestIds: ['bank-company-name', 'bank-company-address']
+        },
+        {
+          nation: 'England (explicit postcode)',
+          siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
+          expectPresent: {
+            'bank-sort-code': '60-70-80',
+            'bank-account-number': '10014411',
+            'bank-account-name': 'EA RECEIPTS',
+            'bank-company-name': 'Environment Agency'
+          },
+          expectAbsentTestIds: ['bank-company-address']
+        }
+      ]
+
+      test.each(cases)(
+        'shows correct bank fields for $nation',
+        async ({ siteAddress, expectPresent, expectAbsentTestIds }) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({ siteAddress })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+            headers: operatorHeaders
+          })
+
+          for (const [testId, value] of Object.entries(expectPresent)) {
+            expect(result).toContain(`data-testid="${testId}"`)
+            expect(result).toContain(value)
+          }
+          for (const testId of expectAbsentTestIds) {
+            expect(result).not.toContain(`data-testid="${testId}"`)
+          }
+        }
+      )
+
+      test('falls back to England when postcode is unrecognised', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            siteAddress: {
+              line1: '1 Fake St',
+              town: 'Nowhere',
+              postcode: 'ZZ99 9ZZ'
+            }
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).toContain('EA RECEIPTS')
+        expect(result).toContain('10014411')
+      })
+
+      test('application.nation takes precedence over postcode derivation', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            nation: 'Scotland',
+            siteAddress: {
+              line1: 'UNIT 5',
+              town: 'Bolton',
+              postcode: 'BL4 7AQ'
+            }
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).toContain('Scottish Environment Protection Agency')
+        expect(result).not.toContain('data-testid="bank-company-name"')
+      })
+
+      test('banner and overseas-payments text use the resolved regulator name per nation', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            siteAddress: {
+              line1: '1 Bay Rd',
+              town: 'Cardiff',
+              postcode: 'CF10 1AA'
+            }
+          })
+        )
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).toContain('data-testid="banner-heading"')
+        expect(result).toContain('Natural Resources Wales')
+        expect(result).not.toContain(
+          'Application submitted to the Environment Agency'
+        )
+      })
     })
   })
 })

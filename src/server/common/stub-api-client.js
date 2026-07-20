@@ -1,3 +1,8 @@
+import {
+  resolveNationFromPostcode,
+  NATIONS
+} from './helpers/nation-from-postcode.js'
+
 const BP_CATEGORIES = [
   'newInfrastructure',
   'priceSupport',
@@ -505,40 +510,17 @@ function parseEndpoint(endpoint) {
 // RA-318: mirrors ManagementBe's ApplicationReferenceGenerator format so local/dev
 // testing sees realistic references — this stub never calls a real ManagementBe, so it
 // must fabricate one itself rather than leaving it to a downstream service.
-const SCOTLAND_POSTCODE_PREFIXES = [
-  'AB',
-  'DD',
-  'DG',
-  'EH',
-  'FK',
-  'G',
-  'HS',
-  'IV',
-  'KA',
-  'KW',
-  'KY',
-  'ML',
-  'PA',
-  'PH',
-  'TD',
-  'ZE'
-]
-const WALES_POSTCODE_PREFIXES = ['CF', 'CH', 'LD', 'LL', 'NP', 'SA', 'SY']
-const NI_POSTCODE_PREFIX = 'BT'
 const APPLICATION_REFERENCE_MAX_LENGTH = 18
 
-function extractPostcodeAreaCode(postcode) {
-  const match = postcode?.trim().match(/^[A-Za-z]+/)
-  return match ? match[0].toUpperCase() : null
+const NATION_TO_AGENCY_CODE = {
+  [NATIONS.ENGLAND]: 'EA',
+  [NATIONS.SCOTLAND]: 'SE',
+  [NATIONS.WALES]: 'NR',
+  [NATIONS.NORTHERN_IRELAND]: 'NI'
 }
 
 function resolveAgencyCode(postcode) {
-  const area = extractPostcodeAreaCode(postcode)
-  if (!area) return 'EA'
-  if (area === NI_POSTCODE_PREFIX) return 'NI'
-  if (SCOTLAND_POSTCODE_PREFIXES.includes(area)) return 'SE'
-  if (WALES_POSTCODE_PREFIXES.includes(area)) return 'NR'
-  return 'EA'
+  return NATION_TO_AGENCY_CODE[resolveNationFromPostcode(postcode)]
 }
 
 function generateApplicationReference({ orgId, postcode, material, year }) {

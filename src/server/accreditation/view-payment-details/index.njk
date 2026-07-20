@@ -18,7 +18,7 @@
           </div>
           <div class="govuk-notification-banner__content">
             <p class="govuk-notification-banner__heading" data-testid="banner-heading">
-              {{ t('pages.viewPaymentDetails.bannerHeading') }}
+              {{ t('pages.viewPaymentDetails.bannerHeadingPrefix') }} {{ regulatorName }}
             </p>
             <p class="govuk-body" data-testid="banner-email">
               {{ t('pages.viewPaymentDetails.bannerEmailSent') }}
@@ -82,18 +82,42 @@
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.amount') }}</dt>
             <dd class="govuk-summary-list__value" data-testid="bank-amount">{{ paymentDetails.amount | formatCurrency }}</dd>
           </div>
+          {% if paymentDetails.sortCode %}
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.sortCode') }}</dt>
             <dd class="govuk-summary-list__value" data-testid="bank-sort-code">{{ paymentDetails.sortCode }}</dd>
           </div>
+          {% endif %}
+          {% if paymentDetails.accountNumber %}
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.accountNumber') }}</dt>
             <dd class="govuk-summary-list__value" data-testid="bank-account-number">{{ paymentDetails.accountNumber }}</dd>
           </div>
+          {% endif %}
+          {% if paymentDetails.accountName %}
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.accountName') }}</dt>
             <dd class="govuk-summary-list__value" data-testid="bank-account-name">{{ paymentDetails.accountName }}</dd>
           </div>
+          {% endif %}
+          {% if paymentDetails.companyName %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.companyName') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-company-name">{{ paymentDetails.companyName }}</dd>
+          </div>
+          {% endif %}
+          {% if paymentDetails.bank %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.bank') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-name">{{ paymentDetails.bank }}</dd>
+          </div>
+          {% endif %}
+          {% if paymentDetails.companyAddress %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.companyAddress') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="bank-company-address">{{ paymentDetails.companyAddress }}</dd>
+          </div>
+          {% endif %}
           <div class="govuk-summary-list__row">
             <dt class="govuk-summary-list__key">{{ t('pages.viewPaymentDetails.paymentReference') }}</dt>
             <dd class="govuk-summary-list__value" data-testid="bank-payment-reference">{{ paymentReference }}</dd>
@@ -114,7 +138,7 @@
             <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.overseasPayments') }}</span>
           </summary>
           <div class="govuk-details__text">
-            {{ t('pages.viewPaymentDetails.overseasPaymentsBody') }}
+            {{ t('pages.viewPaymentDetails.overseasPaymentsBodyPrefix') }} {{ regulatorName }} {{ t('pages.viewPaymentDetails.overseasPaymentsBodySuffix') }}
           </div>
         </details>
 

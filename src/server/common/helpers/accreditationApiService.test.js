@@ -117,6 +117,39 @@ describe('accreditationApiService', () => {
       )
       expect(result.accreditationReference).toBeNull()
     })
+
+    test('sitePostcode is extracted from an object-shaped siteAddress', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' }
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('BL4 7AQ')
+      expect(result.siteAddress).toBe('UNIT 5, Bolton, BL4 7AQ')
+    })
+
+    test('sitePostcode is null when siteAddress is a plain string', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: 'North Road, Siteville, SI1 1AA'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBeNull()
+      expect(result.siteAddress).toBe('North Road, Siteville, SI1 1AA')
+    })
+
+    test('sitePostcode is null when siteAddress is absent', async () => {
+      apiClient.get.mockResolvedValue({})
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBeNull()
+    })
   })
 
   describe('patchTonnage', () => {
