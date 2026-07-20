@@ -27,6 +27,10 @@ function pkceChallenge(verifier) {
     .replace(/\//g, '_')
 }
 
+function logWarn(request, msg, data) {
+  request.logger?.warn?.(data ?? {}, msg)
+}
+
 // --- Login — redirect to provider ---
 
 export function regulatorLoginController(request, h) {
@@ -84,6 +88,11 @@ export async function regulatorCallbackController(request, h) {
   const storedVerifier = request.yar.get('pkceVerifier')
 
   if (!code || !state || state !== storedState) {
+    logWarn(request, 'oauth callback: state mismatch or missing code', {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      stateMatches: state === storedState
+    })
     return h.redirect('/auth/regulator/login')
   }
 
@@ -92,6 +101,10 @@ export async function regulatorCallbackController(request, h) {
   request.yar.clear('pkceVerifier')
 
   if (!storedNonce || !storedVerifier) {
+    logWarn(
+      request,
+      'oauth callback: missing nonce or pkce verifier in session'
+    )
     return h.redirect('/auth/regulator/login')
   }
 
@@ -113,16 +126,23 @@ export async function regulatorCallbackController(request, h) {
     })
 
     if (!tokenResponse.ok) {
+      logWarn(request, 'oauth callback: token endpoint returned non-2xx', {
+        status: tokenResponse.status
+      })
       return h.redirect('/auth/regulator/login')
     }
 
     tokenJson = await tokenResponse.json()
-  } catch {
+  } catch (err) {
+    logWarn(request, 'oauth callback: token endpoint request failed', {
+      err
+    })
     return h.redirect('/auth/regulator/login')
   }
 
   const idToken = tokenJson?.id_token
   if (!idToken) {
+    logWarn(request, 'oauth callback: token response missing id_token')
     return h.redirect('/auth/regulator/login')
   }
 
@@ -134,7 +154,10 @@ export async function regulatorCallbackController(request, h) {
       audience: provider.clientId,
       expectedNonce: storedNonce
     })
-  } catch {
+  } catch (err) {
+    logWarn(request, 'oauth callback: id_token verification failed', {
+      err
+    })
     return h.redirect('/auth/regulator/login')
   }
 
@@ -156,6 +179,11 @@ export async function operatorCallbackController(request, h) {
   const storedNonce = request.yar.get('oauthNonce')
 
   if (!code || !state || state !== storedState) {
+    logWarn(request, 'oauth callback: state mismatch or missing code', {
+      hasCode: Boolean(code),
+      hasState: Boolean(state),
+      stateMatches: state === storedState
+    })
     return h.redirect('/auth/operator/login')
   }
 
@@ -163,6 +191,7 @@ export async function operatorCallbackController(request, h) {
   request.yar.clear('oauthNonce')
 
   if (!storedNonce) {
+    logWarn(request, 'oauth callback: missing nonce in session')
     return h.redirect('/auth/operator/login')
   }
 
@@ -171,26 +200,40 @@ export async function operatorCallbackController(request, h) {
     provider.discoveryUrl
   )
 
-  const tokenResponse = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: provider.clientId,
-      client_secret: provider.clientSecret,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: provider.callbackUrl,
-      scope: provider.scopes.join(' ')
+  let tokenJson
+  try {
+    const tokenResponse = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: provider.clientId,
+        client_secret: provider.clientSecret,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: provider.callbackUrl,
+        scope: provider.scopes.join(' ')
+      })
     })
-  })
 
-  if (!tokenResponse.ok) {
+    if (!tokenResponse.ok) {
+      logWarn(request, 'oauth callback: token endpoint returned non-2xx', {
+        status: tokenResponse.status
+      })
+      return h.redirect('/auth/operator/login')
+    }
+
+    tokenJson = await tokenResponse.json()
+  } catch (err) {
+    logWarn(request, 'oauth callback: token endpoint request failed', {
+      err
+    })
     return h.redirect('/auth/operator/login')
   }
 
-  const { id_token: idToken } = await tokenResponse.json()
+  const idToken = tokenJson?.id_token
 
   if (!idToken) {
+    logWarn(request, 'oauth callback: token response missing id_token')
     return h.redirect('/auth/operator/login')
   }
 
@@ -202,7 +245,10 @@ export async function operatorCallbackController(request, h) {
       audience: provider.clientId,
       expectedNonce: storedNonce
     })
-  } catch {
+  } catch (err) {
+    logWarn(request, 'oauth callback: id_token verification failed', {
+      err
+    })
     return h.redirect('/auth/operator/login')
   }
 
