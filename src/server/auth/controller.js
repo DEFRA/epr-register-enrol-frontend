@@ -280,7 +280,11 @@ export async function logoutController(request, h) {
   if (!idToken || user?.userType !== 'operator') {
     request.yar.clear('user')
     request.yar.clear('idToken')
-    return h.redirect('/auth/operator/login')
+    return h.redirect(
+      user?.userType === 'regulator'
+        ? '/auth/regulator/login'
+        : '/auth/operator/login'
+    )
   }
 
   const provider = getDefraIdConfig(config)
