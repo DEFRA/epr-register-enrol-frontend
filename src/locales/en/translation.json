@@ -11,19 +11,12 @@
     "about": {
       "title": "About",
       "heading": "About",
-      "description": "This service allows regulators to manage their worklist items and organisations to manage their details and enrol in the EPR register."
+      "description": "This service allows organisations to manage their details and enrol in the EPR register."
     },
     "regulator": {
       "title": "Regulator",
       "heading": "Regulator Landing Page",
-      "description": "This page is for regulators to manage their worklist items and view their details.",
-      "worklistItems": "Worklist Items",
-      "organisations": "Organisation List"
-    },
-    "worklistItems": {
-      "title": "Worklist Items",
-      "heading": "Worklist Items",
-      "description": "This page is for regulators to view and manage their worklist items."
+      "description": "This is a placeholder page for the regulator journey."
     },
     "organisationList": {
       "title": "Organisation List",
@@ -595,7 +588,6 @@
     "home": "Home",
     "about": "About",
     "regulator": "Regulator",
-    "worklistItems": "Worklist Items",
     "organisationList": "Organisations"
   },
   "common": {

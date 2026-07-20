@@ -14,11 +14,8 @@
     },
     "regulator": {
       "title": "Rheoleiddiwr",
-      "heading": "Rheoleiddiwr"
-    },
-    "worklistItems": {
-      "title": "Eitemau Rhestr Waith",
-      "heading": "Eitemau Rhestr Waith"
+      "heading": "Rheoleiddiwr",
+      "description": "[Welsh] This is a placeholder page for the regulator journey."
     },
     "organisationList": {
       "title": "Rhestr Sefydliadau",
@@ -587,7 +584,6 @@
     "home": "Hafan",
     "about": "Ynghylch",
     "regulator": "Rheoleiddiwr",
-    "worklistItems": "Eitemau Rhestr Waith",
     "organisationList": "Sefydliadau"
   },
   "common": {

@@ -1,27 +1,27 @@
 import { requireRegulator } from '../common/helpers/auth/auth-scopes.js'
-import { worklistItemsController } from './controller.js'
+import { regulatorController } from './controller.js'
 
 /**
- * Sets up the routes used in the worklist items page.
+ * Sets up the routes used in the regulator page.
  * These routes are registered in src/server/router.js.
  * Supports both default and language-prefixed paths.
  */
-export const worklistItems = {
+export const regulator = {
   plugin: {
-    name: 'worklist-items',
+    name: 'regulator',
     register(server) {
       server.route([
         {
           method: 'GET',
-          path: '/worklist-items',
+          path: '/regulator',
           options: requireRegulator,
-          ...worklistItemsController
+          ...regulatorController
         },
         {
           method: 'GET',
-          path: '/{language}/worklist-items',
+          path: '/{language}/regulator',
           options: requireRegulator,
-          ...worklistItemsController
+          ...regulatorController
         }
       ])
     }

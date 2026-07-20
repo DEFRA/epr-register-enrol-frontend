@@ -6,7 +6,7 @@ import { home } from './home/index.js'
 import { about } from './about/index.js'
 import { health } from './health/index.js'
 import { authRoutes } from './auth/index.js'
-import { worklistItems } from './worklist-items/index.js'
+import { regulator } from './regulator/index.js'
 import { operator } from './operator/index.js'
 import { operatorAccreditation } from './operator-accreditation/index.js'
 import { operatorRegistration } from './operator-registration/index.js'
@@ -68,7 +68,7 @@ export const router = {
       await server.register([
         home,
         about,
-        worklistItems,
+        regulator,
         operator,
         operatorAccreditation,
         operatorRegistration,

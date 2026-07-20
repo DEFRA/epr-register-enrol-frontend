@@ -2,7 +2,7 @@ import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 import { config } from '../../config/config.js'
 
-describe('#worklist-itemsController', () => {
+describe('#regulatorController', () => {
   let server
 
   beforeAll(async () => {
@@ -23,24 +23,11 @@ describe('#worklist-itemsController', () => {
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/worklist-items',
+      url: '/regulator',
       headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(expect.stringContaining('Worklist Items'))
-  })
-
-  test('Should see a worklist item', async () => {
-    const { result, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/worklist-items',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
-    })
-
-    expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toEqual(
-      expect.stringContaining('Glass Recycling Export Import Company')
-    )
+    expect(result).toEqual(expect.stringContaining('Regulator'))
   })
 })
