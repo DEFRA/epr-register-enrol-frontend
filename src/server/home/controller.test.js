@@ -24,7 +24,10 @@ describe('#homeController', () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/en',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      headers: {
+        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
+        'x-test-user-type': 'operator'
+      }
     })
 
     expect(result).toEqual(expect.stringContaining('Home |'))
@@ -45,10 +48,41 @@ describe('#homeController', () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
       url: '/',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      headers: {
+        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
+        'x-test-user-type': 'operator'
+      }
     })
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toEqual(expect.stringContaining('Home |'))
+  })
+
+  test('Should redirect a regulator to the regulator landing page', async () => {
+    const { headers, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/',
+      headers: {
+        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
+        'x-test-user-type': 'regulator'
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(headers.location).toBe('/regulator')
+  })
+
+  test('Should redirect a regulator to the language-prefixed regulator landing page', async () => {
+    const { headers, statusCode } = await server.inject({
+      method: 'GET',
+      url: '/en',
+      headers: {
+        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
+        'x-test-user-type': 'regulator'
+      }
+    })
+
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(headers.location).toBe('/en/regulator')
   })
 })

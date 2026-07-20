@@ -39,7 +39,7 @@ describe('#stubAuthPlugin (test mode)', () => {
   test('auto-authenticates requests in test mode', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/',
+      url: '/test-regulator-only',
       headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
     })
     expect(statusCode).toBe(statusCodes.ok)
