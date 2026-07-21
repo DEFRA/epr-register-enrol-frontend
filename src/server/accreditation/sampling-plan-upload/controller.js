@@ -349,7 +349,9 @@ export const samplingPlanCdpStatusController = {
           filename: fileInput?.filename,
           contentType: fileInput?.contentType ?? fileInput?.detectedContentType,
           scanStatus,
-          fileId: fileInput?.fileId
+          fileId: fileInput?.fileId,
+          s3Key: fileInput?.s3Key,
+          s3Bucket: fileInput?.s3Bucket
         }
       )
     } catch (err) {
