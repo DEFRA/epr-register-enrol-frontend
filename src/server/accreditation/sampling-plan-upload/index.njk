@@ -110,3 +110,58 @@
     </div>
   </div>
 {% endblock %}
+
+{% block bodyEnd %}
+  {{ super() }}
+  <script>
+    (function () {
+      var MAX_BYTES = 20 * 1024 * 1024
+      var errorText = {{ t('pages.samplingPlanUpload.validation.fileTooLarge') | dump | safe }}
+      var fileInput = document.querySelector('[data-testid="file-input"]')
+      var uploadForm = document.querySelector('[data-testid="upload-form"]')
+      if (!fileInput || !uploadForm) return
+      var formGroup = fileInput.closest('.govuk-form-group')
+
+      function showError() {
+        formGroup.classList.add('govuk-form-group--error')
+        fileInput.classList.add('govuk-file-upload--error')
+        var errorEl = document.getElementById('file-error')
+        if (!errorEl) {
+          errorEl = document.createElement('p')
+          errorEl.id = 'file-error'
+          errorEl.className = 'govuk-error-message'
+          errorEl.setAttribute('data-testid', 'file-error')
+          fileInput.insertAdjacentElement('beforebegin', errorEl)
+        }
+        errorEl.innerHTML = '<span class="govuk-visually-hidden">Error:</span> ' + errorText
+        fileInput.setAttribute('aria-describedby', 'file-error')
+        fileInput.value = ''
+      }
+
+      function clearError() {
+        formGroup.classList.remove('govuk-form-group--error')
+        fileInput.classList.remove('govuk-file-upload--error')
+        fileInput.removeAttribute('aria-describedby')
+        var errorEl = document.getElementById('file-error')
+        if (errorEl) errorEl.remove()
+      }
+
+      fileInput.addEventListener('change', function () {
+        var file = this.files[0]
+        if (file && file.size > MAX_BYTES) {
+          showError()
+        } else {
+          clearError()
+        }
+      })
+
+      uploadForm.addEventListener('submit', function (e) {
+        var file = fileInput.files[0]
+        if (file && file.size > MAX_BYTES) {
+          e.preventDefault()
+          showError()
+        }
+      })
+    })()
+  </script>
+{% endblock %}
