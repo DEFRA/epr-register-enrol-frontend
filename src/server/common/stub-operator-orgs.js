@@ -26,6 +26,7 @@ export const STUB_OPERATOR_ORGS = [
   { reExOrgId: '50004', defraOrgId: '50004', name: 'Stub Org 50004' },
   { reExOrgId: '50005', defraOrgId: '50005', name: 'Stub Org 50005' },
   { reExOrgId: '50006', defraOrgId: '50006', name: 'Stub Org 50006' },
+  { reExOrgId: '50007', defraOrgId: '50007', name: 'Stub Org 50007' },
   {
     reExOrgId: '6a2fcd74e16883c137d01188',
     defraOrgId: '67b9e8fc-2235-431a-a7b9-80663c81b6ff',

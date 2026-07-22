@@ -166,7 +166,7 @@ export const persistentStubApiClient = {
   },
 
   async post(endpoint, body) {
-    if (/\/files\/initiate$/.test(endpoint)) {
+    if (/\/initiate$/.test(endpoint)) {
       return stubApiClient.post(endpoint, body)
     }
 
