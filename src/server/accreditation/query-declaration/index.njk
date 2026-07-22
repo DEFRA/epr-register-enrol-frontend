@@ -1,0 +1,115 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if errors or error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              {% if error %}
+                <p>{{ error }}</p>
+              {% else %}
+                <ul class="govuk-list govuk-error-summary__list">
+                  {% if errors.fullName %}
+                    <li><a href="#fullName">{{ errors.fullName.text }}</a></li>
+                  {% endif %}
+                  {% if errors.email %}
+                    <li><a href="#email">{{ errors.email.text }}</a></li>
+                  {% endif %}
+                  {% if errors.role %}
+                    <li><a href="#role">{{ errors.role.text }}</a></li>
+                  {% endif %}
+                </ul>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <h2 class="govuk-heading-m" data-testid="declaration-sub-heading">{{ declarationSubHeading }}</h2>
+      <p class="govuk-body" data-testid="declaration-text">{{ declarationText }}</p>
+
+      <div class="govuk-warning-text" data-testid="warning-text">
+        <span class="govuk-warning-text__icon" aria-hidden="true">!</span>
+        <strong class="govuk-warning-text__text">
+          <span class="govuk-warning-text__assistive">{{ t('common.warning') }}</span>
+          {{ warningText }}
+        </strong>
+      </div>
+
+      <form method="post" novalidate data-testid="declaration-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group{% if errors.fullName %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label govuk-label--s" for="fullName">
+            {{ fullNameLabel }}
+          </label>
+          {% if errors.fullName %}
+            <p id="fullName-error" class="govuk-error-message" data-testid="full-name-error">
+              <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.fullName.text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input{% if errors.fullName %} govuk-input--error{% endif %}"
+                 id="fullName"
+                 name="fullName"
+                 type="text"
+                 autocomplete="name"
+                 value="{{ fullName }}"
+                 {% if errors.fullName %}aria-describedby="fullName-error"{% endif %}
+                 data-testid="full-name-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.email %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label govuk-label--s" for="email">
+            {{ emailLabel }}
+          </label>
+          {% if errors.email %}
+            <p id="email-error" class="govuk-error-message" data-testid="email-error">
+              <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.email.text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input{% if errors.email %} govuk-input--error{% endif %}"
+                 id="email"
+                 name="email"
+                 type="email"
+                 autocomplete="email"
+                 value="{{ email }}"
+                 {% if errors.email %}aria-describedby="email-error"{% endif %}
+                 data-testid="email-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.role %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label govuk-label--s" for="role">
+            {{ roleLabel }}
+          </label>
+          {% if errors.role %}
+            <p id="role-error" class="govuk-error-message" data-testid="role-error">
+              <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.role.text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input{% if errors.role %} govuk-input--error{% endif %}"
+                 id="role"
+                 name="role"
+                 type="text"
+                 autocomplete="organization-title"
+                 value="{{ role }}"
+                 {% if errors.role %}aria-describedby="role-error"{% endif %}
+                 data-testid="role-input">
+        </div>
+
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="resubmit-button">
+          {{ t('pages.queryDeclaration.resubmitButton') }}
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

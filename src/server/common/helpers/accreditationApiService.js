@@ -132,7 +132,8 @@ function normalizeApplication(item) {
     businessPlan: normalizeBp(item.businessPlan),
     samplingPlan: item.samplingPlan,
     overseasSites: item.overseasSites,
-    besEvidence: item.besEvidence
+    besEvidence: item.besEvidence,
+    query: item.query ?? null
   }
 }
 
@@ -263,6 +264,12 @@ export const accreditationApiService = {
   submitApplication(organisationId, applicationId, body) {
     return call(() =>
       apiClient.post(`${appBase(organisationId, applicationId)}/submit`, body)
+    )
+  },
+
+  resubmitApplication(organisationId, applicationId, body) {
+    return call(() =>
+      apiClient.post(`${appBase(organisationId, applicationId)}/resubmit`, body)
     )
   },
 

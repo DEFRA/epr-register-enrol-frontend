@@ -357,6 +357,45 @@ describe('#businessPlanController', () => {
       expect(result).toContain('PERN income')
       expect(result).not.toContain('PRN income')
     })
+
+    test('redirects to query-task-list when application is Queried and business plan section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the form and query note when business plan section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please break down the price support spend.' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Please break down the price support spend.')
+    })
   })
 
   describe('POST /accreditation/business-plan/{applicationId} - save-and-continue', () => {

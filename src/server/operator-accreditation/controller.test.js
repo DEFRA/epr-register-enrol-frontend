@@ -84,6 +84,17 @@ describe('#buildLandingViewModel', () => {
     expect(vm.statusTagClass).toBe('govuk-tag--orange')
   })
 
+  test('Updated maps to turquoise tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'Updated' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
+  })
+
   test('Approved maps to green tag', () => {
     const vm = buildLandingViewModel(
       makeApp({ applicationStatus: 'Approved' }),
@@ -148,6 +159,17 @@ describe('#buildLandingViewModel', () => {
       t
     )
     expect(vm.taskListUrl).toBe('/accreditation/task-list/app-xyz')
+  })
+
+  test('taskListUrl points to query-task-list when applicationStatus is Queried', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationId: 'app-xyz', applicationStatus: 'Queried' }),
+      'Org',
+      null,
+      2027,
+      t
+    )
+    expect(vm.taskListUrl).toBe('/accreditation/query-task-list/app-xyz')
   })
 
   test('materialDisplay comes from translation', () => {

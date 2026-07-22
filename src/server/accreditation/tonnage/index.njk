@@ -6,6 +6,13 @@
 
       <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
 
+      {% if queryNote %}
+        <div class="govuk-inset-text" data-testid="query-note">
+          <p class="govuk-body govuk-!-font-weight-bold">{{ t('common.queryNoteLabel') }}</p>
+          <p class="govuk-body">{{ queryNote }}</p>
+        </div>
+      {% endif %}
+
       {% if errors %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
           <div role="alert">

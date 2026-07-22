@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
 
 export const BUSINESS_PLAN_FIELDS = [
@@ -98,7 +99,14 @@ function renderPage(h, viewData) {
   return h.view('accreditation/business-plan/index', viewData)
 }
 
-function buildViewData(t, applicationId, payload, errors, isExporter = false) {
+function buildViewData(
+  t,
+  applicationId,
+  payload,
+  errors,
+  isExporter = false,
+  queryNote = null
+) {
   return {
     pageTitle: t('pages.businessPlan.title'),
     heading: t('pages.businessPlan.heading'),
@@ -109,7 +117,8 @@ function buildViewData(t, applicationId, payload, errors, isExporter = false) {
     taskListLink: taskListUrl(applicationId),
     fieldInputs: buildFieldInputs(payload, errors, t),
     errors,
-    sumError: errors._sum
+    sumError: errors._sum,
+    queryNote
   }
 }
 
@@ -150,7 +159,18 @@ export const businessPlanGetController = {
       }).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.businessPlan?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
+    const queryNote =
+      application.applicationStatus === 'Queried'
+        ? (application.query?.queryNote ?? null)
+        : null
 
     return renderPage(
       h,
@@ -159,7 +179,8 @@ export const businessPlanGetController = {
         applicationId,
         payloadFromApplication(application),
         {},
-        isExporter
+        isExporter,
+        queryNote
       )
     )
   }

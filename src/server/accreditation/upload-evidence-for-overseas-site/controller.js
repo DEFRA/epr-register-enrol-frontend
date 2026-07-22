@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -62,13 +63,14 @@ function mapSites(t, applicationId, rawSites) {
   })
 }
 
-function buildViewData(t, applicationId, sites, error) {
+function buildViewData(t, applicationId, sites, error, queryNote = null) {
   return {
     pageTitle: t('pages.uploadEvidenceList.title'),
     heading: t('pages.uploadEvidenceList.heading'),
     sites,
     backLink: taskListUrl(applicationId),
-    error
+    error,
+    queryNote
   }
 }
 
@@ -101,11 +103,25 @@ export const uploadEvidenceListGetController = {
       ).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.besEvidence?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const selectedSites = (application.overseasSites?.sites ?? []).filter(
       (s) => s.selected !== false
     )
     const sites = mapSites(t, applicationId, selectedSites)
-    return renderPage(h, buildViewData(t, applicationId, sites, null))
+    const queryNote =
+      application.applicationStatus === 'Queried'
+        ? (application.query?.queryNote ?? null)
+        : null
+    return renderPage(
+      h,
+      buildViewData(t, applicationId, sites, null, queryNote)
+    )
   }
 }
 

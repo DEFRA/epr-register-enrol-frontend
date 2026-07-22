@@ -118,6 +118,15 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.isSubmitted).toBe(false)
   })
 
+  test('applicationStatus Updated — isSubmitted true', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'Updated' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(true)
+  })
+
   test('viewPaymentDetailsLink contains applicationId', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
 
@@ -795,6 +804,23 @@ describe('#taskListGetController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] Accreditation task list')
+    })
+
+    test('redirects to query-task-list when applicationStatus is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Queried' })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
     })
   })
 })

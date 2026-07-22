@@ -74,6 +74,7 @@
         "Started": "[Welsh] IN PROGRESS",
         "Submitted": "[Welsh] SUBMITTED",
         "Queried": "[Welsh] QUERIED",
+        "Updated": "[Welsh] UPDATED",
         "Approved": "[Welsh] WITH REGULATOR",
         "Rejected": "[Welsh] REJECTED"
       },
@@ -382,6 +383,34 @@
         "samplingPlan": "[Welsh] Accreditation sampling and inspection plan - part 2",
         "overseasSites": "[Welsh] Overseas reprocessing sites",
         "besEvidence": "[Welsh] Evidence of broadly equivalent standards (BES)"
+      }
+    },
+    "queryTaskList": {
+      "title": "[Welsh] Respond to query",
+      "heading": "[Welsh] The regulator has queried this accreditation application",
+      "queryNoteHeading": "[Welsh] Query details",
+      "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
+      "continueButton": "[Welsh] Continue to resubmit"
+    },
+    "queryDeclaration": {
+      "title": "[Welsh] Resubmit accreditation application",
+      "heading": "[Welsh] Resubmit accreditation application",
+      "declarationSubHeading": "[Welsh] Declaration",
+      "declarationText": "[Welsh] By entering your name and resubmitting your application, you confirm that the information you have provided in response to the query is accurate.",
+      "warningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
+      "fullNameLabel": "Rhowch eich enw llawn",
+      "emailLabel": "[Welsh] Enter your email address",
+      "roleLabel": "[Welsh] Enter your job title",
+      "resubmitButton": "[Welsh] Resubmit application",
+      "successMessage": "[Welsh] Your application has been resubmitted to the regulator.",
+      "validation": {
+        "fullNameRequired": "Rhowch eich enw llawn",
+        "emailRequired": "[Welsh] Enter your email address",
+        "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
+        "roleRequired": "[Welsh] Enter your job title",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "notQueriedError": "[Welsh] This application is no longer awaiting a response to a query.",
+        "resubmitError": "[Welsh] Sorry, there was a problem resubmitting your application. Please try again."
       }
     },
     "selectOverseasSites": {
@@ -745,6 +774,7 @@
     "errorSummaryTitle": "Mae yna broblem",
     "error": "Gwall",
     "warning": "Rhybudd",
+    "queryNoteLabel": "[Welsh] Query from the regulator",
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",
       "tryAgain": "Trio eto"

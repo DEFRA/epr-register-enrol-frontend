@@ -5,6 +5,7 @@ import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../common/helpers/accreditationUrls.js'
 
 const STATUS_CONFIG = {
   Saved: { tagClass: 'govuk-tag--grey' },
@@ -13,6 +14,7 @@ const STATUS_CONFIG = {
   InProgress: { tagClass: 'govuk-tag--blue' },
   Submitted: { tagClass: 'govuk-tag--green' },
   Queried: { tagClass: 'govuk-tag--orange' },
+  Updated: { tagClass: 'govuk-tag--turquoise' },
   Approved: { tagClass: 'govuk-tag--green' },
   Rejected: { tagClass: 'govuk-tag--red' }
 }
@@ -54,7 +56,10 @@ export function buildLandingViewModel(
       `pages.operatorAccreditation.statuses.${application.applicationStatus}`
     ),
     statusTagClass: config.tagClass,
-    taskListUrl: `/accreditation/task-list/${application.applicationId}`,
+    taskListUrl:
+      application.applicationStatus === 'Queried'
+        ? queryTaskListUrl(application.applicationId)
+        : `/accreditation/task-list/${application.applicationId}`,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',
@@ -150,9 +155,12 @@ export const operatorAccreditationController = {
       t
     )
 
+    const notification = request.yar.flash('notification')[0] ?? null
+
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),
       reExBackUrl: reExBackLink,
+      notification,
       ...viewModel
     })
   }
@@ -243,10 +251,13 @@ export const operatorAccreditationExporterController = {
       t
     )
 
+    const notification = request.yar.flash('notification')[0] ?? null
+
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),
       reExBackUrl: reExBackLink,
       isExporter: true,
+      notification,
       ...viewModel
     })
   }

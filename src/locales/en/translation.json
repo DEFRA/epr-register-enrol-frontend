@@ -78,6 +78,7 @@
         "NotStarted": "NOT STARTED",
         "Submitted": "SUBMITTED",
         "Queried": "QUERIED",
+        "Updated": "UPDATED",
         "Approved": "WITH REGULATOR",
         "Rejected": "REJECTED"
       },
@@ -385,6 +386,34 @@
         "samplingPlan": "Accreditation sampling and inspection plan - part 2",
         "overseasSites": "Overseas reprocessing sites",
         "besEvidence": "Evidence of broadly equivalent standards (BES)"
+      }
+    },
+    "queryTaskList": {
+      "title": "Respond to query",
+      "heading": "The regulator has queried this accreditation application",
+      "queryNoteHeading": "Query details",
+      "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
+      "continueButton": "Continue to resubmit"
+    },
+    "queryDeclaration": {
+      "title": "Resubmit accreditation application",
+      "heading": "Resubmit accreditation application",
+      "declarationSubHeading": "Declaration",
+      "declarationText": "By entering your name and resubmitting your application, you confirm that the information you have provided in response to the query is accurate.",
+      "warningText": "Your organisation may face enforcement action if the data is inaccurate.",
+      "fullNameLabel": "Enter your full name",
+      "emailLabel": "Enter your email address",
+      "roleLabel": "Enter your job title",
+      "resubmitButton": "Resubmit application",
+      "successMessage": "Your application has been resubmitted to the regulator.",
+      "validation": {
+        "fullNameRequired": "Enter your full name",
+        "emailRequired": "Enter your email address",
+        "emailInvalid": "Enter an email address in the correct format, like name@example.com",
+        "roleRequired": "Enter your job title",
+        "fetchError": "Sorry, there was a problem loading your application. Please try again.",
+        "notQueriedError": "This application is no longer awaiting a response to a query.",
+        "resubmitError": "Sorry, there was a problem resubmitting your application. Please try again."
       }
     },
     "selectOverseasSites": {
@@ -748,6 +777,7 @@
     "errorSummaryTitle": "There is a problem",
     "error": "Error",
     "warning": "Warning",
+    "queryNoteLabel": "Query from the regulator",
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
       "tryAgain": "Try again"

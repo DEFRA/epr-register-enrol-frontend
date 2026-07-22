@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
 
@@ -57,6 +58,13 @@ export const tonnageGetController = {
       }).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.prns?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
 
     return renderForm(h, {
@@ -69,7 +77,11 @@ export const tonnageGetController = {
         t
       ),
       backLink: taskListUrl(applicationId),
-      isExporter
+      isExporter,
+      queryNote:
+        application.applicationStatus === 'Queried'
+          ? (application.query?.queryNote ?? null)
+          : null
     })
   }
 }

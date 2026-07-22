@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -73,6 +74,16 @@ export const selectOverseasSitesGetController = {
 
     const sites = normaliseSites(application.overseasSites?.sites)
     const successBanner = !!(request.yar.flash(ORS_SUCCESS_FLASH) ?? []).length
+    const queryNote =
+      application.applicationStatus === 'Queried'
+        ? (application.query?.queryNote ?? null)
+        : null
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.overseasSites?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
 
     return renderPage(
       h,
