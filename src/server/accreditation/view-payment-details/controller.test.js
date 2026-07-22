@@ -175,6 +175,57 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).toContain('£1,238.00')
     })
 
+    test('counts only selected !== false sites when calculating the ORS fee', async () => {
+      // 3 sites total; 1 deselected → only 2 should count toward the fee
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: { plannedTonnageBand: 'UpTo500' },
+          overseasSites: {
+            sites: [
+              { siteId: 1, selected: true },
+              { siteId: 2, selected: true },
+              { siteId: 3, selected: false }
+            ]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      // 2 selected sites x £346 = £692; total = £546 + £692 = £1,238
+      expect(result).toContain('£692.00 for 2 Overseas Sites')
+      expect(result).toContain('£1,238.00')
+      expect(result).not.toContain('3 Overseas Sites')
+    })
+
+    test('omits the ORS fee line entirely when all overseas sites are deselected', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: { plannedTonnageBand: 'UpTo500' },
+          overseasSites: {
+            sites: [
+              { siteId: 1, selected: false },
+              { siteId: 2, selected: false }
+            ]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('Overseas Sites')
+      // total is tonnage-only
+      expect(result).toContain('£546.00')
+    })
+
     test('omits the overseas sites fee line when there are no overseas sites', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({ prns: { plannedTonnageBand: 'UpTo500' } })

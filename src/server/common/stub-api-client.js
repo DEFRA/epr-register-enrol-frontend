@@ -323,6 +323,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000392GL',
         applicationStatus: 'Started',
         material: 'glass',
+        glassRecyclingProcess: 'glass_other',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050006',
         siteAddress: null,
@@ -396,6 +397,113 @@ export const STUB_ORG_DOCS = [
               country: 'France',
               isEu: true,
               isOecd: true,
+              selected: false,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            }
+          ]
+        },
+        besEvidence: { sectionStatus: 'NotStarted' }
+      }
+    ]
+  },
+  {
+    orgId: 50007,
+    companyDetails: { name: 'Global Fe Exports Co.' },
+    accreditations: [
+      {
+        id: 'app007exp',
+        applicationId: 'APP2027ER5000392GL',
+        applicationStatus: 'NotStarted',
+        material: 'steel',
+        wasteProcessingType: 'exporter',
+        registrationId: 'aaa000000000000000050007',
+        siteAddress: null,
+        wasteRegistrationNumber: null,
+        yearlyMetrics: { year: '2027' },
+        formSubmissionTime: null,
+        submitterContactDetails: null,
+        prnIssuance: {
+          sectionStatus: 'NotStarted',
+          plannedIssuance: 'UpTo10000',
+          signatories: [
+            { fullName: 'Alice Iron', email: 'alice@globalsteelexp.co.uk' }
+          ]
+        },
+        businessPlan: {
+          sectionStatus: 'NotStarted',
+          items: makeBpItems({
+            newInfrastructure: 20,
+            priceSupport: 20,
+            businessCollections: 20,
+            communications: 20,
+            newMarkets: 10,
+            newUses: 10
+          })
+        },
+        samplingPlan: {
+          sectionStatus: 'NotStarted',
+          files: [
+            {
+              fileId: 'file006',
+              filename: 'sampling-plan-steel.pdf',
+              uploadedAt: '2026-12-01T10:00:00Z',
+              uploadedBy: 'Alice Iron',
+              scanStatus: 'Clean'
+            }
+          ]
+        },
+        overseasSites: {
+          sectionStatus: 'NotStarted',
+          sites: [
+            {
+              siteId: 900003,
+              siteName: 'Rotterdam Recycling BV',
+              siteAddress: 'Industrieweg 44, Rotterdam',
+              country: 'Netherlands',
+              isEu: true,
+              isOecd: true,
+              selected: true,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900004,
+              siteName: 'Berlin Steel GmbH',
+              siteAddress: 'Recyclingstraße 12, Berlin',
+              country: 'Germany',
+              isEu: true,
+              isOecd: true,
+              selected: true,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900005,
+              siteName: 'Paris Verre SAS',
+              siteAddress: '8 Rue du Recyclage, Paris',
+              country: 'France',
+              isEu: true,
+              isOecd: true,
+              selected: false,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900006,
+              siteName: 'Siagon Steel SAS',
+              siteAddress: '28 Rue du Recyclage, Saigon',
+              country: 'Vietnam',
+              isEu: false,
+              isOecd: false,
               selected: false,
               besEvidence: {
                 besEvidenceUploads: [],
@@ -610,13 +718,12 @@ export const stubApiClient = {
 
   post(endpoint, body) {
     // CDP upload initiation — returns stub uploadUrl/statusUrl for local dev
-    if (/\/files\/initiate$/.test(endpoint)) {
+    if (/\/initiate$/.test(endpoint)) {
       const fileUploadId = `stub-upload-${Date.now()}`
-      // Derive a status path from the endpoint (swap /initiate for /status)
-      const statusPath = endpoint.replace(
-        /\/files\/initiate$/,
-        `/files/${fileUploadId}/status`
-      )
+      // Strip everything from /files/ onwards and rebuild as /files/{id}/status
+      // so the status-check regex (/files/[^/]+/status$) always matches
+      const statusPath =
+        endpoint.replace(/\/files\/.*$/, '') + `/files/${fileUploadId}/status`
       return Promise.resolve({
         fileUploadId,
         uploadUrl: `http://localhost:3000/api/stub/upload/${fileUploadId}`,

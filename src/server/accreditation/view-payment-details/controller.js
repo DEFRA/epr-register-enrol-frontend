@@ -83,7 +83,10 @@ function tonnageFeeCalculator(tonnage) {
 
 function buildPaymentDetails(application, t, nation) {
   const tonnage = application.prns?.plannedTonnageBand
-  const numberOfORSs = application.overseasSites?.sites?.length ?? 0
+  const selectedSites = (application.overseasSites?.sites ?? []).filter(
+    (s) => s.selected !== false
+  )
+  const numberOfORSs = selectedSites?.length ?? 0
   const amountTonnageDue = tonnageFeeCalculator(tonnage)
   const amountOrsDue = numberOfORSs * ORS_FEE
   const bankDetails =
