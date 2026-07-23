@@ -153,11 +153,7 @@ export const submitDeclarationPostController = {
 
     request.yar.set(
       ACCREDITATION_SESSION_KEYS.accreditationReference,
-      response.accreditationReference ?? response.caseManagementReference
-    )
-    request.yar.set(
-      ACCREDITATION_SESSION_KEYS.caseManagementReference,
-      response.caseManagementReference ?? null
+      response.accreditationReference
     )
     request.yar.clear(ACCREDITATION_SESSION_KEYS.declaration)
 
