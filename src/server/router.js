@@ -31,6 +31,7 @@ import { uploadMoreEvidence } from './accreditation/upload-more-evidence/index.j
 import { cyaEvidenceForOverseasSite } from './accreditation/cya-evidence-for-overseas-site/index.js'
 import { checkSiteConditions } from './accreditation/check-site-conditions/index.js'
 import { viewPaymentDetails } from './accreditation/view-payment-details/index.js'
+import { addOverseasSiteSiteName } from './accreditation/add-overseas-site/site-name/index.js'
 
 export const router = {
   plugin: {
@@ -51,7 +52,15 @@ export const router = {
           options: {
             auth: false,
             plugins: { crumb: false },
-            payload: { output: 'data', parse: false }
+            // Hapi's default payload.maxBytes (1MB) is well under the 20MB
+            // MAX_FILE_BYTES enforced by sampling-plan-upload/upload-bes-evidence,
+            // so any real file over 1MB passed their own validation but still
+            // 413'd here.
+            payload: {
+              output: 'data',
+              parse: false,
+              maxBytes: 20 * 1024 * 1024
+            }
           },
           handler(request, h) {
             const { fileUploadId } = request.params
@@ -91,7 +100,8 @@ export const router = {
         uploadMoreEvidence,
         cyaEvidenceForOverseasSite,
         checkSiteConditions,
-        viewPaymentDetails
+        viewPaymentDetails,
+        addOverseasSiteSiteName
       ])
 
       // Static assets
