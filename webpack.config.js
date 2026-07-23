@@ -14,6 +14,10 @@ const govukFrontendPath = path.dirname(
   require.resolve('govuk-frontend/package.json')
 )
 
+const accessibleAutocompletePath = path.dirname(
+  require.resolve('accessible-autocomplete/package.json')
+)
+
 const ruleTypeAssetResource = 'asset/resource'
 
 export default {
@@ -163,6 +167,20 @@ export default {
         {
           from: path.join(govukFrontendPath, 'dist/govuk/assets'),
           to: 'assets'
+        },
+        {
+          from: path.join(
+            accessibleAutocompletePath,
+            'dist/accessible-autocomplete.min.js'
+          ),
+          to: 'javascripts'
+        },
+        {
+          from: path.join(
+            accessibleAutocompletePath,
+            'dist/accessible-autocomplete.min.css'
+          ),
+          to: 'stylesheets'
         }
       ]
     })
