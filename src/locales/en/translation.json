@@ -721,6 +721,7 @@
         "submitButton": "Add this site",
         "cancelLink": "Cancel"
       },
+      "addNewButton": "Add new overseas reprocessing site",
       "successBanner": {
         "title": "Success",
         "heading": "Overseas reprocessing site added to your application",
