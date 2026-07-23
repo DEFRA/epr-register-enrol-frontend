@@ -34,6 +34,7 @@ import { viewPaymentDetails } from './accreditation/view-payment-details/index.j
 import { addOverseasSiteSiteName } from './accreditation/add-overseas-site/site-name/index.js'
 import { addOverseasSiteSiteLocation } from './accreditation/add-overseas-site/site-location/index.js'
 import { addOverseasSiteSiteContactDetails } from './accreditation/add-overseas-site/site-contact-details/index.js'
+import { addOverseasSiteRecyclingOperationDetails } from './accreditation/add-overseas-site/recycling-operation-details/index.js'
 
 export const router = {
   plugin: {
@@ -105,7 +106,8 @@ export const router = {
         viewPaymentDetails,
         addOverseasSiteSiteName,
         addOverseasSiteSiteLocation,
-        addOverseasSiteSiteContactDetails
+        addOverseasSiteSiteContactDetails,
+        addOverseasSiteRecyclingOperationDetails
       ])
 
       // Static assets
