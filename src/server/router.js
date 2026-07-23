@@ -32,6 +32,7 @@ import { cyaEvidenceForOverseasSite } from './accreditation/cya-evidence-for-ove
 import { checkSiteConditions } from './accreditation/check-site-conditions/index.js'
 import { viewPaymentDetails } from './accreditation/view-payment-details/index.js'
 import { addOverseasSiteSiteName } from './accreditation/add-overseas-site/site-name/index.js'
+import { addOverseasSiteSiteLocation } from './accreditation/add-overseas-site/site-location/index.js'
 
 export const router = {
   plugin: {
@@ -101,7 +102,8 @@ export const router = {
         cyaEvidenceForOverseasSite,
         checkSiteConditions,
         viewPaymentDetails,
-        addOverseasSiteSiteName
+        addOverseasSiteSiteName,
+        addOverseasSiteSiteLocation
       ])
 
       // Static assets
