@@ -745,6 +745,7 @@
     "errorSummaryTitle": "There is a problem",
     "error": "Error",
     "warning": "Warning",
+    "maxWords": "You can enter up to {count} words",
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
       "tryAgain": "Try again"
