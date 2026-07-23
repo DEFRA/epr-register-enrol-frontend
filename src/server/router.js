@@ -33,6 +33,7 @@ import { checkSiteConditions } from './accreditation/check-site-conditions/index
 import { viewPaymentDetails } from './accreditation/view-payment-details/index.js'
 import { addOverseasSiteSiteName } from './accreditation/add-overseas-site/site-name/index.js'
 import { addOverseasSiteSiteLocation } from './accreditation/add-overseas-site/site-location/index.js'
+import { addOverseasSiteSiteContactDetails } from './accreditation/add-overseas-site/site-contact-details/index.js'
 
 export const router = {
   plugin: {
@@ -103,7 +104,8 @@ export const router = {
         checkSiteConditions,
         viewPaymentDetails,
         addOverseasSiteSiteName,
-        addOverseasSiteSiteLocation
+        addOverseasSiteSiteLocation,
+        addOverseasSiteSiteContactDetails
       ])
 
       // Static assets
