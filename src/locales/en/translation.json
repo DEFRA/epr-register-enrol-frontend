@@ -220,7 +220,6 @@
       "characterCountHint": "You can enter up to 500 characters",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
-
       "fields": {
         "newInfrastructureDetail": "New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportDetail": "Price support for buying packaging waste or selling recycled packaging waste",
@@ -582,6 +581,151 @@
       "content": "[Content to be confirmed with subject matter experts]",
       "confirmButton": "Confirm",
       "loadError": "Sorry, we were unable to load the site details. Please try again."
+    },
+    "addOverseasSite": {
+      "siteName": {
+        "title": "Site name — Add overseas reprocessing site",
+        "heading": "What is the name of the overseas reprocessing site?",
+        "label": "Site name",
+        "hint": "Enter the full name of the overseas reprocessing site.",
+        "validation": {
+          "required": "Enter the site name"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "siteLocation": {
+        "title": "Site location — Add overseas reprocessing site",
+        "heading": "Where is the overseas reprocessing site located?",
+        "addressLine1Label": "Address line 1",
+        "addressLine2Label": "Address line 2 (optional)",
+        "townOrCityLabel": "Town or city",
+        "stateOrRegionLabel": "State or region (optional)",
+        "postcodeLabel": "Postcode (optional)",
+        "countryLabel": "Country",
+        "coordinatesLabel": "Coordinates (optional)",
+        "coordinatesHint": "Enter the latitude and longitude separated by a comma. For example, 51.503, -0.127",
+        "validation": {
+          "addressLine1Required": "Enter address line 1",
+          "townOrCityRequired": "Enter the town or city",
+          "countryRequired": "Select a country",
+          "coordinatesInvalid": "Enter coordinates in the correct format, for example 51.503, -0.127",
+          "coordinatesLatRange": "Latitude must be between -90 and 90",
+          "coordinatesLngRange": "Longitude must be between -180 and 180"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "siteContactDetails": {
+        "title": "Site contact details — Add overseas reprocessing site",
+        "heading": "Who is the contact at the overseas reprocessing site?",
+        "nameLabel": "Contact name",
+        "emailLabel": "Email address",
+        "phoneLabel": "Phone number (optional)",
+        "validation": {
+          "nameRequired": "Enter the contact name",
+          "emailRequired": "Enter the email address",
+          "emailInvalid": "Enter an email address in the correct format, like name@example.com"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "recyclingOperationDetails": {
+        "title": "Recycling operation — Add overseas reprocessing site",
+        "heading": "What recycling operation is carried out at the site?",
+        "label": "Recycling operation",
+        "selectDefault": "Select a recycling operation",
+        "operations": {
+          "R1": "R1 — Use principally as a fuel or other means to generate energy",
+          "R2": "R2 — Solvent reclamation or regeneration",
+          "R3": "R3 — Recycling or reclamation of organic substances not used as solvents (including composting)",
+          "R4": "R4 — Recycling or reclamation of metals and metal compounds",
+          "R5": "R5 — Recycling or reclamation of other inorganic materials",
+          "R6": "R6 — Regeneration of acids or bases",
+          "R7": "R7 — Recovery of components used for pollution abatement",
+          "R8": "R8 — Recovery of components from catalysts",
+          "R9": "R9 — Oil re-refining or other reuses of oil",
+          "R10": "R10 — Land treatment resulting in benefit to agriculture or ecological improvement",
+          "R11": "R11 — Use of wastes obtained from any of the operations R1 to R10",
+          "R12": "R12 — Exchange of wastes for submission to any of the operations R1 to R11",
+          "R13": "R13 — Storage of wastes pending any of the operations R1 to R12"
+        },
+        "validation": {
+          "required": "Select a recycling operation"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "baselAndOecdCodes": {
+        "title": "Basel Convention and OECD code — Add overseas reprocessing site",
+        "heading": "What are the Basel Convention and OECD codes for the waste?",
+        "code1Label": "Code 1",
+        "code2Label": "Code 2 (optional)",
+        "code3Label": "Code 3 (optional)",
+        "hint": "Basel codes start with one letter followed by 4 digits, for example A1181. OECD codes start with two letters followed by 3 digits, for example GC010.",
+        "validation": {
+          "code1Required": "Enter at least one Basel Convention or OECD code",
+          "codeInvalid": "Enter a valid Basel Convention or OECD code"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "repatriatedLoads": {
+        "title": "Arrangements for rejected or returned loads — Add overseas reprocessing site",
+        "heading": "What are the arrangements for loads rejected or returned to the UK?",
+        "label": "Describe the arrangements",
+        "hint": "Do not include personal or financial information.",
+        "maxWords": 500,
+        "validation": {
+          "required": "Describe the arrangements for loads that are rejected or returned to the UK",
+          "tooManyWords": "Description must be 500 words or fewer"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "conditionsOfExport": {
+        "title": "Conditions of export — Add overseas reprocessing site",
+        "heading": "Does the site meet the conditions of export?",
+        "intro": "The overseas reprocessing site must meet all of the following conditions:",
+        "condition1": "The site is authorised by the competent authority in the country of destination.",
+        "condition2": "The site operates to standards that are broadly equivalent to UK environmental standards.",
+        "condition3": "The site has appropriate facilities and infrastructure for the type of waste being exported.",
+        "condition4": "The site provides evidence of compliance with the Basel Convention and relevant OECD decisions.",
+        "condition5": "The site has arrangements in place for loads that are rejected or cannot be processed.",
+        "condition6": "The site submits annual reports to the relevant competent authority.",
+        "questionLabel": "Does the site meet all of the conditions listed above?",
+        "yesLabel": "Yes",
+        "noLabel": "No",
+        "validation": {
+          "required": "Select yes if the site meets the conditions of export"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "cya": {
+        "title": "Check your answers — Add overseas reprocessing site",
+        "heading": "Check your answers",
+        "rows": {
+          "siteName": "Site name",
+          "location": "Location",
+          "contactName": "Contact name",
+          "contactEmail": "Contact email",
+          "contactPhone": "Contact phone number",
+          "recyclingOperation": "Recycling operation",
+          "baselCode1": "Basel/OECD code 1",
+          "baselCode2": "Basel/OECD code 2",
+          "baselCode3": "Basel/OECD code 3",
+          "repatriatedLoads": "Arrangements for rejected or returned loads"
+        },
+        "changeLink": "Change",
+        "submitButton": "Add this site",
+        "cancelLink": "Cancel"
+      },
+      "successBanner": {
+        "title": "Success",
+        "heading": "Overseas reprocessing site added to your application",
+        "body": "You can continue to add more sites or proceed with your application."
+      }
     }
   },
   "navigation": {
