@@ -10,7 +10,7 @@ import { provideUploadStatusFromSession } from '../../common/helpers/upload/prov
 const uploadOptions = {
   ...requireOperator,
   payload: {
-    maxBytes: 21 * 1024 * 1024,
+    maxBytes: 200 * 1024 * 1024,
     output: 'data',
     parse: true,
     multipart: { output: 'annotated' }

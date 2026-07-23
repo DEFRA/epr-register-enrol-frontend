@@ -290,7 +290,7 @@
       "validation": {
         "noFile": "[Welsh] Select a file to upload",
         "invalidType": "[Welsh] The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
-        "fileTooLarge": "[Welsh] The selected file must be smaller than 20MB",
+        "fileTooLarge": "[Welsh] Cannot upload file. The file is larger than 20MB. Please use a smaller file, or split the file and upload supporting documents separately. You can upload up to 10 files.",
         "noCleanFile": "[Welsh] You must upload at least one file before continuing",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "uploadError": "[Welsh] Sorry, there was a problem uploading your file. Please try again.",
