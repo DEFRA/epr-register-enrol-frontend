@@ -108,6 +108,20 @@ export const addOrsRecyclingOperationPostController = {
       ).code(400)
     }
 
+    if (!OPERATION_CODES.includes(recyclingOperationCode)) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          recyclingOperationCode,
+          t(
+            'pages.addOverseasSite.recyclingOperationDetails.validation.required'
+          )
+        )
+      ).code(400)
+    }
+
     setAddOrsSession(request, { recyclingOperationCode })
     return h.redirect(baselCodeUrl(applicationId))
   }

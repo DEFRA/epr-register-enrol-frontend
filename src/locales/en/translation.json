@@ -715,7 +715,8 @@
           "baselCode1": "Basel/OECD code 1",
           "baselCode2": "Basel/OECD code 2",
           "baselCode3": "Basel/OECD code 3",
-          "repatriatedLoads": "Arrangements for rejected or returned loads"
+          "repatriatedLoads": "Arrangements for rejected or returned loads",
+          "conditionsOfExport": "Conditions of export"
         },
         "changeLink": "Change",
         "submitButton": "Add this site",

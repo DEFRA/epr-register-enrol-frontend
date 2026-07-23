@@ -712,7 +712,8 @@
           "baselCode1": "[Welsh] Basel/OECD code 1",
           "baselCode2": "[Welsh] Basel/OECD code 2",
           "baselCode3": "[Welsh] Basel/OECD code 3",
-          "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads"
+          "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads",
+          "conditionsOfExport": "[Welsh] Conditions of export"
         },
         "changeLink": "[Welsh] Change",
         "submitButton": "[Welsh] Add this site",
