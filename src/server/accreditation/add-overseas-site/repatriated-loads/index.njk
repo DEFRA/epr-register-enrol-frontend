@@ -36,7 +36,7 @@
                     rows="8"
                     data-testid="repatriated-loads-textarea">{{ repatriatedLoads }}</textarea>
           <div class="govuk-hint govuk-character-count__message">
-            {{ t('common.maxWords', { count: maxWords }) if maxWords else '' }}
+            {{ maxWords if maxWords else '' }}
           </div>
         </div>
 

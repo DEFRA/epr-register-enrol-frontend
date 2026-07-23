@@ -675,7 +675,7 @@
         "heading": "What are the arrangements for loads rejected or returned to the UK?",
         "label": "Describe the arrangements",
         "hint": "Do not include personal or financial information.",
-        "maxWords": 500,
+        "maxWords": "You can enter up to 500 words",
         "validation": {
           "required": "Describe the arrangements for loads that are rejected or returned to the UK",
           "tooManyWords": "Description must be 500 words or fewer"
@@ -745,7 +745,6 @@
     "errorSummaryTitle": "There is a problem",
     "error": "Error",
     "warning": "Warning",
-    "maxWords": "You can enter up to {count} words",
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
       "tryAgain": "Try again"
