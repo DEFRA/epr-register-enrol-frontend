@@ -37,6 +37,7 @@ import { addOverseasSiteSiteContactDetails } from './accreditation/add-overseas-
 import { addOverseasSiteRecyclingOperationDetails } from './accreditation/add-overseas-site/recycling-operation-details/index.js'
 import { addOverseasSiteBaselCode } from './accreditation/add-overseas-site/basel-convention-and-oecd-code/index.js'
 import { addOverseasSiteRepatriatedLoads } from './accreditation/add-overseas-site/repatriated-loads/index.js'
+import { addOverseasSiteConditionsOfExport } from './accreditation/add-overseas-site/conditions-of-export/index.js'
 
 export const router = {
   plugin: {
@@ -111,7 +112,8 @@ export const router = {
         addOverseasSiteSiteContactDetails,
         addOverseasSiteRecyclingOperationDetails,
         addOverseasSiteBaselCode,
-        addOverseasSiteRepatriatedLoads
+        addOverseasSiteRepatriatedLoads,
+        addOverseasSiteConditionsOfExport
       ])
 
       // Static assets
