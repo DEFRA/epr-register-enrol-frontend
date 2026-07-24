@@ -270,6 +270,51 @@ describe('#selectOverseasSitesController', () => {
 
       expect(result).not.toContain('data-testid="ors-success-banner"')
     })
+
+    test('redirects to query-task-list when application is Queried and overseas sites section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: {
+            sectionStatus: 'Completed',
+            sites: [{ siteId: 900001, siteName: 'Site Alpha' }]
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the form (no redirect) when overseas sites section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: {
+            sectionStatus: 'Queried',
+            sites: [{ siteId: 900001, siteName: 'Site Alpha' }]
+          },
+          query: { queryNote: 'Please confirm the overseas site selection.' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="select-sites-form"')
+    })
   })
 
   describe('POST /accreditation/select-overseas-sites/{applicationId}', () => {
