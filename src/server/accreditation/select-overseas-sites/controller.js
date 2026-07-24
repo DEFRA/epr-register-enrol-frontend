@@ -74,10 +74,6 @@ export const selectOverseasSitesGetController = {
 
     const sites = normaliseSites(application.overseasSites?.sites)
     const successBanner = !!(request.yar.flash(ORS_SUCCESS_FLASH) ?? []).length
-    const queryNote =
-      application.applicationStatus === 'Queried'
-        ? (application.query?.queryNote ?? null)
-        : null
     if (
       application.applicationStatus === 'Queried' &&
       application.overseasSites?.sectionStatus !== 'Queried'
