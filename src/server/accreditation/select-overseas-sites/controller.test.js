@@ -314,6 +314,7 @@ describe('#selectOverseasSitesController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="select-sites-form"')
+      expect(result).toContain('Please confirm the overseas site selection.')
     })
   })
 

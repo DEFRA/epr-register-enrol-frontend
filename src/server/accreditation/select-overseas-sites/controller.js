@@ -21,7 +21,14 @@ function addOrsUrl(applicationId) {
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 
-function buildViewData(t, applicationId, sites, error, successBanner) {
+function buildViewData(
+  t,
+  applicationId,
+  sites,
+  error,
+  successBanner,
+  queryNote
+) {
   return {
     pageTitle: t('pages.selectOverseasSites.title'),
     heading: t('pages.selectOverseasSites.heading'),
@@ -29,7 +36,8 @@ function buildViewData(t, applicationId, sites, error, successBanner) {
     backLink: taskListUrl(applicationId),
     addOrsUrl: addOrsUrl(applicationId),
     successBanner,
-    error
+    error,
+    queryNote: queryNote ?? null
   }
 }
 
@@ -81,9 +89,14 @@ export const selectOverseasSitesGetController = {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
+    const queryNote =
+      application.applicationStatus === 'Queried'
+        ? (application.query?.queryNote ?? null)
+        : null
+
     return renderPage(
       h,
-      buildViewData(t, applicationId, sites, null, successBanner)
+      buildViewData(t, applicationId, sites, null, successBanner, queryNote)
     )
   }
 }
