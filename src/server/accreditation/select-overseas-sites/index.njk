@@ -22,8 +22,6 @@
         </div>
       {% endif %}
 
-
-
       {% if error and sites.length === 0 %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
           <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
@@ -92,18 +90,15 @@
                   data-testid="continue-button">
             {{ t('pages.selectOverseasSites.continueButton') }}
           </button>
-
-          <a href="{{ addOrsUrl }}" role="button" draggable="false"
-            class="govuk-button govuk-button--secondary"
-            data-module="govuk-button"
-            data-testid="add-new-ors-button">
-            {{ t('pages.addOverseasSite.addNewButton') }}
-          </a>
-
         </form>
-
       {% endif %}
 
+      <a href="{{ addOrsUrl }}" role="button" draggable="false"
+        class="govuk-button govuk-button--secondary"
+        data-module="govuk-button"
+        data-testid="add-new-ors-button">
+          {{ t('pages.addOverseasSite.addNewButton') }}
+      </a>
     </div>
   </div>
 {% endblock %}
