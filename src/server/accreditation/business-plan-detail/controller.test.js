@@ -263,6 +263,36 @@ describe('#businessPlanDetailController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
+    test('shows PRN wording for a non-exporter application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: false })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('PRN income')
+      expect(result).not.toContain('PERN income')
+    })
+
+    test('shows PERN wording for an exporter application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('PERN income')
+      expect(result).not.toContain('PRN income')
+    })
+
     test('returns 200 for Welsh locale', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -329,6 +359,30 @@ describe('#businessPlanDetailController', () => {
       expect(result).toContain(
         'data-testid="field-error-newInfrastructureDetail"'
       )
+    })
+
+    test('shows PERN wording on the 400 re-render for an exporter application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'a'.repeat(501),
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('PERN income')
     })
 
     test('submits with all fields empty when all percentages are zero', async () => {

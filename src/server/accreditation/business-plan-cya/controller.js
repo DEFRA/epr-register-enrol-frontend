@@ -79,6 +79,17 @@ function renderPage(h, viewData) {
   return h.view('accreditation/business-plan-cya/index', viewData)
 }
 
+function headingViewData(t, application) {
+  const isExporter = application?.isExporter ?? false
+  return {
+    pageTitle: t('pages.businessPlanCya.title'),
+    heading: t('pages.businessPlanCya.heading'),
+    subHeading: isExporter
+      ? t('pages.businessPlanCya.subHeadingExporter')
+      : t('pages.businessPlanCya.subHeading')
+  }
+}
+
 export const businessPlanCyaGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -98,9 +109,7 @@ export const businessPlanCyaGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.businessPlanCya.title'),
-        heading: t('pages.businessPlanCya.heading'),
-        subHeading: t('pages.businessPlanCya.subHeading'),
+        ...headingViewData(t, application),
         backLink: taskListUrl(applicationId),
         error: t('pages.businessPlanCya.validation.fetchError')
       }).code(500)
@@ -113,9 +122,7 @@ export const businessPlanCyaGetController = {
     )
 
     return renderPage(h, {
-      pageTitle: t('pages.businessPlanCya.title'),
-      heading: t('pages.businessPlanCya.heading'),
-      subHeading: t('pages.businessPlanCya.subHeading'),
+      ...headingViewData(t, application),
       percentRows,
       detailRows,
       backLink: taskListUrl(applicationId),
@@ -148,9 +155,7 @@ export const businessPlanCyaPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.businessPlanCya.title'),
-        heading: t('pages.businessPlanCya.heading'),
-        subHeading: t('pages.businessPlanCya.subHeading'),
+        ...headingViewData(t, application),
         backLink: taskListUrl(applicationId),
         error: t('pages.businessPlanCya.validation.fetchError')
       }).code(500)
@@ -185,9 +190,7 @@ export const businessPlanCyaPostController = {
         applicationId
       )
       return renderPage(h, {
-        pageTitle: t('pages.businessPlanCya.title'),
-        heading: t('pages.businessPlanCya.heading'),
-        subHeading: t('pages.businessPlanCya.subHeading'),
+        ...headingViewData(t, application),
         percentRows,
         detailRows,
         backLink: taskListUrl(applicationId),

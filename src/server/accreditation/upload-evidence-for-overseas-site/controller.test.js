@@ -228,7 +228,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('Site Beta')
     })
 
-    test('shows Not required for EU status for EU site', async () => {
+    test('shows Not required for application status for EU site', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -238,7 +238,7 @@ describe('#uploadEvidenceListController', () => {
       })
 
       expect(result).toContain('data-testid="evidence-status-900001"')
-      expect(result).toContain('Not required for EU')
+      expect(result).toContain('Not required for application')
     })
 
     test('shows not-uploaded evidence status for non-EU non-OECD site', async () => {
@@ -254,7 +254,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('Not uploaded')
     })
 
-    test('EU site has no upload link', async () => {
+    test('EU site still has an upload link, since evidence is optional but allowed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -263,7 +263,10 @@ describe('#uploadEvidenceListController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).not.toContain('data-testid="upload-link-900001"')
+      expect(result).toContain('data-testid="upload-link-900001"')
+      expect(result).toContain(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/900001`
+      )
     })
 
     test('non-EU non-OECD site has upload link', async () => {

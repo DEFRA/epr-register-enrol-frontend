@@ -14,6 +14,7 @@ import { apiClient } from '../../common/api-client.js'
 import {
   validateFileExtension,
   parseDate,
+  isDateBlank,
   ALLOWED_EXTENSIONS,
   MAX_FILE_BYTES
 } from './controller.js'
@@ -92,6 +93,26 @@ describe('#parseDate', () => {
 
   test('returns null for invalid calendar date (Feb 31)', () => {
     expect(parseDate('31', '2', '2026')).toBeNull()
+  })
+})
+
+describe('#isDateBlank', () => {
+  test('returns true when all three fields are empty', () => {
+    expect(isDateBlank('', '', '')).toBe(true)
+  })
+
+  test('returns true when all three fields are undefined', () => {
+    expect(isDateBlank(undefined, undefined, undefined)).toBe(true)
+  })
+
+  test('returns true when fields are only whitespace', () => {
+    expect(isDateBlank(' ', '  ', '')).toBe(true)
+  })
+
+  test('returns false when any field has a value', () => {
+    expect(isDateBlank('1', '', '')).toBe(false)
+    expect(isDateBlank('', '11', '')).toBe(false)
+    expect(isDateBlank('', '', '2026')).toBe(false)
   })
 })
 
@@ -217,7 +238,9 @@ describe('#uploadBesEvidenceController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
-      expect(result).toContain('Upload BES evidence for')
+      expect(result).toContain(
+        'Upload broadly equivalent standards evidence for'
+      )
       expect(result).toContain('Site Alpha')
     })
 
@@ -258,7 +281,9 @@ describe('#uploadBesEvidenceController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('[Welsh] Upload BES evidence for')
+      expect(result).toContain(
+        '[Welsh] Upload broadly equivalent standards evidence for'
+      )
     })
   })
 
@@ -342,7 +367,7 @@ describe('#uploadBesEvidenceController', () => {
       expect(result).toContain('data-testid="valid-from-error"')
     })
 
-    test('returns 400 for missing valid-to date', async () => {
+    test('returns 400 for non-numeric valid-to date', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
@@ -358,6 +383,32 @@ describe('#uploadBesEvidenceController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="valid-to-error"')
+      expect(result).toContain('Enter a valid date')
+    })
+
+    test('valid-to date is optional and can be left blank', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          validToDay: '',
+          validToMonth: '',
+          validToYear: ''
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`
+      )
+      expect(initUpload).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({ besEvidenceExpiryDate: null })
+        })
+      )
     })
 
     test('returns 400 when valid-to is before valid-from', async () => {

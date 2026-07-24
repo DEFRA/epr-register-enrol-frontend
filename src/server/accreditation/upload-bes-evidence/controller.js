@@ -49,6 +49,14 @@ export function parseDate(day, month, year) {
   return date
 }
 
+export function isDateBlank(day, month, year) {
+  return (
+    !(day ?? '').toString().trim() &&
+    !(month ?? '').toString().trim() &&
+    !(year ?? '').toString().trim()
+  )
+}
+
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
@@ -211,33 +219,40 @@ export const uploadBesEvidencePostController = {
       ).code(400)
     }
 
-    const validTo = parseDate(
+    const validToBlank = isDateBlank(
       payload.validToDay,
       payload.validToMonth,
       payload.validToYear
     )
-    if (!validTo) {
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
-          validToError: t('pages.uploadBesEvidence.validation.validToRequired')
-        })
-      ).code(400)
-    }
-
-    if (validTo <= validFrom) {
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
-          validToError: t(
-            'pages.uploadBesEvidence.validation.validToBeforeFrom'
-          )
-        })
-      ).code(400)
+    let validTo = null
+    if (!validToBlank) {
+      validTo = parseDate(
+        payload.validToDay,
+        payload.validToMonth,
+        payload.validToYear
+      )
+      if (!validTo) {
+        return renderPage(
+          h,
+          buildViewData(t, applicationId, siteId, siteName, payload, {
+            validToError: t('pages.uploadBesEvidence.validation.invalidDate')
+          })
+        ).code(400)
+      }
+      if (validTo <= validFrom) {
+        return renderPage(
+          h,
+          buildViewData(t, applicationId, siteId, siteName, payload, {
+            validToError: t(
+              'pages.uploadBesEvidence.validation.validToBeforeFrom'
+            )
+          })
+        ).code(400)
+      }
     }
 
     const besEvidenceValidFromDate = validFrom.toISOString()
-    const besEvidenceExpiryDate = validTo.toISOString()
+    const besEvidenceExpiryDate = validTo ? validTo.toISOString() : null
 
     let uploadDetail
     try {

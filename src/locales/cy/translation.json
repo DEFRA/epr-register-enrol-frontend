@@ -66,7 +66,7 @@
       "statusLabel": "[Welsh] Application status",
       "notificationStatusLabel": "[Welsh] Notification status",
       "notificationFailedLabel": "[Welsh] Failed to send",
-      "continueButton": "[Welsh] Continue",
+      "continueButton": "Parhau",
       "seedErrorHeading": "[Welsh] There is a problem",
       "seedError": "[Welsh] We were unable to start your application. Please try again.",
       "statuses": {
@@ -210,7 +210,9 @@
     },
     "businessPlanDetail": {
       "title": "[Welsh] More detail about how you\u0027ll spend PRN income",
+      "titleExporter": "[Welsh] More detail about how you\u0027ll spend PERN income",
       "heading": "[Welsh] More detail about how you\u0027ll spend PRN income",
+      "headingExporter": "[Welsh] More detail about how you\u0027ll spend PERN income",
       "intro": "[Welsh] It\u0027s optional, but it can help the regulator to better understand your plans.",
       "optional": "[Welsh] (optional)",
       "characterCountHint": "[Welsh] You can enter up to 500 characters",
@@ -236,6 +238,7 @@
       "title": "[Welsh] Check your answers before continuing",
       "heading": "[Welsh] Check your answers before continuing",
       "subHeading": "[Welsh] Business plan: how you\u0027ll allocate PRN income",
+      "subHeadingExporter": "[Welsh] Business plan: how you\u0027ll allocate PERN income",
       "notProvided": "[Welsh] Not provided",
       "change": "[Welsh] Change",
       "changePercentContext": "[Welsh] percentage for {field}",
@@ -386,7 +389,7 @@
       "heading": "[Welsh] Select the overseas reprocessing sites to include in this accreditation",
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
-      "continueButton": "[Welsh] Continue",
+      "continueButton": "Parhau",
       "columns": {
         "siteName": "[Welsh] Site name",
         "country": "[Welsh] Country"
@@ -507,10 +510,10 @@
       "uploadLink": "[Welsh] Upload evidence",
       "evidenceUploaded": "[Welsh] Uploaded",
       "evidenceNotUploaded": "[Welsh] Not uploaded",
-      "notRequiredEu": "[Welsh] Not required for EU",
-      "notRequiredOecd": "[Welsh] Not required for OECD",
+      "notRequiredEu": "[Welsh] Not required for application",
+      "notRequiredOecd": "[Welsh] Not required for application",
       "incompleteEvidence": "[Welsh] All non-EU, non-OECD sites must have evidence uploaded before continuing.",
-      "continueButton": "[Welsh] Continue",
+      "continueButton": "Parhau",
       "table": {
         "siteName": "[Welsh] Site name",
         "country": "[Welsh] Country",
@@ -519,8 +522,8 @@
       }
     },
     "uploadBesEvidence": {
-      "title": "[Welsh] Upload BES evidence",
-      "heading": "[Welsh] Upload BES evidence for",
+      "title": "[Welsh] Upload broadly equivalent standards evidence",
+      "heading": "[Welsh] Upload broadly equivalent standards evidence for",
       "fileLabel": "[Welsh] Upload a file",
       "uploadButton": "[Welsh] Upload file",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
@@ -530,7 +533,7 @@
         "fileTypes": "[Welsh] be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG file"
       },
       "validFrom": "[Welsh] Start date of evidence",
-      "validTo": "[Welsh] End date of evidence",
+      "validTo": "[Welsh] End date of evidence (optional)",
       "dateHint": "[Welsh] For example, 1 11 2026",
       "status": {
         "title": "[Welsh] Uploading file",
@@ -543,7 +546,6 @@
         "invalidType": "[Welsh] The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",
         "fileTooLarge": "[Welsh] The selected file must be smaller than 20MB",
         "validFromRequired": "[Welsh] Enter the start date of evidence",
-        "validToRequired": "[Welsh] Enter the end date of evidence",
         "validToBeforeFrom": "[Welsh] The end date must be after the start date",
         "invalidDate": "[Welsh] Enter a valid date",
         "fetchError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
@@ -555,7 +557,7 @@
       "heading": "[Welsh] Do you want to upload more evidence",
       "yes": "[Welsh] Yes",
       "no": "[Welsh] No",
-      "continueButton": "[Welsh] Continue",
+      "continueButton": "Parhau",
       "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
       "saveError": "[Welsh] Sorry, we were unable to save your answer. Please try again.",
       "validation": {
@@ -588,7 +590,7 @@
         "validation": {
           "required": "[Welsh] Enter the site name"
         },
-        "continueButton": "[Welsh] Continue",
+        "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
       "siteLocation": {
@@ -600,17 +602,18 @@
         "stateOrRegionLabel": "[Welsh] State or region (optional)",
         "postcodeLabel": "[Welsh] Postcode (optional)",
         "countryLabel": "[Welsh] Country",
-        "coordinatesLabel": "[Welsh] Coordinates (optional)",
+        "coordinatesLabel": "[Welsh] Coordinates",
         "coordinatesHint": "[Welsh] Enter the latitude and longitude separated by a comma. For example, 51.503, -0.127",
         "validation": {
           "addressLine1Required": "[Welsh] Enter address line 1",
           "townOrCityRequired": "[Welsh] Enter the town or city",
           "countryRequired": "[Welsh] Select a country",
+          "coordinatesRequired": "[Welsh] Enter the coordinates",
           "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.503, -0.127",
           "coordinatesLatRange": "[Welsh] Latitude must be between -90 and 90",
           "coordinatesLngRange": "[Welsh] Longitude must be between -180 and 180"
         },
-        "continueButton": "[Welsh] Continue",
+        "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
       "siteContactDetails": {
@@ -624,7 +627,7 @@
           "emailRequired": "[Welsh] Enter the email address",
           "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com"
         },
-        "continueButton": "[Welsh] Continue",
+        "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
       "recyclingOperationDetails": {
@@ -650,7 +653,7 @@
         "validation": {
           "required": "[Welsh] Select a recycling operation"
         },
-        "continueButton": "[Welsh] Continue",
+        "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
       "baselAndOecdCodes": {
@@ -664,7 +667,7 @@
           "code1Required": "[Welsh] Enter at least one Basel Convention or OECD code",
           "codeInvalid": "[Welsh] Enter a valid Basel Convention or OECD code"
         },
-        "continueButton": "[Welsh] Continue",
+        "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
       "repatriatedLoads": {
@@ -677,26 +680,26 @@
           "required": "[Welsh] Describe the arrangements for loads that are rejected or returned to the UK",
           "tooManyWords": "[Welsh] Description must be 500 words or fewer"
         },
-        "continueButton": "[Welsh] Continue",
+        "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
       "conditionsOfExport": {
         "title": "[Welsh] Conditions of export — Add overseas reprocessing site",
         "heading": "[Welsh] Does the site meet the conditions of export?",
         "intro": "[Welsh] The overseas reprocessing site must meet all of the following conditions:",
-        "condition1": "[Welsh] The site is authorised by the competent authority in the country of destination.",
-        "condition2": "[Welsh] The site operates to standards that are broadly equivalent to UK environmental standards.",
-        "condition3": "[Welsh] The site has appropriate facilities and infrastructure for the type of waste being exported.",
-        "condition4": "[Welsh] The site provides evidence of compliance with the Basel Convention and relevant OECD decisions.",
-        "condition5": "[Welsh] The site has arrangements in place for loads that are rejected or cannot be processed.",
-        "condition6": "[Welsh] The site submits annual reports to the relevant competent authority.",
+        "condition1": "[Welsh] The application is for export of Aluminium or Steel packaging waste.",
+        "condition2": "[Welsh] The packaging waste is separated at source, or processed, to ensure it is exported for reprocessing within a shipment of similar material – for example, if the shipment contains steel drink cans and steel scrap and is not a general mix of different materials  (such as paper and plastic), or a mixture of different grades of the same material (for example, different plastic polymers).",
+        "condition3": "[Welsh] There is a well-established international technical specification for the exported packaging waste material that your consignments meet.",
+        "condition4": "[Welsh] The material needs only limited processing overseas before it is recovered, and the recycling process has losses that meet EU industry standards.",
+        "condition5": "[Welsh] Processing the waste material before recycling does not include hand-sorting that may cause significant harm to human health.",
+        "condition6": "[Welsh] The material goes through a recognised form of recycling, and is unlikely to cause significant harm to the environment.",
         "questionLabel": "[Welsh] Does the site meet all of the conditions listed above?",
-        "yesLabel": "[Welsh] Yes",
-        "noLabel": "[Welsh] No",
+        "yesLabel": "Hoffwn",
+        "noLabel": "Nac ydw",
         "validation": {
           "required": "[Welsh] Select yes if the site meets the conditions of export"
         },
-        "continueButton": "[Welsh] Continue",
+        "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
       "cya": {
