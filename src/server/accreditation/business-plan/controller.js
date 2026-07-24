@@ -212,6 +212,13 @@ export const businessPlanPostController = {
       }).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.businessPlan?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
 
     const isSaveAndComeLater = submitAction === 'saveAndComeLater'

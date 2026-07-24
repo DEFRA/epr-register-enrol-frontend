@@ -154,6 +154,13 @@ export const uploadEvidenceListPostController = {
       ).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.besEvidence?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const selectedSites = (application.overseasSites?.sites ?? []).filter(
       (s) => s.selected !== false
     )

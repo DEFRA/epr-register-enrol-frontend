@@ -273,6 +273,32 @@ describe('#selectOverseasSitesController', () => {
   })
 
   describe('POST /accreditation/select-overseas-sites/{applicationId}', () => {
+    test('redirects to query-task-list when application is Queried and overseas sites section is not, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: {
+            sectionStatus: 'Completed',
+            sites: makeApplication().overseasSites.sites
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { siteIds: ['900001'] }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('redirects to confirm-overseas-sites when sites are selected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       vi.spyOn(apiClient, 'patch').mockResolvedValue({})

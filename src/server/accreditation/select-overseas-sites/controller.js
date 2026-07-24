@@ -117,6 +117,13 @@ export const selectOverseasSitesPostController = {
       ).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.overseasSites?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const rawSites = application.overseasSites?.sites ?? []
     const selectedIds = parseSelectedIds(request.payload?.siteIds)
 

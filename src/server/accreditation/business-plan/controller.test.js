@@ -427,6 +427,29 @@ describe('#businessPlanController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
+    test('redirects to query-task-list when application is Queried and business plan section is not, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'Completed' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('returns 400 when percentages do not sum to 100', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

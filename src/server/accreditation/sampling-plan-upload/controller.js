@@ -155,6 +155,13 @@ export const samplingPlanUploadPostController = {
       }).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.samplingPlan?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const files = buildFilesViewModel(application.samplingPlan?.files)
     const rawFiles = application.samplingPlan?.files ?? []
 

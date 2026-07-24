@@ -369,6 +369,32 @@ describe('#tonnageController', () => {
       expect(patchSpy).toHaveBeenCalledOnce()
     })
 
+    test('redirects to query-task-list when application is Queried and PRNs section is not, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Completed' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          plannedTonnageBand: 'UpTo500',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('returns 500 with error when GET fetch fails on POST', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
       const patchSpy = vi.spyOn(apiClient, 'patch')

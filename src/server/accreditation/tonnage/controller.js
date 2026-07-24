@@ -119,6 +119,13 @@ export const tonnagePostController = {
       }).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.prns?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
     const heading = buildHeading(application.materialType, isExporter, t)
     const selectTonnageKey = isExporter
