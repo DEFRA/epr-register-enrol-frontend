@@ -21,6 +21,7 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    registrationId: 'test-registration-id',
     materialType: 'Steel',
     year: 2027,
     applicationStatus: 'Queried',
@@ -150,7 +151,26 @@ describe('#queryTaskListGetController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.redirect)
-    expect(headers.location).toContain('/operator-accreditation/')
+    expect(headers.location).toBe(
+      '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
+    )
+  })
+
+  test('redirect never contains "undefined", even with no session set for this journey', async () => {
+    // Regression guard: a query-response journey can outlive the session
+    // values written when the landing page was first visited. The redirect
+    // must be built from the fetched application, not request.yar.
+    vi.spyOn(apiClient, 'get').mockResolvedValue(
+      makeApplication({ applicationStatus: 'Submitted' })
+    )
+
+    const { headers } = await server.inject({
+      method: 'GET',
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
+      headers: operatorHeaders
+    })
+
+    expect(headers.location).not.toContain('undefined')
   })
 
   test('returns 500 with error summary when API fetch fails', async () => {

@@ -27,6 +27,7 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    registrationId: 'test-registration-id',
     materialType: 'Steel',
     year: 2027,
     applicationStatus: 'Queried',
@@ -138,7 +139,9 @@ describe('#queryDeclarationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toContain('/operator-accreditation/')
+      expect(headers.location).toBe(
+        '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
+      )
     })
   })
 
@@ -183,7 +186,34 @@ describe('#queryDeclarationController', () => {
         })
       )
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toContain('/operator-accreditation/')
+      expect(headers.location).toBe(
+        '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
+      )
+    })
+
+    test('redirect never contains "undefined", even with no session set for this journey', async () => {
+      // Regression guard for the OJ resubmit duplicate-document bug: the
+      // post-resubmit redirect must be built from the fetched application,
+      // not request.yar, since a query-response journey (e.g. via an
+      // emailed link on another device) can outlive the session values
+      // written when the landing page was first visited.
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(apiClient, 'post').mockResolvedValue(
+        makeApplication({ applicationStatus: 'Updated' })
+      )
+
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(headers.location).not.toContain('undefined')
     })
 
     test('surfaces a 409 conflict explicitly instead of redirecting as if succeeded', async () => {
@@ -245,7 +275,9 @@ describe('#queryDeclarationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toContain('/operator-accreditation/')
+      expect(headers.location).toBe(
+        '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
+      )
     })
   })
 })

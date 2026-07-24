@@ -75,7 +75,7 @@ export const queryDeclarationGetController = {
     }
 
     if (application.applicationStatus !== 'Queried') {
-      return h.redirect(landingUrl(request.yar, application.isExporter))
+      return h.redirect(landingUrl(application, application.isExporter))
     }
 
     return renderPage(h, baseViewData(t, applicationId))
@@ -108,7 +108,7 @@ export const queryDeclarationPostController = {
     }
 
     if (application.applicationStatus !== 'Queried') {
-      return h.redirect(landingUrl(request.yar, application.isExporter))
+      return h.redirect(landingUrl(application, application.isExporter))
     }
 
     const errors = validateQueryDeclaration(fullName, email, role, t)
@@ -164,6 +164,6 @@ export const queryDeclarationPostController = {
       t('pages.queryDeclaration.successMessage')
     )
 
-    return h.redirect(landingUrl(request.yar, application.isExporter))
+    return h.redirect(landingUrl(application, application.isExporter))
   }
 }

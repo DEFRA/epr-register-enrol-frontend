@@ -1,5 +1,3 @@
-import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
-
 export function queryTaskListUrl(applicationId) {
   return `/accreditation/query-task-list/${applicationId}`
 }
@@ -9,13 +7,12 @@ export function queryDeclarationUrl(applicationId) {
 }
 
 // The "landing page" is the operator-accreditation summary page for this
-// specific application — reconstructed from session values set when that
-// page was first visited (RA-311 §3).
-export function landingUrl(yar, isExporter) {
-  const organisationId = yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
-  const registrationId = yar.get(ACCREDITATION_SESSION_KEYS.registrationId)
-  const materialType = yar.get(ACCREDITATION_SESSION_KEYS.materialType)
-  const year = yar.get(ACCREDITATION_SESSION_KEYS.year)
+// specific application — built from the application record itself rather
+// than session, since a query-response journey can outlive the session
+// values set when the landing page was first visited (RA-339, see also
+// fix-01-oj-resubmit-duplicate-document.md).
+export function landingUrl(application, isExporter) {
+  const { organisationId, registrationId, materialType, year } = application
   const base = `/operator-accreditation/${organisationId}/${registrationId}/${materialType}/${year}`
   return isExporter ? `${base}/exporter` : base
 }

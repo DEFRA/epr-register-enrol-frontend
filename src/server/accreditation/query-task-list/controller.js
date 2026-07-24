@@ -144,14 +144,14 @@ export const queryTaskListGetController = {
     }
 
     if (application.applicationStatus !== 'Queried') {
-      return h.redirect(landingUrl(request.yar, application.isExporter))
+      return h.redirect(landingUrl(application, application.isExporter))
     }
 
     const viewModel = buildQueryTaskListViewModel(application, t)
 
     return h.view('accreditation/query-task-list/index', {
       pageTitle: t('pages.queryTaskList.title'),
-      backLink: landingUrl(request.yar, application.isExporter),
+      backLink: landingUrl(application, application.isExporter),
       ...viewModel
     })
   }
