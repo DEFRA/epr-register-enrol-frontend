@@ -634,21 +634,9 @@
         "title": "[Welsh] Recycling operation — Add overseas reprocessing site",
         "heading": "[Welsh] What recycling operation is carried out at the site?",
         "label": "[Welsh] Recycling operation",
-        "selectDefault": "[Welsh] Select a recycling operation",
         "operations": {
-          "R1": "[Welsh] R1 — Use principally as a fuel or other means to generate energy",
-          "R2": "[Welsh] R2 — Solvent reclamation or regeneration",
           "R3": "[Welsh] R3 — Recycling or reclamation of organic substances not used as solvents (including composting)",
-          "R4": "[Welsh] R4 — Recycling or reclamation of metals and metal compounds",
-          "R5": "[Welsh] R5 — Recycling or reclamation of other inorganic materials",
-          "R6": "[Welsh] R6 — Regeneration of acids or bases",
-          "R7": "[Welsh] R7 — Recovery of components used for pollution abatement",
-          "R8": "[Welsh] R8 — Recovery of components from catalysts",
-          "R9": "[Welsh] R9 — Oil re-refining or other reuses of oil",
-          "R10": "[Welsh] R10 — Land treatment resulting in benefit to agriculture or ecological improvement",
-          "R11": "[Welsh] R11 — Use of wastes obtained from any of the operations R1 to R10",
-          "R12": "[Welsh] R12 — Exchange of wastes for submission to any of the operations R1 to R11",
-          "R13": "[Welsh] R13 — Storage of wastes pending any of the operations R1 to R12"
+          "R4": "[Welsh] R4 — Recycling or reclamation of metals and metal compounds"
         },
         "validation": {
           "required": "[Welsh] Select a recycling operation"

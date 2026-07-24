@@ -637,21 +637,9 @@
         "title": "Recycling operation — Add overseas reprocessing site",
         "heading": "What recycling operation is carried out at the site?",
         "label": "Recycling operation",
-        "selectDefault": "Select a recycling operation",
         "operations": {
-          "R1": "R1 — Use principally as a fuel or other means to generate energy",
-          "R2": "R2 — Solvent reclamation or regeneration",
           "R3": "R3 — Recycling or reclamation of organic substances not used as solvents (including composting)",
-          "R4": "R4 — Recycling or reclamation of metals and metal compounds",
-          "R5": "R5 — Recycling or reclamation of other inorganic materials",
-          "R6": "R6 — Regeneration of acids or bases",
-          "R7": "R7 — Recovery of components used for pollution abatement",
-          "R8": "R8 — Recovery of components from catalysts",
-          "R9": "R9 — Oil re-refining or other reuses of oil",
-          "R10": "R10 — Land treatment resulting in benefit to agriculture or ecological improvement",
-          "R11": "R11 — Use of wastes obtained from any of the operations R1 to R10",
-          "R12": "R12 — Exchange of wastes for submission to any of the operations R1 to R11",
-          "R13": "R13 — Storage of wastes pending any of the operations R1 to R12"
+          "R4": "R4 — Recycling or reclamation of metals and metal compounds"
         },
         "validation": {
           "required": "Select a recycling operation"

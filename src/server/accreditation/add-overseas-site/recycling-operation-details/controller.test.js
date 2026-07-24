@@ -72,16 +72,19 @@ describe('#addOrsRecyclingOperationController', () => {
       )
     })
 
-    test('renders select element with R1-R13 options', async () => {
+    test('renders radio buttons for R3 and R4 only', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="recycling-operation-select"')
-      expect(result).toContain('data-testid="option-R1"')
-      expect(result).toContain('data-testid="option-R13"')
+      expect(result).toContain('data-testid="option-R3"')
+      expect(result).toContain('data-testid="option-R4"')
+      expect(result).not.toContain('data-testid="option-R1"')
+      expect(result).not.toContain('data-testid="option-R5"')
+      expect(result).not.toContain('data-testid="option-R13"')
+      expect(result).toContain('type="radio"')
     })
 
     test('back link points to site-contact-details', async () => {
@@ -111,7 +114,7 @@ describe('#addOrsRecyclingOperationController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'recyclingOperationCode=R5'
+        payload: 'recyclingOperationCode=R4'
       })
       expect(postResponse.statusCode).toBe(statusCodes.redirect)
 
@@ -121,7 +124,8 @@ describe('#addOrsRecyclingOperationController', () => {
         headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
       })
 
-      expect(result).toContain('value="R5" selected')
+      expect(result).toContain('value="R4"')
+      expect(result).toMatch(/value="R4"\s+checked/)
     })
 
     test('returns 200 in Welsh locale', async () => {
@@ -157,6 +161,36 @@ describe('#addOrsRecyclingOperationController', () => {
         url: BASE_URL,
         headers: postHeaders,
         payload: 'recyclingOperationCode='
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Select a recycling operation')
+      expect(result).toContain('id="recycling-operation-code-error"')
+      expect(result).toContain(
+        'aria-describedby="recycling-operation-code-error"'
+      )
+    })
+
+    test('returns 400 rather than 500 when the field name is submitted twice', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'recyclingOperationCode=R3&recyclingOperationCode=R4'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Select a recycling operation')
+    })
+
+    test('returns 400 with error when an operation code outside R3/R4 is submitted', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'recyclingOperationCode=R5'
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
