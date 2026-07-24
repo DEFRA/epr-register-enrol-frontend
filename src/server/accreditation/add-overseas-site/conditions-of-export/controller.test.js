@@ -79,7 +79,7 @@ describe('#addOrsConditionsOfExportController', () => {
 
       expect(result).toContain('data-testid="conditions-list"')
       expect(result).toContain(
-        'The site is authorised by the competent authority'
+        'The application is for export of Aluminium or Steel packaging waste.'
       )
     })
 

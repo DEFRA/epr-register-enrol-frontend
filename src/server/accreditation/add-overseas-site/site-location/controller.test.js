@@ -18,7 +18,7 @@ const NEXT_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/site-contac
 const SELECT_ORS_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}`
 
 const VALID_PAYLOAD =
-  'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=10115&country=Germany&coordinates='
+  'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=10115&country=Germany&coordinates=52.52%2C+13.40'
 
 function cookiesFrom(response) {
   const raw = response.headers['set-cookie']
@@ -219,6 +219,19 @@ describe('#addOverseasSiteSiteLocationController', () => {
       expect(result).toContain('Select a country')
     })
 
+    test('returns 400 with error when coordinates is empty', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates='
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Enter the coordinates')
+    })
+
     test('returns 400 when coordinates are malformed', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -277,7 +290,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
         url: BASE_URL,
         headers: postHeaders,
         payload:
-          'addressLine1=123+St&addressLine2=&townOrCity=Paris&stateOrRegion=&postcode=&country=France&coordinates='
+          'addressLine1=123+St&addressLine2=&townOrCity=Paris&stateOrRegion=&postcode=&country=France&coordinates=48.85%2C+2.35'
       })
 
       expect(statusCode).toBe(statusCodes.redirect)

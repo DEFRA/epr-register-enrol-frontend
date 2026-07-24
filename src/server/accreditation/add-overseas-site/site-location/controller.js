@@ -35,8 +35,6 @@ function buildViewData(t, applicationId, fields, errors) {
 
 function parseCoordinates(raw) {
   const trimmed = (raw ?? '').trim()
-  if (!trimmed) return { valid: true, value: null }
-
   const parts = trimmed.split(',')
   if (parts.length !== 2) return { valid: false, error: 'invalid' }
 
@@ -103,7 +101,11 @@ export const addOrsSiteLocationPostController = {
       )
     }
 
-    if (fields.coordinates) {
+    if (!fields.coordinates) {
+      errors.coordinates = t(
+        'pages.addOverseasSite.siteLocation.validation.coordinatesRequired'
+      )
+    } else {
       const coordResult = parseCoordinates(fields.coordinates)
       if (!coordResult.valid) {
         const key =

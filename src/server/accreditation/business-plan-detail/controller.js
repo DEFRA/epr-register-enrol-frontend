@@ -83,9 +83,14 @@ function renderPage(h, viewData) {
 }
 
 function buildViewData(t, applicationId, payload, errors, application) {
+  const isExporter = application?.isExporter ?? false
   return {
-    pageTitle: t('pages.businessPlanDetail.title'),
-    heading: t('pages.businessPlanDetail.heading'),
+    pageTitle: isExporter
+      ? t('pages.businessPlanDetail.titleExporter')
+      : t('pages.businessPlanDetail.title'),
+    heading: isExporter
+      ? t('pages.businessPlanDetail.headingExporter')
+      : t('pages.businessPlanDetail.heading'),
     intro: t('pages.businessPlanDetail.intro'),
     backLink: businessPlanUrl(applicationId),
     taskListLink: taskListUrl(applicationId),

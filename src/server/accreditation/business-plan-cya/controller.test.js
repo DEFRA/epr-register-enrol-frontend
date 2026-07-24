@@ -248,6 +248,36 @@ describe('#businessPlanCyaController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
+
+    test('shows PRN wording for a non-exporter application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: false })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('PRN income')
+      expect(result).not.toContain('PERN income')
+    })
+
+    test('shows PERN wording for an exporter application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('PERN income')
+      expect(result).not.toContain('PRN income')
+    })
   })
 
   describe('POST /accreditation/business-plan-cya/{applicationId} - confirm', () => {
@@ -288,6 +318,24 @@ describe('#businessPlanCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('shows PERN wording on the PATCH-failure re-render for an exporter application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: true })
+      )
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('save failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('PERN income')
+      expect(result).not.toContain('PRN income')
     })
 
     test('returns 500 when GET fetch fails during confirm', async () => {

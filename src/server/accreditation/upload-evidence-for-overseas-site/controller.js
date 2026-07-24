@@ -57,7 +57,7 @@ function mapSites(t, applicationId, rawSites) {
       evidenceRequired: required,
       evidenceStatusText: status.text,
       evidenceStatusClass: status.tagClass,
-      uploadUrl: required ? uploadUrl(applicationId, s.siteId) : null
+      uploadUrl: uploadUrl(applicationId, s.siteId)
     }
   })
 }
