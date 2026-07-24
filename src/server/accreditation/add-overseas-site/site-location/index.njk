@@ -1,0 +1,106 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if errors and (errors.addressLine1 or errors.townOrCity or errors.country or errors.coordinates) %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% if errors.addressLine1 %}<li><a href="#address-line1">{{ errors.addressLine1 }}</a></li>{% endif %}
+              {% if errors.townOrCity %}<li><a href="#town-or-city">{{ errors.townOrCity }}</a></li>{% endif %}
+              {% if errors.country %}<li><a href="#country">{{ errors.country }}</a></li>{% endif %}
+              {% if errors.coordinates %}<li><a href="#coordinates">{{ errors.coordinates }}</a></li>{% endif %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <form method="post">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group{% if errors.addressLine1 %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="address-line1">{{ t('pages.addOverseasSite.siteLocation.addressLine1Label') }}</label>
+          {% if errors.addressLine1 %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.addressLine1 }}</p>
+          {% endif %}
+          <input class="govuk-input{% if errors.addressLine1 %} govuk-input--error{% endif %}"
+                 id="address-line1" name="addressLine1" type="text"
+                 value="{{ fields.addressLine1 }}"
+                 autocomplete="address-line1"
+                 data-testid="address-line1-input">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="address-line2">{{ t('pages.addOverseasSite.siteLocation.addressLine2Label') }}</label>
+          <input class="govuk-input" id="address-line2" name="addressLine2" type="text"
+                 value="{{ fields.addressLine2 }}"
+                 autocomplete="address-line2"
+                 data-testid="address-line2-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.townOrCity %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="town-or-city">{{ t('pages.addOverseasSite.siteLocation.townOrCityLabel') }}</label>
+          {% if errors.townOrCity %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.townOrCity }}</p>
+          {% endif %}
+          <input class="govuk-input govuk-input--width-20{% if errors.townOrCity %} govuk-input--error{% endif %}"
+                 id="town-or-city" name="townOrCity" type="text"
+                 value="{{ fields.townOrCity }}"
+                 data-testid="town-or-city-input">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="state-or-region">{{ t('pages.addOverseasSite.siteLocation.stateOrRegionLabel') }}</label>
+          <input class="govuk-input govuk-input--width-20" id="state-or-region" name="stateOrRegion" type="text"
+                 value="{{ fields.stateOrRegion }}"
+                 data-testid="state-or-region-input">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="postcode">{{ t('pages.addOverseasSite.siteLocation.postcodeLabel') }}</label>
+          <input class="govuk-input govuk-input--width-10" id="postcode" name="postcode" type="text"
+                 value="{{ fields.postcode }}"
+                 data-testid="postcode-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.country %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="country">{{ t('pages.addOverseasSite.siteLocation.countryLabel') }}</label>
+          {% if errors.country %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.country }}</p>
+          {% endif %}
+          <input class="govuk-input{% if errors.country %} govuk-input--error{% endif %}"
+                 id="country" name="country" type="text"
+                 value="{{ fields.country }}"
+                 data-testid="country-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.coordinates %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="coordinates">{{ t('pages.addOverseasSite.siteLocation.coordinatesLabel') }}</label>
+          <div class="govuk-hint">{{ t('pages.addOverseasSite.siteLocation.coordinatesHint') }}</div>
+          {% if errors.coordinates %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.coordinates }}</p>
+          {% endif %}
+          <input class="govuk-input{% if errors.coordinates %} govuk-input--error{% endif %}"
+                 id="coordinates" name="coordinates" type="text"
+                 value="{{ fields.coordinates }}"
+                 data-testid="coordinates-input">
+        </div>
+
+        <button type="submit" class="govuk-button" data-module="govuk-button"
+                data-testid="continue-button">
+          {{ continueButton }}
+        </button>
+      </form>
+
+      <a href="{{ cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ cancelLink }}</a>
+
+    </div>
+  </div>
+{% endblock %}

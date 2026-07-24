@@ -225,6 +225,7 @@ export const STUB_ORG_DOCS = [
           sites: [
             {
               siteId: 900001,
+              orsId: '001',
               siteName: 'Site 1',
               siteAddress: 'Address 123',
               country: 'Germany',
@@ -247,6 +248,7 @@ export const STUB_ORG_DOCS = [
             },
             {
               siteId: 900002,
+              orsId: '002',
               siteName: 'Site 2',
               siteAddress: 'Address 456',
               country: 'Chad',
@@ -297,6 +299,7 @@ export const STUB_ORG_DOCS = [
           sites: [
             {
               siteId: 900001,
+              orsId: '001',
               siteName: 'Rotterdam Recycling BV',
               siteAddress: 'Industrieweg 44, Rotterdam',
               country: 'Netherlands',
@@ -366,6 +369,7 @@ export const STUB_ORG_DOCS = [
           sites: [
             {
               siteId: 900003,
+              orsId: '001',
               siteName: 'Rotterdam Recycling BV',
               siteAddress: 'Industrieweg 44, Rotterdam',
               country: 'Netherlands',
@@ -379,6 +383,7 @@ export const STUB_ORG_DOCS = [
             },
             {
               siteId: 900004,
+              orsId: '002',
               siteName: 'Berlin Glass GmbH',
               siteAddress: 'Recyclingstraße 12, Berlin',
               country: 'Germany',
@@ -392,6 +397,7 @@ export const STUB_ORG_DOCS = [
             },
             {
               siteId: 900005,
+              orsId: '003',
               siteName: 'Paris Verre SAS',
               siteAddress: '8 Rue du Recyclage, Paris',
               country: 'France',
@@ -460,6 +466,7 @@ export const STUB_ORG_DOCS = [
           sites: [
             {
               siteId: 900003,
+              orsId: '001',
               siteName: 'Rotterdam Recycling BV',
               siteAddress: 'Industrieweg 44, Rotterdam',
               country: 'Netherlands',
@@ -473,6 +480,7 @@ export const STUB_ORG_DOCS = [
             },
             {
               siteId: 900004,
+              orsId: '002',
               siteName: 'Berlin Steel GmbH',
               siteAddress: 'Recyclingstraße 12, Berlin',
               country: 'Germany',
@@ -486,6 +494,7 @@ export const STUB_ORG_DOCS = [
             },
             {
               siteId: 900005,
+              orsId: '003',
               siteName: 'Paris Verre SAS',
               siteAddress: '8 Rue du Recyclage, Paris',
               country: 'France',
@@ -499,6 +508,7 @@ export const STUB_ORG_DOCS = [
             },
             {
               siteId: 900006,
+              orsId: '004',
               siteName: 'Siagon Steel SAS',
               siteAddress: '28 Rue du Recyclage, Saigon',
               country: 'Vietnam',
@@ -780,6 +790,27 @@ export const stubApiClient = {
       return Promise.resolve({
         accreditationReference: generateApplicationReference({})
       })
+    }
+
+    // POST /overseas-sites — add a new ORS site to the application
+    const newOrsMatch = endpoint.match(
+      /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites$/
+    )
+    if (newOrsMatch) {
+      const item = findAccreditation(newOrsMatch[1], newOrsMatch[2])
+      if (item) {
+        if (!item.overseasSites) {
+          item.overseasSites = { sectionStatus: 'InProgress', sites: [] }
+        }
+        if (!item.overseasSites.sites) item.overseasSites.sites = []
+        const newSite = {
+          siteId: Date.now(),
+          ...body
+        }
+        item.overseasSites.sites.push(newSite)
+        return Promise.resolve(newSite)
+      }
+      return Promise.resolve(body)
     }
 
     if (/\/overseas-sites\/\d+\/bes-evidence\/files$/.test(endpoint)) {

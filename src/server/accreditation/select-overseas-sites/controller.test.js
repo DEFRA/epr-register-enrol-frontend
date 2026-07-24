@@ -243,6 +243,33 @@ describe('#selectOverseasSitesController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] Select the overseas reprocessing sites')
     })
+
+    test('renders Add New ORS button linking to site-name wizard step', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="add-new-ors-button"')
+      expect(result).toContain(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+      )
+    })
+
+    test('does not show success banner when no flash is set', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="ors-success-banner"')
+    })
   })
 
   describe('POST /accreditation/select-overseas-sites/{applicationId}', () => {
