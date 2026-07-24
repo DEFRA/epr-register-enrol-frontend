@@ -22,12 +22,7 @@
         </div>
       {% endif %}
 
-      <a href="{{ addOrsUrl }}" role="button" draggable="false"
-         class="govuk-button govuk-button--secondary"
-         data-module="govuk-button"
-         data-testid="add-new-ors-button">
-        {{ t('pages.addOverseasSite.addNewButton') }}
-      </a>
+
 
       {% if error and sites.length === 0 %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
@@ -97,6 +92,14 @@
                   data-testid="continue-button">
             {{ t('pages.selectOverseasSites.continueButton') }}
           </button>
+
+          <a href="{{ addOrsUrl }}" role="button" draggable="false"
+            class="govuk-button govuk-button--secondary"
+            data-module="govuk-button"
+            data-testid="add-new-ors-button">
+            {{ t('pages.addOverseasSite.addNewButton') }}
+          </a>
+
         </form>
 
       {% endif %}

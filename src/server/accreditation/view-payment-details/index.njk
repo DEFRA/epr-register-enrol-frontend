@@ -124,31 +124,7 @@
           </div>
         </dl>
 
-        <details class="govuk-details" data-testid="card-payments-details">
-          <summary class="govuk-details__summary">
-            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.cardPayments') }}</span>
-          </summary>
-          <div class="govuk-details__text">
-            {{ t('pages.viewPaymentDetails.cardPaymentsBody') }}
-          </div>
-        </details>
-
-        <details class="govuk-details" data-testid="overseas-payments-details">
-          <summary class="govuk-details__summary">
-            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.overseasPayments') }}</span>
-          </summary>
-          <div class="govuk-details__text">
-            {{ t('pages.viewPaymentDetails.overseasPaymentsBodyPrefix') }} {{ regulatorName }} {{ t('pages.viewPaymentDetails.overseasPaymentsBodySuffix') }}
-          </div>
-        </details>
-
-        <p class="govuk-body">
-          <a href="javascript:window.print()" class="govuk-link" data-testid="download-pdf-link">
-            {{ t('pages.viewPaymentDetails.downloadPdf') }}
-          </a>
-        </p>
-
-      {% endif %}
+        {% endif %}
 
     </div>
   </div>
