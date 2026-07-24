@@ -4,21 +4,7 @@ import {
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 
-const OPERATION_CODES = [
-  'R1',
-  'R2',
-  'R3',
-  'R4',
-  'R5',
-  'R6',
-  'R7',
-  'R8',
-  'R9',
-  'R10',
-  'R11',
-  'R12',
-  'R13'
-]
+const OPERATION_CODES = ['R3', 'R4']
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -45,7 +31,7 @@ function buildOptions(t, selectedCode) {
     text: t(
       `pages.addOverseasSite.recyclingOperationDetails.operations.${code}`
     ),
-    selected: code === selectedCode
+    checked: code === selectedCode
   }))
 }
 
@@ -54,9 +40,6 @@ function buildViewData(t, applicationId, selectedCode, error) {
     pageTitle: t('pages.addOverseasSite.recyclingOperationDetails.title'),
     heading: t('pages.addOverseasSite.recyclingOperationDetails.heading'),
     label: t('pages.addOverseasSite.recyclingOperationDetails.label'),
-    selectDefault: t(
-      'pages.addOverseasSite.recyclingOperationDetails.selectDefault'
-    ),
     continueButton: t(
       'pages.addOverseasSite.recyclingOperationDetails.continueButton'
     ),
@@ -90,8 +73,9 @@ export const addOrsRecyclingOperationPostController = {
   handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const rawCode = request.payload?.recyclingOperationCode
     const recyclingOperationCode = (
-      request.payload?.recyclingOperationCode ?? ''
+      typeof rawCode === 'string' ? rawCode : ''
     ).trim()
 
     if (!recyclingOperationCode) {

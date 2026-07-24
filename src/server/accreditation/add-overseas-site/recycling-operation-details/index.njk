@@ -23,22 +23,30 @@
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
         <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="recycling-operation-code">{{ label }}</label>
-          {% if error %}
-            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
-          {% endif %}
-          <select class="govuk-select{% if error %} govuk-select--error{% endif %}"
-                  id="recycling-operation-code"
-                  name="recyclingOperationCode"
-                  data-testid="recycling-operation-select">
-            <option value="">{{ selectDefault }}</option>
-            {% for option in options %}
-              <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}
-                      data-testid="option-{{ option.value }}">
-                {{ option.text }}
-              </option>
-            {% endfor %}
-          </select>
+          <fieldset class="govuk-fieldset" {% if error %}aria-describedby="recycling-operation-code-error"{% endif %}>
+            <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
+              {{ label }}
+            </legend>
+            {% if error %}
+              <p class="govuk-error-message" id="recycling-operation-code-error"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
+            {% endif %}
+            <div class="govuk-radios govuk-radios--inline" data-module="govuk-radios" id="recycling-operation-code">
+              {% for option in options %}
+                <div class="govuk-radios__item">
+                  <input class="govuk-radios__input"
+                         id="recycling-operation-code-{{ option.value | lower }}"
+                         name="recyclingOperationCode"
+                         type="radio"
+                         value="{{ option.value }}"
+                         {% if option.checked %}checked{% endif %}
+                         data-testid="option-{{ option.value }}">
+                  <label class="govuk-label govuk-radios__label" for="recycling-operation-code-{{ option.value | lower }}">
+                    {{ option.text }}
+                  </label>
+                </div>
+              {% endfor %}
+            </div>
+          </fieldset>
         </div>
 
         <button type="submit" class="govuk-button" data-module="govuk-button"
