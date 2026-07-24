@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -20,7 +21,14 @@ function addOrsUrl(applicationId) {
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 
-function buildViewData(t, applicationId, sites, error, successBanner) {
+function buildViewData(
+  t,
+  applicationId,
+  sites,
+  error,
+  successBanner,
+  queryNote
+) {
   return {
     pageTitle: t('pages.selectOverseasSites.title'),
     heading: t('pages.selectOverseasSites.heading'),
@@ -28,7 +36,8 @@ function buildViewData(t, applicationId, sites, error, successBanner) {
     backLink: taskListUrl(applicationId),
     addOrsUrl: addOrsUrl(applicationId),
     successBanner,
-    error
+    error,
+    queryNote: queryNote ?? null
   }
 }
 
@@ -73,10 +82,21 @@ export const selectOverseasSitesGetController = {
 
     const sites = normaliseSites(application.overseasSites?.sites)
     const successBanner = !!(request.yar.flash(ORS_SUCCESS_FLASH) ?? []).length
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.overseasSites?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
+    const queryNote =
+      application.applicationStatus === 'Queried'
+        ? (application.query?.queryNote ?? null)
+        : null
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, sites, null, successBanner)
+      buildViewData(t, applicationId, sites, null, successBanner, queryNote)
     )
   }
 }
@@ -108,6 +128,13 @@ export const selectOverseasSitesPostController = {
           t('pages.selectOverseasSites.loadError')
         )
       ).code(500)
+    }
+
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.overseasSites?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const rawSites = application.overseasSites?.sites ?? []

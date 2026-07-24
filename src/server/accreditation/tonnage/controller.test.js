@@ -213,6 +213,45 @@ describe('#tonnageController', () => {
 
       expect(result).toContain('PERNs do you plan to issue?')
     })
+
+    test('redirects to query-task-list when application is Queried and PRNs section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the form and query note when PRNs section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please confirm the planned tonnage band.' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Please confirm the planned tonnage band.')
+    })
   })
 
   describe('GET task list hub — links to tonnage page', () => {
@@ -328,6 +367,32 @@ describe('#tonnageController', () => {
         `/accreditation/task-list/${APPLICATION_ID}`
       )
       expect(patchSpy).toHaveBeenCalledOnce()
+    })
+
+    test('redirects to query-task-list when application is Queried and PRNs section is not, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Completed' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          plannedTonnageBand: 'UpTo500',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
     })
 
     test('returns 500 with error when GET fetch fails on POST', async () => {

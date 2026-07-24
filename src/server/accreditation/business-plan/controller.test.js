@@ -357,6 +357,45 @@ describe('#businessPlanController', () => {
       expect(result).toContain('PERN income')
       expect(result).not.toContain('PRN income')
     })
+
+    test('redirects to query-task-list when application is Queried and business plan section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the form and query note when business plan section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please break down the price support spend.' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Please break down the price support spend.')
+    })
   })
 
   describe('POST /accreditation/business-plan/{applicationId} - save-and-continue', () => {
@@ -386,6 +425,29 @@ describe('#businessPlanController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('redirects to query-task-list when application is Queried and business plan section is not, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'Completed' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
     })
 
     test('returns 400 when percentages do not sum to 100', async () => {
