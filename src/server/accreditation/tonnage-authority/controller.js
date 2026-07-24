@@ -313,7 +313,9 @@ export const tonnageAuthorityPostController = {
         intro,
         selectSubHeading,
         errors: {
-          authorisers: { text: t('pages.prnsAuthority.validation.saveError') }
+          authorisers: {
+            text: t('pages.tonnageAuthority.validation.saveError')
+          }
         }
       }).code(500)
     }
