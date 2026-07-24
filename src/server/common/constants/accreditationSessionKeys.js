@@ -7,6 +7,5 @@ export const ACCREDITATION_SESSION_KEYS = {
   declaration: 'accreditation.declaration',
   applicationReference: 'accreditation.applicationReference',
   accreditationReference: 'accreditation.accreditationReference',
-  caseManagementReference: 'accreditation.caseManagementReference',
   addOverseasSite: 'accreditation.addOverseasSite'
 }

@@ -293,7 +293,7 @@
       "validation": {
         "noFile": "Select a file to upload",
         "invalidType": "The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
-        "fileTooLarge": "The selected file must be smaller than 20MB",
+        "fileTooLarge": "Cannot upload file. The file is larger than 20MB. Please use a smaller file, or split the file and upload supporting documents separately. You can upload up to 10 files.",
         "noCleanFile": "You must upload at least one file before continuing",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "uploadError": "Sorry, there was a problem uploading your file. Please try again.",

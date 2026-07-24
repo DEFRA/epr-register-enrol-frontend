@@ -155,10 +155,6 @@ export const submitDeclarationPostController = {
       ACCREDITATION_SESSION_KEYS.accreditationReference,
       response.accreditationReference
     )
-    request.yar.set(
-      ACCREDITATION_SESSION_KEYS.caseManagementReference,
-      response.caseManagementReference ?? null
-    )
     request.yar.clear(ACCREDITATION_SESSION_KEYS.declaration)
 
     return h.redirect(confirmationUrl(applicationId))
