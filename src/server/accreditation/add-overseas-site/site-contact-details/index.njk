@@ -1,0 +1,69 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if errors and (errors.siteContactName or errors.siteContactEmail) %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% if errors.siteContactName %}<li><a href="#contact-name">{{ errors.siteContactName }}</a></li>{% endif %}
+              {% if errors.siteContactEmail %}<li><a href="#contact-email">{{ errors.siteContactEmail }}</a></li>{% endif %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <form method="post">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group{% if errors.siteContactName %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="contact-name">{{ t('pages.addOverseasSite.siteContactDetails.nameLabel') }}</label>
+          {% if errors.siteContactName %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.siteContactName }}</p>
+          {% endif %}
+          <input class="govuk-input{% if errors.siteContactName %} govuk-input--error{% endif %}"
+                 id="contact-name" name="siteContactName" type="text"
+                 value="{{ fields.siteContactName }}"
+                 autocomplete="name"
+                 data-testid="contact-name-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.siteContactEmail %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="contact-email">{{ t('pages.addOverseasSite.siteContactDetails.emailLabel') }}</label>
+          {% if errors.siteContactEmail %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.siteContactEmail }}</p>
+          {% endif %}
+          <input class="govuk-input{% if errors.siteContactEmail %} govuk-input--error{% endif %}"
+                 id="contact-email" name="siteContactEmail" type="email"
+                 value="{{ fields.siteContactEmail }}"
+                 autocomplete="email"
+                 data-testid="contact-email-input">
+        </div>
+
+        <div class="govuk-form-group">
+          <label class="govuk-label" for="contact-phone">{{ t('pages.addOverseasSite.siteContactDetails.phoneLabel') }}</label>
+          <input class="govuk-input govuk-input--width-20"
+                 id="contact-phone" name="siteContactPhone" type="tel"
+                 value="{{ fields.siteContactPhone }}"
+                 autocomplete="tel"
+                 data-testid="contact-phone-input">
+        </div>
+
+        <button type="submit" class="govuk-button" data-module="govuk-button"
+                data-testid="continue-button">
+          {{ continueButton }}
+        </button>
+      </form>
+
+      <a href="{{ cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ cancelLink }}</a>
+
+    </div>
+  </div>
+{% endblock %}

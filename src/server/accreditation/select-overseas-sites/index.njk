@@ -6,6 +6,29 @@
 
       <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
 
+      {% if successBanner %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert"
+             aria-labelledby="govuk-notification-banner-title"
+             data-module="govuk-notification-banner"
+             data-testid="ors-success-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="govuk-notification-banner-title">
+              {{ t('pages.addOverseasSite.successBanner.title') }}
+            </h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-body">{{ t('pages.addOverseasSite.successBanner.heading') }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <a href="{{ addOrsUrl }}" role="button" draggable="false"
+         class="govuk-button govuk-button--secondary"
+         data-module="govuk-button"
+         data-testid="add-new-ors-button">
+        {{ t('pages.addOverseasSite.addNewButton') }}
+      </a>
+
       {% if error and sites.length === 0 %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
           <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>

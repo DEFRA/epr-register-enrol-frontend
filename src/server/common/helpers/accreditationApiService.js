@@ -251,6 +251,15 @@ export const accreditationApiService = {
     })
   },
 
+  createOverseasSite(organisationId, applicationId, body) {
+    return call(() =>
+      apiClient.post(
+        `${appBase(organisationId, applicationId)}/overseas-sites`,
+        body
+      )
+    )
+  },
+
   submitApplication(organisationId, applicationId, body) {
     return call(() =>
       apiClient.post(`${appBase(organisationId, applicationId)}/submit`, body)

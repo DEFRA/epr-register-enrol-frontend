@@ -18,7 +18,7 @@ function renderPage(h, viewData) {
 }
 
 export function besEvidenceRequired(site) {
-  return !site.isEu && !site.isOecd
+  return !site.isEu && !site.isOecd && !site.conditionsOfExport
 }
 
 export function evidenceStatus(site, t) {

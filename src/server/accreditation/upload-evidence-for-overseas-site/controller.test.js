@@ -78,6 +78,60 @@ describe('#besEvidenceRequired', () => {
   test('returns false for EU+OECD site', () => {
     expect(besEvidenceRequired({ isEu: true, isOecd: true })).toBe(false)
   })
+
+  test('returns false for non-EU non-OECD site with conditionsOfExport true', () => {
+    expect(
+      besEvidenceRequired({
+        isEu: false,
+        isOecd: false,
+        conditionsOfExport: true
+      })
+    ).toBe(false)
+  })
+
+  test('returns true for non-EU non-OECD site with conditionsOfExport false', () => {
+    expect(
+      besEvidenceRequired({
+        isEu: false,
+        isOecd: false,
+        conditionsOfExport: false
+      })
+    ).toBe(true)
+  })
+
+  test('returns false for EU site regardless of conditionsOfExport', () => {
+    expect(
+      besEvidenceRequired({
+        isEu: true,
+        isOecd: false,
+        conditionsOfExport: true
+      })
+    ).toBe(false)
+    expect(
+      besEvidenceRequired({
+        isEu: true,
+        isOecd: false,
+        conditionsOfExport: false
+      })
+    ).toBe(false)
+  })
+
+  test('returns false for OECD site regardless of conditionsOfExport', () => {
+    expect(
+      besEvidenceRequired({
+        isEu: false,
+        isOecd: true,
+        conditionsOfExport: true
+      })
+    ).toBe(false)
+    expect(
+      besEvidenceRequired({
+        isEu: false,
+        isOecd: true,
+        conditionsOfExport: false
+      })
+    ).toBe(false)
+  })
 })
 
 describe('#evidenceStatus', () => {

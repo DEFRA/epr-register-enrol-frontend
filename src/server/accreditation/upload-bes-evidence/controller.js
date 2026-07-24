@@ -334,7 +334,9 @@ export const besEvidenceCdpStatusController = {
           scanStatus,
           fileId: fileInput?.fileId,
           besEvidenceValidFromDate: session?.besEvidenceValidFromDate,
-          besEvidenceExpiryDate: session?.besEvidenceExpiryDate
+          besEvidenceExpiryDate: session?.besEvidenceExpiryDate,
+          s3Key: fileInput?.s3Key,
+          s3Bucket: fileInput?.s3Bucket
         }
       )
     } catch (err) {

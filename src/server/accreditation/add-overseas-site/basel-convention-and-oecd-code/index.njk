@@ -1,0 +1,71 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if errors and (errors.baselConventionCode1 or errors.baselConventionCode2 or errors.baselConventionCode3) %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              {% if errors.baselConventionCode1 %}<li><a href="#basel-code-1">{{ errors.baselConventionCode1 }}</a></li>{% endif %}
+              {% if errors.baselConventionCode2 %}<li><a href="#basel-code-2">{{ errors.baselConventionCode2 }}</a></li>{% endif %}
+              {% if errors.baselConventionCode3 %}<li><a href="#basel-code-3">{{ errors.baselConventionCode3 }}</a></li>{% endif %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+      <div class="govuk-hint">{{ hint }}</div>
+
+      <form method="post">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group{% if errors.baselConventionCode1 %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="basel-code-1">{{ code1Label }}</label>
+          {% if errors.baselConventionCode1 %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.baselConventionCode1 }}</p>
+          {% endif %}
+          <input class="govuk-input govuk-input--width-10{% if errors.baselConventionCode1 %} govuk-input--error{% endif %}"
+                 id="basel-code-1" name="baselConventionCode1" type="text"
+                 value="{{ fields.baselConventionCode1 }}"
+                 data-testid="basel-code-1-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.baselConventionCode2 %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="basel-code-2">{{ code2Label }}</label>
+          {% if errors.baselConventionCode2 %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.baselConventionCode2 }}</p>
+          {% endif %}
+          <input class="govuk-input govuk-input--width-10{% if errors.baselConventionCode2 %} govuk-input--error{% endif %}"
+                 id="basel-code-2" name="baselConventionCode2" type="text"
+                 value="{{ fields.baselConventionCode2 }}"
+                 data-testid="basel-code-2-input">
+        </div>
+
+        <div class="govuk-form-group{% if errors.baselConventionCode3 %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="basel-code-3">{{ code3Label }}</label>
+          {% if errors.baselConventionCode3 %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.baselConventionCode3 }}</p>
+          {% endif %}
+          <input class="govuk-input govuk-input--width-10{% if errors.baselConventionCode3 %} govuk-input--error{% endif %}"
+                 id="basel-code-3" name="baselConventionCode3" type="text"
+                 value="{{ fields.baselConventionCode3 }}"
+                 data-testid="basel-code-3-input">
+        </div>
+
+        <button type="submit" class="govuk-button" data-module="govuk-button"
+                data-testid="continue-button">
+          {{ continueButton }}
+        </button>
+      </form>
+
+      <a href="{{ cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ cancelLink }}</a>
+
+    </div>
+  </div>
+{% endblock %}

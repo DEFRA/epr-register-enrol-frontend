@@ -1,6 +1,6 @@
 {
   "header": {
-    "serviceName": "Cofrestriad & Ymrestru EPR",
+    "serviceName": "Cofrestriad \u0026 Ymrestru EPR",
     "language": "Iaith"
   },
   "pages": {
@@ -186,8 +186,8 @@
     "businessPlan": {
       "title": "[Welsh] Business plan",
       "heading": "[Welsh] Business plan",
-      "intro": "[Welsh] Enter the percentage of PRN income you'll spend on each item.",
-      "introExporter": "[Welsh] Enter the percentage of PERN income you'll spend on each item.",
+      "intro": "[Welsh] Enter the percentage of PRN income you\u0027ll spend on each item.",
+      "introExporter": "[Welsh] Enter the percentage of PERN income you\u0027ll spend on each item.",
       "regulatorPlan": "[Welsh] The regulator will expect you to follow this plan.",
       "enterWholePercent": "[Welsh] Enter a whole percentage",
       "saveAndContinue": "Cadw a pharhau",
@@ -209,9 +209,9 @@
       }
     },
     "businessPlanDetail": {
-      "title": "[Welsh] More detail about how you'll spend PRN income",
-      "heading": "[Welsh] More detail about how you'll spend PRN income",
-      "intro": "[Welsh] It's optional, but it can help the regulator to better understand your plans.",
+      "title": "[Welsh] More detail about how you\u0027ll spend PRN income",
+      "heading": "[Welsh] More detail about how you\u0027ll spend PRN income",
+      "intro": "[Welsh] It\u0027s optional, but it can help the regulator to better understand your plans.",
       "optional": "[Welsh] (optional)",
       "characterCountHint": "[Welsh] You can enter up to 500 characters",
       "saveAndContinue": "Cadw a pharhau",
@@ -235,7 +235,7 @@
     "businessPlanCya": {
       "title": "[Welsh] Check your answers before continuing",
       "heading": "[Welsh] Check your answers before continuing",
-      "subHeading": "[Welsh] Business plan: how you'll allocate PRN income",
+      "subHeading": "[Welsh] Business plan: how you\u0027ll allocate PRN income",
       "notProvided": "[Welsh] Not provided",
       "change": "[Welsh] Change",
       "changePercentContext": "[Welsh] percentage for {field}",
@@ -323,7 +323,7 @@
       "panelHeading": "[Welsh]  Now pay the application charge",
       "panelBodyPrefix": "[Welsh] Application reference for",
       "caseReferenceLabel": "[Welsh] Your case reference is",
-      "paymentText": "[Welsh] The regulator will only review your application after you've paid.",
+      "paymentText": "[Welsh] The regulator will only review your application after you\u0027ve paid.",
       "viewPaymentDetails": "[Welsh] View payment details",
       "returnHome": "[Welsh] Return to home page"
     },
@@ -336,11 +336,11 @@
       "paymentFor": "[Welsh] Payment for",
       "headingSuffix": "[Welsh] accreditation",
       "paymentInstructionPrefix": "[Welsh] The regulator will only review the application after payment has been made.",
-      "paymentInstructionSuffix": "[Welsh] You'll receive a notification once payment has been received and the application is in review.",
+      "paymentInstructionSuffix": "[Welsh] You\u0027ll receive a notification once payment has been received and the application is in review.",
       "amountDue": "[Welsh] Amount due",
       "description": "[Welsh] Description",
       "payByBankTransfer": "[Welsh] Pay by bank transfer",
-      "bankTransferInstruction": "[Welsh] You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
+      "bankTransferInstruction": "[Welsh] You need to visit your bank\u0027s website, app or branch and use the regulator\u0027s banking details to pay by bank transfer.",
       "howLongDoPaymentsTake": "[Welsh] How long do payments take?",
       "howLongDoPaymentsTakeBody": "[Welsh] Bank transfers can take 3 to 5 working days to be received.",
       "bankDetailsHeading": "[Welsh] Bank details for the regulator",
@@ -578,6 +578,153 @@
       "content": "[Welsh] [Content to be confirmed with subject matter experts]",
       "confirmButton": "[Welsh] Confirm",
       "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again."
+    },
+    "addOverseasSite": {
+      "siteName": {
+        "title": "[Welsh] Site name — Add overseas reprocessing site",
+        "heading": "[Welsh] What is the name of the overseas reprocessing site?",
+        "label": "[Welsh] Site name",
+        "hint": "[Welsh] Enter the full name of the overseas reprocessing site.",
+        "validation": {
+          "required": "[Welsh] Enter the site name"
+        },
+        "continueButton": "[Welsh] Continue",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "siteLocation": {
+        "title": "[Welsh] Site location — Add overseas reprocessing site",
+        "heading": "[Welsh] Where is the overseas reprocessing site located?",
+        "addressLine1Label": "[Welsh] Address line 1",
+        "addressLine2Label": "[Welsh] Address line 2 (optional)",
+        "townOrCityLabel": "[Welsh] Town or city",
+        "stateOrRegionLabel": "[Welsh] State or region (optional)",
+        "postcodeLabel": "[Welsh] Postcode (optional)",
+        "countryLabel": "[Welsh] Country",
+        "coordinatesLabel": "[Welsh] Coordinates (optional)",
+        "coordinatesHint": "[Welsh] Enter the latitude and longitude separated by a comma. For example, 51.503, -0.127",
+        "validation": {
+          "addressLine1Required": "[Welsh] Enter address line 1",
+          "townOrCityRequired": "[Welsh] Enter the town or city",
+          "countryRequired": "[Welsh] Select a country",
+          "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.503, -0.127",
+          "coordinatesLatRange": "[Welsh] Latitude must be between -90 and 90",
+          "coordinatesLngRange": "[Welsh] Longitude must be between -180 and 180"
+        },
+        "continueButton": "[Welsh] Continue",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "siteContactDetails": {
+        "title": "[Welsh] Site contact details — Add overseas reprocessing site",
+        "heading": "[Welsh] Who is the contact at the overseas reprocessing site?",
+        "nameLabel": "[Welsh] Contact name",
+        "emailLabel": "[Welsh] Email address",
+        "phoneLabel": "[Welsh] Phone number (optional)",
+        "validation": {
+          "nameRequired": "[Welsh] Enter the contact name",
+          "emailRequired": "[Welsh] Enter the email address",
+          "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com"
+        },
+        "continueButton": "[Welsh] Continue",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "recyclingOperationDetails": {
+        "title": "[Welsh] Recycling operation — Add overseas reprocessing site",
+        "heading": "[Welsh] What recycling operation is carried out at the site?",
+        "label": "[Welsh] Recycling operation",
+        "selectDefault": "[Welsh] Select a recycling operation",
+        "operations": {
+          "R1": "[Welsh] R1 — Use principally as a fuel or other means to generate energy",
+          "R2": "[Welsh] R2 — Solvent reclamation or regeneration",
+          "R3": "[Welsh] R3 — Recycling or reclamation of organic substances not used as solvents (including composting)",
+          "R4": "[Welsh] R4 — Recycling or reclamation of metals and metal compounds",
+          "R5": "[Welsh] R5 — Recycling or reclamation of other inorganic materials",
+          "R6": "[Welsh] R6 — Regeneration of acids or bases",
+          "R7": "[Welsh] R7 — Recovery of components used for pollution abatement",
+          "R8": "[Welsh] R8 — Recovery of components from catalysts",
+          "R9": "[Welsh] R9 — Oil re-refining or other reuses of oil",
+          "R10": "[Welsh] R10 — Land treatment resulting in benefit to agriculture or ecological improvement",
+          "R11": "[Welsh] R11 — Use of wastes obtained from any of the operations R1 to R10",
+          "R12": "[Welsh] R12 — Exchange of wastes for submission to any of the operations R1 to R11",
+          "R13": "[Welsh] R13 — Storage of wastes pending any of the operations R1 to R12"
+        },
+        "validation": {
+          "required": "[Welsh] Select a recycling operation"
+        },
+        "continueButton": "[Welsh] Continue",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "baselAndOecdCodes": {
+        "title": "[Welsh] Basel Convention and OECD code — Add overseas reprocessing site",
+        "heading": "[Welsh] What are the Basel Convention and OECD codes for the waste?",
+        "code1Label": "[Welsh] Code 1",
+        "code2Label": "[Welsh] Code 2 (optional)",
+        "code3Label": "[Welsh] Code 3 (optional)",
+        "hint": "[Welsh] Basel codes start with one letter followed by 4 digits, for example A1181. OECD codes start with two letters followed by 3 digits, for example GC010.",
+        "validation": {
+          "code1Required": "[Welsh] Enter at least one Basel Convention or OECD code",
+          "codeInvalid": "[Welsh] Enter a valid Basel Convention or OECD code"
+        },
+        "continueButton": "[Welsh] Continue",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "repatriatedLoads": {
+        "title": "[Welsh] Arrangements for rejected or returned loads — Add overseas reprocessing site",
+        "heading": "[Welsh] What are the arrangements for loads rejected or returned to the UK?",
+        "label": "[Welsh] Describe the arrangements",
+        "hint": "[Welsh] Do not include personal or financial information.",
+        "maxWords": "[Welsh] You can enter up to 500 words",
+        "validation": {
+          "required": "[Welsh] Describe the arrangements for loads that are rejected or returned to the UK",
+          "tooManyWords": "[Welsh] Description must be 500 words or fewer"
+        },
+        "continueButton": "[Welsh] Continue",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "conditionsOfExport": {
+        "title": "[Welsh] Conditions of export — Add overseas reprocessing site",
+        "heading": "[Welsh] Does the site meet the conditions of export?",
+        "intro": "[Welsh] The overseas reprocessing site must meet all of the following conditions:",
+        "condition1": "[Welsh] The site is authorised by the competent authority in the country of destination.",
+        "condition2": "[Welsh] The site operates to standards that are broadly equivalent to UK environmental standards.",
+        "condition3": "[Welsh] The site has appropriate facilities and infrastructure for the type of waste being exported.",
+        "condition4": "[Welsh] The site provides evidence of compliance with the Basel Convention and relevant OECD decisions.",
+        "condition5": "[Welsh] The site has arrangements in place for loads that are rejected or cannot be processed.",
+        "condition6": "[Welsh] The site submits annual reports to the relevant competent authority.",
+        "questionLabel": "[Welsh] Does the site meet all of the conditions listed above?",
+        "yesLabel": "[Welsh] Yes",
+        "noLabel": "[Welsh] No",
+        "validation": {
+          "required": "[Welsh] Select yes if the site meets the conditions of export"
+        },
+        "continueButton": "[Welsh] Continue",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "cya": {
+        "title": "[Welsh] Check your answers — Add overseas reprocessing site",
+        "heading": "[Welsh] Check your answers",
+        "rows": {
+          "siteName": "[Welsh] Site name",
+          "location": "[Welsh] Location",
+          "contactName": "[Welsh] Contact name",
+          "contactEmail": "[Welsh] Contact email",
+          "contactPhone": "[Welsh] Contact phone number",
+          "recyclingOperation": "[Welsh] Recycling operation",
+          "baselCode1": "[Welsh] Basel/OECD code 1",
+          "baselCode2": "[Welsh] Basel/OECD code 2",
+          "baselCode3": "[Welsh] Basel/OECD code 3",
+          "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads",
+          "conditionsOfExport": "[Welsh] Conditions of export"
+        },
+        "changeLink": "[Welsh] Change",
+        "submitButton": "[Welsh] Add this site",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "addNewButton": "[Welsh] Add new overseas reprocessing site",
+      "successBanner": {
+        "title": "[Welsh] Success",
+        "heading": "[Welsh] Overseas reprocessing site added to your application",
+        "body": "[Welsh] You can continue to add more sites or proceed with your application."
+      }
     }
   },
   "navigation": {
@@ -596,7 +743,7 @@
     "error": "Gwall",
     "warning": "Rhybudd",
     "errors": {
-      "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda'r gwasanaeth",
+      "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",
       "tryAgain": "Trio eto"
     }
   },

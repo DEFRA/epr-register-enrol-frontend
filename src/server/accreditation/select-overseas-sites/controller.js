@@ -14,12 +14,20 @@ function renderPage(h, viewData) {
   return h.view('accreditation/select-overseas-sites/index', viewData)
 }
 
-function buildViewData(t, applicationId, sites, error) {
+function addOrsUrl(applicationId) {
+  return `/accreditation/add-overseas-site/${applicationId}/site-name`
+}
+
+const ORS_SUCCESS_FLASH = 'orsSuccess'
+
+function buildViewData(t, applicationId, sites, error, successBanner) {
   return {
     pageTitle: t('pages.selectOverseasSites.title'),
     heading: t('pages.selectOverseasSites.heading'),
     sites,
     backLink: taskListUrl(applicationId),
+    addOrsUrl: addOrsUrl(applicationId),
+    successBanner,
     error
   }
 }
@@ -64,8 +72,12 @@ export const selectOverseasSitesGetController = {
     }
 
     const sites = normaliseSites(application.overseasSites?.sites)
+    const successBanner = !!(request.yar.flash(ORS_SUCCESS_FLASH) ?? []).length
 
-    return renderPage(h, buildViewData(t, applicationId, sites, null))
+    return renderPage(
+      h,
+      buildViewData(t, applicationId, sites, null, successBanner)
+    )
   }
 }
 
