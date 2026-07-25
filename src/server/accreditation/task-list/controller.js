@@ -2,13 +2,15 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 //import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
   InProgress: { tagText: 'IN PROGRESS', tagClass: 'govuk-tag--blue' },
   Completed: { tagText: 'COMPLETED', tagClass: 'govuk-tag--green' },
   Submitted: { tagText: 'SUBMITTED', tagClass: 'govuk-tag--green' },
-  Queried: { tagText: 'QUERIED', tagClass: 'govuk-tag--orange' }
+  Queried: { tagText: 'QUERIED', tagClass: 'govuk-tag--orange' },
+  Updated: { tagText: 'UPDATED', tagClass: 'govuk-tag--turquoise' }
 }
 
 const GLASS_RECYCLING_PROCESS_KEYS = {
@@ -99,7 +101,9 @@ export function buildTaskListViewModel(application, t) {
   ]
 
   let allComplete = tonnageComplete && bpComplete && spComplete
-  const isSubmitted = application.applicationStatus === 'Submitted'
+  const isSubmitted = ['Submitted', 'Updated'].includes(
+    application.applicationStatus
+  )
 
   if (isExporter) {
     const osComplete =
@@ -188,6 +192,10 @@ export const taskListGetController = {
           backLink: '/operator-accreditation'
         })
         .code(500)
+    }
+
+    if (application.applicationStatus === 'Queried') {
+      return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const viewModel = buildTaskListViewModel(application, t)

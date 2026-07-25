@@ -5,6 +5,7 @@ import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -101,6 +102,13 @@ export const samplingPlanUploadGetController = {
       }).code(500)
     }
 
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.samplingPlan?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const files = buildFilesViewModel(application.samplingPlan?.files)
     const materialDisplay = t(
       `pages.materialSelection.materials.${application.materialType}`
@@ -111,7 +119,11 @@ export const samplingPlanUploadGetController = {
       heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
       backLink: taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
-      files
+      files,
+      queryNote:
+        application.applicationStatus === 'Queried'
+          ? (application.query?.queryNote ?? null)
+          : null
     })
   }
 }
@@ -141,6 +153,13 @@ export const samplingPlanUploadPostController = {
         files: [],
         error: t('pages.samplingPlanUpload.validation.fetchError')
       }).code(500)
+    }
+
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.samplingPlan?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
