@@ -20,6 +20,7 @@ function addOrsUrl(applicationId) {
 }
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
+const INTERIM_SITE_SUCCESS_FLASH = 'interimSiteSuccess'
 
 function buildViewData(
   t,
@@ -27,7 +28,8 @@ function buildViewData(
   sites,
   error,
   successBanner,
-  queryNote
+  queryNote,
+  interimSiteSuccessBanner
 ) {
   return {
     pageTitle: t('pages.selectOverseasSites.title'),
@@ -37,7 +39,8 @@ function buildViewData(
     addOrsUrl: addOrsUrl(applicationId),
     successBanner,
     error,
-    queryNote: queryNote ?? null
+    queryNote: queryNote ?? null,
+    interimSiteSuccessBanner: interimSiteSuccessBanner ?? false
   }
 }
 
@@ -82,6 +85,9 @@ export const selectOverseasSitesGetController = {
 
     const sites = normaliseSites(application.overseasSites?.sites)
     const successBanner = !!(request.yar.flash(ORS_SUCCESS_FLASH) ?? []).length
+    const interimSiteSuccessBanner = !!(
+      request.yar.flash(INTERIM_SITE_SUCCESS_FLASH) ?? []
+    ).length
     if (
       application.applicationStatus === 'Queried' &&
       application.overseasSites?.sectionStatus !== 'Queried'
@@ -96,7 +102,15 @@ export const selectOverseasSitesGetController = {
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, sites, null, successBanner, queryNote)
+      buildViewData(
+        t,
+        applicationId,
+        sites,
+        null,
+        successBanner,
+        queryNote,
+        interimSiteSuccessBanner
+      )
     )
   }
 }

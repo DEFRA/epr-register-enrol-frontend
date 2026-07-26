@@ -186,5 +186,198 @@ describe('#addOrsCyaController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
+
+    test('explicit action=confirm redirects to select-overseas-sites (same as default)', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: 'action=confirm'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+  })
+
+  describe(`POST ${BASE_URL} — action=addInterimSite branch`, () => {
+    const ADD_INTERIM_SITE_COUNTRY_URL = `/accreditation/add-interim-site/${APPLICATION_ID}/country`
+
+    function cookieHeaderFrom(response, fallback) {
+      const raw = response.headers['set-cookie']
+      if (!raw) return fallback
+      return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+    }
+
+    test('redirects to add-interim-site country step instead of select-overseas-sites', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 555123 }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: 'action=addInterimSite'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(ADD_INTERIM_SITE_COUNTRY_URL)
+    })
+
+    test('still returns 500 with error summary when createOverseasSite fails, regardless of action', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockRejectedValue(
+        new Error('API error')
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: 'action=addInterimSite'
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('stashes the created site siteId as linkedSiteId, consumed by the interim-site CYA on submit', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 777888 }
+      )
+
+      const orsCyaPostResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: 'action=addInterimSite'
+      })
+      expect(orsCyaPostResponse.statusCode).toBe(statusCodes.redirect)
+      expect(orsCyaPostResponse.headers.location).toBe(
+        ADD_INTERIM_SITE_COUNTRY_URL
+      )
+
+      let sessionCookie = cookieHeaderFrom(orsCyaPostResponse, cookie)
+
+      const countryPostResponse = await server.inject({
+        method: 'POST',
+        url: ADD_INTERIM_SITE_COUNTRY_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'country=France'
+      })
+      expect(countryPostResponse.statusCode).toBe(statusCodes.redirect)
+      sessionCookie = cookieHeaderFrom(countryPostResponse, sessionCookie)
+
+      const siteNamePostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'siteName=Interim+Depot'
+      })
+      expect(siteNamePostResponse.statusCode).toBe(statusCodes.redirect)
+      sessionCookie = cookieHeaderFrom(siteNamePostResponse, sessionCookie)
+
+      const siteLocationPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-location`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'addressLine1=Unit+1&townOrCity=Rotterdam'
+      })
+      expect(siteLocationPostResponse.statusCode).toBe(statusCodes.redirect)
+      sessionCookie = cookieHeaderFrom(siteLocationPostResponse, sessionCookie)
+
+      const contactDetailsPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-contact-details`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload:
+          'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=%2B441234567890'
+      })
+      expect(contactDetailsPostResponse.statusCode).toBe(statusCodes.redirect)
+      sessionCookie = cookieHeaderFrom(
+        contactDetailsPostResponse,
+        sessionCookie
+      )
+
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue({
+        siteId: 1,
+        siteNumber: 'SN-001',
+        isNewSite: true
+      })
+
+      const interimCyaPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(interimCyaPostResponse.statusCode).toBe(statusCodes.redirect)
+      expect(interimCyaPostResponse.headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.createInterimSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        777888,
+        expect.objectContaining({
+          country: 'France',
+          siteName: 'Interim Depot',
+          contactName: 'Jane Smith',
+          contactEmail: 'jane@example.com',
+          contactPhone: '+441234567890'
+        })
+      )
+    })
   })
 })

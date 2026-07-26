@@ -11,6 +11,7 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 
 const APPLICATION_ID = 'app-sos-001'
 
@@ -269,6 +270,109 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).not.toContain('data-testid="ors-success-banner"')
+    })
+
+    test('does not show interim-site success banner when no flash is set', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="interim-site-success-banner"')
+    })
+
+    test('shows interim-site success banner after completing the add-interim-site wizard', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue({
+        siteId: 1,
+        siteNumber: 'SN-001',
+        isNewSite: true
+      })
+
+      function cookieHeaderFrom(response, fallback) {
+        const raw = response.headers['set-cookie']
+        if (!raw) return fallback
+        return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+      }
+
+      const countryResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/country`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'country=France'
+      })
+      expect(countryResponse.statusCode).toBe(statusCodes.redirect)
+      let sessionCookie = cookieHeaderFrom(countryResponse, '')
+
+      const siteNameResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'siteName=Interim+Depot'
+      })
+      expect(siteNameResponse.statusCode).toBe(statusCodes.redirect)
+      sessionCookie = cookieHeaderFrom(siteNameResponse, sessionCookie)
+
+      const siteLocationResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-location`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'addressLine1=Unit+1&townOrCity=Rotterdam'
+      })
+      expect(siteLocationResponse.statusCode).toBe(statusCodes.redirect)
+      sessionCookie = cookieHeaderFrom(siteLocationResponse, sessionCookie)
+
+      const contactDetailsResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-contact-details`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload:
+          'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=%2B441234567890'
+      })
+      expect(contactDetailsResponse.statusCode).toBe(statusCodes.redirect)
+      sessionCookie = cookieHeaderFrom(contactDetailsResponse, sessionCookie)
+
+      const cyaPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+      expect(cyaPostResponse.statusCode).toBe(statusCodes.redirect)
+      expect(cyaPostResponse.headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+      sessionCookie = cookieHeaderFrom(cyaPostResponse, sessionCookie)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toContain('data-testid="interim-site-success-banner"')
     })
 
     test('redirects to query-task-list when application is Queried and overseas sites section is not', async () => {
