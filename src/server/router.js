@@ -41,6 +41,11 @@ import { addOverseasSiteBaselCode } from './accreditation/add-overseas-site/base
 import { addOverseasSiteRepatriatedLoads } from './accreditation/add-overseas-site/repatriated-loads/index.js'
 import { addOverseasSiteConditionsOfExport } from './accreditation/add-overseas-site/conditions-of-export/index.js'
 import { addOverseasSiteCya } from './accreditation/add-overseas-site/check-your-answers/index.js'
+import { addInterimSiteCountry } from './accreditation/add-interim-site/country/index.js'
+import { addInterimSiteSiteName } from './accreditation/add-interim-site/site-name/index.js'
+import { addInterimSiteSiteLocation } from './accreditation/add-interim-site/site-location/index.js'
+import { addInterimSiteSiteContactDetails } from './accreditation/add-interim-site/site-contact-details/index.js'
+import { addInterimSiteCya } from './accreditation/add-interim-site/check-your-answers/index.js'
 
 export const router = {
   plugin: {
@@ -119,7 +124,12 @@ export const router = {
         addOverseasSiteBaselCode,
         addOverseasSiteRepatriatedLoads,
         addOverseasSiteConditionsOfExport,
-        addOverseasSiteCya
+        addOverseasSiteCya,
+        addInterimSiteCountry,
+        addInterimSiteSiteName,
+        addInterimSiteSiteLocation,
+        addInterimSiteSiteContactDetails,
+        addInterimSiteCya
       ])
 
       // Static assets

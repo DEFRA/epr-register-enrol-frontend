@@ -1,0 +1,76 @@
+import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import {
+  getAddInterimSiteSession,
+  setAddInterimSiteSession
+} from '../../../common/helpers/addInterimSiteSession.js'
+
+function selectOverseasSitesUrl(applicationId) {
+  return `/accreditation/select-overseas-sites/${applicationId}`
+}
+
+function siteNameUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/site-name`
+}
+
+function renderPage(h, viewData) {
+  return h.view('accreditation/add-interim-site/country/index', viewData)
+}
+
+function buildViewData(t, applicationId, country, error) {
+  return {
+    pageTitle: t('pages.addInterimSite.country.title'),
+    heading: t('pages.addInterimSite.country.heading'),
+    label: t('pages.addInterimSite.country.label'),
+    hint: t('pages.addInterimSite.country.hint'),
+    continueButton: t('pages.addInterimSite.country.continueButton'),
+    cancelLink: t('pages.addInterimSite.country.cancelLink'),
+    country,
+    backLink: selectOverseasSitesUrl(applicationId),
+    cancelUrl: selectOverseasSitesUrl(applicationId),
+    error
+  }
+}
+
+export const addInterimSiteCountryGetController = {
+  handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
+    const session = getAddInterimSiteSession(request)
+    return renderPage(
+      h,
+      buildViewData(t, applicationId, session.country ?? '', null)
+    )
+  }
+}
+
+export const addInterimSiteCountryPostController = {
+  handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
+    const country = (request.payload?.country ?? '').trim()
+
+    if (!country) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          '',
+          t('pages.addInterimSite.country.validation.required')
+        )
+      ).code(400)
+    }
+
+    setAddInterimSiteSession(request, { country })
+    return h.redirect(siteNameUrl(applicationId))
+  }
+}
+
+export const addInterimSiteCancelController = {
+  handler(request, h) {
+    const { applicationId } = request.params
+    request.yar.clear(ACCREDITATION_SESSION_KEYS.addInterimSite)
+    return h.redirect(selectOverseasSitesUrl(applicationId))
+  }
+}
