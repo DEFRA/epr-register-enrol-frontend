@@ -20,7 +20,7 @@
 
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
-      <form method="post">
+      <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
         <div class="govuk-form-group{% if errors.siteContactName %} govuk-form-group--error{% endif %}">
