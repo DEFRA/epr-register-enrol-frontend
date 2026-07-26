@@ -740,6 +740,7 @@
         },
         "changeLink": "Change",
         "submitButton": "Add this site",
+        "addInterimSiteButton": "Save and add interim site",
         "cancelLink": "Cancel"
       },
       "addNewButton": "Add new overseas reprocessing site",
@@ -747,6 +748,81 @@
         "title": "Success",
         "heading": "Overseas reprocessing site added to your application",
         "body": "You can continue to add more sites or proceed with your application."
+      }
+    },
+    "addInterimSite": {
+      "country": {
+        "title": "Country — Add interim site",
+        "heading": "What country is the interim site in?",
+        "label": "Country",
+        "hint": "Enter the country where the interim site is located.",
+        "validation": {
+          "required": "Enter the country"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "siteName": {
+        "title": "Site name — Add interim site",
+        "heading": "What is the name of the interim site?",
+        "label": "Interim site name",
+        "hint": "Enter the full name of the interim site.",
+        "validation": {
+          "required": "Enter the site name"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "siteLocation": {
+        "title": "Site location — Add interim site",
+        "heading": "Where is the interim site located?",
+        "addressLine1Label": "Address line 1",
+        "addressLine2Label": "Address line 2 (optional)",
+        "townOrCityLabel": "Town or city",
+        "stateOrRegionLabel": "State or region (optional)",
+        "postcodeLabel": "Postcode (optional)",
+        "validation": {
+          "addressLine1Required": "Enter address line 1",
+          "townOrCityRequired": "Enter the town or city"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "siteContactDetails": {
+        "title": "Site contact details — Add interim site",
+        "heading": "Who is the contact at the interim site?",
+        "nameLabel": "Contact name",
+        "emailLabel": "Email address",
+        "phoneLabel": "Phone number",
+        "validation": {
+          "nameRequired": "Enter the contact name",
+          "emailRequired": "Enter the email address",
+          "emailInvalid": "Enter an email address in the correct format, like name@example.com",
+          "phoneRequired": "Enter the phone number"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
+      "cya": {
+        "title": "Check your answers — Add interim site",
+        "heading": "Check your answers",
+        "rows": {
+          "country": "Country",
+          "siteName": "Site name",
+          "location": "Location",
+          "contactName": "Contact name",
+          "contactEmail": "Contact email",
+          "contactPhone": "Contact phone number",
+          "siteNumber": "Site number"
+        },
+        "changeLink": "Change",
+        "submitButton": "Add this site",
+        "cancelLink": "Cancel"
+      },
+      "successBanner": {
+        "title": "Success",
+        "heading": "Interim site added to your application",
+        "body": "You can continue with your application."
       }
     }
   },

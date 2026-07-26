@@ -294,6 +294,32 @@ describe('accreditationApiService', () => {
     })
   })
 
+  describe('createInterimSite', () => {
+    test('calls POST to the nested interim-site endpoint for the given siteId', async () => {
+      apiClient.post.mockResolvedValue({ siteId: 123, siteNumber: 'SN-001' })
+      const body = { country: 'France', siteName: 'Interim Depot' }
+      const result = await accreditationApiService.createInterimSite(
+        ORG_ID,
+        APP_ID,
+        900001,
+        body
+      )
+      expect(apiClient.post).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/interim-site`,
+        body
+      )
+      expect(result).toEqual({ siteId: 123, siteNumber: 'SN-001' })
+    })
+
+    test('normalises API error', async () => {
+      const err = Object.assign(new Error('Conflict'), { status: 409 })
+      apiClient.post.mockRejectedValue(err)
+      await expect(
+        accreditationApiService.createInterimSite(ORG_ID, APP_ID, 900001, {})
+      ).rejects.toMatchObject({ status: 409, isApiError: true })
+    })
+  })
+
   describe('addFile', () => {
     test('calls POST files endpoint', async () => {
       apiClient.post.mockResolvedValue({ FileId: 'file-1' })
