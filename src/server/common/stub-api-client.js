@@ -46,7 +46,54 @@ export const STUB_ORG_DOCS = [
           sectionStatus: 'NotStarted',
           items: makeBpItems()
         },
-        samplingPlan: { sectionStatus: 'NotStarted', files: [] }
+        samplingPlan: { sectionStatus: 'NotStarted', files: [] },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26RE5000390068PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Harry Edge', 'Rosina Campbell'],
+            overseasSites: []
+          }
+        }
+      }
+    ]
+  },
+  {
+    orgId: 50011,
+    companyDetails: { name: 'APPROVED RECYCLING LIMITED' },
+    accreditations: [
+      {
+        id: 'app011',
+        applicationId: 'APP112027ER5000390PL',
+        applicationStatus: 'Approved',
+        material: 'plastic',
+        wasteProcessingType: 'reprocessor',
+        registrationId: 'aaa000000000000000050011',
+        siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
+        wasteRegistrationNumber: 'R26ER5000390068PL',
+        yearlyMetrics: { year: '2027' },
+        formSubmissionTime: null,
+        submitterContactDetails: null,
+        prnIssuance: {
+          sectionStatus: 'NotStarted',
+          plannedIssuance: null,
+          signatories: []
+        },
+        businessPlan: {
+          sectionStatus: 'NotStarted',
+          items: makeBpItems()
+        },
+        samplingPlan: { sectionStatus: 'NotStarted', files: [] },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26RE5000390011PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Harry Edge'],
+            overseasSites: []
+          }
+        }
       }
     ]
   },
@@ -77,7 +124,16 @@ export const STUB_ORG_DOCS = [
           signatories: []
         },
         businessPlan: { sectionStatus: 'NotStarted', items: [] },
-        samplingPlan: { sectionStatus: 'NotStarted', files: [] }
+        samplingPlan: { sectionStatus: 'NotStarted', files: [] },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26RE5000390002GL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 1,000 tonnes',
+            authorisedUsers: ['Beth Carter'],
+            overseasSites: []
+          }
+        }
       }
     ]
   },
@@ -151,6 +207,15 @@ export const STUB_ORG_DOCS = [
               scanStatus: 'Clean'
             }
           ]
+        },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26RE5000390003GL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 1,000 tonnes',
+            authorisedUsers: ['Jane Doe'],
+            overseasSites: []
+          }
         }
       }
     ]
@@ -322,7 +387,16 @@ export const STUB_ORG_DOCS = [
             }
           ]
         },
-        besEvidence: { sectionStatus: 'NotStarted' }
+        besEvidence: { sectionStatus: 'NotStarted' },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26EX5000391PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Priya Sharma'],
+            overseasSites: ['Bharat Recycling', 'Dragon Recyclers']
+          }
+        }
       }
     ]
   },
@@ -424,7 +498,16 @@ export const STUB_ORG_DOCS = [
             }
           ]
         },
-        besEvidence: { sectionStatus: 'NotStarted' }
+        besEvidence: { sectionStatus: 'NotStarted' },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26EX5000392GL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 10,000 tonnes',
+            authorisedUsers: ['Alice Green'],
+            overseasSites: ['Rotterdam Recycling BV', 'Berlin Glass GmbH']
+          }
+        }
       }
     ]
   },
@@ -539,7 +622,138 @@ export const STUB_ORG_DOCS = [
             }
           ]
         },
-        besEvidence: { sectionStatus: 'NotStarted' }
+        besEvidence: { sectionStatus: 'NotStarted' },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26EX5000392SL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 10,000 tonnes',
+            authorisedUsers: ['Alice Iron'],
+            overseasSites: ['Rotterdam Recycling BV', 'Berlin Steel GmbH']
+          }
+        }
+      }
+    ]
+  },
+  {
+    orgId: 50008,
+    companyDetails: { name: 'Global Plastic Import Export Co. Ltd.' },
+    accreditations: [
+      {
+        id: 'app008exp',
+        applicationId: 'APP2027ER5000392PL',
+        applicationStatus: 'NotStarted',
+        material: 'plastic',
+        wasteProcessingType: 'exporter',
+        registrationId: 'aaa000000000000000050007',
+        siteAddress: {
+          line1: 'Pastic ExPoCo',
+          town: 'Plaston',
+          postcode: 'PL45 T1C'
+        },
+        wasteRegistrationNumber: null,
+        yearlyMetrics: { year: '2027' },
+        formSubmissionTime: null,
+        submitterContactDetails: null,
+        prnIssuance: {
+          sectionStatus: 'NotStarted',
+          plannedIssuance: 'UpTo10000',
+          signatories: [{ fullName: 'Paul Stick', email: 'paul@plastic.co.uk' }]
+        },
+        businessPlan: {
+          sectionStatus: 'NotStarted',
+          items: makeBpItems({
+            newInfrastructure: 20,
+            priceSupport: 20,
+            businessCollections: 20,
+            communications: 20,
+            newMarkets: 10,
+            newUses: 10
+          })
+        },
+        samplingPlan: {
+          sectionStatus: 'NotStarted',
+          files: [
+            {
+              fileId: 'file006',
+              filename: 'sampling-plan-plastic_2026.pdf',
+              uploadedAt: '2026-12-01T10:00:00Z',
+              uploadedBy: 'Nygel London',
+              scanStatus: 'Clean'
+            }
+          ]
+        },
+        overseasSites: {
+          sectionStatus: 'NotStarted',
+          sites: [
+            {
+              siteId: 900003,
+              orsId: '001',
+              siteName: 'Rotterdam Recycling BV',
+              siteAddress: 'Industrieweg 44, Rotterdam',
+              country: 'Netherlands',
+              isEu: true,
+              isOecd: true,
+              selected: true,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900004,
+              orsId: '002',
+              siteName: 'Berlin Plastics GmbH',
+              siteAddress: 'Recyclingstraße 12, Berlin',
+              country: 'Germany',
+              isEu: true,
+              isOecd: true,
+              selected: true,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900005,
+              orsId: '003',
+              siteName: 'Paris Verre SAS',
+              siteAddress: '8 Rue du Recyclage, Paris',
+              country: 'France',
+              isEu: true,
+              isOecd: true,
+              selected: false,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900006,
+              orsId: '004',
+              siteName: 'Siagon Polymers SAS',
+              siteAddress: '28 Rue du Recyclage, Saigon',
+              country: 'Vietnam',
+              isEu: false,
+              isOecd: false,
+              selected: false,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            }
+          ]
+        },
+        besEvidence: { sectionStatus: 'NotStarted' },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26EA5000392PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 10,000 tonnes',
+            authorisedUsers: ['Paul Stick'],
+            overseasSites: ['Rotterdam Recycling BV', 'Berlin Plastics GmbH']
+          }
+        }
       }
     ]
   }
