@@ -3,6 +3,7 @@ import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
+import { COUNTRIES } from '../../../common/data/countries.js'
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -28,6 +29,7 @@ function buildViewData(t, applicationId, fields, errors) {
     cancelLink: t('pages.addOverseasSite.siteName.cancelLink'),
     backLink: siteNameUrl(applicationId),
     cancelUrl: selectOrsUrl(applicationId),
+    countries: COUNTRIES,
     fields,
     errors
   }

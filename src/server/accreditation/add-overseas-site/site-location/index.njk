@@ -75,10 +75,13 @@
           {% if errors.country %}
             <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.country }}</p>
           {% endif %}
-          <input class="govuk-input{% if errors.country %} govuk-input--error{% endif %}"
-                 id="country" name="country" type="text"
-                 value="{{ fields.country }}"
-                 data-testid="country-input">
+          <select class="govuk-select{% if errors.country %} govuk-select--error{% endif %}"
+                  id="country" name="country" data-testid="country-input">
+            <option value=""></option>
+            {% for country in countries %}
+              <option value="{{ country }}"{% if country == fields.country %} selected{% endif %}>{{ country }}</option>
+            {% endfor %}
+          </select>
         </div>
 
         <div class="govuk-form-group{% if errors.coordinates %} govuk-form-group--error{% endif %}">
