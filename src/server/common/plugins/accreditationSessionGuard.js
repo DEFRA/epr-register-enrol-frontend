@@ -3,6 +3,8 @@ import Boom from '@hapi/boom'
 import { config } from '../../../config/config.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
 import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
+import { accreditationApiService } from '../helpers/accreditationApiService.js'
+import { landingUrl } from '../helpers/accreditationUrls.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -11,6 +13,23 @@ export function shouldGuardPath(path) {
     path.startsWith(ACCREDITATION_ROUTE_PREFIX) ||
     /^\/[a-z]{2}\/accreditation\//.test(path)
   )
+}
+
+// Routes that are safe to reach on a Withdrawn application — the withdraw
+// confirmation page has its own status guard, and payment details are
+// read-only by nature. Everything else under /accreditation/ is a form that
+// edits application data, so it must not be reachable once withdrawn (AC09).
+const READ_ONLY_SAFE_SEGMENTS = new Set([
+  'withdraw-application',
+  'view-payment-details'
+])
+
+export function isWithdrawnBlockedPath(path) {
+  const match = path.match(/^\/(?:[a-z]{2}\/)?accreditation\/([^/]+)\//)
+  if (!match) {
+    return false
+  }
+  return !READ_ONLY_SAFE_SEGMENTS.has(match[1])
 }
 
 export function hasValidSession(yar) {
@@ -31,6 +50,23 @@ export async function hasOrganisationAccess(yar, user, logger) {
     return true
   }
   return operatorCanAccessOrganisation(user, organisationId, { logger })
+}
+
+// Defence in depth for AC09: the backend is the real enforcement boundary
+// (it must reject writes to a Withdrawn application), this guard just keeps
+// the operator from landing on a stale edit form. Fails open on a fetch
+// error — a transient backend outage should not block navigation, since the
+// backend's own write-side guard is what actually protects the data.
+export async function isWithdrawn(yar) {
+  const applicationId = yar.get(ACCREDITATION_SESSION_KEYS.accreditationId)
+  const organisationId = yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
+  if (!applicationId || !organisationId) {
+    return null
+  }
+  const application = await accreditationApiService
+    .getApplication(organisationId, applicationId)
+    .catch(() => null)
+  return application?.applicationStatus === 'Withdrawn' ? application : null
 }
 
 export const accreditationSessionGuard = {
@@ -61,6 +97,20 @@ export const accreditationSessionGuard = {
         )
         if (!allowed) {
           throw Boom.forbidden('You do not have access to this organisation')
+        }
+
+        if (isWithdrawnBlockedPath(request.path)) {
+          const withdrawnApplication = await isWithdrawn(request.yar)
+          if (withdrawnApplication) {
+            return h
+              .redirect(
+                landingUrl(
+                  withdrawnApplication,
+                  withdrawnApplication.isExporter
+                )
+              )
+              .takeover()
+          }
         }
 
         return h.continue

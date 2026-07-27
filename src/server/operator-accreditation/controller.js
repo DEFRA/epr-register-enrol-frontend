@@ -5,7 +5,10 @@ import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
-import { queryTaskListUrl } from '../common/helpers/accreditationUrls.js'
+import {
+  queryTaskListUrl,
+  landingUrl
+} from '../common/helpers/accreditationUrls.js'
 
 const STATUS_CONFIG = {
   Saved: { tagClass: 'govuk-tag--grey' },
@@ -16,8 +19,20 @@ const STATUS_CONFIG = {
   Queried: { tagClass: 'govuk-tag--orange' },
   Updated: { tagClass: 'govuk-tag--turquoise' },
   Approved: { tagClass: 'govuk-tag--green' },
-  Rejected: { tagClass: 'govuk-tag--red' }
+  Rejected: { tagClass: 'govuk-tag--red' },
+  Withdrawn: { tagClass: 'govuk-tag--grey' }
 }
+
+// An application can only be withdrawn before a final regulator decision —
+// shared with withdraw-application/controller.js so the two routes can never
+// disagree about which statuses are withdrawable.
+export const NON_WITHDRAWABLE_STATUSES = new Set([
+  'Approved',
+  'Refused',
+  'Cancelled',
+  'Rejected',
+  'Withdrawn'
+])
 
 const GLASS_RECYCLING_PROCESS_KEYS = {
   glass_re_melt: 'pages.materialSelection.glassRemelt',
@@ -102,6 +117,16 @@ export function buildLandingViewModel(
       application.applicationStatus === 'Queried'
         ? queryTaskListUrl(application.applicationId)
         : `/accreditation/task-list/${application.applicationId}`,
+    showContinueLink: application.applicationStatus !== 'Withdrawn',
+    canWithdraw: !NON_WITHDRAWABLE_STATUSES.has(application.applicationStatus),
+    withdrawUrl: `/accreditation/withdraw-application/${application.applicationId}`,
+    startNewUrl:
+      application.applicationStatus === 'Withdrawn'
+        ? landingUrl(
+            { ...application, year: accreditationYear + 1 },
+            isExporter
+          )
+        : null,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',

@@ -84,6 +84,7 @@
       "authorisedUsersLabel": "Authorised users",
       "overseasSitesLabel": "Overseas reprocessing sites",
       "exporterLabel": "Exporter",
+      "withdrawLink": "Withdraw application",
       "statuses": {
         "Saved": "NOT STARTED",
         "Started": "IN PROGRESS",
@@ -92,7 +93,8 @@
         "Queried": "QUERIED",
         "Updated": "UPDATED",
         "Approved": "WITH REGULATOR",
-        "Rejected": "REJECTED"
+        "Rejected": "REJECTED",
+        "Withdrawn": "WITHDRAWN"
       },
       "materials": {
         "Steel": "Steel",
@@ -426,6 +428,25 @@
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "notQueriedError": "This application is no longer awaiting a response to a query.",
         "resubmitError": "Sorry, there was a problem resubmitting your application. Please try again."
+      }
+    },
+    "withdrawApplication": {
+      "title": "Withdraw application",
+      "heading": "Are you sure you want to withdraw your application?",
+      "warningText": "This action cannot be undone and your application will no longer be considered by the regulator.",
+      "yesLabel": "Yes",
+      "noLabel": "No",
+      "reasonLabel": "Add a reason for withdrawing your application",
+      "reasonHint": "You can enter up to 200 words.",
+      "submitButton": "Confirm and continue",
+      "successMessage": "Application withdrawn. An email has been sent to notify your regulator.",
+      "validation": {
+        "confirmRequired": "Select yes if you want to withdraw your application",
+        "reasonRequired": "Enter a reason for the withdrawal",
+        "reasonTooLong": "Reason must be 200 words or fewer",
+        "fetchError": "Sorry, there was a problem loading your application. Please try again.",
+        "withdrawError": "Sorry, there was a problem withdrawing your application. Please try again.",
+        "alreadyWithdrawnError": "This application has already been withdrawn or is no longer eligible for withdrawal."
       }
     },
     "selectOverseasSites": {

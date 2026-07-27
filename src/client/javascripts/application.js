@@ -1,6 +1,7 @@
 import {
   createAll,
   Button,
+  CharacterCount,
   Checkboxes,
   ErrorSummary,
   Radios,
@@ -9,6 +10,7 @@ import {
 import accessibleAutocomplete from 'accessible-autocomplete'
 
 createAll(Button)
+createAll(CharacterCount)
 createAll(Checkboxes)
 createAll(ErrorSummary)
 createAll(Radios)

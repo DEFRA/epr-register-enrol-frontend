@@ -50,9 +50,21 @@
                 </strong>
               </td>
               <td class="govuk-table__cell">
-                <a href="{{ taskListUrl }}" data-testid="continue-button">
-                  {{ t('pages.operatorAccreditation.continueButton') }}
-                </a>
+                {% if showContinueLink %}
+                  <a href="{{ taskListUrl }}" data-testid="continue-button">
+                    {{ t('pages.operatorAccreditation.continueButton') }}
+                  </a>
+                {% endif %}
+                {% if canWithdraw %}
+                  <a href="{{ withdrawUrl }}" data-testid="withdraw-link" class="govuk-!-margin-left-3">
+                    {{ t('pages.operatorAccreditation.withdrawLink') }}
+                  </a>
+                {% endif %}
+                {% if startNewUrl %}
+                  <a href="{{ startNewUrl }}" data-testid="start-new-link" class="govuk-!-margin-left-3">
+                    {{ t('pages.operatorAccreditation.startNew') }}
+                  </a>
+                {% endif %}
               </td>
             </tr>
           </tbody>
