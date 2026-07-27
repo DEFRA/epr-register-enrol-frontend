@@ -38,6 +38,8 @@
               <th scope="col" class="govuk-table__header">{{ t('pages.operatorAccreditation.dueDateLabel') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.operatorAccreditation.statusLabel') }}</th>
               <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">{{ t('pages.operatorAccreditation.continueButton') }}</span></th>
+              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden"></th>
+              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden"></th>
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -55,13 +57,15 @@
                     {{ t('pages.operatorAccreditation.continueButton') }}
                   </a>
                 {% endif %}
+              </td>
+              <td class="govuk-table__cell">
                 {% if canWithdraw %}
-                  <a href="{{ withdrawUrl }}" data-testid="withdraw-link" class="govuk-!-margin-left-3">
+                  <a href="{{ withdrawUrl }}" data-testid="withdraw-link">
                     {{ t('pages.operatorAccreditation.withdrawLink') }}
                   </a>
                 {% endif %}
                 {% if startNewUrl %}
-                  <a href="{{ startNewUrl }}" data-testid="start-new-link" class="govuk-!-margin-left-3">
+                  <a href="{{ startNewUrl }}" data-testid="start-new-link">
                     {{ t('pages.operatorAccreditation.startNew') }}
                   </a>
                 {% endif %}

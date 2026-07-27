@@ -104,7 +104,7 @@ export const STUB_ORG_DOCS = [
       {
         id: 'app002',
         applicationId: 'APP2027ER5000390GL',
-        applicationStatus: 'Started',
+        applicationStatus: 'Submitted',
         material: 'glass',
         glassRecyclingProcess: 'glass_other',
         wasteProcessingType: 'reprocessor',

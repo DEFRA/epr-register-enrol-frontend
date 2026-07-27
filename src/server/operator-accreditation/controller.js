@@ -27,10 +27,16 @@ const STATUS_CONFIG = {
 // shared with withdraw-application/controller.js so the two routes can never
 // disagree about which statuses are withdrawable.
 export const NON_WITHDRAWABLE_STATUSES = new Set([
+  //Not submitted tso can't be withdrawn
+  'Saved',
+  'Started',
+  'NotStarted',
+  // Final decisions made can't be withdrawn
   'Approved',
   'Refused',
   'Cancelled',
   'Rejected',
+  // Withdrawn is a final state, so can't be withdrawn again
   'Withdrawn'
 ])
 
@@ -43,6 +49,9 @@ const GLASS_RECYCLING_PROCESS_KEYS = {
 // once it's been decided (approved/refused) or dropped (withdrawn/cancelled)
 // there's nothing left to reapply for.
 const REAPPLY_TEXT_HIDDEN_STATUSES = new Set([
+  'Saved',
+  'Started',
+  'NotStarted',
   'Approved',
   'Withdrawn',
   'Cancelled',

@@ -24,7 +24,7 @@ function makeApplication(overrides = {}) {
     registrationId: 'test-registration-id',
     materialType: 'Steel',
     year: 2027,
-    applicationStatus: 'Started',
+    applicationStatus: 'Submitted',
     ...overrides
   }
 }
@@ -123,7 +123,16 @@ describe('#withdrawApplicationController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test.each(['Approved', 'Refused', 'Cancelled', 'Rejected', 'Withdrawn'])(
+    test.each([
+      'Saved',
+      'Started',
+      'NotStarted',
+      'Approved',
+      'Refused',
+      'Cancelled',
+      'Rejected',
+      'Withdrawn'
+    ])(
       'redirects to the landing page when applicationStatus is %s',
       async (applicationStatus) => {
         vi.spyOn(apiClient, 'get').mockResolvedValue(

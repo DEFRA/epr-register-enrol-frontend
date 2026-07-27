@@ -92,7 +92,7 @@
         "Submitted": "SUBMITTED",
         "Queried": "QUERIED",
         "Updated": "UPDATED",
-        "Approved": "WITH REGULATOR",
+        "Approved": "APPROVED",
         "Rejected": "REJECTED",
         "Withdrawn": "WITHDRAWN"
       },
