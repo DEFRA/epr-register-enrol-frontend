@@ -27,6 +27,12 @@ export const STUB_OPERATOR_ORGS = [
   { reExOrgId: '50005', defraOrgId: '50005', name: 'Stub Org 50005' },
   { reExOrgId: '50006', defraOrgId: '50006', name: 'Stub Org 50006' },
   { reExOrgId: '50007', defraOrgId: '50007', name: 'Stub Org 50007' },
+  { reExOrgId: '50008', defraOrgId: '50009', name: 'Stub Org 50008' },
+  {
+    reExOrgId: '50011',
+    defraOrgId: '50011',
+    name: 'APPROVED RECYCLING LIMITED'
+  },
   {
     reExOrgId: '6a2fcd74e16883c137d01188',
     defraOrgId: '67b9e8fc-2235-431a-a7b9-80663c81b6ff',

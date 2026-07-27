@@ -21,7 +21,7 @@
           </div>
         </div>
       {% else %}
-        <h1 class="govuk-heading-l" data-testid="page-heading">{{ organisationName }}: reapply for {{ materialDisplay }} accreditation</h1>
+        <h1 class="govuk-heading-l" data-testid="page-heading">{{ pageHeading }}</h1>
 
         {% if displayReapplyAccreditationText %}
           <div class="govuk-inset-text">
@@ -30,37 +30,93 @@
           </div>
         {% endif %}
 
-        <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-testid="application-summary">
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.organisationLabel') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="organisation-name">{{ organisationName }}</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">Registration Number </dt>
-            <dd class="govuk-summary-list__value" data-testid="registration-number">{{ registrationId }}</dd>
-          </div>
-          {% if not isExporter %}
+        <h2 class="govuk-heading-m">{{ t('pages.operatorAccreditation.applicationDetailsHeading') }}</h2>
+        <table class="govuk-table" data-testid="application-details-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">{{ t('pages.operatorAccreditation.periodLabel') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.operatorAccreditation.dueDateLabel') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.operatorAccreditation.statusLabel') }}</th>
+              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">{{ t('pages.operatorAccreditation.continueButton') }}</span></th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            <tr class="govuk-table__row" data-testid="application-details-row">
+              <td class="govuk-table__cell" data-testid="application-period">{{ accreditationYear }}</td>
+              <td class="govuk-table__cell" data-testid="application-due-date">{{ dueDate }}</td>
+              <td class="govuk-table__cell">
+                <strong class="govuk-tag {{ statusTagClass }}" data-testid="application-status-tag">
+                  {{ statusLabel }}
+                </strong>
+              </td>
+              <td class="govuk-table__cell">
+                <a href="{{ taskListUrl }}" data-testid="continue-button">
+                  {{ t('pages.operatorAccreditation.continueButton') }}
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {% if currentAccreditation %}
+          <h2 class="govuk-heading-m">{{ t('pages.operatorAccreditation.currentAccreditationHeading') }}</h2>
+          <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-testid="current-accreditation-summary">
             <div class="govuk-summary-list__row">
-              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.siteLabel') }}</dt>
-              <dd class="govuk-summary-list__value" data-testid="site-name">{{ siteName }}</dd>
+              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.accreditationNumberLabel') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="current-accreditation-number">{{ currentAccreditation.accreditationNumber }}</dd>
             </div>
-          {% endif %}
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.materialLabel') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="material-display">{{ materialDisplay }}</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.yearLabel') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="accreditation-year">{{ accreditationYear }}</dd>
-          </div>
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.statusLabel') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="application-status">
-              <strong class="govuk-tag {{ statusTagClass }}" data-testid="status-tag">
-                {{ statusLabel }}
-              </strong>
-            </dd>
-          </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">Registration Number </dt>
+              <dd class="govuk-summary-list__value" data-testid="registration-number">{{ registrationId }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.regulatorLabel') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="current-accreditation-regulator">{{ currentAccreditation.regulator }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.statusLabel') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="current-accreditation-status">
+                <strong class="govuk-tag {{ currentAccreditation.statusTagClass }}" data-testid="current-accreditation-status-tag">
+                  {{ currentAccreditation.status }}
+                </strong>
+              </dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.expiryDateLabel') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="current-accreditation-expiry-date">{{ currentAccreditation.expiryDate }}</dd>
+            </div>
+            {% if not isExporter %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.siteAddressLabel') }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="current-accreditation-site-address">{{ currentAccreditation.siteAddress }}</dd>
+              </div>
+            {% endif %}
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.tonnageLabel') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="current-accreditation-tonnage">{{ currentAccreditation.tonnage }}</dd>
+            </div>
+            <div class="govuk-summary-list__row">
+              <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.authorisedUsersLabel') }}</dt>
+              <dd class="govuk-summary-list__value" data-testid="current-accreditation-authorised-users">
+                {% for authorisedUser in currentAccreditation.authorisedUsers %}
+                  {{ authorisedUser }}<br>
+                {% endfor %}
+              </dd>
+            </div>
+            {% if currentAccreditation.overseasSites.length > 0 %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.overseasSitesLabel') }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="current-accreditation-overseas-sites">
+                  {% for overseasSite in currentAccreditation.overseasSites %}
+                    {{ overseasSite }}<br>
+                  {% endfor %}
+                </dd>
+              </div>
+            {% endif %}
+          </dl>
+        {% endif %}
+
+        <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-testid="application-summary">
           {% if notificationFailedBanner %}
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">{{ t('pages.operatorAccreditation.notificationStatusLabel') }}</dt>
@@ -72,11 +128,6 @@
             </div>
           {% endif %}
         </dl>
-
-        <a href="{{ taskListUrl }}" role="button" draggable="false"
-           class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-          {{ t('pages.operatorAccreditation.continueButton') }}
-        </a>
       {% endif %}
 
     </div>

@@ -24,6 +24,17 @@ const GLASS_RECYCLING_PROCESS_KEYS = {
   glass_other: 'pages.materialSelection.glassOther'
 }
 
+// The reapply prompt only makes sense while an application is still live —
+// once it's been decided (approved/refused) or dropped (withdrawn/cancelled)
+// there's nothing left to reapply for.
+const REAPPLY_TEXT_HIDDEN_STATUSES = new Set([
+  'Approved',
+  'Withdrawn',
+  'Cancelled',
+  'Refused',
+  'Rejected'
+])
+
 function materialDisplayName(application, t) {
   const { materialType, glassRecyclingProcess } = application
   if (!materialType) return ''
@@ -34,28 +45,59 @@ function materialDisplayName(application, t) {
   return t(`pages.materialSelection.materials.${materialType}`)
 }
 
+// The prior accreditation year always runs to 31 December, with the
+// reapplication due 30 September of that same prior year.
+function buildCurrentAccreditation(application, siteName, priorYear) {
+  const accreditation = application.organisation?.accreditation
+  if (!accreditation) return null
+
+  return {
+    accreditationNumber: accreditation.accreditationNumber,
+    regulator: accreditation.regulator,
+    status: 'Approved',
+    statusTagClass: STATUS_CONFIG.Approved.tagClass,
+    expiryDate: `31 December ${priorYear}`,
+    siteAddress: siteName,
+    tonnage: accreditation.tonnage,
+    authorisedUsers: accreditation.authorisedUsers ?? [],
+    overseasSites: accreditation.overseasSites ?? []
+  }
+}
+
 export function buildLandingViewModel(
   application,
   organisationName,
   siteAddress,
   accreditationYear,
-  t
+  t,
+  isExporter = false
 ) {
   const config = STATUS_CONFIG[application.applicationStatus] ?? {
     tagClass: ''
   }
   const matDisp = materialDisplayName(application, t)
+  const siteName = isExporter
+    ? t('pages.operatorAccreditation.exporterLabel')
+    : (siteAddress ?? t('pages.taskList.siteNotSet'))
+  const priorYear = accreditationYear - 1
   return {
     organisationName,
     accreditationYear,
     registrationId:
       application.registrationId ?? application.applicationReference,
-    siteName: siteAddress ?? t('pages.taskList.siteNotSet'),
+    siteName,
+    pageHeading: `${siteName} : reapplication for ${matDisp} accreditation for ${accreditationYear}`,
     materialDisplay: matDisp,
     statusLabel: t(
       `pages.operatorAccreditation.statuses.${application.applicationStatus}`
     ),
     statusTagClass: config.tagClass,
+    dueDate: `30 September ${priorYear}`,
+    currentAccreditation: buildCurrentAccreditation(
+      application,
+      siteName,
+      priorYear
+    ),
     taskListUrl:
       application.applicationStatus === 'Queried'
         ? queryTaskListUrl(application.applicationId)
@@ -63,9 +105,9 @@ export function buildLandingViewModel(
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',
-    displayReapplyAccreditationText:
-      application.applicationStatus === 'Saved' ||
-      application.applicationStatus === 'Started'
+    displayReapplyAccreditationText: !REAPPLY_TEXT_HIDDEN_STATUSES.has(
+      application.applicationStatus
+    )
   }
 }
 
@@ -248,7 +290,8 @@ export const operatorAccreditationExporterController = {
       organisationName,
       null,
       yearInt,
-      t
+      t,
+      true
     )
 
     const notification = request.yar.flash('notification')[0] ?? null

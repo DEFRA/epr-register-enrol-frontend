@@ -150,6 +150,45 @@ describe('#buildLandingViewModel', () => {
     expect(vm.siteName).toBe('siteNotSet')
   })
 
+  test('siteName is "Exporter" when isExporter is true, regardless of siteAddress', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'Unknown' }),
+      'Org Name',
+      null,
+      2027,
+      t,
+      true
+    )
+    expect(vm.siteName).toBe('exporterLabel')
+  })
+
+  test.each([
+    ['Saved', true],
+    ['Started', true],
+    ['NotStarted', true],
+    ['InProgress', true],
+    ['Submitted', true],
+    ['Queried', true],
+    ['Updated', true],
+    ['Approved', false],
+    ['Withdrawn', false],
+    ['Cancelled', false],
+    ['Refused', false],
+    ['Rejected', false]
+  ])(
+    'status %s -> displayReapplyAccreditationText %s',
+    (applicationStatus, expected) => {
+      const vm = buildLandingViewModel(
+        makeApp({ applicationStatus }),
+        'Org Name',
+        'siteAddr',
+        2027,
+        t
+      )
+      expect(vm.displayReapplyAccreditationText).toBe(expected)
+    }
+  )
+
   test('taskListUrl contains applicationId', () => {
     const vm = buildLandingViewModel(
       makeApp({ applicationId: 'app-xyz' }),
@@ -242,6 +281,73 @@ describe('#buildLandingViewModel', () => {
       t
     )
     expect(vm.organisationName).toBe('Organisation Name')
+  })
+
+  test('pageHeading combines site address, material and year', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ materialType: 'Steel' }),
+      'Organisation Name',
+      '2 North Road, Addingrove, AA3 1AB',
+      2027,
+      t
+    )
+    expect(vm.pageHeading).toBe(
+      '2 North Road, Addingrove, AA3 1AB : reapplication for Steel accreditation for 2027'
+    )
+  })
+
+  test('pageHeading falls back to siteNotSet translation when siteAddress is null', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ materialType: 'Steel' }),
+      'Organisation Name',
+      null,
+      2027,
+      t
+    )
+    expect(vm.pageHeading).toBe(
+      'siteNotSet : reapplication for Steel accreditation for 2027'
+    )
+  })
+
+  test('dueDate is 30 September of the year before accreditationYear', () => {
+    const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
+    expect(vm.dueDate).toBe('30 September 2026')
+  })
+
+  test('currentAccreditation is null when the application has no organisation.accreditation', () => {
+    const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
+    expect(vm.currentAccreditation).toBeNull()
+  })
+
+  test('currentAccreditation is built from application.organisation.accreditation', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26EX1234560001PA',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Harry Edge', 'Rosina Campbell'],
+            overseasSites: []
+          }
+        }
+      }),
+      'Org Name',
+      '2 North Road, Addingrove, AA3 1AB',
+      2027,
+      t
+    )
+    expect(vm.currentAccreditation).toEqual({
+      accreditationNumber: 'A26EX1234560001PA',
+      regulator: 'Environment Agency',
+      status: 'Approved',
+      statusTagClass: 'govuk-tag--green',
+      expiryDate: '31 December 2026',
+      siteAddress: '2 North Road, Addingrove, AA3 1AB',
+      tonnage: 'Up to 500 tonnes',
+      authorisedUsers: ['Harry Edge', 'Rosina Campbell'],
+      overseasSites: []
+    })
   })
 
   test('notificationFailedBanner is true when notificationStatus is failed', () => {
@@ -407,8 +513,20 @@ describe('#operatorAccreditationController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('renders Not Set site name in summary', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+  test('renders Not Set site address in current accreditation details when there is no site address', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26RE5000390068PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Harry Edge'],
+            overseasSites: []
+          }
+        }
+      })
+    ])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -416,11 +534,11 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain('data-testid="site-name"')
+    expect(result).toContain('data-testid="current-accreditation-site-address"')
     expect(result).toContain('Not set')
   })
 
-  test('renders material display in summary', async () => {
+  test('renders material in page heading', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
     const { result } = await server.inject({
@@ -429,8 +547,123 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain('data-testid="material-display"')
-    expect(result).toContain('Steel')
+    expect(result).toContain('data-testid="page-heading"')
+    expect(result).toContain('reapplication for Steel accreditation')
+  })
+
+  test('renders Application details table with period, due date, status and continue link', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Started' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="application-details-table"')
+    expect(result).toContain('data-testid="application-period"')
+    expect(result).toContain('data-testid="application-due-date"')
+    expect(result).toContain('30 September 2025')
+    expect(result).toContain('data-testid="continue-button"')
+    expect(result).toContain('/accreditation/task-list/app-id-001')
+  })
+
+  test('does not render Current accreditation details when there is no prior organisation accreditation', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).not.toContain('data-testid="current-accreditation-summary"')
+  })
+
+  test('renders Current accreditation details when application.organisation.accreditation is present', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26RE5000390068PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Harry Edge', 'Rosina Campbell'],
+            overseasSites: []
+          }
+        }
+      })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="current-accreditation-summary"')
+    expect(result).toContain('data-testid="current-accreditation-number"')
+    expect(result).toContain('A26RE5000390068PL')
+    expect(result).toContain('data-testid="current-accreditation-regulator"')
+    expect(result).toContain('Environment Agency')
+    expect(result).toContain('data-testid="current-accreditation-expiry-date"')
+    expect(result).toContain('31 December 2025')
+    expect(result).toContain('data-testid="current-accreditation-tonnage"')
+    expect(result).toContain(
+      'data-testid="current-accreditation-authorised-users"'
+    )
+    expect(result).toContain('Harry Edge')
+    expect(result).toContain('Rosina Campbell')
+    expect(result).not.toContain(
+      'data-testid="current-accreditation-overseas-sites"'
+    )
+  })
+
+  test('renders overseas reprocessing sites when present on the current accreditation', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26EX5000391PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Priya Sharma'],
+            overseasSites: ['Bharat Recycling', 'Dragon Recyclers']
+          }
+        }
+      })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain(
+      'data-testid="current-accreditation-overseas-sites"'
+    )
+    expect(result).toContain('Bharat Recycling')
+    expect(result).toContain('Dragon Recyclers')
+  })
+
+  test('renders heading as "<site address> : reapplication for <material> accreditation for <year>"', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ siteAddress: '2 North Road, Addingrove, AA3 1AB' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="page-heading"')
+    expect(result).toContain(
+      '2 North Road, Addingrove, AA3 1AB : reapplication for Steel accreditation for 2026'
+    )
   })
 
   test('renders status tag with correct class for Started', async () => {
@@ -480,7 +713,7 @@ describe('#operatorAccreditationController', () => {
     )
   })
 
-  test('reapply text is NOT shown when application status is Submitted', async () => {
+  test('reapply text is shown when application status is Submitted', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
       makeApp({ applicationStatus: 'Submitted' })
     ])
@@ -491,10 +724,45 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).not.toContain(
+    expect(result).toContain(
       'You can now reapply for accreditation for this material.'
     )
   })
+
+  test('reapply text is shown when application status is Queried', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Queried' })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain(
+      'You can now reapply for accreditation for this material.'
+    )
+  })
+
+  test.each(['Withdrawn', 'Cancelled', 'Refused'])(
+    'reapply text is NOT shown when application status is %s',
+    async (applicationStatus) => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        makeApp({ applicationStatus })
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain(
+        'You can now reapply for accreditation for this material.'
+      )
+    }
+  )
 
   test('reapply text is NOT shown when application status is Approved', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
@@ -773,8 +1041,20 @@ describe('#operatorAccreditationController', () => {
       )
     })
 
-    test('does NOT render site row for exporter', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+    test('does NOT render current accreditation site address row for exporter', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        makeExporterApp({
+          organisation: {
+            accreditation: {
+              accreditationNumber: 'A26EX5000391PL',
+              regulator: 'Environment Agency',
+              tonnage: 'Up to 500 tonnes',
+              authorisedUsers: ['Priya Sharma'],
+              overseasSites: ['Bharat Recycling']
+            }
+          }
+        })
+      ])
 
       const { result } = await server.inject({
         method: 'GET',
@@ -782,10 +1062,12 @@ describe('#operatorAccreditationController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).not.toContain('data-testid="site-name"')
+      expect(result).not.toContain(
+        'data-testid="current-accreditation-site-address"'
+      )
     })
 
-    test('renders application summary without site row', async () => {
+    test('renders application summary and continue link for exporter', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
 
       const { result } = await server.inject({
@@ -795,12 +1077,38 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(result).toContain('data-testid="application-summary"')
-      expect(result).toContain('data-testid="material-display"')
       expect(result).toContain('data-testid="continue-button"')
     })
 
-    test('reprocessor route still renders site row', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    test('renders heading with "Exporter" in place of a site address for exporter journeys', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: exporterUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="page-heading"')
+      expect(result).toContain(
+        'Exporter : reapplication for Steel accreditation for 2026'
+      )
+    })
+
+    test('reprocessor route still renders current accreditation site address row', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        makeApp({
+          organisation: {
+            accreditation: {
+              accreditationNumber: 'A26RE5000390068PL',
+              regulator: 'Environment Agency',
+              tonnage: 'Up to 500 tonnes',
+              authorisedUsers: ['Harry Edge'],
+              overseasSites: []
+            }
+          }
+        })
+      ])
 
       const { result } = await server.inject({
         method: 'GET',
@@ -808,7 +1116,9 @@ describe('#operatorAccreditationController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="site-name"')
+      expect(result).toContain(
+        'data-testid="current-accreditation-site-address"'
+      )
     })
 
     test('returns 500 when listApplications throws', async () => {
