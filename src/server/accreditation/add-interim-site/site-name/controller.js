@@ -1,0 +1,71 @@
+import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
+import {
+  getAddInterimSiteSession,
+  setAddInterimSiteSession
+} from '../../../common/helpers/addInterimSiteSession.js'
+
+function selectOverseasSitesUrl(applicationId) {
+  return `/accreditation/select-overseas-sites/${applicationId}`
+}
+
+function countryUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/country`
+}
+
+function siteLocationUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/site-location`
+}
+
+function renderPage(h, viewData) {
+  return h.view('accreditation/add-interim-site/site-name/index', viewData)
+}
+
+function buildViewData(t, applicationId, siteName, error) {
+  return {
+    pageTitle: t('pages.addInterimSite.siteName.title'),
+    heading: t('pages.addInterimSite.siteName.heading'),
+    label: t('pages.addInterimSite.siteName.label'),
+    hint: t('pages.addInterimSite.siteName.hint'),
+    continueButton: t('pages.addInterimSite.siteName.continueButton'),
+    cancelLink: t('pages.addInterimSite.siteName.cancelLink'),
+    siteName,
+    backLink: countryUrl(applicationId),
+    cancelUrl: selectOverseasSitesUrl(applicationId),
+    error
+  }
+}
+
+export const addInterimSiteNameGetController = {
+  handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
+    const session = getAddInterimSiteSession(request)
+    return renderPage(
+      h,
+      buildViewData(t, applicationId, session.siteName ?? '', null)
+    )
+  }
+}
+
+export const addInterimSiteNamePostController = {
+  handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
+    const siteName = (request.payload?.siteName ?? '').trim()
+
+    if (!siteName) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          '',
+          t('pages.addInterimSite.siteName.validation.required')
+        )
+      ).code(400)
+    }
+
+    setAddInterimSiteSession(request, { siteName })
+    return h.redirect(siteLocationUrl(applicationId))
+  }
+}

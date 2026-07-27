@@ -737,6 +737,7 @@
         },
         "changeLink": "[Welsh] Change",
         "submitButton": "[Welsh] Add this site",
+        "addInterimSiteButton": "[Welsh] Save and add interim site",
         "cancelLink": "[Welsh] Cancel"
       },
       "addNewButton": "[Welsh] Add new overseas reprocessing site",
@@ -744,6 +745,81 @@
         "title": "[Welsh] Success",
         "heading": "[Welsh] Overseas reprocessing site added to your application",
         "body": "[Welsh] You can continue to add more sites or proceed with your application."
+      }
+    },
+    "addInterimSite": {
+      "country": {
+        "title": "[Welsh] Country — Add interim site",
+        "heading": "[Welsh] What country is the interim site in?",
+        "label": "[Welsh] Country",
+        "hint": "[Welsh] Enter the country where the interim site is located.",
+        "validation": {
+          "required": "[Welsh] Enter the country"
+        },
+        "continueButton": "Parhau",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "siteName": {
+        "title": "[Welsh] Site name — Add interim site",
+        "heading": "[Welsh] What is the name of the interim site?",
+        "label": "[Welsh] Interim site name",
+        "hint": "[Welsh] Enter the full name of the interim site.",
+        "validation": {
+          "required": "[Welsh] Enter the site name"
+        },
+        "continueButton": "Parhau",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "siteLocation": {
+        "title": "[Welsh] Site location — Add interim site",
+        "heading": "[Welsh] Where is the interim site located?",
+        "addressLine1Label": "[Welsh] Address line 1",
+        "addressLine2Label": "[Welsh] Address line 2 (optional)",
+        "townOrCityLabel": "[Welsh] Town or city",
+        "stateOrRegionLabel": "[Welsh] State or region (optional)",
+        "postcodeLabel": "[Welsh] Postcode (optional)",
+        "validation": {
+          "addressLine1Required": "[Welsh] Enter address line 1",
+          "townOrCityRequired": "[Welsh] Enter the town or city"
+        },
+        "continueButton": "Parhau",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "siteContactDetails": {
+        "title": "[Welsh] Site contact details — Add interim site",
+        "heading": "[Welsh] Who is the contact at the interim site?",
+        "nameLabel": "[Welsh] Contact name",
+        "emailLabel": "[Welsh] Email address",
+        "phoneLabel": "[Welsh] Phone number",
+        "validation": {
+          "nameRequired": "[Welsh] Enter the contact name",
+          "emailRequired": "[Welsh] Enter the email address",
+          "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
+          "phoneRequired": "[Welsh] Enter the phone number"
+        },
+        "continueButton": "Parhau",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "cya": {
+        "title": "[Welsh] Check your answers — Add interim site",
+        "heading": "[Welsh] Check your answers",
+        "rows": {
+          "country": "[Welsh] Country",
+          "siteName": "[Welsh] Site name",
+          "location": "[Welsh] Location",
+          "contactName": "[Welsh] Contact name",
+          "contactEmail": "[Welsh] Contact email",
+          "contactPhone": "[Welsh] Contact phone number",
+          "siteNumber": "[Welsh] Site number"
+        },
+        "changeLink": "[Welsh] Change",
+        "submitButton": "[Welsh] Add this site",
+        "cancelLink": "[Welsh] Cancel"
+      },
+      "successBanner": {
+        "title": "[Welsh] Success",
+        "heading": "[Welsh] Interim site added to your application",
+        "body": "[Welsh] You can continue with your application."
       }
     }
   },

@@ -89,6 +89,53 @@ describe('stubApiClient.post — BES evidence file upload', () => {
   })
 })
 
+describe('stubApiClient.post — interim site', () => {
+  let stub
+
+  beforeEach(async () => {
+    stub = await freshStub()
+  })
+
+  const INTERIM_URL =
+    '/api/v1/accreditation-applications/50004/app004exp/overseas-sites/900001/interim-site'
+
+  test('returns a fake created interim site with isNewSite true', async () => {
+    const result = await stub.post(INTERIM_URL, {
+      country: 'France',
+      siteName: 'Interim Depot'
+    })
+    expect(result.siteId).toBeDefined()
+    expect(result.siteNumber).toBeDefined()
+    expect(result.isNewSite).toBe(true)
+    expect(result.country).toBe('France')
+    expect(result.siteName).toBe('Interim Depot')
+  })
+
+  test('nests the interim site onto the matched ORS site', async () => {
+    await stub.post(INTERIM_URL, {
+      country: 'France',
+      siteName: 'Interim Depot'
+    })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50004/app004exp'
+    )
+    const site = app.overseasSites.sites.find((s) => s.siteId === 900001)
+    expect(site.interimSite).toBeDefined()
+    expect(site.interimSite.siteName).toBe('Interim Depot')
+    expect(site.interimSite.isNewSite).toBe(true)
+  })
+
+  test('still returns a created interim site when siteId is not found', async () => {
+    const result = await stub.post(
+      '/api/v1/accreditation-applications/50004/app004exp/overseas-sites/999999/interim-site',
+      { country: 'Spain' }
+    )
+    expect(result.country).toBe('Spain')
+    expect(result.isNewSite).toBe(true)
+  })
+})
+
 describe('stubApiClient.patch — BES evidence', () => {
   let stub
 

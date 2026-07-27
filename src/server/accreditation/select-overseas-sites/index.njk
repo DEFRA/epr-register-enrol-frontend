@@ -29,6 +29,22 @@
         </div>
       {% endif %}
 
+      {% if interimSiteSuccessBanner %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert"
+             aria-labelledby="govuk-interim-site-notification-banner-title"
+             data-module="govuk-notification-banner"
+             data-testid="interim-site-success-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="govuk-interim-site-notification-banner-title">
+              {{ t('pages.addInterimSite.successBanner.title') }}
+            </h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-body">{{ t('pages.addInterimSite.successBanner.heading') }}</p>
+          </div>
+        </div>
+      {% endif %}
+
       {% if error and sites.length === 0 %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
           <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>

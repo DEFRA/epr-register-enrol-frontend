@@ -21,9 +21,11 @@
             <dt class="govuk-summary-list__key">{{ row.key }}</dt>
             <dd class="govuk-summary-list__value">{{ row.value }}</dd>
             <dd class="govuk-summary-list__actions">
-              <a class="govuk-link" href="{{ row.changeUrl }}" data-testid="change-{{ row.testId }}">
-                {{ changeLabel }}<span class="govuk-visually-hidden"> {{ row.key }}</span>
-              </a>
+              {% if row.changeUrl %}
+                <a class="govuk-link" href="{{ row.changeUrl }}" data-testid="change-{{ row.testId }}">
+                  {{ changeLabel }}<span class="govuk-visually-hidden"> {{ row.key }}</span>
+                </a>
+              {% endif %}
             </dd>
           </div>
         {% endfor %}
@@ -32,14 +34,9 @@
       <form method="post">
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
-        <button type="submit" name="action" value="confirm" class="govuk-button" data-module="govuk-button"
+        <button type="submit" class="govuk-button" data-module="govuk-button"
                 data-testid="submit-button">
           {{ submitButton }}
-        </button>
-
-        <button type="submit" name="action" value="addInterimSite" class="govuk-button govuk-button--secondary" data-module="govuk-button"
-                data-testid="save-and-add-interim-site-button">
-          {{ addInterimSiteButton }}
         </button>
       </form>
 

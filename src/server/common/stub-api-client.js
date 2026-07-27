@@ -805,12 +805,38 @@ export const stubApiClient = {
         if (!item.overseasSites.sites) item.overseasSites.sites = []
         const newSite = {
           siteId: Date.now(),
+          isNewSite: true,
           ...body
         }
         item.overseasSites.sites.push(newSite)
         return Promise.resolve(newSite)
       }
       return Promise.resolve(body)
+    }
+
+    // POST /overseas-sites/{siteId}/interim-site — nest a new interim site onto
+    // the matched ORS site (1:1 — mirrors the backend's InterimSiteModel nesting)
+    const newInterimSiteMatch = endpoint.match(
+      /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/interim-site$/
+    )
+    if (newInterimSiteMatch) {
+      const item = findAccreditation(
+        newInterimSiteMatch[1],
+        newInterimSiteMatch[2]
+      )
+      const siteId = parseInt(newInterimSiteMatch[3], 10)
+      const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+      const newInterimSite = {
+        siteId: Date.now(),
+        siteNumber: `SN-${Date.now()}`,
+        isNewSite: true,
+        ...body
+      }
+      if (site) {
+        site.interimSite = newInterimSite
+        return Promise.resolve(newInterimSite)
+      }
+      return Promise.resolve(newInterimSite)
     }
 
     if (/\/overseas-sites\/\d+\/bes-evidence\/files$/.test(endpoint)) {

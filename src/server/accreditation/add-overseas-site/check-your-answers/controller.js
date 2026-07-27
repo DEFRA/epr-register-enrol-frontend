@@ -5,11 +5,18 @@ import {
   getAddOrsSession,
   clearAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
+import { setAddInterimSiteSession } from '../../../common/helpers/addInterimSiteSession.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 
+const ADD_INTERIM_SITE_ACTION = 'addInterimSite'
+
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
+}
+
+function addInterimSiteCountryUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/country`
 }
 
 function siteNameUrl(applicationId) {
@@ -144,6 +151,7 @@ function buildViewData(t, applicationId, session, error) {
     pageTitle: t('pages.addOverseasSite.cya.title'),
     heading: t('pages.addOverseasSite.cya.heading'),
     submitButton: t('pages.addOverseasSite.cya.submitButton'),
+    addInterimSiteButton: t('pages.addOverseasSite.cya.addInterimSiteButton'),
     cancelLink: t('pages.addOverseasSite.cya.cancelLink'),
     cancelUrl: selectOrsUrl(applicationId),
     rows: buildRows(t, applicationId, session),
@@ -216,8 +224,9 @@ export const addOrsCyaPostController = {
     const orsId = nextOrsId(application.overseasSites?.sites)
     const sitePayload = buildSitePayload(orsId, session)
 
+    let createdSite
     try {
-      await accreditationApiService.createOverseasSite(
+      createdSite = await accreditationApiService.createOverseasSite(
         organisationId,
         applicationId,
         sitePayload
@@ -233,6 +242,12 @@ export const addOrsCyaPostController = {
     }
 
     clearAddOrsSession(request)
+
+    if (request.payload?.action === ADD_INTERIM_SITE_ACTION) {
+      setAddInterimSiteSession(request, { linkedSiteId: createdSite?.siteId })
+      return h.redirect(addInterimSiteCountryUrl(applicationId))
+    }
+
     request.yar.flash(ORS_SUCCESS_FLASH, true)
     return h.redirect(selectOrsUrl(applicationId))
   }
