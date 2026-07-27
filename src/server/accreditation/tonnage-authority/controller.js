@@ -49,7 +49,7 @@ function buildViewData(application, t, applicationId, opts = {}) {
       : t('pages.tonnageAuthority.title'),
     heading: buildHeading(
       application.materialType,
-      application.siteId,
+      application.siteAddress || t('pages.taskList.siteNotSet'),
       isExporter,
       t
     ),
@@ -142,7 +142,7 @@ export const tonnageAuthorityPostController = {
     const isExporter = application.isExporter ?? false
     const heading = buildHeading(
       application.materialType,
-      application.siteId,
+      application.siteAddress || t('pages.taskList.siteNotSet'),
       isExporter,
       t
     )

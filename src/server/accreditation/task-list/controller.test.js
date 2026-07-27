@@ -223,8 +223,8 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.metadata.site).toBe('123 Test Street')
   })
 
-  test('null siteId falls back to siteNotSet translation', () => {
-    const vm = buildTaskListViewModel(makeApplication({ siteId: null }), t)
+  test('null siteAddress falls back to siteNotSet translation', () => {
+    const vm = buildTaskListViewModel(makeApplication({ siteAddress: null }), t)
     expect(vm.metadata.site).toBe('siteNotSet')
   })
 
