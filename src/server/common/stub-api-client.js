@@ -59,6 +59,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000390GL',
         applicationStatus: 'Started',
         material: 'glass',
+        glassRecyclingProcess: 'glass_other',
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050002',
         siteAddress: {
@@ -165,7 +166,11 @@ export const STUB_ORG_DOCS = [
         material: 'steel',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050004',
-        siteAddress: null,
+        siteAddress: {
+          line1: 'The Steelworks',
+          town: 'Siteville',
+          postcode: 'ST33 LO2'
+        },
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: '2026-12-01T10:00:00Z',
@@ -271,7 +276,11 @@ export const STUB_ORG_DOCS = [
         material: 'plastic',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050005',
-        siteAddress: null,
+        siteAddress: {
+          line1: 'Plaxxtic Export Works',
+          town: 'Siteville',
+          postcode: 'PL45 T1C'
+        },
         wasteRegistrationNumber: 'R26ER5000390068PL',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -329,7 +338,11 @@ export const STUB_ORG_DOCS = [
         glassRecyclingProcess: 'glass_other',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050006',
-        siteAddress: null,
+        siteAddress: {
+          line1: 'The Other Glassworks',
+          town: 'Siteville',
+          postcode: 'GL45 50T'
+        },
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -426,7 +439,11 @@ export const STUB_ORG_DOCS = [
         material: 'steel',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050007',
-        siteAddress: null,
+        siteAddress: {
+          line1: 'STEELERs ExPoCo',
+          town: 'Steelville',
+          postcode: 'ST33 3XP'
+        },
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -562,6 +579,7 @@ export const STUB_ORG_MODELS = {
       {
         registrationId: 'REG002',
         material: 'glass',
+        glassRecyclingProcess: 'glass_other',
         wasteProcessingType: 'reprocessor',
         siteAddress: {
           line1: 'Site Lane 002',
