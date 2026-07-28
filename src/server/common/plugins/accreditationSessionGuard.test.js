@@ -4,11 +4,14 @@ import {
   shouldGuardPath,
   hasValidSession,
   hasOrganisationAccess,
+  isWithdrawnBlockedPath,
+  isWithdrawn,
   accreditationSessionGuard
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
 import { config } from '../../../config/config.js'
 import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
+import { accreditationApiService } from '../helpers/accreditationApiService.js'
 
 // The guard delegates the resolve-and-compare (and fail-closed handling) to
 // operatorCanAccessOrganisation, which is unit-tested in reex-organisation-service.
@@ -17,8 +20,15 @@ vi.mock('../helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
 }))
 
+vi.mock('../helpers/accreditationApiService.js', () => ({
+  accreditationApiService: { getApplication: vi.fn() }
+}))
+
 beforeEach(() => {
   operatorCanAccessOrganisation.mockResolvedValue(true)
+  accreditationApiService.getApplication
+    .mockReset()
+    .mockResolvedValue({ applicationStatus: 'Started' })
 })
 
 describe('shouldGuardPath', () => {
@@ -36,6 +46,86 @@ describe('shouldGuardPath', () => {
     expect(shouldGuardPath('/')).toBe(false)
     expect(shouldGuardPath('/operator-accreditation')).toBe(false)
     expect(shouldGuardPath('/health')).toBe(false)
+  })
+})
+
+describe('isWithdrawnBlockedPath', () => {
+  test('blocks editable section routes', () => {
+    expect(isWithdrawnBlockedPath('/accreditation/task-list/abc')).toBe(true)
+    expect(isWithdrawnBlockedPath('/accreditation/tonnage/abc')).toBe(true)
+    expect(isWithdrawnBlockedPath('/cy/accreditation/business-plan/abc')).toBe(
+      true
+    )
+  })
+
+  test('allows the withdraw-application route itself', () => {
+    expect(
+      isWithdrawnBlockedPath('/accreditation/withdraw-application/abc')
+    ).toBe(false)
+    expect(
+      isWithdrawnBlockedPath('/cy/accreditation/withdraw-application/abc')
+    ).toBe(false)
+  })
+
+  test('allows view-payment-details', () => {
+    expect(
+      isWithdrawnBlockedPath('/accreditation/view-payment-details/abc')
+    ).toBe(false)
+  })
+
+  test('returns false for paths with no matching segment', () => {
+    expect(isWithdrawnBlockedPath('/accreditation/')).toBe(false)
+    expect(isWithdrawnBlockedPath('/health')).toBe(false)
+  })
+})
+
+describe('isWithdrawn', () => {
+  function makeYar(accreditationId, organisationId) {
+    return {
+      get: vi.fn((key) => {
+        if (key === ACCREDITATION_SESSION_KEYS.accreditationId) {
+          return accreditationId
+        }
+        if (key === ACCREDITATION_SESSION_KEYS.organisationId) {
+          return organisationId
+        }
+        return null
+      })
+    }
+  }
+
+  test('returns the application when it is Withdrawn', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Withdrawn',
+      isExporter: false
+    })
+    const result = await isWithdrawn(makeYar('app-1', '50001'))
+    expect(result).toEqual({
+      applicationStatus: 'Withdrawn',
+      isExporter: false
+    })
+  })
+
+  test('returns null when the application is not Withdrawn', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Started'
+    })
+    const result = await isWithdrawn(makeYar('app-1', '50001'))
+    expect(result).toBeNull()
+  })
+
+  test('returns null (fails open) when the fetch throws', async () => {
+    accreditationApiService.getApplication.mockRejectedValue(
+      new Error('backend down')
+    )
+    const result = await isWithdrawn(makeYar('app-1', '50001'))
+    expect(result).toBeNull()
+  })
+
+  test('returns null without fetching when session is incomplete', async () => {
+    const result = await isWithdrawn(makeYar(null, '50001'))
+    expect(result).toBeNull()
+    expect(accreditationApiService.getApplication).not.toHaveBeenCalled()
   })
 })
 
@@ -410,5 +500,81 @@ describe('accreditationSessionGuard plugin registration', () => {
     }
 
     expect(thrown?.output?.statusCode).toBe(503)
+  })
+
+  test('registered callback redirects to the landing page when the application is Withdrawn', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      organisationId: '50001',
+      registrationId: 'REG001',
+      materialType: 'Plastic',
+      year: 2027,
+      applicationStatus: 'Withdrawn',
+      isExporter: false
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = await callback(
+      {
+        path: '/accreditation/tonnage/app-1',
+        yar: makeYarWithOrg('app-1', '50001'),
+        auth: {
+          credentials: {
+            userType: 'operator',
+            relationships: ['rel-1:50001:First Org']
+          }
+        }
+      },
+      h
+    )
+
+    expect(h.redirect).toHaveBeenCalledWith(
+      '/operator-accreditation/50001/REG001/Plastic/2027'
+    )
+    expect(result).toBe('redirect')
+  })
+
+  test('registered callback does not fetch the application for withdraw-application itself', async () => {
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = await callback(
+      {
+        path: '/accreditation/withdraw-application/app-1',
+        yar: makeYarWithOrg('app-1', '50001'),
+        auth: {
+          credentials: {
+            userType: 'operator',
+            relationships: ['rel-1:50001:First Org']
+          }
+        }
+      },
+      h
+    )
+
+    expect(accreditationApiService.getApplication).not.toHaveBeenCalled()
+    expect(result).toBe(h.continue)
+  })
+
+  test('registered callback passes through when the application is not Withdrawn', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Started'
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = await callback(
+      {
+        path: '/accreditation/tonnage/app-1',
+        yar: makeYarWithOrg('app-1', '50001'),
+        auth: {
+          credentials: {
+            userType: 'operator',
+            relationships: ['rel-1:50001:First Org']
+          }
+        }
+      },
+      h
+    )
+
+    expect(h.redirect).not.toHaveBeenCalled()
+    expect(result).toBe(h.continue)
   })
 })

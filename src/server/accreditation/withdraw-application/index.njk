@@ -1,0 +1,102 @@
+{% extends "layouts/page.njk" %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+{% from "govuk/components/warning-text/macro.njk" import govukWarningText %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <p class="govuk-body" data-testid="error-message">{{ error }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if errors %}
+        {% set errorList = [] %}
+        {% if errors.confirmWithdraw %}
+          {% set errorList = (errorList.push({ text: errors.confirmWithdraw.text, href: "#confirmWithdraw" }), errorList) %}
+        {% endif %}
+        {% if errors.reason %}
+          {% set errorList = (errorList.push({ text: errors.reason.text, href: "#reason" }), errorList) %}
+        {% endif %}
+        {{ govukErrorSummary({
+          titleText: t('common.errorSummaryTitle'),
+          errorList: errorList,
+          attributes: { "data-testid": "error-summary" }
+        }) }}
+      {% endif %}
+
+      {{ govukWarningText({
+        text: warningText,
+        iconFallbackText: t('common.warning'),
+        attributes: { "data-testid": "warning-text" }
+      }) }}
+
+      <form method="post" novalidate data-testid="withdraw-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {% set reasonHtml %}
+          {{ govukCharacterCount({
+            id: "reason",
+            name: "reason",
+            maxwords: 200,
+            value: reason,
+            label: {
+              text: reasonLabel
+            },
+            hint: {
+              text: reasonHint
+            },
+            errorMessage: errors.reason,
+            attributes: { "data-testid": "reason-input" }
+          }) }}
+        {% endset %}
+
+        {{ govukRadios({
+          name: "confirmWithdraw",
+          idPrefix: "confirmWithdraw",
+          value: confirmWithdraw,
+          fieldset: {
+            legend: {
+              text: heading,
+              isPageHeading: true,
+              classes: "govuk-fieldset__legend--l"
+            }
+          },
+          errorMessage: errors.confirmWithdraw,
+          items: [
+            {
+              value: "yes",
+              text: yesLabel,
+              conditional: {
+                html: reasonHtml
+              },
+              attributes: { "data-testid": "confirm-withdraw-yes" }
+            },
+            {
+              value: "no",
+              text: noLabel,
+              attributes: { "data-testid": "confirm-withdraw-no" }
+            }
+          ]
+        }) }}
+
+        {{ govukButton({
+          text: submitButton,
+          attributes: { "data-testid": "withdraw-submit-button" }
+        }) }}
+
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

@@ -756,6 +756,37 @@ export const STUB_ORG_DOCS = [
         }
       }
     ]
+  },
+  {
+    orgId: 50012,
+    companyDetails: { name: 'Withdrawn Application Test Co' },
+    accreditations: [
+      {
+        id: 'app012',
+        applicationId: 'APP2027ER5000390PL',
+        applicationStatus: 'Withdrawn',
+        material: 'plastic',
+        wasteProcessingType: 'reprocessor',
+        registrationId: 'aaa000000000000000050012',
+        siteAddress: { line1: 'UNIT 12', town: 'Bolton', postcode: 'BL4 7AQ' },
+        wasteRegistrationNumber: 'R26ER5000390068PL',
+        yearlyMetrics: { year: '2027' },
+        formSubmissionTime: null,
+        submitterContactDetails: null,
+        withdrawalReason: 'No longer required.',
+        withdrawalDate: '2026-11-01T10:00:00Z',
+        prnIssuance: {
+          sectionStatus: 'NotStarted',
+          plannedIssuance: null,
+          signatories: []
+        },
+        businessPlan: {
+          sectionStatus: 'NotStarted',
+          items: makeBpItems()
+        },
+        samplingPlan: { sectionStatus: 'NotStarted', files: [] }
+      }
+    ]
   }
 ]
 
@@ -1022,6 +1053,21 @@ export const stubApiClient = {
       return Promise.resolve({
         accreditationReference: generateApplicationReference({})
       })
+    }
+
+    if (/\/withdraw$/.test(endpoint)) {
+      const parsed = parseEndpoint(endpoint)
+      if (parsed) {
+        const doc = findOrgDoc(parsed.orgId)
+        const item = doc?.accreditations.find((a) => a.id === parsed.itemId)
+        if (item) {
+          item.applicationStatus = 'Withdrawn'
+          item.withdrawalReason = body?.reason ?? null
+          item.withdrawalDate = new Date().toISOString()
+          return Promise.resolve({ applicationStatus: 'Withdrawn' })
+        }
+      }
+      return Promise.resolve({})
     }
 
     // POST /overseas-sites — add a new ORS site to the application

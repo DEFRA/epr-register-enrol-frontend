@@ -81,14 +81,16 @@
       "authorisedUsersLabel": "[Welsh] Authorised users",
       "overseasSitesLabel": "[Welsh] Overseas reprocessing sites",
       "exporterLabel": "[Welsh] Exporter",
+      "withdrawLink": "[Welsh] Withdraw application",
       "statuses": {
         "Saved": "[Welsh] NOT STARTED",
         "Started": "[Welsh] IN PROGRESS",
         "Submitted": "[Welsh] SUBMITTED",
         "Queried": "[Welsh] QUERIED",
         "Updated": "[Welsh] UPDATED",
-        "Approved": "[Welsh] WITH REGULATOR",
-        "Rejected": "[Welsh] REJECTED"
+        "Approved": "[Welsh] APPROVED",
+        "Rejected": "[Welsh] REJECTED",
+        "Withdrawn": "[Welsh] WITHDRAWN"
       },
       "materials": {
         "Steel": "Dur",
@@ -423,6 +425,25 @@
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "notQueriedError": "[Welsh] This application is no longer awaiting a response to a query.",
         "resubmitError": "[Welsh] Sorry, there was a problem resubmitting your application. Please try again."
+      }
+    },
+    "withdrawApplication": {
+      "title": "[Welsh] Withdraw application",
+      "heading": "[Welsh] Are you sure you want to withdraw your application?",
+      "warningText": "[Welsh] This action cannot be undone and your application will no longer be considered by the regulator.",
+      "yesLabel": "Iawn",
+      "noLabel": "Na",
+      "reasonLabel": "[Welsh] Add a reason for withdrawing your application",
+      "reasonHint": "[Welsh] You can enter up to 200 words.",
+      "submitButton": "[Welsh] Confirm and continue",
+      "successMessage": "[Welsh] Application withdrawn. An email has been sent to notify your regulator.",
+      "validation": {
+        "confirmRequired": "[Welsh] Select yes if you want to withdraw your application",
+        "reasonRequired": "[Welsh] Enter a reason for the withdrawal",
+        "reasonTooLong": "[Welsh] Reason must be 200 words or fewer",
+        "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
+        "withdrawError": "[Welsh] Sorry, there was a problem withdrawing your application. Please try again.",
+        "alreadyWithdrawnError": "[Welsh] This application has already been withdrawn or is no longer eligible for withdrawal."
       }
     },
     "selectOverseasSites": {

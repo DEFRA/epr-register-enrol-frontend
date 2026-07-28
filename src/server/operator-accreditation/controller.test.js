@@ -163,9 +163,9 @@ describe('#buildLandingViewModel', () => {
   })
 
   test.each([
-    ['Saved', true],
-    ['Started', true],
-    ['NotStarted', true],
+    ['Saved', false],
+    ['Started', false],
+    ['NotStarted', false],
     ['InProgress', true],
     ['Submitted', true],
     ['Queried', true],
@@ -681,7 +681,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('IN PROGRESS')
   })
 
-  test('reapply text is shown when application status is Saved', async () => {
+  test('reapply text is NOT shown when application status is Saved', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
       makeApp({ applicationStatus: 'Saved' })
     ])
@@ -692,12 +692,12 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain(
+    expect(result).not.toContain(
       'You can now reapply for accreditation for this material.'
     )
   })
 
-  test('reapply text is shown when application status is Started', async () => {
+  test('reapply text is NOT shown when application status is Started', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
       makeApp({ applicationStatus: 'Started' })
     ])
@@ -708,7 +708,7 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain(
+    expect(result).not.toContain(
       'You can now reapply for accreditation for this material.'
     )
   })

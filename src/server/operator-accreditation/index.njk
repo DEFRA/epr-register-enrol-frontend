@@ -38,6 +38,7 @@
               <th scope="col" class="govuk-table__header">{{ t('pages.operatorAccreditation.dueDateLabel') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.operatorAccreditation.statusLabel') }}</th>
               <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">{{ t('pages.operatorAccreditation.continueButton') }}</span></th>
+              <th scope="col" class="govuk-table__header"><span class="govuk-visually-hidden">{{ t('pages.operatorAccreditation.withdrawLink') }}</span></th>
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -50,9 +51,23 @@
                 </strong>
               </td>
               <td class="govuk-table__cell">
-                <a href="{{ taskListUrl }}" data-testid="continue-button">
-                  {{ t('pages.operatorAccreditation.continueButton') }}
-                </a>
+                {% if showContinueLink %}
+                  <a href="{{ taskListUrl }}" data-testid="continue-button">
+                    {{ t('pages.operatorAccreditation.continueButton') }}
+                  </a>
+                {% endif %}
+              </td>
+              <td class="govuk-table__cell">
+                {% if canWithdraw %}
+                  <a href="{{ withdrawUrl }}" data-testid="withdraw-link">
+                    {{ t('pages.operatorAccreditation.withdrawLink') }}
+                  </a>
+                {% endif %}
+                {% if startNewUrl %}
+                  <a href="{{ startNewUrl }}" data-testid="start-new-link">
+                    {{ t('pages.operatorAccreditation.startNew') }}
+                  </a>
+                {% endif %}
               </td>
             </tr>
           </tbody>

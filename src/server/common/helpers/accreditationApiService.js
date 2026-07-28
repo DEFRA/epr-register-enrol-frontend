@@ -282,6 +282,12 @@ export const accreditationApiService = {
     )
   },
 
+  withdrawApplication(organisationId, applicationId, body) {
+    return call(() =>
+      apiClient.post(`${appBase(organisationId, applicationId)}/withdraw`, body)
+    )
+  },
+
   addFile(organisationId, applicationId, body) {
     return call(() =>
       apiClient.post(`${appBase(organisationId, applicationId)}/files`, body)
