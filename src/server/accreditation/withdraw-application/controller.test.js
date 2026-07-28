@@ -232,7 +232,11 @@ describe('#withdrawApplicationController', () => {
 
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/withdraw'),
-        { reason: 'No longer required' }
+        {
+          reason: 'No longer required',
+          fullName: 'Test Operator',
+          email: 'operator@test.example'
+        }
       )
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(

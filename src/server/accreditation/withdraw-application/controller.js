@@ -1,4 +1,5 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
+import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
@@ -128,10 +129,11 @@ export const withdrawApplicationPostController = {
     }
 
     try {
+      const user = getUser(request)
       await accreditationApiService.withdrawApplication(
         organisationId,
         applicationId,
-        { reason: reason.trim() }
+        { reason: reason.trim(), fullName: user?.name, email: user?.email }
       )
     } catch (err) {
       request.server.logger.error(
