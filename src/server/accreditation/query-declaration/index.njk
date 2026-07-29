@@ -34,7 +34,13 @@
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
       <h2 class="govuk-heading-m" data-testid="declaration-sub-heading">{{ declarationSubHeading }}</h2>
-      <p class="govuk-body" data-testid="declaration-text">{{ declarationText }}</p>
+      <p class="govuk-body" data-testid="declaration-intro">{{ declarationIntro }}</p>
+
+      <ul class="govuk-list govuk-list--bullet" data-testid="declaration-bullets">
+        {% for bullet in bullets %}
+          <li data-testid="declaration-bullet-{{ loop.index0 }}">{{ bullet }}</li>
+        {% endfor %}
+      </ul>
 
       <div class="govuk-warning-text" data-testid="warning-text">
         <span class="govuk-warning-text__icon" aria-hidden="true">!</span>

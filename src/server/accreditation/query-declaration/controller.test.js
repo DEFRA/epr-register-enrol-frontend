@@ -27,6 +27,7 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    organisationName: 'Acme Recycling Ltd',
     registrationId: 'test-registration-id',
     materialType: 'Steel',
     year: 2027,
@@ -142,6 +143,47 @@ describe('#queryDeclarationController', () => {
       expect(headers.location).toBe(
         '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
       )
+    })
+
+    test('renders the bulleted declaration list, interpolating the organisation name, alongside the retained warning box', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="declaration-bullets"')
+      expect(result).toContain(
+        'eligible to respond to this query on behalf of Acme Recycling Ltd'
+      )
+      expect(result).toContain(
+        'the information you are submitting in response to the query is accurate'
+      )
+      expect(result).toContain(
+        'you understand that you may face enforcement action if you submit false or misleading data'
+      )
+      expect(result).toContain('data-testid="warning-text"')
+      expect(result).toContain(
+        'Your organisation may face enforcement action if the data is inaccurate.'
+      )
+    })
+
+    test('keeps the full name, email and job title fields, and the resubmit button label', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="full-name-input"')
+      expect(result).toContain('data-testid="email-input"')
+      expect(result).toContain('data-testid="role-input"')
+      expect(result).toContain('data-testid="resubmit-button"')
+      expect(result).toContain('Resubmit application')
     })
   })
 

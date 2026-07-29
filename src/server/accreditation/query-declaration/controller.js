@@ -33,13 +33,32 @@ export function validateQueryDeclaration(fullName, email, role, t) {
   return errors
 }
 
-function baseViewData(t, applicationId, fullName, email, role) {
+function buildBullets(organisationName, t) {
+  return [
+    t('pages.queryDeclaration.bullets.eligiblePerson').replace(
+      '{organisationName}',
+      organisationName
+    ),
+    t('pages.queryDeclaration.bullets.accurateInformation'),
+    t('pages.queryDeclaration.bullets.enforcementAction')
+  ]
+}
+
+function baseViewData(
+  t,
+  applicationId,
+  fullName,
+  email,
+  role,
+  organisationName = ''
+) {
   return {
     pageTitle: t('pages.queryDeclaration.title'),
     heading: t('pages.queryDeclaration.heading'),
     declarationSubHeading: t('pages.queryDeclaration.declarationSubHeading'),
-    declarationText: t('pages.queryDeclaration.declarationText'),
-    warningText: t('pages.queryDeclaration.warningText'),
+    declarationIntro: t('pages.queryDeclaration.declarationIntro'),
+    bullets: buildBullets(organisationName, t),
+    warningText: t('common.declarationWarningText'),
     fullNameLabel: t('pages.queryDeclaration.fullNameLabel'),
     emailLabel: t('pages.queryDeclaration.emailLabel'),
     roleLabel: t('pages.queryDeclaration.roleLabel'),
@@ -78,7 +97,17 @@ export const queryDeclarationGetController = {
       return h.redirect(landingUrl(application, application.isExporter))
     }
 
-    return renderPage(h, baseViewData(t, applicationId))
+    return renderPage(
+      h,
+      baseViewData(
+        t,
+        applicationId,
+        undefined,
+        undefined,
+        undefined,
+        application.organisationName ?? ''
+      )
+    )
   }
 }
 
@@ -114,7 +143,14 @@ export const queryDeclarationPostController = {
     const errors = validateQueryDeclaration(fullName, email, role, t)
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
-        ...baseViewData(t, applicationId, fullName, email, role),
+        ...baseViewData(
+          t,
+          applicationId,
+          fullName,
+          email,
+          role,
+          application.organisationName ?? ''
+        ),
         errors
       }).code(400)
     }
@@ -135,13 +171,27 @@ export const queryDeclarationPostController = {
       )
       if (err.status === 409) {
         return renderPage(h, {
-          ...baseViewData(t, applicationId, fullName, email, role),
+          ...baseViewData(
+            t,
+            applicationId,
+            fullName,
+            email,
+            role,
+            application.organisationName ?? ''
+          ),
           error: t('pages.queryDeclaration.validation.notQueriedError')
         }).code(409)
       }
       if (err.status === 502) {
         return renderPage(h, {
-          ...baseViewData(t, applicationId, fullName, email, role),
+          ...baseViewData(
+            t,
+            applicationId,
+            fullName,
+            email,
+            role,
+            application.organisationName ?? ''
+          ),
           error: t('pages.queryDeclaration.validation.resubmitError')
         }).code(502)
       }
@@ -154,7 +204,14 @@ export const queryDeclarationPostController = {
           .code(500)
       }
       return renderPage(h, {
-        ...baseViewData(t, applicationId, fullName, email, role),
+        ...baseViewData(
+          t,
+          applicationId,
+          fullName,
+          email,
+          role,
+          application.organisationName ?? ''
+        ),
         error: t('pages.queryDeclaration.validation.resubmitError')
       }).code(400)
     }

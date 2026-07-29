@@ -14,70 +14,39 @@ import { apiClient } from '../../common/api-client.js'
 import { validateDeclaration } from './controller.js'
 
 const APPLICATION_ID = 'app-decl-001'
+const ORGANISATION_NAME = 'Acme Recycling Ltd'
 
 const t = (key) => key.split('.').pop()
 
+function makeApplication(overrides = {}) {
+  return {
+    applicationId: APPLICATION_ID,
+    organisationId: 'test-operator-id',
+    organisationName: ORGANISATION_NAME,
+    applicationStatus: 'InProgress',
+    ...overrides
+  }
+}
+
 describe('#validateDeclaration', () => {
-  test('returns no errors when all fields are provided', () => {
-    expect(
-      validateDeclaration('Jane Smith', 'Manager', 'jane@example.com', t)
-    ).toEqual({})
+  test('returns no errors when fullName is provided', () => {
+    expect(validateDeclaration('Jane Smith', t)).toEqual({})
   })
 
   test('returns fullName error when fullName is empty string', () => {
-    const errors = validateDeclaration('', 'Manager', 'jane@example.com', t)
+    const errors = validateDeclaration('', t)
     expect(errors.fullName).toBeDefined()
     expect(errors.fullName.text).toBe('fullNameRequired')
   })
 
   test('returns fullName error when fullName is whitespace only', () => {
-    const errors = validateDeclaration('   ', 'Manager', 'jane@example.com', t)
+    const errors = validateDeclaration('   ', t)
     expect(errors.fullName).toBeDefined()
   })
 
   test('returns fullName error when fullName is null', () => {
-    const errors = validateDeclaration(null, 'Manager', 'jane@example.com', t)
+    const errors = validateDeclaration(null, t)
     expect(errors.fullName).toBeDefined()
-  })
-
-  test('returns jobTitle error when jobTitle is empty string', () => {
-    const errors = validateDeclaration('Jane Smith', '', 'jane@example.com', t)
-    expect(errors.jobTitle).toBeDefined()
-    expect(errors.jobTitle.text).toBe('jobTitleRequired')
-  })
-
-  test('returns jobTitle error when jobTitle is whitespace only', () => {
-    const errors = validateDeclaration(
-      'Jane Smith',
-      '   ',
-      'jane@example.com',
-      t
-    )
-    expect(errors.jobTitle).toBeDefined()
-  })
-
-  test('returns email error when email is empty', () => {
-    const errors = validateDeclaration('Jane Smith', 'Manager', '', t)
-    expect(errors.email).toBeDefined()
-    expect(errors.email.text).toBe('emailRequired')
-  })
-
-  test('returns email error when email is invalid format', () => {
-    const errors = validateDeclaration(
-      'Jane Smith',
-      'Manager',
-      'not-an-email',
-      t
-    )
-    expect(errors.email).toBeDefined()
-    expect(errors.email.text).toBe('emailInvalid')
-  })
-
-  test('returns all three errors when all fields are missing', () => {
-    const errors = validateDeclaration('', '', '', t)
-    expect(errors.fullName).toBeDefined()
-    expect(errors.jobTitle).toBeDefined()
-    expect(errors.email).toBeDefined()
   })
 })
 
@@ -101,6 +70,7 @@ describe('#submitDeclarationController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
   })
 
   const operatorHeaders = {
@@ -118,9 +88,31 @@ describe('#submitDeclarationController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
+      expect(result).toContain('Declaration')
     })
 
-    test('renders full name, job title, and email inputs', async () => {
+    test('renders the declaration intro and bulleted list, interpolating the organisation name', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="declaration-intro"')
+      expect(result).toContain(
+        'By entering your name and submitting this application, you are verifying:'
+      )
+      expect(result).toContain('data-testid="declaration-bullets"')
+      expect(result).toContain(
+        `eligible to submit this application on behalf of ${ORGANISATION_NAME}`
+      )
+      expect(result).toContain('the information you are submitting is accurate')
+      expect(result).toContain(
+        'you understand that you may face enforcement action if you submit false or misleading data'
+      )
+    })
+
+    test('renders only the full name input with its hint', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
@@ -128,11 +120,15 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(result).toContain('data-testid="full-name-input"')
-      expect(result).toContain('data-testid="job-title-input"')
-      expect(result).toContain('data-testid="email-input"')
+      expect(result).toContain('data-testid="full-name-hint"')
+      expect(result).toContain(
+        'This is your full name as it appears on this account'
+      )
+      expect(result).not.toContain('data-testid="job-title-input"')
+      expect(result).not.toContain('data-testid="email-input"')
     })
 
-    test('renders submit and save-and-come-back buttons', async () => {
+    test('renders confirm-and-submit and save-and-come-back buttons', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
@@ -140,6 +136,7 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(result).toContain('data-testid="submit-button"')
+      expect(result).toContain('Confirm and submit')
       expect(result).toContain('data-testid="save-come-back-button"')
     })
 
@@ -155,15 +152,13 @@ describe('#submitDeclarationController', () => {
       )
     })
 
-    test('pre-fills inputs from session after save-and-come-back', async () => {
+    test('pre-fills full name from session after save-and-come-back', async () => {
       const postResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
-          jobTitle: 'Senior Manager',
-          email: 'jane@example.com',
           submitAction: 'saveAndComeLater'
         }
       })
@@ -180,8 +175,6 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(result).toContain('value="Jane Smith"')
-      expect(result).toContain('value="Senior Manager"')
-      expect(result).toContain('value="jane@example.com"')
     })
 
     test('returns 200 in Welsh locale', async () => {
@@ -192,12 +185,25 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('[Welsh] Submit accreditation application')
+      expect(result).toContain('[Welsh] Declaration')
+    })
+
+    test('returns 500 when the application fails to load', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('network error'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
     })
   })
 
   describe('POST /accreditation/submit-declaration/{applicationId} - saveAndComeLater', () => {
-    test('redirects to task list without calling the API', async () => {
+    test('redirects to task list without calling the submit API', async () => {
       const postSpy = vi.spyOn(apiClient, 'post')
 
       const { statusCode, headers } = await server.inject({
@@ -206,8 +212,6 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
-          jobTitle: 'Manager',
-          email: 'jane@example.com',
           submitAction: 'saveAndComeLater'
         }
       })
@@ -228,8 +232,6 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: '',
-          jobTitle: 'Manager',
-          email: 'jane@example.com',
           submitAction: 'submit'
         }
       })
@@ -239,79 +241,7 @@ describe('#submitDeclarationController', () => {
       expect(result).toContain('data-testid="full-name-error"')
     })
 
-    test('returns 400 with error when jobTitle is missing', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: {
-          fullName: 'Jane Smith',
-          jobTitle: '',
-          email: 'jane@example.com',
-          submitAction: 'submit'
-        }
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="error-summary"')
-      expect(result).toContain('data-testid="job-title-error"')
-    })
-
-    test('returns 400 with error when email is missing', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: {
-          fullName: 'Jane Smith',
-          jobTitle: 'Manager',
-          email: '',
-          submitAction: 'submit'
-        }
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="error-summary"')
-      expect(result).toContain('data-testid="email-error"')
-    })
-
-    test('returns 400 with error when email format is invalid', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: {
-          fullName: 'Jane Smith',
-          jobTitle: 'Manager',
-          email: 'not-an-email',
-          submitAction: 'submit'
-        }
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="email-error"')
-    })
-
-    test('returns 400 when all fields are missing', async () => {
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: {
-          fullName: '',
-          jobTitle: '',
-          email: '',
-          submitAction: 'submit'
-        }
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="full-name-error"')
-      expect(result).toContain('data-testid="job-title-error"')
-      expect(result).toContain('data-testid="email-error"')
-    })
-
-    test('calls submitApplication and redirects to confirmation on valid data', async () => {
+    test('calls submitApplication with only fullName and a 20s timeout, and redirects to confirmation', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'RA-000000001',
         applicationStatus: 'Submitted'
@@ -323,8 +253,6 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
-          jobTitle: 'Senior Manager',
-          email: 'jane@example.com',
           submitAction: 'submit'
         }
       })
@@ -336,15 +264,13 @@ describe('#submitDeclarationController', () => {
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/submit`),
         {
-          fullName: 'Jane Smith',
-          jobTitle: 'Senior Manager',
-          email: 'jane@example.com'
+          fullName: 'Jane Smith'
         },
         { timeout: 20000 }
       )
     })
 
-    test('trims whitespace from inputs before submitting', async () => {
+    test('trims whitespace from fullName before submitting', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'RA-000000001',
         applicationStatus: 'Submitted'
@@ -356,8 +282,6 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: '  Jane Smith  ',
-          jobTitle: '  Senior Manager  ',
-          email: '  jane@example.com  ',
           submitAction: 'submit'
         }
       })
@@ -365,9 +289,7 @@ describe('#submitDeclarationController', () => {
       expect(postSpy).toHaveBeenCalledWith(
         expect.any(String),
         {
-          fullName: 'Jane Smith',
-          jobTitle: 'Senior Manager',
-          email: 'jane@example.com'
+          fullName: 'Jane Smith'
         },
         { timeout: 20000 }
       )
@@ -383,8 +305,6 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
-          jobTitle: 'Manager',
-          email: 'jane@example.com',
           submitAction: 'submit'
         }
       })
@@ -407,8 +327,6 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
-          jobTitle: 'Manager',
-          email: 'jane@example.com',
           submitAction: 'submit'
         }
       })
