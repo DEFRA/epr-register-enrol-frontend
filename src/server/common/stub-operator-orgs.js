@@ -42,6 +42,11 @@ export const STUB_OPERATOR_ORGS = [
     reExOrgId: '6a2fcd74e16883c137d01188',
     defraOrgId: '67b9e8fc-2235-431a-a7b9-80663c81b6ff',
     name: 'Bednar - Frami Limited xTklApuT'
+  },
+  {
+    reExOrgId: '6a69d66bd38ef6a70dbbd4da',
+    defraOrgId: '0e3eab83-7dcc-4496-81dd-d758de221aab',
+    name: 'Prosacco, Goodwin-Effertz and Huel-Gutmann Limited sxURMuxt'
   }
 ]
 
