@@ -74,10 +74,10 @@ describe('#buildQueryTaskListViewModel', () => {
     expect(vm.queryNote).toBeNull()
   })
 
-  test('continueUrl points to query-declaration', () => {
+  test('continueUrl points to the resubmit-confirm interstitial screen, not directly to query-declaration', () => {
     const vm = buildQueryTaskListViewModel(makeApplication(), t)
     expect(vm.continueUrl).toBe(
-      `/accreditation/query-declaration/${APPLICATION_ID}`
+      `/accreditation/resubmit-confirm/${APPLICATION_ID}`
     )
   })
 

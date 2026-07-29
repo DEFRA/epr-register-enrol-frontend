@@ -3,7 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
   landingUrl,
-  queryDeclarationUrl
+  resubmitConfirmUrl
 } from '../../common/helpers/accreditationUrls.js'
 
 const SECTION_STATUS_CONFIG = {
@@ -112,7 +112,7 @@ export function buildQueryTaskListViewModel(application, t) {
     metadata: { year },
     queryNote: application.query?.queryNote ?? null,
     tasks,
-    continueUrl: queryDeclarationUrl(applicationId)
+    continueUrl: resubmitConfirmUrl(applicationId)
   }
 }
 

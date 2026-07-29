@@ -16,6 +16,7 @@ import { operatorOrganisationDetails } from './operator-organisation-details/ind
 import { taskList } from './accreditation/task-list/index.js'
 import { queryTaskList } from './accreditation/query-task-list/index.js'
 import { queryDeclaration } from './accreditation/query-declaration/index.js'
+import { resubmitConfirm } from './accreditation/resubmit-confirm/index.js'
 import { withdrawApplication } from './accreditation/withdraw-application/index.js'
 import { tonnage } from './accreditation/tonnage/index.js'
 import { businessPlan } from './accreditation/business-plan/index.js'
@@ -101,6 +102,7 @@ export const router = {
         taskList,
         queryTaskList,
         queryDeclaration,
+        resubmitConfirm,
         withdrawApplication,
         tonnage,
         businessPlan,

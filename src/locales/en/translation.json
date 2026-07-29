@@ -408,6 +408,13 @@
       "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
       "continueButton": "Continue to resubmit"
     },
+    "resubmitConfirm": {
+      "title": "Submit the application",
+      "heading": "Submit the application",
+      "body": "By submitting this application you are confirming that, to the best of your knowledge, the details you are providing are correct.",
+      "continueButton": "Accept and submit",
+      "loadError": "Sorry, we were unable to load your accreditation task list. Please try again."
+    },
     "queryDeclaration": {
       "title": "Resubmit accreditation application",
       "heading": "Resubmit accreditation application",
