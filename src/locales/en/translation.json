@@ -878,6 +878,20 @@
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
       "tryAgain": "Try again"
+    },
+    "regulatorQuery": {
+      "heading": "Regulator query",
+      "summaryPrefix": "The regulator has identified an issue with your",
+      "updateHeading": "Update the application",
+      "changeLink": "Change",
+      "sectionLabels": {
+        "prns": "tonnage and authority to issue PRNs",
+        "perns": "tonnage and authority to issue PERNs",
+        "businessPlan": "business plan",
+        "samplingPlan": "sampling and inspection plan",
+        "overseasSites": "overseas reprocessing sites",
+        "besEvidence": "evidence of broadly equivalent standards (BES)"
+      }
     }
   },
   "languageSwitcher": {

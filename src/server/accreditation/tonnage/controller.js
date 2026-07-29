@@ -2,6 +2,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
 
@@ -66,6 +67,11 @@ export const tonnageGetController = {
     }
 
     const isExporter = application.isExporter ?? false
+    const sectionKey = isExporter ? 'perns' : 'prns'
+    const queryNote =
+      application.applicationStatus === 'Queried'
+        ? (application.query?.queryNote ?? null)
+        : null
 
     return renderForm(h, {
       pageTitle: isExporter
@@ -78,10 +84,18 @@ export const tonnageGetController = {
       ),
       backLink: taskListUrl(applicationId),
       isExporter,
-      queryNote:
-        application.applicationStatus === 'Queried'
-          ? (application.query?.queryNote ?? null)
-          : null
+      queryNote,
+      querySummary: queryNote
+        ? buildRegulatorQuerySummary(sectionKey, t)
+        : null,
+      regulatorQueryFields: queryNote
+        ? [
+            {
+              label: t(`pages.taskList.tasks.${sectionKey}`),
+              href: '#plannedTonnageBand-1'
+            }
+          ]
+        : null
     })
   }
 }

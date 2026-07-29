@@ -872,6 +872,20 @@
     "error": "Gwall",
     "warning": "Rhybudd",
     "queryNoteLabel": "[Welsh] Query from the regulator",
+    "regulatorQuery": {
+      "heading": "[Welsh] Regulator query",
+      "summaryPrefix": "[Welsh] The regulator has identified an issue with your",
+      "updateHeading": "[Welsh] Update the application",
+      "changeLink": "[Welsh] Change",
+      "sectionLabels": {
+        "prns": "[Welsh] tonnage and authority to issue PRNs",
+        "perns": "[Welsh] tonnage and authority to issue PERNs",
+        "businessPlan": "[Welsh] business plan",
+        "samplingPlan": "[Welsh] sampling and inspection plan",
+        "overseasSites": "[Welsh] overseas reprocessing sites",
+        "besEvidence": "[Welsh] evidence of broadly equivalent standards (BES)"
+      }
+    },
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",
       "tryAgain": "Trio eto"

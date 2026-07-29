@@ -2,6 +2,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -106,6 +107,8 @@ export const tonnageAuthorityGetController = {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
+    const isExporter = application.isExporter ?? false
+    const sectionKey = isExporter ? 'perns' : 'prns'
     const queryNote =
       application.applicationStatus === 'Queried'
         ? (application.query?.queryNote ?? null)
@@ -113,7 +116,20 @@ export const tonnageAuthorityGetController = {
 
     return renderPage(
       h,
-      buildViewData(application, t, applicationId, { queryNote })
+      buildViewData(application, t, applicationId, {
+        queryNote,
+        querySummary: queryNote
+          ? buildRegulatorQuerySummary(sectionKey, t)
+          : null,
+        regulatorQueryFields: queryNote
+          ? [
+              {
+                label: t(`pages.taskList.tasks.${sectionKey}`),
+                href: '#authorisers-fieldset'
+              }
+            ]
+          : null
+      })
     )
   }
 }

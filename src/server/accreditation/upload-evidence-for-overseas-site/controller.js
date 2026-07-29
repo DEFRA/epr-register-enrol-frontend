@@ -2,6 +2,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -63,14 +64,24 @@ function mapSites(t, applicationId, rawSites) {
   })
 }
 
-function buildViewData(t, applicationId, sites, error, queryNote = null) {
+function buildViewData(
+  t,
+  applicationId,
+  sites,
+  error,
+  queryNote = null,
+  querySummary = null,
+  regulatorQueryFields = null
+) {
   return {
     pageTitle: t('pages.uploadEvidenceList.title'),
     heading: t('pages.uploadEvidenceList.heading'),
     sites,
     backLink: taskListUrl(applicationId),
     error,
-    queryNote
+    queryNote,
+    querySummary,
+    regulatorQueryFields
   }
 }
 
@@ -120,7 +131,22 @@ export const uploadEvidenceListGetController = {
         : null
     return renderPage(
       h,
-      buildViewData(t, applicationId, sites, null, queryNote)
+      buildViewData(
+        t,
+        applicationId,
+        sites,
+        null,
+        queryNote,
+        queryNote ? buildRegulatorQuerySummary('besEvidence', t) : null,
+        queryNote
+          ? [
+              {
+                label: t('pages.taskList.tasks.besEvidence'),
+                href: '#sites-table'
+              }
+            ]
+          : null
+      )
     )
   }
 }

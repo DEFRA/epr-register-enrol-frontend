@@ -1,0 +1,49 @@
+{#
+  Shared regulator-query banner.
+
+  Renders only when `params.queryNote` is set. Scoped specifically to the
+  "a regulator has queried this section" pattern — do not repurpose this for
+  any other kind of status banner.
+
+  Params:
+    queryNote      (string, required to render) - the officer's note
+    heading        (string) - defaults to "Regulator query"
+    summary        (string) - templated summary sentence, e.g.
+                   "The regulator has identified an issue with your
+                   sampling and inspection plan."
+    updateHeading  (string) - defaults to "Update the application"
+    changeLinkText (string) - defaults to "Change"
+    fields         (array of { label, href }) - fields the operator can
+                   update on this page in response to the query
+#}
+{% macro regulatorQueryBanner(params) %}
+  {% if params.queryNote %}
+    <div class="regulator-query-banner" data-testid="regulator-query-banner">
+      <h1 class="govuk-heading-l" data-testid="regulator-query-heading">{{ params.heading | default('Regulator query') }}</h1>
+
+      {% if params.summary %}
+        <p class="govuk-body" data-testid="regulator-query-summary">{{ params.summary }}</p>
+      {% endif %}
+
+      <blockquote class="govuk-inset-text" data-testid="query-note">
+        <p class="govuk-body">{{ params.queryNote }}</p>
+      </blockquote>
+
+      {% if params.fields and params.fields.length > 0 %}
+        <h2 class="govuk-heading-m" data-testid="regulator-query-update-heading">{{ params.updateHeading | default('Update the application') }}</h2>
+        <dl class="govuk-summary-list" data-testid="regulator-query-update-list">
+          {% for field in params.fields %}
+            <div class="govuk-summary-list__row" data-testid="regulator-query-field-{{ loop.index0 }}">
+              <dt class="govuk-summary-list__key">{{ field.label }}</dt>
+              <dd class="govuk-summary-list__actions">
+                <a class="govuk-link" href="{{ field.href }}" data-testid="regulator-query-change-link-{{ loop.index0 }}">
+                  {{ params.changeLinkText | default('Change') }}<span class="govuk-visually-hidden"> {{ field.label }}</span>
+                </a>
+              </dd>
+            </div>
+          {% endfor %}
+        </dl>
+      {% endif %}
+    </div>
+  {% endif %}
+{% endmacro %}

@@ -282,6 +282,11 @@ describe('#tonnageAuthorityController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="query-note"')
       expect(result).toContain('Please confirm the authorised issuers.')
+      expect(result).toContain('data-testid="regulator-query-banner"')
+      expect(result).toContain(
+        'The regulator has identified an issue with your tonnage and authority to issue PRNs.'
+      )
+      expect(result).toContain('href="#authorisers-fieldset"')
     })
   })
 
