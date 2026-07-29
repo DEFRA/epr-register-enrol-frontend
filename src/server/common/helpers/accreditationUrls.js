@@ -6,13 +6,6 @@ export function queryDeclarationUrl(applicationId) {
   return `/accreditation/query-declaration/${applicationId}`
 }
 
-// Interstitial confirmation screen shown between query-task-list and
-// query-declaration in the resubmit flow only (RA-311, fix 7). Purely
-// navigational — no data is mutated on this page.
-export function resubmitConfirmUrl(applicationId) {
-  return `/accreditation/resubmit-confirm/${applicationId}`
-}
-
 // The "landing page" is the operator-accreditation summary page for this
 // specific application — built from the application record itself rather
 // than session, since a query-response journey can outlive the session

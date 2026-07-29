@@ -120,14 +120,6 @@ export const tonnageAuthorityGetController = {
         queryNote,
         querySummary: queryNote
           ? buildRegulatorQuerySummary(sectionKey, t)
-          : null,
-        regulatorQueryFields: queryNote
-          ? [
-              {
-                label: t(`pages.taskList.tasks.${sectionKey}`),
-                href: '#authorisers-fieldset'
-              }
-            ]
           : null
       })
     )

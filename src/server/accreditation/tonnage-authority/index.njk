@@ -9,10 +9,7 @@
       {{ regulatorQueryBanner({
         queryNote: queryNote,
         heading: t('common.regulatorQuery.heading'),
-        summary: querySummary,
-        updateHeading: t('common.regulatorQuery.updateHeading'),
-        changeLinkText: t('common.regulatorQuery.changeLink'),
-        fields: regulatorQueryFields
+        summary: querySummary
       }) }}
 
       {% if error or errors or addErrors %}

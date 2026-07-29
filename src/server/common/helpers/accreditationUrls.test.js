@@ -2,7 +2,6 @@ import { describe, test, expect } from 'vitest'
 import {
   queryTaskListUrl,
   queryDeclarationUrl,
-  resubmitConfirmUrl,
   landingUrl
 } from './accreditationUrls.js'
 
@@ -18,14 +17,6 @@ describe('#queryDeclarationUrl', () => {
   test('builds the query declaration path for an applicationId', () => {
     expect(queryDeclarationUrl('app-123')).toBe(
       '/accreditation/query-declaration/app-123'
-    )
-  })
-})
-
-describe('#resubmitConfirmUrl', () => {
-  test('builds the resubmit-confirm path for an applicationId', () => {
-    expect(resubmitConfirmUrl('app-123')).toBe(
-      '/accreditation/resubmit-confirm/app-123'
     )
   })
 })

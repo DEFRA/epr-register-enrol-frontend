@@ -253,7 +253,7 @@ describe('#tonnageController', () => {
       expect(result).toContain('Please confirm the planned tonnage band.')
     })
 
-    test('renders the shared regulator-query banner (heading, summary sentence, change link) when queried', async () => {
+    test('renders the shared regulator-query banner (heading, summary sentence) when queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
@@ -275,8 +275,29 @@ describe('#tonnageController', () => {
       expect(result).toContain(
         'The regulator has identified an issue with your tonnage and authority to issue PRNs.'
       )
-      expect(result).toContain('data-testid="regulator-query-change-link-0"')
-      expect(result).toContain('href="#plannedTonnageBand-1"')
+    })
+
+    test('does not render the "Update the application" change-link section', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please confirm the planned tonnage band.' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain(
+        'data-testid="regulator-query-update-heading"'
+      )
+      expect(result).not.toContain(
+        'data-testid="regulator-query-change-link-0"'
+      )
     })
 
     test('does not render the regulator-query banner when the application is not Queried', async () => {

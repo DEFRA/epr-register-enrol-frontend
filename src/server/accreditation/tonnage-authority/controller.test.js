@@ -286,7 +286,31 @@ describe('#tonnageAuthorityController', () => {
       expect(result).toContain(
         'The regulator has identified an issue with your tonnage and authority to issue PRNs.'
       )
-      expect(result).toContain('href="#authorisers-fieldset"')
+    })
+
+    test('does not render the "Update the application" change-link section', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [],
+            sectionStatus: 'Queried'
+          },
+          query: { queryNote: 'Please confirm the authorised issuers.' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain(
+        'data-testid="regulator-query-update-heading"'
+      )
+      expect(result).not.toContain('href="#authorisers-fieldset"')
     })
   })
 

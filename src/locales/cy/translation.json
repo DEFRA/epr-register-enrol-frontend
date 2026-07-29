@@ -404,16 +404,8 @@
     "queryTaskList": {
       "title": "[Welsh] Respond to query",
       "heading": "[Welsh] The regulator has queried this accreditation application",
-      "queryNoteHeading": "[Welsh] Query details",
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "continueButton": "[Welsh] Continue to resubmit"
-    },
-    "resubmitConfirm": {
-      "title": "[Welsh] Submit the application",
-      "heading": "[Welsh] Submit the application",
-      "body": "[Welsh] By submitting this application you are confirming that, to the best of your knowledge, the details you are providing are correct.",
-      "continueButton": "[Welsh] Accept and submit",
-      "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again."
     },
     "queryDeclaration": {
       "title": "[Welsh] Resubmit accreditation application",

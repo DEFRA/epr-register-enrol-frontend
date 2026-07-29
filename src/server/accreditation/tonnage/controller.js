@@ -85,17 +85,7 @@ export const tonnageGetController = {
       backLink: taskListUrl(applicationId),
       isExporter,
       queryNote,
-      querySummary: queryNote
-        ? buildRegulatorQuerySummary(sectionKey, t)
-        : null,
-      regulatorQueryFields: queryNote
-        ? [
-            {
-              label: t(`pages.taskList.tasks.${sectionKey}`),
-              href: '#plannedTonnageBand-1'
-            }
-          ]
-        : null
+      querySummary: queryNote ? buildRegulatorQuerySummary(sectionKey, t) : null
     })
   }
 }

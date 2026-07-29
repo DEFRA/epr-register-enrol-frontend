@@ -19,12 +19,10 @@
 
         <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
-        {% if queryNote %}
-          <div class="govuk-inset-text" data-testid="query-note">
-            <h2 class="govuk-heading-m">{{ t('pages.queryTaskList.queryNoteHeading') }}</h2>
-            <p class="govuk-body">{{ queryNote }}</p>
-          </div>
-        {% endif %}
+        {{ regulatorQueryBanner({
+          queryNote: queryNote,
+          heading: t('common.regulatorQuery.heading')
+        }) }}
 
         <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-testid="application-metadata">
           <div class="govuk-summary-list__row">
