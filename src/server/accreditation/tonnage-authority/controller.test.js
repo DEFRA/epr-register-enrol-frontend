@@ -235,6 +235,54 @@ describe('#tonnageAuthorityController', () => {
       expect(result).toContain('authority to issue PERNs')
       expect(result).toContain('issue PERNs on this system')
     })
+
+    test('redirects to query-task-list when application is Queried and PRNs section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [],
+            sectionStatus: 'Completed'
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the form and query note when PRNs section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [],
+            sectionStatus: 'Queried'
+          },
+          query: { queryNote: 'Please confirm the authorised issuers.' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="query-note"')
+      expect(result).toContain('Please confirm the authorised issuers.')
+    })
   })
 
   describe('POST /accreditation/tonnage-authority/{applicationId} - addAuthoriser', () => {
@@ -452,6 +500,37 @@ describe('#tonnageAuthorityController', () => {
       const patchBody = patchSpy.mock.calls[0][1]
       expect(patchBody.authorisers).toHaveLength(1)
       expect(patchBody.authorisers[0].email).toBe('jane@example.com')
+    })
+
+    test('redirects to query-task-list when application is Queried and PRNs section is not, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' }
+            ],
+            sectionStatus: 'Completed'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch')
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
     })
   })
 

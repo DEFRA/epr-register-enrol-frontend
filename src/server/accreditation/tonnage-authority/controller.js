@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -98,7 +99,22 @@ export const tonnageAuthorityGetController = {
       }).code(500)
     }
 
-    return renderPage(h, buildViewData(application, t, applicationId))
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.prns?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
+    const queryNote =
+      application.applicationStatus === 'Queried'
+        ? (application.query?.queryNote ?? null)
+        : null
+
+    return renderPage(
+      h,
+      buildViewData(application, t, applicationId, { queryNote })
+    )
   }
 }
 
@@ -137,6 +153,13 @@ export const tonnageAuthorityPostController = {
         selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
         error: t('pages.tonnageAuthority.validation.fetchError')
       }).code(500)
+    }
+
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.prns?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const isExporter = application.isExporter ?? false
