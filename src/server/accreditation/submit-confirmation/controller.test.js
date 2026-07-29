@@ -76,6 +76,7 @@ describe('#submitConfirmationController', () => {
       headers: operatorHeaders,
       payload: {
         fullName: 'Jane Smith',
+        jobTitle: 'Director',
         submitAction: 'submit'
       }
     })

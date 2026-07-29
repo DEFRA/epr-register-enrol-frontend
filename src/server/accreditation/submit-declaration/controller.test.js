@@ -29,23 +29,29 @@ function makeApplication(overrides = {}) {
 }
 
 describe('#validateDeclaration', () => {
-  test('returns no errors when fullName is provided', () => {
-    expect(validateDeclaration('Jane Smith', t)).toEqual({})
+  test('returns no errors when fullName and jobTitle are provided', () => {
+    expect(validateDeclaration('Jane Smith', 'Director', t)).toEqual({})
   })
 
   test('returns fullName error when fullName is empty string', () => {
-    const errors = validateDeclaration('', t)
+    const errors = validateDeclaration('', 'Director', t)
     expect(errors.fullName).toBeDefined()
     expect(errors.fullName.text).toBe('fullNameRequired')
   })
 
   test('returns fullName error when fullName is whitespace only', () => {
-    const errors = validateDeclaration('   ', t)
+    const errors = validateDeclaration('   ', 'Director', t)
     expect(errors.fullName).toBeDefined()
   })
 
+  test('returns jobTitle error when jobTitle is empty', () => {
+    const errors = validateDeclaration('Jane Smith', '', t)
+    expect(errors.jobTitle).toBeDefined()
+    expect(errors.jobTitle.text).toBe('jobTitleRequired')
+  })
+
   test('returns fullName error when fullName is null', () => {
-    const errors = validateDeclaration(null, t)
+    const errors = validateDeclaration(null, 'Director', t)
     expect(errors.fullName).toBeDefined()
   })
 })
@@ -112,7 +118,7 @@ describe('#submitDeclarationController', () => {
       )
     })
 
-    test('renders only the full name input with its hint', async () => {
+    test('renders full name and job title inputs with hints', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
@@ -124,7 +130,9 @@ describe('#submitDeclarationController', () => {
       expect(result).toContain(
         'This is your full name as it appears on this account'
       )
-      expect(result).not.toContain('data-testid="job-title-input"')
+      expect(result).toContain('data-testid="job-title-input"')
+      expect(result).toContain('data-testid="job-title-hint"')
+      expect(result).toContain('Enter your job title')
       expect(result).not.toContain('data-testid="email-input"')
     })
 
@@ -152,13 +160,14 @@ describe('#submitDeclarationController', () => {
       )
     })
 
-    test('pre-fills full name from session after save-and-come-back', async () => {
+    test('pre-fills full name and job title from session after save-and-come-back', async () => {
       const postResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
+          jobTitle: 'Director',
           submitAction: 'saveAndComeLater'
         }
       })
@@ -175,6 +184,7 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(result).toContain('value="Jane Smith"')
+      expect(result).toContain('value="Director"')
     })
 
     test('returns 200 in Welsh locale', async () => {
@@ -232,6 +242,7 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: '',
+          jobTitle: 'Director',
           submitAction: 'submit'
         }
       })
@@ -241,7 +252,7 @@ describe('#submitDeclarationController', () => {
       expect(result).toContain('data-testid="full-name-error"')
     })
 
-    test('calls submitApplication with only fullName and a 20s timeout, and redirects to confirmation', async () => {
+    test('calls submitApplication with fullName, jobTitle and a 20s timeout, and redirects to confirmation', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'RA-000000001',
         applicationStatus: 'Submitted'
@@ -253,6 +264,7 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
+          jobTitle: 'Director',
           submitAction: 'submit'
         }
       })
@@ -264,13 +276,14 @@ describe('#submitDeclarationController', () => {
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/submit`),
         {
-          fullName: 'Jane Smith'
+          fullName: 'Jane Smith',
+          jobTitle: 'Director'
         },
         { timeout: 20000 }
       )
     })
 
-    test('trims whitespace from fullName before submitting', async () => {
+    test('trims whitespace from fullName and jobTitle before submitting', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'RA-000000001',
         applicationStatus: 'Submitted'
@@ -282,6 +295,7 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: '  Jane Smith  ',
+          jobTitle: '  Director  ',
           submitAction: 'submit'
         }
       })
@@ -289,7 +303,8 @@ describe('#submitDeclarationController', () => {
       expect(postSpy).toHaveBeenCalledWith(
         expect.any(String),
         {
-          fullName: 'Jane Smith'
+          fullName: 'Jane Smith',
+          jobTitle: 'Director'
         },
         { timeout: 20000 }
       )
@@ -305,6 +320,7 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
+          jobTitle: 'Director',
           submitAction: 'submit'
         }
       })
@@ -327,6 +343,7 @@ describe('#submitDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
+          jobTitle: 'Director',
           submitAction: 'submit'
         }
       })

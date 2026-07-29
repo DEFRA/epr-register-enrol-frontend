@@ -327,10 +327,13 @@
       },
       "fullNameLabel": "Rhowch eich enw llawn",
       "fullNameHint": "[Welsh] This is your full name as it appears on this account",
+      "jobTitleLabel": "Rhowch eich teitl swydd",
+      "jobTitleHint": "[Welsh] This is your job title as it appears on this account",
       "submitButton": "[Welsh] Confirm and submit",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "validation": {
         "fullNameRequired": "Rhowch eich enw llawn",
+        "jobTitleRequired": "Rhowch eich teitl swydd",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again."
       }

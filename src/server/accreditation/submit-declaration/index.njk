@@ -60,6 +60,28 @@
                  data-testid="full-name-input">
         </div>
 
+        <div class="govuk-form-group{% if errors.jobTitle %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label govuk-label--s" for="jobTitle">
+            {{ jobTitleLabel }}
+          </label>
+          <div id="jobTitle-hint" class="govuk-hint" data-testid="job-title-hint">
+            {{ jobTitleHint }}
+          </div>
+          {% if errors.jobTitle %}
+            <p id="jobTitle-error" class="govuk-error-message" data-testid="job-title-error">
+              <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.jobTitle.text }}
+            </p>
+          {% endif %}
+          <input class="govuk-input{% if errors.jobTitle %} govuk-input--error{% endif %}"
+                 id="jobTitle"
+                 name="jobTitle"
+                 type="text"
+                 autocomplete="organization-title"
+                 value="{{ jobTitle }}"
+                 aria-describedby="jobTitle-hint{% if errors.jobTitle %} jobTitle-error{% endif %}"
+                 data-testid="job-title-input">
+        </div>
+
         <button type="submit" name="submitAction" value="submit" class="govuk-button" data-module="govuk-button" data-testid="submit-button">
           {{ t('pages.submitDeclaration.submitButton') }}
         </button>

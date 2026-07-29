@@ -330,10 +330,13 @@
       },
       "fullNameLabel": "Enter your full name",
       "fullNameHint": "This is your full name as it appears on this account",
+      "jobTitleLabel": "Enter your job title",
+      "jobTitleHint": "This is your job title as it appears on this account",
       "submitButton": "Confirm and submit",
       "saveAndComeLater": "Save and come back later",
       "validation": {
         "fullNameRequired": "Enter your full name",
+        "jobTitleRequired": "Enter your job title",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "submitError": "Sorry, there was a problem submitting your application. Please try again."
       }

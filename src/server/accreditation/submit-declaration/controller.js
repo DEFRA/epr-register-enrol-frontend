@@ -14,11 +14,16 @@ function renderPage(h, viewData) {
   return h.view('accreditation/submit-declaration/index', viewData)
 }
 
-export function validateDeclaration(fullName, t) {
+export function validateDeclaration(fullName, jobTitle, t) {
   const errors = {}
   if (!fullName?.trim()) {
     errors.fullName = {
       text: t('pages.submitDeclaration.validation.fullNameRequired')
+    }
+  }
+  if (!jobTitle?.trim()) {
+    errors.jobTitle = {
+      text: t('pages.submitDeclaration.validation.jobTitleRequired')
     }
   }
   return errors
@@ -35,7 +40,7 @@ function buildBullets(organisationName, t) {
   ]
 }
 
-function buildViewData(t, applicationId, organisationName, fullName) {
+function buildViewData(t, applicationId, organisationName, fullName, jobTitle) {
   return {
     pageTitle: t('pages.submitDeclaration.title'),
     heading: t('pages.submitDeclaration.heading'),
@@ -43,8 +48,11 @@ function buildViewData(t, applicationId, organisationName, fullName) {
     bullets: buildBullets(organisationName, t),
     fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
     fullNameHint: t('pages.submitDeclaration.fullNameHint'),
+    jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
+    jobTitleHint: t('pages.submitDeclaration.jobTitleHint'),
     backLink: taskListUrl(applicationId),
-    fullName: fullName ?? ''
+    fullName: fullName ?? '',
+    jobTitle: jobTitle ?? ''
   }
 }
 
@@ -80,7 +88,8 @@ export const submitDeclarationGetController = {
         t,
         applicationId,
         application.organisationName ?? '',
-        saved.fullName
+        saved.fullName,
+        saved.jobTitle
       )
     )
   }
@@ -93,11 +102,16 @@ export const submitDeclarationPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId } = request.params
-    const { fullName, submitAction = 'submit' } = request.payload ?? {}
+    const {
+      fullName,
+      jobTitle,
+      submitAction = 'submit'
+    } = request.payload ?? {}
 
     if (submitAction === 'saveAndComeLater') {
       request.yar.set(ACCREDITATION_SESSION_KEYS.declaration, {
-        fullName: fullName ?? ''
+        fullName: fullName ?? '',
+        jobTitle: jobTitle ?? ''
       })
       return h.redirect(taskListUrl(applicationId))
     }
@@ -113,17 +127,23 @@ export const submitDeclarationPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        ...buildViewData(t, applicationId, '', fullName),
+        ...buildViewData(t, applicationId, '', fullName, jobTitle),
         error: t('pages.submitDeclaration.validation.fetchError')
       }).code(500)
     }
 
     const organisationName = application.organisationName ?? ''
-    const errors = validateDeclaration(fullName, t)
+    const errors = validateDeclaration(fullName, jobTitle, t)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
-        ...buildViewData(t, applicationId, organisationName, fullName),
+        ...buildViewData(
+          t,
+          applicationId,
+          organisationName,
+          fullName,
+          jobTitle
+        ),
         errors
       }).code(400)
     }
@@ -134,7 +154,8 @@ export const submitDeclarationPostController = {
         organisationId,
         applicationId,
         {
-          fullName: fullName.trim()
+          fullName: fullName.trim(),
+          jobTitle: jobTitle.trim()
         },
         // Submission can take substantially longer than the default global
         // API timeout while OJ BE hops through to CM BE, so use a longer
@@ -154,7 +175,13 @@ export const submitDeclarationPostController = {
           .code(500)
       }
       return renderPage(h, {
-        ...buildViewData(t, applicationId, organisationName, fullName),
+        ...buildViewData(
+          t,
+          applicationId,
+          organisationName,
+          fullName,
+          jobTitle
+        ),
         error: t('pages.submitDeclaration.validation.submitError')
       }).code(400)
     }
