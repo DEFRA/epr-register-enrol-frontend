@@ -3,13 +3,16 @@ import { accreditationApiService } from '../../../common/helpers/accreditationAp
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import {
   getAddOrsSession,
+  setAddOrsSession,
   clearAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 import { setAddInterimSiteSession } from '../../../common/helpers/addInterimSiteSession.js'
+import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 
 const ADD_INTERIM_SITE_ACTION = 'addInterimSite'
+const DELETE_BASEL_CODE_ACTION = 'deleteBaselCode'
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -47,6 +50,10 @@ function conditionsOfExportUrl(applicationId) {
   return `/accreditation/add-overseas-site/${applicationId}/conditions-of-export`
 }
 
+function cyaUrl(applicationId) {
+  return `/accreditation/add-overseas-site/${applicationId}/check-your-answers`
+}
+
 function renderPage(h, viewData) {
   return h.view(
     'accreditation/add-overseas-site/check-your-answers/index',
@@ -55,15 +62,6 @@ function renderPage(h, viewData) {
 }
 
 function buildRows(t, applicationId, session) {
-  const locationParts = [
-    session.addressLine1,
-    session.addressLine2,
-    session.townOrCity,
-    session.stateOrRegion,
-    session.postcode,
-    session.country
-  ].filter(Boolean)
-
   const rows = [
     {
       key: t('pages.addOverseasSite.cya.rows.siteName'),
@@ -73,7 +71,7 @@ function buildRows(t, applicationId, session) {
     },
     {
       key: t('pages.addOverseasSite.cya.rows.location'),
-      value: locationParts.join(', '),
+      value: formatSiteAddress(session),
       changeUrl: siteLocationUrl(applicationId),
       testId: 'location'
     },
@@ -102,30 +100,16 @@ function buildRows(t, applicationId, session) {
       testId: 'recycling-operation'
     },
     {
-      key: t('pages.addOverseasSite.cya.rows.baselCode1'),
-      value: session.baselConventionCode1 ?? '',
+      key: t('pages.addOverseasSite.cya.rows.baselCodes'),
+      type: 'codeList',
+      codes: (session.baselAndOecdCodes ?? []).map((value, index) => ({
+        value,
+        index
+      })),
       changeUrl: baselCodeUrl(applicationId),
-      testId: 'basel-code-1'
+      testId: 'basel-codes'
     }
   ]
-
-  if (session.baselConventionCode2) {
-    rows.push({
-      key: t('pages.addOverseasSite.cya.rows.baselCode2'),
-      value: session.baselConventionCode2,
-      changeUrl: baselCodeUrl(applicationId),
-      testId: 'basel-code-2'
-    })
-  }
-
-  if (session.baselConventionCode3) {
-    rows.push({
-      key: t('pages.addOverseasSite.cya.rows.baselCode3'),
-      value: session.baselConventionCode3,
-      changeUrl: baselCodeUrl(applicationId),
-      testId: 'basel-code-3'
-    })
-  }
 
   rows.push({
     key: t('pages.addOverseasSite.cya.rows.repatriatedLoads'),
@@ -156,6 +140,8 @@ function buildViewData(t, applicationId, session, error) {
     cancelUrl: selectOrsUrl(applicationId),
     rows: buildRows(t, applicationId, session),
     changeLabel: t('pages.addOverseasSite.cya.changeLink'),
+    removeCodeLabel: t('pages.addOverseasSite.cya.removeCode'),
+    noCodesEnteredLabel: t('pages.addOverseasSite.cya.noCodesEntered'),
     error
   }
 }
@@ -181,9 +167,7 @@ function buildSitePayload(orsId, session) {
     contactEmail: session.siteContactEmail,
     contactPhone: session.siteContactPhone ?? null,
     operationCode: session.recyclingOperationCode,
-    code1: session.baselConventionCode1,
-    code2: session.baselConventionCode2 ?? null,
-    code3: session.baselConventionCode3 ?? null,
+    codes: session.baselAndOecdCodes ?? [],
     repatriatedLoads: session.repatriatedLoads,
     conditionsOfExport: session.conditionsOfExport ?? null
   }
@@ -200,12 +184,27 @@ export const addOrsCyaGetController = {
 
 export const addOrsCyaPostController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const session = getAddOrsSession(request)
+
+    if (request.payload?.action === DELETE_BASEL_CODE_ACTION) {
+      const codeIndex = parseInt(request.payload?.codeIndex, 10)
+      const codes = [...(session.baselAndOecdCodes ?? [])]
+      if (
+        !Number.isNaN(codeIndex) &&
+        codeIndex >= 0 &&
+        codeIndex < codes.length
+      ) {
+        codes.splice(codeIndex, 1)
+        setAddOrsSession(request, { baselAndOecdCodes: codes })
+      }
+      return h.redirect(cyaUrl(applicationId))
+    }
+
+    const { t } = getLocaleAndTranslator(request)
     const organisationId = request.yar.get(
       ACCREDITATION_SESSION_KEYS.organisationId
     )
-    const session = getAddOrsSession(request)
 
     let application
     try {

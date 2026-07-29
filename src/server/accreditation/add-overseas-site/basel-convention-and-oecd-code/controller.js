@@ -3,8 +3,12 @@ import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
+import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 
 const CODE_REGEX = /^(?:[A-Za-z]\d{4}|[A-Za-z]{2}\d{3})$/
+const MAX_CODES = 5
+const GUIDANCE_LINK_URL =
+  'https://www.gov.uk/government/publications/waste-shipments-regulation-wsr-consolidated-waste-list'
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -25,21 +29,46 @@ function renderPage(h, viewData) {
   )
 }
 
-function buildViewData(t, applicationId, fields, errors) {
+function buildViewData(t, applicationId, session, values, errors) {
+  const codes = values.map((value, index) => ({
+    index,
+    value,
+    error: errors[index]
+  }))
+
   return {
     pageTitle: t('pages.addOverseasSite.baselAndOecdCodes.title'),
     heading: t('pages.addOverseasSite.baselAndOecdCodes.heading'),
-    code1Label: t('pages.addOverseasSite.baselAndOecdCodes.code1Label'),
-    code2Label: t('pages.addOverseasSite.baselAndOecdCodes.code2Label'),
-    code3Label: t('pages.addOverseasSite.baselAndOecdCodes.code3Label'),
+    codeLabel: t('pages.addOverseasSite.baselAndOecdCodes.codeLabel'),
     hint: t('pages.addOverseasSite.baselAndOecdCodes.hint'),
+    guidanceLinkUrl: GUIDANCE_LINK_URL,
+    guidanceLinkText: t(
+      'pages.addOverseasSite.baselAndOecdCodes.guidanceLinkText'
+    ),
+    addCodeButtonLabel: t(
+      'pages.addOverseasSite.baselAndOecdCodes.addCodeButton'
+    ),
+    removeCodeButtonLabel: t(
+      'pages.addOverseasSite.baselAndOecdCodes.removeCodeButton'
+    ),
     continueButton: t('pages.addOverseasSite.siteName.continueButton'),
     cancelLink: t('pages.addOverseasSite.siteName.cancelLink'),
     backLink: recyclingOperationUrl(applicationId),
     cancelUrl: selectOrsUrl(applicationId),
-    fields,
+    siteName: session.siteName ?? '',
+    siteAddress: formatSiteAddress(session),
+    codes,
+    visibleCount: values.length,
+    canAddMore: values.length < MAX_CODES,
+    canRemove: values.length > 1,
     errors
   }
+}
+
+function fieldsFromPayload(payload, visibleCount) {
+  return Array.from({ length: visibleCount }, (_, i) =>
+    (payload?.[`code-${i}`] ?? '').trim().toUpperCase()
+  )
 }
 
 export const addOrsBaselCodeGetController = {
@@ -47,12 +76,9 @@ export const addOrsBaselCodeGetController = {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
     const session = getAddOrsSession(request)
-    const fields = {
-      baselConventionCode1: session.baselConventionCode1 ?? '',
-      baselConventionCode2: session.baselConventionCode2 ?? '',
-      baselConventionCode3: session.baselConventionCode3 ?? ''
-    }
-    return renderPage(h, buildViewData(t, applicationId, fields, {}))
+    const codes = session.baselAndOecdCodes ?? []
+    const values = codes.length > 0 ? codes : ['']
+    return renderPage(h, buildViewData(t, applicationId, session, values, {}))
   }
 }
 
@@ -60,55 +86,53 @@ export const addOrsBaselCodePostController = {
   handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const fields = {
-      baselConventionCode1: (request.payload?.baselConventionCode1 ?? '')
-        .trim()
-        .toUpperCase(),
-      baselConventionCode2: (request.payload?.baselConventionCode2 ?? '')
-        .trim()
-        .toUpperCase(),
-      baselConventionCode3: (request.payload?.baselConventionCode3 ?? '')
-        .trim()
-        .toUpperCase()
+    const session = getAddOrsSession(request)
+    const action = request.payload?.action ?? 'continue'
+    const rawVisibleCount = parseInt(request.payload?.visibleCount, 10)
+    const visibleCount = Number.isNaN(rawVisibleCount) ? 1 : rawVisibleCount
+    const values = fieldsFromPayload(request.payload, visibleCount)
+
+    if (action === 'addCode') {
+      const newValues = [...values]
+      if (newValues.length < MAX_CODES) {
+        newValues.push('')
+      }
+      return renderPage(
+        h,
+        buildViewData(t, applicationId, session, newValues, {})
+      )
     }
+
+    if (action.startsWith('removeCode-')) {
+      const removeIndex = parseInt(action.replace('removeCode-', ''), 10)
+      const newValues = values.filter((_, i) => i !== removeIndex)
+      if (newValues.length === 0) {
+        newValues.push('')
+      }
+      return renderPage(
+        h,
+        buildViewData(t, applicationId, session, newValues, {})
+      )
+    }
+
     const errors = {}
-
-    if (!fields.baselConventionCode1) {
-      errors.baselConventionCode1 = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.code1Required'
-      )
-    } else if (!CODE_REGEX.test(fields.baselConventionCode1)) {
-      errors.baselConventionCode1 = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
-      )
-    }
-
-    if (
-      fields.baselConventionCode2 &&
-      !CODE_REGEX.test(fields.baselConventionCode2)
-    ) {
-      errors.baselConventionCode2 = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
-      )
-    }
-
-    if (
-      fields.baselConventionCode3 &&
-      !CODE_REGEX.test(fields.baselConventionCode3)
-    ) {
-      errors.baselConventionCode3 = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
-      )
-    }
+    values.forEach((value, index) => {
+      if (value && !CODE_REGEX.test(value)) {
+        errors[index] = t(
+          'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
+        )
+      }
+    })
 
     if (Object.keys(errors).length > 0) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, fields, errors)
+        buildViewData(t, applicationId, session, values, errors)
       ).code(400)
     }
 
-    setAddOrsSession(request, fields)
+    const baselAndOecdCodes = values.filter(Boolean)
+    setAddOrsSession(request, { baselAndOecdCodes })
     return h.redirect(repatriatedLoadsUrl(applicationId))
   }
 }
