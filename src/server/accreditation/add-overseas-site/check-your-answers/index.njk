@@ -30,8 +30,7 @@
                         <span data-testid="code-value-{{ code.index }}">{{ code.value }}</span>
                         <form method="post" style="display:inline" data-testid="delete-code-form-{{ code.index }}">
                           <input type="hidden" name="crumb" value="{{ crumb }}">
-                          <input type="hidden" name="codeIndex" value="{{ code.index }}">
-                          <button type="submit" name="action" value="deleteBaselCode"
+                          <button type="submit" name="action" value="deleteBaselCode-{{ code.index }}"
                                   class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
                                   data-testid="delete-code-{{ code.index }}">
                             {{ removeCodeLabel }}<span class="govuk-visually-hidden"> {{ code.value }}</span>

@@ -282,7 +282,7 @@ describe('#addOrsCyaController', () => {
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
-        payload: 'action=deleteBaselCode&codeIndex=1'
+        payload: 'action=deleteBaselCode-1'
       })
 
       expect(deleteResponse.statusCode).toBe(statusCodes.redirect)

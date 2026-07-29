@@ -12,7 +12,7 @@ import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 
 const ADD_INTERIM_SITE_ACTION = 'addInterimSite'
-const DELETE_BASEL_CODE_ACTION = 'deleteBaselCode'
+const DELETE_BASEL_CODE_ACTION_PREFIX = 'deleteBaselCode-'
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -186,9 +186,13 @@ export const addOrsCyaPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
     const session = getAddOrsSession(request)
+    const action = request.payload?.action ?? ''
 
-    if (request.payload?.action === DELETE_BASEL_CODE_ACTION) {
-      const codeIndex = parseInt(request.payload?.codeIndex, 10)
+    if (action.startsWith(DELETE_BASEL_CODE_ACTION_PREFIX)) {
+      const codeIndex = parseInt(
+        action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
+        10
+      )
       const codes = [...(session.baselAndOecdCodes ?? [])]
       if (
         !Number.isNaN(codeIndex) &&
