@@ -118,7 +118,11 @@ export const submitDeclarationPostController = {
           fullName: fullName.trim(),
           jobTitle: jobTitle.trim(),
           email: email.trim()
-        }
+        },
+        // Submission can take substantially longer than the default global
+        // API timeout while OJ BE hops through to CM BE, so use a longer
+        // per-call timeout specifically for this request.
+        { timeout: 20000 }
       )
     } catch (err) {
       request.server.logger.error(

@@ -339,7 +339,8 @@ describe('#submitDeclarationController', () => {
           fullName: 'Jane Smith',
           jobTitle: 'Senior Manager',
           email: 'jane@example.com'
-        }
+        },
+        { timeout: 20000 }
       )
     })
 
@@ -361,11 +362,15 @@ describe('#submitDeclarationController', () => {
         }
       })
 
-      expect(postSpy).toHaveBeenCalledWith(expect.any(String), {
-        fullName: 'Jane Smith',
-        jobTitle: 'Senior Manager',
-        email: 'jane@example.com'
-      })
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          fullName: 'Jane Smith',
+          jobTitle: 'Senior Manager',
+          email: 'jane@example.com'
+        },
+        { timeout: 20000 }
+      )
     })
 
     test('returns 500 service-problem page when submitApplication API fails with server error', async () => {

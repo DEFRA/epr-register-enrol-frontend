@@ -289,7 +289,21 @@ describe('accreditationApiService', () => {
       await accreditationApiService.submitApplication(ORG_ID, APP_ID, body)
       expect(apiClient.post).toHaveBeenCalledWith(
         `${BASE}/${ORG_ID}/${APP_ID}/submit`,
-        body
+        body,
+        undefined
+      )
+    })
+
+    test('passes through per-call options (e.g. timeout override) to apiClient.post', async () => {
+      apiClient.post.mockResolvedValue({ ApplicationId: APP_ID })
+      const body = { FullName: 'Jane', JobTitle: 'Manager', Email: 'j@e.com' }
+      await accreditationApiService.submitApplication(ORG_ID, APP_ID, body, {
+        timeout: 20000
+      })
+      expect(apiClient.post).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/submit`,
+        body,
+        { timeout: 20000 }
       )
     })
   })
