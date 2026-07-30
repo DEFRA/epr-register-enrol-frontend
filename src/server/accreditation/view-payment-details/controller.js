@@ -40,7 +40,7 @@ function resolveNation(application) {
   return resolveNationFromPostcode(application.sitePostcode)
 }
 
-const ORS_FEE = 346
+const ORS_FEE = 328
 
 const TONNAGE_FEES = {
   UpTo500: 546,
