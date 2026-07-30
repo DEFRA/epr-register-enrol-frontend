@@ -19,7 +19,7 @@
 {% macro regulatorQueryBanner(params) %}
   {% if params.queryNote %}
     <div class="regulator-query-banner" data-testid="regulator-query-banner">
-      <h1 class="govuk-heading-l" data-testid="regulator-query-heading">{{ params.heading | default('Regulator query') }}</h1>
+      <h2 class="govuk-heading-m" data-testid="regulator-query-heading">{{ params.heading | default('Regulator query') }}</h2>
 
       {% if params.summary %}
         <p class="govuk-body" data-testid="regulator-query-summary">{{ params.summary }}</p>

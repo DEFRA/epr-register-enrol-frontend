@@ -252,7 +252,25 @@ describe('#submitDeclarationController', () => {
       expect(result).toContain('data-testid="full-name-error"')
     })
 
-    test('calls submitApplication with fullName, jobTitle and a 20s timeout, and redirects to confirmation', async () => {
+    test('returns 400 with error when jobTitle is missing', async () => {
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: '',
+          submitAction: 'submit'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('data-testid="job-title-error"')
+      expect(result).toContain('href="#jobTitle"')
+    })
+
+    test('calls submitApplication with fullName, jobTitle, the authenticated operator email and a 20s timeout, and redirects to confirmation', async () => {
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'RA-000000001',
         applicationStatus: 'Submitted'
@@ -277,7 +295,8 @@ describe('#submitDeclarationController', () => {
         expect.stringContaining(`${APPLICATION_ID}/submit`),
         {
           fullName: 'Jane Smith',
-          jobTitle: 'Director'
+          jobTitle: 'Director',
+          email: 'operator@test.example'
         },
         { timeout: 20000 }
       )
@@ -304,7 +323,8 @@ describe('#submitDeclarationController', () => {
         expect.any(String),
         {
           fullName: 'Jane Smith',
-          jobTitle: 'Director'
+          jobTitle: 'Director',
+          email: 'operator@test.example'
         },
         { timeout: 20000 }
       )

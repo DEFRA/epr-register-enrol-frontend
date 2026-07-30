@@ -18,6 +18,9 @@
                   {% if errors.fullName %}
                     <li><a href="#fullName">{{ errors.fullName.text }}</a></li>
                   {% endif %}
+                  {% if errors.jobTitle %}
+                    <li><a href="#jobTitle">{{ errors.jobTitle.text }}</a></li>
+                  {% endif %}
                 </ul>
               {% endif %}
             </div>

@@ -155,7 +155,8 @@ export const submitDeclarationPostController = {
         applicationId,
         {
           fullName: fullName.trim(),
-          jobTitle: jobTitle.trim()
+          jobTitle: jobTitle.trim(),
+          email: request.auth.credentials.email
         },
         // Submission can take substantially longer than the default global
         // API timeout while OJ BE hops through to CM BE, so use a longer
