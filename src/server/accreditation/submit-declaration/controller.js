@@ -14,9 +14,7 @@ function renderPage(h, viewData) {
   return h.view('accreditation/submit-declaration/index', viewData)
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-export function validateDeclaration(fullName, jobTitle, email, t) {
+export function validateDeclaration(fullName, jobTitle, t) {
   const errors = {}
   if (!fullName?.trim()) {
     errors.fullName = {
@@ -28,39 +26,72 @@ export function validateDeclaration(fullName, jobTitle, email, t) {
       text: t('pages.submitDeclaration.validation.jobTitleRequired')
     }
   }
-  if (!email?.trim()) {
-    errors.email = {
-      text: t('pages.submitDeclaration.validation.emailRequired')
-    }
-  } else if (!EMAIL_REGEX.test(email.trim())) {
-    errors.email = {
-      text: t('pages.submitDeclaration.validation.emailInvalid')
-    }
-  }
   return errors
+}
+
+function buildBullets(organisationName, t) {
+  return [
+    t('pages.submitDeclaration.bullets.eligiblePerson').replace(
+      '{organisationName}',
+      organisationName
+    ),
+    t('pages.submitDeclaration.bullets.accurateInformation'),
+    t('pages.submitDeclaration.bullets.enforcementAction')
+  ]
+}
+
+function buildViewData(t, applicationId, organisationName, fullName, jobTitle) {
+  return {
+    pageTitle: t('pages.submitDeclaration.title'),
+    heading: t('pages.submitDeclaration.heading'),
+    declarationIntro: t('pages.submitDeclaration.declarationIntro'),
+    bullets: buildBullets(organisationName, t),
+    fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
+    fullNameHint: t('pages.submitDeclaration.fullNameHint'),
+    jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
+    jobTitleHint: t('pages.submitDeclaration.jobTitleHint'),
+    backLink: taskListUrl(applicationId),
+    fullName: fullName ?? '',
+    jobTitle: jobTitle ?? ''
+  }
 }
 
 export const submitDeclarationGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
     const { applicationId } = request.params
+
+    let application
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId}: ${err.message}`
+      )
+      return renderPage(h, {
+        ...buildViewData(t, applicationId, ''),
+        error: t('pages.submitDeclaration.validation.fetchError')
+      }).code(500)
+    }
 
     const saved = request.yar.get(ACCREDITATION_SESSION_KEYS.declaration) ?? {}
 
-    return renderPage(h, {
-      pageTitle: t('pages.submitDeclaration.title'),
-      heading: t('pages.submitDeclaration.heading'),
-      declarationSubHeading: t('pages.submitDeclaration.declarationSubHeading'),
-      declarationText: t('pages.submitDeclaration.declarationText'),
-      warningText: t('pages.submitDeclaration.warningText'),
-      fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
-      jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
-      emailLabel: t('pages.submitDeclaration.emailLabel'),
-      backLink: taskListUrl(applicationId),
-      fullName: saved.fullName ?? '',
-      jobTitle: saved.jobTitle ?? '',
-      email: saved.email ?? ''
-    })
+    return renderPage(
+      h,
+      buildViewData(
+        t,
+        applicationId,
+        application.organisationName ?? '',
+        saved.fullName,
+        saved.jobTitle
+      )
+    )
   }
 }
 
@@ -74,37 +105,45 @@ export const submitDeclarationPostController = {
     const {
       fullName,
       jobTitle,
-      email,
       submitAction = 'submit'
     } = request.payload ?? {}
 
     if (submitAction === 'saveAndComeLater') {
       request.yar.set(ACCREDITATION_SESSION_KEYS.declaration, {
         fullName: fullName ?? '',
-        jobTitle: jobTitle ?? '',
-        email: email ?? ''
+        jobTitle: jobTitle ?? ''
       })
       return h.redirect(taskListUrl(applicationId))
     }
 
-    const errors = validateDeclaration(fullName, jobTitle, email, t)
+    let application
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId}: ${err.message}`
+      )
+      return renderPage(h, {
+        ...buildViewData(t, applicationId, '', fullName, jobTitle),
+        error: t('pages.submitDeclaration.validation.fetchError')
+      }).code(500)
+    }
+
+    const organisationName = application.organisationName ?? ''
+    const errors = validateDeclaration(fullName, jobTitle, t)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
-        pageTitle: t('pages.submitDeclaration.title'),
-        heading: t('pages.submitDeclaration.heading'),
-        declarationSubHeading: t(
-          'pages.submitDeclaration.declarationSubHeading'
+        ...buildViewData(
+          t,
+          applicationId,
+          organisationName,
+          fullName,
+          jobTitle
         ),
-        declarationText: t('pages.submitDeclaration.declarationText'),
-        warningText: t('pages.submitDeclaration.warningText'),
-        fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
-        jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
-        emailLabel: t('pages.submitDeclaration.emailLabel'),
-        backLink: taskListUrl(applicationId),
-        fullName: fullName ?? '',
-        jobTitle: jobTitle ?? '',
-        email: email ?? '',
         errors
       }).code(400)
     }
@@ -117,8 +156,12 @@ export const submitDeclarationPostController = {
         {
           fullName: fullName.trim(),
           jobTitle: jobTitle.trim(),
-          email: email.trim()
-        }
+          email: request.auth.credentials.email
+        },
+        // Submission can take substantially longer than the default global
+        // API timeout while OJ BE hops through to CM BE, so use a longer
+        // per-call timeout specifically for this request.
+        { timeout: 20000 }
       )
     } catch (err) {
       request.server.logger.error(
@@ -133,20 +176,13 @@ export const submitDeclarationPostController = {
           .code(500)
       }
       return renderPage(h, {
-        pageTitle: t('pages.submitDeclaration.title'),
-        heading: t('pages.submitDeclaration.heading'),
-        declarationSubHeading: t(
-          'pages.submitDeclaration.declarationSubHeading'
+        ...buildViewData(
+          t,
+          applicationId,
+          organisationName,
+          fullName,
+          jobTitle
         ),
-        declarationText: t('pages.submitDeclaration.declarationText'),
-        warningText: t('pages.submitDeclaration.warningText'),
-        fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
-        jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
-        emailLabel: t('pages.submitDeclaration.emailLabel'),
-        backLink: taskListUrl(applicationId),
-        fullName: fullName ?? '',
-        jobTitle: jobTitle ?? '',
-        email: email ?? '',
         error: t('pages.submitDeclaration.validation.submitError')
       }).code(400)
     }

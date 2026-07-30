@@ -320,21 +320,23 @@
       }
     },
     "submitDeclaration": {
-      "title": "Submit accreditation application",
-      "heading": "Submit accreditation application",
-      "declarationSubHeading": "Declaration",
-      "declarationText": "By entering your name and submitting your application, you confirm that the information you have provided is accurate.",
-      "warningText": "Your organisation may face enforcement action if the data is inaccurate.",
+      "title": "Declaration",
+      "heading": "Declaration",
+      "declarationIntro": "By entering your name and submitting this application, you are verifying:",
+      "bullets": {
+        "eligiblePerson": "you are an approved person or delegated person who is eligible to submit this application on behalf of {organisationName}",
+        "accurateInformation": "the information you are submitting is accurate",
+        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
+      },
       "fullNameLabel": "Enter your full name",
+      "fullNameHint": "This is your full name as it appears on this account",
       "jobTitleLabel": "Enter your job title",
-      "emailLabel": "Enter your email address",
-      "submitButton": "Submit application",
+      "jobTitleHint": "This is your job title as it appears on this account",
+      "submitButton": "Confirm and submit",
       "saveAndComeLater": "Save and come back later",
       "validation": {
         "fullNameRequired": "Enter your full name",
         "jobTitleRequired": "Enter your job title",
-        "emailRequired": "Enter your email address",
-        "emailInvalid": "Enter an email address in the correct format, like name@example.com",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "submitError": "Sorry, there was a problem submitting your application. Please try again."
       }
@@ -405,7 +407,6 @@
     "queryTaskList": {
       "title": "Respond to query",
       "heading": "The regulator has queried this accreditation application",
-      "queryNoteHeading": "Query details",
       "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
       "continueButton": "Continue to resubmit"
     },
@@ -413,8 +414,12 @@
       "title": "Resubmit accreditation application",
       "heading": "Resubmit accreditation application",
       "declarationSubHeading": "Declaration",
-      "declarationText": "By entering your name and resubmitting your application, you confirm that the information you have provided in response to the query is accurate.",
-      "warningText": "Your organisation may face enforcement action if the data is inaccurate.",
+      "declarationIntro": "By entering your name and resubmitting this application, you are verifying:",
+      "bullets": {
+        "eligiblePerson": "you are an approved person or delegated person who is eligible to respond to this query on behalf of {organisationName}",
+        "accurateInformation": "the information you are submitting in response to the query is accurate",
+        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
+      },
       "fullNameLabel": "Enter your full name",
       "emailLabel": "Enter your email address",
       "roleLabel": "Enter your job title",
@@ -876,9 +881,24 @@
     "warning": "Warning",
     "opensInNewTab": "(opens in new tab)",
     "queryNoteLabel": "Query from the regulator",
+    "declarationWarningText": "Your organisation may face enforcement action if the data is inaccurate.",
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
       "tryAgain": "Try again"
+    },
+    "regulatorQuery": {
+      "heading": "Regulator query",
+      "summaryPrefix": "The regulator has identified an issue with your",
+      "updateHeading": "Update the application",
+      "changeLink": "Change",
+      "sectionLabels": {
+        "prns": "tonnage and authority to issue PRNs",
+        "perns": "tonnage and authority to issue PERNs",
+        "businessPlan": "business plan",
+        "samplingPlan": "sampling and inspection plan",
+        "overseasSites": "overseas reprocessing sites",
+        "besEvidence": "evidence of broadly equivalent standards (BES)"
+      }
     }
   },
   "languageSwitcher": {

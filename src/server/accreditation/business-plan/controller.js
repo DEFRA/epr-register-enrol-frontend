@@ -3,6 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
+import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
 
 export const BUSINESS_PLAN_FIELDS = [
   'newInfrastructurePercent',
@@ -105,7 +106,9 @@ function buildViewData(
   payload,
   errors,
   isExporter = false,
-  queryNote = null
+  queryNote = null,
+  querySummary = null,
+  regulatorQueryFields = null
 ) {
   return {
     pageTitle: t('pages.businessPlan.title'),
@@ -118,7 +121,9 @@ function buildViewData(
     fieldInputs: buildFieldInputs(payload, errors, t),
     errors,
     sumError: errors._sum,
-    queryNote
+    queryNote,
+    querySummary,
+    regulatorQueryFields
   }
 }
 
@@ -180,7 +185,16 @@ export const businessPlanGetController = {
         payloadFromApplication(application),
         {},
         isExporter,
+        queryNote,
+        queryNote ? buildRegulatorQuerySummary('businessPlan', t) : null,
         queryNote
+          ? [
+              {
+                label: t('pages.taskList.tasks.businessPlan'),
+                href: '#newInfrastructurePercent'
+              }
+            ]
+          : null
       )
     )
   }

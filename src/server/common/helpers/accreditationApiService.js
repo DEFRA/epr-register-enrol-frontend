@@ -270,9 +270,13 @@ export const accreditationApiService = {
     )
   },
 
-  submitApplication(organisationId, applicationId, body) {
+  submitApplication(organisationId, applicationId, body, options) {
     return call(() =>
-      apiClient.post(`${appBase(organisationId, applicationId)}/submit`, body)
+      apiClient.post(
+        `${appBase(organisationId, applicationId)}/submit`,
+        body,
+        options
+      )
     )
   },
 
