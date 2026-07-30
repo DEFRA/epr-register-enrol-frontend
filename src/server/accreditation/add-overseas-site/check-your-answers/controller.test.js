@@ -230,6 +230,55 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
+    test('maps entered codes onto code1/code2/code3 for the backend, filling gaps with null', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
+
+      const baselCodePostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC010'
+      })
+      const sessionCookie = baselCodePostResponse.headers['set-cookie']
+        ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
+            ? baselCodePostResponse.headers['set-cookie'][0]
+            : baselCodePostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        expect.objectContaining({
+          code1: 'A1181',
+          code2: 'GC010',
+          code3: null
+        })
+      )
+    })
+
     test('explicit action=confirm redirects to select-overseas-sites (same as default)', async () => {
       vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
         makeApplication([])

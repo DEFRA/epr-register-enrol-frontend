@@ -210,18 +210,18 @@ describe('#addOrsBaselCodeController', () => {
       expect(result).toContain('data-testid="basel-code-2-input"')
     })
 
-    test('addCode is capped at 5 visible inputs', async () => {
+    test('addCode is capped at 3 visible inputs', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
         payload:
-          'action=addCode&visibleCount=5&code-0=A1181&code-1=A1181&code-2=A1181&code-3=A1181&code-4=A1181'
+          'action=addCode&visibleCount=3&code-0=A1181&code-1=A1181&code-2=A1181'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toContain('data-testid="add-code-button"')
-      expect(result).not.toContain('data-testid="basel-code-6-input"')
+      expect(result).not.toContain('data-testid="basel-code-4-input"')
     })
 
     test('removeCode-N drops that entry and preserves the rest', async () => {

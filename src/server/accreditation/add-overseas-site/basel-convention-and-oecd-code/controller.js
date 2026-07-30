@@ -6,7 +6,7 @@ import {
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 
 const CODE_REGEX = /^(?:[A-Za-z]\d{4}|[A-Za-z]{2}\d{3})$/
-const MAX_CODES = 5
+const MAX_CODES = 3
 const GUIDANCE_LINK_URL =
   'https://www.gov.uk/government/publications/waste-shipments-regulation-wsr-consolidated-waste-list'
 

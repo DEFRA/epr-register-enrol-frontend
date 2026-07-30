@@ -155,6 +155,7 @@ function nextOrsId(sites) {
 }
 
 function buildSitePayload(orsId, session) {
+  const codes = session.baselAndOecdCodes ?? []
   return {
     orsId,
     siteName: session.siteName,
@@ -167,7 +168,9 @@ function buildSitePayload(orsId, session) {
     contactEmail: session.siteContactEmail,
     contactPhone: session.siteContactPhone ?? null,
     operationCode: session.recyclingOperationCode,
-    codes: session.baselAndOecdCodes ?? [],
+    code1: codes[0] ?? null,
+    code2: codes[1] ?? null,
+    code3: codes[2] ?? null,
     repatriatedLoads: session.repatriatedLoads,
     conditionsOfExport: session.conditionsOfExport ?? null
   }
