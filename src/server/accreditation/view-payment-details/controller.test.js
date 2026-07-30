@@ -169,10 +169,10 @@ describe('#viewPaymentDetailsController', () => {
         headers: operatorHeaders
       })
 
-      // 2 sites x £346 = £692
-      expect(result).toContain('£692.00 for 2 Overseas Sites')
-      // total = £546 (tonnage) + £692 (overseas sites) = £1,238
-      expect(result).toContain('£1,238.00')
+      // 2 sites x £328 = £656
+      expect(result).toContain('£656.00 for 2 Overseas Sites')
+      // total = £546 (tonnage) + £656 (overseas sites) = £1,202
+      expect(result).toContain('£1,202.00')
     })
 
     test('counts only selected !== false sites when calculating the ORS fee', async () => {
@@ -196,9 +196,9 @@ describe('#viewPaymentDetailsController', () => {
         headers: operatorHeaders
       })
 
-      // 2 selected sites x £346 = £692; total = £546 + £692 = £1,238
-      expect(result).toContain('£692.00 for 2 Overseas Sites')
-      expect(result).toContain('£1,238.00')
+      // 2 selected sites x £328 = £656; total = £546 + £656 = £1,202
+      expect(result).toContain('£656.00 for 2 Overseas Sites')
+      expect(result).toContain('£1,202.00')
       expect(result).not.toContain('3 Overseas Sites')
     })
 
