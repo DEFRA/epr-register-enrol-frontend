@@ -385,3 +385,5 @@ information providers in the public sector to license the use and re-use of thei
 licence.
 
 It is designed to encourage use and re-use of information freely and flexibly, with only a few conditions.
+
+_Re-triggering CI to check for run-to-run flakiness in the E2E journey suite (RA-293 investigation)._
