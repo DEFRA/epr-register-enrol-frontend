@@ -296,6 +296,32 @@ describe('#addOrsBaselCodeController', () => {
       expect(result).toContain('GC010')
     })
 
+    test('clamps a spoofed visibleCount server-side, ignoring codes beyond MAX_CODES', async () => {
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'action=continue&visibleCount=10&code-0=A1181&code-1=GC010&code-2=B3011&code-3=Y1010&code-4=Y2020'
+      })
+
+      expect(postResponse.statusCode).toBe(statusCodes.redirect)
+      expect(postResponse.headers.location).toBe(NEXT_URL)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+      })
+
+      expect(result).toContain('value="A1181"')
+      expect(result).toContain('value="GC010"')
+      expect(result).toContain('value="B3011"')
+      expect(result).not.toContain('value="Y1010"')
+      expect(result).not.toContain('value="Y2020"')
+      expect(result).not.toContain('data-testid="basel-code-4-input"')
+    })
+
     test('leaving all codes blank is allowed and continues the journey', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',

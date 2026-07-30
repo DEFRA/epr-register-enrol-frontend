@@ -89,7 +89,10 @@ export const addOrsBaselCodePostController = {
     const session = getAddOrsSession(request)
     const action = request.payload?.action ?? 'continue'
     const rawVisibleCount = parseInt(request.payload?.visibleCount, 10)
-    const visibleCount = Number.isNaN(rawVisibleCount) ? 1 : rawVisibleCount
+    const visibleCount = Math.min(
+      Math.max(Number.isNaN(rawVisibleCount) ? 1 : rawVisibleCount, 1),
+      MAX_CODES
+    )
     const values = fieldsFromPayload(request.payload, visibleCount)
 
     if (action === 'addCode') {
