@@ -20,3 +20,6 @@ tsconfig.tsbuildinfo
 
 # beads issue tracker local store
 .beads/
+
+# Local implementation notes
+RA-311_submit_declaration_fix.md

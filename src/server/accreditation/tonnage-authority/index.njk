@@ -6,6 +6,12 @@
 
       <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
 
+      {{ regulatorQueryBanner({
+        queryNote: queryNote,
+        heading: t('common.regulatorQuery.heading'),
+        summary: querySummary
+      }) }}
+
       {% if error or errors or addErrors %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
           <div role="alert">

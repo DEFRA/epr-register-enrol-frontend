@@ -317,21 +317,23 @@
       }
     },
     "submitDeclaration": {
-      "title": "[Welsh] Submit accreditation application",
-      "heading": "[Welsh] Submit accreditation application",
-      "declarationSubHeading": "[Welsh] Declaration",
-      "declarationText": "[Welsh] By entering your name and submitting your application, you confirm that the information you have provided is accurate.",
-      "warningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
+      "title": "[Welsh] Declaration",
+      "heading": "[Welsh] Declaration",
+      "declarationIntro": "[Welsh] By entering your name and submitting this application, you are verifying:",
+      "bullets": {
+        "eligiblePerson": "[Welsh] you are an approved person or delegated person who is eligible to submit this application on behalf of {organisationName}",
+        "accurateInformation": "[Welsh] the information you are submitting is accurate",
+        "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading data"
+      },
       "fullNameLabel": "Rhowch eich enw llawn",
-      "jobTitleLabel": "[Welsh] Enter your job title",
-      "emailLabel": "[Welsh] Enter your email address",
-      "submitButton": "[Welsh] Submit application",
+      "fullNameHint": "[Welsh] This is your full name as it appears on this account",
+      "jobTitleLabel": "Rhowch eich teitl swydd",
+      "jobTitleHint": "[Welsh] This is your job title as it appears on this account",
+      "submitButton": "[Welsh] Confirm and submit",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "validation": {
         "fullNameRequired": "Rhowch eich enw llawn",
-        "jobTitleRequired": "[Welsh] Enter your job title",
-        "emailRequired": "[Welsh] Enter your email address",
-        "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
+        "jobTitleRequired": "Rhowch eich teitl swydd",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again."
       }
@@ -402,7 +404,6 @@
     "queryTaskList": {
       "title": "[Welsh] Respond to query",
       "heading": "[Welsh] The regulator has queried this accreditation application",
-      "queryNoteHeading": "[Welsh] Query details",
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "continueButton": "[Welsh] Continue to resubmit"
     },
@@ -410,8 +411,12 @@
       "title": "[Welsh] Resubmit accreditation application",
       "heading": "[Welsh] Resubmit accreditation application",
       "declarationSubHeading": "[Welsh] Declaration",
-      "declarationText": "[Welsh] By entering your name and resubmitting your application, you confirm that the information you have provided in response to the query is accurate.",
-      "warningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
+      "declarationIntro": "[Welsh] By entering your name and resubmitting this application, you are verifying:",
+      "bullets": {
+        "eligiblePerson": "[Welsh] you are an approved person or delegated person who is eligible to respond to this query on behalf of {organisationName}",
+        "accurateInformation": "[Welsh] the information you are submitting in response to the query is accurate",
+        "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading data"
+      },
       "fullNameLabel": "Rhowch eich enw llawn",
       "emailLabel": "[Welsh] Enter your email address",
       "roleLabel": "[Welsh] Enter your job title",
@@ -872,6 +877,21 @@
     "error": "Gwall",
     "warning": "Rhybudd",
     "queryNoteLabel": "[Welsh] Query from the regulator",
+    "declarationWarningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
+    "regulatorQuery": {
+      "heading": "[Welsh] Regulator query",
+      "summaryPrefix": "[Welsh] The regulator has identified an issue with your",
+      "updateHeading": "[Welsh] Update the application",
+      "changeLink": "[Welsh] Change",
+      "sectionLabels": {
+        "prns": "[Welsh] tonnage and authority to issue PRNs",
+        "perns": "[Welsh] tonnage and authority to issue PERNs",
+        "businessPlan": "[Welsh] business plan",
+        "samplingPlan": "[Welsh] sampling and inspection plan",
+        "overseasSites": "[Welsh] overseas reprocessing sites",
+        "besEvidence": "[Welsh] evidence of broadly equivalent standards (BES)"
+      }
+    },
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",
       "tryAgain": "Trio eto"

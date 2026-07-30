@@ -16,6 +16,7 @@ export function createApiClient() {
    * @param {string} options.method - HTTP method (GET, POST, PUT, DELETE, etc.)
    * @param {Object} options.headers - Additional headers to send
    * @param {*} options.body - Request body (will be JSON stringified if object)
+   * @param {number} [options.timeout] - Per-call timeout in ms, overriding the configured api.timeout default
    * @returns {Promise<Object>} The parsed JSON response
    * @throws {Error} If the request fails or response is not OK
    */
@@ -24,8 +25,11 @@ export function createApiClient() {
       method = 'GET',
       headers = {},
       body = null,
+      timeout: requestTimeout,
       ...otherOptions
     } = options
+
+    const effectiveTimeout = requestTimeout ?? timeout
 
     const url = new URL(endpoint, baseUrl).toString()
 
@@ -35,7 +39,7 @@ export function createApiClient() {
         'Content-Type': 'application/json',
         ...headers
       },
-      signal: AbortSignal.timeout(timeout),
+      signal: AbortSignal.timeout(effectiveTimeout),
       ...otherOptions
     }
 
@@ -59,8 +63,8 @@ export function createApiClient() {
 
       return await response.json()
     } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new Error(`API request timeout after ${timeout}ms`)
+      if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+        throw new Error(`API request timeout after ${effectiveTimeout}ms`)
       }
       throw error
     }

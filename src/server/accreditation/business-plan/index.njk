@@ -6,12 +6,14 @@
 
       <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('common.back') }}</a>
 
-      {% if queryNote %}
-        <div class="govuk-inset-text" data-testid="query-note">
-          <p class="govuk-body govuk-!-font-weight-bold">{{ t('common.queryNoteLabel') }}</p>
-          <p class="govuk-body">{{ queryNote }}</p>
-        </div>
-      {% endif %}
+      {{ regulatorQueryBanner({
+        queryNote: queryNote,
+        heading: t('common.regulatorQuery.heading'),
+        summary: querySummary,
+        updateHeading: t('common.regulatorQuery.updateHeading'),
+        changeLinkText: t('common.regulatorQuery.changeLink'),
+        fields: regulatorQueryFields
+      }) }}
 
       {% if error %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">

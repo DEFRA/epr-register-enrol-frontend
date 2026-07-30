@@ -74,7 +74,7 @@ describe('#buildQueryTaskListViewModel', () => {
     expect(vm.queryNote).toBeNull()
   })
 
-  test('continueUrl points to query-declaration', () => {
+  test('continueUrl points directly to query-declaration', () => {
     const vm = buildQueryTaskListViewModel(makeApplication(), t)
     expect(vm.continueUrl).toBe(
       `/accreditation/query-declaration/${APPLICATION_ID}`
@@ -134,8 +134,23 @@ describe('#queryTaskListGetController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('data-testid="task-business-plan"')
+    expect(result).toContain('data-testid="regulator-query-banner"')
     expect(result).toContain(
       'Please provide more detail on your business plan.'
+    )
+  })
+
+  test('continue button links directly to query-declaration', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain(
+      `href="/accreditation/query-declaration/${APPLICATION_ID}"`
     )
   })
 

@@ -59,6 +59,12 @@ describe('#submitConfirmationController', () => {
 
   async function getSessionCookieWithReference(reference = 'RA-000000001') {
     // Use the submit-declaration POST to seed the session with an accreditationReference
+    // submit-declaration's POST handler fetches the application (for the
+    // organisation name shown in its declaration copy) before submitting.
+    // Queue one successful response for that internal call so it doesn't
+    // consume/clash with whatever apiClient.get mock the calling test has
+    // set up for the confirmation page itself.
+    vi.spyOn(apiClient, 'get').mockResolvedValueOnce(makeApplication())
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
       accreditationReference: reference,
       applicationStatus: 'Submitted'
@@ -70,8 +76,7 @@ describe('#submitConfirmationController', () => {
       headers: operatorHeaders,
       payload: {
         fullName: 'Jane Smith',
-        jobTitle: 'Manager',
-        email: 'jane@example.com',
+        jobTitle: 'Director',
         submitAction: 'submit'
       }
     })
