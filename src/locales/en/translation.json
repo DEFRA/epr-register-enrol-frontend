@@ -717,12 +717,12 @@
       "baselAndOecdCodes": {
         "title": "Basel Convention and OECD code — Add overseas reprocessing site",
         "heading": "What are the Basel Convention and OECD codes for the waste?",
-        "code1Label": "Code 1",
-        "code2Label": "Code 2 (optional)",
-        "code3Label": "Code 3 (optional)",
+        "codeLabel": "Code",
         "hint": "Basel codes start with one letter followed by 4 digits, for example A1181. OECD codes start with two letters followed by 3 digits, for example GC010.",
+        "guidanceLinkText": "Check the Consolidated waste list for the correct code",
+        "addCodeButton": "Add another code",
+        "removeCodeButton": "Remove",
         "validation": {
-          "code1Required": "Enter at least one Basel Convention or OECD code",
           "codeInvalid": "Enter a valid Basel Convention or OECD code"
         },
         "continueButton": "Continue",
@@ -770,12 +770,12 @@
           "contactEmail": "Contact email",
           "contactPhone": "Contact phone number",
           "recyclingOperation": "Recycling operation",
-          "baselCode1": "Basel/OECD code 1",
-          "baselCode2": "Basel/OECD code 2",
-          "baselCode3": "Basel/OECD code 3",
+          "baselCodes": "Basel Convention and OECD codes",
           "repatriatedLoads": "Arrangements for rejected or returned loads",
           "conditionsOfExport": "Conditions of export"
         },
+        "noCodesEntered": "None entered",
+        "removeCode": "Remove",
         "changeLink": "Change",
         "submitButton": "Add this site",
         "addInterimSiteButton": "Save and add interim site",
@@ -879,6 +879,7 @@
     "errorSummaryTitle": "There is a problem",
     "error": "Error",
     "warning": "Warning",
+    "opensInNewTab": "(opens in new tab)",
     "queryNoteLabel": "Query from the regulator",
     "declarationWarningText": "Your organisation may face enforcement action if the data is inaccurate.",
     "errors": {

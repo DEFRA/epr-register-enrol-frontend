@@ -138,6 +138,49 @@ describe('#addOrsCyaController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] Check your answers')
     })
+
+    test('renders a single Basel/OECD codes row listing all entered codes', async () => {
+      const baselCodePostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC010'
+      })
+      const sessionCookie = baselCodePostResponse.headers['set-cookie']
+        ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
+            ? baselCodePostResponse.headers['set-cookie'][0]
+            : baselCodePostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toContain('data-testid="row-basel-codes"')
+      expect(result).toContain('Basel Convention and OECD codes')
+      expect(result).toContain('A1181')
+      expect(result).toContain('GC010')
+      expect(result).toContain('data-testid="delete-code-0"')
+      expect(result).toContain('data-testid="delete-code-1"')
+    })
+
+    test('shows "None entered" when no codes were added', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      expect(result).toContain('data-testid="row-basel-codes"')
+      expect(result).toContain('None entered')
+    })
   })
 
   describe(`POST ${BASE_URL}`, () => {
@@ -187,6 +230,55 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
+    test('maps entered codes onto code1/code2/code3 for the backend, filling gaps with null', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
+
+      const baselCodePostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC010'
+      })
+      const sessionCookie = baselCodePostResponse.headers['set-cookie']
+        ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
+            ? baselCodePostResponse.headers['set-cookie'][0]
+            : baselCodePostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        expect.objectContaining({
+          code1: 'A1181',
+          code2: 'GC010',
+          code3: null
+        })
+      )
+    })
+
     test('explicit action=confirm redirects to select-overseas-sites (same as default)', async () => {
       vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
         makeApplication([])
@@ -208,6 +300,59 @@ describe('#addOrsCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+  })
+
+  describe(`POST ${BASE_URL} — action=deleteBaselCode branch`, () => {
+    test('removes the code at codeIndex and stays on the CYA page', async () => {
+      const baselCodePostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload:
+          'action=continue&visibleCount=3&code-0=A1181&code-1=GC010&code-2=B3011'
+      })
+      const sessionCookie = baselCodePostResponse.headers['set-cookie']
+        ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
+            ? baselCodePostResponse.headers['set-cookie'][0]
+            : baselCodePostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const deleteResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'action=deleteBaselCode-1'
+      })
+
+      expect(deleteResponse.statusCode).toBe(statusCodes.redirect)
+      expect(deleteResponse.headers.location).toBe(BASE_URL)
+
+      const postDeleteCookie = deleteResponse.headers['set-cookie']
+        ? (Array.isArray(deleteResponse.headers['set-cookie'])
+            ? deleteResponse.headers['set-cookie'][0]
+            : deleteResponse.headers['set-cookie']
+          ).split(';')[0]
+        : sessionCookie
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: postDeleteCookie }
+      })
+
+      expect(result).toContain('A1181')
+      expect(result).toContain('B3011')
+      expect(result).not.toContain('GC010')
     })
   })
 
