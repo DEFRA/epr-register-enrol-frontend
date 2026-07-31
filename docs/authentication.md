@@ -279,7 +279,7 @@ export const STUB_USERS = {
     {
       id: 'stub-op-1',
       name: 'Stub Operator',
-      email: 'operator@stub.example',
+      email: 'test@defra.gov.uk',
       userType: 'operator',
       roles: ['user']
     }
