@@ -18,7 +18,7 @@ export const STUB_USERS = {
     {
       id: 'stub-op-1',
       name: 'Stub Operator',
-      email: 'operator@stub.example',
+      email: 'test@defra.gov.uk',
       userType: 'operator',
       roles: ['user'],
       // Relationships (and the /defra-link map) are derived from the shared
