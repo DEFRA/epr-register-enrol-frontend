@@ -457,12 +457,16 @@
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "continueButton": "Parhau",
-      "columns": {
-        "siteName": "[Welsh] Site name",
-        "country": "[Welsh] Country"
+      "removeFromAccreditationButton": "[Welsh] Remove from accreditation",
+      "addToAccreditationButton": "[Welsh] Add to accreditation",
+      "sections": {
+        "accredited": "[Welsh] Accredited",
+        "registered": "[Welsh] Registered",
+        "newSites": "[Welsh] New sites",
+        "registeredSitesAdded": "[Welsh] Registered sites added"
       },
       "validation": {
-        "noSitesSelected": "[Welsh] Select at least one overseas reprocessing site",
+        "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",
         "saveError": "[Welsh] Sorry, we were unable to save your site selection. Please try again."
       }
     },
@@ -472,7 +476,7 @@
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "saveError": "[Welsh] Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
-      "removeButton": "[Welsh] Remove",
+      "changeLink": "[Welsh] Change",
       "confirmButton": "[Welsh] Confirm and continue"
     },
     "operatorRegistration": {
@@ -779,6 +783,10 @@
         "cancelLink": "[Welsh] Cancel"
       },
       "addNewButton": "[Welsh] Add new overseas reprocessing site",
+      "promoteSuccessBanner": {
+        "title": "[Welsh] Success",
+        "heading": "[Welsh] Site added to accreditation"
+      },
       "successBanner": {
         "title": "[Welsh] Success",
         "heading": "[Welsh] Overseas reprocessing site added to your application",

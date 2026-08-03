@@ -10,6 +10,7 @@ import { setAddInterimSiteSession } from '../../../common/helpers/addInterimSite
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
+const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
 
 const ADD_INTERIM_SITE_ACTION = 'addInterimSite'
 const DELETE_BASEL_CODE_ACTION_PREFIX = 'deleteBaselCode-'
@@ -176,6 +177,30 @@ function buildSitePayload(orsId, session) {
   }
 }
 
+// Promoting a registered site keeps its existing orsId/siteId server-side, so the payload
+// omits them — matches the backend's PromoteOverseasSiteRequest shape (AddOverseasSiteRequest
+// minus orsId).
+function buildPromotePayload(session) {
+  const codes = session.baselAndOecdCodes ?? []
+  return {
+    siteName: session.siteName,
+    addressLine1: session.addressLine1,
+    addressLine2: session.addressLine2 ?? null,
+    townOrCity: session.townOrCity,
+    country: session.country,
+    coordinates: session.coordinates ?? null,
+    contactName: session.siteContactName,
+    contactEmail: session.siteContactEmail,
+    contactPhone: session.siteContactPhone ?? null,
+    operationCode: session.recyclingOperationCode,
+    code1: codes[0] ?? null,
+    code2: codes[1] ?? null,
+    code3: codes[2] ?? null,
+    repatriatedLoads: session.repatriatedLoads,
+    conditionsOfExport: session.conditionsOfExport ?? null
+  }
+}
+
 export const addOrsCyaGetController = {
   handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -227,19 +252,28 @@ export const addOrsCyaPostController = {
       ).code(500)
     }
 
-    const orsId = nextOrsId(application.overseasSites?.sites)
-    const sitePayload = buildSitePayload(orsId, session)
+    const isPromoting = session.promotingSiteId != null
 
     let createdSite
     try {
-      createdSite = await accreditationApiService.createOverseasSite(
-        organisationId,
-        applicationId,
-        sitePayload
-      )
+      if (isPromoting) {
+        createdSite = await accreditationApiService.promoteOverseasSite(
+          organisationId,
+          applicationId,
+          session.promotingSiteId,
+          buildPromotePayload(session)
+        )
+      } else {
+        const orsId = nextOrsId(application.overseasSites?.sites)
+        createdSite = await accreditationApiService.createOverseasSite(
+          organisationId,
+          applicationId,
+          buildSitePayload(orsId, session)
+        )
+      }
     } catch (err) {
       request.server.logger.error(
-        `CYA createOverseasSite error: ${err.message}`
+        `CYA ${isPromoting ? 'promoteOverseasSite' : 'createOverseasSite'} error: ${err.message}`
       )
       return renderPage(
         h,
@@ -254,7 +288,10 @@ export const addOrsCyaPostController = {
       return h.redirect(addInterimSiteCountryUrl(applicationId))
     }
 
-    request.yar.flash(ORS_SUCCESS_FLASH, true)
+    request.yar.flash(
+      isPromoting ? ORS_PROMOTE_SUCCESS_FLASH : ORS_SUCCESS_FLASH,
+      true
+    )
     return h.redirect(selectOrsUrl(applicationId))
   }
 }

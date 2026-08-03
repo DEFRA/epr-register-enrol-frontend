@@ -92,7 +92,7 @@ describe('#confirmOverseasSitesController', () => {
       expect(result).toContain('Germany')
     })
 
-    test('renders remove button for each site', async () => {
+    test('renders change link for each site pointing back to select-overseas-sites', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -101,8 +101,8 @@ describe('#confirmOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="remove-button-900001"')
-      expect(result).toContain('data-testid="remove-button-900002"')
+      expect(result).toContain('data-testid="change-link-900001"')
+      expect(result).toContain('data-testid="change-link-900002"')
     })
 
     test('renders confirm button', async () => {
@@ -202,72 +202,6 @@ describe('#confirmOverseasSitesController', () => {
         url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
-    })
-
-    test('remove action handles null overseasSites.sites gracefully', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          overseasSites: { sectionStatus: 'NotStarted', sites: null }
-        })
-      )
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { submitAction: 'remove', siteId: '900001' }
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/overseas-sites`),
-        expect.objectContaining({ sites: [] })
-      )
-      expect(headers.location).toContain(
-        `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
-      )
-    })
-
-    test('remove action patches with updated sites and redirects to GET', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { submitAction: 'remove', siteId: '900001' }
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toContain(
-        `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
-      )
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/overseas-sites`),
-        expect.objectContaining({
-          sites: expect.arrayContaining([
-            expect.objectContaining({ siteId: 900001, selected: false }),
-            expect.objectContaining({ siteId: 900002 })
-          ])
-        })
-      )
-    })
-
-    test('remove action returns 500 when PATCH fails', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('patch failed'))
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { submitAction: 'remove', siteId: '900001' }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)

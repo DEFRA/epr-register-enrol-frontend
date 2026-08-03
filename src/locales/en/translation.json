@@ -460,12 +460,16 @@
       "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "continueButton": "Continue",
-      "columns": {
-        "siteName": "Site name",
-        "country": "Country"
+      "removeFromAccreditationButton": "Remove from accreditation",
+      "addToAccreditationButton": "Add to accreditation",
+      "sections": {
+        "accredited": "Accredited",
+        "registered": "Registered",
+        "newSites": "New sites",
+        "registeredSitesAdded": "Registered sites added"
       },
       "validation": {
-        "noSitesSelected": "Select at least one overseas reprocessing site",
+        "noSitesAccredited": "Add at least one overseas reprocessing site to accreditation",
         "saveError": "Sorry, we were unable to save your site selection. Please try again."
       }
     },
@@ -475,7 +479,7 @@
       "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "saveError": "Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
-      "removeButton": "Remove",
+      "changeLink": "Change",
       "confirmButton": "Confirm and continue"
     },
     "operatorRegistration": {
@@ -782,6 +786,10 @@
         "cancelLink": "Cancel"
       },
       "addNewButton": "Add new overseas reprocessing site",
+      "promoteSuccessBanner": {
+        "title": "Success",
+        "heading": "Site added to accreditation"
+      },
       "successBanner": {
         "title": "Success",
         "heading": "Overseas reprocessing site added to your application",

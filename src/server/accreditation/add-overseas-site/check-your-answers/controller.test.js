@@ -525,4 +525,96 @@ describe('#addOrsCyaController', () => {
       )
     })
   })
+
+  describe('POST — arriving via the promote (Add To Accreditation) entry point', () => {
+    const PROMOTE_ENTRY_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`
+
+    function cookieHeaderFrom(response, fallback) {
+      const raw = response.headers['set-cookie']
+      if (!raw) return fallback
+      return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+    }
+
+    const REGISTERED_SITE = {
+      siteId: 900002,
+      orsId: '002',
+      siteName: 'Registered Site',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      country: 'Netherlands',
+      contactName: 'Jane Smith',
+      contactEmail: 'jane@example.com',
+      operationCode: 'R3',
+      code1: 'A1181',
+      repatriatedLoads: 'Details',
+      selected: false
+    }
+
+    async function seedPromoteSession() {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([REGISTERED_SITE])
+      )
+      const entryResponse = await server.inject({
+        method: 'GET',
+        url: PROMOTE_ENTRY_URL,
+        headers: operatorHeaders
+      })
+      expect(entryResponse.statusCode).toBe(statusCodes.redirect)
+      expect(entryResponse.headers.location).toBe(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+      )
+      return cookieHeaderFrom(entryResponse, cookie)
+    }
+
+    test('calls promoteOverseasSite instead of createOverseasSite, keyed on the original siteId', async () => {
+      const sessionCookie = await seedPromoteSession()
+      vi.spyOn(
+        accreditationApiService,
+        'promoteOverseasSite'
+      ).mockResolvedValue({ siteId: 900002 })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.promoteOverseasSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        900002,
+        expect.objectContaining({ siteName: 'Registered Site' })
+      )
+      expect(accreditationApiService.createOverseasSite).not.toHaveBeenCalled()
+    })
+
+    test('returns 500 with error summary when promoteOverseasSite fails', async () => {
+      const sessionCookie = await seedPromoteSession()
+      vi.spyOn(
+        accreditationApiService,
+        'promoteOverseasSite'
+      ).mockRejectedValue(new Error('promote failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+  })
 })
