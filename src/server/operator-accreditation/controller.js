@@ -16,6 +16,7 @@ const STATUS_CONFIG = {
   NotStarted: { tagClass: 'govuk-tag--grey' },
   InProgress: { tagClass: 'govuk-tag--blue' },
   Submitted: { tagClass: 'govuk-tag--green' },
+  DulyMade: { tagClass: 'govuk-tag--turquoise' },
   Queried: { tagClass: 'govuk-tag--orange' },
   Updated: { tagClass: 'govuk-tag--turquoise' },
   Approved: { tagClass: 'govuk-tag--green' },

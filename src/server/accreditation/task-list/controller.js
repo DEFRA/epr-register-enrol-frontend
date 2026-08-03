@@ -101,7 +101,7 @@ export function buildTaskListViewModel(application, t) {
   ]
 
   let allComplete = tonnageComplete && bpComplete && spComplete
-  const isSubmitted = ['Submitted', 'Updated'].includes(
+  const isSubmitted = ['Submitted', 'Updated', 'DulyMade'].includes(
     application.applicationStatus
   )
 

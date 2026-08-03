@@ -95,6 +95,17 @@ describe('#buildLandingViewModel', () => {
     expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
   })
 
+  test('DulyMade maps to turquoise tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'DulyMade' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
+  })
+
   test('Approved maps to green tag', () => {
     const vm = buildLandingViewModel(
       makeApp({ applicationStatus: 'Approved' }),

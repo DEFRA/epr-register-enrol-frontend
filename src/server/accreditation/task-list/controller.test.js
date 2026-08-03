@@ -127,6 +127,15 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.isSubmitted).toBe(true)
   })
 
+  test('applicationStatus DulyMade — isSubmitted true', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'DulyMade' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(true)
+  })
+
   test('viewPaymentDetailsLink contains applicationId', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
 

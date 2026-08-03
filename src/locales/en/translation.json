@@ -90,6 +90,7 @@
         "Started": "IN PROGRESS",
         "NotStarted": "NOT STARTED",
         "Submitted": "SUBMITTED",
+        "DulyMade": "DULY MADE",
         "Queried": "QUERIED",
         "Updated": "UPDATED",
         "Approved": "APPROVED",
