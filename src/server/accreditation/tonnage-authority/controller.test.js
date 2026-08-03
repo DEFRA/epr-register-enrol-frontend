@@ -39,7 +39,7 @@ function makeApplication(overrides = {}) {
 describe('#buildHeading', () => {
   test('builds heading with material and site', () => {
     const heading = buildHeading('Steel', 'Site A', false, t)
-    expect(heading).toContain('Steel')
+    expect(heading).toContain('steel')
     expect(heading).toContain('Site A')
   })
 
@@ -57,7 +57,7 @@ describe('#buildHeading', () => {
   test('uses exporter prefix when isExporter is true', () => {
     const heading = buildHeading('Plastic', 'Site B', true, t)
     expect(heading).toContain('headingPrefixExporter')
-    expect(heading).toContain('Plastic')
+    expect(heading).toContain('plastic')
   })
 })
 
@@ -134,7 +134,7 @@ describe('#tonnageAuthorityController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
-      expect(result).toContain('Steel')
+      expect(result).toContain('steel')
     })
 
     test('shows no-authorisers message when authorisers list is empty', async () => {
@@ -233,7 +233,12 @@ describe('#tonnageAuthorityController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('authority to issue PERNs')
-      expect(result).toContain('issue PERNs on this system')
+      expect(result).toContain(
+        'You can choose who will have authority to issue PERNs.'
+      )
+      expect(result).toContain(
+        'Select those who you want to have authority to issue PERNs.'
+      )
     })
 
     test('redirects to query-task-list when application is Queried and PRNs section is not', async () => {

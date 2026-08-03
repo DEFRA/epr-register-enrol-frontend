@@ -223,9 +223,8 @@ describe('#tonnageCyaController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Tonnage of PERNs you plan to issue')
-      expect(result).toContain('request authority to issue PERNs')
-      expect(result).toContain('authority to issue PERNs')
+      expect(result).toContain('PERNs you plan to issue')
+      expect(result).toContain('Authority to issue PERNs')
     })
 
     test('returns 500 when API fetch fails', async () => {
@@ -313,7 +312,7 @@ describe('#tonnageCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
-      expect(result).toContain('Tonnage of PERNs you plan to issue')
+      expect(result).toContain('PERNs you plan to issue')
     })
   })
 

@@ -292,7 +292,7 @@ describe('#buildLandingViewModel', () => {
       t
     )
     expect(vm.pageHeading).toBe(
-      '2 North Road, Addingrove, AA3 1AB : reapplication for Steel accreditation for 2027'
+      '2 North Road, Addingrove, AA3 1AB : reapply for accreditation (Steel)'
     )
   })
 
@@ -305,7 +305,7 @@ describe('#buildLandingViewModel', () => {
       t
     )
     expect(vm.pageHeading).toBe(
-      'siteNotSet : reapplication for Steel accreditation for 2027'
+      'siteNotSet : reapply for accreditation (Steel)'
     )
   })
 
@@ -548,7 +548,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(result).toContain('data-testid="page-heading"')
-    expect(result).toContain('reapplication for Steel accreditation')
+    expect(result).toContain('reapply for accreditation (Steel)')
   })
 
   test('renders Application details table with period, due date, status and continue link', async () => {
@@ -649,7 +649,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Dragon Recyclers')
   })
 
-  test('renders heading as "<site address> : reapplication for <material> accreditation for <year>"', async () => {
+  test('renders heading as "<site address> : reapply for accreditation (<material>)"', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
       makeApp({ siteAddress: '2 North Road, Addingrove, AA3 1AB' })
     ])
@@ -662,7 +662,7 @@ describe('#operatorAccreditationController', () => {
 
     expect(result).toContain('data-testid="page-heading"')
     expect(result).toContain(
-      '2 North Road, Addingrove, AA3 1AB : reapplication for Steel accreditation for 2026'
+      '2 North Road, Addingrove, AA3 1AB : reapply for accreditation (Steel)'
     )
   })
 
@@ -1090,9 +1090,7 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(result).toContain('data-testid="page-heading"')
-      expect(result).toContain(
-        'Exporter : reapplication for Steel accreditation for 2026'
-      )
+      expect(result).toContain('Exporter : reapply for accreditation (Steel)')
     })
 
     test('reprocessor route still renders current accreditation site address row', async () => {
