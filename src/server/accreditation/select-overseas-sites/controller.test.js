@@ -253,7 +253,7 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('[Welsh] Select the overseas reprocessing sites')
     })
 
-    test('renders Add New ORS button linking to site-name wizard step', async () => {
+    test('renders Add New ORS button linking to the wizard reset-and-start route', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -264,7 +264,7 @@ describe('#selectOverseasSitesController', () => {
 
       expect(result).toContain('data-testid="add-new-ors-button"')
       expect(result).toContain(
-        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/new`
       )
     })
 
@@ -428,6 +428,53 @@ describe('#selectOverseasSitesController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="continue-form"')
       expect(result).toContain('Please confirm the overseas site selection.')
+    })
+  })
+
+  describe('GET /accreditation/select-overseas-sites/{applicationId}/promote/{siteId}', () => {
+    test('redirects back to select-overseas-sites when the application fetch fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects back to select-overseas-sites when siteId matches no site', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/999999`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects to site-name and seeds the session when the site is found', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+      )
     })
   })
 

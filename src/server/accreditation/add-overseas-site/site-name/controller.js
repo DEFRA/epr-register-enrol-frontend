@@ -2,7 +2,8 @@ import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-trans
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import {
   getAddOrsSession,
-  setAddOrsSession
+  setAddOrsSession,
+  resetAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 
 function selectOrsUrl(applicationId) {
@@ -11,6 +12,10 @@ function selectOrsUrl(applicationId) {
 
 function siteLocationUrl(applicationId) {
   return `/accreditation/add-overseas-site/${applicationId}/site-location`
+}
+
+function siteNameUrl(applicationId) {
+  return `/accreditation/add-overseas-site/${applicationId}/site-name`
 }
 
 function renderPage(h, viewData) {
@@ -72,5 +77,18 @@ export const addOrsCancelController = {
     const { applicationId } = request.params
     request.yar.clear(ACCREDITATION_SESSION_KEYS.addOverseasSite)
     return h.redirect(selectOrsUrl(applicationId))
+  }
+}
+
+// Entry point for the "Add new overseas reprocessing site" button on select-overseas-sites.
+// Resets the wizard session before handing off to site-name, so a promotingSiteId left over
+// from an abandoned "Add To Accreditation" attempt can't leak into an unrelated new site and
+// get silently promoted onto it (site-name's own GET handler must NOT do this reset, since it
+// also serves as the wizard's "Back" target and would wipe in-progress answers).
+export const addOrsStartController = {
+  handler(request, h) {
+    const { applicationId } = request.params
+    resetAddOrsSession(request)
+    return h.redirect(siteNameUrl(applicationId))
   }
 }

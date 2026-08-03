@@ -32,8 +32,11 @@ function renderPage(h, viewData) {
   return h.view('accreditation/select-overseas-sites/index', viewData)
 }
 
+// Routes through the wizard's reset-and-start entry point rather than straight to site-name,
+// so a promotingSiteId left over from an abandoned "Add To Accreditation" attempt can't leak
+// into this fresh "Add new overseas reprocessing site" journey.
 function addOrsUrl(applicationId) {
-  return `/accreditation/add-overseas-site/${applicationId}/site-name`
+  return `/accreditation/add-overseas-site/${applicationId}/new`
 }
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
@@ -319,7 +322,11 @@ export const selectOverseasSitesPostController = {
     }
 
     const sections = partitionSites(rawSites)
-    if (sections.accredited.length === 0) {
+    const accreditedCount =
+      sections.accredited.length +
+      sections.newSites.length +
+      sections.registeredSitesAdded.length
+    if (accreditedCount === 0) {
       return renderPage(
         h,
         buildViewData(
