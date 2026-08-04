@@ -15,7 +15,7 @@ export function buildHeading(materialType, siteName, isExporter, t) {
     ? t(`pages.materialSelection.materials.${materialType}`)
     : ''
   const site = siteName || t('pages.taskList.siteNotSet')
-  return `${prefix} ${material} ${at}: ${site}`
+  return `${prefix}${at} ${site} (${material.toLowerCase()})`
 }
 
 export function buildAuthoriserRows(authorisers, t) {

@@ -10,10 +10,6 @@ function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
 }
 
-function confirmUrl(applicationId) {
-  return `/accreditation/confirm-overseas-sites/${applicationId}`
-}
-
 function renderPage(h, viewData) {
   return h.view('accreditation/confirm-overseas-sites/index', viewData)
 }
@@ -72,7 +68,6 @@ export const confirmOverseasSitesPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId } = request.params
-    const { submitAction, siteId } = request.payload
 
     let application
     try {
@@ -95,36 +90,9 @@ export const confirmOverseasSitesPostController = {
       ).code(500)
     }
 
-    const allSites = application.overseasSites?.sites ?? []
-    const sites = allSites.filter((s) => s.selected !== false)
-
-    if (submitAction === 'remove') {
-      const siteIdInt = parseInt(siteId, 10)
-      const updatedSites = allSites.map((s) =>
-        s.siteId === siteIdInt ? { ...s, selected: false } : s
-      )
-      try {
-        await accreditationApiService.patchOverseasSites(
-          organisationId,
-          applicationId,
-          { sites: updatedSites }
-        )
-      } catch (err) {
-        request.server.logger.error(
-          `Error removing overseas site ${siteId} from ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            sites,
-            t('pages.confirmOverseasSites.saveError')
-          )
-        ).code(500)
-      }
-      return h.redirect(confirmUrl(applicationId))
-    }
+    const sites = (application.overseasSites?.sites ?? []).filter(
+      (s) => s.selected !== false
+    )
 
     try {
       await accreditationApiService.patchOverseasSites(

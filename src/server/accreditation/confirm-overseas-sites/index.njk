@@ -28,15 +28,9 @@
               <dt class="govuk-summary-list__key" data-testid="site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
               <dd class="govuk-summary-list__value" data-testid="site-country-{{ site.siteId }}">{{ site.country }}</dd>
               <dd class="govuk-summary-list__actions">
-                <form method="post" style="display:inline" data-testid="remove-form-{{ site.siteId }}">
-                  <input type="hidden" name="crumb" value="{{ crumb }}">
-                  <input type="hidden" name="siteId" value="{{ site.siteId }}">
-                  <button type="submit" name="submitAction" value="remove"
-                          class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
-                          data-testid="remove-button-{{ site.siteId }}">
-                    {{ t('pages.confirmOverseasSites.removeButton') }}
-                  </button>
-                </form>
+                <a class="govuk-link" href="{{ backLink }}" data-testid="change-link-{{ site.siteId }}">
+                  {{ t('pages.confirmOverseasSites.changeLink') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span>
+                </a>
               </dd>
             </div>
           {% endfor %}

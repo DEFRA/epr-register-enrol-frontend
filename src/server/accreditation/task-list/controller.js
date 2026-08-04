@@ -52,7 +52,7 @@ export function buildTaskListViewModel(application, t) {
   const headingPrefix = isExporter
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')
-  const heading = `${headingPrefix} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
+  const heading = `${headingPrefix}${materialDisplay}${t('pages.taskList.headingSuffix')}`
 
   const tonnageComplete = (prns?.sectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =

@@ -47,71 +47,144 @@
         </div>
       {% endif %}
 
-      {% if error and sites.length === 0 %}
-        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
-          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
-          <div class="govuk-error-summary__body">
-            <p>{{ error }}</p>
+      {% if promoteSuccessBanner %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert"
+             aria-labelledby="govuk-promote-notification-banner-title"
+             data-module="govuk-notification-banner"
+             data-testid="ors-promote-success-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="govuk-promote-notification-banner-title">
+              {{ t('pages.addOverseasSite.promoteSuccessBanner.title') }}
+            </h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-body">{{ t('pages.addOverseasSite.promoteSuccessBanner.heading') }}</p>
           </div>
         </div>
       {% endif %}
 
-      {% if sites.length === 0 %}
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
-        <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
+          <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+          <div class="govuk-error-summary__body">
+            <ul class="govuk-list govuk-error-summary__list">
+              <li><a href="#accredited-sites" data-testid="sites-error">{{ error }}</a></li>
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if not accreditedSites.length and not registeredSites.length and not newSites.length and not registeredSitesAddedSites.length %}
+
         <p class="govuk-body" data-testid="no-sites-message">
           {{ t('pages.selectOverseasSites.noSites') }}
         </p>
 
       {% else %}
 
-        {% if error %}
-          <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
-            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
-            <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list">
-                <li><a href="#site-checkboxes">{{ error }}</a></li>
-              </ul>
-            </div>
-          </div>
+        {% if accreditedSites.length %}
+          <h2 class="govuk-heading-m" id="accredited-sites" data-testid="accredited-heading">
+            {{ t('pages.selectOverseasSites.sections.accredited') }}
+          </h2>
+          <dl class="govuk-summary-list" data-testid="accredited-sites-list">
+            {% for site in accreditedSites %}
+              <div class="govuk-summary-list__row" data-testid="accredited-site-row-{{ site.siteId }}">
+                <dt class="govuk-summary-list__key" data-testid="accredited-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="accredited-site-country-{{ site.siteId }}">{{ site.country }}</dd>
+                <dd class="govuk-summary-list__actions">
+                  <form method="post" style="display:inline" data-testid="remove-form-accredited-{{ site.siteId }}">
+                    <input type="hidden" name="crumb" value="{{ crumb }}">
+                    <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                    <button type="submit" name="submitAction" value="removeAccredited"
+                            class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                            data-testid="remove-button-accredited-{{ site.siteId }}">
+                      {{ t('pages.selectOverseasSites.removeFromAccreditationButton') }}
+                    </button>
+                  </form>
+                </dd>
+              </div>
+            {% endfor %}
+          </dl>
         {% endif %}
 
-        <form method="post" data-testid="select-sites-form">
-          <input type="hidden" name="crumb" value="{{ crumb }}">
-
-          <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
-            <fieldset class="govuk-fieldset">
-              <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-                <h1 class="govuk-fieldset__heading" data-testid="page-heading">{{ heading }}</h1>
-              </legend>
-
-              {% if error %}
-                <p class="govuk-error-message" id="site-checkboxes-error" data-testid="sites-error">
-                  <span class="govuk-visually-hidden">Error:</span> {{ error }}
-                </p>
-              {% endif %}
-
-              <div class="govuk-checkboxes" data-module="govuk-checkboxes" id="site-checkboxes">
-                {% for site in sites %}
-                  <div class="govuk-checkboxes__item">
-                    <input class="govuk-checkboxes__input"
-                           id="site-{{ site.siteId }}"
-                           name="siteIds"
-                           type="checkbox"
-                           value="{{ site.siteId }}"
-                           data-testid="site-checkbox-{{ site.siteId }}"
-                           {% if site.selected %}checked{% endif %}>
-                    <label class="govuk-label govuk-checkboxes__label" for="site-{{ site.siteId }}"
-                           data-testid="site-label-{{ site.siteId }}">
-                      {{ site.siteName }} — {{ site.country }}
-                    </label>
-                  </div>
-                {% endfor %}
+        {% if registeredSites.length %}
+          <h2 class="govuk-heading-m" data-testid="registered-heading">
+            {{ t('pages.selectOverseasSites.sections.registered') }}
+          </h2>
+          <dl class="govuk-summary-list" data-testid="registered-sites-list">
+            {% for site in registeredSites %}
+              <div class="govuk-summary-list__row" data-testid="registered-site-row-{{ site.siteId }}">
+                <dt class="govuk-summary-list__key" data-testid="registered-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="registered-site-country-{{ site.siteId }}">{{ site.country }}</dd>
+                <dd class="govuk-summary-list__actions">
+                  <a href="{{ site.promoteUrl }}" role="button" draggable="false"
+                     class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                     data-module="govuk-button"
+                     data-testid="add-button-registered-{{ site.siteId }}">
+                    {{ t('pages.selectOverseasSites.addToAccreditationButton') }}
+                  </a>
+                </dd>
               </div>
-            </fieldset>
-          </div>
+            {% endfor %}
+          </dl>
+        {% endif %}
 
-          <button type="submit" class="govuk-button" data-module="govuk-button"
+        {% if newSites.length %}
+          <h2 class="govuk-heading-m" data-testid="new-sites-heading">
+            {{ t('pages.selectOverseasSites.sections.newSites') }}
+          </h2>
+          <dl class="govuk-summary-list" data-testid="new-sites-list">
+            {% for site in newSites %}
+              <div class="govuk-summary-list__row" data-testid="new-site-row-{{ site.siteId }}">
+                <dt class="govuk-summary-list__key" data-testid="new-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="new-site-country-{{ site.siteId }}">{{ site.country }}</dd>
+                <dd class="govuk-summary-list__actions">
+                  <form method="post" style="display:inline" data-testid="remove-form-new-{{ site.siteId }}">
+                    <input type="hidden" name="crumb" value="{{ crumb }}">
+                    <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                    <button type="submit" name="submitAction" value="deleteNewSite"
+                            class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                            data-testid="remove-button-new-{{ site.siteId }}">
+                      {{ t('pages.selectOverseasSites.removeFromAccreditationButton') }}
+                    </button>
+                  </form>
+                </dd>
+              </div>
+            {% endfor %}
+          </dl>
+        {% endif %}
+
+        {% if registeredSitesAddedSites.length %}
+          <h2 class="govuk-heading-m" data-testid="registered-sites-added-heading">
+            {{ t('pages.selectOverseasSites.sections.registeredSitesAdded') }}
+          </h2>
+          <dl class="govuk-summary-list" data-testid="registered-sites-added-list">
+            {% for site in registeredSitesAddedSites %}
+              <div class="govuk-summary-list__row" data-testid="registered-sites-added-row-{{ site.siteId }}">
+                <dt class="govuk-summary-list__key" data-testid="registered-sites-added-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="registered-sites-added-country-{{ site.siteId }}">{{ site.country }}</dd>
+                <dd class="govuk-summary-list__actions">
+                  <form method="post" style="display:inline" data-testid="remove-form-registered-added-{{ site.siteId }}">
+                    <input type="hidden" name="crumb" value="{{ crumb }}">
+                    <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                    <button type="submit" name="submitAction" value="revertAccreditation"
+                            class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                            data-testid="remove-button-registered-added-{{ site.siteId }}">
+                      {{ t('pages.selectOverseasSites.removeFromAccreditationButton') }}
+                    </button>
+                  </form>
+                </dd>
+              </div>
+            {% endfor %}
+          </dl>
+        {% endif %}
+
+        <form method="post" data-testid="continue-form">
+          <input type="hidden" name="crumb" value="{{ crumb }}">
+          <button type="submit" name="submitAction" value="continue"
+                  class="govuk-button" data-module="govuk-button"
                   data-testid="continue-button">
             {{ t('pages.selectOverseasSites.continueButton') }}
           </button>

@@ -301,6 +301,8 @@ export const STUB_ORG_DOCS = [
               country: 'Germany',
               isEu: true,
               isOecd: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [
                   {
@@ -322,7 +324,9 @@ export const STUB_ORG_DOCS = [
               siteName: 'Site 2',
               siteAddress: 'Address 456',
               country: 'Chad',
-              isEu: false
+              isEu: false,
+              isNewSite: false,
+              registeredNowAccredited: false
             }
           ]
         },
@@ -380,6 +384,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -463,6 +469,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -477,6 +485,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -491,6 +501,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -573,6 +585,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -587,6 +601,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -601,6 +617,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -615,6 +633,8 @@ export const STUB_ORG_DOCS = [
               isEu: false,
               isOecd: false,
               selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -695,6 +715,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -709,6 +731,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -723,6 +747,8 @@ export const STUB_ORG_DOCS = [
               isEu: true,
               isOecd: true,
               selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -737,6 +763,8 @@ export const STUB_ORG_DOCS = [
               isEu: false,
               isOecd: false,
               selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
               besEvidence: {
                 besEvidenceUploads: [],
                 doYouWantToUploadMoreEvidence: false
@@ -1090,6 +1118,55 @@ export const stubApiClient = {
         return Promise.resolve(newSite)
       }
       return Promise.resolve(body)
+    }
+
+    // POST /overseas-sites/{siteId}/promote — snapshot a registered site's current
+    // fields onto its previousSites undo stack, then overwrite them from body and
+    // mark it accredited (mirrors the backend's promote endpoint)
+    const promoteOrsMatch = endpoint.match(
+      /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/promote$/
+    )
+    if (promoteOrsMatch) {
+      const item = findAccreditation(promoteOrsMatch[1], promoteOrsMatch[2])
+      const siteId = parseInt(promoteOrsMatch[3], 10)
+      const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+      if (site) {
+        if (!site.previousSites) site.previousSites = []
+        const { previousSites, ...snapshot } = site
+        site.previousSites.push(snapshot)
+        Object.assign(site, body, {
+          siteId: site.siteId,
+          orsId: site.orsId,
+          selected: true,
+          isNewSite: site.isNewSite,
+          registeredNowAccredited: true,
+          previousSites: site.previousSites
+        })
+        return Promise.resolve(site)
+      }
+      return Promise.resolve(body)
+    }
+
+    // POST /overseas-sites/{siteId}/revert — pop the last promote snapshot back
+    // over the current site's fields (undo)
+    const revertOrsMatch = endpoint.match(
+      /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/revert$/
+    )
+    if (revertOrsMatch) {
+      const item = findAccreditation(revertOrsMatch[1], revertOrsMatch[2])
+      const siteId = parseInt(revertOrsMatch[3], 10)
+      const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+      if (site?.previousSites?.length) {
+        const snapshot = site.previousSites.pop()
+        Object.assign(site, snapshot, {
+          siteId: site.siteId,
+          previousSites: site.previousSites,
+          selected: false,
+          registeredNowAccredited: false
+        })
+        return Promise.resolve(site)
+      }
+      return Promise.resolve(site ?? body)
     }
 
     // POST /overseas-sites/{siteId}/interim-site — nest a new interim site onto

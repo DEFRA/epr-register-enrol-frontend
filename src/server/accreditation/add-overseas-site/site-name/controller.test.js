@@ -235,4 +235,53 @@ describe('#addOverseasSiteSiteNameController', () => {
       expect(cancelResponse.headers.location).toBe(SELECT_ORS_URL)
     })
   })
+
+  describe(`GET /accreditation/add-overseas-site/${APPLICATION_ID}/new`, () => {
+    const NEW_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/new`
+
+    test('redirects to site-name', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: NEW_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(BASE_URL)
+    })
+
+    test('resets any existing wizard session before redirecting, so a promote entry left over from an abandoned "Add To Accreditation" attempt cannot leak into a fresh new-site journey', async () => {
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'siteName=Stale+Site'
+      })
+      const postCookie = postResponse.headers['set-cookie']
+      const postCookieHeader = Array.isArray(postCookie)
+        ? postCookie.map((c) => c.split(';')[0]).join('; ')
+        : (postCookie?.split(';')[0] ?? '')
+
+      const newResponse = await server.inject({
+        method: 'GET',
+        url: NEW_URL,
+        headers: { ...operatorHeaders, cookie: postCookieHeader }
+      })
+      const newCookie = newResponse.headers['set-cookie']
+      const newCookieHeader = Array.isArray(newCookie)
+        ? newCookie.map((c) => c.split(';')[0]).join('; ')
+        : (newCookie?.split(';')[0] ?? postCookieHeader)
+
+      const getResponse = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: newCookieHeader }
+      })
+
+      expect(getResponse.result).not.toContain('Stale Site')
+    })
+  })
 })

@@ -15,6 +15,42 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 
 const APPLICATION_ID = 'app-sos-001'
 
+const ACCREDITED_SITE = {
+  siteId: 900001,
+  siteName: 'Site Alpha',
+  siteAddress: '123 Test St',
+  country: 'Germany',
+  isEu: true,
+  isOecd: true,
+  selected: true
+}
+
+const REGISTERED_SITE = {
+  siteId: 900002,
+  siteName: 'Site Beta',
+  siteAddress: '456 Test Ave',
+  country: 'Chad',
+  isEu: false,
+  isOecd: false,
+  selected: false
+}
+
+const NEW_SITE = {
+  siteId: 900003,
+  siteName: 'Site Gamma',
+  country: 'France',
+  selected: true,
+  isNewSite: true
+}
+
+const REGISTERED_SITE_ADDED = {
+  siteId: 900004,
+  siteName: 'Site Delta',
+  country: 'Japan',
+  selected: true,
+  registeredNowAccredited: true
+}
+
 function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
@@ -24,24 +60,7 @@ function makeApplication(overrides = {}) {
     isExporter: true,
     overseasSites: {
       sectionStatus: 'NotStarted',
-      sites: [
-        {
-          siteId: 900001,
-          siteName: 'Site Alpha',
-          siteAddress: '123 Test St',
-          country: 'Germany',
-          isEu: true,
-          isOecd: true
-        },
-        {
-          siteId: 900002,
-          siteName: 'Site Beta',
-          siteAddress: '456 Test Ave',
-          country: 'Chad',
-          isEu: false,
-          isOecd: false
-        }
-      ]
+      sites: [ACCREDITED_SITE, REGISTERED_SITE]
     },
     ...overrides
   }
@@ -89,57 +108,16 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('Select the overseas reprocessing sites')
     })
 
-    test('renders checkboxes for each site', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
-      })
-
-      expect(result).toContain('data-testid="site-checkbox-900001"')
-      expect(result).toContain('data-testid="site-checkbox-900002"')
-      expect(result).toContain('Site Alpha')
-      expect(result).toContain('Germany')
-      expect(result).toContain('Site Beta')
-      expect(result).toContain('Chad')
-    })
-
-    test('pre-checks sites where selected is undefined (default checked)', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
-      })
-
-      expect(result).toContain('data-testid="site-checkbox-900001"')
-      const checkbox1 = result.match(
-        /data-testid="site-checkbox-900001"[^>]*>/
-      )?.[0]
-      expect(checkbox1).toContain('checked')
-    })
-
-    test('does not pre-check site where selected is false', async () => {
+    test('places sites into their respective sections', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           overseasSites: {
             sectionStatus: 'InProgress',
             sites: [
-              {
-                siteId: 900001,
-                siteName: 'Site Alpha',
-                country: 'Germany',
-                selected: false
-              },
-              {
-                siteId: 900002,
-                siteName: 'Site Beta',
-                country: 'Chad',
-                selected: true
-              }
+              ACCREDITED_SITE,
+              REGISTERED_SITE,
+              NEW_SITE,
+              REGISTERED_SITE_ADDED
             ]
           }
         })
@@ -151,14 +129,44 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
-      const checkbox1 = result.match(
-        /data-testid="site-checkbox-900001"[^>]*>/
-      )?.[0]
-      const checkbox2 = result.match(
-        /data-testid="site-checkbox-900002"[^>]*>/
-      )?.[0]
-      expect(checkbox1).not.toContain('checked')
-      expect(checkbox2).toContain('checked')
+      expect(result).toContain('data-testid="accredited-site-row-900001"')
+      expect(result).toContain('data-testid="registered-site-row-900002"')
+      expect(result).toContain('data-testid="new-site-row-900003"')
+      expect(result).toContain(
+        'data-testid="registered-sites-added-row-900004"'
+      )
+    })
+
+    test('does not render a section heading when that section is empty', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="accredited-heading"')
+      expect(result).toContain('data-testid="registered-heading"')
+      expect(result).not.toContain('data-testid="new-sites-heading"')
+      expect(result).not.toContain(
+        'data-testid="registered-sites-added-heading"'
+      )
+    })
+
+    test('registered site Add To Accreditation link points to the promote route', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="add-button-registered-900002"')
+      expect(result).toContain(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`
+      )
     })
 
     test('shows no-sites message when overseasSites.sites is empty', async () => {
@@ -175,7 +183,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('data-testid="no-sites-message"')
-      expect(result).not.toContain('data-testid="select-sites-form"')
+      expect(result).not.toContain('data-testid="continue-form"')
     })
 
     test('handles null overseasSites gracefully', async () => {
@@ -203,7 +211,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('data-testid="continue-button"')
-      expect(result).toContain('data-testid="select-sites-form"')
+      expect(result).toContain('data-testid="continue-form"')
     })
 
     test('back link points to task list', async () => {
@@ -245,7 +253,7 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('[Welsh] Select the overseas reprocessing sites')
     })
 
-    test('renders Add New ORS button linking to site-name wizard step', async () => {
+    test('renders Add New ORS button linking to the wizard reset-and-start route', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -256,7 +264,7 @@ describe('#selectOverseasSitesController', () => {
 
       expect(result).toContain('data-testid="add-new-ors-button"')
       expect(result).toContain(
-        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/new`
       )
     })
 
@@ -270,6 +278,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).not.toContain('data-testid="ors-success-banner"')
+      expect(result).not.toContain('data-testid="ors-promote-success-banner"')
     })
 
     test('does not show interim-site success banner when no flash is set', async () => {
@@ -398,7 +407,7 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
-    test('renders the form (no redirect) when overseas sites section itself is Queried', async () => {
+    test('renders the page (no redirect) when overseas sites section itself is Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
@@ -417,8 +426,55 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="select-sites-form"')
+      expect(result).toContain('data-testid="continue-form"')
       expect(result).toContain('Please confirm the overseas site selection.')
+    })
+  })
+
+  describe('GET /accreditation/select-overseas-sites/{applicationId}/promote/{siteId}', () => {
+    test('redirects back to select-overseas-sites when the application fetch fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects back to select-overseas-sites when siteId matches no site', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/999999`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects to site-name and seeds the session when the site is found', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+      )
     })
   })
 
@@ -439,7 +495,7 @@ describe('#selectOverseasSitesController', () => {
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { siteIds: ['900001'] }
+        payload: { submitAction: 'continue' }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -449,15 +505,14 @@ describe('#selectOverseasSitesController', () => {
       expect(patchSpy).not.toHaveBeenCalled()
     })
 
-    test('redirects to confirm-overseas-sites when sites are selected', async () => {
+    test('continue redirects to confirm-overseas-sites when at least one accredited site exists', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { siteIds: ['900001'] }
+        payload: { submitAction: 'continue' }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -466,80 +521,147 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
-    test('patches overseas sites with selected flags', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      await server.inject({
-        method: 'POST',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { siteIds: ['900001'] }
-      })
-
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('overseas-sites'),
-        expect.objectContaining({
-          sites: expect.arrayContaining([
-            expect.objectContaining({ siteId: 900001, selected: true }),
-            expect.objectContaining({ siteId: 900002, selected: false })
-          ])
+    test('continue returns 400 with error when no sites are accredited', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'NotStarted',
+            sites: [REGISTERED_SITE]
+          }
         })
       )
-    })
-
-    test('accepts multiple selected sites', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      await server.inject({
-        method: 'POST',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { siteIds: ['900001', '900002'] }
-      })
-
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          sites: expect.arrayContaining([
-            expect.objectContaining({ siteId: 900001, selected: true }),
-            expect.objectContaining({ siteId: 900002, selected: true })
-          ])
-        })
-      )
-    })
-
-    test('returns 400 with error when no sites selected', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: {}
+        payload: { submitAction: 'continue' }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="error-summary"')
-      expect(result).toContain('Select at least one overseas reprocessing site')
+      expect(result).toContain(
+        'Add at least one overseas reprocessing site to accreditation'
+      )
     })
 
-    test('returns 400 and shows sites unchecked when validation fails', async () => {
+    test('removeAccredited patches the site to selected:false and redirects back', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
-      const { result } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: {}
+        payload: { submitAction: 'removeAccredited', siteId: '900001' }
       })
 
-      expect(result).toContain('data-testid="site-checkbox-900001"')
-      const checkbox = result.match(
-        /data-testid="site-checkbox-900001"[^>]*>/
-      )?.[0]
-      expect(checkbox).not.toContain('checked')
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('overseas-sites'),
+        expect.objectContaining({
+          sites: expect.arrayContaining([
+            expect.objectContaining({ siteId: 900001, selected: false })
+          ])
+        })
+      )
+    })
+
+    test('removeAccredited returns 500 when PATCH fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('patch failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'removeAccredited', siteId: '900001' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('deleteNewSite removes the site from the array entirely', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [ACCREDITED_SITE, NEW_SITE]
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'deleteNewSite', siteId: '900003' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('overseas-sites'),
+        {
+          sites: [ACCREDITED_SITE]
+        }
+      )
+    })
+
+    test('revertAccreditation calls the revert API and redirects back', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [ACCREDITED_SITE, REGISTERED_SITE_ADDED]
+          }
+        })
+      )
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'revertAccreditation', siteId: '900004' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('overseas-sites/900004/revert')
+      )
+    })
+
+    test('revertAccreditation returns 500 when the API call fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [ACCREDITED_SITE, REGISTERED_SITE_ADDED]
+          }
+        })
+      )
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('revert failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'revertAccreditation', siteId: '900004' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
     })
 
     test('returns 500 when API fetch fails', async () => {
@@ -549,27 +671,11 @@ describe('#selectOverseasSitesController', () => {
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { siteIds: ['900001'] }
+        payload: { submitAction: 'continue' }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
-    })
-
-    test('returns 500 service-problem page when PATCH fails with server error', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const err = Object.assign(new Error('Patch failed'), { status: 500 })
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { siteIds: ['900001'] }
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="try-again-link"')
     })
   })
 })

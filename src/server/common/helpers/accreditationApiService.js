@@ -261,6 +261,23 @@ export const accreditationApiService = {
     )
   },
 
+  promoteOverseasSite(organisationId, applicationId, siteId, body) {
+    return call(() =>
+      apiClient.post(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/promote`,
+        body
+      )
+    )
+  },
+
+  revertOverseasSite(organisationId, applicationId, siteId) {
+    return call(() =>
+      apiClient.post(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/revert`
+      )
+    )
+  },
+
   createInterimSite(organisationId, applicationId, siteId, body) {
     return call(() =>
       apiClient.post(

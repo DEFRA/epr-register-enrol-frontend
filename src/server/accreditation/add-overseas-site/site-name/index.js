@@ -1,7 +1,8 @@
 import {
   addOrsiteNameGetController,
   addOrsiteNamePostController,
-  addOrsCancelController
+  addOrsCancelController,
+  addOrsStartController
 } from './controller.js'
 import { requireOperator } from '../../../common/helpers/auth/auth-scopes.js'
 
@@ -10,6 +11,18 @@ export const addOverseasSiteSiteName = {
     name: 'addOverseasSiteSiteName',
     register(server) {
       server.route([
+        {
+          method: 'GET',
+          path: '/accreditation/add-overseas-site/{applicationId}/new',
+          options: requireOperator,
+          ...addOrsStartController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/add-overseas-site/{applicationId}/new',
+          options: requireOperator,
+          ...addOrsStartController
+        },
         {
           method: 'GET',
           path: '/accreditation/add-overseas-site/{applicationId}/site-name',

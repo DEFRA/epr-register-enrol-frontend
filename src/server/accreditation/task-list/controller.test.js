@@ -419,9 +419,7 @@ describe('#taskListGetController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        'Accredit to issue PRNs: UK Steel packaging waste'
-      )
+      expect(result).toContain('Reapply for accreditation (Steel)')
     })
 
     test('renders three task rows', async () => {
@@ -707,7 +705,7 @@ describe('#taskListGetController', () => {
       expect(result).toContain('data-testid="task-bes-evidence"')
     })
 
-    test('exporter: heading contains PERNs', async () => {
+    test('exporter: heading contains material', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           isExporter: true,
@@ -724,7 +722,7 @@ describe('#taskListGetController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('Accredit to issue PERNs: UK')
+      expect(result).toContain('Reapply for accreditation (Plastic)')
     })
 
     test('exporter: all 5 sections complete shows Continue button', async () => {

@@ -200,7 +200,7 @@ describe('#samplingPlanUploadController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
       expect(result).toContain(
-        'Upload accreditation sampling and inspection plan - part 2 - Steel'
+        'Upload sampling and inspection plan - part 2 - Steel'
       )
     })
 
@@ -216,7 +216,7 @@ describe('#samplingPlanUploadController', () => {
       })
 
       expect(result).toContain(
-        'Upload accreditation sampling and inspection plan - part 2 - Glass'
+        'Upload sampling and inspection plan - part 2 - Glass'
       )
     })
 
@@ -361,9 +361,7 @@ describe('#samplingPlanUploadController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain(
-        '[Welsh] Upload accreditation sampling and inspection plan'
-      )
+      expect(result).toContain('[Welsh] Upload sampling and inspection plan')
     })
   })
 

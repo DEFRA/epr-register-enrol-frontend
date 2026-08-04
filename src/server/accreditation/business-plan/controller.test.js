@@ -326,7 +326,8 @@ describe('#businessPlanController', () => {
         headers: operatorHeaders
       })
 
-      const matches = result.match(/Enter a whole percentage/g) ?? []
+      const matches =
+        result.match(/Enter the percentage as a whole number/g) ?? []
       expect(matches).toHaveLength(BUSINESS_PLAN_FIELDS.length)
     })
 
@@ -339,7 +340,7 @@ describe('#businessPlanController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('[Welsh] Enter a whole percentage')
+      expect(result).toContain('[Welsh] Enter the percentage as a whole number')
     })
 
     test('exporter GET shows PERN intro text', async () => {

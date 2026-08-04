@@ -147,25 +147,25 @@
     "tonnageAuthority": {
       "title": "[Welsh] Authority to issue PRNs",
       "titleExporter": "[Welsh] Authority to issue PERNs",
-      "headingPrefix": "[Welsh] Authority to issue PRNs for",
-      "headingPrefixExporter": "[Welsh] Authority to issue PERNs for",
+      "headingPrefix": "[Welsh] Authority to issue PRNs ",
+      "headingPrefixExporter": "[Welsh] Authority to issue PERNs ",
       "headingAt": "[Welsh] at",
-      "intro": "[Welsh] You can choose the people you want to have authority to issue PRNs. The people you choose will be able to issue PRNs on this system.",
+      "intro": "[Welsh] You can choose the people you want to have authority to issue PRNs.",
       "introExporter": "[Welsh] You can choose the people you want to have authority to issue PERNs. The people you choose will be able to issue PERNs on this system.",
-      "selectSubHeading": "[Welsh] Select who you want to have authority to issue PRNs — You can select more than one.",
-      "selectSubHeadingExporter": "[Welsh] Select who you want to have authority to issue PERNs — You can select more than one.",
-      "noAuthorisers": "[Welsh] No authorisers added yet. Use the form below to add someone.",
+      "selectSubHeading": "[Welsh] Select those who you want to have authority to issue PRNs — You can select more than one.",
+      "selectSubHeadingExporter": "[Welsh] Select those who you want to have authority to issue PERNs — You can select more than one.",
+      "noAuthorisers": "[Welsh] You have not added any authorisers yet.",
       "addAuthoriserLabel": "[Welsh] Add a new authoriser",
       "addAuthoriserButton": "[Welsh] Add authoriser",
       "saveAndContinue": "Cadw a pharhau",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "table": {
         "select": "[Welsh] Select",
-        "fullName": "[Welsh] Full name",
+        "fullName": "[Welsh] Name",
         "email": "[Welsh] Email"
       },
       "addForm": {
-        "fullName": "[Welsh] Full name",
+        "fullName": "[Welsh] Name",
         "email": "[Welsh] Email address"
       },
       "validation": {
@@ -179,12 +179,12 @@
       }
     },
     "tonnageCya": {
-      "title": "[Welsh] Check your answers before continuing",
-      "heading": "[Welsh] Check your answers before continuing",
-      "tonnageLabel": "[Welsh] Tonnage of PRNs you plan to issue",
-      "tonnageLabelExporter": "[Welsh] Tonnage of PERNs you plan to issue",
-      "authorisersLabel": "[Welsh] People you want to request authority to issue PRNs",
-      "authorisersLabelExporter": "[Welsh] People you want to request authority to issue PERNs",
+      "title": "[Welsh] Check your answers before you continue",
+      "heading": "[Welsh] Check your answers before you continue",
+      "tonnageLabel": "[Welsh] PRNs you plan to issue",
+      "tonnageLabelExporter": "[Welsh] PERNs you plan to issue",
+      "authorisersLabel": "[Welsh] Authority to issue PRNs",
+      "authorisersLabelExporter": "[Welsh] Authority to issue PERNs",
       "change": "[Welsh] Change",
       "changeTonnageContext": "[Welsh] planned tonnage",
       "changeAuthorityContext": "[Welsh] authority to issue PRNs",
@@ -201,10 +201,10 @@
     "businessPlan": {
       "title": "[Welsh] Business plan",
       "heading": "[Welsh] Business plan",
-      "intro": "[Welsh] Enter the percentage of PRN income you\u0027ll spend on each item.",
-      "introExporter": "[Welsh] Enter the percentage of PERN income you\u0027ll spend on each item.",
-      "regulatorPlan": "[Welsh] The regulator will expect you to follow this plan.",
-      "enterWholePercent": "[Welsh] Enter a whole percentage",
+      "intro": "[Welsh] You need to provide the percentage of PRN income that you\u0027ll spend on each area and activity.",
+      "introExporter": "[Welsh] You need to provide the percentage of PERN income that you\u0027ll spend on each area and activity.",
+      "regulatorPlan": "[Welsh] The regulator will expect you to follow this plan. If you later need to change how you spend the income, you\u0027lll need to explain why in your annual report.",
+      "enterWholePercent": "[Welsh] Enter the percentage as a whole number",
       "saveAndContinue": "Cadw a pharhau",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "fields": {
@@ -224,11 +224,11 @@
       }
     },
     "businessPlanDetail": {
-      "title": "[Welsh] More detail about how you\u0027ll spend PRN income",
-      "titleExporter": "[Welsh] More detail about how you\u0027ll spend PERN income",
-      "heading": "[Welsh] More detail about how you\u0027ll spend PRN income",
-      "headingExporter": "[Welsh] More detail about how you\u0027ll spend PERN income",
-      "intro": "[Welsh] It\u0027s optional, but it can help the regulator to better understand your plans.",
+      "title": "[Welsh] Add more details about how you\u0027ll spend the PRN income",
+      "titleExporter": "[Welsh] Add more details about how you\u0027ll spend the the PERN income",
+      "heading": "[Welsh] Add more details about how you\u0027ll spend the the PRN income",
+      "headingExporter": "[Welsh] Add more details about how you\u0027ll spend the PERN income",
+      "intro": "[Welsh] This is optional, but the details will help the regulator to better understand your plans.",
       "optional": "[Welsh] (optional)",
       "characterCountHint": "[Welsh] You can enter up to 500 characters",
       "saveAndContinue": "Cadw a pharhau",
@@ -250,10 +250,10 @@
       }
     },
     "businessPlanCya": {
-      "title": "[Welsh] Check your answers before continuing",
-      "heading": "[Welsh] Check your answers before continuing",
-      "subHeading": "[Welsh] Business plan: how you\u0027ll allocate PRN income",
-      "subHeadingExporter": "[Welsh] Business plan: how you\u0027ll allocate PERN income",
+      "title": "[Welsh] Check your answers before you continue",
+      "heading": "[Welsh] Check your answers before you continue",
+      "subHeading": "[Welsh] Business plan: how you’ll spend PRN income",
+      "subHeadingExporter": "[Welsh] Business plan: how you’ll spend PERN income",
       "notProvided": "[Welsh] Not provided",
       "change": "[Welsh] Change",
       "changePercentContext": "[Welsh] percentage for {field}",
@@ -274,8 +274,8 @@
       }
     },
     "samplingPlanUpload": {
-      "title": "[Welsh] Upload accreditation sampling and inspection plan - part 2",
-      "heading": "[Welsh] Upload accreditation sampling and inspection plan - part 2",
+      "title": "[Welsh] Upload sampling and inspection plan - part 2",
+      "heading": "[Welsh] Upload sampling and inspection plan - part 2",
       "requirements": {
         "intro": "[Welsh] The file(s) must be:",
         "maxSize": "[Welsh] no more than 20MB each",
@@ -284,15 +284,15 @@
       "uploadedFilesHeading": "[Welsh] Uploaded files",
       "fileLabel": "[Welsh] Choose a file to upload",
       "uploadButton": "Uwchlwytho ffeil",
-      "deleteFile": "[Welsh] Delete",
+      "deleteFile": "[Welsh] Remove",
       "saveAndContinue": "Cadw a pharhau",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "table": {
         "filename": "[Welsh] Filename",
-        "dateUploaded": "[Welsh] Date uploaded",
+        "dateUploaded": "[Welsh] Upload date",
         "uploadedBy": "Uwchlwythwyd gan",
         "status": "Statws",
-        "action": "[Welsh] Action"
+        "action": ""
       },
       "scanStatus": {
         "scanning": "[Welsh] Scanning",
@@ -353,8 +353,8 @@
       "bannerTitle": "Llwyddiant",
       "bannerHeadingPrefix": "[Welsh] Application submitted to the",
       "bannerEmailSent": "[Welsh] A confirmation email has been sent to",
-      "paymentFor": "[Welsh] Payment for",
-      "headingSuffix": "[Welsh] accreditation",
+      "paymentFor": "[Welsh] Payment for accreditation (",
+      "headingSuffix": ")",
       "paymentInstructionPrefix": "[Welsh] The regulator will only review the application after payment has been made.",
       "paymentInstructionSuffix": "[Welsh] You\u0027ll receive a notification once payment has been received and the application is in review.",
       "amountDue": "[Welsh] Amount due",
@@ -363,7 +363,7 @@
       "bankTransferInstruction": "[Welsh] You need to visit your bank\u0027s website, app or branch and use the regulator\u0027s banking details to pay by bank transfer.",
       "howLongDoPaymentsTake": "[Welsh] How long do payments take?",
       "howLongDoPaymentsTakeBody": "[Welsh] Bank transfers can take 3 to 5 working days to be received.",
-      "bankDetailsHeading": "[Welsh] Bank details for the regulator",
+      "bankDetailsHeading": "[Welsh] Regulator bank details",
       "amount": "[Welsh] Amount",
       "sortCode": "[Welsh] Sort code",
       "accountNumber": "[Welsh] Account number",
@@ -382,19 +382,19 @@
     },
     "taskList": {
       "title": "[Welsh] Accreditation task list",
-      "headingPrefix": "[Welsh] Accredit to issue PRNs: UK",
-      "headingPrefixExporter": "[Welsh] Accredit to issue PERNs: UK",
-      "headingSuffix": "[Welsh] packaging waste",
-      "metadataYear": "[Welsh] For:",
-      "metadataSite": "[Welsh] For reprocessing site:",
+      "headingPrefix": "[Welsh] Reapply for accreditation (",
+      "headingPrefixExporter": "[Welsh] Reapply for accreditation (",
+      "headingSuffix": ")",
+      "metadataYear": "[Welsh] Accreditation year:",
+      "metadataSite": "[Welsh] Site:",
       "siteNotSet": "[Welsh] Not set",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "submittedText": "[Welsh] This reapplication for accreditation has been submitted",
       "viewPaymentDetailsLink": "[Welsh] View payment details",
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
-        "prns": "[Welsh] PRNs tonnage and authority to issue PRNs",
-        "perns": "[Welsh] PERNs tonnage and authority to issue PERNs",
+        "prns": "[Welsh] PRN tonnage and authority to issue",
+        "perns": "[Welsh] PERN tonnage and authority to issue",
         "businessPlan": "[Welsh] Business plan",
         "samplingPlan": "[Welsh] Accreditation sampling and inspection plan - part 2",
         "overseasSites": "[Welsh] Overseas reprocessing sites",
@@ -457,12 +457,16 @@
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "continueButton": "Parhau",
-      "columns": {
-        "siteName": "[Welsh] Site name",
-        "country": "[Welsh] Country"
+      "removeFromAccreditationButton": "[Welsh] Remove from accreditation",
+      "addToAccreditationButton": "[Welsh] Add to accreditation",
+      "sections": {
+        "accredited": "[Welsh] Accredited",
+        "registered": "[Welsh] Registered",
+        "newSites": "[Welsh] New sites",
+        "registeredSitesAdded": "[Welsh] Registered sites added"
       },
       "validation": {
-        "noSitesSelected": "[Welsh] Select at least one overseas reprocessing site",
+        "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",
         "saveError": "[Welsh] Sorry, we were unable to save your site selection. Please try again."
       }
     },
@@ -472,7 +476,7 @@
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "saveError": "[Welsh] Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
-      "removeButton": "[Welsh] Remove",
+      "changeLink": "[Welsh] Change",
       "confirmButton": "[Welsh] Confirm and continue"
     },
     "operatorRegistration": {
@@ -779,6 +783,10 @@
         "cancelLink": "[Welsh] Cancel"
       },
       "addNewButton": "[Welsh] Add new overseas reprocessing site",
+      "promoteSuccessBanner": {
+        "title": "[Welsh] Success",
+        "heading": "[Welsh] Site added to accreditation"
+      },
       "successBanner": {
         "title": "[Welsh] Success",
         "heading": "[Welsh] Overseas reprocessing site added to your application",

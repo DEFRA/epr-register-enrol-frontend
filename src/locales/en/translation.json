@@ -151,25 +151,25 @@
     "tonnageAuthority": {
       "title": "Authority to issue PRNs",
       "titleExporter": "Authority to issue PERNs",
-      "headingPrefix": "Authority to issue PRNs for",
-      "headingPrefixExporter": "Authority to issue PERNs for",
+      "headingPrefix": "Authority to issue PRNs ",
+      "headingPrefixExporter": "Authority to issue PERNs ",
       "headingAt": "at",
-      "intro": "You can choose the people you want to have authority to issue PRNs. The people you choose will be able to issue PRNs on this system.",
-      "introExporter": "You can choose the people you want to have authority to issue PERNs. The people you choose will be able to issue PERNs on this system.",
-      "selectSubHeading": "Select who you want to have authority to issue PRNs — You can select more than one.",
-      "selectSubHeadingExporter": "Select who you want to have authority to issue PERNs — You can select more than one.",
-      "noAuthorisers": "No authorisers added yet. Use the form below to add someone.",
+      "intro": "You can choose who will have authority to issue PRNs.",
+      "introExporter": "You can choose who will have authority to issue PERNs.",
+      "selectSubHeading": "Select those who you want to have authority to issue PRNs.",
+      "selectSubHeadingExporter": "Select those who you want to have authority to issue PERNs.",
+      "noAuthorisers": "You have not added any authorisers yet.",
       "addAuthoriserLabel": "Add a new authoriser",
       "addAuthoriserButton": "Add authoriser",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
       "table": {
         "select": "Select",
-        "fullName": "Full name",
+        "fullName": "Name",
         "email": "Email"
       },
       "addForm": {
-        "fullName": "Full name",
+        "fullName": "Name",
         "email": "Email address"
       },
       "validation": {
@@ -183,12 +183,12 @@
       }
     },
     "tonnageCya": {
-      "title": "Check your answers before continuing",
-      "heading": "Check your answers before continuing",
-      "tonnageLabel": "Tonnage of PRNs you plan to issue",
-      "tonnageLabelExporter": "Tonnage of PERNs you plan to issue",
-      "authorisersLabel": "People you want to request authority to issue PRNs",
-      "authorisersLabelExporter": "People you want to request authority to issue PERNs",
+      "title": "Check your answers before you continue",
+      "heading": "Check your answers before you continue",
+      "tonnageLabel": "PRNs you plan to issue",
+      "tonnageLabelExporter": "PERNs you plan to issue",
+      "authorisersLabel": "Authority to issue PRNs",
+      "authorisersLabelExporter": "Authority to issue PERNs",
       "change": "Change",
       "changeTonnageContext": "planned tonnage",
       "changeAuthorityContext": "authority to issue PRNs",
@@ -205,12 +205,12 @@
     "businessPlan": {
       "title": "Business plan",
       "heading": "Business plan",
-      "intro": "Enter the percentage of PRN income you'll spend on each item.",
-      "introExporter": "Enter the percentage of PERN income you'll spend on each item.",
-      "regulatorPlan": "The regulator will expect you to follow this plan.",
+      "intro": "You need to provide the percentage of PRN income that you'll spend on each area and activity.",
+      "introExporter": "You need to provide the percentage of PERN income that you'll spend on each area and activity.",
+      "regulatorPlan": "The regulator will expect you to follow this plan. If you later need to change how you spend the income, you’ll need to explain why in your annual report.",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
-      "enterWholePercent": "Enter a whole percentage",
+      "enterWholePercent": "Enter the percentage as a whole number",
       "fields": {
         "newInfrastructurePercent": "New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportPercent": "Price support for buying packaging waste or selling recycled packaging waste",
@@ -228,11 +228,11 @@
       }
     },
     "businessPlanDetail": {
-      "title": "More detail about how you'll spend PRN income",
-      "titleExporter": "More detail about how you'll spend PERN income",
-      "heading": "More detail about how you'll spend PRN income",
-      "headingExporter": "More detail about how you'll spend PERN income",
-      "intro": "It's optional, but it can help the regulator to better understand your plans.",
+      "title": "Add more details about how you'll spend the PRN income",
+      "titleExporter": "Add more details about how you'll spend the PERN income",
+      "heading": "Add more details about how you'll spend the PRN income",
+      "headingExporter": "Add more details about how you'll spend the PERN income",
+      "intro": "This is optional, but the details will help the regulator to better understand your plans.",
       "optional": "(optional)",
       "characterCountHint": "You can enter up to 500 characters",
       "saveAndContinue": "Save and continue",
@@ -253,10 +253,10 @@
       }
     },
     "businessPlanCya": {
-      "title": "Check your answers before continuing",
+      "title": "Check your answers before you continue",
       "heading": "Check your answers before continuing",
-      "subHeading": "Business plan: how you'll allocate PRN income",
-      "subHeadingExporter": "Business plan: how you'll allocate PERN income",
+      "subHeading": "Business plan: how you’ll spend PRN income",
+      "subHeadingExporter": "Business plan: how you’ll spend PERN income",
       "notProvided": "Not provided",
       "change": "Change",
       "changePercentContext": "percentage for {field}",
@@ -277,8 +277,8 @@
       }
     },
     "samplingPlanUpload": {
-      "title": "Upload accreditation sampling and inspection plan - part 2",
-      "heading": "Upload accreditation sampling and inspection plan - part 2",
+      "title": "Upload sampling and inspection plan - part 2",
+      "heading": "Upload sampling and inspection plan - part 2",
       "requirements": {
         "intro": "The file(s) must be:",
         "maxSize": "no more than 20MB each",
@@ -287,15 +287,15 @@
       "uploadedFilesHeading": "Uploaded files",
       "fileLabel": "Choose a file to upload",
       "uploadButton": "Upload file",
-      "deleteFile": "Delete",
+      "deleteFile": "Remove",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
       "table": {
         "filename": "Filename",
-        "dateUploaded": "Date uploaded",
+        "dateUploaded": "Upload date",
         "uploadedBy": "Uploaded by",
         "status": "Status",
-        "action": "Action"
+        "action": ""
       },
       "scanStatus": {
         "scanning": "Scanning",
@@ -356,8 +356,8 @@
       "bannerTitle": "Success",
       "bannerHeadingPrefix": "Application submitted to the",
       "bannerEmailSent": "A confirmation email has been sent to",
-      "paymentFor": "Payment for",
-      "headingSuffix": "accreditation",
+      "paymentFor": "Payment for accreditation (",
+      "headingSuffix": ")",
       "paymentInstructionPrefix": "The regulator will only review the application after payment has been made.",
       "paymentInstructionSuffix": "You'll receive a notification once payment has been received and the application is in review.",
       "amountDue": "Amount due",
@@ -366,7 +366,7 @@
       "bankTransferInstruction": "You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
       "howLongDoPaymentsTake": "How long do payments take?",
       "howLongDoPaymentsTakeBody": "Bank transfers can take 3 to 5 working days to be received.",
-      "bankDetailsHeading": "Bank details for the regulator",
+      "bankDetailsHeading": "Regulator bank details",
       "amount": "Amount",
       "sortCode": "Sort code",
       "accountNumber": "Account number",
@@ -385,21 +385,21 @@
     },
     "taskList": {
       "title": "Accreditation task list",
-      "headingPrefix": "Accredit to issue PRNs: UK",
-      "headingPrefixExporter": "Accredit to issue PERNs: UK",
-      "headingSuffix": "packaging waste",
-      "metadataYear": "For:",
-      "metadataSite": "For reprocessing site:",
+      "headingPrefix": "Reapply for accreditation (",
+      "headingPrefixExporter": "Reapply for accreditation (",
+      "headingSuffix": ")",
+      "metadataYear": "Accreditation year:",
+      "metadataSite": "Site:",
       "siteNotSet": "Not set",
       "saveAndComeLater": "Save and come back later",
       "submittedText": "This reapplication for accreditation has been submitted",
       "viewPaymentDetailsLink": "View payment details",
       "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
-        "prns": "PRNs tonnage and authority to issue PRNs",
-        "perns": "PERNs tonnage and authority to issue PERNs",
+        "prns": "PRN tonnage and authority to issue",
+        "perns": "PERN tonnage and authority to issue",
         "businessPlan": "Business plan",
-        "samplingPlan": "Accreditation sampling and inspection plan - part 2",
+        "samplingPlan": "Sampling and inspection plan - Part 2",
         "overseasSites": "Overseas reprocessing sites",
         "besEvidence": "Evidence of broadly equivalent standards (BES)"
       }
@@ -460,12 +460,16 @@
       "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "continueButton": "Continue",
-      "columns": {
-        "siteName": "Site name",
-        "country": "Country"
+      "removeFromAccreditationButton": "Remove from accreditation",
+      "addToAccreditationButton": "Add to accreditation",
+      "sections": {
+        "accredited": "Accredited",
+        "registered": "Registered",
+        "newSites": "New sites",
+        "registeredSitesAdded": "Registered sites added"
       },
       "validation": {
-        "noSitesSelected": "Select at least one overseas reprocessing site",
+        "noSitesAccredited": "Add at least one overseas reprocessing site to accreditation",
         "saveError": "Sorry, we were unable to save your site selection. Please try again."
       }
     },
@@ -475,7 +479,7 @@
       "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "saveError": "Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
-      "removeButton": "Remove",
+      "changeLink": "Change",
       "confirmButton": "Confirm and continue"
     },
     "operatorRegistration": {
@@ -782,6 +786,10 @@
         "cancelLink": "Cancel"
       },
       "addNewButton": "Add new overseas reprocessing site",
+      "promoteSuccessBanner": {
+        "title": "Success",
+        "heading": "Site added to accreditation"
+      },
       "successBanner": {
         "title": "Success",
         "heading": "Overseas reprocessing site added to your application",

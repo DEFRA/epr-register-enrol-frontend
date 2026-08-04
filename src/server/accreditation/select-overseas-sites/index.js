@@ -1,6 +1,7 @@
 import {
   selectOverseasSitesGetController,
-  selectOverseasSitesPostController
+  selectOverseasSitesPostController,
+  selectOverseasSitesPromoteEntryGetController
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 
@@ -20,6 +21,18 @@ export const selectOverseasSites = {
           path: '/{language}/accreditation/select-overseas-sites/{applicationId}',
           options: requireOperator,
           ...selectOverseasSitesGetController
+        },
+        {
+          method: 'GET',
+          path: '/accreditation/select-overseas-sites/{applicationId}/promote/{siteId}',
+          options: requireOperator,
+          ...selectOverseasSitesPromoteEntryGetController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/select-overseas-sites/{applicationId}/promote/{siteId}',
+          options: requireOperator,
+          ...selectOverseasSitesPromoteEntryGetController
         },
         {
           method: 'POST',
