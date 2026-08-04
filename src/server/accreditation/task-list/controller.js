@@ -3,7 +3,6 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
-import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -24,7 +23,6 @@ export function buildTaskListViewModel(application, t) {
     materialType,
     year,
     siteId,
-    siteAddress,
     organisationId,
     prns,
     businessPlan,
@@ -34,11 +32,9 @@ export function buildTaskListViewModel(application, t) {
     isExporter
   } = application
 
-  const materialDisplay = materialDisplayName(application, t)
-  const headingPrefix = isExporter
+  const heading = isExporter
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')
-  const heading = `${headingPrefix}${materialDisplay}${t('pages.taskList.headingSuffix')}`
 
   const tonnageComplete = (prns?.sectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =
@@ -131,12 +127,6 @@ export function buildTaskListViewModel(application, t) {
   return {
     heading,
     isExporter: exporterIsNotNull,
-    metadata: {
-      year,
-      site: exporterIsNotNull
-        ? null
-        : (siteAddress ?? t('pages.taskList.siteNotSet'))
-    },
     tasks,
     allComplete,
     continueUrl: allComplete

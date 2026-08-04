@@ -294,7 +294,10 @@ describe('#buildLandingViewModel', () => {
     expect(vm.organisationName).toBe('Organisation Name')
   })
 
-  test('pageHeading combines site address, material and year', () => {
+  // Site, material and operator are shown once, in the persistent
+  // application-header (see src/server/common/helpers/applicationHeader.js),
+  // so pageHeading is just the static "reapply" prompt regardless of them.
+  test('pageHeading is the reapply prompt, not tied to site or material', () => {
     const vm = buildLandingViewModel(
       makeApp({ materialType: 'Steel' }),
       'Organisation Name',
@@ -302,12 +305,10 @@ describe('#buildLandingViewModel', () => {
       2027,
       t
     )
-    expect(vm.pageHeading).toBe(
-      '2 North Road, Addingrove, AA3 1AB : reapply for accreditation (Steel)'
-    )
+    expect(vm.pageHeading).toBe('reapplyHeading')
   })
 
-  test('pageHeading falls back to siteNotSet translation when siteAddress is null', () => {
+  test('pageHeading is unaffected by a null siteAddress', () => {
     const vm = buildLandingViewModel(
       makeApp({ materialType: 'Steel' }),
       'Organisation Name',
@@ -315,9 +316,7 @@ describe('#buildLandingViewModel', () => {
       2027,
       t
     )
-    expect(vm.pageHeading).toBe(
-      'siteNotSet : reapply for accreditation (Steel)'
-    )
+    expect(vm.pageHeading).toBe('reapplyHeading')
   })
 
   test('dueDate is 30 September of the year before accreditationYear', () => {
@@ -549,7 +548,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Not set')
   })
 
-  test('renders material in page heading', async () => {
+  test('renders the reapply page heading', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
 
     const { result } = await server.inject({
@@ -559,7 +558,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(result).toContain('data-testid="page-heading"')
-    expect(result).toContain('reapply for accreditation (Steel)')
+    expect(result).toContain('Reapply for accreditation')
   })
 
   test('renders Application details table with period, due date, status and continue link', async () => {
@@ -660,7 +659,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Dragon Recyclers')
   })
 
-  test('renders heading as "<site address> : reapply for accreditation (<material>)"', async () => {
+  test('page heading is unaffected by site address; the address appears in the application header instead', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
       makeApp({ siteAddress: '2 North Road, Addingrove, AA3 1AB' })
     ])
@@ -672,9 +671,9 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(result).toContain('data-testid="page-heading"')
-    expect(result).toContain(
-      '2 North Road, Addingrove, AA3 1AB : reapply for accreditation (Steel)'
-    )
+    expect(result).toContain('Reapply for accreditation')
+    expect(result).toContain('data-testid="application-header-site-name"')
+    expect(result).toContain('2 North Road, Addingrove, AA3 1AB')
   })
 
   test('renders status tag with correct class for Started', async () => {
@@ -1113,7 +1112,7 @@ describe('#operatorAccreditationController', () => {
       expect(result).toContain('data-testid="continue-button"')
     })
 
-    test('renders heading with "Exporter" in place of a site address for exporter journeys', async () => {
+    test('renders "Exporter" in the application header site field for exporter journeys', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
 
       const { result } = await server.inject({
@@ -1123,7 +1122,9 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(result).toContain('data-testid="page-heading"')
-      expect(result).toContain('Exporter : reapply for accreditation (Steel)')
+      expect(result).toContain('Reapply for accreditation')
+      expect(result).toContain('data-testid="application-header-site-name"')
+      expect(result).toContain('Exporter')
     })
 
     test('reprocessor route still renders current accreditation site address row', async () => {

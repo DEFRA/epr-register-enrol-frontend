@@ -9,9 +9,9 @@ describe('Application Header Component', () => {
         operatorName: 'Delta Green Ltd',
         materialType: 'Plastic',
         siteName: '1 Recycling Way, Leeds',
-        operatorLabel: 'Operator',
-        materialLabel: 'Material',
-        siteLabel: 'Site'
+        operatorLabel: 'Operator:',
+        materialLabel: 'Material:',
+        siteLabel: 'Site:'
       })
     })
 
@@ -42,15 +42,20 @@ describe('Application Header Component', () => {
     })
 
     test('Should use the given labels', () => {
-      expect(
-        $header('.app-application-header__label').eq(0).text().trim()
-      ).toBe('Operator')
-      expect(
-        $header('.app-application-header__label').eq(1).text().trim()
-      ).toBe('Material')
-      expect(
-        $header('.app-application-header__label').eq(2).text().trim()
-      ).toBe('Site')
+      expect($header('.govuk-summary-list__key').eq(0).text().trim()).toBe(
+        'Operator:'
+      )
+      expect($header('.govuk-summary-list__key').eq(1).text().trim()).toBe(
+        'Material:'
+      )
+      expect($header('.govuk-summary-list__key').eq(2).text().trim()).toBe(
+        'Site:'
+      )
+    })
+
+    test('Should use the same govuk-summary-list--no-border pattern as the existing application-metadata block', () => {
+      expect($header('dl').hasClass('govuk-summary-list')).toBe(true)
+      expect($header('dl').hasClass('govuk-summary-list--no-border')).toBe(true)
     })
   })
 
@@ -64,15 +69,15 @@ describe('Application Header Component', () => {
     })
 
     test('Should fall back to the default English labels', () => {
-      expect(
-        $header('.app-application-header__label').eq(0).text().trim()
-      ).toBe('Operator')
-      expect(
-        $header('.app-application-header__label').eq(1).text().trim()
-      ).toBe('Material')
-      expect(
-        $header('.app-application-header__label').eq(2).text().trim()
-      ).toBe('Site')
+      expect($header('.govuk-summary-list__key').eq(0).text().trim()).toBe(
+        'Operator:'
+      )
+      expect($header('.govuk-summary-list__key').eq(1).text().trim()).toBe(
+        'Material:'
+      )
+      expect($header('.govuk-summary-list__key').eq(2).text().trim()).toBe(
+        'Site:'
+      )
     })
   })
 })

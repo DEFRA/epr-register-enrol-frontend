@@ -98,7 +98,7 @@ export function buildLandingViewModel(
     registrationId:
       application.registrationId ?? application.applicationReference,
     siteName,
-    pageHeading: `${siteName} : reapply for accreditation (${matDisp})`,
+    pageHeading: t('pages.operatorAccreditation.reapplyHeading'),
     materialDisplay: matDisp,
     statusLabel: t(
       `pages.operatorAccreditation.statuses.${application.applicationStatus}`

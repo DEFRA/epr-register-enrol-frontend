@@ -17,19 +17,6 @@
 
         <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
-        <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-testid="application-metadata">
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ t('pages.taskList.metadataYear') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="metadata-year">{{ metadata.year }}</dd>
-          </div>
-          {% if not isExporter %}
-          <div class="govuk-summary-list__row">
-            <dt class="govuk-summary-list__key">{{ t('pages.taskList.metadataSite') }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="metadata-site">{{ metadata.site }}</dd>
-          </div>
-          {% endif %}
-        </dl>
-
         <ul class="govuk-task-list" data-testid="task-list">
           {% for task in tasks %}
             <li class="govuk-task-list__item govuk-task-list__item--with-link" data-testid="{{ task.testId }}">

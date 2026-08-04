@@ -5,7 +5,6 @@ import {
   landingUrl,
   queryDeclarationUrl
 } from '../../common/helpers/accreditationUrls.js'
-import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -72,11 +71,9 @@ function allSectionTasks(application, t) {
 export function buildQueryTaskListViewModel(application, t) {
   const { applicationId, year, isExporter } = application
 
-  const materialDisplay = materialDisplayName(application, t)
-  const headingPrefix = isExporter
+  const heading = isExporter
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')
-  const heading = `${headingPrefix} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
 
   const tasks = allSectionTasks(application, t)
     .filter((task) => task.status === 'Queried')
