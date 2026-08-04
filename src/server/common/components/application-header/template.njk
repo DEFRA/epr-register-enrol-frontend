@@ -3,9 +3,15 @@
   page of the accreditation application journey (RA-309 AC03). The
   Material/Site rows match the existing "application-metadata"
   govuk-summary-list--no-border pattern already used on
-  task-list/query-task-list. The operator name is unlabelled and set in the
-  same heading-size type as the page's own h1 (e.g. "Reapply for
-  accreditation"), per design feedback.
+  task-list/query-task-list. The operator name is unlabelled and set one
+  size larger than the page's own h1, per design feedback. A section-break
+  rule follows the Site row to set the header apart from the page content
+  below it.
+
+  Wrapped in the same grid-row/two-thirds column as the page content below
+  it, so the summary-list key/value columns line up with the page's own
+  content width rather than stretching the key column to 30% of the full
+  page width.
 
   Params:
     operatorName  (string)
@@ -15,15 +21,20 @@
     siteLabel     (string) - defaults to "Site:"
 #}
 <div class="app-application-header" data-testid="application-header">
-  <p class="govuk-heading-l govuk-!-margin-bottom-2" data-testid="application-header-operator-name">{{ params.operatorName }}</p>
-  <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6">
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">{{ params.materialLabel | default('Material:') }}</dt>
-      <dd class="govuk-summary-list__value" data-testid="application-header-material-type">{{ params.materialType }}</dd>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-heading-xl govuk-!-margin-bottom-2" data-testid="application-header-operator-name">{{ params.operatorName }}</p>
+      <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-2">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ params.materialLabel | default('Material:') }}</dt>
+          <dd class="govuk-summary-list__value" data-testid="application-header-material-type">{{ params.materialType }}</dd>
+        </div>
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ params.siteLabel | default('Site:') }}</dt>
+          <dd class="govuk-summary-list__value" data-testid="application-header-site-name">{{ params.siteName }}</dd>
+        </div>
+      </dl>
     </div>
-    <div class="govuk-summary-list__row">
-      <dt class="govuk-summary-list__key">{{ params.siteLabel | default('Site:') }}</dt>
-      <dd class="govuk-summary-list__value" data-testid="application-header-site-name">{{ params.siteName }}</dd>
-    </div>
-  </dl>
+  </div>
+  <hr class="govuk-section-break govuk-section-break--visible govuk-section-break--m" data-testid="application-header-separator">
 </div>

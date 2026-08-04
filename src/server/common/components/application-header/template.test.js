@@ -18,13 +18,20 @@ describe('Application Header Component', () => {
       expect($header('[data-testid="application-header"]')).toHaveLength(1)
     })
 
-    test('Should render the operator name unlabelled, at heading size', () => {
+    test('Should render the operator name unlabelled, one size larger than a page heading', () => {
       const $operatorName = $header(
         '[data-testid="application-header-operator-name"]'
       )
       expect($operatorName.text().trim()).toBe('Delta Green Ltd')
       expect($operatorName.text()).not.toContain('Operator')
-      expect($operatorName.hasClass('govuk-heading-l')).toBe(true)
+      expect($operatorName.hasClass('govuk-heading-xl')).toBe(true)
+    })
+
+    test('Should render a visible section-break rule after the site row', () => {
+      const $separator = $header('[data-testid="application-header-separator"]')
+      expect($separator).toHaveLength(1)
+      expect($separator.is('hr')).toBe(true)
+      expect($separator.hasClass('govuk-section-break--visible')).toBe(true)
     })
 
     test('Should contain the material type', () => {
