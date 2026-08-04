@@ -887,7 +887,6 @@
     "queryNoteLabel": "[Welsh] Query from the regulator",
     "declarationWarningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
     "applicationHeader": {
-      "operatorLabel": "[Welsh] Operator:",
       "materialLabel": "[Welsh] Material:",
       "siteLabel": "[Welsh] Site:"
     },

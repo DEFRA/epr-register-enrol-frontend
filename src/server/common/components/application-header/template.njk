@@ -1,29 +1,29 @@
 {#
   Persistent application-header strip, shown below the back link on every
-  page of the accreditation application journey (RA-309 AC03). Matches the
-  existing "application-metadata" govuk-summary-list--no-border pattern
-  already used on task-list/query-task-list, rather than introducing a new
-  visual style.
+  page of the accreditation application journey (RA-309 AC03). The
+  Material/Site rows match the existing "application-metadata"
+  govuk-summary-list--no-border pattern already used on
+  task-list/query-task-list. The operator name is unlabelled and set in the
+  same heading-size type as the page's own h1 (e.g. "Reapply for
+  accreditation"), per design feedback.
 
   Params:
     operatorName  (string)
     materialType  (string)
     siteName      (string)
-    operatorLabel (string) - defaults to "Operator:"
     materialLabel (string) - defaults to "Material:"
     siteLabel     (string) - defaults to "Site:"
 #}
-<dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-testid="application-header">
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">{{ params.operatorLabel | default('Operator:') }}</dt>
-    <dd class="govuk-summary-list__value" data-testid="application-header-operator-name">{{ params.operatorName }}</dd>
-  </div>
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">{{ params.materialLabel | default('Material:') }}</dt>
-    <dd class="govuk-summary-list__value" data-testid="application-header-material-type">{{ params.materialType }}</dd>
-  </div>
-  <div class="govuk-summary-list__row">
-    <dt class="govuk-summary-list__key">{{ params.siteLabel | default('Site:') }}</dt>
-    <dd class="govuk-summary-list__value" data-testid="application-header-site-name">{{ params.siteName }}</dd>
-  </div>
-</dl>
+<div class="app-application-header" data-testid="application-header">
+  <p class="govuk-heading-l govuk-!-margin-bottom-2" data-testid="application-header-operator-name">{{ params.operatorName }}</p>
+  <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6">
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">{{ params.materialLabel | default('Material:') }}</dt>
+      <dd class="govuk-summary-list__value" data-testid="application-header-material-type">{{ params.materialType }}</dd>
+    </div>
+    <div class="govuk-summary-list__row">
+      <dt class="govuk-summary-list__key">{{ params.siteLabel | default('Site:') }}</dt>
+      <dd class="govuk-summary-list__value" data-testid="application-header-site-name">{{ params.siteName }}</dd>
+    </div>
+  </dl>
+</div>

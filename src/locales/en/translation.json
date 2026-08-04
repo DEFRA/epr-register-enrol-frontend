@@ -890,7 +890,6 @@
     "queryNoteLabel": "Query from the regulator",
     "declarationWarningText": "Your organisation may face enforcement action if the data is inaccurate.",
     "applicationHeader": {
-      "operatorLabel": "Operator:",
       "materialLabel": "Material:",
       "siteLabel": "Site:"
     },
