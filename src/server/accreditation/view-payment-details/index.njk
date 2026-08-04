@@ -4,8 +4,6 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ t('pages.viewPaymentDetails.backLink') }}</a>
-
       {% if error %}
         <p class="govuk-body govuk-error-message" data-testid="load-error">{{ error }}</p>
       {% else %}

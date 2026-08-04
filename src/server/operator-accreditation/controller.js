@@ -9,6 +9,8 @@ import {
   queryTaskListUrl,
   landingUrl
 } from '../common/helpers/accreditationUrls.js'
+import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
+import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
 
 const STATUS_CONFIG = {
   Saved: { tagClass: 'govuk-tag--grey' },
@@ -41,11 +43,6 @@ export const NON_WITHDRAWABLE_STATUSES = new Set([
   'Withdrawn'
 ])
 
-const GLASS_RECYCLING_PROCESS_KEYS = {
-  glass_re_melt: 'pages.materialSelection.glassRemelt',
-  glass_other: 'pages.materialSelection.glassOther'
-}
-
 // The reapply prompt only makes sense while an application is still live —
 // once it's been decided (approved/refused) or dropped (withdrawn/cancelled)
 // there's nothing left to reapply for.
@@ -59,16 +56,6 @@ const REAPPLY_TEXT_HIDDEN_STATUSES = new Set([
   'Refused',
   'Rejected'
 ])
-
-function materialDisplayName(application, t) {
-  const { materialType, glassRecyclingProcess } = application
-  if (!materialType) return ''
-
-  const glassKey = GLASS_RECYCLING_PROCESS_KEYS[glassRecyclingProcess]
-  if (materialType === 'Glass' && glassKey) return t(glassKey)
-
-  return t(`pages.materialSelection.materials.${materialType}`)
-}
 
 // The prior accreditation year always runs to 31 December, with the
 // reapplication due 30 September of that same prior year.
@@ -155,6 +142,7 @@ export const operatorAccreditationController = {
     const yearInt = parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = '/operator/'
+    const backLinkText = t('pages.operatorAccreditation.reExBackLink')
 
     const canAccess = await operatorCanAccessOrganisation(
       user,
@@ -173,7 +161,8 @@ export const operatorAccreditationController = {
           pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
           heading: t('pages.operatorAccreditation.seedErrorHeading'),
           userName,
-          reExBackUrl: '#',
+          backLink: '#',
+          backLinkText,
           error: message
         })
         .code(500)
@@ -234,9 +223,16 @@ export const operatorAccreditationController = {
 
     const notification = request.yar.flash('notification')[0] ?? null
 
+    request.app = request.app ?? {}
+    request.app.applicationHeader = buildApplicationHeaderViewModel(
+      application,
+      t
+    )
+
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),
-      reExBackUrl: reExBackLink,
+      backLink: reExBackLink,
+      backLinkText,
       notification,
       ...viewModel
     })
@@ -252,6 +248,7 @@ export const operatorAccreditationExporterController = {
     const yearInt = parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = '/operator/'
+    const backLinkText = t('pages.operatorAccreditation.reExBackLink')
 
     const canAccess = await operatorCanAccessOrganisation(
       user,
@@ -270,7 +267,8 @@ export const operatorAccreditationExporterController = {
           pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
           heading: t('pages.operatorAccreditation.seedErrorHeading'),
           userName,
-          reExBackUrl: '#',
+          backLink: '#',
+          backLinkText,
           error: message
         })
         .code(500)
@@ -331,9 +329,16 @@ export const operatorAccreditationExporterController = {
 
     const notification = request.yar.flash('notification')[0] ?? null
 
+    request.app = request.app ?? {}
+    request.app.applicationHeader = buildApplicationHeaderViewModel(
+      application,
+      t
+    )
+
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),
-      reExBackUrl: reExBackLink,
+      backLink: reExBackLink,
+      backLinkText,
       isExporter: true,
       notification,
       ...viewModel

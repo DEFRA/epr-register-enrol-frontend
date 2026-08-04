@@ -891,6 +891,11 @@
     "opensInNewTab": "(opens in new tab)",
     "queryNoteLabel": "Query from the regulator",
     "declarationWarningText": "Your organisation may face enforcement action if the data is inaccurate.",
+    "applicationHeader": {
+      "operatorLabel": "Operator",
+      "materialLabel": "Material",
+      "siteLabel": "Site"
+    },
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
       "tryAgain": "Try again"

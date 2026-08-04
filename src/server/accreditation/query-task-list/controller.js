@@ -5,6 +5,7 @@ import {
   landingUrl,
   queryDeclarationUrl
 } from '../../common/helpers/accreditationUrls.js'
+import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -16,21 +17,6 @@ const SECTION_STATUS_CONFIG = {
 
 function sectionStatus(value) {
   return SECTION_STATUS_CONFIG[value] ?? SECTION_STATUS_CONFIG.NotStarted
-}
-
-const GLASS_RECYCLING_PROCESS_KEYS = {
-  glass_re_melt: 'pages.materialSelection.glassRemelt',
-  glass_other: 'pages.materialSelection.glassOther'
-}
-
-function materialDisplayName(application, t) {
-  const { materialType, glassRecyclingProcess } = application
-  if (!materialType) return ''
-
-  const glassKey = GLASS_RECYCLING_PROCESS_KEYS[glassRecyclingProcess]
-  if (materialType === 'Glass' && glassKey) return t(glassKey)
-
-  return t(`pages.materialSelection.materials.${materialType}`)
 }
 
 // Same five sections/URLs task-list.js links to, unfiltered by progression —

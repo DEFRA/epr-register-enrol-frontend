@@ -888,6 +888,11 @@
     "opensInNewTab": "[Welsh] (opens in new tab)",
     "queryNoteLabel": "[Welsh] Query from the regulator",
     "declarationWarningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
+    "applicationHeader": {
+      "operatorLabel": "[Welsh] Operator",
+      "materialLabel": "[Welsh] Material",
+      "siteLabel": "[Welsh] Site"
+    },
     "regulatorQuery": {
       "heading": "[Welsh] Regulator query",
       "summaryPrefix": "[Welsh] The regulator has identified an issue with your",

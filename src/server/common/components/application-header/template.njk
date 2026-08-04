@@ -1,0 +1,28 @@
+{#
+  Persistent application-header strip, shown below the back link on every
+  page of the accreditation application journey (RA-309 AC03).
+
+  Params:
+    operatorName  (string)
+    materialType  (string)
+    siteName      (string)
+    operatorLabel (string) - defaults to "Operator"
+    materialLabel (string) - defaults to "Material"
+    siteLabel     (string) - defaults to "Site"
+#}
+<div class="app-application-header" data-testid="application-header">
+  <dl class="app-application-header__list">
+    <div class="app-application-header__item">
+      <dt class="app-application-header__label">{{ params.operatorLabel | default('Operator') }}</dt>
+      <dd class="app-application-header__value" data-testid="application-header-operator-name">{{ params.operatorName }}</dd>
+    </div>
+    <div class="app-application-header__item">
+      <dt class="app-application-header__label">{{ params.materialLabel | default('Material') }}</dt>
+      <dd class="app-application-header__value" data-testid="application-header-material-type">{{ params.materialType }}</dd>
+    </div>
+    <div class="app-application-header__item">
+      <dt class="app-application-header__label">{{ params.siteLabel | default('Site') }}</dt>
+      <dd class="app-application-header__value" data-testid="application-header-site-name">{{ params.siteName }}</dd>
+    </div>
+  </dl>
+</div>

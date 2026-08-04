@@ -52,9 +52,9 @@ describe('context and cache', () => {
           getAssetPath: expect.any(Function),
           navigation: [
             {
-              current: true,
+              current: false,
               text: 'Home',
-              href: '/'
+              href: '/operator'
             },
             {
               current: false,
@@ -66,7 +66,8 @@ describe('context and cache', () => {
           serviceUrl: '/',
           t: expect.any(Function),
           user: null,
-          userType: null
+          userType: null,
+          applicationHeader: null
         })
       })
 
@@ -83,6 +84,21 @@ describe('context and cache', () => {
           expect(contextResult.getAssetPath('an-image.png')).toBe(
             '/public/an-image.png'
           )
+        })
+      })
+
+      describe('With request.app.applicationHeader set', () => {
+        test('Should surface it on the context', () => {
+          const applicationHeader = {
+            operatorName: 'Delta Green Ltd',
+            materialType: 'Plastic',
+            siteName: '1 Recycling Way, Leeds'
+          }
+          const result = contextImport.context({
+            path: '/accreditation/tonnage/app-1',
+            app: { applicationHeader }
+          })
+          expect(result.applicationHeader).toEqual(applicationHeader)
         })
       })
     })
@@ -156,9 +172,9 @@ describe('context and cache', () => {
           getAssetPath: expect.any(Function),
           navigation: [
             {
-              current: true,
+              current: false,
               text: 'Home',
-              href: '/'
+              href: '/operator'
             },
             {
               current: false,
@@ -170,7 +186,8 @@ describe('context and cache', () => {
           serviceUrl: '/',
           t: expect.any(Function),
           user: null,
-          userType: null
+          userType: null,
+          applicationHeader: null
         })
       })
     })

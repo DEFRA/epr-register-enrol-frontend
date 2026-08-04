@@ -1,0 +1,28 @@
+@use 'govuk-frontend' as *;
+
+.app-application-header {
+  background-color: govuk-colour('black', $variant: 'tint-95');
+  padding: govuk-spacing(3);
+  margin-bottom: govuk-spacing(6);
+}
+
+.app-application-header__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: govuk-spacing(4);
+  margin: 0;
+}
+
+.app-application-header__item {
+  margin: 0;
+}
+
+.app-application-header__label {
+  @include govuk-font(16, $weight: bold);
+  margin: 0;
+}
+
+.app-application-header__value {
+  @include govuk-font(16);
+  margin: 0;
+}

@@ -829,7 +829,29 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain('data-testid="reex-back-link"')
+    expect(result).toContain('data-testid="back-link"')
+  })
+
+  test('persistent application header shows operator, material and site', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({
+        organisationName: 'Delta Green Ltd',
+        siteAddress: '2 North Road, Addingrove, AA3 1AB'
+      })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="application-header"')
+    expect(result).toContain('data-testid="application-header-operator-name"')
+    expect(result).toContain('Delta Green Ltd')
+    expect(result).toContain('data-testid="application-header-material-type"')
+    expect(result).toContain('data-testid="application-header-site-name"')
+    expect(result).toContain('2 North Road, Addingrove, AA3 1AB')
   })
 
   test('application summary list is rendered', async () => {
@@ -934,7 +956,7 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain('data-testid="reex-back-link"')
+    expect(result).toContain('data-testid="back-link"')
     expect(result).not.toContain('href=""')
   })
 

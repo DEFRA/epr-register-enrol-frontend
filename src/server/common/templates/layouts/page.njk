@@ -6,6 +6,7 @@
 
 {# Import custom components globally #}
 {% from "heading/macro.njk" import appHeading %}
+{% from "application-header/macro.njk" import appApplicationHeader %}
 {% from "language-switcher/macro.njk" import languageSwitcher %}
 {% from "regulator-query-banner/macro.njk" import regulatorQueryBanner %}
 
@@ -44,6 +45,19 @@
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({
       items: breadcrumbs
+    }) }}
+  {% endif %}
+  {% if backLink %}
+    <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ backLinkText or t('common.back') }}</a>
+  {% endif %}
+  {% if applicationHeader %}
+    {{ appApplicationHeader({
+      operatorName: applicationHeader.operatorName,
+      materialType: applicationHeader.materialType,
+      siteName: applicationHeader.siteName,
+      operatorLabel: t('common.applicationHeader.operatorLabel'),
+      materialLabel: t('common.applicationHeader.materialLabel'),
+      siteLabel: t('common.applicationHeader.siteLabel')
     }) }}
   {% endif %}
 {% endblock %}

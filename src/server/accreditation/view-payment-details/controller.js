@@ -5,6 +5,7 @@ import {
   resolveNationFromPostcode,
   NATIONS
 } from '../../common/helpers/nation-from-postcode.js'
+import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 const BANK_DETAILS_BY_NATION = {
   [NATIONS.ENGLAND]: {
@@ -56,21 +57,6 @@ function confirmationUrl(applicationId) {
 function siteNameFromAddress(siteAddress) {
   if (!siteAddress) return ''
   return siteAddress.split(',')[0].trim()
-}
-
-const GLASS_RECYCLING_PROCESS_KEYS = {
-  glass_re_melt: 'pages.materialSelection.glassRemelt',
-  glass_other: 'pages.materialSelection.glassOther'
-}
-
-function materialDisplayName(application, t) {
-  const { materialType, glassRecyclingProcess } = application
-  if (!materialType) return ''
-
-  const glassKey = GLASS_RECYCLING_PROCESS_KEYS[glassRecyclingProcess]
-  if (materialType === 'Glass' && glassKey) return t(glassKey)
-
-  return t(`pages.materialSelection.materials.${materialType}`)
 }
 
 function tonnageFeeCalculator(tonnage) {
