@@ -37,27 +37,14 @@ function makeApplication(overrides = {}) {
 }
 
 describe('#buildHeading', () => {
-  test('builds heading with material and site', () => {
-    const heading = buildHeading('Steel', 'Site A', false, t)
-    expect(heading).toContain('steel')
-    expect(heading).toContain('Site A')
+  // Material and site are shown once, in the persistent application-header,
+  // so this heading is just the translated prefix.
+  test('uses the standard prefix for a reprocessor', () => {
+    expect(buildHeading(false, t)).toBe('headingPrefix')
   })
 
-  test('uses siteNotSet fallback when no site', () => {
-    const heading = buildHeading('Steel', null, false, t)
-    expect(heading).toContain('siteNotSet')
-  })
-
-  test('handles null materialType gracefully', () => {
-    const heading = buildHeading(null, null, false, t)
-    expect(heading).toBeDefined()
-    expect(typeof heading).toBe('string')
-  })
-
-  test('uses exporter prefix when isExporter is true', () => {
-    const heading = buildHeading('Plastic', 'Site B', true, t)
-    expect(heading).toContain('headingPrefixExporter')
-    expect(heading).toContain('plastic')
+  test('uses the exporter-specific prefix when isExporter is true', () => {
+    expect(buildHeading(true, t)).toBe('headingPrefixExporter')
   })
 })
 
@@ -123,7 +110,7 @@ describe('#tonnageAuthorityController', () => {
   }
 
   describe('GET /accreditation/tonnage-authority/{applicationId}', () => {
-    test('returns 200 with page heading containing material and site', async () => {
+    test('returns 200 with the "Authority to issue PRNs" heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
@@ -134,7 +121,7 @@ describe('#tonnageAuthorityController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
-      expect(result).toContain('steel')
+      expect(result).toContain('Authority to issue PRNs')
     })
 
     test('shows no-authorisers message when authorisers list is empty', async () => {

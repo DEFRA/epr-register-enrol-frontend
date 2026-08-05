@@ -174,67 +174,18 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.tasks[0].statusTagClass).toBe('govuk-tag--orange')
   })
 
-  test('builds heading with material name', () => {
+  // Site/material/operator are no longer duplicated on this page's own
+  // heading or metadata — they're shown once, in the persistent
+  // application-header (see src/server/common/helpers/applicationHeader.js),
+  // so the heading here is just the static "reapply" prompt.
+  test('heading is the reapply prompt, not tied to material', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
-    expect(vm.heading).toContain('Steel')
+    expect(vm.heading).toBe('headingPrefix')
   })
 
-  test('glass with glass_re_melt process uses the remelt display name', () => {
-    const vm = buildTaskListViewModel(
-      makeApplication({
-        materialType: 'Glass',
-        glassRecyclingProcess: 'glass_re_melt'
-      }),
-      t
-    )
-    expect(vm.heading).toContain('glassRemelt')
-  })
-
-  test('glass with glass_other process uses the other display name', () => {
-    const vm = buildTaskListViewModel(
-      makeApplication({
-        materialType: 'Glass',
-        glassRecyclingProcess: 'glass_other'
-      }),
-      t
-    )
-    expect(vm.heading).toContain('glassOther')
-  })
-
-  test('glass with no recycling process falls back to the generic material name', () => {
-    const vm = buildTaskListViewModel(
-      makeApplication({ materialType: 'Glass' }),
-      t
-    )
-    expect(vm.heading).toContain('Glass')
-    expect(vm.heading).not.toContain('glassRemelt')
-    expect(vm.heading).not.toContain('glassOther')
-  })
-
-  test('non-glass material ignores glassRecyclingProcess entirely', () => {
-    const vm = buildTaskListViewModel(
-      makeApplication({
-        materialType: 'Steel',
-        glassRecyclingProcess: 'glass_re_melt'
-      }),
-      t
-    )
-    expect(vm.heading).toContain('Steel')
-    expect(vm.heading).not.toContain('glassRemelt')
-  })
-
-  test('metadata contains year and site', () => {
-    const vm = buildTaskListViewModel(
-      makeApplication({ year: 2026, siteAddress: '123 Test Street' }),
-      t
-    )
-    expect(vm.metadata.year).toBe(2026)
-    expect(vm.metadata.site).toBe('123 Test Street')
-  })
-
-  test('null siteAddress falls back to siteNotSet translation', () => {
-    const vm = buildTaskListViewModel(makeApplication({ siteAddress: null }), t)
-    expect(vm.metadata.site).toBe('siteNotSet')
+  test('exporter heading uses the exporter-specific prefix', () => {
+    const vm = buildTaskListViewModel(makeApplication({ isExporter: true }), t)
+    expect(vm.heading).toBe('headingPrefixExporter')
   })
 
   test('null prns/businessPlan/samplingPlan treated as NotStarted', () => {
@@ -382,11 +333,6 @@ describe('#buildTaskListViewModel', () => {
       const vm = buildTaskListViewModel(makeExporterApp(), t)
       expect(vm.isExporter).toBe(true)
     })
-
-    test('metadata.site is null for exporter', () => {
-      const vm = buildTaskListViewModel(makeExporterApp(), t)
-      expect(vm.metadata.site).toBeNull()
-    })
   })
 })
 
@@ -418,7 +364,7 @@ describe('#taskListGetController', () => {
   }
 
   describe('GET /accreditation/task-list/{applicationId}', () => {
-    test('returns 200 with heading containing material type', async () => {
+    test('returns 200 with the reapply heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
@@ -428,7 +374,7 @@ describe('#taskListGetController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Reapply for accreditation (Steel)')
+      expect(result).toContain('Reapply for accreditation')
     })
 
     test('renders three task rows', async () => {
@@ -645,22 +591,6 @@ describe('#taskListGetController', () => {
       expect(result).toContain('data-testid="back-link"')
     })
 
-    test('renders year and site metadata', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ year: 2026, siteId: 'site-123' })
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
-      })
-
-      expect(result).toContain('data-testid="metadata-year"')
-      expect(result).toContain('2026')
-      expect(result).toContain('site-123')
-    })
-
     test('returns 500 with error message when API call fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
 
@@ -714,7 +644,7 @@ describe('#taskListGetController', () => {
       expect(result).toContain('data-testid="task-bes-evidence"')
     })
 
-    test('exporter: heading contains material', async () => {
+    test('exporter: renders the exporter-specific reapply heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           isExporter: true,
@@ -731,7 +661,7 @@ describe('#taskListGetController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('Reapply for accreditation (Plastic)')
+      expect(result).toContain('Reapply for accreditation')
     })
 
     test('exporter: all 5 sections complete shows Continue button', async () => {
@@ -778,26 +708,6 @@ describe('#taskListGetController', () => {
       })
 
       expect(result).not.toContain('data-testid="continue-button"')
-    })
-
-    test('exporter: does not show site metadata row', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          isExporter: true,
-          siteId: null,
-          materialType: 'Plastic',
-          overseasSites: { sectionStatus: 'NotStarted' },
-          besEvidence: { sectionStatus: 'NotStarted' }
-        })
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
-      })
-
-      expect(result).not.toContain('data-testid="metadata-site"')
     })
 
     test('returns 200 in Welsh locale', async () => {

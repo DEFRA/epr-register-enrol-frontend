@@ -6,16 +6,13 @@ import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export function buildHeading(materialType, siteName, isExporter, t) {
-  const prefix = isExporter
+// Material and site are shown once, in the persistent application-header
+// (see src/server/common/helpers/applicationHeader.js), so this heading no
+// longer repeats them.
+export function buildHeading(isExporter, t) {
+  return isExporter
     ? t('pages.tonnageAuthority.headingPrefixExporter')
     : t('pages.tonnageAuthority.headingPrefix')
-  const at = t('pages.tonnageAuthority.headingAt')
-  const material = materialType
-    ? t(`pages.materialSelection.materials.${materialType}`)
-    : ''
-  const site = siteName || t('pages.taskList.siteNotSet')
-  return `${prefix}${at} ${site} (${material.toLowerCase()})`
 }
 
 export function buildAuthoriserRows(authorisers, t) {
@@ -49,12 +46,7 @@ function buildViewData(application, t, applicationId, opts = {}) {
     pageTitle: isExporter
       ? t('pages.tonnageAuthority.titleExporter')
       : t('pages.tonnageAuthority.title'),
-    heading: buildHeading(
-      application.materialType,
-      application.siteAddress || t('pages.taskList.siteNotSet'),
-      isExporter,
-      t
-    ),
+    heading: buildHeading(isExporter, t),
     authoriserRows: buildAuthoriserRows(application.prns?.authorisers, t),
     backLink: tonnageUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
@@ -89,7 +81,7 @@ export const tonnageAuthorityGetController = {
       )
       return renderPage(h, {
         pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(null, null, false, t),
+        heading: buildHeading(false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
@@ -152,7 +144,7 @@ export const tonnageAuthorityPostController = {
       )
       return renderPage(h, {
         pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(null, null, false, t),
+        heading: buildHeading(false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
@@ -171,12 +163,7 @@ export const tonnageAuthorityPostController = {
     }
 
     const isExporter = application.isExporter ?? false
-    const heading = buildHeading(
-      application.materialType,
-      application.siteAddress || t('pages.taskList.siteNotSet'),
-      isExporter,
-      t
-    )
+    const heading = buildHeading(isExporter, t)
     const intro = isExporter
       ? t('pages.tonnageAuthority.introExporter')
       : t('pages.tonnageAuthority.intro')

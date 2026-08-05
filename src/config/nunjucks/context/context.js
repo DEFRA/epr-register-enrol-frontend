@@ -47,6 +47,7 @@ export function context(request) {
     currentLocale,
     t,
     user,
-    userType: user?.userType ?? null
+    userType: user?.userType ?? null,
+    applicationHeader: request.app?.applicationHeader ?? null
   }
 }

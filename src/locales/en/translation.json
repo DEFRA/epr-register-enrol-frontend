@@ -70,6 +70,7 @@
       "notificationFailedLabel": "Failed to send",
       "yearLabel": "Accreditation Year",
       "continueButton": "Continue",
+      "reapplyHeading": "Reapply for accreditation",
       "seedErrorHeading": "There is a problem",
       "seedError": "We were unable to start your application. Please try again.",
       "applicationDetailsHeading": "Application details",
@@ -152,9 +153,8 @@
     "tonnageAuthority": {
       "title": "Authority to issue PRNs",
       "titleExporter": "Authority to issue PERNs",
-      "headingPrefix": "Authority to issue PRNs ",
-      "headingPrefixExporter": "Authority to issue PERNs ",
-      "headingAt": "at",
+      "headingPrefix": "Authority to issue PRNs",
+      "headingPrefixExporter": "Authority to issue PERNs",
       "intro": "You can choose who will have authority to issue PRNs.",
       "introExporter": "You can choose who will have authority to issue PERNs.",
       "selectSubHeading": "Select those who you want to have authority to issue PRNs.",
@@ -386,11 +386,8 @@
     },
     "taskList": {
       "title": "Accreditation task list",
-      "headingPrefix": "Reapply for accreditation (",
-      "headingPrefixExporter": "Reapply for accreditation (",
-      "headingSuffix": ")",
-      "metadataYear": "Accreditation year:",
-      "metadataSite": "Site:",
+      "headingPrefix": "Reapply for accreditation",
+      "headingPrefixExporter": "Reapply for accreditation",
       "siteNotSet": "Not set",
       "saveAndComeLater": "Save and come back later",
       "submittedText": "This reapplication for accreditation has been submitted",
@@ -891,6 +888,11 @@
     "opensInNewTab": "(opens in new tab)",
     "queryNoteLabel": "Query from the regulator",
     "declarationWarningText": "Your organisation may face enforcement action if the data is inaccurate.",
+    "applicationHeader": {
+      "materialLabel": "Material:",
+      "siteLabel": "Site:",
+      "yearLabel": "Year:"
+    },
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
       "tryAgain": "Try again"

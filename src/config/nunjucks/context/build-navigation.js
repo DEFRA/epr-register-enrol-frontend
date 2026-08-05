@@ -2,8 +2,8 @@ export function buildNavigation(request) {
   return [
     {
       text: 'Home',
-      href: '/',
-      current: request?.path === '/'
+      href: '/operator',
+      current: request?.path === '/operator'
     },
     {
       text: 'About',

@@ -5,6 +5,8 @@ import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKey
 import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
 import { accreditationApiService } from '../helpers/accreditationApiService.js'
 import { landingUrl } from '../helpers/accreditationUrls.js'
+import { getLocaleAndTranslator } from '../helpers/get-locale-translator.js'
+import { buildApplicationHeaderViewModel } from '../helpers/applicationHeader.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -52,21 +54,28 @@ export async function hasOrganisationAccess(yar, user, logger) {
   return operatorCanAccessOrganisation(user, organisationId, { logger })
 }
 
-// Defence in depth for AC09: the backend is the real enforcement boundary
-// (it must reject writes to a Withdrawn application), this guard just keeps
-// the operator from landing on a stale edit form. Fails open on a fetch
-// error — a transient backend outage should not block navigation, since the
-// backend's own write-side guard is what actually protects the data.
-export async function isWithdrawn(yar) {
-  const applicationId = yar.get(ACCREDITATION_SESSION_KEYS.accreditationId)
+// Single fetch shared by the Withdrawn check (AC09) and the persistent
+// application-header population below. Fails open on a fetch error — a
+// transient backend outage should not block navigation, since the backend's
+// own write-side guard is what actually protects the data, and the header
+// simply won't render.
+//
+// Resolved from the route's own applicationId, not the session's — every
+// accreditation page fetches and renders by request.params.applicationId,
+// and the session value is only set once by the landing controllers, so it
+// can point at a different application than the one on screen (a second
+// tab, back button, or bookmark to an earlier application). Falls back to
+// the session value only when the route has none.
+export async function fetchApplication(yar, routeApplicationId) {
+  const applicationId =
+    routeApplicationId ?? yar.get(ACCREDITATION_SESSION_KEYS.accreditationId)
   const organisationId = yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
   if (!applicationId || !organisationId) {
     return null
   }
-  const application = await accreditationApiService
+  return accreditationApiService
     .getApplication(organisationId, applicationId)
     .catch(() => null)
-  return application?.applicationStatus === 'Withdrawn' ? application : null
 }
 
 export const accreditationSessionGuard = {
@@ -99,18 +108,27 @@ export const accreditationSessionGuard = {
           throw Boom.forbidden('You do not have access to this organisation')
         }
 
-        if (isWithdrawnBlockedPath(request.path)) {
-          const withdrawnApplication = await isWithdrawn(request.yar)
-          if (withdrawnApplication) {
-            return h
-              .redirect(
-                landingUrl(
-                  withdrawnApplication,
-                  withdrawnApplication.isExporter
-                )
-              )
-              .takeover()
-          }
+        const application = await fetchApplication(
+          request.yar,
+          request.params?.applicationId
+        )
+
+        if (
+          isWithdrawnBlockedPath(request.path) &&
+          application?.applicationStatus === 'Withdrawn'
+        ) {
+          return h
+            .redirect(landingUrl(application, application.isExporter))
+            .takeover()
+        }
+
+        if (application) {
+          const { t } = getLocaleAndTranslator(request)
+          request.app = request.app ?? {}
+          request.app.applicationHeader = buildApplicationHeaderViewModel(
+            application,
+            t
+          )
         }
 
         return h.continue

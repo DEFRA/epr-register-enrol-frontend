@@ -13,23 +13,8 @@ const SECTION_STATUS_CONFIG = {
   Updated: { tagText: 'UPDATED', tagClass: 'govuk-tag--turquoise' }
 }
 
-const GLASS_RECYCLING_PROCESS_KEYS = {
-  glass_re_melt: 'pages.materialSelection.glassRemelt',
-  glass_other: 'pages.materialSelection.glassOther'
-}
-
 function sectionStatus(value) {
   return SECTION_STATUS_CONFIG[value] ?? SECTION_STATUS_CONFIG.NotStarted
-}
-
-function materialDisplayName(application, t) {
-  const { materialType, glassRecyclingProcess } = application
-  if (!materialType) return ''
-
-  const glassKey = GLASS_RECYCLING_PROCESS_KEYS[glassRecyclingProcess]
-  if (materialType === 'Glass' && glassKey) return t(glassKey)
-
-  return t(`pages.materialSelection.materials.${materialType}`)
 }
 
 export function buildTaskListViewModel(application, t) {
@@ -38,7 +23,6 @@ export function buildTaskListViewModel(application, t) {
     materialType,
     year,
     siteId,
-    siteAddress,
     organisationId,
     prns,
     businessPlan,
@@ -48,11 +32,9 @@ export function buildTaskListViewModel(application, t) {
     isExporter
   } = application
 
-  const materialDisplay = materialDisplayName(application, t)
-  const headingPrefix = isExporter
+  const heading = isExporter
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')
-  const heading = `${headingPrefix}${materialDisplay}${t('pages.taskList.headingSuffix')}`
 
   const tonnageComplete = (prns?.sectionStatus ?? 'NotStarted') === 'Completed'
   const bpComplete =
@@ -145,12 +127,6 @@ export function buildTaskListViewModel(application, t) {
   return {
     heading,
     isExporter: exporterIsNotNull,
-    metadata: {
-      year,
-      site: exporterIsNotNull
-        ? null
-        : (siteAddress ?? t('pages.taskList.siteNotSet'))
-    },
     tasks,
     allComplete,
     continueUrl: allComplete

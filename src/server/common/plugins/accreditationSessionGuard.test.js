@@ -5,7 +5,7 @@ import {
   hasValidSession,
   hasOrganisationAccess,
   isWithdrawnBlockedPath,
-  isWithdrawn,
+  fetchApplication,
   accreditationSessionGuard
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
@@ -79,7 +79,7 @@ describe('isWithdrawnBlockedPath', () => {
   })
 })
 
-describe('isWithdrawn', () => {
+describe('fetchApplication', () => {
   function makeYar(accreditationId, organisationId) {
     return {
       get: vi.fn((key) => {
@@ -94,38 +94,52 @@ describe('isWithdrawn', () => {
     }
   }
 
-  test('returns the application when it is Withdrawn', async () => {
+  test('returns the fetched application regardless of status', async () => {
     accreditationApiService.getApplication.mockResolvedValue({
-      applicationStatus: 'Withdrawn',
+      applicationStatus: 'Started',
       isExporter: false
     })
-    const result = await isWithdrawn(makeYar('app-1', '50001'))
+    const result = await fetchApplication(makeYar('app-1', '50001'))
     expect(result).toEqual({
-      applicationStatus: 'Withdrawn',
+      applicationStatus: 'Started',
       isExporter: false
     })
-  })
-
-  test('returns null when the application is not Withdrawn', async () => {
-    accreditationApiService.getApplication.mockResolvedValue({
-      applicationStatus: 'Started'
-    })
-    const result = await isWithdrawn(makeYar('app-1', '50001'))
-    expect(result).toBeNull()
   })
 
   test('returns null (fails open) when the fetch throws', async () => {
     accreditationApiService.getApplication.mockRejectedValue(
       new Error('backend down')
     )
-    const result = await isWithdrawn(makeYar('app-1', '50001'))
+    const result = await fetchApplication(makeYar('app-1', '50001'))
     expect(result).toBeNull()
   })
 
   test('returns null without fetching when session is incomplete', async () => {
-    const result = await isWithdrawn(makeYar(null, '50001'))
+    const result = await fetchApplication(makeYar(null, '50001'))
     expect(result).toBeNull()
     expect(accreditationApiService.getApplication).not.toHaveBeenCalled()
+  })
+
+  test('fetches by the route applicationId, not the session accreditationId', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Started'
+    })
+    await fetchApplication(makeYar('session-app', '50001'), 'route-app')
+    expect(accreditationApiService.getApplication).toHaveBeenCalledWith(
+      '50001',
+      'route-app'
+    )
+  })
+
+  test('falls back to the session accreditationId when no route id is given', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Started'
+    })
+    await fetchApplication(makeYar('session-app', '50001'))
+    expect(accreditationApiService.getApplication).toHaveBeenCalledWith(
+      '50001',
+      'session-app'
+    )
   })
 })
 
@@ -533,7 +547,48 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(result).toBe('redirect')
   })
 
-  test('registered callback does not fetch the application for withdraw-application itself', async () => {
+  test('registered callback resolves the application from the URL, not a stale session accreditationId', async () => {
+    // Regression guard: the session's accreditationId is set once by the
+    // landing controllers and never refreshed per page, so it can point at
+    // a different application than the one in the URL (second tab, back
+    // button, bookmark). The header and the Withdrawn gate must both key
+    // off request.params.applicationId.
+    accreditationApiService.getApplication.mockResolvedValue({
+      organisationName: 'App B Ltd',
+      materialType: 'Plastic',
+      siteAddress: 'Site B',
+      isExporter: false,
+      applicationStatus: 'Started'
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/tonnage/app-b',
+      params: { applicationId: 'app-b' },
+      yar: makeYarWithOrg('app-a-stale-session', '50001'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50001:First Org']
+        }
+      },
+      app: {}
+    }
+
+    await callback(request, h)
+
+    expect(accreditationApiService.getApplication).toHaveBeenCalledWith(
+      '50001',
+      'app-b'
+    )
+    expect(request.app.applicationHeader.operatorName).toBe('App B Ltd')
+  })
+
+  test('registered callback still fetches the application on withdraw-application (for the header), but does not redirect even if Withdrawn', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Withdrawn',
+      isExporter: false
+    })
     const callback = registerAndGetCallback()
     const h = makeH()
     const result = await callback(
@@ -550,7 +605,8 @@ describe('accreditationSessionGuard plugin registration', () => {
       h
     )
 
-    expect(accreditationApiService.getApplication).not.toHaveBeenCalled()
+    expect(accreditationApiService.getApplication).toHaveBeenCalled()
+    expect(h.redirect).not.toHaveBeenCalled()
     expect(result).toBe(h.continue)
   })
 
@@ -575,6 +631,96 @@ describe('accreditationSessionGuard plugin registration', () => {
     )
 
     expect(h.redirect).not.toHaveBeenCalled()
+    expect(result).toBe(h.continue)
+  })
+
+  test('registered callback attaches applicationHeader when the application fetch succeeds', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      organisationName: 'Delta Green Ltd',
+      materialType: 'Plastic',
+      siteAddress: '1 Recycling Way, Leeds',
+      year: 2027,
+      isExporter: false,
+      applicationStatus: 'Started'
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/tonnage/app-1',
+      yar: makeYarWithOrg('app-1', '50001'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50001:First Org']
+        }
+      },
+      app: {}
+    }
+
+    await callback(request, h)
+
+    expect(request.app.applicationHeader).toEqual({
+      operatorName: 'Delta Green Ltd',
+      materialType: 'Plastic',
+      siteName: '1 Recycling Way, Leeds',
+      year: 2027
+    })
+  })
+
+  test('registered callback attaches applicationHeader on read-only-safe segments too (e.g. withdraw-application)', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      organisationName: 'Delta Green Ltd',
+      materialType: 'Plastic',
+      siteAddress: '1 Recycling Way, Leeds',
+      year: 2027,
+      isExporter: false,
+      applicationStatus: 'Withdrawn'
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/withdraw-application/app-1',
+      yar: makeYarWithOrg('app-1', '50001'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50001:First Org']
+        }
+      },
+      app: {}
+    }
+
+    await callback(request, h)
+
+    expect(request.app.applicationHeader).toEqual({
+      operatorName: 'Delta Green Ltd',
+      materialType: 'Plastic',
+      siteName: '1 Recycling Way, Leeds',
+      year: 2027
+    })
+  })
+
+  test('registered callback leaves applicationHeader unset (fails open) when the application fetch throws', async () => {
+    accreditationApiService.getApplication.mockRejectedValue(
+      new Error('backend down')
+    )
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/tonnage/app-1',
+      yar: makeYarWithOrg('app-1', '50001'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50001:First Org']
+        }
+      },
+      app: {}
+    }
+
+    const result = await callback(request, h)
+
+    expect(request.app.applicationHeader).toBeUndefined()
     expect(result).toBe(h.continue)
   })
 })

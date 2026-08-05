@@ -12,7 +12,22 @@ describe('#buildNavigation', () => {
       {
         current: false,
         text: 'Home',
-        href: '/'
+        href: '/operator'
+      },
+      {
+        current: false,
+        text: 'About',
+        href: '/about'
+      }
+    ])
+  })
+
+  test('Should not highlight Home on the pre-login marketing page', () => {
+    expect(buildNavigation(mockRequest({ path: '/' }))).toEqual([
+      {
+        current: false,
+        text: 'Home',
+        href: '/operator'
       },
       {
         current: false,
@@ -23,11 +38,11 @@ describe('#buildNavigation', () => {
   })
 
   test('Should provide expected highlighted navigation details', () => {
-    expect(buildNavigation(mockRequest({ path: '/' }))).toEqual([
+    expect(buildNavigation(mockRequest({ path: '/operator' }))).toEqual([
       {
         current: true,
         text: 'Home',
-        href: '/'
+        href: '/operator'
       },
       {
         current: false,

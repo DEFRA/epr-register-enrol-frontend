@@ -67,6 +67,7 @@
       "notificationStatusLabel": "[Welsh] Notification status",
       "notificationFailedLabel": "[Welsh] Failed to send",
       "continueButton": "Parhau",
+      "reapplyHeading": "[Welsh] Reapply for accreditation",
       "seedErrorHeading": "[Welsh] There is a problem",
       "seedError": "[Welsh] We were unable to start your application. Please try again.",
       "applicationDetailsHeading": "[Welsh] Application details",
@@ -148,9 +149,8 @@
     "tonnageAuthority": {
       "title": "[Welsh] Authority to issue PRNs",
       "titleExporter": "[Welsh] Authority to issue PERNs",
-      "headingPrefix": "[Welsh] Authority to issue PRNs ",
-      "headingPrefixExporter": "[Welsh] Authority to issue PERNs ",
-      "headingAt": "[Welsh] at",
+      "headingPrefix": "[Welsh] Authority to issue PRNs",
+      "headingPrefixExporter": "[Welsh] Authority to issue PERNs",
       "intro": "[Welsh] You can choose the people you want to have authority to issue PRNs.",
       "introExporter": "[Welsh] You can choose the people you want to have authority to issue PERNs. The people you choose will be able to issue PERNs on this system.",
       "selectSubHeading": "[Welsh] Select those who you want to have authority to issue PRNs — You can select more than one.",
@@ -383,11 +383,8 @@
     },
     "taskList": {
       "title": "[Welsh] Accreditation task list",
-      "headingPrefix": "[Welsh] Reapply for accreditation (",
-      "headingPrefixExporter": "[Welsh] Reapply for accreditation (",
-      "headingSuffix": ")",
-      "metadataYear": "[Welsh] Accreditation year:",
-      "metadataSite": "[Welsh] Site:",
+      "headingPrefix": "[Welsh] Reapply for accreditation",
+      "headingPrefixExporter": "[Welsh] Reapply for accreditation",
       "siteNotSet": "[Welsh] Not set",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "submittedText": "[Welsh] This reapplication for accreditation has been submitted",
@@ -888,6 +885,11 @@
     "opensInNewTab": "[Welsh] (opens in new tab)",
     "queryNoteLabel": "[Welsh] Query from the regulator",
     "declarationWarningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
+    "applicationHeader": {
+      "materialLabel": "[Welsh] Material:",
+      "siteLabel": "[Welsh] Site:",
+      "yearLabel": "[Welsh] Year:"
+    },
     "regulatorQuery": {
       "heading": "[Welsh] Regulator query",
       "summaryPrefix": "[Welsh] The regulator has identified an issue with your",

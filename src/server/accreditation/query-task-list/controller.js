@@ -18,21 +18,6 @@ function sectionStatus(value) {
   return SECTION_STATUS_CONFIG[value] ?? SECTION_STATUS_CONFIG.NotStarted
 }
 
-const GLASS_RECYCLING_PROCESS_KEYS = {
-  glass_re_melt: 'pages.materialSelection.glassRemelt',
-  glass_other: 'pages.materialSelection.glassOther'
-}
-
-function materialDisplayName(application, t) {
-  const { materialType, glassRecyclingProcess } = application
-  if (!materialType) return ''
-
-  const glassKey = GLASS_RECYCLING_PROCESS_KEYS[glassRecyclingProcess]
-  if (materialType === 'Glass' && glassKey) return t(glassKey)
-
-  return t(`pages.materialSelection.materials.${materialType}`)
-}
-
 // Same five sections/URLs task-list.js links to, unfiltered by progression —
 // every queried section is editable regardless of the other sections' state.
 function allSectionTasks(application, t) {
@@ -84,13 +69,11 @@ function allSectionTasks(application, t) {
 }
 
 export function buildQueryTaskListViewModel(application, t) {
-  const { applicationId, year, isExporter } = application
+  const { applicationId, isExporter } = application
 
-  const materialDisplay = materialDisplayName(application, t)
-  const headingPrefix = isExporter
+  const heading = isExporter
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')
-  const heading = `${headingPrefix} ${materialDisplay} ${t('pages.taskList.headingSuffix')}`
 
   const tasks = allSectionTasks(application, t)
     .filter((task) => task.status === 'Queried')
@@ -109,7 +92,6 @@ export function buildQueryTaskListViewModel(application, t) {
   return {
     heading,
     isExporter: isExporter ?? false,
-    metadata: { year },
     queryNote: application.query?.queryNote ?? null,
     tasks,
     continueUrl: queryDeclarationUrl(applicationId)
