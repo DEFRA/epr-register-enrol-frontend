@@ -59,8 +59,16 @@ export async function hasOrganisationAccess(yar, user, logger) {
 // transient backend outage should not block navigation, since the backend's
 // own write-side guard is what actually protects the data, and the header
 // simply won't render.
-export async function fetchApplication(yar) {
-  const applicationId = yar.get(ACCREDITATION_SESSION_KEYS.accreditationId)
+//
+// Resolved from the route's own applicationId, not the session's — every
+// accreditation page fetches and renders by request.params.applicationId,
+// and the session value is only set once by the landing controllers, so it
+// can point at a different application than the one on screen (a second
+// tab, back button, or bookmark to an earlier application). Falls back to
+// the session value only when the route has none.
+export async function fetchApplication(yar, routeApplicationId) {
+  const applicationId =
+    routeApplicationId ?? yar.get(ACCREDITATION_SESSION_KEYS.accreditationId)
   const organisationId = yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
   if (!applicationId || !organisationId) {
     return null
@@ -100,7 +108,10 @@ export const accreditationSessionGuard = {
           throw Boom.forbidden('You do not have access to this organisation')
         }
 
-        const application = await fetchApplication(request.yar)
+        const application = await fetchApplication(
+          request.yar,
+          request.params?.applicationId
+        )
 
         if (
           isWithdrawnBlockedPath(request.path) &&

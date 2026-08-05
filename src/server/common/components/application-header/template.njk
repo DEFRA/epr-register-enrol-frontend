@@ -17,14 +17,20 @@
     operatorName  (string)
     materialType  (string)
     siteName      (string)
+    year          (number)
     materialLabel (string) - defaults to "Material:"
     siteLabel     (string) - defaults to "Site:"
+    yearLabel     (string) - defaults to "Year:"
 #}
 <div class="app-application-header" data-testid="application-header">
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <p class="govuk-heading-xl govuk-!-margin-bottom-2" data-testid="application-header-operator-name">{{ params.operatorName }}</p>
       <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-2">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ params.yearLabel | default('Year:') }}</dt>
+          <dd class="govuk-summary-list__value" data-testid="application-header-year">{{ params.year }}</dd>
+        </div>
         <div class="govuk-summary-list__row">
           <dt class="govuk-summary-list__key">{{ params.materialLabel | default('Material:') }}</dt>
           <dd class="govuk-summary-list__value" data-testid="application-header-material-type">{{ params.materialType }}</dd>

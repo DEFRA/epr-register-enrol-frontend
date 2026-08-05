@@ -11,21 +11,23 @@ const t = (key) => {
 }
 
 describe('buildApplicationHeaderViewModel', () => {
-  test('builds operator name, material type and site name for a non-exporter application', () => {
+  test('builds operator name, material type, site name and year for a non-exporter application', () => {
     expect(
       buildApplicationHeaderViewModel(
         {
           organisationName: 'Delta Green Ltd',
           materialType: 'Plastic',
           isExporter: false,
-          siteAddress: '1 Recycling Way, Leeds'
+          siteAddress: '1 Recycling Way, Leeds',
+          year: 2027
         },
         t
       )
     ).toEqual({
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
-      siteName: '1 Recycling Way, Leeds'
+      siteName: '1 Recycling Way, Leeds',
+      year: 2027
     })
   })
 
@@ -36,14 +38,16 @@ describe('buildApplicationHeaderViewModel', () => {
           organisationName: 'Delta Green Ltd',
           materialType: 'Plastic',
           isExporter: true,
-          siteAddress: 'should be ignored'
+          siteAddress: 'should be ignored',
+          year: 2027
         },
         t
       )
     ).toEqual({
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
-      siteName: 'Exporter'
+      siteName: 'Exporter',
+      year: 2027
     })
   })
 
@@ -54,14 +58,16 @@ describe('buildApplicationHeaderViewModel', () => {
           organisationName: 'Delta Green Ltd',
           materialType: 'Plastic',
           isExporter: false,
-          siteAddress: null
+          siteAddress: null,
+          year: 2027
         },
         t
       )
     ).toEqual({
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
-      siteName: 'Not set'
+      siteName: 'Not set',
+      year: 2027
     })
   })
 })

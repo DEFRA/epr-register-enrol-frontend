@@ -69,7 +69,7 @@ function allSectionTasks(application, t) {
 }
 
 export function buildQueryTaskListViewModel(application, t) {
-  const { applicationId, year, isExporter } = application
+  const { applicationId, isExporter } = application
 
   const heading = isExporter
     ? t('pages.taskList.headingPrefixExporter')
@@ -92,7 +92,6 @@ export function buildQueryTaskListViewModel(application, t) {
   return {
     heading,
     isExporter: isExporter ?? false,
-    metadata: { year },
     queryNote: application.query?.queryNote ?? null,
     tasks,
     continueUrl: queryDeclarationUrl(applicationId)

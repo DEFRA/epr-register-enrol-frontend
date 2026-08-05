@@ -119,6 +119,28 @@ describe('fetchApplication', () => {
     expect(result).toBeNull()
     expect(accreditationApiService.getApplication).not.toHaveBeenCalled()
   })
+
+  test('fetches by the route applicationId, not the session accreditationId', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Started'
+    })
+    await fetchApplication(makeYar('session-app', '50001'), 'route-app')
+    expect(accreditationApiService.getApplication).toHaveBeenCalledWith(
+      '50001',
+      'route-app'
+    )
+  })
+
+  test('falls back to the session accreditationId when no route id is given', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Started'
+    })
+    await fetchApplication(makeYar('session-app', '50001'))
+    expect(accreditationApiService.getApplication).toHaveBeenCalledWith(
+      '50001',
+      'session-app'
+    )
+  })
 })
 
 describe('hasValidSession', () => {
@@ -525,6 +547,43 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(result).toBe('redirect')
   })
 
+  test('registered callback resolves the application from the URL, not a stale session accreditationId', async () => {
+    // Regression guard: the session's accreditationId is set once by the
+    // landing controllers and never refreshed per page, so it can point at
+    // a different application than the one in the URL (second tab, back
+    // button, bookmark). The header and the Withdrawn gate must both key
+    // off request.params.applicationId.
+    accreditationApiService.getApplication.mockResolvedValue({
+      organisationName: 'App B Ltd',
+      materialType: 'Plastic',
+      siteAddress: 'Site B',
+      isExporter: false,
+      applicationStatus: 'Started'
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const request = {
+      path: '/accreditation/tonnage/app-b',
+      params: { applicationId: 'app-b' },
+      yar: makeYarWithOrg('app-a-stale-session', '50001'),
+      auth: {
+        credentials: {
+          userType: 'operator',
+          relationships: ['rel-1:50001:First Org']
+        }
+      },
+      app: {}
+    }
+
+    await callback(request, h)
+
+    expect(accreditationApiService.getApplication).toHaveBeenCalledWith(
+      '50001',
+      'app-b'
+    )
+    expect(request.app.applicationHeader.operatorName).toBe('App B Ltd')
+  })
+
   test('registered callback still fetches the application on withdraw-application (for the header), but does not redirect even if Withdrawn', async () => {
     accreditationApiService.getApplication.mockResolvedValue({
       applicationStatus: 'Withdrawn',
@@ -580,6 +639,7 @@ describe('accreditationSessionGuard plugin registration', () => {
       organisationName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteAddress: '1 Recycling Way, Leeds',
+      year: 2027,
       isExporter: false,
       applicationStatus: 'Started'
     })
@@ -602,7 +662,8 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(request.app.applicationHeader).toEqual({
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
-      siteName: '1 Recycling Way, Leeds'
+      siteName: '1 Recycling Way, Leeds',
+      year: 2027
     })
   })
 
@@ -611,6 +672,7 @@ describe('accreditationSessionGuard plugin registration', () => {
       organisationName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteAddress: '1 Recycling Way, Leeds',
+      year: 2027,
       isExporter: false,
       applicationStatus: 'Withdrawn'
     })
@@ -633,7 +695,8 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(request.app.applicationHeader).toEqual({
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
-      siteName: '1 Recycling Way, Leeds'
+      siteName: '1 Recycling Way, Leeds',
+      year: 2027
     })
   })
 

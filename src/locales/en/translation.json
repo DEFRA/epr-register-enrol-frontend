@@ -388,7 +388,6 @@
       "title": "Accreditation task list",
       "headingPrefix": "Reapply for accreditation",
       "headingPrefixExporter": "Reapply for accreditation",
-      "metadataYear": "Accreditation year:",
       "siteNotSet": "Not set",
       "saveAndComeLater": "Save and come back later",
       "submittedText": "This reapplication for accreditation has been submitted",
@@ -891,7 +890,8 @@
     "declarationWarningText": "Your organisation may face enforcement action if the data is inaccurate.",
     "applicationHeader": {
       "materialLabel": "Material:",
-      "siteLabel": "Site:"
+      "siteLabel": "Site:",
+      "yearLabel": "Year:"
     },
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",

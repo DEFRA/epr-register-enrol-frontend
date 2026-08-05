@@ -9,8 +9,10 @@ describe('Application Header Component', () => {
         operatorName: 'Delta Green Ltd',
         materialType: 'Plastic',
         siteName: '1 Recycling Way, Leeds',
+        year: 2027,
         materialLabel: 'Material:',
-        siteLabel: 'Site:'
+        siteLabel: 'Site:',
+        yearLabel: 'Year:'
       })
     })
 
@@ -48,11 +50,20 @@ describe('Application Header Component', () => {
       ).toBe('1 Recycling Way, Leeds')
     })
 
-    test('Should use the given labels for material and site', () => {
+    test('Should contain the accreditation year', () => {
+      expect(
+        $header('[data-testid="application-header-year"]').text().trim()
+      ).toBe('2027')
+    })
+
+    test('Should use the given labels for year, material and site', () => {
       expect($header('.govuk-summary-list__key').eq(0).text().trim()).toBe(
-        'Material:'
+        'Year:'
       )
       expect($header('.govuk-summary-list__key').eq(1).text().trim()).toBe(
+        'Material:'
+      )
+      expect($header('.govuk-summary-list__key').eq(2).text().trim()).toBe(
         'Site:'
       )
     })
@@ -74,9 +85,12 @@ describe('Application Header Component', () => {
 
     test('Should fall back to the default English labels', () => {
       expect($header('.govuk-summary-list__key').eq(0).text().trim()).toBe(
-        'Material:'
+        'Year:'
       )
       expect($header('.govuk-summary-list__key').eq(1).text().trim()).toBe(
+        'Material:'
+      )
+      expect($header('.govuk-summary-list__key').eq(2).text().trim()).toBe(
         'Site:'
       )
     })

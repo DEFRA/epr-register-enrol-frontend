@@ -385,7 +385,6 @@
       "title": "[Welsh] Accreditation task list",
       "headingPrefix": "[Welsh] Reapply for accreditation",
       "headingPrefixExporter": "[Welsh] Reapply for accreditation",
-      "metadataYear": "[Welsh] Accreditation year:",
       "siteNotSet": "[Welsh] Not set",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "submittedText": "[Welsh] This reapplication for accreditation has been submitted",
@@ -888,7 +887,8 @@
     "declarationWarningText": "[Welsh] Your organisation may face enforcement action if the data is inaccurate.",
     "applicationHeader": {
       "materialLabel": "[Welsh] Material:",
-      "siteLabel": "[Welsh] Site:"
+      "siteLabel": "[Welsh] Site:",
+      "yearLabel": "[Welsh] Year:"
     },
     "regulatorQuery": {
       "heading": "[Welsh] Regulator query",
