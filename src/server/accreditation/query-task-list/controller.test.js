@@ -94,6 +94,22 @@ describe('#buildQueryTaskListViewModel', () => {
     expect(testIds).toContain('task-overseas-sites')
     expect(testIds).toContain('task-bes-evidence')
   })
+
+  // Material is no longer duplicated on this page's own heading — it's
+  // shown once, in the persistent application-header (see
+  // src/server/common/helpers/applicationHeader.js).
+  test('heading is the reapply prompt, not tied to material', () => {
+    const vm = buildQueryTaskListViewModel(makeApplication(), t)
+    expect(vm.heading).toBe('headingPrefix')
+  })
+
+  test('exporter heading uses the exporter-specific prefix', () => {
+    const vm = buildQueryTaskListViewModel(
+      makeApplication({ isExporter: true }),
+      t
+    )
+    expect(vm.heading).toBe('headingPrefixExporter')
+  })
 })
 
 describe('#queryTaskListGetController', () => {

@@ -112,6 +112,7 @@ export const viewPaymentDetailsGetController = {
         .view('accreditation/view-payment-details/index', {
           pageTitle: t('pages.viewPaymentDetails.title'),
           backLink: confirmationUrl(applicationId),
+          backLinkText: t('pages.viewPaymentDetails.backLink'),
           error: t('pages.viewPaymentDetails.loadError')
         })
         .code(500)
@@ -130,6 +131,7 @@ export const viewPaymentDetailsGetController = {
         .view('accreditation/view-payment-details/index', {
           pageTitle: t('pages.viewPaymentDetails.title'),
           backLink: confirmationUrl(applicationId),
+          backLinkText: t('pages.viewPaymentDetails.backLink'),
           error: t('pages.viewPaymentDetails.loadError')
         })
         .code(500)
@@ -144,6 +146,7 @@ export const viewPaymentDetailsGetController = {
     return h.view('accreditation/view-payment-details/index', {
       pageTitle: t('pages.viewPaymentDetails.title'),
       backLink: confirmationUrl(applicationId),
+      backLinkText: t('pages.viewPaymentDetails.backLink'),
       siteName: siteNameFromAddress(application.siteAddress),
       materialDisplay,
       submitterName: submittedBy.name ?? '',
