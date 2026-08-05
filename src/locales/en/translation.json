@@ -801,7 +801,6 @@
       "country": {
         "title": "Country — Add interim site",
         "heading": "What country is the interim site in?",
-        "label": "Country",
         "hint": "Enter the country where the interim site is located.",
         "validation": {
           "required": "Enter the country"

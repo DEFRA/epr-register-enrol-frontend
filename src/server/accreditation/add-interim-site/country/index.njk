@@ -34,12 +34,16 @@
               <span class="govuk-visually-hidden">Error:</span> {{ error }}
             </p>
           {% endif %}
-          <input class="govuk-input{% if error %} govuk-input--error{% endif %}"
-                 id="country"
-                 name="country"
-                 type="text"
-                 value="{{ country }}"
-                 data-testid="country-input">
+          <select class="govuk-select{% if error %} govuk-select--error{% endif %}"
+                  id="country"
+                  name="country"
+                  {% if error %}aria-describedby="country-error"{% endif %}
+                  data-testid="country-input">
+            <option value=""></option>
+            {% for c in countries %}
+              <option value="{{ c }}"{% if c == country %} selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
         </div>
 
         <button type="submit" class="govuk-button" data-module="govuk-button"

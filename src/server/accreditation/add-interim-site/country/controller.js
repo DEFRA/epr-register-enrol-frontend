@@ -4,6 +4,7 @@ import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
+import { COUNTRIES } from '../../../common/data/countries.js'
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -21,11 +22,11 @@ function buildViewData(t, applicationId, country, error) {
   return {
     pageTitle: t('pages.addInterimSite.country.title'),
     heading: t('pages.addInterimSite.country.heading'),
-    label: t('pages.addInterimSite.country.label'),
     hint: t('pages.addInterimSite.country.hint'),
     continueButton: t('pages.addInterimSite.country.continueButton'),
     cancelLink: t('pages.addInterimSite.country.cancelLink'),
     country,
+    countries: COUNTRIES,
     backLink: selectOverseasSitesUrl(applicationId),
     cancelUrl: selectOverseasSitesUrl(applicationId),
     error
