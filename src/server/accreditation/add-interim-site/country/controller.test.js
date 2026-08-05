@@ -66,6 +66,21 @@ describe('#addInterimSiteCountryController', () => {
       expect(result).toContain('data-testid="country-input"')
     })
 
+    test('renders country as a GDS select populated with the country list, not a text box', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(result).toMatch(
+        /<select[^>]*id="country"[^>]*data-testid="country-input"/
+      )
+      expect(result).not.toContain('type="text"\n                 id="country"')
+      expect(result).toContain('>France</option>')
+      expect(result).toContain('>Germany</option>')
+    })
+
     test('back link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
@@ -114,6 +129,32 @@ describe('#addInterimSiteCountryController', () => {
 
       expect(getResponse.statusCode).toBe(statusCodes.ok)
       expect(getResponse.result).toContain('France')
+    })
+
+    test('marks the session country as the selected option when returning via Back', async () => {
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'country=France'
+      })
+      const sessionCookie = postResponse.headers['set-cookie']
+
+      const getResponse = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          cookie: Array.isArray(sessionCookie)
+            ? sessionCookie.map((c) => c.split(';')[0]).join('; ')
+            : (sessionCookie?.split(';')[0] ?? '')
+        }
+      })
+
+      expect(getResponse.result).toContain('value="France" selected')
     })
 
     test('returns 200 in Welsh locale', async () => {
@@ -183,6 +224,35 @@ describe('#addInterimSiteCountryController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Enter the country')
+    })
+
+    test('links the select to the error message via aria-describedby', async () => {
+      const { result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'country='
+      })
+
+      expect(result).toContain('aria-describedby="country-error"')
+    })
+
+    test('returns 400 with inline error when country payload is absent entirely', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('Enter the country')
     })
 

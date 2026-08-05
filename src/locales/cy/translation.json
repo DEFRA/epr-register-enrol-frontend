@@ -795,7 +795,6 @@
       "country": {
         "title": "[Welsh] Country — Add interim site",
         "heading": "[Welsh] What country is the interim site in?",
-        "label": "[Welsh] Country",
         "hint": "[Welsh] Enter the country where the interim site is located.",
         "validation": {
           "required": "[Welsh] Enter the country"
