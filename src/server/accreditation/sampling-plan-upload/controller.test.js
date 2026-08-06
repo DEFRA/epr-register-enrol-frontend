@@ -770,6 +770,131 @@ describe('#samplingPlanUploadController', () => {
     })
   })
 
+  describe('uploading multiple files via the "Upload another file" loop', () => {
+    const boundary = 'test-boundary-loop'
+    const multipartContentType = `multipart/form-data; boundary=${boundary}`
+
+    function buildFilePayload(filename) {
+      const CRLF = '\r\n'
+      return Buffer.concat([
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="action"${CRLF}${CRLF}uploadFile${CRLF}`
+        ),
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="file"; filename="${filename}"${CRLF}` +
+            `Content-Type: application/pdf${CRLF}${CRLF}`
+        ),
+        Buffer.from('file-content'),
+        Buffer.from(`${CRLF}--${boundary}--${CRLF}`)
+      ])
+    }
+
+    async function uploadOneFile({ currentFiles, filename, fileId }) {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: { sectionStatus: 'InProgress', files: currentFiles }
+        })
+      )
+      const uploadResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildFilePayload(filename)
+      })
+      const raw = uploadResponse.headers['set-cookie']
+      const cookie = Array.isArray(raw)
+        ? raw[0].split(';')[0]
+        : raw.split(';')[0]
+
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: {
+          file: { filename, contentType: 'application/pdf', fileId }
+        }
+      })
+      const addFileSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const statusResponse = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      return { statusResponse, addFileSpy }
+    }
+
+    test('lets a second file be uploaded from the results page without losing the first', async () => {
+      const first = await uploadOneFile({
+        currentFiles: [],
+        filename: 'first.pdf',
+        fileId: 'file-first'
+      })
+      expect(first.statusResponse.headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results`
+      )
+      expect(first.addFileSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ filename: 'first.pdf' })
+      )
+
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ fileId: 'file-first', filename: 'first.pdf' })]
+          }
+        })
+      )
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('first.pdf')
+      expect(result).toContain(
+        `href="/accreditation/sampling-plan/${APPLICATION_ID}"`
+      )
+
+      const second = await uploadOneFile({
+        currentFiles: [
+          makeFile({ fileId: 'file-first', filename: 'first.pdf' })
+        ],
+        filename: 'second.pdf',
+        fileId: 'file-second'
+      })
+      expect(second.statusResponse.headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results`
+      )
+      expect(second.addFileSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ filename: 'second.pdf' })
+      )
+
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [
+              makeFile({ fileId: 'file-first', filename: 'first.pdf' }),
+              makeFile({ fileId: 'file-second', filename: 'second.pdf' })
+            ]
+          }
+        })
+      )
+      const finalResults = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+      expect(finalResults.result).toContain('first.pdf')
+      expect(finalResults.result).toContain('second.pdf')
+    })
+  })
+
   describe('GET /accreditation/sampling-plan/{applicationId}/results', () => {
     test('redirects to the upload page when there are no files and no failure flag', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
