@@ -340,7 +340,6 @@
       "panelBodyPrefix": "[Welsh] Application reference for",
       "caseReferenceLabel": "[Welsh] Your case reference is",
       "paymentText": "[Welsh] The regulator will only review your application after you\u0027ve paid.",
-      "viewPaymentDetails": "[Welsh] View payment details",
       "returnHome": "[Welsh] Return to home page"
     },
     "viewPaymentDetails": {
@@ -357,7 +356,6 @@
       "description": "[Welsh] Description",
       "payByBankTransfer": "[Welsh] Pay by bank transfer",
       "bankTransferInstruction": "[Welsh] You need to visit your bank\u0027s website, app or branch and use the regulator\u0027s banking details to pay by bank transfer.",
-      "howLongDoPaymentsTake": "[Welsh] How long do payments take?",
       "howLongDoPaymentsTakeBody": "[Welsh] Bank transfers can take 3 to 5 working days to be received.",
       "bankDetailsHeading": "[Welsh] Regulator bank details",
       "amount": "[Welsh] Amount",

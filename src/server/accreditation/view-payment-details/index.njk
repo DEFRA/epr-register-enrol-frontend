@@ -62,14 +62,9 @@
 
         <p class="govuk-body">{{ t('pages.viewPaymentDetails.bankTransferInstruction') }}</p>
 
-        <details class="govuk-details" data-testid="how-long-details">
-          <summary class="govuk-details__summary">
-            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.howLongDoPaymentsTake') }}</span>
-          </summary>
-          <div class="govuk-details__text">
-            {{ t('pages.viewPaymentDetails.howLongDoPaymentsTakeBody') }}
-          </div>
-        </details>
+        <p class="govuk-body" data-testid="how-long-payments-take">
+          {{ t('pages.viewPaymentDetails.howLongDoPaymentsTakeBody') }}
+        </p>
 
         <h3 class="govuk-heading-s" data-testid="bank-details-heading">
           {{ t('pages.viewPaymentDetails.bankDetailsHeading') }}
@@ -126,7 +121,7 @@
             <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.alternativePayments') }}</span>
           </summary>
           <div class="govuk-details__text">
-            {{ t('pages.viewPaymentDetails.alternativePaymentsBody') }}
+            <p>{{ t('pages.viewPaymentDetails.alternativePaymentsBody') }}</p>
             <p>
               Environment Agency
               <br/>

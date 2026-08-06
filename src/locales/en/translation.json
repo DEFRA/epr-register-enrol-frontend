@@ -343,7 +343,6 @@
       "panelBodyPrefix": "Application reference for",
       "caseReferenceLabel": "Your case reference is",
       "paymentText": "The regulator will only review your application after you've paid.",
-      "viewPaymentDetails": "View payment details",
       "returnHome": "Return to home page"
     },
     "viewPaymentDetails": {
@@ -360,7 +359,6 @@
       "description": "Description",
       "payByBankTransfer": "Pay by bank transfer",
       "bankTransferInstruction": "You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
-      "howLongDoPaymentsTake": "How long do payments take?",
       "howLongDoPaymentsTakeBody": "Bank transfers can take 3 to 5 working days to be received.",
       "bankDetailsHeading": "Regulator bank details",
       "amount": "Amount",
