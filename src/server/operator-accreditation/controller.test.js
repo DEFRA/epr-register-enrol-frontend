@@ -13,7 +13,10 @@ import { statusCodes } from '../common/constants/status-codes.js'
 import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
-import { buildLandingViewModel } from './controller.js'
+import {
+  buildLandingViewModel,
+  selectApplicationForYear
+} from './controller.js'
 
 // The controller delegates the access decision to operatorCanAccessOrganisation
 // (resolve-linked-id + relationship check + fail-closed), which is unit-tested in
@@ -396,6 +399,227 @@ describe('#buildLandingViewModel', () => {
   test('notificationFailedBanner is false when notificationStatus is absent', () => {
     const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
     expect(vm.notificationFailedBanner).toBe(false)
+  })
+
+  // RA-357: restarting after a withdrawal creates a new application for the
+  // SAME accreditation year. This used to link to accreditationYear + 1, which
+  // made the landing controller seed against a prior year that has no approved
+  // accreditation, so the seed always 404'd and the operator was stuck.
+  test('startNewUrl targets the same accreditation year for a withdrawn application', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        year: 2027
+      }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.startNewUrl).toBe(
+      `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2027?startNew=true`
+    )
+    expect(vm.startNewUrl).not.toContain('2028')
+  })
+
+  test('startNewUrl points at the exporter landing route when isExporter', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        year: 2027
+      }),
+      'Org Name',
+      null,
+      2027,
+      t,
+      true
+    )
+
+    expect(vm.startNewUrl).toBe(
+      `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2027/exporter?startNew=true`
+    )
+  })
+
+  test('startNewUrl uses the accreditation year even when the record carries a different year', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        year: 1999
+      }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.startNewUrl).toContain('/2027?startNew=true')
+  })
+
+  test.each([
+    'Saved',
+    'Started',
+    'NotStarted',
+    'InProgress',
+    'Submitted',
+    'DulyMade',
+    'Queried',
+    'Updated',
+    'Approved',
+    'Rejected'
+  ])('startNewUrl is null when application status is %s', (status) => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: status, organisationId: ORG_ID }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.startNewUrl).toBeNull()
+  })
+
+  test('a withdrawn application offers neither a continue nor a withdraw action', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'Withdrawn', organisationId: ORG_ID }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.showContinueLink).toBe(false)
+    expect(vm.canWithdraw).toBe(false)
+  })
+})
+
+// RA-357: a year can now hold a withdrawn record alongside its live
+// replacement, and the backend gives no ordering guarantee on the list
+// response, so selection must never depend on array order.
+describe('#selectApplicationForYear', () => {
+  const criteria = {
+    registrationId: REGISTRATION_ID,
+    materialType: MATERIAL,
+    year: YEAR
+  }
+
+  const withdrawn = (overrides = {}) =>
+    makeApp({ applicationStatus: 'Withdrawn', ...overrides })
+
+  test('returns nothing for an empty list', () => {
+    expect(selectApplicationForYear([], criteria)).toEqual({
+      application: null,
+      hasLive: false,
+      hasMatch: false
+    })
+  })
+
+  test('ignores applications for another registration, material or year', () => {
+    const result = selectApplicationForYear(
+      [
+        makeApp({ registrationId: 'REG999' }),
+        makeApp({ materialType: 'Glass' }),
+        makeApp({ year: YEAR - 1 })
+      ],
+      criteria
+    )
+
+    expect(result).toEqual({
+      application: null,
+      hasLive: false,
+      hasMatch: false
+    })
+  })
+
+  test('returns the only matching application', () => {
+    const app = makeApp()
+
+    expect(selectApplicationForYear([app], criteria)).toEqual({
+      application: app,
+      hasLive: true,
+      hasMatch: true
+    })
+  })
+
+  test.each([
+    ['withdrawn first', true],
+    ['live first', false]
+  ])(
+    'prefers the live application over a withdrawn one (%s)',
+    (_label, withdrawnFirst) => {
+      const dead = withdrawn({ applicationId: 'app-withdrawn' })
+      const alive = makeApp({ applicationId: 'app-live' })
+      const list = withdrawnFirst ? [dead, alive] : [alive, dead]
+
+      const result = selectApplicationForYear(list, criteria)
+
+      expect(result.application).toBe(alive)
+      expect(result.hasLive).toBe(true)
+      expect(result.hasMatch).toBe(true)
+    }
+  )
+
+  test('falls back to the withdrawn application when that is all there is', () => {
+    const dead = withdrawn({ applicationId: 'app-withdrawn' })
+
+    expect(selectApplicationForYear([dead], criteria)).toEqual({
+      application: dead,
+      hasLive: false,
+      hasMatch: true
+    })
+  })
+
+  test.each([
+    ['newest last', false],
+    ['newest first', true]
+  ])(
+    'picks the live application with the newest createdAt (%s)',
+    (_label, newestFirst) => {
+      const older = makeApp({
+        applicationId: 'app-older',
+        createdAt: '2026-01-01T00:00:00.000Z'
+      })
+      const newer = makeApp({
+        applicationId: 'app-newer',
+        createdAt: '2026-06-01T00:00:00.000Z'
+      })
+      const list = newestFirst ? [newer, older] : [older, newer]
+
+      expect(selectApplicationForYear(list, criteria).application).toBe(newer)
+    }
+  )
+
+  test('prefers a record carrying a createdAt over one without', () => {
+    const undated = makeApp({ applicationId: 'app-zzz-undated' })
+    const dated = makeApp({
+      applicationId: 'app-aaa-dated',
+      createdAt: '2026-01-01T00:00:00.000Z'
+    })
+
+    expect(
+      selectApplicationForYear([undated, dated], criteria).application
+    ).toBe(dated)
+    expect(
+      selectApplicationForYear([dated, undated], criteria).application
+    ).toBe(dated)
+  })
+
+  test.each([
+    ['identical createdAt', '2026-01-01T00:00:00.000Z'],
+    ['no createdAt at all', undefined]
+  ])('breaks a tie on the highest applicationId (%s)', (_label, createdAt) => {
+    const lower = makeApp({ applicationId: 'app-001', createdAt })
+    const higher = makeApp({ applicationId: 'app-002', createdAt })
+
+    expect(
+      selectApplicationForYear([lower, higher], criteria).application
+    ).toBe(higher)
+    expect(
+      selectApplicationForYear([higher, lower], criteria).application
+    ).toBe(higher)
   })
 })
 
@@ -1001,6 +1225,154 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('[Welsh]')
   })
 
+  // RA-357: an operator who withdraws a reapplication must be able to start a
+  // fresh one for the SAME accreditation year, with the withdrawn record kept
+  // untouched for audit.
+  describe('restarting after a withdrawal', () => {
+    const withdrawnApp = (overrides = {}) =>
+      makeApp({
+        applicationId: 'app-withdrawn',
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        ...overrides
+      })
+
+    const restartedApp = (overrides = {}) =>
+      makeApp({
+        applicationId: 'app-restarted',
+        applicationStatus: 'Saved',
+        organisationId: ORG_ID,
+        createdAt: '2026-02-01T00:00:00.000Z',
+        ...overrides
+      })
+
+    test('withdrawn application links to start a new application for the SAME year', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="start-new-link"')
+      expect(result).toContain(
+        `href="/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}?startNew=true"`
+      )
+      expect(result).not.toContain(`${MATERIAL}/${YEAR + 1}`)
+      // Simply viewing a withdrawn application must not create a replacement.
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('withdrawn application still renders as WITHDRAWN with no continue or withdraw action', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('WITHDRAWN')
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="withdraw-link"')
+    })
+
+    test('renders the live application, not the withdrawn one, when the year holds both', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        withdrawnApp(),
+        restartedApp()
+      ])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="continue-button"')
+      expect(result).toContain('/accreditation/task-list/app-restarted')
+      expect(result).not.toContain('/accreditation/task-list/app-withdrawn')
+      expect(result).not.toContain('data-testid="start-new-link"')
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('seeds for the SAME year and renders the new application when every record is withdrawn', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(restartedApp())
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `${baseUrl}?startNew=true`,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        `/api/v1/accreditation-applications/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/seed`,
+        { year: YEAR }
+      )
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="continue-button"')
+      expect(result).toContain('/accreditation/task-list/app-restarted')
+      expect(result).not.toContain('data-testid="start-new-link"')
+    })
+
+    test('does not seed when start-new is requested but a live application already exists', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        withdrawnApp(),
+        restartedApp()
+      ])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${baseUrl}?startNew=true`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('renders the seed-error view (500) when the restart seed fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `${baseUrl}?startNew=true`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-message"')
+      expect(result).toContain('We were unable to start your application')
+    })
+
+    test('a live application never offers the start-new link', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        makeApp({ applicationStatus: 'Submitted', organisationId: ORG_ID })
+      ])
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="start-new-link"')
+    })
+  })
+
   const makeExporterApp = (overrides = {}) => ({
     applicationId: 'app-exp-001',
     applicationStatus: 'Saved',
@@ -1190,6 +1562,108 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    // RA-357: the exporter route must behave identically to the reprocessor
+    // route — both share resolveLandingApplication.
+    describe('restarting after a withdrawal', () => {
+      const withdrawnExporterApp = (overrides = {}) =>
+        makeExporterApp({
+          applicationId: 'app-exp-withdrawn',
+          applicationStatus: 'Withdrawn',
+          organisationId: ORG_ID,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          ...overrides
+        })
+
+      const restartedExporterApp = (overrides = {}) =>
+        makeExporterApp({
+          applicationId: 'app-exp-restarted',
+          applicationStatus: 'Saved',
+          organisationId: ORG_ID,
+          createdAt: '2026-02-01T00:00:00.000Z',
+          ...overrides
+        })
+
+      test('withdrawn exporter application links to start a new application for the SAME year', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnExporterApp()])
+        const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="start-new-link"')
+        expect(result).toContain(
+          `href="/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter?startNew=true"`
+        )
+        expect(result).not.toContain(`${MATERIAL}/${YEAR + 1}`)
+        expect(result).toContain('WITHDRAWN')
+        expect(result).not.toContain('data-testid="continue-button"')
+        expect(result).not.toContain('data-testid="withdraw-link"')
+        expect(postSpy).not.toHaveBeenCalled()
+      })
+
+      test('renders the live exporter application when the year holds both', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue([
+          withdrawnExporterApp(),
+          restartedExporterApp()
+        ])
+        const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: exporterUrl,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('/accreditation/task-list/app-exp-restarted')
+        expect(result).not.toContain(
+          '/accreditation/task-list/app-exp-withdrawn'
+        )
+        expect(result).not.toContain('data-testid="start-new-link"')
+        expect(postSpy).not.toHaveBeenCalled()
+      })
+
+      test('seeds for the SAME year when start-new is requested and every exporter record is withdrawn', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnExporterApp()])
+        const postSpy = vi
+          .spyOn(apiClient, 'post')
+          .mockResolvedValue(restartedExporterApp())
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `${exporterUrl}?startNew=true`,
+          headers: operatorHeaders
+        })
+
+        expect(postSpy).toHaveBeenCalledWith(
+          `/api/v1/accreditation-applications/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/seed`,
+          { year: YEAR }
+        )
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="continue-button"')
+        expect(result).toContain('/accreditation/task-list/app-exp-restarted')
+        expect(result).not.toContain('data-testid="start-new-link"')
+      })
+
+      test('renders the seed-error view (500) when the exporter restart seed fails', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnExporterApp()])
+        vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `${exporterUrl}?startNew=true`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(result).toContain('data-testid="error-message"')
+      })
     })
   })
 })
