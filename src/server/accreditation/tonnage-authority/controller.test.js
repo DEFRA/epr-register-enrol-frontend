@@ -164,6 +164,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -179,6 +180,27 @@ describe('#tonnageAuthorityController', () => {
       })
 
       expect(result).toMatch(/value="jane@example\.com"[\s\S]*?checked/)
+    })
+
+    test('redirects to tonnage page when tonnage has not been completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: undefined,
+            authorisers: [],
+            sectionStatus: 'NotStarted'
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(`/accreditation/tonnage/${APPLICATION_ID}`)
     })
 
     test('returns 500 when API fetch fails', async () => {

@@ -99,6 +99,10 @@ export const tonnageAuthorityGetController = {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
+    if (!application.prns?.plannedTonnageBand) {
+      return h.redirect(tonnageUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
     const sectionKey = isExporter ? 'perns' : 'prns'
     const queryNote =
