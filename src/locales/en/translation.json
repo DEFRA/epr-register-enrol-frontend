@@ -712,10 +712,10 @@
         "cancelLink": "Cancel"
       },
       "baselAndOecdCodes": {
-        "title": "Basel Convention and OECD code — Add overseas reprocessing site",
-        "heading": "What are the Basel Convention and OECD codes for the waste?",
+        "title": "Basel Convention code — Add overseas reprocessing site",
+        "heading": "What are the Basel Convention codes for the waste?",
         "codeLabel": "Code",
-        "hint": "Basel codes start with one letter followed by 4 digits, for example A1181. OECD codes start with two letters followed by 3 digits, for example GC010.",
+        "hint": "Basel codes start with one letter followed by 4 digits, for example A1181.",
         "guidanceLinkText": "Check the Consolidated waste list for the correct code",
         "addCodeButton": "Add another code",
         "removeCodeButton": "Remove",
@@ -767,7 +767,7 @@
           "contactEmail": "Contact email",
           "contactPhone": "Contact phone number",
           "recyclingOperation": "Recycling operation",
-          "baselCodes": "Basel Convention and OECD codes",
+          "baselCodes": "Basel Convention codes",
           "repatriatedLoads": "Arrangements for rejected or returned loads",
           "conditionsOfExport": "Conditions of export"
         },

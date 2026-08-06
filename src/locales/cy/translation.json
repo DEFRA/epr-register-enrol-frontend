@@ -709,10 +709,10 @@
         "cancelLink": "[Welsh] Cancel"
       },
       "baselAndOecdCodes": {
-        "title": "[Welsh] Basel Convention and OECD code — Add overseas reprocessing site",
-        "heading": "[Welsh] What are the Basel Convention and OECD codes for the waste?",
+        "title": "[Welsh] Basel Convention code — Add overseas reprocessing site",
+        "heading": "[Welsh] What are the Basel Convention codes for the waste?",
         "codeLabel": "[Welsh] Code",
-        "hint": "[Welsh] Basel codes start with one letter followed by 4 digits, for example A1181. OECD codes start with two letters followed by 3 digits, for example GC010.",
+        "hint": "[Welsh] Basel codes start with one letter followed by 4 digits, for example A1181.",
         "guidanceLinkText": "[Welsh] Check the Consolidated waste list for the correct code",
         "addCodeButton": "[Welsh] Add another code",
         "removeCodeButton": "[Welsh] Remove",
@@ -764,7 +764,7 @@
           "contactEmail": "[Welsh] Contact email",
           "contactPhone": "[Welsh] Contact phone number",
           "recyclingOperation": "[Welsh] Recycling operation",
-          "baselCodes": "[Welsh] Basel Convention and OECD codes",
+          "baselCodes": "[Welsh] Basel Convention codes",
           "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads",
           "conditionsOfExport": "[Welsh] Conditions of export"
         },

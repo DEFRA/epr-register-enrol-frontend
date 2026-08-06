@@ -89,7 +89,7 @@ describe('#addOrsBaselCodeController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
       expect(result).toContain(
-        'What are the Basel Convention and OECD codes for the waste?'
+        'What are the Basel Convention codes for the waste?'
       )
     })
 
@@ -191,7 +191,7 @@ describe('#addOrsBaselCodeController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        '[Welsh] What are the Basel Convention and OECD codes for the waste?'
+        '[Welsh] What are the Basel Convention codes for the waste?'
       )
     })
   })

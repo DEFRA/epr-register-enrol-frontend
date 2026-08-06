@@ -139,7 +139,7 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('[Welsh] Check your answers')
     })
 
-    test('renders a single Basel/OECD codes row listing all entered codes', async () => {
+    test('renders a single Basel row listing all entered codes', async () => {
       const baselCodePostResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
@@ -148,7 +148,7 @@ describe('#addOrsCyaController', () => {
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
-        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC010'
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=G0010'
       })
       const sessionCookie = baselCodePostResponse.headers['set-cookie']
         ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
@@ -164,9 +164,9 @@ describe('#addOrsCyaController', () => {
       })
 
       expect(result).toContain('data-testid="row-basel-codes"')
-      expect(result).toContain('Basel Convention and OECD codes')
+      expect(result).toContain('Basel Convention codes')
       expect(result).toContain('A1181')
-      expect(result).toContain('GC010')
+      expect(result).toContain('G0010')
       expect(result).toContain('data-testid="delete-code-0"')
       expect(result).toContain('data-testid="delete-code-1"')
     })
