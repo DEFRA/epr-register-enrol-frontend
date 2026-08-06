@@ -60,9 +60,14 @@
                   </a>
                 {% endif %}
                 {% if startNewUrl %}
-                  <a href="{{ startNewUrl }}" data-testid="start-new-link">
-                    {{ t('pages.operatorAccreditation.startNew') }}
-                  </a>
+                  {# RA-357: this creates an application, so it is a crumb-protected
+                     POST rather than an anchor — see operator-accreditation/controller.js. #}
+                  <form method="post" action="{{ startNewUrl }}" data-testid="start-new-form">
+                    <input type="hidden" name="crumb" value="{{ crumb }}">
+                    <button type="submit" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button" data-testid="start-new-link">
+                      {{ t('pages.operatorAccreditation.startNew') }}
+                    </button>
+                  </form>
                 {% endif %}
               </td>
             </tr>
