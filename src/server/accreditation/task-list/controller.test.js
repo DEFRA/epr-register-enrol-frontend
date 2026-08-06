@@ -22,9 +22,9 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    registrationId: 'reg-abc',
     materialType: 'Steel',
     year: CURRENT_YEAR,
-    siteId: 'site-abc',
     prns: { sectionStatus: 'NotStarted' },
     businessPlan: { sectionStatus: 'NotStarted' },
     samplingPlan: { sectionStatus: 'NotStarted' },
@@ -211,7 +211,7 @@ describe('#buildTaskListViewModel', () => {
   test('back link and save-and-come-back link point to /operator-accreditation', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
     expect(vm.backLink).toBe(
-      '/operator-accreditation/test-operator-id/site-abc/Steel/2026'
+      `/operator-accreditation/test-operator-id/reg-abc/Steel/${CURRENT_YEAR}`
     )
     expect(vm.saveAndComeLaterLink).toBe('/operator')
   })
@@ -225,7 +225,6 @@ describe('#buildTaskListViewModel', () => {
     function makeExporterApp(overrides = {}) {
       return makeApplication({
         isExporter: true,
-        siteId: null,
         materialType: 'Plastic',
         overseasSites: { sectionStatus: 'NotStarted' },
         besEvidence: { sectionStatus: 'NotStarted' },
@@ -303,15 +302,16 @@ describe('#buildTaskListViewModel', () => {
       expect(vm.continueUrl).toBeNull()
     })
 
-    test('backlink omits siteId', () => {
+    test('backlink is the single unified route, same shape as the reprocessor journey (RA-374)', () => {
       const vm = buildTaskListViewModel(
         makeExporterApp({ year: CURRENT_YEAR }),
         t
       )
       expect(vm.backLink).toBe(
-        `/operator-accreditation/test-operator-id/Plastic/${CURRENT_YEAR}`
+        `/operator-accreditation/test-operator-id/reg-abc/Plastic/${CURRENT_YEAR}`
       )
       expect(vm.backLink).not.toContain('null')
+      expect(vm.backLink).not.toContain('undefined')
     })
 
     test('task[0] label uses perns key', () => {
@@ -623,7 +623,6 @@ describe('#taskListGetController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           isExporter: true,
-          siteId: null,
           materialType: 'Plastic',
           overseasSites: { sectionStatus: 'NotStarted' },
           besEvidence: { sectionStatus: 'NotStarted' }
@@ -648,7 +647,6 @@ describe('#taskListGetController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           isExporter: true,
-          siteId: null,
           materialType: 'Plastic',
           overseasSites: { sectionStatus: 'NotStarted' },
           besEvidence: { sectionStatus: 'NotStarted' }
@@ -668,7 +666,6 @@ describe('#taskListGetController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           isExporter: true,
-          siteId: null,
           materialType: 'Plastic',
           prns: { sectionStatus: 'Completed' },
           businessPlan: { sectionStatus: 'Completed' },
@@ -691,7 +688,6 @@ describe('#taskListGetController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           isExporter: true,
-          siteId: null,
           materialType: 'Plastic',
           prns: { sectionStatus: 'Completed' },
           businessPlan: { sectionStatus: 'Completed' },

@@ -2,7 +2,10 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 //import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
-import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  queryTaskListUrl,
+  landingUrl
+} from '../../common/helpers/accreditationUrls.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -20,10 +23,6 @@ function sectionStatus(value) {
 export function buildTaskListViewModel(application, t) {
   const {
     applicationId,
-    materialType,
-    year,
-    siteId,
-    organisationId,
     prns,
     businessPlan,
     samplingPlan,
@@ -49,9 +48,7 @@ export function buildTaskListViewModel(application, t) {
   const bpSt = sectionStatus(businessPlan?.sectionStatus)
   const spSt = sectionStatus(samplingPlan?.sectionStatus)
 
-  const backLink = isExporter
-    ? `/operator-accreditation/${organisationId}/${materialType}/${year}`
-    : `/operator-accreditation/${organisationId}/${siteId}/${materialType}/${year}`
+  const backLink = landingUrl(application)
 
   const tasks = [
     {
