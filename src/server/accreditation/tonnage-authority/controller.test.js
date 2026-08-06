@@ -354,11 +354,46 @@ describe('#tonnageAuthorityController', () => {
           authorisers: expect.arrayContaining([
             expect.objectContaining({
               fullName: 'Jane Smith',
-              email: 'jane@example.com'
+              email: 'jane@example.com',
+              addedForAuthorityToIssue: true
             })
           ])
         })
       )
+    })
+
+    test('does not flag existing authorisers as newly added', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [{ fullName: 'Alice', email: 'alice@example.com' }],
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          newFullName: 'Bob',
+          newEmail: 'bob@example.com'
+        }
+      })
+
+      const patchBody = patchSpy.mock.calls[0][1]
+      const existing = patchBody.authorisers.find(
+        (a) => a.email === 'alice@example.com'
+      )
+      const added = patchBody.authorisers.find(
+        (a) => a.email === 'bob@example.com'
+      )
+      expect(existing.addedForAuthorityToIssue).toBeUndefined()
+      expect(added.addedForAuthorityToIssue).toBe(true)
     })
 
     test('returns 400 with error when full name is missing', async () => {

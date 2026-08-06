@@ -243,7 +243,11 @@ export const tonnageAuthorityPostController = {
 
       const updatedAuthorisers = [
         ...currentAuthorisers,
-        { fullName: newFullName.trim(), email: trimmedEmail }
+        {
+          fullName: newFullName.trim(),
+          email: trimmedEmail,
+          addedForAuthorityToIssue: true
+        }
       ]
       try {
         await accreditationApiService.patchTonnage(
