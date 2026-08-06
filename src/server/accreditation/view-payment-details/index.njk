@@ -121,7 +121,14 @@
             <dd class="govuk-summary-list__value" data-testid="bank-payment-reference">{{ paymentReference }}</dd>
           </div>
         </dl>
-
+        <details class="govuk-details" data-testid="alternative-payments-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.alternativePayments') }}</span>
+          </summary>
+          <div class="govuk-details__text">
+            {{ t('pages.viewPaymentDetails.alternativePaymentsBody') }}
+          </div>
+        </details>
         {% endif %}
 
     </div>
