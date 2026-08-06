@@ -19,22 +19,24 @@ export const NON_WITHDRAWABLE_STATUSES = new Set([
   WITHDRAWN_STATUS
 ])
 
-// The backend gives no ordering guarantee on
-// GET /api/v1/accreditation-applications/{organisationId} — the Mongo find is
-// unsorted — so array order must never decide which record wins. Sort
-// explicitly on createdAt, newest first, with applicationId as a stable
+// Sort explicitly on createdAt, newest first, with applicationId as a stable
 // secondary tiebreak.
 //
-// This deliberately mirrors AccreditationApplicationEndpoints.cs in
-// epr-register-enrol-backend, whose seed endpoint picks the live application
-// with OrderByDescending(CreatedAt).ThenByDescending(Id). The two orderings
-// agree because applicationId is the ObjectId as fixed-length lowercase hex, so
-// plain string comparison matches the driver's byte-wise ObjectId comparison —
-// do not switch to localeCompare, whose collation would silently disagree on
-// exactly the edge case this tiebreak exists for.
+// GET /api/v1/accreditation-applications/{organisationId} does now guarantee
+// this order: AccreditationApplicationOrdering.NewestFirst in
+// epr-register-enrol-backend applies OrderByDescending(CreatedAt)
+// .ThenByDescending(Id) to the list response, and the seed endpoint uses the
+// same shared rule to pick the live application. We sort anyway, so that
+// selection depends on the records themselves rather than on the order they
+// happened to arrive in — a transport-level detail no caller should be
+// coupled to. Once relying on the server's order directly is judged safe,
+// this comparator can go and only the non-withdrawn filter needs to stay.
 //
-// Duplicating the rule is temporary: epr-eo2n tracks dropping this comparator
-// once the backend sorts that list endpoint server-side.
+// Keep the tiebreak a plain string comparison. applicationId is the ObjectId
+// as fixed-length lowercase hex, so `>` matches the driver's byte-wise
+// ObjectId ordering and therefore agrees with the backend; localeCompare
+// would apply locale collation and could silently disagree on exactly the
+// edge case this tiebreak exists for.
 function createdAtTime(application) {
   const parsed = Date.parse(application.createdAt)
   return Number.isNaN(parsed) ? -Infinity : parsed
