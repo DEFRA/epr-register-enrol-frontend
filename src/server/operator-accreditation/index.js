@@ -1,7 +1,4 @@
-import {
-  operatorAccreditationController,
-  operatorAccreditationExporterController
-} from './controller.js'
+import { operatorAccreditationController } from './controller.js'
 import { requireOperator } from '../common/helpers/auth/auth-scopes.js'
 
 export const operatorAccreditation = {
@@ -20,18 +17,6 @@ export const operatorAccreditation = {
           path: '/{language}/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}',
           options: requireOperator,
           ...operatorAccreditationController
-        },
-        {
-          method: 'GET',
-          path: '/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter',
-          options: requireOperator,
-          ...operatorAccreditationExporterController
-        },
-        {
-          method: 'GET',
-          path: '/{language}/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter',
-          options: requireOperator,
-          ...operatorAccreditationExporterController
         }
       ])
     }

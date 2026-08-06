@@ -204,6 +204,31 @@ describe('#queryTaskListGetController', () => {
     expect(headers.location).not.toContain('undefined')
   })
 
+  test('renders all 5 task items for a Queried exporter application with every section queried', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(
+      makeApplication({
+        isExporter: true,
+        prns: { sectionStatus: 'Queried' },
+        businessPlan: { sectionStatus: 'Queried' },
+        samplingPlan: { sectionStatus: 'Queried' },
+        overseasSites: { sectionStatus: 'Queried' },
+        besEvidence: { sectionStatus: 'Queried' }
+      })
+    )
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="task-prns"')
+    expect(result).toContain('data-testid="task-business-plan"')
+    expect(result).toContain('data-testid="task-sampling-plan"')
+    expect(result).toContain('data-testid="task-overseas-sites"')
+    expect(result).toContain('data-testid="task-bes-evidence"')
+  })
+
   test('returns 500 with error summary when API fetch fails', async () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
 

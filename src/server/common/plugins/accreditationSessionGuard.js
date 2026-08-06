@@ -117,9 +117,7 @@ export const accreditationSessionGuard = {
           isWithdrawnBlockedPath(request.path) &&
           application?.applicationStatus === 'Withdrawn'
         ) {
-          return h
-            .redirect(landingUrl(application, application.isExporter))
-            .takeover()
+          return h.redirect(landingUrl(application)).takeover()
         }
 
         if (application) {

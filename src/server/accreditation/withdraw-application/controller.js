@@ -80,7 +80,7 @@ export const withdrawApplicationGetController = {
     }
 
     if (NON_WITHDRAWABLE_STATUSES.has(application.applicationStatus)) {
-      return h.redirect(landingUrl(application, application.isExporter))
+      return h.redirect(landingUrl(application))
     }
 
     return renderPage(h, baseViewData(t, applicationId))
@@ -113,7 +113,7 @@ export const withdrawApplicationPostController = {
     }
 
     if (NON_WITHDRAWABLE_STATUSES.has(application.applicationStatus)) {
-      return h.redirect(landingUrl(application, application.isExporter))
+      return h.redirect(landingUrl(application))
     }
 
     const errors = validateWithdrawApplication(confirmWithdraw, reason, t)
@@ -125,7 +125,7 @@ export const withdrawApplicationPostController = {
     }
 
     if (confirmWithdraw === 'no') {
-      return h.redirect(landingUrl(application, application.isExporter))
+      return h.redirect(landingUrl(application))
     }
 
     try {
@@ -170,6 +170,6 @@ export const withdrawApplicationPostController = {
       t('pages.withdrawApplication.successMessage')
     )
 
-    return h.redirect(landingUrl(application, application.isExporter))
+    return h.redirect(landingUrl(application))
   }
 }
