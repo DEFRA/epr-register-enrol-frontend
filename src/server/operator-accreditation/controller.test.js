@@ -1104,5 +1104,23 @@ describe('#operatorAccreditationController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
     })
+
+    test('seeds and renders a new exporter application reached via the plain URL for the first time', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      vi.spyOn(apiClient, 'post').mockResolvedValue(makeExporterApp())
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="application-header-site-name"')
+      expect(result).toContain('Exporter')
+      expect(result).not.toContain(
+        'data-testid="current-accreditation-site-address"'
+      )
+    })
   })
 })
