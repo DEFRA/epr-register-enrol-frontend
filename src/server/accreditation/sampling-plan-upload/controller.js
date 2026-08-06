@@ -58,11 +58,6 @@ export function hasEligibleFile(files) {
   return (files ?? []).some((f) => (f.scanStatus ?? 'Pending') !== 'Infected')
 }
 
-function decodeField(field) {
-  if (typeof field === 'string') return field
-  return field?.payload?.toString()
-}
-
 function appUrl(organisationId, applicationId) {
   return `/api/v1/accreditation-applications/${organisationId}/${applicationId}`
 }
@@ -71,8 +66,20 @@ function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
+function samplingPlanUrl(applicationId) {
+  return `/accreditation/sampling-plan/${applicationId}`
+}
+
+function resultsUrl(applicationId) {
+  return `/accreditation/sampling-plan/${applicationId}/results`
+}
+
 function renderPage(h, viewData) {
   return h.view('accreditation/sampling-plan-upload/index', viewData)
+}
+
+function renderResultsPage(h, viewData) {
+  return h.view('accreditation/sampling-plan-upload/results', viewData)
 }
 
 export const samplingPlanUploadGetController = {
@@ -125,6 +132,7 @@ export const samplingPlanUploadGetController = {
       backLink: taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files,
+      resultsLink: resultsUrl(applicationId),
       queryNote,
       querySummary: queryNote
         ? buildRegulatorQuerySummary('samplingPlan', t)
@@ -148,8 +156,6 @@ export const samplingPlanUploadPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId } = request.params
-    const action = decodeField(request.payload?.action)
-    const fileId = decodeField(request.payload?.fileId)
 
     let application
     try {
@@ -176,7 +182,6 @@ export const samplingPlanUploadPostController = {
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
-    const rawFiles = application.samplingPlan?.files ?? []
 
     function baseView(overrides = {}) {
       return {
@@ -184,93 +189,206 @@ export const samplingPlanUploadPostController = {
         heading: t('pages.samplingPlanUpload.heading'),
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        resultsLink: resultsUrl(applicationId),
         files,
         ...overrides
       }
     }
 
-    if (action === 'uploadFile') {
-      const uploadedFile = request.payload.file
-      const filename = uploadedFile?.filename ?? ''
-      const contentType =
-        uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
-      const fileSize = uploadedFile?.payload?.length ?? 0
+    const uploadedFile = request.payload.file
+    const filename = uploadedFile?.filename ?? ''
+    const contentType =
+      uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
+    const fileSize = uploadedFile?.payload?.length ?? 0
 
-      if (!filename) {
-        return renderPage(
-          h,
-          baseView({
-            fileError: t('pages.samplingPlanUpload.validation.noFile')
-          })
-        ).code(400)
-      }
-
-      if (!validateFileExtension(filename)) {
-        return renderPage(
-          h,
-          baseView({
-            fileError: t('pages.samplingPlanUpload.validation.invalidType')
-          })
-        ).code(400)
-      }
-
-      if (fileSize > MAX_FILE_BYTES) {
-        return renderPage(
-          h,
-          baseView({
-            fileError: t('pages.samplingPlanUpload.validation.fileTooLarge')
-          })
-        ).code(400)
-      }
-
-      let uploadDetail
-      try {
-        uploadDetail = await initUpload({
-          initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/initiate`,
-          redirectUrl: `${config.get('auth.callbackBaseUrl')}/accreditation/sampling-plan/${applicationId}/status`,
-          s3Path: `accreditation/sampling-plan/${applicationId}`,
-          s3Bucket: config.get('fileUpload.s3Bucket'),
-          mimeTypes: ALLOWED_MIME_TYPES,
-          maxFileSize: MAX_FILE_BYTES
+    if (!filename) {
+      return renderPage(
+        h,
+        baseView({
+          fileError: t('pages.samplingPlanUpload.validation.noFile')
         })
-      } catch (err) {
-        request.server.logger.error(
-          `Error initiating upload for ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          baseView({
-            fileError: t('pages.samplingPlanUpload.validation.uploadError')
-          })
-        ).code(500)
-      }
+      ).code(400)
+    }
 
-      try {
-        await proxyUploadToCdp({
-          uploadUrl: uploadDetail.uploadUrl,
-          payload: uploadedFile.payload,
-          filename,
-          contentType
+    if (!validateFileExtension(filename)) {
+      return renderPage(
+        h,
+        baseView({
+          fileError: t('pages.samplingPlanUpload.validation.invalidType')
         })
-      } catch (err) {
-        request.server.logger.error(
-          `Error proxying file for ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          baseView({
-            fileError: t('pages.samplingPlanUpload.validation.uploadError')
-          })
-        ).code(500)
-      }
+      ).code(400)
+    }
 
-      request.yar.set(SAMPLING_PLAN_UPLOAD_SESSION_KEY, {
-        statusUrl: uploadDetail.statusUrl,
-        applicationId,
-        organisationId
+    if (fileSize > MAX_FILE_BYTES) {
+      return renderPage(
+        h,
+        baseView({
+          fileError: t('pages.samplingPlanUpload.validation.fileTooLarge')
+        })
+      ).code(400)
+    }
+
+    let uploadDetail
+    try {
+      uploadDetail = await initUpload({
+        initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/initiate`,
+        redirectUrl: `${config.get('auth.callbackBaseUrl')}/accreditation/sampling-plan/${applicationId}/status`,
+        s3Path: `accreditation/sampling-plan/${applicationId}`,
+        s3Bucket: config.get('fileUpload.s3Bucket'),
+        mimeTypes: ALLOWED_MIME_TYPES,
+        maxFileSize: MAX_FILE_BYTES
       })
+    } catch (err) {
+      request.server.logger.error(
+        `Error initiating upload for ${applicationId}: ${err.message}`
+      )
+      return renderPage(
+        h,
+        baseView({
+          fileError: t('pages.samplingPlanUpload.validation.uploadError')
+        })
+      ).code(500)
+    }
 
-      return h.redirect(`/accreditation/sampling-plan/${applicationId}/status`)
+    try {
+      await proxyUploadToCdp({
+        uploadUrl: uploadDetail.uploadUrl,
+        payload: uploadedFile.payload,
+        filename,
+        contentType
+      })
+    } catch (err) {
+      request.server.logger.error(
+        `Error proxying file for ${applicationId}: ${err.message}`
+      )
+      return renderPage(
+        h,
+        baseView({
+          fileError: t('pages.samplingPlanUpload.validation.uploadError')
+        })
+      ).code(500)
+    }
+
+    request.yar.set(SAMPLING_PLAN_UPLOAD_SESSION_KEY, {
+      statusUrl: uploadDetail.statusUrl,
+      applicationId,
+      organisationId
+    })
+
+    return h.redirect(`/accreditation/sampling-plan/${applicationId}/status`)
+  }
+}
+
+function buildResultsFiles(files) {
+  return buildFilesViewModel(files).filter((f) => f.scanStatus !== 'Infected')
+}
+
+export const samplingPlanResultsGetController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+    const { applicationId } = request.params
+    const uploadFailed = request.query?.upload === 'failed'
+
+    let application
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId}: ${err.message}`
+      )
+      return renderResultsPage(h, {
+        pageTitle: t('pages.samplingPlanUpload.title'),
+        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+        backLink: samplingPlanUrl(applicationId),
+        taskListLink: taskListUrl(applicationId),
+        files: [],
+        error: t('pages.samplingPlanUpload.validation.fetchError')
+      }).code(500)
+    }
+
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.samplingPlan?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
+    const rawFiles = application.samplingPlan?.files ?? []
+    const files = buildResultsFiles(rawFiles)
+
+    if (files.length === 0 && !uploadFailed) {
+      return h.redirect(samplingPlanUrl(applicationId))
+    }
+
+    return renderResultsPage(h, {
+      pageTitle: t('pages.samplingPlanUpload.title'),
+      heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+      backLink: samplingPlanUrl(applicationId),
+      taskListLink: taskListUrl(applicationId),
+      uploadAnotherLink: samplingPlanUrl(applicationId),
+      files,
+      error: uploadFailed
+        ? t('pages.samplingPlanUpload.validation.uploadError')
+        : null
+    })
+  }
+}
+
+export const samplingPlanResultsPostController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+    const { applicationId } = request.params
+    const { action = 'saveAndContinue', fileId } = request.payload ?? {}
+
+    let application
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error fetching application ${applicationId}: ${err.message}`
+      )
+      return renderResultsPage(h, {
+        pageTitle: t('pages.samplingPlanUpload.title'),
+        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+        backLink: samplingPlanUrl(applicationId),
+        taskListLink: taskListUrl(applicationId),
+        files: [],
+        error: t('pages.samplingPlanUpload.validation.fetchError')
+      }).code(500)
+    }
+
+    if (
+      application.applicationStatus === 'Queried' &&
+      application.samplingPlan?.sectionStatus !== 'Queried'
+    ) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
+    const rawFiles = application.samplingPlan?.files ?? []
+    const files = buildResultsFiles(rawFiles)
+
+    function baseView(overrides = {}) {
+      return {
+        pageTitle: t('pages.samplingPlanUpload.title'),
+        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+        backLink: samplingPlanUrl(applicationId),
+        taskListLink: taskListUrl(applicationId),
+        uploadAnotherLink: samplingPlanUrl(applicationId),
+        files,
+        ...overrides
+      }
     }
 
     if (action === 'deleteFile') {
@@ -285,7 +403,7 @@ export const samplingPlanUploadPostController = {
           request.server.logger.error(
             `Error deleting file ${fileId} for ${applicationId}: ${err.message}`
           )
-          return renderPage(
+          return renderResultsPage(
             h,
             baseView({
               error: t('pages.samplingPlanUpload.validation.deleteError')
@@ -293,7 +411,7 @@ export const samplingPlanUploadPostController = {
           ).code(500)
         }
       }
-      return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
+      return h.redirect(resultsUrl(applicationId))
     }
 
     if (action === 'saveAndComeLater') {
@@ -308,7 +426,7 @@ export const samplingPlanUploadPostController = {
         request.server.logger.error(
           `Error saving sampling plan for ${applicationId}: ${err.message}`
         )
-        return renderPage(
+        return renderResultsPage(
           h,
           baseView({
             error: t('pages.samplingPlanUpload.validation.saveError')
@@ -320,7 +438,7 @@ export const samplingPlanUploadPostController = {
 
     // saveAndContinue (default)
     if (!hasEligibleFile(rawFiles)) {
-      return renderPage(
+      return renderResultsPage(
         h,
         baseView({
           error: t('pages.samplingPlanUpload.validation.noCleanFile')
@@ -338,7 +456,7 @@ export const samplingPlanUploadPostController = {
       request.server.logger.error(
         `Error completing sampling plan for ${applicationId}: ${err.message}`
       )
-      return renderPage(
+      return renderResultsPage(
         h,
         baseView({ error: t('pages.samplingPlanUpload.validation.saveError') })
       ).code(500)
@@ -367,7 +485,7 @@ export const samplingPlanCdpStatusController = {
     request.yar.clear(SAMPLING_PLAN_UPLOAD_SESSION_KEY)
 
     if (fileInput?.hasError) {
-      return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
+      return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
     }
 
     const scanStatus =
@@ -392,6 +510,10 @@ export const samplingPlanCdpStatusController = {
       )
     }
 
-    return h.redirect(`/accreditation/sampling-plan/${applicationId}`)
+    return h.redirect(
+      scanStatus === 'Infected'
+        ? `${resultsUrl(applicationId)}?upload=failed`
+        : resultsUrl(applicationId)
+    )
   }
 }

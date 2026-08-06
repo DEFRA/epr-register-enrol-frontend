@@ -285,6 +285,8 @@
         "fileTypes": "one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
       "uploadedFilesHeading": "Uploaded files",
+      "viewUploadedFiles": "View uploaded files ({count})",
+      "uploadAnotherFile": "Upload another file",
       "fileLabel": "Choose a file to upload",
       "uploadButton": "Upload file",
       "deleteFile": "Remove",
@@ -294,13 +296,7 @@
         "filename": "Filename",
         "dateUploaded": "Upload date",
         "uploadedBy": "Uploaded by",
-        "status": "Status",
         "action": ""
-      },
-      "scanStatus": {
-        "scanning": "Scanning",
-        "clean": "Clean",
-        "infected": "Infected"
       },
       "status": {
         "title": "Uploading file",

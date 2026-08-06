@@ -282,6 +282,8 @@
         "fileTypes": "[Welsh] one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
       "uploadedFilesHeading": "[Welsh] Uploaded files",
+      "viewUploadedFiles": "[Welsh] View uploaded files ({count})",
+      "uploadAnotherFile": "[Welsh] Upload another file",
       "fileLabel": "[Welsh] Choose a file to upload",
       "uploadButton": "Uwchlwytho ffeil",
       "deleteFile": "[Welsh] Remove",
@@ -291,13 +293,7 @@
         "filename": "[Welsh] Filename",
         "dateUploaded": "[Welsh] Upload date",
         "uploadedBy": "Uwchlwythwyd gan",
-        "status": "Statws",
         "action": ""
-      },
-      "scanStatus": {
-        "scanning": "[Welsh] Scanning",
-        "clean": "[Welsh] Clean",
-        "infected": "[Welsh] Infected"
       },
       "status": {
         "title": "Wrthi’n uwchlwytho ffeil",

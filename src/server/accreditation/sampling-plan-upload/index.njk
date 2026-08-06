@@ -33,46 +33,11 @@
       </ul>
 
       {% if files and files.length > 0 %}
-        <h2 class="govuk-heading-m" data-testid="uploaded-files-heading">{{ t('pages.samplingPlanUpload.uploadedFilesHeading') }}</h2>
-        <table class="govuk-table" data-testid="uploaded-files-table">
-          <thead class="govuk-table__head">
-            <tr class="govuk-table__row">
-              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.filename') }}</th>
-              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.dateUploaded') }}</th>
-              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.uploadedBy') }}</th>
-              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.status') }}</th>
-              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.action') }}</th>
-            </tr>
-          </thead>
-          <tbody class="govuk-table__body">
-            {% for file in files %}
-              <tr class="govuk-table__row" data-testid="file-row">
-                <td class="govuk-table__cell" data-testid="file-name">{{ file.filename }}</td>
-                <td class="govuk-table__cell" data-testid="file-date">{{ file.uploadedAt }}</td>
-                <td class="govuk-table__cell" data-testid="file-uploaded-by">{{ file.uploadedBy }}</td>
-                <td class="govuk-table__cell" data-testid="file-scan-status">
-                  {% if file.scanStatus === 'Infected' %}
-                    <strong class="govuk-tag govuk-tag--red">{{ t('pages.samplingPlanUpload.scanStatus.infected') }}</strong>
-                  {% elif file.scanStatus === 'Clean' %}
-                    <strong class="govuk-tag govuk-tag--green">{{ t('pages.samplingPlanUpload.scanStatus.clean') }}</strong>
-                  {% else %}
-                    <strong class="govuk-tag govuk-tag--grey">{{ t('pages.samplingPlanUpload.scanStatus.scanning') }}</strong>
-                  {% endif %}
-                </td>
-                <td class="govuk-table__cell">
-                  <form method="post" novalidate>
-                    <input type="hidden" name="crumb" value="{{ crumb }}">
-                    <input type="hidden" name="action" value="deleteFile">
-                    <input type="hidden" name="fileId" value="{{ file.fileId }}">
-                    <button type="submit" class="govuk-button govuk-button--warning govuk-!-margin-bottom-0" data-module="govuk-button" data-testid="delete-file-button">
-                      {{ t('pages.samplingPlanUpload.deleteFile') }}<span class="govuk-visually-hidden"> {{ file.filename }}</span>
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <p class="govuk-body" data-testid="view-uploaded-files">
+          <a class="govuk-link" href="{{ resultsLink }}" data-testid="view-uploaded-files-link">
+            {{ t('pages.samplingPlanUpload.viewUploadedFiles').replace('{count}', files.length) }}
+          </a>
+        </p>
       {% endif %}
 
       <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">
@@ -99,18 +64,6 @@
 
         <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="upload-button">
           {{ t('pages.samplingPlanUpload.uploadButton') }}
-        </button>
-      </form>
-
-      <form method="post" novalidate data-testid="continue-form">
-        <input type="hidden" name="crumb" value="{{ crumb }}">
-
-        <button type="submit" name="action" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="save-continue-button">
-          {{ t('pages.samplingPlanUpload.saveAndContinue') }}
-        </button>
-
-        <button type="submit" name="action" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.samplingPlanUpload.saveAndComeLater') }}
         </button>
       </form>
 
