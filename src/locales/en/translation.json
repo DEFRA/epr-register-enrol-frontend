@@ -376,6 +376,8 @@
       "bank": "Bank",
       "companyAddress": "Company address",
       "paymentReference": "Payment reference",
+      "alternativePayments": "Alternative payments",
+      "alternativePaymentsBody": "Please contact your regulator if you need to discuss alternative payment methods.",
       "cardPayments": "Card payments",
       "cardPaymentsBody": "A card payment can be taken over the phone. Please contact your account manager to arrange taking a card payment over the phone.",
       "overseasPayments": "Overseas payments",

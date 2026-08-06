@@ -121,7 +121,34 @@
             <dd class="govuk-summary-list__value" data-testid="bank-payment-reference">{{ paymentReference }}</dd>
           </div>
         </dl>
-
+        <details class="govuk-details" data-testid="alternative-payments-details">
+          <summary class="govuk-details__summary">
+            <span class="govuk-details__summary-text">{{ t('pages.viewPaymentDetails.alternativePayments') }}</span>
+          </summary>
+          <div class="govuk-details__text">
+            {{ t('pages.viewPaymentDetails.alternativePaymentsBody') }}
+            <p>
+              Environment Agency
+              <br/>
+              Email: packagingnotifications@environment-agency.gov.uk
+            </p>
+            <p>
+              Natural Resources Wales
+              <br/>
+              Email: packaging@naturalresourceswales.gov.uk
+            </p>
+            <p>
+              Scottish Environment Protection Agency
+              <br/>
+              Email: producer.responsibility@sepa.org.uk
+            </p>
+            <p>
+              Northern Ireland Environment Agency
+              <br/>
+              Email: repandexp@daera-ni.gov.uk
+            </p>
+          </div>
+        </details>
         {% endif %}
 
     </div>
