@@ -3,7 +3,6 @@ import Boom from '@hapi/boom'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
-import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
 import {
   queryTaskListUrl,
@@ -11,14 +10,17 @@ import {
 } from '../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
+import {
+  WITHDRAWN_STATUS,
+  NON_WITHDRAWABLE_STATUSES,
+  resolveLandingApplication
+} from '../common/helpers/accreditationSelection.js'
 
-const WITHDRAWN_STATUS = 'Withdrawn'
-
-// RA-357: "Start new accreditation application" re-enters the SAME landing
-// route, so a plain visit to a withdrawn application must not be confused with
-// an explicit request to start again — otherwise merely being redirected back
-// here after withdrawing would silently create a replacement application.
-const START_NEW_PARAM = 'startNew'
+// RA-357: restarting after a withdrawal is a mutation, so it is a POST to
+// /start-new carrying a crumb token — never a flag on this GET. A GET would be
+// both CSRF-able (no token) and replayable from history, bookmarks or prefetch,
+// silently creating an application every time it was re-visited.
+const START_NEW_SEGMENT = '/start-new'
 
 const STATUS_CONFIG = {
   Saved: { tagClass: 'govuk-tag--grey' },
@@ -33,23 +35,6 @@ const STATUS_CONFIG = {
   Rejected: { tagClass: 'govuk-tag--red' },
   Withdrawn: { tagClass: 'govuk-tag--grey' }
 }
-
-// An application can only be withdrawn before a final regulator decision —
-// shared with withdraw-application/controller.js so the two routes can never
-// disagree about which statuses are withdrawable.
-export const NON_WITHDRAWABLE_STATUSES = new Set([
-  //Not submitted tso can't be withdrawn
-  'Saved',
-  'Started',
-  'NotStarted',
-  // Final decisions made can't be withdrawn
-  'Approved',
-  'Refused',
-  'Cancelled',
-  'Rejected',
-  // Withdrawn is a final state, so can't be withdrawn again
-  'Withdrawn'
-])
 
 // The reapply prompt only makes sense while an application is still live —
 // once it's been decided (approved/refused) or dropped (withdrawn/cancelled)
@@ -129,12 +114,14 @@ export function buildLandingViewModel(
     // the SAME accreditation year — the withdrawn record is kept untouched for
     // audit. This used to link to accreditationYear + 1, which seeded against a
     // prior year that has no approved accreditation and always failed.
+    // This is the action of a POST form, not an anchor href — see
+    // START_NEW_SEGMENT above.
     startNewUrl:
       application.applicationStatus === WITHDRAWN_STATUS
         ? `${landingUrl(
             { ...application, year: accreditationYear },
             isExporter
-          )}?${START_NEW_PARAM}=true`
+          )}${START_NEW_SEGMENT}`
         : null,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
@@ -142,104 +129,6 @@ export function buildLandingViewModel(
     displayReapplyAccreditationText: !REAPPLY_TEXT_HIDDEN_STATUSES.has(
       application.applicationStatus
     )
-  }
-}
-
-// The backend gives no ordering guarantee on GET /{organisationId} (confirmed
-// with the backend team for RA-357 — the Mongo find is unsorted), so array
-// order must never decide which record wins. Sort explicitly on createdAt,
-// newest first, with applicationId as a stable secondary tiebreak — the same
-// rule the seed endpoint now applies server-side.
-function createdAtTime(application) {
-  const parsed = Date.parse(application.createdAt)
-  return Number.isNaN(parsed) ? -Infinity : parsed
-}
-
-function latest(applications) {
-  return applications.reduce((best, application) => {
-    if (best === null) return application
-    const difference = createdAtTime(application) - createdAtTime(best)
-    if (difference > 0) return application
-    if (difference < 0) return best
-    return String(application.applicationId) > String(best.applicationId)
-      ? application
-      : best
-  }, null)
-}
-
-// RA-357: a single accreditation year can now hold both a withdrawn record and
-// its live replacement, so pick the newest live application and only fall back
-// to a withdrawn one when that is genuinely all there is for the year.
-export function selectApplicationForYear(
-  applications,
-  { registrationId, materialType, year }
-) {
-  const matching = applications.filter(
-    (app) =>
-      app.registrationId === registrationId &&
-      app.materialType === materialType &&
-      app.year === year
-  )
-  const live = matching.filter(
-    (app) => app.applicationStatus !== WITHDRAWN_STATUS
-  )
-
-  return {
-    application: latest(live) ?? latest(matching),
-    hasLive: live.length > 0,
-    hasMatch: matching.length > 0
-  }
-}
-
-// Shared by the reprocessor and exporter landing controllers so the two routes
-// can never disagree about which application is rendered or when a new one is
-// seeded. Returns { application: null, failed: true } when the caller should
-// render the seed-error view.
-export async function resolveLandingApplication({
-  organisationId,
-  registrationId,
-  materialType,
-  yearInt,
-  startNewRequested,
-  logger,
-  logLabel = ''
-}) {
-  let applications
-  try {
-    applications =
-      await accreditationApiService.listApplications(organisationId)
-  } catch (error) {
-    logger.error(`Error fetching accreditation applications: ${error.message}`)
-    return { application: null, failed: true }
-  }
-
-  const { application, hasLive, hasMatch } = selectApplicationForYear(
-    applications,
-    { registrationId, materialType, year: yearInt }
-  )
-
-  // Seed when the year is empty, or when every record for it is withdrawn and
-  // the operator explicitly asked to start again. Simply viewing a withdrawn
-  // application must leave it exactly as it is.
-  if (hasMatch && (hasLive || !startNewRequested)) {
-    return { application, failed: false }
-  }
-
-  try {
-    return {
-      application: await accreditationApiService.seedApplication(
-        organisationId,
-        registrationId,
-        materialType,
-        yearInt
-      ),
-      failed: false
-    }
-  } catch (error) {
-    logger.error(
-      `Error seeding ${logLabel}accreditation application for org=${organisationId} registration=${registrationId} material=${materialType} year=${yearInt}: ${error.message} status=${error.status} response=${error.response}`
-    )
-    return { application: null, failed: true }
   }
 }
 
@@ -282,7 +171,9 @@ export const operatorAccreditationController = {
       registrationId,
       materialType,
       yearInt,
-      startNewRequested: request.query[START_NEW_PARAM] === 'true',
+      // This GET only ever lazily seeds an empty year, which is idempotent. A
+      // restart is never triggered from here — see handleStartNew below.
+      startNewRequested: false,
       logger: request.server.logger
     })
 
@@ -367,9 +258,10 @@ export const operatorAccreditationExporterController = {
       registrationId,
       materialType,
       yearInt,
-      startNewRequested: request.query[START_NEW_PARAM] === 'true',
+      // See the reprocessor handler above — restarts arrive via POST only.
+      startNewRequested: false,
       logger: request.server.logger,
-      logLabel: 'exporter '
+      kind: 'exporter'
     })
 
     if (failed) {
@@ -412,5 +304,73 @@ export const operatorAccreditationExporterController = {
       notification,
       ...viewModel
     })
+  }
+}
+
+// RA-357: restarting after a withdrawal. This is a POST, not a flag on the
+// landing GET, for two reasons:
+//   - CSRF. It creates an application, so it must carry a crumb token. @hapi/crumb
+//     validates POST/PUT/PATCH/DELETE only, so a GET mutation would be the one
+//     unprotected write in the accreditation journey — reachable by a crafted
+//     link, since the session cookie is SameSite=Lax and rides top-level
+//     navigation.
+//   - Replay. Post/redirect/get keeps the mutating URL out of history and
+//     bookmarks. A GET flag would re-fire on every back-button, restored tab or
+//     prefetch that landed on it while only withdrawn records existed.
+// It redirects to the clean landing URL, which then renders the seeded
+// application through the ordinary GET path.
+async function handleStartNew(request, h, { isExporter, kind }) {
+  const { t } = getLocaleAndTranslator(request)
+  const user = getUser(request)
+  const { organisationId, registrationId, materialType, year } = request.params
+  const yearInt = parseInt(year, 10)
+
+  const canAccess = await operatorCanAccessOrganisation(user, organisationId, {
+    logger: request.logger
+  })
+  if (!canAccess) {
+    throw Boom.forbidden('You do not have access to this organisation')
+  }
+
+  const { application, failed } = await resolveLandingApplication({
+    organisationId,
+    registrationId,
+    materialType,
+    yearInt,
+    startNewRequested: true,
+    logger: request.server.logger,
+    kind
+  })
+
+  if (failed) {
+    return h
+      .view('operator-accreditation/index', {
+        pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
+        heading: t('pages.operatorAccreditation.seedErrorHeading'),
+        userName: user?.name,
+        backLink: '#',
+        backLinkText: t('pages.operatorAccreditation.reExBackLink'),
+        error: t('pages.operatorAccreditation.seedError')
+      })
+      .code(500)
+  }
+
+  return h.redirect(
+    landingUrl(
+      { ...application, organisationId, registrationId, year: yearInt },
+      isExporter
+    )
+  )
+}
+
+export const startNewAccreditationController = {
+  handler(request, h) {
+    return handleStartNew(request, h, { isExporter: false, kind: '' })
+  }
+}
+
+export const startNewAccreditationExporterController = {
+  handler(request, h) {
+    return handleStartNew(request, h, { isExporter: true, kind: 'exporter' })
   }
 }
