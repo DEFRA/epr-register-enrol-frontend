@@ -80,6 +80,23 @@ describe('#buildAuthoriserRows', () => {
     expect(rows[0].index).toBe(0)
     expect(rows[1].index).toBe(1)
   })
+
+  // RA-290 AC01: existing (seeded) authorisers default opted-in, and per
+  // clarification newly added authorisers (flagged by AC03) do too.
+  test('defaults both existing and newly-added authorisers to checked=true', () => {
+    const rows = buildAuthoriserRows(
+      [
+        { fullName: 'Alice', email: 'alice@example.com' },
+        {
+          fullName: 'Bob',
+          email: 'bob@example.com',
+          addedForAuthorityToIssue: true
+        }
+      ],
+      t
+    )
+    expect(rows.every((r) => r.checked === true)).toBe(true)
+  })
 })
 
 describe('#tonnageAuthorityController', () => {
@@ -158,6 +175,34 @@ describe('#tonnageAuthorityController', () => {
       expect(result).toContain('data-testid="authorisers-table"')
       expect(result).toContain('Jane Smith')
       expect(result).toContain('jane@example.com')
+    })
+
+    test('pre-checks a newly-added authoriser as well as existing ones', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' },
+              {
+                fullName: 'Bob',
+                email: 'bob@example.com',
+                addedForAuthorityToIssue: true
+              }
+            ],
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toMatch(/value="jane@example\.com"[\s\S]*?checked/)
+      expect(result).toMatch(/value="bob@example\.com"[\s\S]*?checked/)
     })
 
     test('pre-checks saved authorisers', async () => {
