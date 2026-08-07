@@ -117,8 +117,10 @@ export function buildLandingViewModel(
     // This is the action of a POST form, not an anchor href — see
     // START_NEW_SEGMENT above.
     startNewUrl:
-      application.applicationStatus === 'Withdrawn'
-        ? landingUrl({ ...application, year: accreditationYear + 1 })
+      application.applicationStatus === WITHDRAWN_STATUS
+        ? `${landingUrl({ ...application, year: accreditationYear })}${
+            isExporter ? '/exporter' : ''
+          }${START_NEW_SEGMENT}`
         : null,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
