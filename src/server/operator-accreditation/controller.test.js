@@ -1353,68 +1353,8 @@ describe('#operatorAccreditationController', () => {
     ...overrides
   })
 
-  const exporterUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter`
-
-  describe('GET /operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter', () => {
-    test('returns 403 when operator is not related to the organisation', async () => {
-      const getSpy = vi
-        .spyOn(apiClient, 'get')
-        .mockResolvedValue([makeExporterApp()])
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter`,
-        headers: operatorHeaders
-      })
-
-      expect(statusCode).toBe(statusCodes.forbidden)
-      expect(getSpy).not.toHaveBeenCalled()
-    })
-
-    test('returns 200 when existing exporter application found', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
-
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        headers: operatorHeaders
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    test('does not call seed when matching exporter application already exists', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
-      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
-
-      await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        headers: operatorHeaders
-      })
-
-      expect(postSpy).not.toHaveBeenCalled()
-    })
-
-    test('calls seedApplication when no matching exporter app found', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([])
-      const postSpy = vi
-        .spyOn(apiClient, 'post')
-        .mockResolvedValue(makeExporterApp())
-
-      await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        headers: operatorHeaders
-      })
-
-      expect(postSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`/${REGISTRATION_ID}/${MATERIAL}/seed`),
-        expect.objectContaining({ year: YEAR })
-      )
-    })
-
-    test('does NOT render current accreditation site address row for exporter', async () => {
+  describe('exporter applications on the main route (RA-374: isExporter comes from the record, not the URL)', () => {
+    test('does NOT render current accreditation site address row for an exporter application', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([
         makeExporterApp({
           organisation: {
@@ -1431,7 +1371,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: exporterUrl,
+        url: baseUrl,
         headers: operatorHeaders
       })
 
@@ -1440,35 +1380,7 @@ describe('#operatorAccreditationController', () => {
       )
     })
 
-    test('renders application summary and continue link for exporter', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        headers: operatorHeaders
-      })
-
-      expect(result).toContain('data-testid="application-summary"')
-      expect(result).toContain('data-testid="continue-button"')
-    })
-
-    test('renders "Exporter" in the application header site field for exporter journeys', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: exporterUrl,
-        headers: operatorHeaders
-      })
-
-      expect(result).toContain('data-testid="page-heading"')
-      expect(result).toContain('Reapply for accreditation')
-      expect(result).toContain('data-testid="application-header-site-name"')
-      expect(result).toContain('Exporter')
-    })
-
-    test('reprocessor route still renders current accreditation site address row', async () => {
+    test('reprocessor application still renders current accreditation site address row', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([
         makeApp({
           organisation: {
@@ -1485,7 +1397,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
+        url: baseUrl,
         headers: operatorHeaders
       })
 
@@ -1494,194 +1406,62 @@ describe('#operatorAccreditationController', () => {
       )
     })
 
-    test('returns 500 when listApplications throws', async () => {
-      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+    test('renders application summary and continue link for an exporter application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
 
-      const { statusCode, result } = await server.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: exporterUrl,
+        url: baseUrl,
         headers: operatorHeaders
       })
 
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-message"')
+      expect(result).toContain('data-testid="application-summary"')
+      expect(result).toContain('data-testid="continue-button"')
     })
 
-    test('returns 500 when seed throws', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([])
-      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
+    test('renders "Exporter" as the site name in both the landing page and the application header', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
 
-      const { statusCode, result } = await server.inject({
+      const { result } = await server.inject({
         method: 'GET',
-        url: exporterUrl,
+        url: baseUrl,
         headers: operatorHeaders
       })
 
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-message"')
+      expect(result).toContain('data-testid="page-heading"')
+      expect(result).toContain('Reapply for accreditation')
+      expect(result).toContain('data-testid="application-header-site-name"')
+      expect(result).toContain('Exporter')
     })
 
-    test('returns 200 in Welsh locale', async () => {
+    test('returns 200 in Welsh locale for an exporter application', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter`,
+        url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
         headers: operatorHeaders
       })
 
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    // RA-357: the exporter route must behave identically to the reprocessor
-    // route — both share resolveLandingApplication.
-    describe('restarting after a withdrawal', () => {
-      const withdrawnExporterApp = (overrides = {}) =>
-        makeExporterApp({
-          applicationId: 'app-exp-withdrawn',
-          applicationStatus: 'Withdrawn',
-          organisationId: ORG_ID,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          ...overrides
-        })
+    test('seeds and renders a new exporter application reached via the plain URL for the first time', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      vi.spyOn(apiClient, 'post').mockResolvedValue(makeExporterApp())
 
-      const restartedExporterApp = (overrides = {}) =>
-        makeExporterApp({
-          applicationId: 'app-exp-restarted',
-          applicationStatus: 'Saved',
-          organisationId: ORG_ID,
-          createdAt: '2026-02-01T00:00:00.000Z',
-          ...overrides
-        })
-
-      test('withdrawn exporter application links to start a new application for the SAME year', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnExporterApp()])
-        const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
-
-        const { statusCode, result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          headers: operatorHeaders
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain('data-testid="start-new-link"')
-        expect(result).toContain('data-testid="start-new-form"')
-        expect(result).toContain('name="crumb"')
-        expect(result).toContain(
-          `action="/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter/start-new"`
-        )
-        expect(result).not.toContain(`${MATERIAL}/${YEAR + 1}`)
-        expect(result).toContain('WITHDRAWN')
-        expect(result).not.toContain('data-testid="continue-button"')
-        expect(result).not.toContain('data-testid="withdraw-link"')
-        expect(postSpy).not.toHaveBeenCalled()
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
       })
 
-      test('renders the live exporter application when the year holds both', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue([
-          withdrawnExporterApp(),
-          restartedExporterApp()
-        ])
-        const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
-
-        const { statusCode, result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          headers: operatorHeaders
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain('/accreditation/task-list/app-exp-restarted')
-        expect(result).not.toContain(
-          '/accreditation/task-list/app-exp-withdrawn'
-        )
-        expect(result).not.toContain('data-testid="start-new-link"')
-        expect(postSpy).not.toHaveBeenCalled()
-      })
-
-      test('exporter POST seeds for the SAME year then redirects to the exporter landing URL', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnExporterApp()])
-        const postSpy = vi
-          .spyOn(apiClient, 'post')
-          .mockResolvedValue(restartedExporterApp())
-
-        const { statusCode, headers } = await server.inject({
-          method: 'POST',
-          url: `${exporterUrl}/start-new`,
-          headers: operatorHeaders
-        })
-
-        expect(postSpy).toHaveBeenCalledWith(
-          `/api/v1/accreditation-applications/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/seed`,
-          { year: YEAR }
-        )
-        expect(statusCode).toBe(statusCodes.redirect)
-        // Must land back on the exporter route, not the reprocessor one.
-        expect(headers.location).toBe(exporterUrl)
-        expect(headers.location).not.toContain('start-new')
-      })
-
-      test('the exporter redirect target then renders the newly seeded application', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue([
-          withdrawnExporterApp(),
-          restartedExporterApp()
-        ])
-
-        const { statusCode, result } = await server.inject({
-          method: 'GET',
-          url: exporterUrl,
-          headers: operatorHeaders
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).toContain('data-testid="continue-button"')
-        expect(result).toContain('/accreditation/task-list/app-exp-restarted')
-        expect(result).not.toContain('data-testid="start-new-link"')
-      })
-
-      test('exporter POST returns 403 when the operator is not related to the organisation', async () => {
-        const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue([])
-
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/exporter/start-new`,
-          headers: operatorHeaders
-        })
-
-        expect(statusCode).toBe(statusCodes.forbidden)
-        expect(getSpy).not.toHaveBeenCalled()
-      })
-
-      test('exporter POST in Welsh locale redirects after seeding', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnExporterApp()])
-        const postSpy = vi
-          .spyOn(apiClient, 'post')
-          .mockResolvedValue(restartedExporterApp())
-
-        const { statusCode } = await server.inject({
-          method: 'POST',
-          url: `/cy${exporterUrl}/start-new`,
-          headers: operatorHeaders
-        })
-
-        expect(statusCode).toBe(statusCodes.redirect)
-        expect(postSpy).toHaveBeenCalledTimes(1)
-      })
-
-      test('renders the seed-error view (500) when the exporter restart seed fails', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnExporterApp()])
-        vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
-
-        const { statusCode, result } = await server.inject({
-          method: 'POST',
-          url: `${exporterUrl}/start-new`,
-          headers: operatorHeaders
-        })
-
-        expect(statusCode).toBe(statusCodes.internalServerError)
-        expect(result).toContain('data-testid="error-message"')
-      })
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="application-header-site-name"')
+      expect(result).toContain('Exporter')
+      expect(result).not.toContain(
+        'data-testid="current-accreditation-site-address"'
+      )
     })
   })
 })

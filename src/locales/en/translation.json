@@ -865,6 +865,69 @@
         "heading": "Interim site added to your application",
         "body": "You can continue with your application."
       }
+    },
+    "contact": {
+      "title": "Contact",
+      "heading": "Contact",
+      "subheading": "For questions about your summary log, registration or accreditation",
+      "regulatorIntro": "If you have questions or feedback, contact your regulator.",
+      "email": "Email",
+      "phone": "Phone",
+      "findCallCharges": "Find information on call charges",
+      "regulators": {
+        "environmentAgency": {
+          "name": "Environment Agency",
+          "email": "packaging@environment-agency.gov.uk",
+          "phone": "03708 506 506"
+        },
+        "naturalResourcesWales": {
+          "name": "Natural Resources Wales",
+          "email": "packaging@naturalresourceswales.gov.uk",
+          "phone": "0300 065 3000"
+        },
+        "sepa": {
+          "name": "Scottish Environment Protection Agency",
+          "email": "producer.responsibility@sepa.org.uk",
+          "phone": "0300 099 6699"
+        },
+        "niea": {
+          "name": "Northern Ireland Environment Agency",
+          "email": "repandexp@daera-ni.gov.uk",
+          "phone": "028 9056 9338"
+        }
+      },
+      "digitalService": {
+        "heading": "For help with this digital service",
+        "intro": "If you are having problems using this service, contact customer services.",
+        "email": "eprcustomerservice@defra.gov.uk",
+        "phone": "0300 060 0002",
+        "hours": "Monday to Friday, 8am to 4:30pm."
+      }
+    },
+    "cookies": {
+      "title": "Cookies",
+      "heading": "Cookies",
+      "intro1": "Cookies are small files saved on your phone, tablet or computer when you visit a website.",
+      "intro2": "We use cookies to make the EPR Register & Enrol service work and to collect information about how you use our service.",
+      "essentialCookies": {
+        "heading": "Essential cookies",
+        "description": "Essential cookies keep your information secure while you use this service. We do not need to ask permission to use them."
+      },
+      "table": {
+        "name": "Name",
+        "purpose": "Purpose",
+        "expires": "Expires",
+        "crumb": {
+          "name": "crumb",
+          "purpose": "This is an anti-forgery token and is used to prevent cross-site request forgery (CSRF) attacks. It prevents others from forging your website links.",
+          "expires": "At end of session"
+        },
+        "session": {
+          "name": "session",
+          "purpose": "Saves your responses and keeps you signed in so you have a better experience.",
+          "expires": "4 hours"
+        }
+      }
     }
   },
   "navigation": {

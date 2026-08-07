@@ -118,10 +118,9 @@ export function buildLandingViewModel(
     // START_NEW_SEGMENT above.
     startNewUrl:
       application.applicationStatus === WITHDRAWN_STATUS
-        ? `${landingUrl(
-            { ...application, year: accreditationYear },
-            isExporter
-          )}${START_NEW_SEGMENT}`
+        ? `${landingUrl({ ...application, year: accreditationYear })}${
+            isExporter ? '/exporter' : ''
+          }${START_NEW_SEGMENT}`
         : null,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
@@ -198,94 +197,8 @@ export const operatorAccreditationController = {
       organisationName,
       siteAddress,
       yearInt,
-      t
-    )
-
-    const notification = request.yar.flash('notification')[0] ?? null
-
-    request.app = request.app ?? {}
-    request.app.applicationHeader = buildApplicationHeaderViewModel(
-      application,
-      t
-    )
-
-    return h.view('operator-accreditation/index', {
-      pageTitle: t('pages.operatorAccreditation.title'),
-      backLink: reExBackLink,
-      backLinkText,
-      notification,
-      ...viewModel
-    })
-  }
-}
-
-export const operatorAccreditationExporterController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const user = getUser(request)
-    const { organisationId, registrationId, materialType, year } =
-      request.params
-    const yearInt = parseInt(year, 10)
-    const userName = user?.name
-    const reExBackLink = '/operator/'
-    const backLinkText = t('pages.operatorAccreditation.reExBackLink')
-
-    const canAccess = await operatorCanAccessOrganisation(
-      user,
-      organisationId,
-      {
-        logger: request.logger
-      }
-    )
-    if (!canAccess) {
-      throw Boom.forbidden('You do not have access to this organisation')
-    }
-
-    const errorView = (message) =>
-      h
-        .view('operator-accreditation/index', {
-          pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
-          heading: t('pages.operatorAccreditation.seedErrorHeading'),
-          userName,
-          backLink: '#',
-          backLinkText,
-          error: message
-        })
-        .code(500)
-
-    const { application, failed } = await resolveLandingApplication({
-      organisationId,
-      registrationId,
-      materialType,
-      yearInt,
-      // See the reprocessor handler above — restarts arrive via POST only.
-      startNewRequested: false,
-      logger: request.server.logger,
-      kind: 'exporter'
-    })
-
-    if (failed) {
-      return errorView(t('pages.operatorAccreditation.seedError'))
-    }
-
-    const organisationName = application.organisationName
-
-    request.yar.set(
-      ACCREDITATION_SESSION_KEYS.accreditationId,
-      application.applicationId
-    )
-    request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
-    request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
-    request.yar.set(ACCREDITATION_SESSION_KEYS.registrationId, registrationId)
-    request.yar.set(ACCREDITATION_SESSION_KEYS.year, yearInt)
-
-    const viewModel = buildLandingViewModel(
-      application,
-      organisationName,
-      null,
-      yearInt,
       t,
-      true
+      application.isExporter
     )
 
     const notification = request.yar.flash('notification')[0] ?? null
@@ -300,7 +213,7 @@ export const operatorAccreditationExporterController = {
       pageTitle: t('pages.operatorAccreditation.title'),
       backLink: reExBackLink,
       backLinkText,
-      isExporter: true,
+      isExporter: application.isExporter,
       notification,
       ...viewModel
     })

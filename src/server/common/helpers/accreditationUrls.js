@@ -11,8 +11,10 @@ export function queryDeclarationUrl(applicationId) {
 // than session, since a query-response journey can outlive the session
 // values set when the landing page was first visited (RA-339, see also
 // fix-01-oj-resubmit-duplicate-document.md).
-export function landingUrl(application, isExporter) {
+//
+// There is a single route for both reprocessor and exporter journeys —
+// isExporter is a property of the application record, not the URL (RA-374).
+export function landingUrl(application) {
   const { organisationId, registrationId, materialType, year } = application
-  const base = `/operator-accreditation/${organisationId}/${registrationId}/${materialType}/${year}`
-  return isExporter ? `${base}/exporter` : base
+  return `/operator-accreditation/${organisationId}/${registrationId}/${materialType}/${year}`
 }

@@ -94,7 +94,7 @@ export const queryDeclarationGetController = {
     }
 
     if (application.applicationStatus !== 'Queried') {
-      return h.redirect(landingUrl(application, application.isExporter))
+      return h.redirect(landingUrl(application))
     }
 
     return renderPage(
@@ -137,7 +137,7 @@ export const queryDeclarationPostController = {
     }
 
     if (application.applicationStatus !== 'Queried') {
-      return h.redirect(landingUrl(application, application.isExporter))
+      return h.redirect(landingUrl(application))
     }
 
     const errors = validateQueryDeclaration(fullName, email, role, t)
@@ -221,6 +221,6 @@ export const queryDeclarationPostController = {
       t('pages.queryDeclaration.successMessage')
     )
 
-    return h.redirect(landingUrl(application, application.isExporter))
+    return h.redirect(landingUrl(application))
   }
 }
