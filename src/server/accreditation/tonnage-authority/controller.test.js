@@ -50,18 +50,17 @@ describe('#buildHeading', () => {
 
 describe('#buildAuthoriserRows', () => {
   test('returns empty array when authorisers is null', () => {
-    expect(buildAuthoriserRows(null, t)).toEqual([])
+    expect(buildAuthoriserRows(null)).toEqual([])
   })
 
   test('returns empty array when authorisers is empty', () => {
-    expect(buildAuthoriserRows([], t)).toEqual([])
+    expect(buildAuthoriserRows([])).toEqual([])
   })
 
   test('maps authorisers to rows with checked=true', () => {
-    const rows = buildAuthoriserRows(
-      [{ fullName: 'Jane Smith', email: 'jane@example.com' }],
-      t
-    )
+    const rows = buildAuthoriserRows([
+      { fullName: 'Jane Smith', email: 'jane@example.com' }
+    ])
     expect(rows).toHaveLength(1)
     expect(rows[0].fullName).toBe('Jane Smith')
     expect(rows[0].email).toBe('jane@example.com')
@@ -69,13 +68,10 @@ describe('#buildAuthoriserRows', () => {
   })
 
   test('maps multiple authorisers with sequential indices', () => {
-    const rows = buildAuthoriserRows(
-      [
-        { fullName: 'Alice', email: 'alice@example.com' },
-        { fullName: 'Bob', email: 'bob@example.com' }
-      ],
-      t
-    )
+    const rows = buildAuthoriserRows([
+      { fullName: 'Alice', email: 'alice@example.com' },
+      { fullName: 'Bob', email: 'bob@example.com' }
+    ])
     expect(rows).toHaveLength(2)
     expect(rows[0].index).toBe(0)
     expect(rows[1].index).toBe(1)
@@ -84,17 +80,14 @@ describe('#buildAuthoriserRows', () => {
   // RA-290 AC01: existing (seeded) authorisers default opted-in, and per
   // clarification newly added authorisers (flagged by AC03) do too.
   test('defaults both existing and newly-added authorisers to checked=true', () => {
-    const rows = buildAuthoriserRows(
-      [
-        { fullName: 'Alice', email: 'alice@example.com' },
-        {
-          fullName: 'Bob',
-          email: 'bob@example.com',
-          addedForAuthorityToIssue: true
-        }
-      ],
-      t
-    )
+    const rows = buildAuthoriserRows([
+      { fullName: 'Alice', email: 'alice@example.com' },
+      {
+        fullName: 'Bob',
+        email: 'bob@example.com',
+        addedForAuthorityToIssue: true
+      }
+    ])
     expect(rows.every((r) => r.checked === true)).toBe(true)
   })
 })
