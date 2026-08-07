@@ -15,7 +15,7 @@ export function buildHeading(isExporter, t) {
     : t('pages.tonnageAuthority.headingPrefix')
 }
 
-export function buildAuthoriserRows(authorisers, t) {
+export function buildAuthoriserRows(authorisers) {
   return (authorisers ?? []).map((a, i) => ({
     index: i,
     fullName: a.fullName,
@@ -47,7 +47,7 @@ function buildViewData(application, t, applicationId, opts = {}) {
       ? t('pages.tonnageAuthority.titleExporter')
       : t('pages.tonnageAuthority.title'),
     heading: buildHeading(isExporter, t),
-    authoriserRows: buildAuthoriserRows(application.prns?.authorisers, t),
+    authoriserRows: buildAuthoriserRows(application.prns?.authorisers),
     backLink: tonnageUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     isExporter,
@@ -97,6 +97,10 @@ export const tonnageAuthorityGetController = {
       application.prns?.sectionStatus !== 'Queried'
     ) {
       return h.redirect(queryTaskListUrl(applicationId))
+    }
+
+    if (!application.prns?.plannedTonnageBand) {
+      return h.redirect(tonnageUrl(applicationId))
     }
 
     const isExporter = application.isExporter ?? false
@@ -162,6 +166,10 @@ export const tonnageAuthorityPostController = {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
+    if (!application.prns?.plannedTonnageBand) {
+      return h.redirect(tonnageUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
     const heading = buildHeading(isExporter, t)
     const intro = isExporter
@@ -195,7 +203,7 @@ export const tonnageAuthorityPostController = {
             ? t('pages.tonnageAuthority.titleExporter')
             : t('pages.tonnageAuthority.title'),
           heading,
-          authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
+          authoriserRows: buildAuthoriserRows(currentAuthorisers),
           backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
           isExporter,
@@ -224,7 +232,7 @@ export const tonnageAuthorityPostController = {
             ? t('pages.tonnageAuthority.titleExporter')
             : t('pages.tonnageAuthority.title'),
           heading,
-          authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
+          authoriserRows: buildAuthoriserRows(currentAuthorisers),
           backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
           isExporter,
@@ -239,7 +247,11 @@ export const tonnageAuthorityPostController = {
 
       const updatedAuthorisers = [
         ...currentAuthorisers,
-        { fullName: newFullName.trim(), email: trimmedEmail }
+        {
+          fullName: newFullName.trim(),
+          email: trimmedEmail,
+          addedForAuthorityToIssue: true
+        }
       ]
       try {
         await accreditationApiService.patchTonnage(
@@ -256,7 +268,7 @@ export const tonnageAuthorityPostController = {
             ? t('pages.tonnageAuthority.titleExporter')
             : t('pages.tonnageAuthority.title'),
           heading,
-          authoriserRows: buildAuthoriserRows(currentAuthorisers, t),
+          authoriserRows: buildAuthoriserRows(currentAuthorisers),
           backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
           isExporter,
@@ -283,7 +295,7 @@ export const tonnageAuthorityPostController = {
           ? t('pages.tonnageAuthority.titleExporter')
           : t('pages.tonnageAuthority.title'),
         heading,
-        authoriserRows: buildAuthoriserRows(currentAuthorisers, t).map((r) => ({
+        authoriserRows: buildAuthoriserRows(currentAuthorisers).map((r) => ({
           ...r,
           checked: checkedEmails.includes(r.email)
         })),
@@ -321,7 +333,7 @@ export const tonnageAuthorityPostController = {
           ? t('pages.tonnageAuthority.titleExporter')
           : t('pages.tonnageAuthority.title'),
         heading,
-        authoriserRows: buildAuthoriserRows(currentAuthorisers, t).map((r) => ({
+        authoriserRows: buildAuthoriserRows(currentAuthorisers).map((r) => ({
           ...r,
           checked: checkedEmails.includes(r.email)
         })),

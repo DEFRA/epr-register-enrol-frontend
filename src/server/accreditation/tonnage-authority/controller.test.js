@@ -50,18 +50,17 @@ describe('#buildHeading', () => {
 
 describe('#buildAuthoriserRows', () => {
   test('returns empty array when authorisers is null', () => {
-    expect(buildAuthoriserRows(null, t)).toEqual([])
+    expect(buildAuthoriserRows(null)).toEqual([])
   })
 
   test('returns empty array when authorisers is empty', () => {
-    expect(buildAuthoriserRows([], t)).toEqual([])
+    expect(buildAuthoriserRows([])).toEqual([])
   })
 
   test('maps authorisers to rows with checked=true', () => {
-    const rows = buildAuthoriserRows(
-      [{ fullName: 'Jane Smith', email: 'jane@example.com' }],
-      t
-    )
+    const rows = buildAuthoriserRows([
+      { fullName: 'Jane Smith', email: 'jane@example.com' }
+    ])
     expect(rows).toHaveLength(1)
     expect(rows[0].fullName).toBe('Jane Smith')
     expect(rows[0].email).toBe('jane@example.com')
@@ -69,16 +68,27 @@ describe('#buildAuthoriserRows', () => {
   })
 
   test('maps multiple authorisers with sequential indices', () => {
-    const rows = buildAuthoriserRows(
-      [
-        { fullName: 'Alice', email: 'alice@example.com' },
-        { fullName: 'Bob', email: 'bob@example.com' }
-      ],
-      t
-    )
+    const rows = buildAuthoriserRows([
+      { fullName: 'Alice', email: 'alice@example.com' },
+      { fullName: 'Bob', email: 'bob@example.com' }
+    ])
     expect(rows).toHaveLength(2)
     expect(rows[0].index).toBe(0)
     expect(rows[1].index).toBe(1)
+  })
+
+  // RA-290 AC01: existing (seeded) authorisers default opted-in, and per
+  // clarification newly added authorisers (flagged by AC03) do too.
+  test('defaults both existing and newly-added authorisers to checked=true', () => {
+    const rows = buildAuthoriserRows([
+      { fullName: 'Alice', email: 'alice@example.com' },
+      {
+        fullName: 'Bob',
+        email: 'bob@example.com',
+        addedForAuthorityToIssue: true
+      }
+    ])
+    expect(rows.every((r) => r.checked === true)).toBe(true)
   })
 })
 
@@ -160,10 +170,39 @@ describe('#tonnageAuthorityController', () => {
       expect(result).toContain('jane@example.com')
     })
 
+    test('pre-checks a newly-added authoriser as well as existing ones', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' },
+              {
+                fullName: 'Bob',
+                email: 'bob@example.com',
+                addedForAuthorityToIssue: true
+              }
+            ],
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toMatch(/value="jane@example\.com"[\s\S]*?checked/)
+      expect(result).toMatch(/value="bob@example\.com"[\s\S]*?checked/)
+    })
+
     test('pre-checks saved authorisers', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -179,6 +218,27 @@ describe('#tonnageAuthorityController', () => {
       })
 
       expect(result).toMatch(/value="jane@example\.com"[\s\S]*?checked/)
+    })
+
+    test('redirects to tonnage page when tonnage has not been completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: undefined,
+            authorisers: [],
+            sectionStatus: 'NotStarted'
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(`/accreditation/tonnage/${APPLICATION_ID}`)
     })
 
     test('returns 500 when API fetch fails', async () => {
@@ -332,11 +392,46 @@ describe('#tonnageAuthorityController', () => {
           authorisers: expect.arrayContaining([
             expect.objectContaining({
               fullName: 'Jane Smith',
-              email: 'jane@example.com'
+              email: 'jane@example.com',
+              addedForAuthorityToIssue: true
             })
           ])
         })
       )
+    })
+
+    test('does not flag existing authorisers as newly added', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [{ fullName: 'Alice', email: 'alice@example.com' }],
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          newFullName: 'Bob',
+          newEmail: 'bob@example.com'
+        }
+      })
+
+      const patchBody = patchSpy.mock.calls[0][1]
+      const existing = patchBody.authorisers.find(
+        (a) => a.email === 'alice@example.com'
+      )
+      const added = patchBody.authorisers.find(
+        (a) => a.email === 'bob@example.com'
+      )
+      expect(existing.addedForAuthorityToIssue).toBeUndefined()
+      expect(added.addedForAuthorityToIssue).toBe(true)
     })
 
     test('returns 400 with error when full name is missing', async () => {
@@ -397,6 +492,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -443,6 +539,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [{ fullName: 'Alice', email: 'alice@example.com' }],
             sectionStatus: 'InProgress'
           }
@@ -467,10 +564,40 @@ describe('#tonnageAuthorityController', () => {
   })
 
   describe('POST /accreditation/tonnage-authority/{applicationId} - saveAndContinue', () => {
+    test('redirects to tonnage page without patching when tonnage has not been completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: undefined,
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' }
+            ],
+            sectionStatus: 'NotStarted'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch')
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(`/accreditation/tonnage/${APPLICATION_ID}`)
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('returns 400 error when no checkboxes selected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -494,6 +621,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' },
               { fullName: 'Bob', email: 'bob@example.com' }
@@ -578,6 +706,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],

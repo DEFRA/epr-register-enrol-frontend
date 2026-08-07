@@ -1,0 +1,95 @@
+{#
+  Shared payment-details block: amount-due description, bank-transfer
+  instructions and bank details summary list. Used by both
+  view-payment-details/index.njk and submit-confirmation/index.njk so the
+  two pages can't drift on this markup.
+
+  Params:
+    paymentDetails  (object, required to render) - see
+                    common/helpers/paymentDetails.js for shape
+    paymentReference (string) - reference shown in the bank details list
+    t               (function, required) - translator
+#}
+{% macro paymentDetailsSummary(params) %}
+  {% if params.paymentDetails %}
+    {% set paymentDetails = params.paymentDetails %}
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+    <h2 class="govuk-heading-m" data-testid="amount-due">
+      {{ params.t('pages.viewPaymentDetails.amountDue') }}: {{ paymentDetails.amount | formatCurrency }}
+    </h2>
+    <h3 class="govuk-heading-s" data-testid="description-heading">
+      {{ params.t('pages.viewPaymentDetails.description') }}
+    </h3>
+    <p>
+    {{ params.t('pages.viewPaymentDetails.descriptionTonnageLine').replace('{amount}', paymentDetails.amountTonnageDue | formatCurrency).replace('{tonnage}', paymentDetails.tonnageDisplay).replace('{material}', paymentDetails.materialName) }}
+    {% if paymentDetails.numberOfORSs > 0 %}
+      <br/>
+      {{ params.t('pages.viewPaymentDetails.descriptionOrsLine').replace('{amount}', paymentDetails.amountOrsDue | formatCurrency).replace('{count}', paymentDetails.numberOfORSs) }}
+    {% endif %}
+    </p>
+
+    <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+    <h2 class="govuk-heading-m" data-testid="bank-transfer-heading">
+      {{ params.t('pages.viewPaymentDetails.payByBankTransfer') }}
+    </h2>
+
+    <p class="govuk-body">{{ params.t('pages.viewPaymentDetails.bankTransferInstruction') }}</p>
+
+    <p class="govuk-body" data-testid="how-long-payments-take">
+      {{ params.t('pages.viewPaymentDetails.howLongDoPaymentsTakeBody') }}
+    </p>
+
+    <h3 class="govuk-heading-s" data-testid="bank-details-heading">
+      {{ params.t('pages.viewPaymentDetails.bankDetailsHeading') }}
+    </h3>
+
+    <dl class="govuk-summary-list" data-testid="bank-details-list">
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.amount') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-amount">{{ paymentDetails.amount | formatCurrency }}</dd>
+      </div>
+      {% if paymentDetails.sortCode %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.sortCode') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-sort-code">{{ paymentDetails.sortCode }}</dd>
+      </div>
+      {% endif %}
+      {% if paymentDetails.accountNumber %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.accountNumber') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-account-number">{{ paymentDetails.accountNumber }}</dd>
+      </div>
+      {% endif %}
+      {% if paymentDetails.accountName %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.accountName') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-account-name">{{ paymentDetails.accountName }}</dd>
+      </div>
+      {% endif %}
+      {% if paymentDetails.companyName %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.companyName') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-company-name">{{ paymentDetails.companyName }}</dd>
+      </div>
+      {% endif %}
+      {% if paymentDetails.bank %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.bank') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-name">{{ paymentDetails.bank }}</dd>
+      </div>
+      {% endif %}
+      {% if paymentDetails.companyAddress %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.companyAddress') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-company-address">{{ paymentDetails.companyAddress }}</dd>
+      </div>
+      {% endif %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ params.t('pages.viewPaymentDetails.paymentReference') }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="bank-payment-reference">{{ params.paymentReference }}</dd>
+      </div>
+    </dl>
+  {% endif %}
+{% endmacro %}

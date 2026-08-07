@@ -129,16 +129,53 @@ describe('#validateDetailFields', () => {
 })
 
 describe('#buildTextareaInputs', () => {
-  test('returns one textarea per detail field', () => {
+  test('falls back to showing every field when application is not provided', () => {
     const inputs = buildTextareaInputs({}, {}, t)
     expect(inputs).toHaveLength(DETAIL_FIELDS.length)
+  })
+
+  test('preserves submitted payload values when application is not provided', () => {
+    const inputs = buildTextareaInputs(
+      { newInfrastructureDetail: 'a'.repeat(501) },
+      {
+        newInfrastructureDetail: {
+          text: 'newInfrastructureDetail must be 500 characters or fewer'
+        }
+      },
+      t
+    )
+    const field = inputs.find((i) => i.id === 'newInfrastructureDetail')
+    expect(field.value).toBe('a'.repeat(501))
+    expect(field.errorMessage.text).toContain('500 characters')
+  })
+
+  test('returns a textarea for every field when all percentages are set', () => {
+    const inputs = buildTextareaInputs({}, {}, t, makeApplication())
+    expect(inputs).toHaveLength(DETAIL_FIELDS.length)
+  })
+
+  test('hides fields whose percentage is 0 or not set', () => {
+    const application = makeApplication({
+      businessPlan: {
+        newInfrastructurePercent: 20,
+        priceSupportPercent: 0,
+        businessCollectionsPercent: 20,
+        communicationsPercent: 20,
+        newMarketsPercent: 20,
+        newUsesPercent: 20
+      }
+    })
+    const inputs = buildTextareaInputs({}, {}, t, application)
+    expect(inputs.map((i) => i.id)).not.toContain('priceSupportDetail')
+    expect(inputs).toHaveLength(5)
   })
 
   test('sets value from payload', () => {
     const inputs = buildTextareaInputs(
       { newInfrastructureDetail: 'some detail' },
       {},
-      t
+      t,
+      makeApplication()
     )
     const field = inputs.find((i) => i.id === 'newInfrastructureDetail')
     expect(field.value).toBe('some detail')
@@ -148,23 +185,18 @@ describe('#buildTextareaInputs', () => {
     const errors = {
       communicationsDetail: { text: 'too long error' }
     }
-    const inputs = buildTextareaInputs({}, errors, t)
+    const inputs = buildTextareaInputs({}, errors, t, makeApplication())
     const field = inputs.find((i) => i.id === 'communicationsDetail')
     expect(field.errorMessage).toEqual({ text: 'too long error' })
   })
 
   test('errorMessage is undefined when no error for field', () => {
-    const inputs = buildTextareaInputs({}, {}, t)
+    const inputs = buildTextareaInputs({}, {}, t, makeApplication())
     inputs.forEach((i) => expect(i.errorMessage).toBeUndefined())
   })
 
-  test('label includes (optional) suffix', () => {
-    const inputs = buildTextareaInputs({}, {}, t)
-    inputs.forEach((i) => expect(i.label).toContain('(optional)'))
-  })
-
   test('maxlength is 500', () => {
-    const inputs = buildTextareaInputs({}, {}, t)
+    const inputs = buildTextareaInputs({}, {}, t, makeApplication())
     inputs.forEach((i) => expect(i.maxlength).toBe(500))
   })
 })
@@ -224,6 +256,30 @@ describe('#businessPlanDetailController', () => {
       })
     })
 
+    test('hides the textarea for a category with no percentage entered', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          businessPlan: {
+            newInfrastructurePercent: 20,
+            priceSupportPercent: 0,
+            businessCollectionsPercent: 20,
+            communicationsPercent: 20,
+            newMarketsPercent: 20,
+            newUsesPercent: 20
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="textarea-priceSupportDetail"')
+      expect(result).toContain('data-testid="textarea-newInfrastructureDetail"')
+    })
+
     test('pre-populates textarea with existing detail values', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -261,6 +317,9 @@ describe('#businessPlanDetailController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+      DETAIL_FIELDS.forEach((field) => {
+        expect(result).toContain(`data-testid="textarea-${field}"`)
+      })
     })
 
     test('shows PRN wording for a non-exporter application', async () => {
@@ -502,6 +561,29 @@ describe('#businessPlanDetailController', () => {
         `/accreditation/task-list/${APPLICATION_ID}`
       )
       expect(patchSpy).toHaveBeenCalledOnce()
+    })
+
+    test('re-renders the textarea with its value when it exceeds 500 chars', async () => {
+      const overLength = 'a'.repeat(501)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: overLength,
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndComeLater'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="textarea-newInfrastructureDetail"')
+      expect(result).toContain(overLength)
     })
   })
 })

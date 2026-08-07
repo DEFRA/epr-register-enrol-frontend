@@ -234,7 +234,6 @@
       "heading": "Add more details about how you'll spend the PRN income",
       "headingExporter": "Add more details about how you'll spend the PERN income",
       "intro": "This is optional, but the details will help the regulator to better understand your plans.",
-      "optional": "(optional)",
       "characterCountHint": "You can enter up to 500 characters",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
@@ -286,6 +285,9 @@
         "fileTypes": "one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
       "uploadedFilesHeading": "Uploaded files",
+      "resultsTitle": "Uploaded files",
+      "viewUploadedFiles": "View uploaded files ({count})",
+      "uploadAnotherFile": "Upload another file",
       "fileLabel": "Choose a file to upload",
       "uploadButton": "Upload file",
       "deleteFile": "Remove",
@@ -295,13 +297,7 @@
         "filename": "Filename",
         "dateUploaded": "Upload date",
         "uploadedBy": "Uploaded by",
-        "status": "Status",
         "action": ""
-      },
-      "scanStatus": {
-        "scanning": "Scanning",
-        "clean": "Clean",
-        "infected": "Infected"
       },
       "status": {
         "title": "Uploading file",
@@ -348,7 +344,6 @@
       "panelBodyPrefix": "Application reference for",
       "caseReferenceLabel": "Your case reference is",
       "paymentText": "The regulator will only review your application after you've paid.",
-      "viewPaymentDetails": "View payment details",
       "returnHome": "Return to home page"
     },
     "viewPaymentDetails": {
@@ -363,9 +358,10 @@
       "paymentInstructionSuffix": "You'll receive a notification once payment has been received and the application is in review.",
       "amountDue": "Amount due",
       "description": "Description",
+      "descriptionTonnageLine": "{amount} for {tonnage} accreditation for {material}",
+      "descriptionOrsLine": "{amount} for {count} Overseas Sites",
       "payByBankTransfer": "Pay by bank transfer",
       "bankTransferInstruction": "You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
-      "howLongDoPaymentsTake": "How long do payments take?",
       "howLongDoPaymentsTakeBody": "Bank transfers can take 3 to 5 working days to be received.",
       "bankDetailsHeading": "Regulator bank details",
       "amount": "Amount",
@@ -719,10 +715,10 @@
         "cancelLink": "Cancel"
       },
       "baselAndOecdCodes": {
-        "title": "Basel Convention and OECD code — Add overseas reprocessing site",
-        "heading": "What are the Basel Convention and OECD codes for the waste?",
+        "title": "Basel Convention code — Add overseas reprocessing site",
+        "heading": "What are the Basel Convention codes for the waste?",
         "codeLabel": "Code",
-        "hint": "Basel codes start with one letter followed by 4 digits, for example A1181. OECD codes start with two letters followed by 3 digits, for example GC010.",
+        "hint": "Basel codes start with one letter followed by 4 digits, for example A1181.",
         "guidanceLinkText": "Check the Consolidated waste list for the correct code",
         "addCodeButton": "Add another code",
         "removeCodeButton": "Remove",
@@ -774,7 +770,7 @@
           "contactEmail": "Contact email",
           "contactPhone": "Contact phone number",
           "recyclingOperation": "Recycling operation",
-          "baselCodes": "Basel Convention and OECD codes",
+          "baselCodes": "Basel Convention codes",
           "repatriatedLoads": "Arrangements for rejected or returned loads",
           "conditionsOfExport": "Conditions of export"
         },

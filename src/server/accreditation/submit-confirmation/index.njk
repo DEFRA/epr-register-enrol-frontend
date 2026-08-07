@@ -28,9 +28,11 @@
         </div>
       </div>
 
-      <p class="govuk-body">
-        <a href="/accreditation/view-payment-details/{{ applicationId }}" class="govuk-link" data-testid="view-payment-details-link">{{ viewInvoice }}</a>
-      </p>
+      {{ paymentDetailsSummary({
+        paymentDetails: paymentDetails,
+        paymentReference: paymentReference,
+        t: t
+      }) }}
 
       <p class="govuk-body">
         <a href="/" class="govuk-link" data-testid="return-home-link">{{ returnHome }}</a>
