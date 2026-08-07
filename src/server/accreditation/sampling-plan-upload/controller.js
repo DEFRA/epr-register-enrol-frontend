@@ -489,7 +489,7 @@ export const samplingPlanCdpStatusController = {
     }
 
     const scanStatus =
-      uploadStatus.processingStatus === 'validated' ? 'Clean' : 'Infected'
+      fileInput?.fileStatus === 'complete' ? 'Clean' : 'Infected'
 
     try {
       await accreditationApiService.addFile(

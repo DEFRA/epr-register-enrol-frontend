@@ -683,7 +683,6 @@ describe('#samplingPlanUploadController', () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
-        processingStatus: 'validated',
         form: {
           file: {
             filename: 'plan.pdf',
@@ -715,7 +714,6 @@ describe('#samplingPlanUploadController', () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
-        processingStatus: 'rejected',
         form: {
           file: {
             filename: 'virus.pdf',
@@ -810,9 +808,13 @@ describe('#samplingPlanUploadController', () => {
 
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
-        processingStatus: 'validated',
         form: {
-          file: { filename, contentType: 'application/pdf', fileId }
+          file: {
+            filename,
+            contentType: 'application/pdf',
+            fileId,
+            fileStatus: 'complete'
+          }
         }
       })
       const addFileSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
