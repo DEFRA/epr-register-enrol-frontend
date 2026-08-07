@@ -397,6 +397,100 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
     expect(vm.notificationFailedBanner).toBe(false)
   })
+
+  // RA-357: restarting after a withdrawal creates a new application for the
+  // SAME accreditation year. This used to link to accreditationYear + 1, which
+  // made the landing controller seed against a prior year that has no approved
+  // accreditation, so the seed always 404'd and the operator was stuck.
+  test('startNewUrl targets the same accreditation year for a withdrawn application', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        year: 2027
+      }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.startNewUrl).toBe(
+      `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2027/start-new`
+    )
+    expect(vm.startNewUrl).not.toContain('2028')
+  })
+
+  test('startNewUrl points at the exporter landing route when isExporter', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        year: 2027
+      }),
+      'Org Name',
+      null,
+      2027,
+      t,
+      true
+    )
+
+    expect(vm.startNewUrl).toBe(
+      `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2027/exporter/start-new`
+    )
+  })
+
+  test('startNewUrl uses the accreditation year even when the record carries a different year', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        year: 1999
+      }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.startNewUrl).toContain('/2027/start-new')
+  })
+
+  test.each([
+    'Saved',
+    'Started',
+    'NotStarted',
+    'InProgress',
+    'Submitted',
+    'DulyMade',
+    'Queried',
+    'Updated',
+    'Approved',
+    'Rejected'
+  ])('startNewUrl is null when application status is %s', (status) => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: status, organisationId: ORG_ID }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.startNewUrl).toBeNull()
+  })
+
+  test('a withdrawn application offers neither a continue nor a withdraw action', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'Withdrawn', organisationId: ORG_ID }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.showContinueLink).toBe(false)
+    expect(vm.canWithdraw).toBe(false)
+  })
 })
 
 describe('#operatorAccreditationController', () => {
@@ -999,6 +1093,253 @@ describe('#operatorAccreditationController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('[Welsh]')
+  })
+
+  // RA-357: an operator who withdraws a reapplication must be able to start a
+  // fresh one for the SAME accreditation year, with the withdrawn record kept
+  // untouched for audit.
+  describe('restarting after a withdrawal', () => {
+    const withdrawnApp = (overrides = {}) =>
+      makeApp({
+        applicationId: 'app-withdrawn',
+        applicationStatus: 'Withdrawn',
+        organisationId: ORG_ID,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        ...overrides
+      })
+
+    const restartedApp = (overrides = {}) =>
+      makeApp({
+        applicationId: 'app-restarted',
+        applicationStatus: 'Saved',
+        organisationId: ORG_ID,
+        createdAt: '2026-02-01T00:00:00.000Z',
+        ...overrides
+      })
+
+    test('withdrawn application links to start a new application for the SAME year', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="start-new-link"')
+      expect(result).toContain(
+        `action="/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/start-new"`
+      )
+      expect(result).not.toContain(`${MATERIAL}/${YEAR + 1}`)
+      // Simply viewing a withdrawn application must not create a replacement.
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('withdrawn application still renders as WITHDRAWN with no continue or withdraw action', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('WITHDRAWN')
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="withdraw-link"')
+    })
+
+    test('renders the live application, not the withdrawn one, when the year holds both', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        withdrawnApp(),
+        restartedApp()
+      ])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="continue-button"')
+      expect(result).toContain('/accreditation/task-list/app-restarted')
+      expect(result).not.toContain('/accreditation/task-list/app-withdrawn')
+      expect(result).not.toContain('data-testid="start-new-link"')
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('the restart control is a crumb-carrying POST form, not a link', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="start-new-form"')
+      expect(result).toContain('method="post"')
+      expect(result).toContain('name="crumb"')
+      // The mutation must never be reachable as an anchor — that is what made
+      // it CSRF-able and replayable from history.
+      expect(result).not.toContain(
+        `<a href="/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/start-new"`
+      )
+    })
+
+    // The GET is now purely an idempotent lazy seed: it must never restart,
+    // however it is reached (back button, bookmark, restored tab, prefetch).
+    test('GET on the start-new path is not routable', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `${baseUrl}/start-new`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('POST seeds for the SAME year then redirects to the clean landing URL', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(restartedApp())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `${baseUrl}/start-new`,
+        headers: operatorHeaders
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        `/api/v1/accreditation-applications/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/seed`,
+        { year: YEAR }
+      )
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(baseUrl)
+      expect(headers.location).not.toContain('start-new')
+    })
+
+    test('the redirect target then renders the newly seeded application', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        withdrawnApp(),
+        restartedApp()
+      ])
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="continue-button"')
+      expect(result).toContain('/accreditation/task-list/app-restarted')
+      expect(result).not.toContain('data-testid="start-new-link"')
+    })
+
+    test('POST does not seed when a live application already exists', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        withdrawnApp(),
+        restartedApp()
+      ])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `${baseUrl}/start-new`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('POST returns 403 when the operator is not related to the organisation', async () => {
+      const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/start-new`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(getSpy).not.toHaveBeenCalled()
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('POST returns 500 when listApplications throws', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${baseUrl}/start-new`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-message"')
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('POST in Welsh locale redirects after seeding', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(restartedApp())
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/cy${baseUrl}/start-new`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(postSpy).toHaveBeenCalledTimes(1)
+    })
+
+    test('renders the seed-error view (500) when the restart seed fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${baseUrl}/start-new`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-message"')
+      expect(result).toContain('We were unable to start your application')
+    })
+
+    test('a live application never offers the start-new link', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue([
+        makeApp({ applicationStatus: 'Submitted', organisationId: ORG_ID })
+      ])
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: baseUrl,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="start-new-link"')
+    })
   })
 
   const makeExporterApp = (overrides = {}) => ({

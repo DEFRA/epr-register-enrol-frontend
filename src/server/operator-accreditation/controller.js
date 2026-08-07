@@ -3,7 +3,6 @@ import Boom from '@hapi/boom'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
-import { accreditationApiService } from '../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
 import {
   queryTaskListUrl,
@@ -11,6 +10,17 @@ import {
 } from '../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
+import {
+  WITHDRAWN_STATUS,
+  NON_WITHDRAWABLE_STATUSES,
+  resolveLandingApplication
+} from '../common/helpers/accreditationSelection.js'
+
+// RA-357: restarting after a withdrawal is a mutation, so it is a POST to
+// /start-new carrying a crumb token — never a flag on this GET. A GET would be
+// both CSRF-able (no token) and replayable from history, bookmarks or prefetch,
+// silently creating an application every time it was re-visited.
+const START_NEW_SEGMENT = '/start-new'
 
 const STATUS_CONFIG = {
   Saved: { tagClass: 'govuk-tag--grey' },
@@ -25,23 +35,6 @@ const STATUS_CONFIG = {
   Rejected: { tagClass: 'govuk-tag--red' },
   Withdrawn: { tagClass: 'govuk-tag--grey' }
 }
-
-// An application can only be withdrawn before a final regulator decision —
-// shared with withdraw-application/controller.js so the two routes can never
-// disagree about which statuses are withdrawable.
-export const NON_WITHDRAWABLE_STATUSES = new Set([
-  //Not submitted tso can't be withdrawn
-  'Saved',
-  'Started',
-  'NotStarted',
-  // Final decisions made can't be withdrawn
-  'Approved',
-  'Refused',
-  'Cancelled',
-  'Rejected',
-  // Withdrawn is a final state, so can't be withdrawn again
-  'Withdrawn'
-])
 
 // The reapply prompt only makes sense while an application is still live —
 // once it's been decided (approved/refused) or dropped (withdrawn/cancelled)
@@ -114,9 +107,15 @@ export function buildLandingViewModel(
       application.applicationStatus === 'Queried'
         ? queryTaskListUrl(application.applicationId)
         : `/accreditation/task-list/${application.applicationId}`,
-    showContinueLink: application.applicationStatus !== 'Withdrawn',
+    showContinueLink: application.applicationStatus !== WITHDRAWN_STATUS,
     canWithdraw: !NON_WITHDRAWABLE_STATUSES.has(application.applicationStatus),
     withdrawUrl: `/accreditation/withdraw-application/${application.applicationId}`,
+    // RA-357: starting again after a withdrawal creates a new application for
+    // the SAME accreditation year — the withdrawn record is kept untouched for
+    // audit. This used to link to accreditationYear + 1, which seeded against a
+    // prior year that has no approved accreditation and always failed.
+    // This is the action of a POST form, not an anchor href — see
+    // START_NEW_SEGMENT above.
     startNewUrl:
       application.applicationStatus === 'Withdrawn'
         ? landingUrl({ ...application, year: accreditationYear + 1 })
@@ -164,38 +163,19 @@ export const operatorAccreditationController = {
         })
         .code(500)
 
-    let applications
-    try {
-      applications =
-        await accreditationApiService.listApplications(organisationId)
-    } catch (error) {
-      request.server.logger.error(
-        `Error fetching accreditation applications: ${error.message}`
-      )
+    const { application, failed } = await resolveLandingApplication({
+      organisationId,
+      registrationId,
+      materialType,
+      yearInt,
+      // This GET only ever lazily seeds an empty year, which is idempotent. A
+      // restart is never triggered from here — see handleStartNew below.
+      startNewRequested: false,
+      logger: request.server.logger
+    })
+
+    if (failed) {
       return errorView(t('pages.operatorAccreditation.seedError'))
-    }
-
-    let application = applications.find(
-      (app) =>
-        app.registrationId === registrationId &&
-        app.materialType === materialType &&
-        app.year === yearInt
-    )
-
-    if (!application) {
-      try {
-        application = await accreditationApiService.seedApplication(
-          organisationId,
-          registrationId,
-          materialType,
-          yearInt
-        )
-      } catch (error) {
-        request.server.logger.error(
-          `Error seeding accreditation application for org=${organisationId} registration=${registrationId} material=${materialType} year=${yearInt}: ${error.message} status=${error.status} response=${error.response}`
-        )
-        return errorView(t('pages.operatorAccreditation.seedError'))
-      }
     }
 
     const organisationName = application.organisationName
@@ -235,5 +215,73 @@ export const operatorAccreditationController = {
       notification,
       ...viewModel
     })
+  }
+}
+
+// RA-357: restarting after a withdrawal. This is a POST, not a flag on the
+// landing GET, for two reasons:
+//   - CSRF. It creates an application, so it must carry a crumb token. @hapi/crumb
+//     validates POST/PUT/PATCH/DELETE only, so a GET mutation would be the one
+//     unprotected write in the accreditation journey — reachable by a crafted
+//     link, since the session cookie is SameSite=Lax and rides top-level
+//     navigation.
+//   - Replay. Post/redirect/get keeps the mutating URL out of history and
+//     bookmarks. A GET flag would re-fire on every back-button, restored tab or
+//     prefetch that landed on it while only withdrawn records existed.
+// It redirects to the clean landing URL, which then renders the seeded
+// application through the ordinary GET path.
+async function handleStartNew(request, h, { isExporter, kind }) {
+  const { t } = getLocaleAndTranslator(request)
+  const user = getUser(request)
+  const { organisationId, registrationId, materialType, year } = request.params
+  const yearInt = parseInt(year, 10)
+
+  const canAccess = await operatorCanAccessOrganisation(user, organisationId, {
+    logger: request.logger
+  })
+  if (!canAccess) {
+    throw Boom.forbidden('You do not have access to this organisation')
+  }
+
+  const { application, failed } = await resolveLandingApplication({
+    organisationId,
+    registrationId,
+    materialType,
+    yearInt,
+    startNewRequested: true,
+    logger: request.server.logger,
+    kind
+  })
+
+  if (failed) {
+    return h
+      .view('operator-accreditation/index', {
+        pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
+        heading: t('pages.operatorAccreditation.seedErrorHeading'),
+        userName: user?.name,
+        backLink: '#',
+        backLinkText: t('pages.operatorAccreditation.reExBackLink'),
+        error: t('pages.operatorAccreditation.seedError')
+      })
+      .code(500)
+  }
+
+  return h.redirect(
+    landingUrl(
+      { ...application, organisationId, registrationId, year: yearInt },
+      isExporter
+    )
+  )
+}
+
+export const startNewAccreditationController = {
+  handler(request, h) {
+    return handleStartNew(request, h, { isExporter: false, kind: '' })
+  }
+}
+
+export const startNewAccreditationExporterController = {
+  handler(request, h) {
+    return handleStartNew(request, h, { isExporter: true, kind: 'exporter' })
   }
 }

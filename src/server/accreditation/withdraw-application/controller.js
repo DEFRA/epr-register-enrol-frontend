@@ -3,7 +3,7 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
-import { NON_WITHDRAWABLE_STATUSES } from '../../operator-accreditation/controller.js'
+import { NON_WITHDRAWABLE_STATUSES } from '../../common/helpers/accreditationSelection.js'
 
 const MAX_REASON_WORDS = 200
 
