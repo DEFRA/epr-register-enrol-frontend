@@ -387,5 +387,3 @@ licence.
 It is designed to encourage use and re-use of information freely and flexibly, with only a few conditions.
 
 _Re-triggering CI to check for run-to-run flakiness in the E2E journey suite (RA-293 investigation)._
-
-_Re-triggering CI after GitHub Actions incident recovery (RA-290)._
