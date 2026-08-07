@@ -49,14 +49,15 @@ export function validateDetailFields(payload, t, application) {
 }
 
 export function buildTextareaInputs(payload, errors, t, application) {
-  return DETAIL_FIELDS.filter((field) => {
-    if (!application) {
-      return false
-    }
-    const category = DETAIL_FIELD_TO_CATEGORY[field]
-    const item = findBpItem(application.businessPlan, category)
-    return (item.percentSpent ?? 0) > 0
-  }).map((field) => ({
+  const fields = application
+    ? DETAIL_FIELDS.filter((field) => {
+        const category = DETAIL_FIELD_TO_CATEGORY[field]
+        const item = findBpItem(application.businessPlan, category)
+        return (item.percentSpent ?? 0) > 0
+      })
+    : DETAIL_FIELDS
+
+  return fields.map((field) => ({
     id: field,
     name: field,
     value: payload[field] ?? '',

@@ -129,9 +129,24 @@ describe('#validateDetailFields', () => {
 })
 
 describe('#buildTextareaInputs', () => {
-  test('returns no textareas when application is not provided', () => {
+  test('falls back to showing every field when application is not provided', () => {
     const inputs = buildTextareaInputs({}, {}, t)
-    expect(inputs).toHaveLength(0)
+    expect(inputs).toHaveLength(DETAIL_FIELDS.length)
+  })
+
+  test('preserves submitted payload values when application is not provided', () => {
+    const inputs = buildTextareaInputs(
+      { newInfrastructureDetail: 'a'.repeat(501) },
+      {
+        newInfrastructureDetail: {
+          text: 'newInfrastructureDetail must be 500 characters or fewer'
+        }
+      },
+      t
+    )
+    const field = inputs.find((i) => i.id === 'newInfrastructureDetail')
+    expect(field.value).toBe('a'.repeat(501))
+    expect(field.errorMessage.text).toContain('500 characters')
   })
 
   test('returns a textarea for every field when all percentages are set', () => {
@@ -302,6 +317,9 @@ describe('#businessPlanDetailController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+      DETAIL_FIELDS.forEach((field) => {
+        expect(result).toContain(`data-testid="textarea-${field}"`)
+      })
     })
 
     test('shows PRN wording for a non-exporter application', async () => {
@@ -543,6 +561,29 @@ describe('#businessPlanDetailController', () => {
         `/accreditation/task-list/${APPLICATION_ID}`
       )
       expect(patchSpy).toHaveBeenCalledOnce()
+    })
+
+    test('re-renders the textarea with its value when it exceeds 500 chars', async () => {
+      const overLength = 'a'.repeat(501)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: overLength,
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndComeLater'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="textarea-newInfrastructureDetail"')
+      expect(result).toContain(overLength)
     })
   })
 })
