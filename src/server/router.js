@@ -4,6 +4,8 @@ import { config } from '../config/config.js'
 import { stubCompleteUpload } from './common/stub-api-client.js'
 import { home } from './home/index.js'
 import { about } from './about/index.js'
+import { contact } from './contact/index.js'
+import { cookies } from './cookies/index.js'
 import { health } from './health/index.js'
 import { authRoutes } from './auth/index.js'
 import { regulator } from './regulator/index.js'
@@ -92,6 +94,8 @@ export const router = {
       await server.register([
         home,
         about,
+        contact,
+        cookies,
         regulator,
         operator,
         operatorAccreditation,

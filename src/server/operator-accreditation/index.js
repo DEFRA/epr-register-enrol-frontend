@@ -1,6 +1,5 @@
 import {
   operatorAccreditationController,
-  operatorAccreditationExporterController,
   startNewAccreditationController,
   startNewAccreditationExporterController
 } from './controller.js'
@@ -22,18 +21,6 @@ export const operatorAccreditation = {
           path: '/{language}/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}',
           options: requireOperator,
           ...operatorAccreditationController
-        },
-        {
-          method: 'GET',
-          path: '/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter',
-          options: requireOperator,
-          ...operatorAccreditationExporterController
-        },
-        {
-          method: 'GET',
-          path: '/{language}/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}/exporter',
-          options: requireOperator,
-          ...operatorAccreditationExporterController
         },
         // RA-357: restarting after a withdrawal creates an application, so it
         // is a POST carrying a crumb token rather than a flag on the GETs

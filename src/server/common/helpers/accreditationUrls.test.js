@@ -33,14 +33,14 @@ describe('#landingUrl', () => {
   }
 
   test('builds the operator landing URL from the application record', () => {
-    expect(landingUrl(makeApplication(), false)).toBe(
+    expect(landingUrl(makeApplication())).toBe(
       '/operator-accreditation/org-1/reg-1/Steel/2027'
     )
   })
 
-  test('appends /exporter for exporter applications', () => {
-    expect(landingUrl(makeApplication(), true)).toBe(
-      '/operator-accreditation/org-1/reg-1/Steel/2027/exporter'
+  test('is the same URL for exporter applications — isExporter is not part of the route', () => {
+    expect(landingUrl(makeApplication({ isExporter: true }))).toBe(
+      '/operator-accreditation/org-1/reg-1/Steel/2027'
     )
   })
 
@@ -49,7 +49,7 @@ describe('#landingUrl', () => {
       organisationId: 'org-42',
       registrationId: 'reg-42'
     })
-    const url = landingUrl(application, false)
+    const url = landingUrl(application)
     expect(url).not.toContain('undefined')
     expect(url).toBe('/operator-accreditation/org-42/reg-42/Steel/2027')
   })

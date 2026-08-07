@@ -1,0 +1,57 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    text: heading,
+    caption: serviceName
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-body" data-testid="app-page-body">
+        <p class="govuk-body-l">{{ t('pages.contact.subheading') }}</p>
+
+        <p>{{ t('pages.contact.regulatorIntro') }}</p>
+
+        <h2 class="govuk-heading-s">{{ t('pages.contact.regulators.environmentAgency.name') }}</h2>
+        <p>
+          {{ t('pages.contact.email') }}: <a href="mailto:{{ t('pages.contact.regulators.environmentAgency.email') }}" class="govuk-link">{{ t('pages.contact.regulators.environmentAgency.email') }}</a><br>
+          {{ t('pages.contact.phone') }}: {{ t('pages.contact.regulators.environmentAgency.phone') }}
+        </p>
+
+        <h2 class="govuk-heading-s">{{ t('pages.contact.regulators.naturalResourcesWales.name') }}</h2>
+        <p>
+          {{ t('pages.contact.email') }}: <a href="mailto:{{ t('pages.contact.regulators.naturalResourcesWales.email') }}" class="govuk-link">{{ t('pages.contact.regulators.naturalResourcesWales.email') }}</a><br>
+          {{ t('pages.contact.phone') }}: {{ t('pages.contact.regulators.naturalResourcesWales.phone') }}
+        </p>
+
+        <h2 class="govuk-heading-s">{{ t('pages.contact.regulators.sepa.name') }}</h2>
+        <p>
+          {{ t('pages.contact.email') }}: <a href="mailto:{{ t('pages.contact.regulators.sepa.email') }}" class="govuk-link">{{ t('pages.contact.regulators.sepa.email') }}</a><br>
+          {{ t('pages.contact.phone') }}: {{ t('pages.contact.regulators.sepa.phone') }}
+        </p>
+
+        <h2 class="govuk-heading-s">{{ t('pages.contact.regulators.niea.name') }}</h2>
+        <p>
+          {{ t('pages.contact.email') }}: <a href="mailto:{{ t('pages.contact.regulators.niea.email') }}" class="govuk-link">{{ t('pages.contact.regulators.niea.email') }}</a><br>
+          {{ t('pages.contact.phone') }}: {{ t('pages.contact.regulators.niea.phone') }}
+        </p>
+
+        <p>
+          <a href="https://www.gov.uk/call-charges" class="govuk-link">{{ t('pages.contact.findCallCharges') }}</a>
+        </p>
+
+        <h2 class="govuk-heading-s">{{ t('pages.contact.digitalService.heading') }}</h2>
+        <p>{{ t('pages.contact.digitalService.intro') }}</p>
+        <p>
+          {{ t('pages.contact.email') }}: <a href="mailto:{{ t('pages.contact.digitalService.email') }}" class="govuk-link">{{ t('pages.contact.digitalService.email') }}</a><br>
+          {{ t('pages.contact.phone') }}: {{ t('pages.contact.digitalService.phone') }}
+        </p>
+        <p>{{ t('pages.contact.digitalService.hours') }}</p>
+        <p>
+          <a href="https://www.gov.uk/call-charges" class="govuk-link">{{ t('pages.contact.findCallCharges') }}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

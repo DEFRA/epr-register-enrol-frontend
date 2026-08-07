@@ -81,7 +81,7 @@
       "tonnageLabel": "[Welsh] Tonnage",
       "authorisedUsersLabel": "[Welsh] Authorised users",
       "overseasSitesLabel": "[Welsh] Overseas reprocessing sites",
-      "exporterLabel": "[Welsh] Exporter",
+      "exporterLabel": "Allforiwr",
       "withdrawLink": "[Welsh] Withdraw application",
       "statuses": {
         "Saved": "[Welsh] NOT STARTED",
@@ -865,6 +865,69 @@
         "title": "[Welsh] Success",
         "heading": "[Welsh] Interim site added to your application",
         "body": "[Welsh] You can continue with your application."
+      }
+    },
+    "contact": {
+      "title": "[Welsh] Contact",
+      "heading": "[Welsh] Contact",
+      "subheading": "[Welsh] For questions about your summary log, registration or accreditation",
+      "regulatorIntro": "[Welsh] If you have questions or feedback, contact your regulator.",
+      "email": "[Welsh] Email",
+      "phone": "[Welsh] Phone",
+      "findCallCharges": "[Welsh] Find information on call charges",
+      "regulators": {
+        "environmentAgency": {
+          "name": "Environment Agency",
+          "email": "packaging@environment-agency.gov.uk",
+          "phone": "03708 506 506"
+        },
+        "naturalResourcesWales": {
+          "name": "Natural Resources Wales",
+          "email": "packaging@naturalresourceswales.gov.uk",
+          "phone": "0300 065 3000"
+        },
+        "sepa": {
+          "name": "Scottish Environment Protection Agency",
+          "email": "producer.responsibility@sepa.org.uk",
+          "phone": "0300 099 6699"
+        },
+        "niea": {
+          "name": "Northern Ireland Environment Agency",
+          "email": "repandexp@daera-ni.gov.uk",
+          "phone": "028 9056 9338"
+        }
+      },
+      "digitalService": {
+        "heading": "[Welsh] For help with this digital service",
+        "intro": "[Welsh] If you are having problems using this service, contact customer services.",
+        "email": "eprcustomerservice@defra.gov.uk",
+        "phone": "0300 060 0002",
+        "hours": "[Welsh] Monday to Friday, 8am to 4:30pm."
+      }
+    },
+    "cookies": {
+      "title": "[Welsh] Cookies",
+      "heading": "[Welsh] Cookies",
+      "intro1": "[Welsh] Cookies are small files saved on your phone, tablet or computer when you visit a website.",
+      "intro2": "[Welsh] We use cookies to make the EPR Register & Enrol service work and to collect information about how you use our service.",
+      "essentialCookies": {
+        "heading": "[Welsh] Essential cookies",
+        "description": "[Welsh] Essential cookies keep your information secure while you use this service. We do not need to ask permission to use them."
+      },
+      "table": {
+        "name": "[Welsh] Name",
+        "purpose": "[Welsh] Purpose",
+        "expires": "[Welsh] Expires",
+        "crumb": {
+          "name": "crumb",
+          "purpose": "[Welsh] This is an anti-forgery token and is used to prevent cross-site request forgery (CSRF) attacks. It prevents others from forging your website links.",
+          "expires": "[Welsh] At end of session"
+        },
+        "session": {
+          "name": "session",
+          "purpose": "[Welsh] Saves your responses and keeps you signed in so you have a better experience.",
+          "expires": "[Welsh] 4 hours"
+        }
       }
     }
   },
