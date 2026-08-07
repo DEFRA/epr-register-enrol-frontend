@@ -32,17 +32,16 @@
         <li>{{ t('pages.samplingPlanUpload.requirements.fileTypes') }}</li>
       </ul>
 
-      {% if files and files.length > 0 %}
+      {% if viewableFilesCount and viewableFilesCount > 0 %}
         <p class="govuk-body" data-testid="view-uploaded-files">
           <a class="govuk-link" href="{{ resultsLink }}" data-testid="view-uploaded-files-link">
-            {{ t('pages.samplingPlanUpload.viewUploadedFiles').replace('{count}', files.length) }}
+            {{ t('pages.samplingPlanUpload.viewUploadedFiles').replace('{count}', viewableFilesCount) }}
           </a>
         </p>
       {% endif %}
 
       <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">
         <input type="hidden" name="crumb" value="{{ crumb }}">
-        <input type="hidden" name="action" value="uploadFile">
 
         <div class="govuk-form-group{% if fileError %} govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="file">

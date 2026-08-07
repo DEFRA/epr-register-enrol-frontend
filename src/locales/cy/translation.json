@@ -282,6 +282,7 @@
         "fileTypes": "[Welsh] one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
       "uploadedFilesHeading": "[Welsh] Uploaded files",
+      "resultsTitle": "[Welsh] Uploaded files",
       "viewUploadedFiles": "[Welsh] View uploaded files ({count})",
       "uploadAnotherFile": "[Welsh] Upload another file",
       "fileLabel": "[Welsh] Choose a file to upload",
@@ -354,6 +355,8 @@
       "paymentInstructionSuffix": "[Welsh] You\u0027ll receive a notification once payment has been received and the application is in review.",
       "amountDue": "[Welsh] Amount due",
       "description": "[Welsh] Description",
+      "descriptionTonnageLine": "[Welsh] {amount} for {tonnage} accreditation for {material}",
+      "descriptionOrsLine": "[Welsh] {amount} for {count} Overseas Sites",
       "payByBankTransfer": "[Welsh] Pay by bank transfer",
       "bankTransferInstruction": "[Welsh] You need to visit your bank\u0027s website, app or branch and use the regulator\u0027s banking details to pay by bank transfer.",
       "howLongDoPaymentsTakeBody": "[Welsh] Bank transfers can take 3 to 5 working days to be received.",

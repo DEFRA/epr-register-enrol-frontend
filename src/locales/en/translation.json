@@ -285,6 +285,7 @@
         "fileTypes": "one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
       "uploadedFilesHeading": "Uploaded files",
+      "resultsTitle": "Uploaded files",
       "viewUploadedFiles": "View uploaded files ({count})",
       "uploadAnotherFile": "Upload another file",
       "fileLabel": "Choose a file to upload",
@@ -357,6 +358,8 @@
       "paymentInstructionSuffix": "You'll receive a notification once payment has been received and the application is in review.",
       "amountDue": "Amount due",
       "description": "Description",
+      "descriptionTonnageLine": "{amount} for {tonnage} accreditation for {material}",
+      "descriptionOrsLine": "{amount} for {count} Overseas Sites",
       "payByBankTransfer": "Pay by bank transfer",
       "bankTransferInstruction": "You need to visit your bank's website, app or branch and use the regulator's banking details to pay by bank transfer.",
       "howLongDoPaymentsTakeBody": "Bank transfers can take 3 to 5 working days to be received.",

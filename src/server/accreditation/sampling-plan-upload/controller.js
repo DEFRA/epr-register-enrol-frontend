@@ -118,6 +118,9 @@ export const samplingPlanUploadGetController = {
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
+    const viewableFilesCount = buildResultsFiles(
+      application.samplingPlan?.files
+    ).length
     const materialDisplay = t(
       `pages.materialSelection.materials.${application.materialType}`
     )
@@ -132,6 +135,7 @@ export const samplingPlanUploadGetController = {
       backLink: taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files,
+      viewableFilesCount,
       resultsLink: resultsUrl(applicationId),
       queryNote,
       querySummary: queryNote
@@ -182,6 +186,9 @@ export const samplingPlanUploadPostController = {
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
+    const viewableFilesCount = buildResultsFiles(
+      application.samplingPlan?.files
+    ).length
 
     function baseView(overrides = {}) {
       return {
@@ -191,6 +198,7 @@ export const samplingPlanUploadPostController = {
         taskListLink: taskListUrl(applicationId),
         resultsLink: resultsUrl(applicationId),
         files,
+        viewableFilesCount,
         ...overrides
       }
     }
@@ -303,10 +311,11 @@ export const samplingPlanResultsGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.title'),
+        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
         heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
         backLink: samplingPlanUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        uploadAnotherLink: samplingPlanUrl(applicationId),
         files: [],
         error: t('pages.samplingPlanUpload.validation.fetchError')
       }).code(500)
@@ -327,7 +336,7 @@ export const samplingPlanResultsGetController = {
     }
 
     return renderResultsPage(h, {
-      pageTitle: t('pages.samplingPlanUpload.title'),
+      pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
       heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
       backLink: samplingPlanUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
@@ -360,10 +369,11 @@ export const samplingPlanResultsPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.title'),
+        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
         heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
         backLink: samplingPlanUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        uploadAnotherLink: samplingPlanUrl(applicationId),
         files: [],
         error: t('pages.samplingPlanUpload.validation.fetchError')
       }).code(500)
@@ -381,7 +391,7 @@ export const samplingPlanResultsPostController = {
 
     function baseView(overrides = {}) {
       return {
-        pageTitle: t('pages.samplingPlanUpload.title'),
+        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
         heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
         backLink: samplingPlanUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
@@ -488,6 +498,9 @@ export const samplingPlanCdpStatusController = {
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
     }
 
+    // CDP uploader's form.file.fileStatus is now the authoritative virus-scan
+    // outcome ('complete' = passed). hasError above already covers rejected
+    // uploads, so any other fileStatus here is treated as Infected (fail-closed).
     const scanStatus =
       fileInput?.fileStatus === 'complete' ? 'Clean' : 'Infected'
 
