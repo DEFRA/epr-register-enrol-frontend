@@ -166,6 +166,10 @@ export const tonnageAuthorityPostController = {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
+    if (!application.prns?.plannedTonnageBand) {
+      return h.redirect(tonnageUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
     const heading = buildHeading(isExporter, t)
     const intro = isExporter

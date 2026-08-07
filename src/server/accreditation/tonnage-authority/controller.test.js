@@ -499,6 +499,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -545,6 +546,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [{ fullName: 'Alice', email: 'alice@example.com' }],
             sectionStatus: 'InProgress'
           }
@@ -569,10 +571,40 @@ describe('#tonnageAuthorityController', () => {
   })
 
   describe('POST /accreditation/tonnage-authority/{applicationId} - saveAndContinue', () => {
+    test('redirects to tonnage page without patching when tonnage has not been completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: undefined,
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' }
+            ],
+            sectionStatus: 'NotStarted'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch')
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(`/accreditation/tonnage/${APPLICATION_ID}`)
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('returns 400 error when no checkboxes selected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -596,6 +628,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' },
               { fullName: 'Bob', email: 'bob@example.com' }
@@ -680,6 +713,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
+            plannedTonnageBand: 'UpTo1000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
