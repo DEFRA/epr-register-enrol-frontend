@@ -33,7 +33,7 @@
   {{ govukServiceNavigation({
     navigation: navigation,
     slots: {
-      navigationEnd: ('<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/auth/logout">Sign out</a></li>' if user else "")
+      navigationEnd: ('<li class="govuk-service-navigation__item app-service-navigation__item--right"><a class="govuk-service-navigation__link" href="/auth/logout" data-testid="sign-out-link">' + t('common.signOut') + '</a></li>' if user else "")
     }
   }) }}
 {% endblock %}

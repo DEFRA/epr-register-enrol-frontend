@@ -278,8 +278,7 @@ export async function logoutController(request, h) {
   // Only do federated logout when we have an id_token — that means the user
   // authenticated via real Defra ID (stub users never get one).
   if (!idToken || user?.userType !== 'operator') {
-    request.yar.clear('user')
-    request.yar.clear('idToken')
+    request.yar.reset()
     return h.redirect(
       user?.userType === 'regulator'
         ? '/auth/regulator/login'
@@ -290,11 +289,11 @@ export async function logoutController(request, h) {
   const provider = getDefraIdConfig(config)
   const { endSessionUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
 
-  // Clear local session before redirecting — if the user returns to /auth/logout
-  // after Defra ID signs them out, the session will be empty and we fall through
-  // to the redirect above.
-  request.yar.clear('idToken')
-  request.yar.clear('user')
+  // Reset (not clear) the local session before redirecting, so the server-side
+  // cache entry is actually dropped rather than just nulling out these two keys.
+  // If the user returns to /auth/logout after Defra ID signs them out, the
+  // session will be empty and we fall through to the redirect above.
+  request.yar.reset()
 
   const params = new URLSearchParams({
     post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout`

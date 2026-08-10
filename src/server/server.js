@@ -7,6 +7,7 @@ import { router } from './router.js'
 import { config } from '../config/config.js'
 import { pulse } from './common/helpers/pulse.js'
 import { catchAll } from './common/helpers/errors.js'
+import { noStoreCacheHeaders } from './common/helpers/no-store-cache-headers.js'
 import { nunjucksConfig } from '../config/nunjucks/nunjucks.js'
 import { setupProxy } from './common/helpers/proxy/setup-proxy.js'
 import { requestTracing } from './common/helpers/request-tracing.js'
@@ -98,6 +99,7 @@ export async function createServer() {
   ])
 
   server.ext('onPreResponse', catchAll)
+  server.ext('onPreResponse', noStoreCacheHeaders)
 
   return server
 }
