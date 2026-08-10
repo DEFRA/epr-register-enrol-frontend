@@ -699,14 +699,18 @@
       },
       "recyclingOperationDetails": {
         "title": "[Welsh] Recycling operation — Add overseas reprocessing site",
-        "heading": "[Welsh] What recycling operation is carried out at the site?",
-        "label": "[Welsh] Recycling operation",
+        "heading": "[Welsh] What recycling operations are carried out at the site?",
+        "label": "[Welsh] Select all recycling operations that apply",
         "operations": {
-          "R3": "[Welsh] R3 — Recycling or reclamation of organic substances not used as solvents (including composting)",
-          "R4": "[Welsh] R4 — Recycling or reclamation of metals and metal compounds"
+          "R3": "[Welsh] R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
+          "R4": "[Welsh] R4 — Recycling/reclamation of metals and metal compounds (Scrap metal recycling, metal recovery)",
+          "R5": "[Welsh] R5 — Recycling/reclamation of other inorganic materials (Glass, bricks, concrete, soil, aggregates, ceramics)",
+          "R12": "[Welsh] R12 — Exchange of waste for submission (sorting, baling, aggregation)",
+          "R13": "[Welsh] R13 — Interim storage of wastes"
         },
         "validation": {
-          "required": "[Welsh] Select a recycling operation"
+          "required": "[Welsh] Select at least one recycling operation",
+          "accompanyingCodeRequired": "[Welsh] R12 and R13 cannot be selected on their own — select at least one other applicable recycling operation as well"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"

@@ -10,6 +10,8 @@ import {
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { config } from '../../../../config/config.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { addOrsRecyclingOperationGetController } from './controller.js'
 
 const APPLICATION_ID = 'app-rod-001'
 const BASE_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`
@@ -23,6 +25,25 @@ function cookiesFrom(response) {
   return Array.isArray(raw)
     ? raw.map((c) => c.split(';')[0]).join('; ')
     : raw.split(';')[0]
+}
+
+function makeMockRequest(materialType, session = {}) {
+  return {
+    path: BASE_URL,
+    params: { applicationId: APPLICATION_ID },
+    yar: {
+      get: vi.fn((key) => {
+        if (key === ACCREDITATION_SESSION_KEYS.materialType) return materialType
+        if (key === ACCREDITATION_SESSION_KEYS.addOverseasSite) return session
+        return null
+      }),
+      set: vi.fn()
+    }
+  }
+}
+
+function makeMockH() {
+  return { view: vi.fn((view, data) => data) }
 }
 
 describe('#addOrsRecyclingOperationController', () => {
@@ -68,23 +89,19 @@ describe('#addOrsRecyclingOperationController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
       expect(result).toContain(
-        'What recycling operation is carried out at the site?'
+        'What recycling operations are carried out at the site?'
       )
     })
 
-    test('renders radio buttons for R3 and R4 only', async () => {
+    test('renders checkboxes, not radios', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="option-R3"')
-      expect(result).toContain('data-testid="option-R4"')
-      expect(result).not.toContain('data-testid="option-R1"')
-      expect(result).not.toContain('data-testid="option-R5"')
-      expect(result).not.toContain('data-testid="option-R13"')
-      expect(result).toContain('type="radio"')
+      expect(result).toContain('type="checkbox"')
+      expect(result).not.toContain('type="radio"')
     })
 
     test('back link points to site-contact-details', async () => {
@@ -109,12 +126,12 @@ describe('#addOrsRecyclingOperationController', () => {
       expect(result).toContain(SELECT_ORS_URL)
     })
 
-    test('pre-selects option from session when returning via Back', async () => {
+    test('pre-selects codes from session when returning via Back', async () => {
       const postResponse = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'recyclingOperationCode=R4'
+        payload: 'recyclingOperationCodes=R3&recyclingOperationCodes=R12'
       })
       expect(postResponse.statusCode).toBe(statusCodes.redirect)
 
@@ -124,8 +141,8 @@ describe('#addOrsRecyclingOperationController', () => {
         headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
       })
 
-      expect(result).toContain('value="R4"')
-      expect(result).toMatch(/value="R4"\s+checked/)
+      expect(result).toMatch(/value="R3"\s+checked/)
+      expect(result).toMatch(/value="R12"\s+checked/)
     })
 
     test('returns 200 in Welsh locale', async () => {
@@ -137,65 +154,180 @@ describe('#addOrsRecyclingOperationController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        '[Welsh] What recycling operation is carried out at the site?'
+        '[Welsh] What recycling operations are carried out at the site?'
       )
     })
   })
 
   describe(`POST ${BASE_URL}`, () => {
-    test('redirects to basel-convention-and-oecd-code when valid code selected', async () => {
+    test('redirects to basel-convention-and-oecd-code when a valid single code is selected', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'recyclingOperationCode=R3'
+        payload: 'recyclingOperationCodes=R3'
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(NEXT_URL)
     })
 
-    test('returns 400 with error when no operation selected', async () => {
+    test('redirects and persists all codes when multiple checkboxes are selected', async () => {
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'recyclingOperationCodes=R3&recyclingOperationCodes=R5&recyclingOperationCodes=R12'
+      })
+
+      expect(postResponse.statusCode).toBe(statusCodes.redirect)
+      expect(postResponse.headers.location).toBe(NEXT_URL)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          cookie: cookiesFrom(postResponse)
+        }
+      })
+
+      expect(result).toMatch(/value="R3"\s+checked/)
+      expect(result).toMatch(/value="R5"\s+checked/)
+      expect(result).toMatch(/value="R12"\s+checked/)
+    })
+
+    test('returns 400 with error when no operation is selected', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'recyclingOperationCode='
+        payload: ''
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="error-summary"')
-      expect(result).toContain('Select a recycling operation')
+      expect(result).toContain('Select at least one recycling operation')
       expect(result).toContain('id="recycling-operation-code-error"')
       expect(result).toContain(
         'aria-describedby="recycling-operation-code-error"'
       )
     })
 
-    test('returns 400 rather than 500 when the field name is submitted twice', async () => {
+    test('returns 400 with error when a code outside R3/R4/R5/R12/R13 is submitted', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'recyclingOperationCode=R3&recyclingOperationCode=R4'
+        payload: 'recyclingOperationCodes=R7'
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="error-summary"')
-      expect(result).toContain('Select a recycling operation')
+      expect(result).toContain('Select at least one recycling operation')
     })
 
-    test('returns 400 with error when an operation code outside R3/R4 is submitted', async () => {
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: BASE_URL,
-        headers: postHeaders,
-        payload: 'recyclingOperationCode=R5'
+    describe('AC07 — R12/R13 require an accompanying code', () => {
+      test.each([['R12'], ['R13'], ['R12,R13']])(
+        'returns 400 when only %s is selected',
+        async (codesCsv) => {
+          const payload = codesCsv
+            .split(',')
+            .map((c) => `recyclingOperationCodes=${c}`)
+            .join('&')
+
+          const { statusCode, result } = await server.inject({
+            method: 'POST',
+            url: BASE_URL,
+            headers: postHeaders,
+            payload
+          })
+
+          expect(statusCode).toBe(statusCodes.badRequest)
+          expect(result).toContain(
+            'R12 and R13 cannot be selected on their own'
+          )
+        }
+      )
+
+      test.each([
+        ['R3', 'R12'],
+        ['R4', 'R13']
+      ])('allows %s + %s (accompanied)', async (codeA, codeB) => {
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: BASE_URL,
+          headers: postHeaders,
+          payload: `recyclingOperationCodes=${codeA}&recyclingOperationCodes=${codeB}`
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(NEXT_URL)
       })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain('data-testid="error-summary"')
-      expect(result).toContain('Select a recycling operation')
+      test('allows the full R3+R4+R5+R12+R13 combination', async () => {
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: BASE_URL,
+          headers: postHeaders,
+          payload:
+            'recyclingOperationCodes=R3&recyclingOperationCodes=R4&recyclingOperationCodes=R5&recyclingOperationCodes=R12&recyclingOperationCodes=R13'
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(NEXT_URL)
+      })
+    })
+  })
+
+  describe('materialType branching (unit)', () => {
+    test.each([
+      ['Aluminium', ['R4', 'R12', 'R13']],
+      ['Fibre', ['R3', 'R5', 'R12', 'R13']],
+      ['Glass', ['R5', 'R12', 'R13']],
+      ['Paper', ['R3', 'R12', 'R13']],
+      ['Plastic', ['R3', 'R12', 'R13']],
+      ['Steel', ['R4', 'R12', 'R13']],
+      ['Wood', ['R3', 'R12', 'R13']]
+    ])(
+      'shows only %s codes for materialType %s',
+      async (materialType, expectedCodes) => {
+        const mockH = makeMockH()
+        const data = addOrsRecyclingOperationGetController.handler(
+          makeMockRequest(materialType),
+          mockH
+        )
+
+        expect(data.options.map((o) => o.value).sort()).toEqual(
+          [...expectedCodes].sort()
+        )
+      }
+    )
+
+    test('shows all codes when materialType is unset (graceful fallback)', async () => {
+      const mockH = makeMockH()
+      const data = addOrsRecyclingOperationGetController.handler(
+        makeMockRequest(null),
+        mockH
+      )
+
+      expect(data.options.map((o) => o.value).sort()).toEqual(
+        ['R3', 'R4', 'R5', 'R12', 'R13'].sort()
+      )
+    })
+
+    test('re-displays only the new materialType codes after it changes, dropping stale selections', async () => {
+      const mockH = makeMockH()
+      const data = addOrsRecyclingOperationGetController.handler(
+        makeMockRequest('Wood', { recyclingOperationCodes: ['R4', 'R12'] }),
+        mockH
+      )
+
+      expect(data.options.map((o) => o.value).sort()).toEqual(
+        ['R3', 'R12', 'R13'].sort()
+      )
+      expect(data.options.find((o) => o.value === 'R12').checked).toBe(true)
     })
   })
 })
