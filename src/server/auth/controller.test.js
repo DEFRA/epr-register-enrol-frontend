@@ -77,4 +77,36 @@ describe('#logoutController', () => {
     expect(statusCode).toBe(statusCodes.redirect)
     expect(headers.location).toBe('/auth/operator/login')
   })
+
+  test('resets the session on logout, issuing a new session id rather than just clearing keys (AC04)', async () => {
+    const loginResponse = await server.inject({
+      method: 'POST',
+      url: '/auth/stub/login',
+      payload: {
+        userId: STUB_USERS.operator[0].id,
+        type: 'operator'
+      },
+      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+    })
+    const oldSessionCookie = loginResponse.headers['set-cookie']
+      .find((c) => c.startsWith('session='))
+      .split(';')[0]
+
+    const logoutResponse = await server.inject({
+      method: 'GET',
+      url: '/auth/logout',
+      headers: {
+        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
+        cookie: oldSessionCookie
+      }
+    })
+    const newSessionCookie = logoutResponse.headers['set-cookie']
+      .find((c) => c.startsWith('session='))
+      .split(';')[0]
+
+    // request.yar.reset() drops the old cache entry and generates a brand
+    // new session id — request.yar.clear() would leave the id (and cookie)
+    // unchanged, only nulling out the 'user'/'idToken' keys.
+    expect(newSessionCookie).not.toBe(oldSessionCookie)
+  })
 })
