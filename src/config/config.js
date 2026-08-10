@@ -368,6 +368,9 @@ if (config.get('environment') === 'prod' && config.get('auth.stubEnabled')) {
   throw new Error(
     'AUTH_STUB_ENABLED must be false when ENVIRONMENT=prod. The stub auth ' +
       'provider bypasses real OAuth and auto-authenticates every request.'
+  )
+}
+
 // Production hardening: refuse to boot with the placeholder session
 // cookie password. convict only validates length, not that the operator
 // supplied a unique secret — a missing SESSION_COOKIE_PASSWORD in a
