@@ -28,17 +28,17 @@
             {% if error %}
               <p class="govuk-error-message" id="recycling-operation-code-error"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
             {% endif %}
-            <div class="govuk-radios govuk-radios--inline" data-module="govuk-radios" id="recycling-operation-code">
+            <div class="govuk-checkboxes" data-module="govuk-checkboxes" id="recycling-operation-code">
               {% for option in options %}
-                <div class="govuk-radios__item">
-                  <input class="govuk-radios__input"
+                <div class="govuk-checkboxes__item">
+                  <input class="govuk-checkboxes__input"
                          id="recycling-operation-code-{{ option.value | lower }}"
-                         name="recyclingOperationCode"
-                         type="radio"
+                         name="recyclingOperationCodes"
+                         type="checkbox"
                          value="{{ option.value }}"
                          {% if option.checked %}checked{% endif %}
                          data-testid="option-{{ option.value }}">
-                  <label class="govuk-label govuk-radios__label" for="recycling-operation-code-{{ option.value | lower }}">
+                  <label class="govuk-label govuk-checkboxes__label" for="recycling-operation-code-{{ option.value | lower }}">
                     {{ option.text }}
                   </label>
                 </div>

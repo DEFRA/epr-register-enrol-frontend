@@ -212,7 +212,7 @@ export const selectOverseasSitesPromoteEntryGetController = {
       siteContactName: site.contactName ?? '',
       siteContactEmail: site.contactEmail ?? '',
       siteContactPhone: site.contactPhone ?? '',
-      recyclingOperationCode: site.operationCode ?? '',
+      recyclingOperationCodes: site.operationCodes ?? [],
       baselAndOecdCodes: [site.code1, site.code2, site.code3].filter(Boolean),
       repatriatedLoads: site.repatriatedLoads ?? '',
       conditionsOfExport: site.conditionsOfExport ?? null,

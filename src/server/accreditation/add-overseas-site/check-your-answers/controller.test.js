@@ -279,6 +279,50 @@ describe('#addOrsCyaController', () => {
       )
     })
 
+    test('sends the selected R-codes as operationCodes on the payload', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
+
+      const rodPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload: 'recyclingOperationCodes=R3&recyclingOperationCodes=R12'
+      })
+      const sessionCookie = rodPostResponse.headers['set-cookie']
+        ? (Array.isArray(rodPostResponse.headers['set-cookie'])
+            ? rodPostResponse.headers['set-cookie'][0]
+            : rodPostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'action=addInterimSite'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        expect.objectContaining({ operationCodes: ['R3', 'R12'] })
+      )
+    })
+
     test('explicit action=confirm redirects to select-overseas-sites (same as default)', async () => {
       vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
         makeApplication([])
@@ -300,6 +344,128 @@ describe('#addOrsCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+  })
+
+  describe('AC08 — R12/R13 require an interim site', () => {
+    async function seedCodesSession(...codes) {
+      const payload = codes.map((c) => `recyclingOperationCodes=${c}`).join('&')
+      const response = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload
+      })
+      const raw = response.headers['set-cookie']
+      if (!raw) return cookie
+      return (Array.isArray(raw) ? raw[0] : raw).split(';')[0]
+    }
+
+    test('GET renders only Add Interim Site when R12 is selected', async () => {
+      const sessionCookie = await seedCodesSession('R3', 'R12')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).not.toContain('data-testid="submit-button"')
+      expect(result).toContain('data-testid="save-and-add-interim-site-button"')
+    })
+
+    test('GET renders only Add Interim Site when R13 is selected', async () => {
+      const sessionCookie = await seedCodesSession('R4', 'R13')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).not.toContain('data-testid="submit-button"')
+    })
+
+    test('GET renders both buttons when neither R12 nor R13 is selected', async () => {
+      const sessionCookie = await seedCodesSession('R3')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toContain('data-testid="submit-button"')
+      expect(result).toContain('data-testid="save-and-add-interim-site-button"')
+    })
+
+    test('POST action=confirm with R12 present does not create the site', async () => {
+      const sessionCookie = await seedCodesSession('R3', 'R12')
+      vi.spyOn(accreditationApiService, 'createOverseasSite')
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'action=confirm'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(accreditationApiService.createOverseasSite).not.toHaveBeenCalled()
+    })
+
+    test('POST with no action (default) and R13 present does not create the site', async () => {
+      const sessionCookie = await seedCodesSession('R4', 'R13')
+      vi.spyOn(accreditationApiService, 'createOverseasSite')
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(accreditationApiService.createOverseasSite).not.toHaveBeenCalled()
+    })
+
+    test('POST action=addInterimSite with R12 present still proceeds', async () => {
+      const sessionCookie = await seedCodesSession('R3', 'R12')
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'action=addInterimSite'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/add-interim-site/${APPLICATION_ID}/country`
+      )
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalled()
     })
   })
 
@@ -544,7 +710,7 @@ describe('#addOrsCyaController', () => {
       country: 'Netherlands',
       contactName: 'Jane Smith',
       contactEmail: 'jane@example.com',
-      operationCode: 'R3',
+      operationCodes: ['R3'],
       code1: 'A1181',
       repatriatedLoads: 'Details',
       selected: false

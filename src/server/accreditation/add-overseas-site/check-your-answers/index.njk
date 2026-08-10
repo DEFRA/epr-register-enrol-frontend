@@ -56,12 +56,14 @@
       <form method="post">
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
-        <button type="submit" name="action" value="confirm" class="govuk-button" data-module="govuk-button"
-                data-testid="submit-button">
-          {{ submitButton }}
-        </button>
+        {% if not requiresInterimSite %}
+          <button type="submit" name="action" value="confirm" class="govuk-button" data-module="govuk-button"
+                  data-testid="submit-button">
+            {{ submitButton }}
+          </button>
+        {% endif %}
 
-        <button type="submit" name="action" value="addInterimSite" class="govuk-button govuk-button--secondary" data-module="govuk-button"
+        <button type="submit" name="action" value="addInterimSite" class="govuk-button{% if requiresInterimSite %}{% else %} govuk-button--secondary{% endif %}" data-module="govuk-button"
                 data-testid="save-and-add-interim-site-button">
           {{ addInterimSiteButton }}
         </button>
