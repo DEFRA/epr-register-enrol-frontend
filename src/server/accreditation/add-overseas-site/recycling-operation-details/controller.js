@@ -135,7 +135,7 @@ export const addOrsRecyclingOperationPostController = {
 
     if (
       recyclingOperationCodes.length === 0 ||
-      !recyclingOperationCodes.every((code) => ALL_CODES.includes(code))
+      !recyclingOperationCodes.every((code) => applicableCodes.includes(code))
     ) {
       return renderError(
         t('pages.addOverseasSite.recyclingOperationDetails.validation.required')

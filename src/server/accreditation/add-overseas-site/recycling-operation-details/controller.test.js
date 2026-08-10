@@ -11,7 +11,10 @@ import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { config } from '../../../../config/config.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
-import { addOrsRecyclingOperationGetController } from './controller.js'
+import {
+  addOrsRecyclingOperationGetController,
+  addOrsRecyclingOperationPostController
+} from './controller.js'
 
 const APPLICATION_ID = 'app-rod-001'
 const BASE_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`
@@ -27,10 +30,11 @@ function cookiesFrom(response) {
     : raw.split(';')[0]
 }
 
-function makeMockRequest(materialType, session = {}) {
+function makeMockRequest(materialType, session = {}, payload) {
   return {
     path: BASE_URL,
     params: { applicationId: APPLICATION_ID },
+    payload,
     yar: {
       get: vi.fn((key) => {
         if (key === ACCREDITATION_SESSION_KEYS.materialType) return materialType
@@ -43,7 +47,10 @@ function makeMockRequest(materialType, session = {}) {
 }
 
 function makeMockH() {
-  return { view: vi.fn((view, data) => data) }
+  return {
+    view: vi.fn((view, data) => ({ ...data, code: vi.fn(() => data) })),
+    redirect: vi.fn((url) => url)
+  }
 }
 
 describe('#addOrsRecyclingOperationController', () => {
@@ -328,6 +335,27 @@ describe('#addOrsRecyclingOperationController', () => {
         ['R3', 'R12', 'R13'].sort()
       )
       expect(data.options.find((o) => o.value === 'R12').checked).toBe(true)
+    })
+
+    test('POST rejects a code that is valid overall but not applicable to the current materialType', () => {
+      const mockH = makeMockH()
+      const data = addOrsRecyclingOperationPostController.handler(
+        makeMockRequest('Wood', {}, { recyclingOperationCodes: 'R4' }),
+        mockH
+      )
+
+      expect(mockH.redirect).not.toHaveBeenCalled()
+      expect(data.error).toBeTruthy()
+    })
+
+    test('POST accepts a code that is applicable to the current materialType', () => {
+      const mockH = makeMockH()
+      addOrsRecyclingOperationPostController.handler(
+        makeMockRequest('Wood', {}, { recyclingOperationCodes: 'R3' }),
+        mockH
+      )
+
+      expect(mockH.redirect).toHaveBeenCalledWith(NEXT_URL)
     })
   })
 })
