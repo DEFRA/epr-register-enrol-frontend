@@ -162,6 +162,89 @@ describe('accreditationApiService', () => {
         body
       )
     })
+
+    // RA-292 AC03: `isNew` is derived server-side, so the client must relay the
+    // authoriser objects verbatim rather than projecting known fields.
+    test('sends the authoriser objects through untouched, including isNew', async () => {
+      apiClient.patch.mockResolvedValue({})
+      const body = {
+        authorisers: [
+          { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+          { fullName: 'Bob', email: 'bob@example.com', isNew: false },
+          { fullName: 'Sue', email: 'sue@example.com' }
+        ]
+      }
+      await accreditationApiService.patchTonnage(ORG_ID, APP_ID, body)
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/tonnage`,
+        body
+      )
+    })
+  })
+
+  describe('normalisation of prns authorisers (RA-292)', () => {
+    test('preserves isNew when the backend returns prnIssuance.signatories', async () => {
+      apiClient.get.mockResolvedValue({
+        id: APP_ID,
+        prnIssuance: {
+          sectionStatus: 'InProgress',
+          plannedIssuance: 'UpTo1000',
+          signatories: [
+            { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+            { fullName: 'Bob', email: 'bob@example.com', isNew: false },
+            { fullName: 'Sue', email: 'sue@example.com' },
+            { fullName: 'Ann', email: 'ann@example.com', isNew: null }
+          ]
+        }
+      })
+
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+
+      expect(result.prns.authorisers).toEqual([
+        { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+        { fullName: 'Bob', email: 'bob@example.com', isNew: false },
+        { fullName: 'Sue', email: 'sue@example.com' },
+        { fullName: 'Ann', email: 'ann@example.com', isNew: null }
+      ])
+      expect(result.prns.authorisers[2]).not.toHaveProperty('isNew')
+    })
+
+    test('preserves isNew when the payload already uses the prns shape', async () => {
+      apiClient.get.mockResolvedValue({
+        id: APP_ID,
+        prns: {
+          sectionStatus: 'InProgress',
+          plannedTonnageBand: 'UpTo1000',
+          authorisers: [
+            { fullName: 'Jane', email: 'jane@example.com', isNew: true }
+          ]
+        }
+      })
+
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+
+      expect(result.prns.authorisers[0].isNew).toBe(true)
+    })
+
+    test('yields an empty authoriser list when signatories are missing', async () => {
+      apiClient.get.mockResolvedValue({
+        id: APP_ID,
+        prnIssuance: { sectionStatus: 'NotStarted' }
+      })
+
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+
+      expect(result.prns.authorisers).toEqual([])
+    })
   })
 
   describe('seedExporterApplication', () => {
