@@ -56,6 +56,14 @@ describe('session cookie password boot guard', () => {
     process.env.ENVIRONMENT = 'prod'
     process.env.SESSION_COOKIE_PASSWORD = REAL_SECRET
     process.env.AUTH_STUB_ENABLED = 'false'
+    process.env.ENTRA_CLIENT_ID = 'azure-client-id'
+    process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
+    process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'
+    process.env.DEFRA_ID_CLIENT_SECRET = 'defra-id-client-secret'
+    process.env.DEFRA_ID_DISCOVERY_URL = 'https://defra-id.example/.well-known'
+    process.env.REDIS_HOST = 'redis.example.internal'
+    process.env.REDIS_USERNAME = 'redis-user'
+    process.env.REDIS_PASSWORD = 'redis-password'
 
     const mod = await import('./config.js')
     expect(mod.config.get('session.cookie.password')).toBe(REAL_SECRET)

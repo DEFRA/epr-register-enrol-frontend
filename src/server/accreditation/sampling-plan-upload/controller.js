@@ -551,6 +551,7 @@ export const samplingPlanCdpStatusController = {
       request.server.logger.error(
         `Error saving uploaded file for ${applicationId}: ${err.message}`
       )
+      return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
     }
 
     return h.redirect(

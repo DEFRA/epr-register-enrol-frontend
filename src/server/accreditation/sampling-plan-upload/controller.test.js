@@ -683,6 +683,25 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('data-testid="file-error"')
     })
 
+    test('re-renders with the chosen document type still selected when only the file fails validation', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'malware.exe',
+          contentType: 'application/octet-stream',
+          documentType: 'SupportingEvidence'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('value="SupportingEvidence" selected')
+    })
+
     test('CDP redirect response from proxy upload is treated as success, not failure', async () => {
       // Regression guard: cdp-uploader's /upload-and-scan responds with a redirect meant for
       // an end-user's browser, not our server-to-server proxy fetch. Previously this was
@@ -943,6 +962,35 @@ describe('#samplingPlanUploadController', () => {
         `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
       )
       expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('redirects to results with the shared failure flag when addFile rejects, instead of a silent success redirect', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        form: {
+          file: {
+            filename: 'plan.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-validated',
+            fileStatus: 'complete'
+          }
+        }
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        new Error('Backend rejected the request')
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
+      )
     })
   })
 
