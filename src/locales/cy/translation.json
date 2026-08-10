@@ -286,6 +286,12 @@
       "viewUploadedFiles": "[Welsh] View uploaded files ({count})",
       "uploadAnotherFile": "[Welsh] Upload another file",
       "fileLabel": "[Welsh] Choose a file to upload",
+      "documentTypeLabel": "[Welsh] Document type",
+      "documentType": {
+        "samplingPlan": "[Welsh] Sampling and inspection plan",
+        "supportingEvidence": "[Welsh] Supporting evidence",
+        "notSpecified": "[Welsh] Not specified"
+      },
       "uploadButton": "Uwchlwytho ffeil",
       "deleteFile": "[Welsh] Remove",
       "saveAndContinue": "Cadw a pharhau",
@@ -293,17 +299,18 @@
       "table": {
         "filename": "[Welsh] Filename",
         "dateUploaded": "[Welsh] Upload date",
-        "uploadedBy": "Uwchlwythwyd gan",
+        "documentType": "[Welsh] Document type",
         "action": ""
       },
       "status": {
-        "title": "Wrthi’n uwchlwytho ffeil",
-        "heading": "Wrthi’n uwchlwytho ffeil",
-        "message": "[Welsh] Your file is being scanned for viruses. This may take a few seconds.",
-        "doNotClose": "[Welsh] Do not close this page."
+        "title": "[Welsh] Your file is being virus checked",
+        "heading": "[Welsh] Your file is being virus checked",
+        "message": "[Welsh] This may take a few minutes.",
+        "doNotClose": "[Welsh] Keep this page open and do not refresh it."
       },
       "validation": {
         "noFile": "[Welsh] Select a file to upload",
+        "noDocumentType": "[Welsh] Select a document type",
         "invalidType": "[Welsh] The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
         "fileTooLarge": "[Welsh] Cannot upload file. The file is larger than 20MB. Please use a smaller file, or split the file and upload supporting documents separately. You can upload up to 10 files.",
         "noCleanFile": "[Welsh] You must upload at least one file before continuing",

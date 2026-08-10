@@ -23,7 +23,7 @@
             <tr class="govuk-table__row">
               <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.filename') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.dateUploaded') }}</th>
-              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.uploadedBy') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.documentType') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.action') }}</th>
             </tr>
           </thead>
@@ -32,7 +32,7 @@
               <tr class="govuk-table__row" data-testid="file-row">
                 <td class="govuk-table__cell" data-testid="file-name">{{ file.filename }}</td>
                 <td class="govuk-table__cell" data-testid="file-date">{{ file.uploadedAt }}</td>
-                <td class="govuk-table__cell" data-testid="file-uploaded-by">{{ file.uploadedBy }}</td>
+                <td class="govuk-table__cell" data-testid="file-document-type">{{ file.documentTypeLabel }}</td>
                 <td class="govuk-table__cell">
                   <form method="post" novalidate>
                     <input type="hidden" name="crumb" value="{{ crumb }}">
