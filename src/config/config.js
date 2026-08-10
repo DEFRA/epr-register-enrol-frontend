@@ -13,6 +13,9 @@ const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
 const isDevelopment = process.env.NODE_ENV === 'development'
 
+export const PLACEHOLDER_SESSION_COOKIE_PASSWORD =
+  'the-password-must-be-at-least-32-characters-long'
+
 convict.addFormats(convictFormatWithValidator)
 
 export const config = convict({
@@ -346,3 +349,22 @@ export const config = convict({
 })
 
 config.validate({ allowed: 'strict' })
+
+// Production hardening: refuse to boot with the placeholder session
+// cookie password. convict only validates length, not that the operator
+// supplied a unique secret — a missing SESSION_COOKIE_PASSWORD in a
+// deployed env would silently fall back to this publicly known default,
+// signing/encrypting session data with a key anyone can read on GitHub.
+const sessionCookieSecure = config.get('session.cookie.secure')
+const sessionCookiePassword = config.get('session.cookie.password')
+
+if (
+  (config.get('isProduction') || sessionCookieSecure) &&
+  sessionCookiePassword === PLACEHOLDER_SESSION_COOKIE_PASSWORD
+) {
+  throw new Error(
+    'SESSION_COOKIE_PASSWORD must be set to a unique per-environment secret ' +
+      '(>=32 chars) via Secrets Manager. The placeholder default is not ' +
+      'permitted when SESSION_COOKIE_SECURE is true or NODE_ENV=production.'
+  )
+}
