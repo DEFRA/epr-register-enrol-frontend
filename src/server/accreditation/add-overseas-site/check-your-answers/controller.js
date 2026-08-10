@@ -96,7 +96,7 @@ function buildRows(t, applicationId, session) {
     },
     {
       key: t('pages.addOverseasSite.cya.rows.recyclingOperation'),
-      value: session.recyclingOperationCode ?? '',
+      value: (session.recyclingOperationCodes ?? []).join(', '),
       changeUrl: recyclingOperationUrl(applicationId),
       testId: 'recycling-operation'
     },
@@ -131,6 +131,11 @@ function buildRows(t, applicationId, session) {
   return rows
 }
 
+function requiresInterimSite(session) {
+  const codes = session.recyclingOperationCodes ?? []
+  return codes.includes('R12') || codes.includes('R13')
+}
+
 function buildViewData(t, applicationId, session, error) {
   return {
     pageTitle: t('pages.addOverseasSite.cya.title'),
@@ -143,6 +148,7 @@ function buildViewData(t, applicationId, session, error) {
     changeLabel: t('pages.addOverseasSite.cya.changeLink'),
     removeCodeLabel: t('pages.addOverseasSite.cya.removeCode'),
     noCodesEnteredLabel: t('pages.addOverseasSite.cya.noCodesEntered'),
+    requiresInterimSite: requiresInterimSite(session),
     error
   }
 }
@@ -168,7 +174,7 @@ function buildSitePayload(orsId, session) {
     contactName: session.siteContactName,
     contactEmail: session.siteContactEmail,
     contactPhone: session.siteContactPhone ?? null,
-    operationCode: session.recyclingOperationCode,
+    operationCodes: session.recyclingOperationCodes ?? [],
     code1: codes[0] ?? null,
     code2: codes[1] ?? null,
     code3: codes[2] ?? null,
@@ -192,7 +198,7 @@ function buildPromotePayload(session) {
     contactName: session.siteContactName,
     contactEmail: session.siteContactEmail,
     contactPhone: session.siteContactPhone ?? null,
-    operationCode: session.recyclingOperationCode,
+    operationCodes: session.recyclingOperationCodes ?? [],
     code1: codes[0] ?? null,
     code2: codes[1] ?? null,
     code3: codes[2] ?? null,
@@ -234,6 +240,13 @@ export const addOrsCyaPostController = {
     }
 
     const { t } = getLocaleAndTranslator(request)
+
+    if (requiresInterimSite(session) && action !== ADD_INTERIM_SITE_ACTION) {
+      return renderPage(h, buildViewData(t, applicationId, session, null)).code(
+        400
+      )
+    }
+
     const organisationId = request.yar.get(
       ACCREDITATION_SESSION_KEYS.organisationId
     )
