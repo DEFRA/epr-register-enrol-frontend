@@ -1,6 +1,10 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import {
+  resolveNation,
+  buildPaymentDetails
+} from '../../common/helpers/paymentDetails.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -23,15 +27,21 @@ export const submitConfirmationGetController = {
     }
 
     let materialType = ''
+    let paymentDetails = null
     try {
       const application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
       materialType = application.materialType ?? ''
+      paymentDetails = buildPaymentDetails(
+        application,
+        t,
+        resolveNation(application)
+      )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId} for confirmation: ${err.message}`
+        `Error fetching payment details for ${applicationId} on confirmation: ${err.message}`
       )
     }
 
@@ -45,11 +55,12 @@ export const submitConfirmationGetController = {
       panelBodyPrefix: t('pages.submitConfirmation.panelBodyPrefix'),
       panelBodySuffix: t('pages.submitConfirmation.panelBodySuffix'),
       paymentText: t('pages.submitConfirmation.paymentText'),
-      viewInvoice: t('pages.submitConfirmation.viewPaymentDetails'),
       returnHome: t('pages.submitConfirmation.returnHome'),
       accreditationReference,
       materialDisplay,
-      applicationId
+      applicationId,
+      paymentDetails,
+      paymentReference: accreditationReference
     })
   }
 }

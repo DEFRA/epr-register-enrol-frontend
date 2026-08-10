@@ -1,6 +1,8 @@
 import {
   samplingPlanUploadGetController,
   samplingPlanUploadPostController,
+  samplingPlanResultsGetController,
+  samplingPlanResultsPostController,
   samplingPlanCdpStatusController,
   SAMPLING_PLAN_UPLOAD_SESSION_KEY
 } from './controller.js'
@@ -62,6 +64,30 @@ export const samplingPlanUpload = {
           path: '/{language}/accreditation/sampling-plan/{applicationId}/status',
           options: statusOptions,
           ...samplingPlanCdpStatusController
+        },
+        {
+          method: 'GET',
+          path: '/accreditation/sampling-plan/{applicationId}/results',
+          options: requireOperator,
+          ...samplingPlanResultsGetController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/sampling-plan/{applicationId}/results',
+          options: requireOperator,
+          ...samplingPlanResultsGetController
+        },
+        {
+          method: 'POST',
+          path: '/accreditation/sampling-plan/{applicationId}/results',
+          options: requireOperator,
+          ...samplingPlanResultsPostController
+        },
+        {
+          method: 'POST',
+          path: '/{language}/accreditation/sampling-plan/{applicationId}/results',
+          options: requireOperator,
+          ...samplingPlanResultsPostController
         }
       ])
     }

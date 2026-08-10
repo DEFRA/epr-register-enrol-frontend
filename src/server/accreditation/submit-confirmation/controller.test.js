@@ -23,7 +23,7 @@ function makeApplication(overrides = {}) {
     siteId: 'site-001',
     applicationStatus: 'Submitted',
     accreditationReference: 'RA-000000001',
-    prns: { sectionStatus: 'Completed' },
+    prns: { sectionStatus: 'Completed', plannedTonnageBand: 'UpTo500' },
     businessPlan: { sectionStatus: 'Completed' },
     samplingPlan: { sectionStatus: 'Completed', Files: [] },
     ...overrides
@@ -145,7 +145,7 @@ describe('#submitConfirmationController', () => {
       expect(result).not.toContain('Your application reference for')
     })
 
-    test('displays payment text and action links', async () => {
+    test('displays payment text and action links, with no separate payment page link', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference()
 
@@ -156,8 +156,63 @@ describe('#submitConfirmationController', () => {
       })
 
       expect(result).toContain('data-testid="payment-text"')
-      expect(result).toContain('data-testid="view-payment-details-link"')
       expect(result).toContain('data-testid="return-home-link"')
+      expect(result).not.toContain('data-testid="view-payment-details-link"')
+    })
+
+    test('shows payment details inline, including amount, bank details, and the payment reference', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: { plannedTonnageBand: 'UpTo1000' }
+        })
+      )
+      const cookie = await getSessionCookieWithReference('RA-000000001')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(result).toContain('data-testid="amount-due"')
+      expect(result).toContain('£2,184.00')
+      expect(result).toContain('data-testid="bank-details-list"')
+      expect(result).toContain('data-testid="bank-sort-code"')
+      expect(result).toContain('60-70-80')
+      expect(result).toContain('data-testid="bank-payment-reference"')
+      expect(result).toContain('RA-000000001')
+    })
+
+    test('shows the "how long payments take" content as static text, not a collapsible link', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const cookie = await getSessionCookieWithReference()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(result).toContain('data-testid="how-long-payments-take"')
+      expect(result).toContain('Bank transfers can take 3 to 5 working days')
+      expect(result).not.toContain('govuk-details')
+    })
+
+    test('omits the payment details section gracefully when payment cannot be calculated', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ prns: { plannedTonnageBand: null } })
+      )
+      const cookie = await getSessionCookieWithReference()
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="confirmation-panel"')
+      expect(result).not.toContain('data-testid="amount-due"')
     })
 
     test('can be revisited — session is not cleared on render', async () => {

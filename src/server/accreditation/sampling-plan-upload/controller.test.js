@@ -234,19 +234,7 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
-    test('does not render files table when no files uploaded', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
-      })
-
-      expect(result).not.toContain('data-testid="uploaded-files-table"')
-    })
-
-    test('renders uploaded files table when files exist', async () => {
+    test('never renders a files table on the upload page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           samplingPlan: {
@@ -262,16 +250,27 @@ describe('#samplingPlanUploadController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="uploaded-files-table"')
-      expect(result).toContain('sampling-plan.pdf')
+      expect(result).not.toContain('data-testid="uploaded-files-table"')
     })
 
-    test('shows Scanning tag for Pending file', async () => {
+    test('does not show the view-uploaded-files link when no files uploaded', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="view-uploaded-files-link"')
+    })
+
+    test('shows a view-uploaded-files link with a count when files exist', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           samplingPlan: {
             sectionStatus: 'InProgress',
-            files: [makeFile({ scanStatus: 'Pending' })]
+            files: [makeFile(), makeFile({ fileId: 'file-002' })]
           }
         })
       )
@@ -282,7 +281,11 @@ describe('#samplingPlanUploadController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('Scanning')
+      expect(result).toContain('data-testid="view-uploaded-files-link"')
+      expect(result).toContain(
+        `href="/accreditation/sampling-plan/${APPLICATION_ID}/results"`
+      )
+      expect(result).toContain('2')
     })
 
     test('back link points to task list', async () => {
@@ -362,238 +365,6 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] Upload sampling and inspection plan')
-    })
-  })
-
-  describe('POST /accreditation/sampling-plan/{applicationId} — saveAndContinue', () => {
-    test('redirects to query-task-list when application is Queried and sampling plan section is not, without patching', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          applicationStatus: 'Queried',
-          samplingPlan: { sectionStatus: 'Completed', files: [] }
-        })
-      )
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndContinue' }
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe(
-        `/accreditation/query-task-list/${APPLICATION_ID}`
-      )
-      expect(patchSpy).not.toHaveBeenCalled()
-    })
-
-    test('returns 400 with error when no files uploaded', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndContinue' }
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain(
-        'You must upload at least one file before continuing'
-      )
-    })
-
-    test('returns 400 when all files are Infected', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          samplingPlan: {
-            sectionStatus: 'InProgress',
-            files: [makeFile({ scanStatus: 'Infected' })]
-          }
-        })
-      )
-
-      const { result, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndContinue' }
-      })
-
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(result).toContain(
-        'You must upload at least one file before continuing'
-      )
-    })
-
-    test('patches SectionStatus Completed and redirects to task list when eligible file exists', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          samplingPlan: {
-            sectionStatus: 'InProgress',
-            files: [makeFile({ scanStatus: 'Pending' })]
-          }
-        })
-      )
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      const { headers, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndContinue' }
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe(
-        `/accreditation/task-list/${APPLICATION_ID}`
-      )
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { sectionStatus: 'Completed' }
-      )
-    })
-
-    test('returns 500 when patch fails on saveAndContinue', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          samplingPlan: {
-            sectionStatus: 'InProgress',
-            files: [makeFile()]
-          }
-        })
-      )
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('Patch failed'))
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndContinue' }
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
-    })
-  })
-
-  describe('POST /accreditation/sampling-plan/{applicationId} — saveAndComeLater', () => {
-    test('patches InProgress and redirects to task list when files exist', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          samplingPlan: {
-            sectionStatus: 'NotStarted',
-            files: [makeFile()]
-          }
-        })
-      )
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      const { headers, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndComeLater' }
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe(
-        `/accreditation/task-list/${APPLICATION_ID}`
-      )
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { sectionStatus: 'InProgress' }
-      )
-    })
-
-    test('patches NotStarted when no files exist', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
-
-      await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndComeLater' }
-      })
-
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
-        { sectionStatus: 'NotStarted' }
-      )
-    })
-
-    test('returns 500 when patch fails on saveAndComeLater', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('Patch failed'))
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'saveAndComeLater' }
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
-    })
-  })
-
-  describe('POST /accreditation/sampling-plan/{applicationId} — deleteFile', () => {
-    test('calls delete and redirects to GET', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const deleteSpy = vi
-        .spyOn(apiClient, 'delete')
-        .mockResolvedValue(undefined)
-
-      const { headers, statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'deleteFile', fileId: 'file-001' }
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe(
-        `/accreditation/sampling-plan/${APPLICATION_ID}`
-      )
-      expect(deleteSpy).toHaveBeenCalledWith(
-        expect.stringContaining('file-001')
-      )
-    })
-
-    test('returns 500 when delete API fails', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'delete').mockRejectedValue(
-        new Error('Delete failed')
-      )
-
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'deleteFile', fileId: 'file-001' }
-      })
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="error-summary"')
-    })
-
-    test('redirects without calling delete when no fileId provided', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      const deleteSpy = vi.spyOn(apiClient, 'delete')
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
-        payload: { action: 'deleteFile' }
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(deleteSpy).not.toHaveBeenCalled()
     })
   })
 
@@ -850,7 +621,7 @@ describe('#samplingPlanUploadController', () => {
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { action: 'saveAndContinue' }
+        payload: {}
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -908,11 +679,10 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('data-testid="status-message"')
     })
 
-    test('saves Clean scanStatus and redirects when processingStatus is validated', async () => {
+    test('saves Clean scanStatus and redirects to the results page', async () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
-        processingStatus: 'validated',
         form: {
           file: {
             filename: 'plan.pdf',
@@ -932,7 +702,7 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        `/accreditation/sampling-plan/${APPLICATION_ID}`
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       )
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/files'),
@@ -940,11 +710,10 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
-    test('saves Infected scanStatus when processingStatus is rejected', async () => {
+    test('saves Infected scanStatus and redirects to results with the shared failure flag', async () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
-        processingStatus: 'rejected',
         form: {
           file: {
             filename: 'virus.pdf',
@@ -956,16 +725,582 @@ describe('#samplingPlanUploadController', () => {
       })
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
-      await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
         headers: { ...operatorHeaders, Cookie: cookie }
       })
 
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
+      )
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/files'),
         expect.objectContaining({ scanStatus: 'Infected' })
       )
+    })
+
+    test('redirects to results with the shared failure flag when CDP reports a form error, without saving a file', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'preprocessing',
+        form: {
+          file: {
+            hasError: true
+          }
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post')
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
+      )
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('uploading multiple files via the "Upload another file" loop', () => {
+    const boundary = 'test-boundary-loop'
+    const multipartContentType = `multipart/form-data; boundary=${boundary}`
+
+    function buildFilePayload(filename) {
+      const CRLF = '\r\n'
+      return Buffer.concat([
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="action"${CRLF}${CRLF}uploadFile${CRLF}`
+        ),
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="file"; filename="${filename}"${CRLF}` +
+            `Content-Type: application/pdf${CRLF}${CRLF}`
+        ),
+        Buffer.from('file-content'),
+        Buffer.from(`${CRLF}--${boundary}--${CRLF}`)
+      ])
+    }
+
+    async function uploadOneFile({ currentFiles, filename, fileId }) {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: { sectionStatus: 'InProgress', files: currentFiles }
+        })
+      )
+      const uploadResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildFilePayload(filename)
+      })
+      const raw = uploadResponse.headers['set-cookie']
+      const cookie = Array.isArray(raw)
+        ? raw[0].split(';')[0]
+        : raw.split(';')[0]
+
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        form: {
+          file: {
+            filename,
+            contentType: 'application/pdf',
+            fileId,
+            fileStatus: 'complete'
+          }
+        }
+      })
+      const addFileSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const statusResponse = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      return { statusResponse, addFileSpy }
+    }
+
+    test('lets a second file be uploaded from the results page without losing the first', async () => {
+      const first = await uploadOneFile({
+        currentFiles: [],
+        filename: 'first.pdf',
+        fileId: 'file-first'
+      })
+      expect(first.statusResponse.headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results`
+      )
+      expect(first.addFileSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ filename: 'first.pdf' })
+      )
+
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ fileId: 'file-first', filename: 'first.pdf' })]
+          }
+        })
+      )
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('first.pdf')
+      expect(result).toContain(
+        `href="/accreditation/sampling-plan/${APPLICATION_ID}"`
+      )
+
+      const second = await uploadOneFile({
+        currentFiles: [
+          makeFile({ fileId: 'file-first', filename: 'first.pdf' })
+        ],
+        filename: 'second.pdf',
+        fileId: 'file-second'
+      })
+      expect(second.statusResponse.headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results`
+      )
+      expect(second.addFileSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ filename: 'second.pdf' })
+      )
+
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [
+              makeFile({ fileId: 'file-first', filename: 'first.pdf' }),
+              makeFile({ fileId: 'file-second', filename: 'second.pdf' })
+            ]
+          }
+        })
+      )
+      const finalResults = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+      expect(finalResults.result).toContain('first.pdf')
+      expect(finalResults.result).toContain('second.pdf')
+    })
+  })
+
+  describe('GET /accreditation/sampling-plan/{applicationId}/results', () => {
+    test('redirects to the upload page when there are no files and no failure flag', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the results page listing uploaded files without a Status column', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Clean' })]
+          }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="uploaded-files-table"')
+      expect(result).toContain('sampling-plan.pdf')
+      expect(result).not.toContain('data-testid="file-scan-status"')
+      expect(result).not.toContain('govuk-tag--green')
+      expect(result).not.toContain('govuk-tag--red')
+    })
+
+    test('excludes Infected files from the results table', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [
+              makeFile({
+                fileId: 'file-clean',
+                filename: 'clean.pdf',
+                scanStatus: 'Clean'
+              }),
+              makeFile({
+                fileId: 'file-infected',
+                filename: 'infected.pdf',
+                scanStatus: 'Infected'
+              })
+            ]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('clean.pdf')
+      expect(result).not.toContain('infected.pdf')
+    })
+
+    test('shows an error banner when redirected here after a failed upload/virus check, even with no files', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('problem uploading your file')
+    })
+
+    test('shows the same error message for a failed upload as for a failed virus check', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Infected' })]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('problem uploading your file')
+    })
+
+    test('upload-another-file link points to the upload page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile()]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        `href="/accreditation/sampling-plan/${APPLICATION_ID}"`
+      )
+    })
+
+    test('returns 500 with error when API fetch fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('redirects to query-task-list when application is Queried and sampling plan section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [makeFile()] }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+  })
+
+  describe('POST /accreditation/sampling-plan/{applicationId}/results — saveAndContinue', () => {
+    test('redirects to query-task-list when application is Queried and sampling plan section is not, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [] }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns 400 with error when no files uploaded', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'You must upload at least one file before continuing'
+      )
+    })
+
+    test('returns 400 when all files are Infected', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Infected' })]
+          }
+        })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'You must upload at least one file before continuing'
+      )
+    })
+
+    test('patches SectionStatus Completed and redirects to task list when eligible file exists', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Pending' })]
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { headers, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
+        { sectionStatus: 'Completed' }
+      )
+    })
+
+    test('returns 500 when patch fails on saveAndContinue', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile()]
+          }
+        })
+      )
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('Patch failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+  })
+
+  describe('POST /accreditation/sampling-plan/{applicationId}/results — saveAndComeLater', () => {
+    test('patches InProgress and redirects to task list when files exist', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'NotStarted',
+            files: [makeFile()]
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { headers, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndComeLater' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
+        { sectionStatus: 'InProgress' }
+      )
+    })
+
+    test('patches NotStarted when no files exist', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndComeLater' }
+      })
+
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/sampling-plan`),
+        { sectionStatus: 'NotStarted' }
+      )
+    })
+
+    test('returns 500 when patch fails on saveAndComeLater', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('Patch failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndComeLater' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+  })
+
+  describe('POST /accreditation/sampling-plan/{applicationId}/results — deleteFile', () => {
+    test('calls delete and redirects back to the results page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const deleteSpy = vi
+        .spyOn(apiClient, 'delete')
+        .mockResolvedValue(undefined)
+
+      const { headers, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'deleteFile', fileId: 'file-001' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results`
+      )
+      expect(deleteSpy).toHaveBeenCalledWith(
+        expect.stringContaining('file-001')
+      )
+    })
+
+    test('returns 500 when delete API fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(
+        new Error('Delete failed')
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'deleteFile', fileId: 'file-001' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('redirects without calling delete when no fileId provided', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const deleteSpy = vi.spyOn(apiClient, 'delete')
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'deleteFile' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(deleteSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('POST /accreditation/sampling-plan/{applicationId}/results — GET fetch failure', () => {
+    test('returns 500 when initial GET fails on any POST', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
     })
   })
 })
