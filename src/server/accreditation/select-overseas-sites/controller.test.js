@@ -32,7 +32,8 @@ const REGISTERED_SITE = {
   country: 'Chad',
   isEu: false,
   isOecd: false,
-  selected: false
+  selected: false,
+  operationCodes: ['R3', 'R12']
 }
 
 const NEW_SITE = {
@@ -475,6 +476,33 @@ describe('#selectOverseasSitesController', () => {
       expect(headers.location).toBe(
         `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
       )
+    })
+
+    test("re-populates all of the site's existing R-codes as checked on recycling-operation-details", async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      function cookieHeaderFrom(response, fallback) {
+        const raw = response.headers['set-cookie']
+        if (!raw) return fallback
+        return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+      }
+
+      const promoteResponse = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
+        headers: operatorHeaders
+      })
+      expect(promoteResponse.statusCode).toBe(statusCodes.redirect)
+      const sessionCookie = cookieHeaderFrom(promoteResponse, '')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toMatch(/value="R3"\s+checked/)
+      expect(result).toMatch(/value="R12"\s+checked/)
     })
   })
 
