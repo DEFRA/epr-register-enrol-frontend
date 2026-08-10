@@ -234,6 +234,13 @@ export const config = convict({
   },
   auth: {
     stubEnabled: {
+      // Reads process.env directly rather than the validated `environment`
+      // key above: convict builds this schema as a single object literal, so
+      // `environment` isn't materialized into a queryable config yet at this
+      // point — config.get('environment') doesn't exist until after convict()
+      // returns. This only affects the *default* though; enforcement (below,
+      // after config.validate()) reads both values via config.get(), fully
+      // validated.
       doc: 'Enable stub auth (bypasses real OAuth). Defaults true for non-prod.',
       format: Boolean,
       default: process.env.ENVIRONMENT !== 'prod',
@@ -350,6 +357,17 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
+// Production hardening: refuse to boot with stub auth enabled when
+// ENVIRONMENT=prod. The stub auth provider auto-authenticates every
+// request as a fixed test user and bypasses real OAuth — it must never
+// be reachable in the real production tier. Gated on the validated
+// `environment` enum, not NODE_ENV/isProduction: deployed non-prod tiers
+// (dev/test/ext-test) legitimately run with NODE_ENV=production and
+// AUTH_STUB_ENABLED=true, and that must keep working.
+if (config.get('environment') === 'prod' && config.get('auth.stubEnabled')) {
+  throw new Error(
+    'AUTH_STUB_ENABLED must be false when ENVIRONMENT=prod. The stub auth ' +
+      'provider bypasses real OAuth and auto-authenticates every request.'
 // Production hardening: refuse to boot with the placeholder session
 // cookie password. convict only validates length, not that the operator
 // supplied a unique secret — a missing SESSION_COOKIE_PASSWORD in a
