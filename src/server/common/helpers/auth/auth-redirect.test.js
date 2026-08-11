@@ -301,16 +301,22 @@ describe('#redirectToLogin', () => {
       // Follow the redirect chain exactly as a browser would: GET the stub
       // chooser with the rt query string still attached, which is what
       // confirms the stash (see confirmPostLoginRedirect) before it can be
-      // consumed.
-      const chooserUrl = loginRedirect.headers.location.replace(
-        '/auth/operator/login',
-        '/auth/stub/login?type=operator'
-      )
+      // consumed. Built via URL/searchParams rather than string
+      // concatenation, since the location already carries its own `?rt=`
+      // — naively appending `?type=operator` would produce a second `?`
+      // that hapi parses as part of the `type` value, silently skipping
+      // confirmPostLoginRedirect and leaving this path uncovered.
+      const rtUrl = new URL(loginRedirect.headers.location, 'http://localhost')
+      const chooserUrl = new URL('/auth/stub/login', 'http://localhost')
+      chooserUrl.searchParams.set('type', 'operator')
+      chooserUrl.searchParams.set('rt', rtUrl.searchParams.get('rt'))
+
       const chooserPage = await server.inject({
         method: 'GET',
-        url: chooserUrl,
+        url: chooserUrl.pathname + chooserUrl.search,
         headers: { cookie: cookieHeader(cookies) }
       })
+      expect(chooserPage.statusCode).toBe(statusCodes.ok)
       cookies = { ...cookies, ...extractCookies(chooserPage.headers) }
 
       const stubLogin = await server.inject({
