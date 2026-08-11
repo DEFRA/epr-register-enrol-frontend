@@ -34,24 +34,38 @@ function makeApplication(overrides = {}) {
 }
 
 describe('#buildQueryTaskListViewModel', () => {
-  test('filters tasks to only Queried sections', () => {
+  test('renders all sections, unlocking only the Queried one', () => {
     const vm = buildQueryTaskListViewModel(makeApplication(), t)
 
-    expect(vm.tasks).toHaveLength(1)
-    expect(vm.tasks[0].testId).toBe('task-business-plan')
-    expect(vm.tasks[0].statusTagText).toBe('QUERIED')
-    expect(vm.tasks[0].locked).toBe(false)
+    expect(vm.tasks).toHaveLength(3)
+
+    const businessPlan = vm.tasks.find((t) => t.testId === 'task-business-plan')
+    expect(businessPlan.statusTagText).toBe('QUERIED')
+    expect(businessPlan.locked).toBe(false)
+    expect(businessPlan.url).toBe(
+      `/accreditation/business-plan/${APPLICATION_ID}`
+    )
+
+    const prns = vm.tasks.find((t) => t.testId === 'task-prns')
+    expect(prns.locked).toBe(true)
+    expect(prns.url).toBeNull()
+
+    const samplingPlan = vm.tasks.find((t) => t.testId === 'task-sampling-plan')
+    expect(samplingPlan.locked).toBe(true)
+    expect(samplingPlan.url).toBeNull()
   })
 
-  test('no Queried sections yields an empty task list', () => {
+  test('no Queried sections locks every task', () => {
     const vm = buildQueryTaskListViewModel(
       makeApplication({ businessPlan: { sectionStatus: 'Completed' } }),
       t
     )
-    expect(vm.tasks).toHaveLength(0)
+    expect(vm.tasks).toHaveLength(3)
+    expect(vm.tasks.every((task) => task.locked)).toBe(true)
+    expect(vm.tasks.every((task) => task.url === null)).toBe(true)
   })
 
-  test('multiple Queried sections are all included', () => {
+  test('multiple Queried sections are all unlocked', () => {
     const vm = buildQueryTaskListViewModel(
       makeApplication({
         prns: { sectionStatus: 'Queried' },
@@ -59,7 +73,12 @@ describe('#buildQueryTaskListViewModel', () => {
       }),
       t
     )
-    expect(vm.tasks).toHaveLength(2)
+    expect(vm.tasks).toHaveLength(3)
+    const unlocked = vm.tasks.filter((task) => !task.locked)
+    expect(unlocked.map((task) => task.testId).sort()).toEqual([
+      'task-business-plan',
+      'task-prns'
+    ])
   })
 
   test('exposes queryNote from application.query', () => {
@@ -202,6 +221,24 @@ describe('#queryTaskListGetController', () => {
     })
 
     expect(headers.location).not.toContain('undefined')
+  })
+
+  test('non-queried sections render as locked, read-only text with no link', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="task-prns-label"')
+    expect(result).not.toContain('data-testid="task-prns-link"')
+    expect(result).not.toContain(`/accreditation/tonnage/${APPLICATION_ID}`)
+    expect(result).toContain('data-testid="task-business-plan-link"')
+    expect(result).toContain(
+      `href="/accreditation/business-plan/${APPLICATION_ID}"`
+    )
   })
 
   test('renders all 5 task items for a Queried exporter application with every section queried', async () => {

@@ -2,6 +2,12 @@ import { accreditationApiService } from './accreditationApiService.js'
 
 export const WITHDRAWN_STATUS = 'Withdrawn'
 
+// RA-415: once a regulator decision is final (Approved/Rejected) or the
+// operator has withdrawn, the application is read-only end-to-end. The
+// backend's write endpoints reject edits on all three; this mirrors that set
+// on the frontend so navigation/UI defends the same boundary, not just the API.
+export const TERMINAL_STATUSES = new Set(['Withdrawn', 'Approved', 'Rejected'])
+
 // An application can only be withdrawn before a final regulator decision —
 // shared with accreditation/withdraw-application so the withdraw route and the
 // landing page can never disagree about which statuses are withdrawable.

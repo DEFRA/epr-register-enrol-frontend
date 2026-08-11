@@ -76,6 +76,7 @@
       "applicationDetailsHeading": "Application details",
       "periodLabel": "Period",
       "dueDateLabel": "Due date",
+      "dueDateNotAvailable": "Not yet available",
       "currentAccreditationHeading": "Current accreditation details",
       "accreditationNumberLabel": "Accreditation number",
       "regulatorLabel": "Regulator",
@@ -95,7 +96,7 @@
         "Queried": "QUERIED",
         "Updated": "UPDATED",
         "AwaitingDecision": "AWAITING DECISION",
-        "Approved": "APPROVED",
+        "Approved": "GRANTED",
         "Rejected": "REJECTED",
         "Withdrawn": "WITHDRAWN"
       },

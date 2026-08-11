@@ -40,7 +40,7 @@
           <tbody class="govuk-table__body">
             <tr class="govuk-table__row" data-testid="application-details-row">
               <td class="govuk-table__cell" data-testid="application-period">{{ accreditationYear }}</td>
-              <td class="govuk-table__cell" data-testid="application-due-date">{{ dueDate }}</td>
+              <td class="govuk-table__cell" data-testid="application-due-date">{{ (dueDate | formatDate) if dueDate else t('pages.operatorAccreditation.dueDateNotAvailable') }}</td>
               <td class="govuk-table__cell" data-testid="application-status">
                 <strong class="govuk-tag {{ statusTagClass }}" data-testid="status-tag">
                   {{ statusLabel }}

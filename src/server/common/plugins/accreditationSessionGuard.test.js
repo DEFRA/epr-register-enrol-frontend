@@ -4,7 +4,7 @@ import {
   shouldGuardPath,
   hasValidSession,
   hasOrganisationAccess,
-  isWithdrawnBlockedPath,
+  isEditRestrictedPath,
   fetchApplication,
   accreditationSessionGuard
 } from './accreditationSessionGuard.js'
@@ -49,33 +49,33 @@ describe('shouldGuardPath', () => {
   })
 })
 
-describe('isWithdrawnBlockedPath', () => {
+describe('isEditRestrictedPath', () => {
   test('blocks editable section routes', () => {
-    expect(isWithdrawnBlockedPath('/accreditation/task-list/abc')).toBe(true)
-    expect(isWithdrawnBlockedPath('/accreditation/tonnage/abc')).toBe(true)
-    expect(isWithdrawnBlockedPath('/cy/accreditation/business-plan/abc')).toBe(
+    expect(isEditRestrictedPath('/accreditation/task-list/abc')).toBe(true)
+    expect(isEditRestrictedPath('/accreditation/tonnage/abc')).toBe(true)
+    expect(isEditRestrictedPath('/cy/accreditation/business-plan/abc')).toBe(
       true
     )
   })
 
   test('allows the withdraw-application route itself', () => {
     expect(
-      isWithdrawnBlockedPath('/accreditation/withdraw-application/abc')
+      isEditRestrictedPath('/accreditation/withdraw-application/abc')
     ).toBe(false)
     expect(
-      isWithdrawnBlockedPath('/cy/accreditation/withdraw-application/abc')
+      isEditRestrictedPath('/cy/accreditation/withdraw-application/abc')
     ).toBe(false)
   })
 
   test('allows view-payment-details', () => {
     expect(
-      isWithdrawnBlockedPath('/accreditation/view-payment-details/abc')
+      isEditRestrictedPath('/accreditation/view-payment-details/abc')
     ).toBe(false)
   })
 
   test('returns false for paths with no matching segment', () => {
-    expect(isWithdrawnBlockedPath('/accreditation/')).toBe(false)
-    expect(isWithdrawnBlockedPath('/health')).toBe(false)
+    expect(isEditRestrictedPath('/accreditation/')).toBe(false)
+    expect(isEditRestrictedPath('/health')).toBe(false)
   })
 })
 
@@ -546,6 +546,68 @@ describe('accreditationSessionGuard plugin registration', () => {
     )
     expect(result).toBe('redirect')
   })
+
+  test.each(['Approved', 'Rejected'])(
+    'registered callback redirects to the landing page when the application is %s',
+    async (applicationStatus) => {
+      accreditationApiService.getApplication.mockResolvedValue({
+        organisationId: '50001',
+        registrationId: 'REG001',
+        materialType: 'Plastic',
+        year: 2027,
+        applicationStatus,
+        isExporter: false
+      })
+      const callback = registerAndGetCallback()
+      const h = makeH()
+      const result = await callback(
+        {
+          path: '/accreditation/tonnage/app-1',
+          yar: makeYarWithOrg('app-1', '50001'),
+          auth: {
+            credentials: {
+              userType: 'operator',
+              relationships: ['rel-1:50001:First Org']
+            }
+          }
+        },
+        h
+      )
+
+      expect(h.redirect).toHaveBeenCalledWith(
+        '/operator-accreditation/50001/REG001/Plastic/2027'
+      )
+      expect(result).toBe('redirect')
+    }
+  )
+
+  test.each(['Approved', 'Rejected'])(
+    'registered callback still fetches the application on withdraw-application (for the header), but does not redirect even when %s',
+    async (applicationStatus) => {
+      accreditationApiService.getApplication.mockResolvedValue({
+        applicationStatus,
+        isExporter: false
+      })
+      const callback = registerAndGetCallback()
+      const h = makeH()
+      const result = await callback(
+        {
+          path: '/accreditation/withdraw-application/app-1',
+          yar: makeYarWithOrg('app-1', '50001'),
+          auth: {
+            credentials: {
+              userType: 'operator',
+              relationships: ['rel-1:50001:First Org']
+            }
+          }
+        },
+        h
+      )
+
+      expect(h.redirect).not.toHaveBeenCalled()
+      expect(result).toBe(h.continue)
+    }
+  )
 
   test('registered callback resolves the application from the URL, not a stale session accreditationId', async () => {
     // Regression guard: the session's accreditationId is set once by the

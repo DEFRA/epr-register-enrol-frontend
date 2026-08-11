@@ -26,9 +26,13 @@
           {% for task in tasks %}
             <li class="govuk-task-list__item govuk-task-list__item--with-link" data-testid="{{ task.testId }}">
               <div class="govuk-task-list__name-and-hint">
-                <a class="govuk-link govuk-task-list__link" href="{{ task.url }}" data-testid="{{ task.testId }}-link">
-                  {{ task.label }}
-                </a>
+                {% if task.locked %}
+                  <span data-testid="{{ task.testId }}-label">{{ task.label }}</span>
+                {% else %}
+                  <a class="govuk-link govuk-task-list__link" href="{{ task.url }}" data-testid="{{ task.testId }}-link">
+                    {{ task.label }}
+                  </a>
+                {% endif %}
               </div>
               <div class="govuk-task-list__status" data-testid="{{ task.testId }}-status">
                 <strong class="govuk-tag {{ task.statusTagClass }}" data-testid="{{ task.testId }}-tag">

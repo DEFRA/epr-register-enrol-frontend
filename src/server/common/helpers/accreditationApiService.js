@@ -74,6 +74,13 @@ function normalizeBp(bp) {
   return { sectionStatus, items }
 }
 
+const UK_POSTCODE_REGEX = /[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}/i
+
+function extractPostcodeFromAddressString(address) {
+  const match = address?.match(UK_POSTCODE_REGEX)
+  return match ? match[0].toUpperCase().replace(/\s+/, ' ') : null
+}
+
 function normalizeApplication(item) {
   if (!item || typeof item !== 'object' || Array.isArray(item)) return item
   const sa = item.siteAddress
@@ -84,7 +91,11 @@ function normalizeApplication(item) {
         ? sa
         : null
   const sitePostcode =
-    sa && typeof sa === 'object' ? (sa.postcode ?? null) : null
+    sa && typeof sa === 'object'
+      ? (sa.postcode ?? null)
+      : typeof sa === 'string'
+        ? extractPostcodeFromAddressString(sa)
+        : null
   return {
     ...item,
     // item.id = internal UUID used in URLs; item.applicationId = human-readable ref (new schema)
@@ -133,7 +144,8 @@ function normalizeApplication(item) {
     samplingPlan: item.samplingPlan,
     overseasSites: item.overseasSites,
     besEvidence: item.besEvidence,
-    query: item.query ?? null
+    query: item.query ?? null,
+    dueDate: item.dueDate ?? null
   }
 }
 

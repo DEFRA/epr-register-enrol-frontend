@@ -1,5 +1,16 @@
 import { describe, test, expect } from 'vitest'
-import { selectApplicationForYear } from './accreditationSelection.js'
+import {
+  selectApplicationForYear,
+  TERMINAL_STATUSES
+} from './accreditationSelection.js'
+
+describe('#TERMINAL_STATUSES', () => {
+  test('covers exactly the three statuses a decision can no longer change', () => {
+    expect(TERMINAL_STATUSES).toEqual(
+      new Set(['Withdrawn', 'Approved', 'Rejected'])
+    )
+  })
+})
 
 const REGISTRATION_ID = 'REG001'
 const MATERIAL = 'Steel'

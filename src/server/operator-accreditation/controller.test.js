@@ -331,9 +331,20 @@ describe('#buildLandingViewModel', () => {
     expect(vm.pageHeading).toBe('reapplyHeading')
   })
 
-  test('dueDate is 30 September of the year before accreditationYear', () => {
+  test('dueDate is sourced from application.dueDate (CM SLA due date)', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ dueDate: '2026-09-30T00:00:00.000Z' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.dueDate).toBe('2026-09-30T00:00:00.000Z')
+  })
+
+  test('dueDate is null when the application has no linked CM work item', () => {
     const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
-    expect(vm.dueDate).toBe('30 September 2026')
+    expect(vm.dueDate).toBeNull()
   })
 
   test('currentAccreditation is null when the application has no organisation.accreditation', () => {
@@ -504,6 +515,21 @@ describe('#buildLandingViewModel', () => {
     expect(vm.showContinueLink).toBe(false)
     expect(vm.canWithdraw).toBe(false)
   })
+
+  test.each(['Approved', 'Rejected'])(
+    'a %s application offers no continue action (RA-415: application is terminal, so read-only)',
+    (applicationStatus) => {
+      const vm = buildLandingViewModel(
+        makeApp({ applicationStatus, organisationId: ORG_ID }),
+        'Org Name',
+        'siteAddr',
+        2027,
+        t
+      )
+
+      expect(vm.showContinueLink).toBe(false)
+    }
+  )
 })
 
 describe('#operatorAccreditationController', () => {
@@ -670,7 +696,10 @@ describe('#operatorAccreditationController', () => {
 
   test('renders Application details table with period, due date, status and continue link', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Started' })
+      makeApp({
+        applicationStatus: 'Started',
+        dueDate: '2026-09-30T00:00:00.000Z'
+      })
     ])
 
     const { result } = await server.inject({
@@ -682,9 +711,24 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('data-testid="application-details-table"')
     expect(result).toContain('data-testid="application-period"')
     expect(result).toContain('data-testid="application-due-date"')
-    expect(result).toContain('30 September 2025')
+    expect(result).toContain('30th September 2026')
     expect(result).toContain('data-testid="continue-button"')
     expect(result).toContain('/accreditation/task-list/app-id-001')
+  })
+
+  test('renders a fallback due date when the application has no linked CM work item', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue([
+      makeApp({ applicationStatus: 'Started', dueDate: null })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="application-due-date"')
+    expect(result).toContain('Not yet available')
   })
 
   test('does not render Current accreditation details when there is no prior organisation accreditation', async () => {

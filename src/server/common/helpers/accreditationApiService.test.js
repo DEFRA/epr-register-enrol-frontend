@@ -130,7 +130,7 @@ describe('accreditationApiService', () => {
       expect(result.siteAddress).toBe('UNIT 5, Bolton, BL4 7AQ')
     })
 
-    test('sitePostcode is null when siteAddress is a plain string', async () => {
+    test('sitePostcode is extracted from a plain-string siteAddress', async () => {
       apiClient.get.mockResolvedValue({
         siteAddress: 'North Road, Siteville, SI1 1AA'
       })
@@ -138,8 +138,30 @@ describe('accreditationApiService', () => {
         ORG_ID,
         APP_ID
       )
-      expect(result.sitePostcode).toBeNull()
+      expect(result.sitePostcode).toBe('SI1 1AA')
       expect(result.siteAddress).toBe('North Road, Siteville, SI1 1AA')
+    })
+
+    test('sitePostcode is extracted from a plain-string Scottish siteAddress', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: '12 Harbour Road, Aberdeen, AB11 5DQ'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('AB11 5DQ')
+    })
+
+    test('sitePostcode is null when a plain-string siteAddress has no recognisable postcode', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: 'North Road, Siteville'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBeNull()
     })
 
     test('sitePostcode is null when siteAddress is absent', async () => {

@@ -73,6 +73,7 @@
       "applicationDetailsHeading": "[Welsh] Application details",
       "periodLabel": "[Welsh] Period",
       "dueDateLabel": "[Welsh] Due date",
+      "dueDateNotAvailable": "[Welsh] Not yet available",
       "currentAccreditationHeading": "[Welsh] Current accreditation details",
       "accreditationNumberLabel": "[Welsh] Accreditation number",
       "regulatorLabel": "[Welsh] Regulator",
@@ -91,7 +92,7 @@
         "Queried": "[Welsh] QUERIED",
         "Updated": "[Welsh] UPDATED",
         "AwaitingDecision": "[Welsh] AWAITING DECISION",
-        "Approved": "[Welsh] APPROVED",
+        "Approved": "[Welsh] GRANTED",
         "Rejected": "[Welsh] REJECTED",
         "Withdrawn": "[Welsh] WITHDRAWN"
       },
