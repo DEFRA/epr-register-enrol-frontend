@@ -8,7 +8,10 @@ import {
   getDefraIdEndpoints
 } from '../common/helpers/auth/providers/defra-id.js'
 import { verifyDefraIdToken } from '../common/helpers/auth/providers/defra-id-token.js'
-import { popPostLoginRedirect } from '../common/helpers/auth/auth-redirect.js'
+import {
+  confirmPostLoginRedirect,
+  popPostLoginRedirect
+} from '../common/helpers/auth/auth-redirect.js'
 
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
@@ -35,6 +38,8 @@ function logWarn(request, msg, data) {
 // --- Login — redirect to provider ---
 
 export function regulatorLoginController(request, h) {
+  confirmPostLoginRedirect(request, 'regulator')
+
   const provider = getAzureEntraIdConfig(config)
   const state = randomToken()
   const nonce = randomToken()
@@ -60,6 +65,8 @@ export function regulatorLoginController(request, h) {
 }
 
 export async function operatorLoginController(request, h) {
+  confirmPostLoginRedirect(request, 'operator')
+
   const provider = getDefraIdConfig(config)
   const { authUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
   const state = crypto.randomUUID()

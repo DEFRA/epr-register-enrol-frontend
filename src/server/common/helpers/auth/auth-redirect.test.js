@@ -1,6 +1,10 @@
 import Boom from '@hapi/boom'
 import { vi } from 'vitest'
-import { redirectToLogin, popPostLoginRedirect } from './auth-redirect.js'
+import {
+  redirectToLogin,
+  confirmPostLoginRedirect,
+  popPostLoginRedirect
+} from './auth-redirect.js'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../constants/status-codes.js'
 import { requireRegulator, requireOperator } from './auth-scopes.js'
@@ -78,7 +82,7 @@ describe('#redirectToLogin', () => {
   })
 
   describe('post-login redirect stashing', () => {
-    test('stashes the originally requested GET URL, including query string', () => {
+    test('stashes the originally requested GET URL, including query string, with a nonce', () => {
       const yar = fakeYar()
       const h = mockH()
       redirectToLogin(
@@ -90,8 +94,27 @@ describe('#redirectToLogin', () => {
         }),
         h
       )
-      expect(yar.get('postLoginRedirectOperator')).toBe(
-        '/organisations/123?foo=bar'
+      const stashed = yar.get('postLoginRedirectOperator')
+      expect(stashed.target).toBe('/organisations/123?foo=bar')
+      expect(typeof stashed.nonce).toBe('string')
+      expect(stashed.nonce.length).toBeGreaterThan(0)
+    })
+
+    test('carries the nonce in the login redirect query string', () => {
+      const yar = fakeYar()
+      const h = mockH()
+      redirectToLogin(
+        mockRequest(401, ['operator'], {
+          method: 'get',
+          path: '/organisations/123',
+          url: { search: '' },
+          yar
+        }),
+        h
+      )
+      const stashed = yar.get('postLoginRedirectOperator')
+      expect(h.redirect).toHaveBeenCalledWith(
+        `/auth/operator/login?rt=${stashed.nonce}`
       )
     })
 
@@ -107,7 +130,7 @@ describe('#redirectToLogin', () => {
         }),
         h
       )
-      expect(yar.get('postLoginRedirectRegulator')).toBe('/cases/123')
+      expect(yar.get('postLoginRedirectRegulator').target).toBe('/cases/123')
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
 
@@ -142,10 +165,39 @@ describe('#redirectToLogin', () => {
     })
   })
 
+  describe('#confirmPostLoginRedirect', () => {
+    test('keeps the stash when the request carries the matching nonce', () => {
+      const yar = fakeYar()
+      yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
+      const request = { yar, query: { rt: 'n1' } }
+      confirmPostLoginRedirect(request, 'operator')
+      expect(yar.get('postLoginRedirectOperator')).toBeDefined()
+    })
+
+    test('drops the stash when the nonce is missing (a direct, unrelated visit)', () => {
+      const yar = fakeYar()
+      yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
+      const request = { yar, query: {} }
+      confirmPostLoginRedirect(request, 'operator')
+      expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
+    })
+
+    test('drops the stash when the nonce does not match', () => {
+      const yar = fakeYar()
+      yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
+      const request = { yar, query: { rt: 'wrong' } }
+      confirmPostLoginRedirect(request, 'operator')
+      expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
+    })
+  })
+
   describe('#popPostLoginRedirect', () => {
     test('returns and clears the stashed target for the given user type', () => {
       const yar = fakeYar()
-      yar.set('postLoginRedirectOperator', '/organisations/123')
+      yar.set('postLoginRedirectOperator', {
+        target: '/organisations/123',
+        nonce: 'n1'
+      })
       const request = { yar }
       expect(popPostLoginRedirect(request, 'operator', '/')).toBe(
         '/organisations/123'
@@ -155,7 +207,10 @@ describe('#redirectToLogin', () => {
 
     test('does not leak a target stashed for a different user type', () => {
       const yar = fakeYar()
-      yar.set('postLoginRedirectRegulator', '/cases/123')
+      yar.set('postLoginRedirectRegulator', {
+        target: '/cases/123',
+        nonce: 'n1'
+      })
       const request = { yar }
       expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
     })
@@ -167,7 +222,10 @@ describe('#redirectToLogin', () => {
 
     test('returns the fallback for a protocol-relative stashed value (open-redirect guard)', () => {
       const yar = fakeYar()
-      yar.set('postLoginRedirectOperator', '//evil.example')
+      yar.set('postLoginRedirectOperator', {
+        target: '//evil.example',
+        nonce: 'n1'
+      })
       const request = { yar }
       expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
     })
@@ -211,9 +269,19 @@ describe('#redirectToLogin', () => {
       await server.stop({ timeout: 0 })
     })
 
-    function extractCookie(headers) {
-      return (headers['set-cookie'] ?? [])
-        .map((c) => c.split(';')[0])
+    function extractCookies(headers) {
+      const cookies = {}
+      for (const header of headers['set-cookie'] ?? []) {
+        const [pair] = header.split(';')
+        const [key, value] = pair.split('=')
+        cookies[key] = value
+      }
+      return cookies
+    }
+
+    function cookieHeader(cookies) {
+      return Object.entries(cookies)
+        .map(([key, value]) => `${key}=${value}`)
         .join('; ')
     }
 
@@ -223,15 +291,32 @@ describe('#redirectToLogin', () => {
         url: '/test-requires-login?foo=bar'
       })
       expect(loginRedirect.statusCode).toBe(statusCodes.redirect)
-      expect(loginRedirect.headers.location).toBe('/auth/operator/login')
+      expect(loginRedirect.headers.location).toMatch(
+        /^\/auth\/operator\/login\?rt=/
+      )
 
-      const cookie = extractCookie(loginRedirect.headers)
-      expect(cookie).toContain('session=')
+      let cookies = extractCookies(loginRedirect.headers)
+      expect(cookies.session).toBeTruthy()
+
+      // Follow the redirect chain exactly as a browser would: GET the stub
+      // chooser with the rt query string still attached, which is what
+      // confirms the stash (see confirmPostLoginRedirect) before it can be
+      // consumed.
+      const chooserUrl = loginRedirect.headers.location.replace(
+        '/auth/operator/login',
+        '/auth/stub/login?type=operator'
+      )
+      const chooserPage = await server.inject({
+        method: 'GET',
+        url: chooserUrl,
+        headers: { cookie: cookieHeader(cookies) }
+      })
+      cookies = { ...cookies, ...extractCookies(chooserPage.headers) }
 
       const stubLogin = await server.inject({
         method: 'POST',
         url: '/auth/stub/login',
-        headers: { cookie },
+        headers: { cookie: cookieHeader(cookies) },
         payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
       })
 
@@ -250,20 +335,57 @@ describe('#redirectToLogin', () => {
       expect(stubLogin.headers.location).toBe('/')
     })
 
+    // Regression guard for the exact bug this caught in CI: a user is
+    // bounced to login from a page they never actually sign in from (they
+    // abandon it), then *separately* logs in later in the same browser
+    // session — e.g. by navigating straight to /auth/operator/login. That
+    // unrelated login must not silently resume the abandoned one.
+    test('does not replay a stash from an abandoned login into a later, unrelated one', async () => {
+      const loginRedirect = await server.inject({
+        method: 'GET',
+        url: '/test-requires-login?foo=bar'
+      })
+      const cookies = extractCookies(loginRedirect.headers)
+
+      // The user never follows the rt-bearing redirect above — instead they
+      // (or a later, separate action) land on the login page directly, with
+      // no rt in the query string.
+      const chooserPage = await server.inject({
+        method: 'GET',
+        url: '/auth/stub/login?type=operator',
+        headers: { cookie: cookieHeader(cookies) }
+      })
+      const mergedCookies = {
+        ...cookies,
+        ...extractCookies(chooserPage.headers)
+      }
+
+      const stubLogin = await server.inject({
+        method: 'POST',
+        url: '/auth/stub/login',
+        headers: { cookie: cookieHeader(mergedCookies) },
+        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
+      })
+
+      expect(stubLogin.headers.location).toBe('/')
+    })
+
     test('does not replay a regulator-scoped stash into an operator login', async () => {
       const loginRedirect = await server.inject({
         method: 'GET',
         url: '/test-redirect-regulator?scope=1'
       })
-      expect(loginRedirect.headers.location).toBe('/auth/regulator/login')
-      const cookie = extractCookie(loginRedirect.headers)
+      expect(loginRedirect.headers.location).toMatch(
+        /^\/auth\/regulator\/login\?rt=/
+      )
+      const cookies = extractCookies(loginRedirect.headers)
 
       // Same session, but the user completes login as an operator instead —
       // must land on the operator default, not the stashed regulator path.
       const stubLogin = await server.inject({
         method: 'POST',
         url: '/auth/stub/login',
-        headers: { cookie },
+        headers: { cookie: cookieHeader(cookies) },
         payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
       })
 

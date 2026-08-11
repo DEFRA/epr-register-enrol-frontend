@@ -53,7 +53,7 @@
       {% if defraIdConfigured %}
         <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
         <h2 class="govuk-heading-m">Or sign in with a real account</h2>
-        <a href="/auth/operator/defra-id" class="govuk-button govuk-button--secondary" data-testid="defra-id-login">
+        <a href="/auth/operator/defra-id{{ '?rt=' + rt if rt }}" class="govuk-button govuk-button--secondary" data-testid="defra-id-login">
           Sign in with Defra ID
         </a>
       {% endif %}
@@ -61,7 +61,7 @@
       {% if entraIdConfigured %}
         <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
         <h2 class="govuk-heading-m">Or sign in with a real account</h2>
-        <a href="/auth/regulator/entra-id" class="govuk-button govuk-button--secondary" data-testid="entra-id-login">
+        <a href="/auth/regulator/entra-id{{ '?rt=' + rt if rt }}" class="govuk-button govuk-button--secondary" data-testid="entra-id-login">
           Sign in with Entra ID
         </a>
       {% endif %}

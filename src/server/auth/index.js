@@ -22,18 +22,25 @@ export const authRoutes = {
       })
 
       if (stubEnabled) {
+        const stubChooserRedirect = (type) => (request, h) => {
+          const rt = request.query.rt
+          return h.redirect(
+            `/auth/stub/login?type=${type}${rt ? `&rt=${encodeURIComponent(rt)}` : ''}`
+          )
+        }
+
         server.route([
           {
             method: 'GET',
             path: '/auth/regulator/login',
             options: { auth: false },
-            handler: (_, h) => h.redirect('/auth/stub/login?type=regulator')
+            handler: stubChooserRedirect('regulator')
           },
           {
             method: 'GET',
             path: '/auth/operator/login',
             options: { auth: false },
-            handler: (_, h) => h.redirect('/auth/stub/login?type=operator')
+            handler: stubChooserRedirect('operator')
           }
         ])
 

@@ -3,7 +3,10 @@ import {
   STUB_OPERATOR_RELATIONSHIPS,
   STUB_OPERATOR_CURRENT_RELATIONSHIP_ID
 } from '../../common/stub-operator-orgs.js'
-import { popPostLoginRedirect } from '../../common/helpers/auth/auth-redirect.js'
+import {
+  confirmPostLoginRedirect,
+  popPostLoginRedirect
+} from '../../common/helpers/auth/auth-redirect.js'
 
 export const STUB_USERS = {
   regulator: [
@@ -33,10 +36,15 @@ export const STUB_USERS = {
 export function stubLoginGetController(request, h) {
   const type = request.query.type
   const users = STUB_USERS[type]
+  const rt = request.query.rt
 
   if (!users) {
-    return h.redirect('/auth/stub/login?type=regulator')
+    return h.redirect(
+      `/auth/stub/login?type=regulator${rt ? `&rt=${encodeURIComponent(rt)}` : ''}`
+    )
   }
+
+  confirmPostLoginRedirect(request, type)
 
   const defraIdConfigured =
     type === 'operator' &&
@@ -56,7 +64,8 @@ export function stubLoginGetController(request, h) {
     type,
     users,
     defraIdConfigured,
-    entraIdConfigured
+    entraIdConfigured,
+    rt: rt ?? ''
   })
 }
 
