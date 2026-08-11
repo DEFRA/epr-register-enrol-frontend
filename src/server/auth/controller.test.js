@@ -164,7 +164,9 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toMatch(/^\/auth\/(operator|regulator)\/login$/)
+      expect(headers.location).toMatch(
+        /^\/auth\/(operator|regulator)\/login(\?rt=.+)?$/
+      )
     }
   )
 })

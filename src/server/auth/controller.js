@@ -8,6 +8,10 @@ import {
   getDefraIdEndpoints
 } from '../common/helpers/auth/providers/defra-id.js'
 import { verifyDefraIdToken } from '../common/helpers/auth/providers/defra-id-token.js'
+import {
+  confirmPostLoginRedirect,
+  popPostLoginRedirect
+} from '../common/helpers/auth/auth-redirect.js'
 
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
@@ -34,6 +38,8 @@ function logWarn(request, msg, data) {
 // --- Login — redirect to provider ---
 
 export function regulatorLoginController(request, h) {
+  confirmPostLoginRedirect(request, 'regulator')
+
   const provider = getAzureEntraIdConfig(config)
   const state = randomToken()
   const nonce = randomToken()
@@ -59,6 +65,8 @@ export function regulatorLoginController(request, h) {
 }
 
 export async function operatorLoginController(request, h) {
+  confirmPostLoginRedirect(request, 'operator')
+
   const provider = getDefraIdConfig(config)
   const { authUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
   const state = crypto.randomUUID()
@@ -168,9 +176,10 @@ export async function regulatorCallbackController(request, h) {
     userType: 'regulator'
   }
 
+  const redirectTo = popPostLoginRedirect(request, 'regulator', '/')
   request.yar.reset()
   request.yar.set('user', user)
-  return h.redirect('/')
+  return h.redirect(redirectTo)
 }
 
 export async function operatorCallbackController(request, h) {
@@ -263,10 +272,12 @@ export async function operatorCallbackController(request, h) {
     userType: 'operator'
   }
 
+  const redirectTo = popPostLoginRedirect(request, 'operator', '/')
+
   // Store the raw id_token so it can be passed as id_token_hint during logout.
   request.yar.set('idToken', idToken)
   request.yar.set('user', user)
-  return h.redirect('/')
+  return h.redirect(redirectTo)
 }
 
 // --- Logout ---
