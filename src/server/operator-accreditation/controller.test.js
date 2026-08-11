@@ -106,6 +106,17 @@ describe('#buildLandingViewModel', () => {
     expect(vm.statusTagClass).toBe('govuk-tag--turquoise')
   })
 
+  test('AwaitingDecision maps to purple tag', () => {
+    const vm = buildLandingViewModel(
+      makeApp({ applicationStatus: 'AwaitingDecision' }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+    expect(vm.statusTagClass).toBe('govuk-tag--purple')
+  })
+
   test('Approved maps to green tag', () => {
     const vm = buildLandingViewModel(
       makeApp({ applicationStatus: 'Approved' }),
@@ -181,6 +192,7 @@ describe('#buildLandingViewModel', () => {
     ['Submitted', true],
     ['Queried', true],
     ['Updated', true],
+    ['AwaitingDecision', true],
     ['Approved', false],
     ['Withdrawn', false],
     ['Cancelled', false],
@@ -465,6 +477,7 @@ describe('#buildLandingViewModel', () => {
     'DulyMade',
     'Queried',
     'Updated',
+    'AwaitingDecision',
     'Approved',
     'Rejected'
   ])('startNewUrl is null when application status is %s', (status) => {
