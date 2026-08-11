@@ -277,19 +277,27 @@
       }
     },
     "samplingPlanUpload": {
-      "title": "Upload sampling and inspection plan - part 2",
-      "heading": "Upload sampling and inspection plan - part 2",
+      "title": "Upload sampling and inspection plan",
+      "heading": "Upload sampling and inspection plan",
       "requirements": {
         "intro": "The file(s) must be:",
         "maxSize": "no more than 20MB each",
         "fileTypes": "one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
+      "youNeedToUploadAPlan": "You need to upload a plan that explains how you determine the amount of UK packaging waste received for recycling at this site. The plan must use the correct ",
+      "planLinkText": "sampling and inspection plan template (opens in new tab).",
+      "uploadAFile": "Upload a file",
+      "fileRequriements": "Only PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG files are allowed and they must be smaller than 20MB.",
+      "noFileChosen": "No file chosen",
+      "orDropFile": "or drop a file here",
+      "chooseFile": "Choose file",
       "uploadedFilesHeading": "Uploaded files",
       "resultsTitle": "Uploaded files",
       "viewUploadedFiles": "View uploaded files ({count})",
       "uploadAnotherFile": "Upload another file",
       "fileLabel": "Choose a file to upload",
       "documentTypeLabel": "Document type",
+      "documentTypeDefault": "Select a document type",
       "documentType": {
         "samplingPlan": "Sampling and inspection plan",
         "supportingEvidence": "Supporting evidence",

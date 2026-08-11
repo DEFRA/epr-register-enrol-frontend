@@ -204,7 +204,8 @@ export const STUB_ORG_DOCS = [
               filename: 'code-nightmare-green.pdf',
               uploadedAt: '2026-11-01T12:00:00Z',
               uploadedBy: 'Jane Doe',
-              scanStatus: 'Clean'
+              scanStatus: 'Clean',
+              documentType: 'SamplingPlan'
             }
           ]
         },
@@ -286,7 +287,8 @@ export const STUB_ORG_DOCS = [
               filename: 'code-nightmare-green.pdf',
               uploadedAt: '2026-11-01T12:00:00Z',
               uploadedBy: 'Jane Doe',
-              scanStatus: 'Clean'
+              scanStatus: 'Clean',
+              documentType: 'SamplingPlan'
             }
           ]
         },
@@ -368,7 +370,8 @@ export const STUB_ORG_DOCS = [
               filename: 'code5-nightmare-green.pdf',
               uploadedAt: '2026-11-01T12:00:00Z',
               uploadedBy: 'Jane Doe',
-              scanStatus: 'Clean'
+              scanStatus: 'Clean',
+              documentType: 'SamplingPlan'
             }
           ]
         },
@@ -453,7 +456,8 @@ export const STUB_ORG_DOCS = [
               filename: 'sampling-plan-glass.pdf',
               uploadedAt: '2026-12-01T10:00:00Z',
               uploadedBy: 'Alice Green',
-              scanStatus: 'Clean'
+              scanStatus: 'Clean',
+              documentType: 'SamplingPlan'
             }
           ]
         },
@@ -569,7 +573,8 @@ export const STUB_ORG_DOCS = [
               filename: 'sampling-plan-steel.pdf',
               uploadedAt: '2026-12-01T10:00:00Z',
               uploadedBy: 'Alice Iron',
-              scanStatus: 'Clean'
+              scanStatus: 'Clean',
+              documentType: 'SamplingPlan'
             }
           ]
         },
@@ -699,7 +704,8 @@ export const STUB_ORG_DOCS = [
               filename: 'sampling-plan-plastic_2026.pdf',
               uploadedAt: '2026-12-01T10:00:00Z',
               uploadedBy: 'Nygel London',
-              scanStatus: 'Clean'
+              scanStatus: 'Clean',
+              documentType: 'SamplingPlan'
             }
           ]
         },

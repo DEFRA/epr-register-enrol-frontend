@@ -262,28 +262,10 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="page-heading"')
-      expect(result).toContain(
-        'Upload sampling and inspection plan - part 2 - Steel'
-      )
+      expect(result).toContain('Upload sampling and inspection plan')
     })
 
-    test('appends the material type to the heading', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ materialType: 'Glass' })
-      )
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
-      })
-
-      expect(result).toContain(
-        'Upload sampling and inspection plan - part 2 - Glass'
-      )
-    })
-
-    test('renders file requirements list', async () => {
+    test('renders the enhanced file upload field with label, hint and testid', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -292,7 +274,9 @@ describe('#samplingPlanUploadController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="file-requirements"')
+      expect(result).toContain('data-testid="file-input"')
+      expect(result).toContain('data-module="govuk-file-upload"')
+      expect(result).toContain('Upload a file')
       expect(result).toContain('20MB')
       expect(result).toContain('PDF')
     })
@@ -309,6 +293,35 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('data-testid="document-type-input"')
       expect(result).toContain('Sampling and inspection plan')
       expect(result).toContain('Supporting evidence')
+    })
+
+    test('renders a non-blank default option for the document type select', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<option value="">Select a document type</option>'
+      )
+    })
+
+    test('continue form posts to the results endpoint', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        `action="/accreditation/sampling-plan/${APPLICATION_ID}/results"`
+      )
+      expect(result).toContain('data-testid="continue-form"')
     })
 
     test('never renders a files table on the upload page', async () => {

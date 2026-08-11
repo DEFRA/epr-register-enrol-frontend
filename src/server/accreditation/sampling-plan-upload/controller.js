@@ -125,6 +125,7 @@ export const samplingPlanUploadGetController = {
         heading: t('pages.samplingPlanUpload.heading'),
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        resultsLink: resultsUrl(applicationId),
         files: [],
         documentTypeOptions: documentTypeOptions(t),
         error: t('pages.samplingPlanUpload.validation.fetchError')
@@ -143,9 +144,7 @@ export const samplingPlanUploadGetController = {
       application.samplingPlan?.files,
       t
     ).length
-    const materialDisplay = t(
-      `pages.materialSelection.materials.${application.materialType}`
-    )
+
     const queryNote =
       application.applicationStatus === 'Queried'
         ? (application.query?.queryNote ?? null)
@@ -153,7 +152,7 @@ export const samplingPlanUploadGetController = {
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
-      heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
+      heading: `${t('pages.samplingPlanUpload.heading')}`,
       backLink: taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files,
@@ -196,6 +195,7 @@ export const samplingPlanUploadPostController = {
         heading: t('pages.samplingPlanUpload.heading'),
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
+        resultsLink: resultsUrl(applicationId),
         files: [],
         documentTypeOptions: documentTypeOptions(t),
         error: t('pages.samplingPlanUpload.validation.fetchError')

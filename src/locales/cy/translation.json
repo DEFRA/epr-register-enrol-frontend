@@ -274,19 +274,27 @@
       }
     },
     "samplingPlanUpload": {
-      "title": "[Welsh] Upload sampling and inspection plan - part 2",
-      "heading": "[Welsh] Upload sampling and inspection plan - part 2",
+      "title": "[Welsh] Upload sampling and inspection plan",
+      "heading": "[Welsh] Upload sampling and inspection plan",
       "requirements": {
         "intro": "[Welsh] The file(s) must be:",
         "maxSize": "[Welsh] no more than 20MB each",
         "fileTypes": "[Welsh] one of these file types: PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG"
       },
+      "youNeedToUploadAPlan": "[Welsh] You need to upload a plan that explains how you determine the amount of UK packaging waste received for recycling at this site. The plan must use the correct ",
+      "planLinkText": "[Welsh] sampling and inspection plan template (opens in new tab).",
+      "uploadAFile": "[Welsh] Upload a file",
+      "fileRequriements": "[Welsh] Only PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG files are allowed and they must be smaller than 20MB.",
+      "noFileChosen": "[Welsh] No file chosen",
+      "orDropFile": "[Welsh] or drop a file here",
+      "chooseFile": "[Welsh] Choose file",
       "uploadedFilesHeading": "[Welsh] Uploaded files",
       "resultsTitle": "[Welsh] Uploaded files",
       "viewUploadedFiles": "[Welsh] View uploaded files ({count})",
       "uploadAnotherFile": "[Welsh] Upload another file",
       "fileLabel": "[Welsh] Choose a file to upload",
       "documentTypeLabel": "[Welsh] Document type",
+      "documentTypeDefault": "[Welsh] Select a document type",
       "documentType": {
         "samplingPlan": "[Welsh] Sampling and inspection plan",
         "supportingEvidence": "[Welsh] Supporting evidence",

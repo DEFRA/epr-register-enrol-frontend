@@ -41,7 +41,10 @@ export const config = convict({
   staticCacheTimeout: {
     doc: 'Static cache timeout in milliseconds',
     format: Number,
-    default: oneWeekMs,
+    // Dev builds reuse the same unhashed filename (javascripts/application.js) on every
+    // rebuild, so a long cache here just makes browsers keep running stale JS after a
+    // change. Production assets are content-hashed, so a long cache is safe and desired there.
+    default: isProduction ? oneWeekMs : 0,
     env: 'STATIC_CACHE_TIMEOUT'
   },
   serviceName: {
