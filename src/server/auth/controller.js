@@ -8,6 +8,7 @@ import {
   getDefraIdEndpoints
 } from '../common/helpers/auth/providers/defra-id.js'
 import { verifyDefraIdToken } from '../common/helpers/auth/providers/defra-id-token.js'
+import { popPostLoginRedirect } from '../common/helpers/auth/auth-redirect.js'
 
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
@@ -168,9 +169,10 @@ export async function regulatorCallbackController(request, h) {
     userType: 'regulator'
   }
 
+  const redirectTo = popPostLoginRedirect(request, 'regulator', '/')
   request.yar.reset()
   request.yar.set('user', user)
-  return h.redirect('/')
+  return h.redirect(redirectTo)
 }
 
 export async function operatorCallbackController(request, h) {
@@ -263,10 +265,12 @@ export async function operatorCallbackController(request, h) {
     userType: 'operator'
   }
 
+  const redirectTo = popPostLoginRedirect(request, 'operator', '/')
+
   // Store the raw id_token so it can be passed as id_token_hint during logout.
   request.yar.set('idToken', idToken)
   request.yar.set('user', user)
-  return h.redirect('/')
+  return h.redirect(redirectTo)
 }
 
 // --- Logout ---

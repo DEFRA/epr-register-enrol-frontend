@@ -3,6 +3,7 @@ import {
   STUB_OPERATOR_RELATIONSHIPS,
   STUB_OPERATOR_CURRENT_RELATIONSHIP_ID
 } from '../../common/stub-operator-orgs.js'
+import { popPostLoginRedirect } from '../../common/helpers/auth/auth-redirect.js'
 
 export const STUB_USERS = {
   regulator: [
@@ -74,6 +75,7 @@ export async function stubLoginPostController(request, h) {
       .code(400)
   }
 
+  const redirectTo = popPostLoginRedirect(request, type, '/')
   request.yar.set('user', user)
-  return h.redirect('/')
+  return h.redirect(redirectTo)
 }
