@@ -31,6 +31,7 @@ const STATUS_CONFIG = {
   DulyMade: { tagClass: 'govuk-tag--turquoise' },
   Queried: { tagClass: 'govuk-tag--orange' },
   Updated: { tagClass: 'govuk-tag--turquoise' },
+  AwaitingDecision: { tagClass: 'govuk-tag--purple' },
   Approved: { tagClass: 'govuk-tag--green' },
   Rejected: { tagClass: 'govuk-tag--red' },
   Withdrawn: { tagClass: 'govuk-tag--grey' }

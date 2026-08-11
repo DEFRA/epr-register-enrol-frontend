@@ -136,6 +136,15 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.isSubmitted).toBe(true)
   })
 
+  test('applicationStatus AwaitingDecision — isSubmitted true', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'AwaitingDecision' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(true)
+  })
+
   test('viewPaymentDetailsLink contains applicationId', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
 

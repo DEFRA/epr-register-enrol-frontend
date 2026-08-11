@@ -94,6 +94,7 @@
         "DulyMade": "DULY MADE",
         "Queried": "QUERIED",
         "Updated": "UPDATED",
+        "AwaitingDecision": "AWAITING DECISION",
         "Approved": "APPROVED",
         "Rejected": "REJECTED",
         "Withdrawn": "WITHDRAWN"
