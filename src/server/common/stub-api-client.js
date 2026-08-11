@@ -166,7 +166,11 @@ export const STUB_ORG_DOCS = [
           sectionStatus: 'Completed',
           plannedIssuance: 'UpTo1000',
           signatories: [
-            { fullName: 'Jane Doe', email: 'jane@deltagreen.co.uk' }
+            {
+              fullName: 'Jane Doe',
+              email: 'jane@deltagreen.co.uk',
+              isNew: false
+            }
           ]
         },
         businessPlan: {
@@ -248,7 +252,11 @@ export const STUB_ORG_DOCS = [
           sectionStatus: 'Completed',
           plannedIssuance: 'UpTo1000',
           signatories: [
-            { fullName: 'Jane Doe', email: 'jane@deltagreen.co.uk' }
+            {
+              fullName: 'Jane Doe',
+              email: 'jane@deltagreen.co.uk',
+              isNew: false
+            }
           ]
         },
         businessPlan: {
@@ -431,7 +439,16 @@ export const STUB_ORG_DOCS = [
           sectionStatus: 'Completed',
           plannedIssuance: 'UpTo10000',
           signatories: [
-            { fullName: 'Alice Green', email: 'alice@globalglassexp.co.uk' }
+            {
+              fullName: 'Alice Green',
+              email: 'alice@globalglassexp.co.uk',
+              isNew: false
+            },
+            {
+              fullName: 'Mark Fielding',
+              email: 'mark@globalglassexp.co.uk',
+              isNew: true
+            }
           ]
         },
         businessPlan: {
@@ -547,7 +564,11 @@ export const STUB_ORG_DOCS = [
           sectionStatus: 'NotStarted',
           plannedIssuance: 'UpTo10000',
           signatories: [
-            { fullName: 'Alice Iron', email: 'alice@globalsteelexp.co.uk' }
+            {
+              fullName: 'Alice Iron',
+              email: 'alice@globalsteelexp.co.uk',
+              isNew: false
+            }
           ]
         },
         businessPlan: {
@@ -678,7 +699,13 @@ export const STUB_ORG_DOCS = [
         prnIssuance: {
           sectionStatus: 'NotStarted',
           plannedIssuance: 'UpTo10000',
-          signatories: [{ fullName: 'Paul Stick', email: 'paul@plastic.co.uk' }]
+          signatories: [
+            {
+              fullName: 'Paul Stick',
+              email: 'paul@plastic.co.uk',
+              isNew: false
+            }
+          ]
         },
         businessPlan: {
           sectionStatus: 'NotStarted',
