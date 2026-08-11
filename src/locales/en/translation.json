@@ -290,6 +290,12 @@
       "viewUploadedFiles": "View uploaded files ({count})",
       "uploadAnotherFile": "Upload another file",
       "fileLabel": "Choose a file to upload",
+      "documentTypeLabel": "Document type",
+      "documentType": {
+        "samplingPlan": "Sampling and inspection plan",
+        "supportingEvidence": "Supporting evidence",
+        "notSpecified": "Not specified"
+      },
       "uploadButton": "Upload file",
       "deleteFile": "Remove",
       "saveAndContinue": "Save and continue",
@@ -297,17 +303,18 @@
       "table": {
         "filename": "Filename",
         "dateUploaded": "Upload date",
-        "uploadedBy": "Uploaded by",
+        "documentType": "Document type",
         "action": ""
       },
       "status": {
-        "title": "Uploading file",
-        "heading": "Uploading file",
-        "message": "Your file is being scanned for viruses. This may take a few seconds.",
-        "doNotClose": "Do not close this page."
+        "title": "Your file is being virus checked",
+        "heading": "Your file is being virus checked",
+        "message": "This may take a few minutes.",
+        "doNotClose": "Keep this page open and do not refresh it."
       },
       "validation": {
         "noFile": "Select a file to upload",
+        "noDocumentType": "Select a document type",
         "invalidType": "The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
         "fileTooLarge": "Cannot upload file. The file is larger than 20MB. Please use a smaller file, or split the file and upload supporting documents separately. You can upload up to 10 files.",
         "noCleanFile": "You must upload at least one file before continuing",
