@@ -984,6 +984,11 @@
         "overseasSites": "overseas reprocessing sites",
         "besEvidence": "evidence of broadly equivalent standards (BES)"
       }
+    },
+    "readOnlySection": {
+      "heading": "You cannot edit this section",
+      "body": "This section has already been completed and is not part of the regulator's query. Go back to the query task list to update the queried section.",
+      "backToQueryTaskList": "Back to query task list"
     }
   },
   "languageSwitcher": {

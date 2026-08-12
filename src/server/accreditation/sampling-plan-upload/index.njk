@@ -40,6 +40,15 @@
         </p>
       {% endif %}
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          <p class="govuk-body">
+            <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+            {{ t('common.readOnlySection.body') }}
+          </p>
+        </div>
+      {% else %}
+
       <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
@@ -86,6 +95,8 @@
           {{ t('pages.samplingPlanUpload.uploadButton') }}
         </button>
       </form>
+
+      {% endif %}
 
     </div>
   </div>

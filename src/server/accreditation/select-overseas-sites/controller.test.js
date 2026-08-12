@@ -385,12 +385,12 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('data-testid="interim-site-success-banner"')
     })
 
-    test('redirects to query-task-list when application is Queried and overseas sites section is not', async () => {
+    test('redirects to query-task-list when application is Queried and overseas sites section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
           overseasSites: {
-            sectionStatus: 'Completed',
+            sectionStatus: 'NotStarted',
             sites: [{ siteId: 900001, siteName: 'Site Alpha' }]
           }
         })
@@ -405,6 +405,35 @@ describe('#selectOverseasSitesController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders read-only, without remove/add/continue actions, when application is Queried and overseas sites section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: {
+            sectionStatus: 'Completed',
+            sites: [{ siteId: 900001, siteName: 'Site Alpha' }]
+          }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain('data-testid="continue-form"')
+      expect(result).not.toContain(
+        'data-testid="remove-button-accredited-900001"'
+      )
+      expect(result).not.toContain('data-testid="add-new-ors-button"')
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
       )
     })
 

@@ -3,6 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 import {
   resetAddOrsSession,
   setAddOrsSession
@@ -78,7 +79,9 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     })),
     newSites: sections.newSites,
     registeredSitesAddedSites: sections.registeredSitesAdded,
-    backLink: taskListUrl(applicationId),
+    backLink: banners.readOnly
+      ? queryTaskListUrl(applicationId)
+      : taskListUrl(applicationId),
     addOrsUrl: addOrsUrl(applicationId),
     successBanner: banners.successBanner ?? false,
     error,
@@ -86,7 +89,8 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
     promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
     querySummary: banners.querySummary ?? null,
-    regulatorQueryFields: banners.regulatorQueryFields ?? null
+    regulatorQueryFields: banners.regulatorQueryFields ?? null,
+    readOnly: banners.readOnly ?? false
   }
 }
 
@@ -127,10 +131,11 @@ export const selectOverseasSitesGetController = {
       request.yar.flash(ORS_PROMOTE_SUCCESS_FLASH) ?? []
     ).length
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.overseasSites?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.overseasSites?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
@@ -161,7 +166,8 @@ export const selectOverseasSitesGetController = {
                   href: '#accredited-sites'
                 }
               ]
-            : null
+            : null,
+          readOnly
         }
       )
     )

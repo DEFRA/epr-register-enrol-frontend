@@ -366,11 +366,11 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('redirects to query-task-list when application is Queried and BES evidence section is not', async () => {
+    test('redirects to query-task-list when application is Queried and BES evidence section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
-          besEvidence: { sectionStatus: 'Completed' }
+          besEvidence: { sectionStatus: 'NotStarted' }
         })
       )
 
@@ -383,6 +383,29 @@ describe('#uploadEvidenceListController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders read-only, without upload links, when application is Queried and BES evidence section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          besEvidence: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain('data-testid="continue-form"')
+      expect(result).not.toContain('data-testid="upload-link-900001"')
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
       )
     })
 

@@ -978,6 +978,11 @@
         "besEvidence": "[Welsh] evidence of broadly equivalent standards (BES)"
       }
     },
+    "readOnlySection": {
+      "heading": "[Welsh] You cannot edit this section",
+      "body": "[Welsh] This section has already been completed and is not part of the regulator's query. Go back to the query task list to update the queried section.",
+      "backToQueryTaskList": "[Welsh] Back to query task list"
+    },
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",
       "tryAgain": "Trio eto"

@@ -359,11 +359,11 @@ describe('#businessPlanController', () => {
       expect(result).not.toContain('PRN income')
     })
 
-    test('redirects to query-task-list when application is Queried and business plan section is not', async () => {
+    test('redirects to query-task-list when application is Queried and business plan section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
-          businessPlan: { sectionStatus: 'Completed' }
+          businessPlan: { sectionStatus: 'NotStarted' }
         })
       )
 
@@ -376,6 +376,29 @@ describe('#businessPlanController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the form read-only when application is Queried and business plan section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="save-come-back-button"')
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
       )
     })
 

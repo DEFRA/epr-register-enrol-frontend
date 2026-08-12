@@ -34,7 +34,7 @@ function makeApplication(overrides = {}) {
 }
 
 describe('#buildQueryTaskListViewModel', () => {
-  test('renders all sections, unlocking only the Queried one', () => {
+  test('the Queried section is unlocked and editable', () => {
     const vm = buildQueryTaskListViewModel(makeApplication(), t)
 
     expect(vm.tasks).toHaveLength(3)
@@ -42,12 +42,39 @@ describe('#buildQueryTaskListViewModel', () => {
     const businessPlan = vm.tasks.find((t) => t.testId === 'task-business-plan')
     expect(businessPlan.statusTagText).toBe('QUERIED')
     expect(businessPlan.locked).toBe(false)
+    expect(businessPlan.readOnly).toBe(false)
     expect(businessPlan.url).toBe(
       `/accreditation/business-plan/${APPLICATION_ID}`
     )
+  })
+
+  test('Completed/Submitted sections that are not the queried one are unlocked but read-only', () => {
+    const vm = buildQueryTaskListViewModel(makeApplication(), t)
 
     const prns = vm.tasks.find((t) => t.testId === 'task-prns')
+    expect(prns.locked).toBe(false)
+    expect(prns.readOnly).toBe(true)
+    expect(prns.url).toBe(`/accreditation/tonnage/${APPLICATION_ID}`)
+
+    const samplingPlan = vm.tasks.find((t) => t.testId === 'task-sampling-plan')
+    expect(samplingPlan.locked).toBe(false)
+    expect(samplingPlan.readOnly).toBe(true)
+    expect(samplingPlan.url).toBe(
+      `/accreditation/sampling-plan/${APPLICATION_ID}`
+    )
+  })
+
+  test('NotStarted/InProgress sections stay locked with no link', () => {
+    const vm = buildQueryTaskListViewModel(
+      makeApplication({
+        prns: { sectionStatus: 'NotStarted' },
+        samplingPlan: { sectionStatus: 'InProgress' }
+      }),
+      t
+    )
+    const prns = vm.tasks.find((t) => t.testId === 'task-prns')
     expect(prns.locked).toBe(true)
+    expect(prns.readOnly).toBe(false)
     expect(prns.url).toBeNull()
 
     const samplingPlan = vm.tasks.find((t) => t.testId === 'task-sampling-plan')
@@ -55,17 +82,7 @@ describe('#buildQueryTaskListViewModel', () => {
     expect(samplingPlan.url).toBeNull()
   })
 
-  test('no Queried sections locks every task', () => {
-    const vm = buildQueryTaskListViewModel(
-      makeApplication({ businessPlan: { sectionStatus: 'Completed' } }),
-      t
-    )
-    expect(vm.tasks).toHaveLength(3)
-    expect(vm.tasks.every((task) => task.locked)).toBe(true)
-    expect(vm.tasks.every((task) => task.url === null)).toBe(true)
-  })
-
-  test('multiple Queried sections are all unlocked', () => {
+  test('multiple Queried sections are all unlocked and editable', () => {
     const vm = buildQueryTaskListViewModel(
       makeApplication({
         prns: { sectionStatus: 'Queried' },
@@ -74,8 +91,8 @@ describe('#buildQueryTaskListViewModel', () => {
       t
     )
     expect(vm.tasks).toHaveLength(3)
-    const unlocked = vm.tasks.filter((task) => !task.locked)
-    expect(unlocked.map((task) => task.testId).sort()).toEqual([
+    const editable = vm.tasks.filter((task) => !task.locked && !task.readOnly)
+    expect(editable.map((task) => task.testId).sort()).toEqual([
       'task-business-plan',
       'task-prns'
     ])
@@ -223,8 +240,27 @@ describe('#queryTaskListGetController', () => {
     expect(headers.location).not.toContain('undefined')
   })
 
-  test('non-queried sections render as locked, read-only text with no link', async () => {
+  test('Completed non-queried sections render as clickable, read-only links', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="task-prns-link"')
+    expect(result).toContain(`href="/accreditation/tonnage/${APPLICATION_ID}"`)
+    expect(result).toContain('data-testid="task-business-plan-link"')
+    expect(result).toContain(
+      `href="/accreditation/business-plan/${APPLICATION_ID}"`
+    )
+  })
+
+  test('NotStarted non-queried sections render as locked, read-only text with no link', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(
+      makeApplication({ prns: { sectionStatus: 'NotStarted' } })
+    )
 
     const { result } = await server.inject({
       method: 'GET',
@@ -235,10 +271,6 @@ describe('#queryTaskListGetController', () => {
     expect(result).toContain('data-testid="task-prns-label"')
     expect(result).not.toContain('data-testid="task-prns-link"')
     expect(result).not.toContain(`/accreditation/tonnage/${APPLICATION_ID}`)
-    expect(result).toContain('data-testid="task-business-plan-link"')
-    expect(result).toContain(
-      `href="/accreditation/business-plan/${APPLICATION_ID}"`
-    )
   })
 
   test('renders all 5 task items for a Queried exporter application with every section queried', async () => {

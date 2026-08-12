@@ -77,11 +77,18 @@ export function buildQueryTaskListViewModel(application, t) {
 
   const tasks = allSectionTasks(application, t).map((task) => {
     const st = sectionStatus(task.status)
-    const locked = task.status !== 'Queried'
+    const queried = task.status === 'Queried'
+    // Completed/Submitted sections are already-answered data, safe to open
+    // read-only. NotStarted/InProgress sections have nothing to show, so
+    // they stay locked (shouldn't normally occur once an application has
+    // reached Queried, since that only happens after a full submission).
+    const viewable =
+      queried || task.status === 'Completed' || task.status === 'Submitted'
     return {
       label: task.label,
-      url: locked ? null : task.url,
-      locked,
+      url: viewable ? task.url : null,
+      locked: !viewable,
+      readOnly: viewable && !queried,
       statusTagText: st.tagText,
       statusTagClass: st.tagClass,
       testId: task.testId

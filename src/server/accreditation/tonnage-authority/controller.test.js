@@ -288,14 +288,14 @@ describe('#tonnageAuthorityController', () => {
       )
     })
 
-    test('redirects to query-task-list when application is Queried and PRNs section is not', async () => {
+    test('redirects to query-task-list when application is Queried and PRNs section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
           prns: {
             plannedTonnageBand: 'UpTo1000',
             authorisers: [],
-            sectionStatus: 'Completed'
+            sectionStatus: 'NotStarted'
           }
         })
       )
@@ -309,6 +309,33 @@ describe('#tonnageAuthorityController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the page read-only when application is Queried and PRNs section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [{ fullName: 'Jane Doe', email: 'jane@example.com' }],
+            sectionStatus: 'Completed'
+          }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="add-authoriser-details"')
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
       )
     })
 
