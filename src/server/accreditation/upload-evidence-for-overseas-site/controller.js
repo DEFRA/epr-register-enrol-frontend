@@ -132,7 +132,7 @@ export const uploadEvidenceListGetController = {
     )
     const sites = mapSites(t, applicationId, selectedSites)
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
     return renderPage(

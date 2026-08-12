@@ -179,7 +179,7 @@ export const businessPlanGetController = {
 
     const isExporter = application.isExporter ?? false
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 

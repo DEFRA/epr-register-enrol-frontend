@@ -140,7 +140,7 @@ export const selectOverseasSitesGetController = {
     }
 
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 

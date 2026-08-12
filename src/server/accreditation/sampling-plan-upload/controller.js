@@ -149,7 +149,7 @@ export const samplingPlanUploadGetController = {
       `pages.materialSelection.materials.${application.materialType}`
     )
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 
