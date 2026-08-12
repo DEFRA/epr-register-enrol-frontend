@@ -39,6 +39,15 @@
 
       <p class="govuk-body">{{ intro }}</p>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          <p class="govuk-body">
+            <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+            {{ t('common.readOnlySection.body') }}
+          </p>
+        </div>
+      {% endif %}
+
       <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
@@ -76,6 +85,7 @@
                             type="checkbox"
                             value="{{ row.email }}"
                             {% if row.checked %}checked{% endif %}
+                            {% if readOnly %}disabled{% endif %}
                             data-testid="authoriser-checkbox-{{ loop.index0 }}">
                           <label class="govuk-label govuk-checkboxes__label" for="authoriser-{{ loop.index0 }}">
                             <span class="govuk-visually-hidden">{{ row.fullName }}</span>
@@ -95,60 +105,62 @@
           </fieldset>
         </div>
 
-        <details class="govuk-details" {% if showAddForm %}open{% endif %} data-testid="add-authoriser-details">
-          <summary class="govuk-details__summary" data-testid="add-authoriser-toggle">
-            <span class="govuk-details__summary-text">{{ t('pages.tonnageAuthority.addAuthoriserLabel') }}</span>
-          </summary>
-          <div class="govuk-details__text">
+        {% if not readOnly %}
+          <details class="govuk-details" {% if showAddForm %}open{% endif %} data-testid="add-authoriser-details">
+            <summary class="govuk-details__summary" data-testid="add-authoriser-toggle">
+              <span class="govuk-details__summary-text">{{ t('pages.tonnageAuthority.addAuthoriserLabel') }}</span>
+            </summary>
+            <div class="govuk-details__text">
 
-            <div class="govuk-form-group {% if addErrors.newFullName %}govuk-form-group--error{% endif %}">
-              <label class="govuk-label" for="newFullName">{{ t('pages.tonnageAuthority.addForm.fullName') }}</label>
-              {% if addErrors.newFullName %}
-                <p id="newFullName-error" class="govuk-error-message" data-testid="new-full-name-error">
-                  <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newFullName.text }}
-                </p>
-              {% endif %}
-              <input
-                class="govuk-input {% if addErrors.newFullName %}govuk-input--error{% endif %}"
-                id="newFullName"
-                name="newFullName"
-                type="text"
-                value="{{ newFullName }}"
-                {% if addErrors.newFullName %}aria-describedby="newFullName-error"{% endif %}
-                data-testid="new-full-name-input">
+              <div class="govuk-form-group {% if addErrors.newFullName %}govuk-form-group--error{% endif %}">
+                <label class="govuk-label" for="newFullName">{{ t('pages.tonnageAuthority.addForm.fullName') }}</label>
+                {% if addErrors.newFullName %}
+                  <p id="newFullName-error" class="govuk-error-message" data-testid="new-full-name-error">
+                    <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newFullName.text }}
+                  </p>
+                {% endif %}
+                <input
+                  class="govuk-input {% if addErrors.newFullName %}govuk-input--error{% endif %}"
+                  id="newFullName"
+                  name="newFullName"
+                  type="text"
+                  value="{{ newFullName }}"
+                  {% if addErrors.newFullName %}aria-describedby="newFullName-error"{% endif %}
+                  data-testid="new-full-name-input">
+              </div>
+
+              <div class="govuk-form-group {% if addErrors.newEmail %}govuk-form-group--error{% endif %}">
+                <label class="govuk-label" for="newEmail">{{ t('pages.tonnageAuthority.addForm.email') }}</label>
+                {% if addErrors.newEmail %}
+                  <p id="newEmail-error" class="govuk-error-message" data-testid="new-email-error">
+                    <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newEmail.text }}
+                  </p>
+                {% endif %}
+                <input
+                  class="govuk-input {% if addErrors.newEmail %}govuk-input--error{% endif %}"
+                  id="newEmail"
+                  name="newEmail"
+                  type="email"
+                  value="{{ newEmail }}"
+                  {% if addErrors.newEmail %}aria-describedby="newEmail-error"{% endif %}
+                  data-testid="new-email-input">
+              </div>
+
+              <button type="submit" name="submitAction" value="addAuthoriser" class="govuk-button govuk-button--secondary" data-testid="add-authoriser-button">
+                {{ t('pages.tonnageAuthority.addAuthoriserButton') }}
+              </button>
+
             </div>
+          </details>
 
-            <div class="govuk-form-group {% if addErrors.newEmail %}govuk-form-group--error{% endif %}">
-              <label class="govuk-label" for="newEmail">{{ t('pages.tonnageAuthority.addForm.email') }}</label>
-              {% if addErrors.newEmail %}
-                <p id="newEmail-error" class="govuk-error-message" data-testid="new-email-error">
-                  <span class="govuk-visually-hidden">Error:</span>{{ addErrors.newEmail.text }}
-                </p>
-              {% endif %}
-              <input
-                class="govuk-input {% if addErrors.newEmail %}govuk-input--error{% endif %}"
-                id="newEmail"
-                name="newEmail"
-                type="email"
-                value="{{ newEmail }}"
-                {% if addErrors.newEmail %}aria-describedby="newEmail-error"{% endif %}
-                data-testid="new-email-input">
-            </div>
+          <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+            {{ t('pages.tonnageAuthority.saveAndContinue') }}
+          </button>
 
-            <button type="submit" name="submitAction" value="addAuthoriser" class="govuk-button govuk-button--secondary" data-testid="add-authoriser-button">
-              {{ t('pages.tonnageAuthority.addAuthoriserButton') }}
-            </button>
-
-          </div>
-        </details>
-
-        <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-          {{ t('pages.tonnageAuthority.saveAndContinue') }}
-        </button>
-
-        <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.tonnageAuthority.saveAndComeLater') }}
-        </button>
+          <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+            {{ t('pages.tonnageAuthority.saveAndComeLater') }}
+          </button>
+        {% endif %}
 
       </form>
 

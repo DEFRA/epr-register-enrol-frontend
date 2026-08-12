@@ -130,7 +130,7 @@ describe('accreditationApiService', () => {
       expect(result.siteAddress).toBe('UNIT 5, Bolton, BL4 7AQ')
     })
 
-    test('sitePostcode is null when siteAddress is a plain string', async () => {
+    test('sitePostcode is extracted from a plain-string siteAddress', async () => {
       apiClient.get.mockResolvedValue({
         siteAddress: 'North Road, Siteville, SI1 1AA'
       })
@@ -138,8 +138,30 @@ describe('accreditationApiService', () => {
         ORG_ID,
         APP_ID
       )
-      expect(result.sitePostcode).toBeNull()
+      expect(result.sitePostcode).toBe('SI1 1AA')
       expect(result.siteAddress).toBe('North Road, Siteville, SI1 1AA')
+    })
+
+    test('sitePostcode is extracted from a plain-string Scottish siteAddress', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: '12 Harbour Road, Aberdeen, AB11 5DQ'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('AB11 5DQ')
+    })
+
+    test('sitePostcode is null when a plain-string siteAddress has no recognisable postcode', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: 'North Road, Siteville'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBeNull()
     })
 
     test('sitePostcode is null when siteAddress is absent', async () => {
@@ -149,6 +171,51 @@ describe('accreditationApiService', () => {
         APP_ID
       )
       expect(result.sitePostcode).toBeNull()
+    })
+
+    test('dueDate is passed through when it is a valid ISO string', async () => {
+      apiClient.get.mockResolvedValue({
+        dueDate: '2026-09-30T00:00:00.000Z'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBe('2026-09-30T00:00:00.000Z')
+    })
+
+    test('dueDate is null when absent', async () => {
+      apiClient.get.mockResolvedValue({})
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBeNull()
+    })
+
+    // Regression: an unparseable dueDate must not crash the landing page —
+    // formatDate() throws on an Invalid Date, so anything the backend sends
+    // that isn't a valid ISO string is dropped to null here instead.
+    test('dueDate falls back to null when the backend sends a malformed value', async () => {
+      apiClient.get.mockResolvedValue({
+        dueDate: 'not-a-real-date'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBeNull()
+    })
+
+    test('dueDate falls back to null for a non-string value', async () => {
+      apiClient.get.mockResolvedValue({
+        dueDate: 12345
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBeNull()
     })
   })
 

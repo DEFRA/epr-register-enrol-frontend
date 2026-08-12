@@ -392,11 +392,11 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('redirects to query-task-list when application is Queried and sampling plan section is not', async () => {
+    test('redirects to query-task-list when application is Queried and sampling plan section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
-          samplingPlan: { sectionStatus: 'Completed', files: [] }
+          samplingPlan: { sectionStatus: 'NotStarted', files: [] }
         })
       )
 
@@ -410,6 +410,50 @@ describe('#samplingPlanUploadController', () => {
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
+    })
+
+    test('renders read-only, without the upload form, when application is Queried and sampling plan section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [] }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain(
+        '<form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">'
+      )
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
+      )
+    })
+
+    test('does not render the regulator-query banner for a read-only section, even though another section is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [] },
+          businessPlan: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please break down the price support spend.' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain('Please break down the price support spend.')
     })
 
     test('renders the form and query note when sampling plan section itself is Queried', async () => {
@@ -1337,11 +1381,11 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('redirects to query-task-list when application is Queried and sampling plan section is not', async () => {
+    test('redirects to query-task-list when application is Queried and sampling plan section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
-          samplingPlan: { sectionStatus: 'Completed', files: [makeFile()] }
+          samplingPlan: { sectionStatus: 'NotStarted', files: [makeFile()] }
         })
       )
 
@@ -1355,6 +1399,26 @@ describe('#samplingPlanUploadController', () => {
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
+    })
+
+    test('renders read-only, without delete/continue actions, when application is Queried and sampling plan section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [makeFile()] }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain('data-testid="delete-file-button"')
+      expect(result).not.toContain('data-testid="continue-form"')
     })
   })
 

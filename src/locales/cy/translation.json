@@ -73,6 +73,7 @@
       "applicationDetailsHeading": "[Welsh] Application details",
       "periodLabel": "[Welsh] Period",
       "dueDateLabel": "[Welsh] Due date",
+      "dueDateNotAvailable": "[Welsh] Not yet available",
       "currentAccreditationHeading": "[Welsh] Current accreditation details",
       "accreditationNumberLabel": "[Welsh] Accreditation number",
       "regulatorLabel": "[Welsh] Regulator",
@@ -91,7 +92,7 @@
         "Queried": "[Welsh] QUERIED",
         "Updated": "[Welsh] UPDATED",
         "AwaitingDecision": "[Welsh] AWAITING DECISION",
-        "Approved": "[Welsh] APPROVED",
+        "Approved": "[Welsh] GRANTED",
         "Rejected": "[Welsh] REJECTED",
         "Withdrawn": "[Welsh] WITHDRAWN"
       },
@@ -976,6 +977,11 @@
         "overseasSites": "[Welsh] overseas reprocessing sites",
         "besEvidence": "[Welsh] evidence of broadly equivalent standards (BES)"
       }
+    },
+    "readOnlySection": {
+      "heading": "[Welsh] You cannot edit this section",
+      "body": "[Welsh] This section has already been completed and is not part of the regulator's query. Go back to the query task list to update the queried section.",
+      "backToQueryTaskList": "[Welsh] Back to query task list"
     },
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",

@@ -46,6 +46,15 @@
 
       <p class="govuk-body">{{ t('pages.businessPlan.regulatorPlan') }}</p>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          <p class="govuk-body">
+            <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+            {{ t('common.readOnlySection.body') }}
+          </p>
+        </div>
+      {% endif %}
+
       <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
@@ -72,6 +81,7 @@
                 inputmode="numeric"
                 value="{{ input.value }}"
                 aria-describedby="{% if input.errorMessage %}{{ input.id }}-error{% endif %}"
+                {% if readOnly %}disabled{% endif %}
                 data-testid="input-{{ input.id }}"
 
               >
@@ -80,13 +90,15 @@
           </div>
         {% endfor %}
 
-        <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-          {{ t('pages.businessPlan.saveAndContinue') }}
-        </button>
+        {% if not readOnly %}
+          <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+            {{ t('pages.businessPlan.saveAndContinue') }}
+          </button>
 
-        <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.businessPlan.saveAndComeLater') }}
-        </button>
+          <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+            {{ t('pages.businessPlan.saveAndComeLater') }}
+          </button>
+        {% endif %}
 
       </form>
 

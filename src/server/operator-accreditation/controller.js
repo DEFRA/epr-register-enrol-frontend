@@ -13,6 +13,7 @@ import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHe
 import {
   WITHDRAWN_STATUS,
   NON_WITHDRAWABLE_STATUSES,
+  TERMINAL_STATUSES,
   resolveLandingApplication
 } from '../common/helpers/accreditationSelection.js'
 
@@ -51,8 +52,7 @@ const REAPPLY_TEXT_HIDDEN_STATUSES = new Set([
   'Rejected'
 ])
 
-// The prior accreditation year always runs to 31 December, with the
-// reapplication due 30 September of that same prior year.
+// The prior accreditation year always runs to 31 December.
 function buildCurrentAccreditation(application, siteName, priorYear) {
   const accreditation = application.organisation?.accreditation
   if (!accreditation) return null
@@ -98,7 +98,10 @@ export function buildLandingViewModel(
       `pages.operatorAccreditation.statuses.${application.applicationStatus}`
     ),
     statusTagClass: config.tagClass,
-    dueDate: `30 September ${priorYear}`,
+    // RA-415: sourced from CM's SLA due date (OJ-BE's WorkItemDetailResponseDto
+    // -> AccreditationApplicationModel.DueDate), null until the application has
+    // a linked CM work item — see dueDateNotAvailable fallback in the template.
+    dueDate: application.dueDate ?? null,
     currentAccreditation: buildCurrentAccreditation(
       application,
       siteName,
@@ -108,7 +111,7 @@ export function buildLandingViewModel(
       application.applicationStatus === 'Queried'
         ? queryTaskListUrl(application.applicationId)
         : `/accreditation/task-list/${application.applicationId}`,
-    showContinueLink: application.applicationStatus !== WITHDRAWN_STATUS,
+    showContinueLink: !TERMINAL_STATUSES.has(application.applicationStatus),
     canWithdraw: !NON_WITHDRAWABLE_STATUSES.has(application.applicationStatus),
     withdrawUrl: `/accreditation/withdraw-application/${application.applicationId}`,
     // RA-357: starting again after a withdrawal creates a new application for

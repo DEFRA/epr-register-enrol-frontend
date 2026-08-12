@@ -3,6 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -92,10 +93,11 @@ export const tonnageAuthorityGetController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.prns?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.prns?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
@@ -106,7 +108,7 @@ export const tonnageAuthorityGetController = {
     const isExporter = application.isExporter ?? false
     const sectionKey = isExporter ? 'perns' : 'prns'
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 
@@ -116,7 +118,11 @@ export const tonnageAuthorityGetController = {
         queryNote,
         querySummary: queryNote
           ? buildRegulatorQuerySummary(sectionKey, t)
-          : null
+          : null,
+        readOnly,
+        backLink: readOnly
+          ? queryTaskListUrl(applicationId)
+          : tonnageUrl(applicationId)
       })
     )
   }

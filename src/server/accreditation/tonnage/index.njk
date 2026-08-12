@@ -38,6 +38,15 @@
         </div>
       {% endif %}
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          <p class="govuk-body">
+            <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+            {{ t('common.readOnlySection.body') }}
+          </p>
+        </div>
+      {% endif %}
+
       <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
@@ -64,6 +73,7 @@
                     type="radio"
                     value="{{ option.value }}"
                     {% if option.checked %}checked{% endif %}
+                    {% if readOnly %}disabled{% endif %}
                     data-testid="tonnage-option-{{ option.value | lower }}">
                   <label class="govuk-label govuk-radios__label" for="plannedTonnageBand-{{ loop.index }}">
                     {{ option.text }}
@@ -74,13 +84,15 @@
           </fieldset>
         </div>
 
-        <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-          {{ t('pages.tonnage.saveAndContinue') }}
-        </button>
+        {% if not readOnly %}
+          <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+            {{ t('pages.tonnage.saveAndContinue') }}
+          </button>
 
-        <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.tonnage.saveAndComeLater') }}
-        </button>
+          <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+            {{ t('pages.tonnage.saveAndComeLater') }}
+          </button>
+        {% endif %}
 
       </form>
 

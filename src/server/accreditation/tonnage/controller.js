@@ -3,6 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
 
@@ -59,17 +60,18 @@ export const tonnageGetController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.prns?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.prns?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const isExporter = application.isExporter ?? false
     const sectionKey = isExporter ? 'perns' : 'prns'
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 
@@ -82,10 +84,15 @@ export const tonnageGetController = {
         application.prns?.plannedTonnageBand ?? null,
         t
       ),
-      backLink: taskListUrl(applicationId),
+      backLink: readOnly
+        ? queryTaskListUrl(applicationId)
+        : taskListUrl(applicationId),
       isExporter,
       queryNote,
-      querySummary: queryNote ? buildRegulatorQuerySummary(sectionKey, t) : null
+      querySummary: queryNote
+        ? buildRegulatorQuerySummary(sectionKey, t)
+        : null,
+      readOnly
     })
   }
 }

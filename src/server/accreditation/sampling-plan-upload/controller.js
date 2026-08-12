@@ -7,6 +7,7 @@ import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cd
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -131,10 +132,11 @@ export const samplingPlanUploadGetController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.samplingPlan?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
@@ -147,14 +149,16 @@ export const samplingPlanUploadGetController = {
       `pages.materialSelection.materials.${application.materialType}`
     )
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
       heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
-      backLink: taskListUrl(applicationId),
+      backLink: readOnly
+        ? queryTaskListUrl(applicationId)
+        : taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files,
       viewableFilesCount,
@@ -171,7 +175,8 @@ export const samplingPlanUploadGetController = {
               href: '#file'
             }
           ]
-        : null
+        : null,
+      readOnly
     })
   }
 }
@@ -350,10 +355,11 @@ export const samplingPlanResultsGetController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.samplingPlan?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
@@ -373,7 +379,8 @@ export const samplingPlanResultsGetController = {
       files,
       error: uploadFailed
         ? t('pages.samplingPlanUpload.validation.uploadError')
-        : null
+        : null,
+      readOnly
     })
   }
 }

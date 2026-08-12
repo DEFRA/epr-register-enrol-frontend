@@ -75,19 +75,25 @@ export function buildQueryTaskListViewModel(application, t) {
     ? t('pages.taskList.headingPrefixExporter')
     : t('pages.taskList.headingPrefix')
 
-  const tasks = allSectionTasks(application, t)
-    .filter((task) => task.status === 'Queried')
-    .map((task) => {
-      const st = sectionStatus(task.status)
-      return {
-        label: task.label,
-        url: task.url,
-        locked: false,
-        statusTagText: st.tagText,
-        statusTagClass: st.tagClass,
-        testId: task.testId
-      }
-    })
+  const tasks = allSectionTasks(application, t).map((task) => {
+    const st = sectionStatus(task.status)
+    const queried = task.status === 'Queried'
+    // Completed/Submitted sections are already-answered data, safe to open
+    // read-only. NotStarted/InProgress sections have nothing to show, so
+    // they stay locked (shouldn't normally occur once an application has
+    // reached Queried, since that only happens after a full submission).
+    const viewable =
+      queried || task.status === 'Completed' || task.status === 'Submitted'
+    return {
+      label: task.label,
+      url: viewable ? task.url : null,
+      locked: !viewable,
+      readOnly: viewable && !queried,
+      statusTagText: st.tagText,
+      statusTagClass: st.tagClass,
+      testId: task.testId
+    }
+  })
 
   return {
     heading,

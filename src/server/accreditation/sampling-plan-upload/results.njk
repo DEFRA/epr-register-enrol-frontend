@@ -17,6 +17,15 @@
 
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          <p class="govuk-body">
+            <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+            {{ t('common.readOnlySection.body') }}
+          </p>
+        </div>
+      {% endif %}
+
       {% if files and files.length > 0 %}
         <table class="govuk-table" data-testid="uploaded-files-table">
           <thead class="govuk-table__head">
@@ -24,7 +33,9 @@
               <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.filename') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.dateUploaded') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.documentType') }}</th>
-              <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.action') }}</th>
+              {% if not readOnly %}
+                <th scope="col" class="govuk-table__header">{{ t('pages.samplingPlanUpload.table.action') }}</th>
+              {% endif %}
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -33,39 +44,43 @@
                 <td class="govuk-table__cell" data-testid="file-name">{{ file.filename }}</td>
                 <td class="govuk-table__cell" data-testid="file-date">{{ file.uploadedAt }}</td>
                 <td class="govuk-table__cell" data-testid="file-document-type">{{ file.documentTypeLabel }}</td>
-                <td class="govuk-table__cell">
-                  <form method="post" novalidate>
-                    <input type="hidden" name="crumb" value="{{ crumb }}">
-                    <input type="hidden" name="action" value="deleteFile">
-                    <input type="hidden" name="fileId" value="{{ file.fileId }}">
-                    <button type="submit" class="govuk-button govuk-button--warning govuk-!-margin-bottom-0" data-module="govuk-button" data-testid="delete-file-button">
-                      {{ t('pages.samplingPlanUpload.deleteFile') }}<span class="govuk-visually-hidden"> {{ file.filename }}</span>
-                    </button>
-                  </form>
-                </td>
+                {% if not readOnly %}
+                  <td class="govuk-table__cell">
+                    <form method="post" novalidate>
+                      <input type="hidden" name="crumb" value="{{ crumb }}">
+                      <input type="hidden" name="action" value="deleteFile">
+                      <input type="hidden" name="fileId" value="{{ file.fileId }}">
+                      <button type="submit" class="govuk-button govuk-button--warning govuk-!-margin-bottom-0" data-module="govuk-button" data-testid="delete-file-button">
+                        {{ t('pages.samplingPlanUpload.deleteFile') }}<span class="govuk-visually-hidden"> {{ file.filename }}</span>
+                      </button>
+                    </form>
+                  </td>
+                {% endif %}
               </tr>
             {% endfor %}
           </tbody>
         </table>
       {% endif %}
 
-      <p class="govuk-body" data-testid="upload-another-file">
-        <a class="govuk-link" href="{{ uploadAnotherLink }}" data-testid="upload-another-file-link">
-          {{ t('pages.samplingPlanUpload.uploadAnotherFile') }}
-        </a>
-      </p>
+      {% if not readOnly %}
+        <p class="govuk-body" data-testid="upload-another-file">
+          <a class="govuk-link" href="{{ uploadAnotherLink }}" data-testid="upload-another-file-link">
+            {{ t('pages.samplingPlanUpload.uploadAnotherFile') }}
+          </a>
+        </p>
 
-      <form method="post" novalidate data-testid="continue-form">
-        <input type="hidden" name="crumb" value="{{ crumb }}">
+        <form method="post" novalidate data-testid="continue-form">
+          <input type="hidden" name="crumb" value="{{ crumb }}">
 
-        <button type="submit" name="action" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="save-continue-button">
-          {{ t('pages.samplingPlanUpload.saveAndContinue') }}
-        </button>
+          <button type="submit" name="action" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="save-continue-button">
+            {{ t('pages.samplingPlanUpload.saveAndContinue') }}
+          </button>
 
-        <button type="submit" name="action" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.samplingPlanUpload.saveAndComeLater') }}
-        </button>
-      </form>
+          <button type="submit" name="action" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+            {{ t('pages.samplingPlanUpload.saveAndComeLater') }}
+          </button>
+        </form>
+      {% endif %}
 
     </div>
   </div>

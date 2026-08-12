@@ -4,6 +4,7 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 export const BUSINESS_PLAN_FIELDS = [
   'newInfrastructurePercent',
@@ -108,7 +109,8 @@ function buildViewData(
   isExporter = false,
   queryNote = null,
   querySummary = null,
-  regulatorQueryFields = null
+  regulatorQueryFields = null,
+  readOnly = false
 ) {
   return {
     pageTitle: t('pages.businessPlan.title'),
@@ -116,14 +118,17 @@ function buildViewData(
     intro: isExporter
       ? t('pages.businessPlan.introExporter')
       : t('pages.businessPlan.intro'),
-    backLink: taskListUrl(applicationId),
+    backLink: readOnly
+      ? queryTaskListUrl(applicationId)
+      : taskListUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     fieldInputs: buildFieldInputs(payload, errors, t),
     errors,
     sumError: errors._sum,
     queryNote,
     querySummary,
-    regulatorQueryFields
+    regulatorQueryFields,
+    readOnly
   }
 }
 
@@ -164,16 +169,17 @@ export const businessPlanGetController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.businessPlan?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.businessPlan?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const isExporter = application.isExporter ?? false
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 
@@ -194,7 +200,8 @@ export const businessPlanGetController = {
                 href: '#newInfrastructurePercent'
               }
             ]
-          : null
+          : null,
+        readOnly
       )
     )
   }

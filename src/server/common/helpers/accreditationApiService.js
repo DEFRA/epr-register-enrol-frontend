@@ -1,3 +1,5 @@
+import { isValid, parseISO } from 'date-fns'
+
 import { apiClient } from '../api-client.js'
 
 const BASE = '/api/v1/accreditation-applications'
@@ -74,6 +76,21 @@ function normalizeBp(bp) {
   return { sectionStatus, items }
 }
 
+const UK_POSTCODE_REGEX = /[A-Z]{1,2}[0-9][A-Z0-9]?\s*[0-9][A-Z]{2}/i
+
+function extractPostcodeFromAddressString(address) {
+  const match = address?.match(UK_POSTCODE_REGEX)
+  return match ? match[0].toUpperCase().replace(/\s+/, ' ') : null
+}
+
+// The backend may return a dueDate that isn't a parseable ISO string; the
+// formatDate nunjucks filter throws on an Invalid Date, so treat anything
+// unparseable as absent rather than crashing the page.
+function normalizeDueDate(dueDate) {
+  if (typeof dueDate !== 'string' || !dueDate) return null
+  return isValid(parseISO(dueDate)) ? dueDate : null
+}
+
 function normalizeApplication(item) {
   if (!item || typeof item !== 'object' || Array.isArray(item)) return item
   const sa = item.siteAddress
@@ -84,7 +101,11 @@ function normalizeApplication(item) {
         ? sa
         : null
   const sitePostcode =
-    sa && typeof sa === 'object' ? (sa.postcode ?? null) : null
+    sa && typeof sa === 'object'
+      ? (sa.postcode ?? null)
+      : typeof sa === 'string'
+        ? extractPostcodeFromAddressString(sa)
+        : null
   return {
     ...item,
     // item.id = internal UUID used in URLs; item.applicationId = human-readable ref (new schema)
@@ -133,7 +154,8 @@ function normalizeApplication(item) {
     samplingPlan: item.samplingPlan,
     overseasSites: item.overseasSites,
     besEvidence: item.besEvidence,
-    query: item.query ?? null
+    query: item.query ?? null,
+    dueDate: normalizeDueDate(item.dueDate ?? null)
   }
 }
 
