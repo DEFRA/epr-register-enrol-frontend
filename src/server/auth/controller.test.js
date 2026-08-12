@@ -15,8 +15,6 @@ describe('#logoutController', () => {
 
   beforeAll(async () => {
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
       return originalConfigGet(key)
     })
     server = await createServer()
@@ -35,8 +33,7 @@ describe('#logoutController', () => {
       payload: {
         userId: STUB_USERS[type][0].id,
         type
-      },
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      }
     })
 
     return headers['set-cookie'].map((c) => c.split(';')[0]).join('; ')
@@ -49,7 +46,6 @@ describe('#logoutController', () => {
       method: 'GET',
       url: '/auth/logout',
       headers: {
-        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
         cookie
       }
     })
@@ -65,7 +61,6 @@ describe('#logoutController', () => {
       method: 'GET',
       url: '/auth/logout',
       headers: {
-        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
         cookie
       }
     })
@@ -77,8 +72,7 @@ describe('#logoutController', () => {
   test('redirects to the operator login page when there is no session', async () => {
     const { statusCode, headers } = await server.inject({
       method: 'GET',
-      url: '/auth/logout',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      url: '/auth/logout'
     })
 
     expect(statusCode).toBe(statusCodes.redirect)
@@ -100,8 +94,6 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
 
   beforeAll(async () => {
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
       if (key === 'isTest') return false
       return originalConfigGet(key)
     })
@@ -117,8 +109,7 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
   async function loginAs(type) {
     const crumbResponse = await server.inject({
       method: 'GET',
-      url: `/auth/stub/login?type=${type}`,
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      url: `/auth/stub/login?type=${type}`
     })
     const crumbCookie = crumbResponse.headers['set-cookie']
       .find((c) => c.startsWith('crumb='))
@@ -130,7 +121,6 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
       url: '/auth/stub/login',
       payload: { userId: STUB_USERS[type][0].id, type, crumb },
       headers: {
-        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
         cookie: crumbCookie
       }
     })
@@ -149,7 +139,6 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
         method: 'GET',
         url: '/auth/logout',
         headers: {
-          Authorization: 'Basic dGVzdDp0ZXN0MTIz',
           cookie: oldSessionCookie
         }
       })
@@ -158,7 +147,6 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
         method: 'GET',
         url: '/',
         headers: {
-          Authorization: 'Basic dGVzdDp0ZXN0MTIz',
           cookie: oldSessionCookie
         }
       })

@@ -8,8 +8,6 @@ describe('#cookiesController', () => {
   beforeAll(async () => {
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
       return originalGet(key)
     })
     server = await createServer()
@@ -23,8 +21,7 @@ describe('#cookiesController', () => {
   test('Should provide expected response', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cookies',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      url: '/cookies'
     })
 
     expect(result).toEqual(expect.stringContaining('Cookies |'))
@@ -36,8 +33,7 @@ describe('#cookiesController', () => {
   test('Should provide expected response in Welsh locale', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/cookies',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      url: '/cy/cookies'
     })
 
     expect(statusCode).toBe(statusCodes.ok)

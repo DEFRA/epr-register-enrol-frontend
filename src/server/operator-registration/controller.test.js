@@ -8,8 +8,6 @@ describe('#operatorRegistrationController', () => {
   beforeAll(async () => {
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
       return originalGet(key)
     })
     server = await createServer()
@@ -23,8 +21,7 @@ describe('#operatorRegistrationController', () => {
   test('Should provide expected response in English', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/en/operator-registration',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      url: '/en/operator-registration'
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -34,8 +31,7 @@ describe('#operatorRegistrationController', () => {
   test('Should provide expected response in Welsh', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/cy/operator-registration',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      url: '/cy/operator-registration'
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -49,8 +45,7 @@ describe('#operatorRegistrationController', () => {
   test('Should provide expected response for default locale', async () => {
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: '/operator-registration',
-      headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+      url: '/operator-registration'
     })
 
     expect(result).toEqual(expect.stringContaining('Annual fee:'))

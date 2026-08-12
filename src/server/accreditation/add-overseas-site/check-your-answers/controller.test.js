@@ -31,8 +31,6 @@ describe('#addOrsCyaController', () => {
   beforeAll(async () => {
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
       return originalGet(key)
     })
     server = await createServer()
@@ -50,7 +48,6 @@ describe('#addOrsCyaController', () => {
       method: 'GET',
       url: BASE_URL,
       headers: {
-        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
         'x-test-user-type': 'operator'
       }
     })
@@ -61,7 +58,6 @@ describe('#addOrsCyaController', () => {
   })
 
   const operatorHeaders = {
-    Authorization: 'Basic dGVzdDp0ZXN0MTIz',
     'x-test-user-type': 'operator'
   }
 
