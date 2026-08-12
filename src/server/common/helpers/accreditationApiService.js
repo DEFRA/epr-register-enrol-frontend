@@ -1,3 +1,5 @@
+import { isValid, parseISO } from 'date-fns'
+
 import { apiClient } from '../api-client.js'
 
 const BASE = '/api/v1/accreditation-applications'
@@ -81,6 +83,14 @@ function extractPostcodeFromAddressString(address) {
   return match ? match[0].toUpperCase().replace(/\s+/, ' ') : null
 }
 
+// The backend may return a dueDate that isn't a parseable ISO string; the
+// formatDate nunjucks filter throws on an Invalid Date, so treat anything
+// unparseable as absent rather than crashing the page.
+function normalizeDueDate(dueDate) {
+  if (typeof dueDate !== 'string' || !dueDate) return null
+  return isValid(parseISO(dueDate)) ? dueDate : null
+}
+
 function normalizeApplication(item) {
   if (!item || typeof item !== 'object' || Array.isArray(item)) return item
   const sa = item.siteAddress
@@ -145,7 +155,7 @@ function normalizeApplication(item) {
     overseasSites: item.overseasSites,
     besEvidence: item.besEvidence,
     query: item.query ?? null,
-    dueDate: item.dueDate ?? null
+    dueDate: normalizeDueDate(item.dueDate ?? null)
   }
 }
 

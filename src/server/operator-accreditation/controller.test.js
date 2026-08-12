@@ -740,6 +740,26 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Not yet available')
   })
 
+  // Regression: a malformed (non-empty, unparseable) dueDate from the backend
+  // must render the fallback copy, not crash formatDate() with a 500 — see
+  // accreditationApiService normalizeDueDate, which drops it to null upstream
+  // of this page.
+  test('renders a fallback due date, not a 500, when the backend sends a malformed dueDate', async () => {
+    mockAccreditationGet([
+      makeApp({ applicationStatus: 'Started', dueDate: 'not-a-real-date' })
+    ])
+
+    const { statusCode, result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(result).toContain('data-testid="application-due-date"')
+    expect(result).toContain('Not yet available')
+  })
+
   test('does not render Current accreditation details when there is no prior organisation accreditation', async () => {
     mockAccreditationGet([makeApp()])
 
