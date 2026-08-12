@@ -1,6 +1,7 @@
 import { isValid, parseISO } from 'date-fns'
 
 import { apiClient } from '../api-client.js'
+import { retryWithBackoff } from './retryWithBackoff.js'
 
 const BASE = '/api/v1/accreditation-applications'
 
@@ -339,8 +340,10 @@ export const accreditationApiService = {
 
   deleteFile(organisationId, applicationId, fileId) {
     return call(() =>
-      apiClient.delete(
-        `${appBase(organisationId, applicationId)}/files/${fileId}`
+      retryWithBackoff(() =>
+        apiClient.delete(
+          `${appBase(organisationId, applicationId)}/files/${fileId}`
+        )
       )
     )
   }
