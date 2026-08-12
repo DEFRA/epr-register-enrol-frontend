@@ -9,7 +9,6 @@ import {
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { config } from '../../../../config/config.js'
 
 const APPLICATION_ID = 'app-scd-001'
 const BASE_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/site-contact-details`
@@ -32,10 +31,6 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
   let server
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })

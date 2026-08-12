@@ -9,7 +9,6 @@ import {
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { config } from '../../../../config/config.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 
 const APPLICATION_ID = 'app-cya-001'
@@ -29,10 +28,6 @@ describe('#addOrsCyaController', () => {
   let cookie
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })

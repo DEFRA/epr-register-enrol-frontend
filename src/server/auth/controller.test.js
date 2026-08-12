@@ -3,20 +3,15 @@ import { statusCodes } from '../common/constants/status-codes.js'
 import { STUB_USERS } from './stub/controller.js'
 import { config } from '../../config/config.js'
 
-// Captured once, before either describe block below installs a vi.spyOn on
-// config.get — spying twice without restoring in between would otherwise
-// make the second block's "fall through to original" call resolve back into
-// itself (vi.spyOn mutates the existing spy's implementation in place rather
-// than layering a new one), causing infinite recursion.
+// Captured once, before the describe block below installs a vi.spyOn on
+// config.get, so that block's "fall through to original" call resolves to
+// the real config rather than recursing back into its own spy.
 const originalConfigGet = config.get.bind(config)
 
 describe('#logoutController', () => {
   let server
 
   beforeAll(async () => {
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      return originalConfigGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })

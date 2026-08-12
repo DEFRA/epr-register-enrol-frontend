@@ -9,7 +9,6 @@ import {
 } from 'vitest'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
 import {
   parsePercent,
@@ -186,10 +185,6 @@ describe('#businessPlanController', () => {
   let server
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })

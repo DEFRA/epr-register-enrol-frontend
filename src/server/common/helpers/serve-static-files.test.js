@@ -1,6 +1,3 @@
-import { vi } from 'vitest'
-
-import { config } from '../../../config/config.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../constants/status-codes.js'
 
@@ -8,10 +5,6 @@ describe('#serveStaticFiles', () => {
   let server
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })

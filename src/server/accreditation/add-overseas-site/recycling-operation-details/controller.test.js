@@ -9,7 +9,6 @@ import {
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { config } from '../../../../config/config.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import {
   addOrsRecyclingOperationGetController,
@@ -57,10 +56,6 @@ describe('#addOrsRecyclingOperationController', () => {
   let server
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })
