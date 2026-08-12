@@ -37,6 +37,19 @@ const makeApp = (overrides = {}) => ({
   ...overrides
 })
 
+// RA-415: resolveLandingApplication issues a second GET (getApplication) to
+// refresh the picked application with live CM fields (e.g. dueDate) after
+// listApplications. Both calls go through apiClient.get, so route by URL
+// shape: a request whose last path segment is one of the given apps'
+// applicationId is the single-application fetch, anything else is the list.
+function mockAccreditationGet(apps) {
+  return vi.spyOn(apiClient, 'get').mockImplementation(async (url) => {
+    const lastSegment = url.split('/').pop()
+    const single = apps.find((app) => app.applicationId === lastSegment)
+    return single ?? apps
+  })
+}
+
 describe('#buildLandingViewModel', () => {
   const t = (key) => key.split('.').pop()
 
@@ -565,7 +578,7 @@ describe('#operatorAccreditationController', () => {
   const baseUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
 
   test('returns 403 when operator is not related to the organisation', async () => {
-    const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    const getSpy = mockAccreditationGet([makeApp()])
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
     const { statusCode } = await server.inject({
@@ -597,9 +610,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('returns 200 when existing application found for site/material/year', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Started' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Started' })])
     vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
     const { statusCode } = await server.inject({
@@ -613,7 +624,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('does not call seed when matching application already exists', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
     await server.inject({
@@ -626,9 +637,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('calls seedApplication when no matching application found for site/material/year', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ registrationId: 'other-ref' })
-    ])
+    mockAccreditationGet([makeApp({ registrationId: 'other-ref' })])
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())
 
     await server.inject({
@@ -644,7 +653,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('returns 200 after successful seed when no application exists', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    mockAccreditationGet([])
     vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())
 
     const { statusCode } = await server.inject({
@@ -657,7 +666,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders Not Set site address in current accreditation details when there is no site address', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
+    mockAccreditationGet([
       makeApp({
         organisation: {
           accreditation: {
@@ -682,7 +691,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders the reapply page heading', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -695,7 +704,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders Application details table with period, due date, status and continue link', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
+    mockAccreditationGet([
       makeApp({
         applicationStatus: 'Started',
         dueDate: '2026-09-30T00:00:00.000Z'
@@ -717,7 +726,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders a fallback due date when the application has no linked CM work item', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
+    mockAccreditationGet([
       makeApp({ applicationStatus: 'Started', dueDate: null })
     ])
 
@@ -732,7 +741,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('does not render Current accreditation details when there is no prior organisation accreditation', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -744,7 +753,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders Current accreditation details when application.organisation.accreditation is present', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
+    mockAccreditationGet([
       makeApp({
         organisation: {
           accreditation: {
@@ -783,7 +792,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders overseas reprocessing sites when present on the current accreditation', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
+    mockAccreditationGet([
       makeApp({
         organisation: {
           accreditation: {
@@ -811,7 +820,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('page heading is unaffected by site address; the address appears in the application header instead', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
+    mockAccreditationGet([
       makeApp({ siteAddress: '2 North Road, Addingrove, AA3 1AB' })
     ])
 
@@ -828,9 +837,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders status tag with correct class for Started', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Started' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Started' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -843,9 +850,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('reapply text is NOT shown when application status is Saved', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Saved' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Saved' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -859,9 +864,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('reapply text is NOT shown when application status is Started', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Started' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Started' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -875,9 +878,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('reapply text is shown when application status is Submitted', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Submitted' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Submitted' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -891,9 +892,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('reapply text is shown when application status is Queried', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Queried' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Queried' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -909,9 +908,7 @@ describe('#operatorAccreditationController', () => {
   test.each(['Withdrawn', 'Cancelled', 'Refused'])(
     'reapply text is NOT shown when application status is %s',
     async (applicationStatus) => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
-        makeApp({ applicationStatus })
-      ])
+      mockAccreditationGet([makeApp({ applicationStatus })])
 
       const { result } = await server.inject({
         method: 'GET',
@@ -926,9 +923,7 @@ describe('#operatorAccreditationController', () => {
   )
 
   test('reapply text is NOT shown when application status is Approved', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Approved' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Approved' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -942,9 +937,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('reapply text is NOT shown when application status is Rejected', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ applicationStatus: 'Rejected' })
-    ])
+    mockAccreditationGet([makeApp({ applicationStatus: 'Rejected' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -958,7 +951,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('Continue button links to task-list with applicationId', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -971,7 +964,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('Re/Ex back link is present', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -983,7 +976,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('persistent application header shows operator, material and site', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
+    mockAccreditationGet([
       makeApp({
         organisationName: 'Delta Green Ltd',
         siteAddress: '2 North Road, Addingrove, AA3 1AB'
@@ -1005,7 +998,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('application summary list is rendered', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -1017,7 +1010,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('multi-application list is not rendered', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -1029,9 +1022,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('renders notification status row when notificationStatus is failed', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ notificationStatus: 'failed' })
-    ])
+    mockAccreditationGet([makeApp({ notificationStatus: 'failed' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -1044,9 +1035,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('does not render notification status row when notificationStatus is sent', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ notificationStatus: 'sent' })
-    ])
+    mockAccreditationGet([makeApp({ notificationStatus: 'sent' })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -1058,9 +1047,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('does not render notification status row when notificationStatus is null', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([
-      makeApp({ notificationStatus: null })
-    ])
+    mockAccreditationGet([makeApp({ notificationStatus: null })])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -1072,7 +1059,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('does not render notification status row when notificationStatus is absent', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result } = await server.inject({
       method: 'GET',
@@ -1111,7 +1098,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('returns 500 error view when seedApplication throws', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([])
+    mockAccreditationGet([])
     vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
 
     const { result, statusCode } = await server.inject({
@@ -1127,7 +1114,7 @@ describe('#operatorAccreditationController', () => {
   test('year URL param is compared as integer against app.year', async () => {
     const app2026 = makeApp({ year: 2026 })
     const app2025 = makeApp({ applicationId: 'app-2025', year: 2025 })
-    vi.spyOn(apiClient, 'get').mockResolvedValue([app2025, app2026])
+    mockAccreditationGet([app2025, app2026])
 
     const { statusCode } = await server.inject({
       method: 'GET',
@@ -1140,7 +1127,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   test('returns 200 in Welsh locale', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue([makeApp()])
+    mockAccreditationGet([makeApp()])
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
@@ -1175,7 +1162,7 @@ describe('#operatorAccreditationController', () => {
       })
 
     test('withdrawn application links to start a new application for the SAME year', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      mockAccreditationGet([withdrawnApp()])
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { statusCode, result } = await server.inject({
@@ -1195,7 +1182,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('withdrawn application still renders as WITHDRAWN with no continue or withdraw action', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      mockAccreditationGet([withdrawnApp()])
       vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { result } = await server.inject({
@@ -1210,10 +1197,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('renders the live application, not the withdrawn one, when the year holds both', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
-        withdrawnApp(),
-        restartedApp()
-      ])
+      mockAccreditationGet([withdrawnApp(), restartedApp()])
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { statusCode, result } = await server.inject({
@@ -1231,7 +1215,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('the restart control is a crumb-carrying POST form, not a link', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      mockAccreditationGet([withdrawnApp()])
       vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { result } = await server.inject({
@@ -1253,7 +1237,7 @@ describe('#operatorAccreditationController', () => {
     // The GET is now purely an idempotent lazy seed: it must never restart,
     // however it is reached (back button, bookmark, restored tab, prefetch).
     test('GET on the start-new path is not routable', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      mockAccreditationGet([withdrawnApp()])
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { statusCode } = await server.inject({
@@ -1267,7 +1251,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('POST seeds for the SAME year then redirects to the clean landing URL', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      mockAccreditationGet([withdrawnApp()])
       const postSpy = vi
         .spyOn(apiClient, 'post')
         .mockResolvedValue(restartedApp())
@@ -1288,10 +1272,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('the redirect target then renders the newly seeded application', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
-        withdrawnApp(),
-        restartedApp()
-      ])
+      mockAccreditationGet([withdrawnApp(), restartedApp()])
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
@@ -1306,10 +1287,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('POST does not seed when a live application already exists', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
-        withdrawnApp(),
-        restartedApp()
-      ])
+      mockAccreditationGet([withdrawnApp(), restartedApp()])
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { statusCode } = await server.inject({
@@ -1323,7 +1301,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('POST returns 403 when the operator is not related to the organisation', async () => {
-      const getSpy = vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      const getSpy = mockAccreditationGet([])
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { statusCode } = await server.inject({
@@ -1353,7 +1331,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('POST in Welsh locale redirects after seeding', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      mockAccreditationGet([withdrawnApp()])
       const postSpy = vi
         .spyOn(apiClient, 'post')
         .mockResolvedValue(restartedApp())
@@ -1369,7 +1347,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('renders the seed-error view (500) when the restart seed fails', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([withdrawnApp()])
+      mockAccreditationGet([withdrawnApp()])
       vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('seed failed'))
 
       const { statusCode, result } = await server.inject({
@@ -1384,7 +1362,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('a live application never offers the start-new link', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
+      mockAccreditationGet([
         makeApp({ applicationStatus: 'Submitted', organisationId: ORG_ID })
       ])
       vi.spyOn(apiClient, 'post').mockResolvedValue({})
@@ -1412,7 +1390,7 @@ describe('#operatorAccreditationController', () => {
 
   describe('exporter applications on the main route (RA-374: isExporter comes from the record, not the URL)', () => {
     test('does NOT render current accreditation site address row for an exporter application', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
+      mockAccreditationGet([
         makeExporterApp({
           organisation: {
             accreditation: {
@@ -1438,7 +1416,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('reprocessor application still renders current accreditation site address row', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([
+      mockAccreditationGet([
         makeApp({
           organisation: {
             accreditation: {
@@ -1464,7 +1442,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('renders application summary and continue link for an exporter application', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+      mockAccreditationGet([makeExporterApp()])
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1477,7 +1455,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('renders "Exporter" as the site name in both the landing page and the application header', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+      mockAccreditationGet([makeExporterApp()])
 
       const { result } = await server.inject({
         method: 'GET',
@@ -1492,7 +1470,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('returns 200 in Welsh locale for an exporter application', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([makeExporterApp()])
+      mockAccreditationGet([makeExporterApp()])
 
       const { statusCode } = await server.inject({
         method: 'GET',
@@ -1504,7 +1482,7 @@ describe('#operatorAccreditationController', () => {
     })
 
     test('seeds and renders a new exporter application reached via the plain URL for the first time', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue([])
+      mockAccreditationGet([])
       vi.spyOn(apiClient, 'post').mockResolvedValue(makeExporterApp())
 
       const { statusCode, result } = await server.inject({

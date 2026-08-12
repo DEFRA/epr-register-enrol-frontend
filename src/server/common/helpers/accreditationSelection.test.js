@@ -1,6 +1,17 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('./accreditationApiService.js', () => ({
+  accreditationApiService: {
+    listApplications: vi.fn(),
+    getApplication: vi.fn(),
+    seedApplication: vi.fn()
+  }
+}))
+
+import { accreditationApiService } from './accreditationApiService.js'
 import {
   selectApplicationForYear,
+  resolveLandingApplication,
   TERMINAL_STATUSES
 } from './accreditationSelection.js'
 
@@ -149,5 +160,64 @@ describe('#selectApplicationForYear', () => {
     expect(
       selectApplicationForYear([higher, lower], criteria).application
     ).toBe(higher)
+  })
+})
+
+// RA-415: listApplications() -> GetList never populates CM-sourced live fields
+// like dueDate, so a record picked straight from the list is stale. The
+// landing page must render the freshly-fetched record instead.
+describe('#resolveLandingApplication', () => {
+  const organisationId = 'org-123'
+  const logger = { error: vi.fn() }
+  const baseArgs = {
+    organisationId,
+    registrationId: REGISTRATION_ID,
+    materialType: MATERIAL,
+    yearInt: YEAR,
+    startNewRequested: false,
+    logger
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test('refreshes the picked application via getApplication before returning it', async () => {
+    const staleApp = makeApp({ dueDate: null })
+    const freshApp = makeApp({ dueDate: '2026-09-30T00:00:00.000Z' })
+    accreditationApiService.listApplications.mockResolvedValue([staleApp])
+    accreditationApiService.getApplication.mockResolvedValue(freshApp)
+
+    const result = await resolveLandingApplication(baseArgs)
+
+    expect(accreditationApiService.getApplication).toHaveBeenCalledWith(
+      organisationId,
+      staleApp.applicationId
+    )
+    expect(result).toEqual({ application: freshApp, failed: false })
+  })
+
+  test('falls back to the list record when the refresh call fails', async () => {
+    const staleApp = makeApp({ dueDate: null })
+    accreditationApiService.listApplications.mockResolvedValue([staleApp])
+    accreditationApiService.getApplication.mockRejectedValue(
+      new Error('API down')
+    )
+
+    const result = await resolveLandingApplication(baseArgs)
+
+    expect(result).toEqual({ application: staleApp, failed: false })
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  test('does not call getApplication when a new application is seeded', async () => {
+    const seeded = makeApp({ applicationId: 'app-seeded' })
+    accreditationApiService.listApplications.mockResolvedValue([])
+    accreditationApiService.seedApplication.mockResolvedValue(seeded)
+
+    const result = await resolveLandingApplication(baseArgs)
+
+    expect(accreditationApiService.getApplication).not.toHaveBeenCalled()
+    expect(result).toEqual({ application: seeded, failed: false })
   })
 })

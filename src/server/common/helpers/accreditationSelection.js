@@ -115,7 +115,24 @@ export async function resolveLandingApplication({
   // again and every record for the year is withdrawn. Simply viewing a
   // withdrawn application must leave it exactly as it is.
   if (hasMatch && (hasLive || !startNewRequested)) {
-    return { application, failed: false }
+    // RA-415: listApplications() -> GetList never populates dueDate (or other
+    // CM-sourced live fields), so the list record is stale by construction.
+    // Re-fetch the single application via GetById, which does return the live
+    // value, before rendering it.
+    try {
+      return {
+        application: await accreditationApiService.getApplication(
+          organisationId,
+          application.applicationId
+        ),
+        failed: false
+      }
+    } catch (error) {
+      logger.error(
+        `Error refreshing accreditation application id=${application.applicationId}: ${error.message}`
+      )
+      return { application, failed: false }
+    }
   }
 
   const descriptor = kind ? `${kind} ` : ''
