@@ -26,6 +26,15 @@
 
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          <p class="govuk-body">
+            <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+            {{ t('common.readOnlySection.body') }}
+          </p>
+        </div>
+      {% endif %}
+
       {% if sites and sites.length > 0 %}
         <table class="govuk-table" id="sites-table" data-testid="sites-table">
           <thead class="govuk-table__head">
@@ -33,7 +42,9 @@
               <th scope="col" class="govuk-table__header">{{ t('pages.uploadEvidenceList.table.siteName') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.uploadEvidenceList.table.country') }}</th>
               <th scope="col" class="govuk-table__header">{{ t('pages.uploadEvidenceList.table.evidenceStatus') }}</th>
-              <th scope="col" class="govuk-table__header">{{ t('pages.uploadEvidenceList.table.action') }}</th>
+              {% if not readOnly %}
+                <th scope="col" class="govuk-table__header">{{ t('pages.uploadEvidenceList.table.action') }}</th>
+              {% endif %}
             </tr>
           </thead>
           <tbody class="govuk-table__body">
@@ -44,25 +55,29 @@
                 <td class="govuk-table__cell" data-testid="evidence-status-{{ site.siteId }}">
                   <strong class="govuk-tag {{ site.evidenceStatusClass }}">{{ site.evidenceStatusText }}</strong>
                 </td>
-                <td class="govuk-table__cell" data-testid="action-{{ site.siteId }}">
-                  {% if site.uploadUrl %}
-                    <a href="{{ site.uploadUrl }}" class="govuk-link" data-testid="upload-link-{{ site.siteId }}">
-                      {{ t('pages.uploadEvidenceList.uploadLink') }}
-                      <span class="govuk-visually-hidden"> for {{ site.siteName }}</span>
-                    </a>
-                  {% endif %}
-                </td>
+                {% if not readOnly %}
+                  <td class="govuk-table__cell" data-testid="action-{{ site.siteId }}">
+                    {% if site.uploadUrl %}
+                      <a href="{{ site.uploadUrl }}" class="govuk-link" data-testid="upload-link-{{ site.siteId }}">
+                        {{ t('pages.uploadEvidenceList.uploadLink') }}
+                        <span class="govuk-visually-hidden"> for {{ site.siteName }}</span>
+                      </a>
+                    {% endif %}
+                  </td>
+                {% endif %}
               </tr>
             {% endfor %}
           </tbody>
         </table>
 
-        <form method="post" novalidate data-testid="continue-form">
-          <input type="hidden" name="crumb" value="{{ crumb }}">
-          <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-            {{ t('pages.uploadEvidenceList.continueButton') }}
-          </button>
-        </form>
+        {% if not readOnly %}
+          <form method="post" novalidate data-testid="continue-form">
+            <input type="hidden" name="crumb" value="{{ crumb }}">
+            <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+              {{ t('pages.uploadEvidenceList.continueButton') }}
+            </button>
+          </form>
+        {% endif %}
       {% else %}
         <p class="govuk-body" data-testid="no-sites-message">{{ t('pages.uploadEvidenceList.noSites') }}</p>
       {% endif %}

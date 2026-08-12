@@ -6,6 +6,7 @@ import {
   queryTaskListUrl,
   landingUrl
 } from '../../common/helpers/accreditationUrls.js'
+import { TERMINAL_STATUSES } from '../../common/helpers/accreditationSelection.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -80,9 +81,12 @@ export function buildTaskListViewModel(application, t) {
   ]
 
   let allComplete = tonnageComplete && bpComplete && spComplete
-  const isSubmitted = ['Submitted', 'Updated', 'DulyMade'].includes(
-    application.applicationStatus
-  )
+  const isSubmitted = [
+    'Submitted',
+    'Updated',
+    'DulyMade',
+    'AwaitingDecision'
+  ].includes(application.applicationStatus)
 
   if (isExporter) {
     const osComplete =
@@ -169,6 +173,14 @@ export const taskListGetController = {
 
     if (application.applicationStatus === 'Queried') {
       return h.redirect(queryTaskListUrl(applicationId))
+    }
+
+    // RA-415 defense in depth: the session guard already blocks this route
+    // once terminal, but that guard is disabled in the test environment and
+    // this is a cheap second check against the same data this handler
+    // already fetched.
+    if (TERMINAL_STATUSES.has(application.applicationStatus)) {
+      return h.redirect(landingUrl(application))
     }
 
     const viewModel = buildTaskListViewModel(application, t)

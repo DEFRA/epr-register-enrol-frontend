@@ -76,6 +76,7 @@
       "applicationDetailsHeading": "Application details",
       "periodLabel": "Period",
       "dueDateLabel": "Due date",
+      "dueDateNotAvailable": "Not yet available",
       "currentAccreditationHeading": "Current accreditation details",
       "accreditationNumberLabel": "Accreditation number",
       "regulatorLabel": "Regulator",
@@ -94,7 +95,8 @@
         "DulyMade": "DULY MADE",
         "Queried": "QUERIED",
         "Updated": "UPDATED",
-        "Approved": "APPROVED",
+        "AwaitingDecision": "AWAITING DECISION",
+        "Approved": "GRANTED",
         "Rejected": "REJECTED",
         "Withdrawn": "WITHDRAWN"
       },
@@ -289,6 +291,12 @@
       "viewUploadedFiles": "View uploaded files ({count})",
       "uploadAnotherFile": "Upload another file",
       "fileLabel": "Choose a file to upload",
+      "documentTypeLabel": "Document type",
+      "documentType": {
+        "samplingPlan": "Sampling and inspection plan",
+        "supportingEvidence": "Supporting evidence",
+        "notSpecified": "Not specified"
+      },
       "uploadButton": "Upload file",
       "deleteFile": "Remove",
       "saveAndContinue": "Save and continue",
@@ -296,17 +304,18 @@
       "table": {
         "filename": "Filename",
         "dateUploaded": "Upload date",
-        "uploadedBy": "Uploaded by",
+        "documentType": "Document type",
         "action": ""
       },
       "status": {
-        "title": "Uploading file",
-        "heading": "Uploading file",
-        "message": "Your file is being scanned for viruses. This may take a few seconds.",
-        "doNotClose": "Do not close this page."
+        "title": "Your file is being virus checked",
+        "heading": "Your file is being virus checked",
+        "message": "This may take a few minutes.",
+        "doNotClose": "Keep this page open and do not refresh it."
       },
       "validation": {
         "noFile": "Select a file to upload",
+        "noDocumentType": "Select a document type",
         "invalidType": "The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
         "fileTooLarge": "Cannot upload file. The file is larger than 20MB. Please use a smaller file, or split the file and upload supporting documents separately. You can upload up to 10 files.",
         "noCleanFile": "You must upload at least one file before continuing",
@@ -702,14 +711,18 @@
       },
       "recyclingOperationDetails": {
         "title": "Recycling operation — Add overseas reprocessing site",
-        "heading": "What recycling operation is carried out at the site?",
-        "label": "Recycling operation",
+        "heading": "What recycling operations are carried out at the site?",
+        "label": "Select all recycling operations that apply",
         "operations": {
-          "R3": "R3 — Recycling or reclamation of organic substances not used as solvents (including composting)",
-          "R4": "R4 — Recycling or reclamation of metals and metal compounds"
+          "R3": "R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
+          "R4": "R4 — Recycling/reclamation of metals and metal compounds (Scrap metal recycling, metal recovery)",
+          "R5": "R5 — Recycling/reclamation of other inorganic materials (Glass, bricks, concrete, soil, aggregates, ceramics)",
+          "R12": "R12 — Exchange of waste for submission (sorting, baling, aggregation)",
+          "R13": "R13 — Interim storage of wastes"
         },
         "validation": {
-          "required": "Select a recycling operation"
+          "required": "Select at least one recycling operation",
+          "accompanyingCodeRequired": "R12 and R13 cannot be selected on their own — select at least one other applicable recycling operation as well"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"
@@ -971,6 +984,11 @@
         "overseasSites": "overseas reprocessing sites",
         "besEvidence": "evidence of broadly equivalent standards (BES)"
       }
+    },
+    "readOnlySection": {
+      "heading": "You cannot edit this section",
+      "body": "This section has already been completed and is not part of the regulator's query. Go back to the query task list to update the queried section.",
+      "backToQueryTaskList": "Back to query task list"
     }
   },
   "languageSwitcher": {

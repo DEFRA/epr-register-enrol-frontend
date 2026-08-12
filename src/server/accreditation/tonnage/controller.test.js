@@ -214,11 +214,11 @@ describe('#tonnageController', () => {
       expect(result).toContain('PERNs do you plan to issue?')
     })
 
-    test('redirects to query-task-list when application is Queried and PRNs section is not', async () => {
+    test('redirects to query-task-list when application is Queried and PRNs section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
-          prns: { sectionStatus: 'Completed' }
+          prns: { sectionStatus: 'NotStarted' }
         })
       )
 
@@ -231,6 +231,53 @@ describe('#tonnageController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('renders the form read-only when application is Queried and PRNs section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Completed', plannedTonnageBand: 'UpTo500' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).toContain('You cannot edit this section')
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="save-come-back-button"')
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
+      )
+    })
+
+    test('does not render the regulator-query banner for a read-only section, even though another section is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Completed', plannedTonnageBand: 'UpTo500' },
+          businessPlan: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please break down the price support spend.' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain('Please break down the price support spend.')
+      expect(result).not.toContain(
+        'The regulator has identified an issue with your tonnage and authority to issue PRNs.'
       )
     })
 

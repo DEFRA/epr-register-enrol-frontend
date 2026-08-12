@@ -130,7 +130,7 @@ describe('accreditationApiService', () => {
       expect(result.siteAddress).toBe('UNIT 5, Bolton, BL4 7AQ')
     })
 
-    test('sitePostcode is null when siteAddress is a plain string', async () => {
+    test('sitePostcode is extracted from a plain-string siteAddress', async () => {
       apiClient.get.mockResolvedValue({
         siteAddress: 'North Road, Siteville, SI1 1AA'
       })
@@ -138,8 +138,30 @@ describe('accreditationApiService', () => {
         ORG_ID,
         APP_ID
       )
-      expect(result.sitePostcode).toBeNull()
+      expect(result.sitePostcode).toBe('SI1 1AA')
       expect(result.siteAddress).toBe('North Road, Siteville, SI1 1AA')
+    })
+
+    test('sitePostcode is extracted from a plain-string Scottish siteAddress', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: '12 Harbour Road, Aberdeen, AB11 5DQ'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('AB11 5DQ')
+    })
+
+    test('sitePostcode is null when a plain-string siteAddress has no recognisable postcode', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: 'North Road, Siteville'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBeNull()
     })
 
     test('sitePostcode is null when siteAddress is absent', async () => {
@@ -149,6 +171,51 @@ describe('accreditationApiService', () => {
         APP_ID
       )
       expect(result.sitePostcode).toBeNull()
+    })
+
+    test('dueDate is passed through when it is a valid ISO string', async () => {
+      apiClient.get.mockResolvedValue({
+        dueDate: '2026-09-30T00:00:00.000Z'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBe('2026-09-30T00:00:00.000Z')
+    })
+
+    test('dueDate is null when absent', async () => {
+      apiClient.get.mockResolvedValue({})
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBeNull()
+    })
+
+    // Regression: an unparseable dueDate must not crash the landing page —
+    // formatDate() throws on an Invalid Date, so anything the backend sends
+    // that isn't a valid ISO string is dropped to null here instead.
+    test('dueDate falls back to null when the backend sends a malformed value', async () => {
+      apiClient.get.mockResolvedValue({
+        dueDate: 'not-a-real-date'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBeNull()
+    })
+
+    test('dueDate falls back to null for a non-string value', async () => {
+      apiClient.get.mockResolvedValue({
+        dueDate: 12345
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.dueDate).toBeNull()
     })
   })
 
@@ -161,6 +228,89 @@ describe('accreditationApiService', () => {
         `${BASE}/${ORG_ID}/${APP_ID}/tonnage`,
         body
       )
+    })
+
+    // RA-292 AC03: `isNew` is derived server-side, so the client must relay the
+    // authoriser objects verbatim rather than projecting known fields.
+    test('sends the authoriser objects through untouched, including isNew', async () => {
+      apiClient.patch.mockResolvedValue({})
+      const body = {
+        authorisers: [
+          { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+          { fullName: 'Bob', email: 'bob@example.com', isNew: false },
+          { fullName: 'Sue', email: 'sue@example.com' }
+        ]
+      }
+      await accreditationApiService.patchTonnage(ORG_ID, APP_ID, body)
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/tonnage`,
+        body
+      )
+    })
+  })
+
+  describe('normalisation of prns authorisers (RA-292)', () => {
+    test('preserves isNew when the backend returns prnIssuance.signatories', async () => {
+      apiClient.get.mockResolvedValue({
+        id: APP_ID,
+        prnIssuance: {
+          sectionStatus: 'InProgress',
+          plannedIssuance: 'UpTo1000',
+          signatories: [
+            { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+            { fullName: 'Bob', email: 'bob@example.com', isNew: false },
+            { fullName: 'Sue', email: 'sue@example.com' },
+            { fullName: 'Ann', email: 'ann@example.com', isNew: null }
+          ]
+        }
+      })
+
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+
+      expect(result.prns.authorisers).toEqual([
+        { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+        { fullName: 'Bob', email: 'bob@example.com', isNew: false },
+        { fullName: 'Sue', email: 'sue@example.com' },
+        { fullName: 'Ann', email: 'ann@example.com', isNew: null }
+      ])
+      expect(result.prns.authorisers[2]).not.toHaveProperty('isNew')
+    })
+
+    test('preserves isNew when the payload already uses the prns shape', async () => {
+      apiClient.get.mockResolvedValue({
+        id: APP_ID,
+        prns: {
+          sectionStatus: 'InProgress',
+          plannedTonnageBand: 'UpTo1000',
+          authorisers: [
+            { fullName: 'Jane', email: 'jane@example.com', isNew: true }
+          ]
+        }
+      })
+
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+
+      expect(result.prns.authorisers[0].isNew).toBe(true)
+    })
+
+    test('yields an empty authoriser list when signatories are missing', async () => {
+      apiClient.get.mockResolvedValue({
+        id: APP_ID,
+        prnIssuance: { sectionStatus: 'NotStarted' }
+      })
+
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+
+      expect(result.prns.authorisers).toEqual([])
     })
   })
 

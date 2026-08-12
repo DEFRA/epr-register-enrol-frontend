@@ -15,7 +15,10 @@ import {
   validateFileExtension,
   buildFilesViewModel,
   hasEligibleFile,
+  documentTypeLabel,
+  documentTypeOptions,
   ALLOWED_EXTENSIONS,
+  DOCUMENT_TYPES,
   MAX_FILE_BYTES
 } from './controller.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
@@ -51,8 +54,20 @@ function makeFile(overrides = {}) {
     uploadedAt: '2027-03-01T10:00:00Z',
     uploadedBy: 'test-operator-id',
     scanStatus: 'Pending',
+    documentType: 'SamplingPlan',
     ...overrides
   }
+}
+
+function stubT(key) {
+  const labels = {
+    'pages.samplingPlanUpload.documentType.samplingPlan':
+      'Sampling and inspection plan',
+    'pages.samplingPlanUpload.documentType.supportingEvidence':
+      'Supporting evidence',
+    'pages.samplingPlanUpload.documentType.notSpecified': 'Not specified'
+  }
+  return labels[key] ?? key
 }
 
 describe('#validateFileExtension', () => {
@@ -109,6 +124,54 @@ describe('#buildFilesViewModel', () => {
   test('defaults scanStatus to Pending when missing', () => {
     const result = buildFilesViewModel([{ fileId: 'x', filename: 'a.pdf' }])
     expect(result[0].scanStatus).toBe('Pending')
+  })
+
+  test('includes documentType in the view model', () => {
+    const result = buildFilesViewModel([
+      makeFile({ documentType: 'SupportingEvidence' })
+    ])
+    expect(result[0].documentType).toBe('SupportingEvidence')
+  })
+
+  test('defaults documentType to null when missing', () => {
+    const result = buildFilesViewModel([{ fileId: 'x', filename: 'a.pdf' }])
+    expect(result[0].documentType).toBeNull()
+  })
+})
+
+describe('#documentTypeLabel', () => {
+  test('resolves SamplingPlan to its translated label', () => {
+    expect(documentTypeLabel(stubT, 'SamplingPlan')).toBe(
+      'Sampling and inspection plan'
+    )
+  })
+
+  test('resolves SupportingEvidence to its translated label', () => {
+    expect(documentTypeLabel(stubT, 'SupportingEvidence')).toBe(
+      'Supporting evidence'
+    )
+  })
+
+  test('falls back to notSpecified for null', () => {
+    expect(documentTypeLabel(stubT, null)).toBe('Not specified')
+  })
+
+  test('falls back to notSpecified for an unrecognised value', () => {
+    expect(documentTypeLabel(stubT, 'SomethingElse')).toBe('Not specified')
+  })
+})
+
+describe('#documentTypeOptions', () => {
+  test('returns both document type options with translated labels', () => {
+    const result = documentTypeOptions(stubT)
+    expect(result).toEqual([
+      { value: 'SamplingPlan', label: 'Sampling and inspection plan' },
+      { value: 'SupportingEvidence', label: 'Supporting evidence' }
+    ])
+  })
+
+  test('one option per DOCUMENT_TYPES entry', () => {
+    expect(documentTypeOptions(stubT)).toHaveLength(DOCUMENT_TYPES.length)
   })
 })
 
@@ -234,6 +297,20 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
+    test('renders the document type select with both options', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="document-type-input"')
+      expect(result).toContain('Sampling and inspection plan')
+      expect(result).toContain('Supporting evidence')
+    })
+
     test('never renders a files table on the upload page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -315,11 +392,11 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('redirects to query-task-list when application is Queried and sampling plan section is not', async () => {
+    test('redirects to query-task-list when application is Queried and sampling plan section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
-          samplingPlan: { sectionStatus: 'Completed', files: [] }
+          samplingPlan: { sectionStatus: 'NotStarted', files: [] }
         })
       )
 
@@ -333,6 +410,50 @@ describe('#samplingPlanUploadController', () => {
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
+    })
+
+    test('renders read-only, without the upload form, when application is Queried and sampling plan section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [] }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain(
+        '<form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">'
+      )
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
+      )
+    })
+
+    test('does not render the regulator-query banner for a read-only section, even though another section is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [] },
+          businessPlan: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please break down the price support spend.' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain('Please break down the price support spend.')
     })
 
     test('renders the form and query note when sampling plan section itself is Queried', async () => {
@@ -375,7 +496,8 @@ describe('#samplingPlanUploadController', () => {
     function buildMultipartPayload({
       filename = 'test.png',
       contentType = 'image/png',
-      fileBytes = Buffer.from('fake-content')
+      fileBytes = Buffer.from('fake-content'),
+      documentType = 'SamplingPlan'
     } = {}) {
       const CRLF = '\r\n'
       const buffers = []
@@ -388,6 +510,17 @@ describe('#samplingPlanUploadController', () => {
             `uploadFile${CRLF}`
         )
       )
+
+      if (documentType !== '') {
+        buffers.push(
+          Buffer.from(
+            `--${boundary}${CRLF}` +
+              `Content-Disposition: form-data; name="documentType"${CRLF}` +
+              CRLF +
+              `${documentType}${CRLF}`
+          )
+        )
+      }
 
       if (filename !== '') {
         buffers.push(
@@ -542,6 +675,77 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
+    test('missing document type returns 400 with noDocumentType error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png',
+          documentType: ''
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="document-type-error"')
+      expect(result).toContain('Select a document type')
+    })
+
+    test('unrecognised document type returns 400 with noDocumentType error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png',
+          documentType: 'NotARealType'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="document-type-error"')
+    })
+
+    test('missing document type and invalid file both render their errors together', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({ filename: '', documentType: '' })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="document-type-error"')
+      expect(result).toContain('data-testid="file-error"')
+    })
+
+    test('re-renders with the chosen document type still selected when only the file fails validation', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'malware.exe',
+          contentType: 'application/octet-stream',
+          documentType: 'SupportingEvidence'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('value="SupportingEvidence" selected')
+    })
+
     test('CDP redirect response from proxy upload is treated as success, not failure', async () => {
       // Regression guard: cdp-uploader's /upload-and-scan responds with a redirect meant for
       // an end-user's browser, not our server-to-server proxy fetch. Previously this was
@@ -633,12 +837,16 @@ describe('#samplingPlanUploadController', () => {
     const boundary = 'test-boundary-status'
     const multipartContentType = `multipart/form-data; boundary=${boundary}`
 
-    function buildFilePayload() {
+    function buildFilePayload(documentType = 'SamplingPlan') {
       const CRLF = '\r\n'
       return Buffer.concat([
         Buffer.from(
           `--${boundary}${CRLF}` +
             `Content-Disposition: form-data; name="action"${CRLF}${CRLF}uploadFile${CRLF}`
+        ),
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="documentType"${CRLF}${CRLF}${documentType}${CRLF}`
         ),
         Buffer.from(
           `--${boundary}${CRLF}` +
@@ -650,13 +858,13 @@ describe('#samplingPlanUploadController', () => {
       ])
     }
 
-    async function getStatusCookie() {
+    async function getStatusCookie(documentType = 'SamplingPlan') {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const postResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
         headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildFilePayload()
+        payload: buildFilePayload(documentType)
       })
       const raw = postResponse.headers['set-cookie']
       return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
@@ -677,6 +885,9 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="status-message"')
+      expect(result).toContain('Your file is being virus checked')
+      expect(result).toContain('This may take a few minutes.')
+      expect(result).toContain('Keep this page open and do not refresh it.')
     })
 
     test('saves Clean scanStatus and redirects to the results page', async () => {
@@ -706,7 +917,37 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/files'),
-        expect.objectContaining({ scanStatus: 'Clean' })
+        expect.objectContaining({
+          scanStatus: 'Clean',
+          documentType: 'SamplingPlan'
+        })
+      )
+    })
+
+    test('threads the selected SupportingEvidence document type through to addFile', async () => {
+      const cookie = await getStatusCookie('SupportingEvidence')
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        form: {
+          file: {
+            filename: 'evidence.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-validated',
+            fileStatus: 'complete'
+          }
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ documentType: 'SupportingEvidence' })
       )
     })
 
@@ -766,18 +1007,51 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(postSpy).not.toHaveBeenCalled()
     })
+
+    test('redirects to results with the shared failure flag when addFile rejects, instead of a silent success redirect', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        form: {
+          file: {
+            filename: 'plan.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-validated',
+            fileStatus: 'complete'
+          }
+        }
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        new Error('Backend rejected the request')
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
+      )
+    })
   })
 
   describe('uploading multiple files via the "Upload another file" loop', () => {
     const boundary = 'test-boundary-loop'
     const multipartContentType = `multipart/form-data; boundary=${boundary}`
 
-    function buildFilePayload(filename) {
+    function buildFilePayload(filename, documentType = 'SamplingPlan') {
       const CRLF = '\r\n'
       return Buffer.concat([
         Buffer.from(
           `--${boundary}${CRLF}` +
             `Content-Disposition: form-data; name="action"${CRLF}${CRLF}uploadFile${CRLF}`
+        ),
+        Buffer.from(
+          `--${boundary}${CRLF}` +
+            `Content-Disposition: form-data; name="documentType"${CRLF}${CRLF}${documentType}${CRLF}`
         ),
         Buffer.from(
           `--${boundary}${CRLF}` +
@@ -789,7 +1063,12 @@ describe('#samplingPlanUploadController', () => {
       ])
     }
 
-    async function uploadOneFile({ currentFiles, filename, fileId }) {
+    async function uploadOneFile({
+      currentFiles,
+      filename,
+      fileId,
+      documentType = 'SamplingPlan'
+    }) {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           samplingPlan: { sectionStatus: 'InProgress', files: currentFiles }
@@ -799,7 +1078,7 @@ describe('#samplingPlanUploadController', () => {
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
         headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
-        payload: buildFilePayload(filename)
+        payload: buildFilePayload(filename, documentType)
       })
       const raw = uploadResponse.headers['set-cookie']
       const cookie = Array.isArray(raw)
@@ -895,6 +1174,32 @@ describe('#samplingPlanUploadController', () => {
       expect(finalResults.result).toContain('first.pdf')
       expect(finalResults.result).toContain('second.pdf')
     })
+
+    test('a second upload with a different document type does not leak the first session value', async () => {
+      const first = await uploadOneFile({
+        currentFiles: [],
+        filename: 'first.pdf',
+        fileId: 'file-first',
+        documentType: 'SamplingPlan'
+      })
+      expect(first.addFileSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ documentType: 'SamplingPlan' })
+      )
+
+      const second = await uploadOneFile({
+        currentFiles: [
+          makeFile({ fileId: 'file-first', filename: 'first.pdf' })
+        ],
+        filename: 'second.pdf',
+        fileId: 'file-second',
+        documentType: 'SupportingEvidence'
+      })
+      expect(second.addFileSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/files'),
+        expect.objectContaining({ documentType: 'SupportingEvidence' })
+      )
+    })
   })
 
   describe('GET /accreditation/sampling-plan/{applicationId}/results', () => {
@@ -935,6 +1240,47 @@ describe('#samplingPlanUploadController', () => {
       expect(result).not.toContain('data-testid="file-scan-status"')
       expect(result).not.toContain('govuk-tag--green')
       expect(result).not.toContain('govuk-tag--red')
+      expect(result).not.toContain('data-testid="file-uploaded-by"')
+      expect(result).toContain('data-testid="file-document-type"')
+      expect(result).toContain('Sampling and inspection plan')
+    })
+
+    test('renders the Supporting evidence label for a SupportingEvidence file', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ documentType: 'SupportingEvidence' })]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Supporting evidence')
+    })
+
+    test('renders the notSpecified fallback for a legacy file with no document type', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ documentType: undefined })]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Not specified')
     })
 
     test('excludes Infected files from the results table', async () => {
@@ -1035,11 +1381,11 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('redirects to query-task-list when application is Queried and sampling plan section is not', async () => {
+    test('redirects to query-task-list when application is Queried and sampling plan section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
-          samplingPlan: { sectionStatus: 'Completed', files: [makeFile()] }
+          samplingPlan: { sectionStatus: 'NotStarted', files: [makeFile()] }
         })
       )
 
@@ -1053,6 +1399,26 @@ describe('#samplingPlanUploadController', () => {
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
+    })
+
+    test('renders read-only, without delete/continue actions, when application is Queried and sampling plan section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [makeFile()] }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain('data-testid="delete-file-button"')
+      expect(result).not.toContain('data-testid="continue-form"')
     })
   })
 

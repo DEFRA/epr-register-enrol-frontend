@@ -7,6 +7,7 @@ import { accreditationApiService } from '../helpers/accreditationApiService.js'
 import { landingUrl } from '../helpers/accreditationUrls.js'
 import { getLocaleAndTranslator } from '../helpers/get-locale-translator.js'
 import { buildApplicationHeaderViewModel } from '../helpers/applicationHeader.js'
+import { TERMINAL_STATUSES } from '../helpers/accreditationSelection.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -17,16 +18,17 @@ export function shouldGuardPath(path) {
   )
 }
 
-// Routes that are safe to reach on a Withdrawn application — the withdraw
-// confirmation page has its own status guard, and payment details are
-// read-only by nature. Everything else under /accreditation/ is a form that
-// edits application data, so it must not be reachable once withdrawn (AC09).
+// Routes that are safe to reach on a terminal (Withdrawn/Approved/Rejected)
+// application — the withdraw confirmation page has its own status guard, and
+// payment details are read-only by nature. Everything else under
+// /accreditation/ is a form that edits application data, so it must not be
+// reachable once the application is in a terminal state (AC09, RA-415).
 const READ_ONLY_SAFE_SEGMENTS = new Set([
   'withdraw-application',
   'view-payment-details'
 ])
 
-export function isWithdrawnBlockedPath(path) {
+export function isEditRestrictedPath(path) {
   const match = path.match(/^\/(?:[a-z]{2}\/)?accreditation\/([^/]+)\//)
   if (!match) {
     return false
@@ -114,8 +116,8 @@ export const accreditationSessionGuard = {
         )
 
         if (
-          isWithdrawnBlockedPath(request.path) &&
-          application?.applicationStatus === 'Withdrawn'
+          isEditRestrictedPath(request.path) &&
+          TERMINAL_STATUSES.has(application?.applicationStatus)
         ) {
           return h.redirect(landingUrl(application)).takeover()
         }

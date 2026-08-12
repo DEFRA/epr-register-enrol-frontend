@@ -3,6 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -71,17 +72,21 @@ function buildViewData(
   error,
   queryNote = null,
   querySummary = null,
-  regulatorQueryFields = null
+  regulatorQueryFields = null,
+  readOnly = false
 ) {
   return {
     pageTitle: t('pages.uploadEvidenceList.title'),
     heading: t('pages.uploadEvidenceList.heading'),
     sites,
-    backLink: taskListUrl(applicationId),
+    backLink: readOnly
+      ? queryTaskListUrl(applicationId)
+      : taskListUrl(applicationId),
     error,
     queryNote,
     querySummary,
-    regulatorQueryFields
+    regulatorQueryFields,
+    readOnly
   }
 }
 
@@ -114,10 +119,11 @@ export const uploadEvidenceListGetController = {
       ).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.besEvidence?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.besEvidence?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
@@ -126,7 +132,7 @@ export const uploadEvidenceListGetController = {
     )
     const sites = mapSites(t, applicationId, selectedSites)
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
     return renderPage(
@@ -145,7 +151,8 @@ export const uploadEvidenceListGetController = {
                 href: '#sites-table'
               }
             ]
-          : null
+          : null,
+        readOnly
       )
     )
   }

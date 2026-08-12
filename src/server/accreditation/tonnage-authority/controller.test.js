@@ -288,14 +288,14 @@ describe('#tonnageAuthorityController', () => {
       )
     })
 
-    test('redirects to query-task-list when application is Queried and PRNs section is not', async () => {
+    test('redirects to query-task-list when application is Queried and PRNs section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
           prns: {
             plannedTonnageBand: 'UpTo1000',
             authorisers: [],
-            sectionStatus: 'Completed'
+            sectionStatus: 'NotStarted'
           }
         })
       )
@@ -310,6 +310,57 @@ describe('#tonnageAuthorityController', () => {
       expect(headers.location).toBe(
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
+    })
+
+    test('renders the page read-only when application is Queried and PRNs section is Completed', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [{ fullName: 'Jane Doe', email: 'jane@example.com' }],
+            sectionStatus: 'Completed'
+          }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="read-only-notice"')
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="add-authoriser-details"')
+      expect(result).toContain(
+        `href="/accreditation/query-task-list/${APPLICATION_ID}"`
+      )
+    })
+
+    test('does not render the regulator-query banner for a read-only section, even though another section is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers: [],
+            sectionStatus: 'Completed'
+          },
+          businessPlan: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please break down the price support spend.' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain('Please break down the price support spend.')
     })
 
     test('renders the form and query note when PRNs section itself is Queried', async () => {
@@ -765,6 +816,194 @@ describe('#tonnageAuthorityController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="new-full-name-error"')
+    })
+  })
+
+  // RA-292 AC03: the regulator's case-management view flags newly-added
+  // authority-to-issue contacts. `isNew` is derived server-side and is
+  // authoritative there; the operator journey must round-trip it untouched and
+  // must never surface it to the operator.
+  describe('RA-292 authoriser isNew round-trip', () => {
+    function patchedAuthorisers(patchSpy) {
+      return patchSpy.mock.calls.at(-1)[1].authorisers
+    }
+
+    function appWithAuthorisers(authorisers) {
+      return makeApplication({
+        prns: {
+          plannedTonnageBand: 'UpTo1000',
+          authorisers,
+          sectionStatus: 'InProgress'
+        }
+      })
+    }
+
+    test('preserves isNew true and false through the selection step', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        appWithAuthorisers([
+          { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true },
+          { fullName: 'Bob Jones', email: 'bob@example.com', isNew: false }
+        ])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: ['jane@example.com', 'bob@example.com']
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(patchedAuthorisers(patchSpy)).toEqual([
+        { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true },
+        { fullName: 'Bob Jones', email: 'bob@example.com', isNew: false }
+      ])
+    })
+
+    test('keeps isNew on surviving authorisers when one is unticked', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        appWithAuthorisers([
+          { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true },
+          { fullName: 'Bob Jones', email: 'bob@example.com', isNew: false }
+        ])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(patchedAuthorisers(patchSpy)).toEqual([
+        { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true }
+      ])
+    })
+
+    test('does not fabricate isNew when the field is absent', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        appWithAuthorisers([
+          { fullName: 'Jane Smith', email: 'jane@example.com' }
+        ])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(patchedAuthorisers(patchSpy)[0]).not.toHaveProperty('isNew')
+    })
+
+    test('passes isNew through unchanged when it is null', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        appWithAuthorisers([
+          { fullName: 'Jane Smith', email: 'jane@example.com', isNew: null }
+        ])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(patchedAuthorisers(patchSpy)[0].isNew).toBeNull()
+    })
+
+    test('saveAndComeLater also preserves isNew', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        appWithAuthorisers([
+          { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true }
+        ])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndComeLater',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(patchedAuthorisers(patchSpy)[0].isNew).toBe(true)
+    })
+
+    // Newness is derived server-side by merging on email. The operator side
+    // must not guess it, so a freshly added authoriser is sent without the key.
+    test('adding an authoriser keeps existing isNew and sets none on the new one', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        appWithAuthorisers([
+          { fullName: 'Bob Jones', email: 'bob@example.com', isNew: false }
+        ])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          newFullName: 'Jane Smith',
+          newEmail: 'jane@example.com'
+        }
+      })
+
+      const sent = patchedAuthorisers(patchSpy)
+      expect(sent[0]).toEqual({
+        fullName: 'Bob Jones',
+        email: 'bob@example.com',
+        isNew: false
+      })
+      expect(sent[1]).not.toHaveProperty('isNew')
+    })
+
+    test('does not expose isNew to the operator on the rendered page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        appWithAuthorisers([
+          { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true }
+        ])
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Jane Smith')
+      expect(result).not.toContain('isNew')
+    })
+
+    test('buildAuthoriserRows drops isNew from the view model', () => {
+      const rows = buildAuthoriserRows([
+        { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true }
+      ])
+      expect(rows[0]).not.toHaveProperty('isNew')
     })
   })
 })

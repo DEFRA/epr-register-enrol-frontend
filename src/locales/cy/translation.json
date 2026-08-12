@@ -73,6 +73,7 @@
       "applicationDetailsHeading": "[Welsh] Application details",
       "periodLabel": "[Welsh] Period",
       "dueDateLabel": "[Welsh] Due date",
+      "dueDateNotAvailable": "[Welsh] Not yet available",
       "currentAccreditationHeading": "[Welsh] Current accreditation details",
       "accreditationNumberLabel": "[Welsh] Accreditation number",
       "regulatorLabel": "[Welsh] Regulator",
@@ -90,7 +91,8 @@
         "DulyMade": "[Welsh] DULY MADE",
         "Queried": "[Welsh] QUERIED",
         "Updated": "[Welsh] UPDATED",
-        "Approved": "[Welsh] APPROVED",
+        "AwaitingDecision": "[Welsh] AWAITING DECISION",
+        "Approved": "[Welsh] GRANTED",
         "Rejected": "[Welsh] REJECTED",
         "Withdrawn": "[Welsh] WITHDRAWN"
       },
@@ -286,6 +288,12 @@
       "viewUploadedFiles": "[Welsh] View uploaded files ({count})",
       "uploadAnotherFile": "[Welsh] Upload another file",
       "fileLabel": "[Welsh] Choose a file to upload",
+      "documentTypeLabel": "[Welsh] Document type",
+      "documentType": {
+        "samplingPlan": "[Welsh] Sampling and inspection plan",
+        "supportingEvidence": "[Welsh] Supporting evidence",
+        "notSpecified": "[Welsh] Not specified"
+      },
       "uploadButton": "Uwchlwytho ffeil",
       "deleteFile": "[Welsh] Remove",
       "saveAndContinue": "Cadw a pharhau",
@@ -293,17 +301,18 @@
       "table": {
         "filename": "[Welsh] Filename",
         "dateUploaded": "[Welsh] Upload date",
-        "uploadedBy": "Uwchlwythwyd gan",
+        "documentType": "[Welsh] Document type",
         "action": ""
       },
       "status": {
-        "title": "Wrthi’n uwchlwytho ffeil",
-        "heading": "Wrthi’n uwchlwytho ffeil",
-        "message": "[Welsh] Your file is being scanned for viruses. This may take a few seconds.",
-        "doNotClose": "[Welsh] Do not close this page."
+        "title": "[Welsh] Your file is being virus checked",
+        "heading": "[Welsh] Your file is being virus checked",
+        "message": "[Welsh] This may take a few minutes.",
+        "doNotClose": "[Welsh] Keep this page open and do not refresh it."
       },
       "validation": {
         "noFile": "[Welsh] Select a file to upload",
+        "noDocumentType": "[Welsh] Select a document type",
         "invalidType": "[Welsh] The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
         "fileTooLarge": "[Welsh] Cannot upload file. The file is larger than 20MB. Please use a smaller file, or split the file and upload supporting documents separately. You can upload up to 10 files.",
         "noCleanFile": "[Welsh] You must upload at least one file before continuing",
@@ -699,14 +708,18 @@
       },
       "recyclingOperationDetails": {
         "title": "[Welsh] Recycling operation — Add overseas reprocessing site",
-        "heading": "[Welsh] What recycling operation is carried out at the site?",
-        "label": "[Welsh] Recycling operation",
+        "heading": "[Welsh] What recycling operations are carried out at the site?",
+        "label": "[Welsh] Select all recycling operations that apply",
         "operations": {
-          "R3": "[Welsh] R3 — Recycling or reclamation of organic substances not used as solvents (including composting)",
-          "R4": "[Welsh] R4 — Recycling or reclamation of metals and metal compounds"
+          "R3": "[Welsh] R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
+          "R4": "[Welsh] R4 — Recycling/reclamation of metals and metal compounds (Scrap metal recycling, metal recovery)",
+          "R5": "[Welsh] R5 — Recycling/reclamation of other inorganic materials (Glass, bricks, concrete, soil, aggregates, ceramics)",
+          "R12": "[Welsh] R12 — Exchange of waste for submission (sorting, baling, aggregation)",
+          "R13": "[Welsh] R13 — Interim storage of wastes"
         },
         "validation": {
-          "required": "[Welsh] Select a recycling operation"
+          "required": "[Welsh] Select at least one recycling operation",
+          "accompanyingCodeRequired": "[Welsh] R12 and R13 cannot be selected on their own — select at least one other applicable recycling operation as well"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
@@ -964,6 +977,11 @@
         "overseasSites": "[Welsh] overseas reprocessing sites",
         "besEvidence": "[Welsh] evidence of broadly equivalent standards (BES)"
       }
+    },
+    "readOnlySection": {
+      "heading": "[Welsh] You cannot edit this section",
+      "body": "[Welsh] This section has already been completed and is not part of the regulator's query. Go back to the query task list to update the queried section.",
+      "backToQueryTaskList": "[Welsh] Back to query task list"
     },
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",

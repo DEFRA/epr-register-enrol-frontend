@@ -334,4 +334,62 @@ describe('#tonnageCyaController', () => {
       expect(patchSpy).not.toHaveBeenCalled()
     })
   })
+
+  // RA-292 AC03: confirming the section re-PATCHes the authoriser list, so this
+  // page must not strip the server-derived isNew either, nor show it.
+  describe('RA-292 authoriser isNew round-trip', () => {
+    const authorisers = [
+      { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true },
+      { fullName: 'Bob Jones', email: 'bob@example.com', isNew: false },
+      { fullName: 'Sue Clark', email: 'sue@example.com' },
+      { fullName: 'Ann Doe', email: 'ann@example.com', isNew: null }
+    ]
+
+    test('confirming the section relays isNew untouched', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers,
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      const sent = patchSpy.mock.calls.at(-1)[1].authorisers
+      expect(sent).toEqual(authorisers)
+      expect(sent[2]).not.toHaveProperty('isNew')
+    })
+
+    test('does not expose isNew to the operator on the summary page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: 'UpTo1000',
+            authorisers,
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Jane Smith')
+      expect(result).not.toContain('isNew')
+    })
+  })
 })

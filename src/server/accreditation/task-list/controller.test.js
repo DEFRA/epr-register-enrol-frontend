@@ -136,6 +136,15 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.isSubmitted).toBe(true)
   })
 
+  test('applicationStatus AwaitingDecision — isSubmitted true', () => {
+    const vm = buildTaskListViewModel(
+      makeApplication({ applicationStatus: 'AwaitingDecision' }),
+      t
+    )
+
+    expect(vm.isSubmitted).toBe(true)
+  })
+
   test('viewPaymentDetailsLink contains applicationId', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
 
@@ -735,5 +744,25 @@ describe('#taskListGetController', () => {
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
     })
+
+    test.each(['Approved', 'Rejected', 'Withdrawn'])(
+      'redirects to the landing page when applicationStatus is %s',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({ applicationStatus })
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/task-list/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/operator-accreditation/test-operator-id/reg-abc/Steel/${CURRENT_YEAR}`
+        )
+      }
+    )
   })
 })

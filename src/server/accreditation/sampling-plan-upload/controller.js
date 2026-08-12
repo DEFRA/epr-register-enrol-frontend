@@ -7,6 +7,7 @@ import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cd
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -36,6 +37,25 @@ export const ALLOWED_MIME_TYPES = [
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
+export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
+
+const DOCUMENT_TYPE_LABEL_KEYS = {
+  SamplingPlan: 'pages.samplingPlanUpload.documentType.samplingPlan',
+  SupportingEvidence: 'pages.samplingPlanUpload.documentType.supportingEvidence'
+}
+
+export function documentTypeLabel(t, documentType) {
+  const key = DOCUMENT_TYPE_LABEL_KEYS[documentType]
+  return t(key ?? 'pages.samplingPlanUpload.documentType.notSpecified')
+}
+
+export function documentTypeOptions(t) {
+  return DOCUMENT_TYPES.map((value) => ({
+    value,
+    label: t(DOCUMENT_TYPE_LABEL_KEYS[value])
+  }))
+}
+
 export function validateFileExtension(filename) {
   if (!filename) return false
   const ext = filename.split('.').pop()?.toLowerCase()
@@ -50,7 +70,8 @@ export function buildFilesViewModel(files) {
       ? new Date(f.uploadedAt).toLocaleDateString('en-GB')
       : '',
     uploadedBy: f.uploadedBy ?? '',
-    scanStatus: f.scanStatus ?? 'Pending'
+    scanStatus: f.scanStatus ?? 'Pending',
+    documentType: f.documentType ?? null
   }))
 }
 
@@ -106,37 +127,43 @@ export const samplingPlanUploadGetController = {
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         files: [],
+        documentTypeOptions: documentTypeOptions(t),
         error: t('pages.samplingPlanUpload.validation.fetchError')
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.samplingPlan?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
     const viewableFilesCount = buildResultsFiles(
-      application.samplingPlan?.files
+      application.samplingPlan?.files,
+      t
     ).length
     const materialDisplay = t(
       `pages.materialSelection.materials.${application.materialType}`
     )
     const queryNote =
-      application.applicationStatus === 'Queried'
+      application.applicationStatus === 'Queried' && !readOnly
         ? (application.query?.queryNote ?? null)
         : null
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
       heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
-      backLink: taskListUrl(applicationId),
+      backLink: readOnly
+        ? queryTaskListUrl(applicationId)
+        : taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files,
       viewableFilesCount,
       resultsLink: resultsUrl(applicationId),
+      documentTypeOptions: documentTypeOptions(t),
       queryNote,
       querySummary: queryNote
         ? buildRegulatorQuerySummary('samplingPlan', t)
@@ -148,7 +175,8 @@ export const samplingPlanUploadGetController = {
               href: '#file'
             }
           ]
-        : null
+        : null,
+      readOnly
     })
   }
 }
@@ -174,6 +202,7 @@ export const samplingPlanUploadPostController = {
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         files: [],
+        documentTypeOptions: documentTypeOptions(t),
         error: t('pages.samplingPlanUpload.validation.fetchError')
       }).code(500)
     }
@@ -187,7 +216,8 @@ export const samplingPlanUploadPostController = {
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
     const viewableFilesCount = buildResultsFiles(
-      application.samplingPlan?.files
+      application.samplingPlan?.files,
+      t
     ).length
 
     function baseView(overrides = {}) {
@@ -199,39 +229,37 @@ export const samplingPlanUploadPostController = {
         resultsLink: resultsUrl(applicationId),
         files,
         viewableFilesCount,
+        documentTypeOptions: documentTypeOptions(t),
         ...overrides
       }
     }
 
+    const documentType = request.payload.documentType
     const uploadedFile = request.payload.file
     const filename = uploadedFile?.filename ?? ''
     const contentType =
       uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
     const fileSize = uploadedFile?.payload?.length ?? 0
 
-    if (!filename) {
-      return renderPage(
-        h,
-        baseView({
-          fileError: t('pages.samplingPlanUpload.validation.noFile')
-        })
-      ).code(400)
-    }
+    const documentTypeError = !DOCUMENT_TYPES.includes(documentType)
+      ? t('pages.samplingPlanUpload.validation.noDocumentType')
+      : null
 
-    if (!validateFileExtension(filename)) {
-      return renderPage(
-        h,
-        baseView({
-          fileError: t('pages.samplingPlanUpload.validation.invalidType')
-        })
-      ).code(400)
-    }
+    const fileError = !filename
+      ? t('pages.samplingPlanUpload.validation.noFile')
+      : !validateFileExtension(filename)
+        ? t('pages.samplingPlanUpload.validation.invalidType')
+        : fileSize > MAX_FILE_BYTES
+          ? t('pages.samplingPlanUpload.validation.fileTooLarge')
+          : null
 
-    if (fileSize > MAX_FILE_BYTES) {
+    if (documentTypeError || fileError) {
       return renderPage(
         h,
         baseView({
-          fileError: t('pages.samplingPlanUpload.validation.fileTooLarge')
+          documentTypeError,
+          fileError,
+          fields: { documentType }
         })
       ).code(400)
     }
@@ -280,15 +308,21 @@ export const samplingPlanUploadPostController = {
     request.yar.set(SAMPLING_PLAN_UPLOAD_SESSION_KEY, {
       statusUrl: uploadDetail.statusUrl,
       applicationId,
-      organisationId
+      organisationId,
+      documentType
     })
 
     return h.redirect(`/accreditation/sampling-plan/${applicationId}/status`)
   }
 }
 
-function buildResultsFiles(files) {
-  return buildFilesViewModel(files).filter((f) => f.scanStatus !== 'Infected')
+function buildResultsFiles(files, t) {
+  return buildFilesViewModel(files)
+    .filter((f) => f.scanStatus !== 'Infected')
+    .map((f) => ({
+      ...f,
+      documentTypeLabel: documentTypeLabel(t, f.documentType)
+    }))
 }
 
 export const samplingPlanResultsGetController = {
@@ -321,15 +355,16 @@ export const samplingPlanResultsGetController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.samplingPlan?.sectionStatus
+    )
+    if (blocked) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
     const rawFiles = application.samplingPlan?.files ?? []
-    const files = buildResultsFiles(rawFiles)
+    const files = buildResultsFiles(rawFiles, t)
 
     if (files.length === 0 && !uploadFailed) {
       return h.redirect(samplingPlanUrl(applicationId))
@@ -344,7 +379,8 @@ export const samplingPlanResultsGetController = {
       files,
       error: uploadFailed
         ? t('pages.samplingPlanUpload.validation.uploadError')
-        : null
+        : null,
+      readOnly
     })
   }
 }
@@ -387,7 +423,7 @@ export const samplingPlanResultsPostController = {
     }
 
     const rawFiles = application.samplingPlan?.files ?? []
-    const files = buildResultsFiles(rawFiles)
+    const files = buildResultsFiles(rawFiles, t)
 
     function baseView(overrides = {}) {
       return {
@@ -514,13 +550,15 @@ export const samplingPlanCdpStatusController = {
           scanStatus,
           fileId: fileInput?.fileId,
           s3Key: fileInput?.s3Key,
-          s3Bucket: fileInput?.s3Bucket
+          s3Bucket: fileInput?.s3Bucket,
+          documentType: session?.documentType
         }
       )
     } catch (err) {
       request.server.logger.error(
         `Error saving uploaded file for ${applicationId}: ${err.message}`
       )
+      return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
     }
 
     return h.redirect(

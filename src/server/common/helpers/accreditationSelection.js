@@ -2,6 +2,12 @@ import { accreditationApiService } from './accreditationApiService.js'
 
 export const WITHDRAWN_STATUS = 'Withdrawn'
 
+// RA-415: once a regulator decision is final (Approved/Rejected) or the
+// operator has withdrawn, the application is read-only end-to-end. The
+// backend's write endpoints reject edits on all three; this mirrors that set
+// on the frontend so navigation/UI defends the same boundary, not just the API.
+export const TERMINAL_STATUSES = new Set(['Withdrawn', 'Approved', 'Rejected'])
+
 // An application can only be withdrawn before a final regulator decision —
 // shared with accreditation/withdraw-application so the withdraw route and the
 // landing page can never disagree about which statuses are withdrawable.
@@ -109,7 +115,24 @@ export async function resolveLandingApplication({
   // again and every record for the year is withdrawn. Simply viewing a
   // withdrawn application must leave it exactly as it is.
   if (hasMatch && (hasLive || !startNewRequested)) {
-    return { application, failed: false }
+    // RA-415: listApplications() -> GetList never populates dueDate (or other
+    // CM-sourced live fields), so the list record is stale by construction.
+    // Re-fetch the single application via GetById, which does return the live
+    // value, before rendering it.
+    try {
+      return {
+        application: await accreditationApiService.getApplication(
+          organisationId,
+          application.applicationId
+        ),
+        failed: false
+      }
+    } catch (error) {
+      logger.error(
+        `Error refreshing accreditation application id=${application.applicationId}: ${error.message}`
+      )
+      return { application, failed: false }
+    }
   }
 
   const descriptor = kind ? `${kind} ` : ''

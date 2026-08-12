@@ -304,6 +304,57 @@ describe('stubApiClient.patch — tonnage section', () => {
     expect(app.prnIssuance.plannedIssuance).toBe('UpTo5000')
     expect(app.prnIssuance.sectionStatus).toBe('InProgress')
   })
+
+  // RA-292 AC03: the stub stands in for the backend during local dev. It stores
+  // whatever isNew it is given without deriving it — derivation is the real
+  // backend's job — and a dropped authoriser stays dropped.
+  test('round-trips isNew whether it is true, false, absent or null', async () => {
+    const authorisers = [
+      { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+      { fullName: 'Bob', email: 'bob@example.com', isNew: false },
+      { fullName: 'Sue', email: 'sue@example.com' },
+      { fullName: 'Ann', email: 'ann@example.com', isNew: null }
+    ]
+    await stub.patch(PATCH_URL, { authorisers })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.signatories).toEqual(authorisers)
+    expect(app.prnIssuance.signatories[2]).not.toHaveProperty('isNew')
+  })
+
+  test('replaces the authoriser list rather than merging it', async () => {
+    await stub.patch(PATCH_URL, {
+      authorisers: [
+        { fullName: 'Jane', email: 'jane@example.com', isNew: true },
+        { fullName: 'Bob', email: 'bob@example.com', isNew: false }
+      ]
+    })
+    await stub.patch(PATCH_URL, {
+      authorisers: [{ fullName: 'Bob', email: 'bob@example.com', isNew: false }]
+    })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.signatories).toEqual([
+      { fullName: 'Bob', email: 'bob@example.com', isNew: false }
+    ])
+  })
+
+  test('leaves the persisted authorisers alone when the patch omits them', async () => {
+    const authorisers = [
+      { fullName: 'Jane', email: 'jane@example.com', isNew: true }
+    ]
+    await stub.patch(PATCH_URL, { authorisers })
+    await stub.patch(PATCH_URL, { sectionStatus: 'Completed' })
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(app.prnIssuance.signatories).toEqual(authorisers)
+  })
 })
 
 describe('stubApiClient.delete — BES evidence file', () => {
