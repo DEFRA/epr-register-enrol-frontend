@@ -3,7 +3,6 @@ import { vi } from 'vitest'
 import { noStoreCacheHeaders } from './no-store-cache-headers.js'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../constants/status-codes.js'
-import { config } from '../../../config/config.js'
 
 describe('#noStoreCacheHeaders', () => {
   test('sets no-store headers on a view response', () => {
@@ -41,12 +40,6 @@ describe('#noStoreCacheHeaders integration', () => {
   let server
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })
@@ -60,7 +53,6 @@ describe('#noStoreCacheHeaders integration', () => {
       method: 'GET',
       url: '/',
       headers: {
-        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
         'x-test-user-type': 'operator'
       }
     })

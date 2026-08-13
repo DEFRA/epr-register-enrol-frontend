@@ -10,7 +10,6 @@ import {
 import Boom from '@hapi/boom'
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
-import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { buildLandingViewModel } from './controller.js'
@@ -549,12 +548,6 @@ describe('#operatorAccreditationController', () => {
   let server
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })
@@ -571,7 +564,6 @@ describe('#operatorAccreditationController', () => {
   })
 
   const operatorHeaders = {
-    Authorization: 'Basic dGVzdDp0ZXN0MTIz',
     'x-test-user-type': 'operator'
   }
 

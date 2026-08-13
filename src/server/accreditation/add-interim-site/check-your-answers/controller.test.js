@@ -9,7 +9,6 @@ import {
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { config } from '../../../../config/config.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 
 const APPLICATION_ID = 'app-is-cya-001'
@@ -21,12 +20,6 @@ describe('#addInterimSiteCyaController', () => {
   let cookie
 
   beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
-      return originalGet(key)
-    })
     server = await createServer()
     await server.initialize()
   })
@@ -42,7 +35,6 @@ describe('#addInterimSiteCyaController', () => {
       method: 'GET',
       url: BASE_URL,
       headers: {
-        Authorization: 'Basic dGVzdDp0ZXN0MTIz',
         'x-test-user-type': 'operator'
       }
     })
@@ -53,7 +45,6 @@ describe('#addInterimSiteCyaController', () => {
   })
 
   const operatorHeaders = {
-    Authorization: 'Basic dGVzdDp0ZXN0MTIz',
     'x-test-user-type': 'operator'
   }
 
