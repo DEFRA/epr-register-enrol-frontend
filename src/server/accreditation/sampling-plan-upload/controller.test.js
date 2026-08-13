@@ -4,6 +4,7 @@ import {
   expect,
   beforeAll,
   afterAll,
+  afterEach,
   vi,
   beforeEach
 } from 'vitest'
@@ -1599,6 +1600,10 @@ describe('#samplingPlanUploadController', () => {
   })
 
   describe('POST /accreditation/sampling-plan/{applicationId}/results — deleteFile', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
     test('calls delete and redirects back to the results page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const deleteSpy = vi
@@ -1640,7 +1645,6 @@ describe('#samplingPlanUploadController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
       expect(deleteSpy).toHaveBeenCalledTimes(3)
-      vi.useRealTimers()
     })
 
     test('succeeds on the second attempt after one transient failure', async () => {
@@ -1665,7 +1669,6 @@ describe('#samplingPlanUploadController', () => {
         `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       )
       expect(deleteSpy).toHaveBeenCalledTimes(2)
-      vi.useRealTimers()
     })
 
     test('redirects without calling delete when no fileId provided', async () => {
