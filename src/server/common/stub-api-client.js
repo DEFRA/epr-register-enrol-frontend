@@ -106,7 +106,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000390GL',
         applicationStatus: 'Started',
         material: 'glass',
-        glassRecyclingProcess: 'glass_other',
+        glassRecyclingProcess: ['glass_other'],
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050002',
         siteAddress: {
@@ -146,7 +146,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000390GL',
         applicationStatus: 'Started',
         material: 'glass',
-        glassRecyclingProcess: 'glass_re_melt',
+        glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050003',
         siteAddress: {
@@ -423,7 +423,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000392GL',
         applicationStatus: 'Started',
         material: 'glass',
-        glassRecyclingProcess: 'glass_other',
+        glassRecyclingProcess: ['glass_other'],
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050006',
         siteAddress: {
@@ -879,7 +879,7 @@ export const STUB_ORG_MODELS = {
       {
         registrationId: 'REG002',
         material: 'glass',
-        glassRecyclingProcess: 'glass_other',
+        glassRecyclingProcess: ['glass_other'],
         wasteProcessingType: 'reprocessor',
         siteAddress: {
           line1: 'Site Lane 002',

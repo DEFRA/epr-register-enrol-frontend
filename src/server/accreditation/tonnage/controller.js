@@ -4,6 +4,7 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
 
@@ -15,13 +16,13 @@ export function buildTonnageOptions(selectedTonnage, t) {
   }))
 }
 
-function buildHeading(materialType, isExporter, t) {
+function buildHeading(application, isExporter, t) {
   const prefix = t('pages.tonnage.headingPrefix')
   const suffix = isExporter
     ? t('pages.tonnage.headingSuffixExporter')
     : t('pages.tonnage.headingSuffix')
-  if (!materialType) return `${prefix} ${suffix}`
-  const material = t(`pages.materialSelection.materials.${materialType}`)
+  const material = application ? materialDisplayName(application, t) : ''
+  if (!material) return `${prefix} ${suffix}`
   return `${prefix} ${material} ${suffix}`
 }
 
@@ -79,7 +80,7 @@ export const tonnageGetController = {
       pageTitle: isExporter
         ? t('pages.tonnage.titleExporter')
         : t('pages.tonnage.title'),
-      heading: buildHeading(application.materialType, isExporter, t),
+      heading: buildHeading(application, isExporter, t),
       tonnageOptions: buildTonnageOptions(
         application.prns?.plannedTonnageBand ?? null,
         t
@@ -138,7 +139,7 @@ export const tonnagePostController = {
     }
 
     const isExporter = application.isExporter ?? false
-    const heading = buildHeading(application.materialType, isExporter, t)
+    const heading = buildHeading(application, isExporter, t)
     const selectTonnageKey = isExporter
       ? 'pages.tonnage.validation.selectTonnageExporter'
       : 'pages.tonnage.validation.selectTonnage'

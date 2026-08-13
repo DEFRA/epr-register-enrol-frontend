@@ -102,6 +102,24 @@ describe('#tonnageController', () => {
       expect(result).toContain('data-testid="page-heading"')
     })
 
+    test('appends the glass recycling type suffix to the heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          materialType: 'Glass',
+          glassRecyclingProcess: ['glass_other']
+        })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('Glass - Other')
+    })
+
     test('renders four radio options', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

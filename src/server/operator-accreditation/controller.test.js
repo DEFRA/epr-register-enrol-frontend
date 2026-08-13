@@ -262,7 +262,7 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({
         materialType: 'Glass',
-        glassRecyclingProcess: 'glass_re_melt'
+        glassRecyclingProcess: ['glass_re_melt']
       }),
       'Org',
       'siteAddr',
@@ -274,7 +274,10 @@ describe('#buildLandingViewModel', () => {
 
   test('glass with glass_other process uses the other display name', () => {
     const vm = buildLandingViewModel(
-      makeApp({ materialType: 'Glass', glassRecyclingProcess: 'glass_other' }),
+      makeApp({
+        materialType: 'Glass',
+        glassRecyclingProcess: ['glass_other']
+      }),
       'Org',
       'siteAddr',
       2027,
@@ -298,7 +301,7 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({
         materialType: 'Steel',
-        glassRecyclingProcess: 'glass_re_melt'
+        glassRecyclingProcess: ['glass_re_melt']
       }),
       'Org',
       'siteAddr',

@@ -276,6 +276,25 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
+    test('appends the glass recycling type suffix to the heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          materialType: 'Glass',
+          glassRecyclingProcess: ['glass_re_melt']
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'Upload sampling and inspection plan - part 2 - Glass - Remelt'
+      )
+    })
+
     test('renders file requirements list', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
