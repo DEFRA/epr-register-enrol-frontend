@@ -114,13 +114,16 @@
       var errorNoFile = {{ t('pages.samplingPlanUpload.validation.noFile') | dump | safe }}
       // Set on a genuine 'change' event on the file input; reset on every
       // pageshow (see below). Gating submission on this, rather than on
-      // fileInput.files directly, survives browsers silently reasserting a
-      // previously chosen file into the input across a back/forward
-      // navigation (bfcache restore, or Chrome's separate form-state
-      // restore-on-history-traversal, which Cache-Control: no-store does
-      // not prevent) — whatever the input's live value claims, submission
-      // still requires the user to have actually interacted with the
-      // picker since this page was last (re)shown.
+      // fileInput.files directly, matters because on a back/forward
+      // navigation the browser can silently reassert a previously chosen
+      // file into the input — and, empirically, redispatch a 'change' event
+      // for it too — after this script has already run once. Neither
+      // Cache-Control: no-store nor clearing fileInput.value survives that.
+      // The only thing that reliably does is swapping in a brand new input
+      // element on pageshow (see swapFileInput below): the browser only has
+      // restorable state for the specific element instance that existed in
+      // the page it navigated away from, so a freshly created element has
+      // nothing to restore onto.
       var userSelectedFile = false
       var fileInput = document.querySelector('[data-testid="file-input"]')
       var documentTypeSelect = document.querySelector('[data-testid="document-type-input"]')
@@ -190,11 +193,15 @@
         if (errorEl) errorEl.remove()
       }
 
-      fileInput.addEventListener('change', function () {
-        userSelectedFile = true
-        var error = validate(this.files[0])
-        if (error) { showError(error) } else { clearError() }
-      })
+      function attachFileInputChangeListener(input) {
+        input.addEventListener('change', function () {
+          userSelectedFile = true
+          var error = validate(input.files[0])
+          if (error) { showError(error) } else { clearError() }
+        })
+      }
+
+      attachFileInputChangeListener(fileInput)
 
       if (documentTypeSelect) {
         documentTypeSelect.addEventListener('change', function () {
@@ -219,15 +226,25 @@
       // with a file still sitting in the input — either because it was
       // restored whole from bfcache, or because the browser reapplies the
       // previous session history entry's form state (including file input
-      // selections) after a fresh reload, independently of bfcache and
-      // regardless of Cache-Control: no-store. Left alone, clicking
-      // "Upload file" resubmits that same file and adds it to the list
-      // again as a duplicate. Clearing fileInput.value here is a best-effort
-      // visual reset, but the userSelectedFile flag above is what actually
-      // blocks the resubmit even if the browser reasserts a value later.
+      // selections, and a synthetic 'change' event for it) after a fresh
+      // reload, independently of bfcache and regardless of
+      // Cache-Control: no-store. Left alone, clicking "Upload file"
+      // resubmits that same file and adds it to the list again as a
+      // duplicate. Replace the input element itself with a fresh clone: the
+      // browser has no restorable state for an element that didn't exist in
+      // the page it's navigating away from, so the clone starts genuinely
+      // empty and stays that way until the user genuinely interacts with it.
+      function swapFileInput() {
+        var freshInput = fileInput.cloneNode(true)
+        freshInput.value = ''
+        fileInput.replaceWith(freshInput)
+        fileInput = freshInput
+        attachFileInputChangeListener(fileInput)
+      }
+
       window.addEventListener('pageshow', function () {
         userSelectedFile = false
-        fileInput.value = ''
+        swapFileInput()
         clearError()
       })
     })()
