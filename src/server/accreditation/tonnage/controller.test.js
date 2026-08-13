@@ -123,7 +123,7 @@ describe('#tonnageController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             sectionStatus: 'InProgress'
           }
         })
@@ -135,7 +135,7 @@ describe('#tonnageController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toMatch(/value="UpTo1000"[\s\S]*?checked/)
+      expect(result).toMatch(/value="UpTo5000"[\s\S]*?checked/)
     })
 
     test('no radio pre-selected when PlannedTonnageBand is null', async () => {
@@ -148,7 +148,7 @@ describe('#tonnageController', () => {
       })
 
       expect(result).not.toMatch(
-        /value="(UpTo500|UpTo1000|UpTo10000|Over10000)"[\s\S]*?checked/
+        /value="(UpTo500|UpTo5000|UpTo10000|Over10000)"[\s\S]*?checked/
       )
     })
 
@@ -430,7 +430,7 @@ describe('#tonnageController', () => {
         url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
-          plannedTonnageBand: 'UpTo1000',
+          plannedTonnageBand: 'UpTo5000',
           submitAction: 'saveAndContinue'
         }
       })
@@ -442,7 +442,7 @@ describe('#tonnageController', () => {
       expect(getSpy).toHaveBeenCalledOnce()
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/tonnage`),
-        { plannedTonnageBand: 'UpTo1000' }
+        { plannedTonnageBand: 'UpTo5000' }
       )
     })
 

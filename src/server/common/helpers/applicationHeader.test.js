@@ -4,7 +4,6 @@ import { buildApplicationHeaderViewModel } from './applicationHeader.js'
 const t = (key) => {
   const map = {
     'pages.materialSelection.materials.Plastic': 'Plastic',
-    'pages.operatorAccreditation.exporterLabel': 'Exporter',
     'pages.taskList.siteNotSet': 'Not set'
   }
   return map[key] ?? key
@@ -31,7 +30,7 @@ describe('buildApplicationHeaderViewModel', () => {
     })
   })
 
-  test('uses the exporter label instead of a site address for exporters', () => {
+  test('uses the UK registered address instead of the site address for exporters', () => {
     expect(
       buildApplicationHeaderViewModel(
         {
@@ -39,6 +38,7 @@ describe('buildApplicationHeaderViewModel', () => {
           materialType: 'Plastic',
           isExporter: true,
           siteAddress: 'should be ignored',
+          companyRegisteredAddress: '4 Glassworks Court, Bristol, BS1 4AA',
           year: 2027
         },
         t
@@ -46,7 +46,28 @@ describe('buildApplicationHeaderViewModel', () => {
     ).toEqual({
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
-      siteName: 'Exporter',
+      siteName: '4 Glassworks Court, Bristol, BS1 4AA',
+      year: 2027
+    })
+  })
+
+  test('falls back to the siteNotSet copy for exporters when companyRegisteredAddress is missing', () => {
+    expect(
+      buildApplicationHeaderViewModel(
+        {
+          organisationName: 'Delta Green Ltd',
+          materialType: 'Plastic',
+          isExporter: true,
+          siteAddress: 'should be ignored',
+          companyRegisteredAddress: null,
+          year: 2027
+        },
+        t
+      )
+    ).toEqual({
+      operatorName: 'Delta Green Ltd',
+      materialType: 'Plastic',
+      siteName: 'Not set',
       year: 2027
     })
   })

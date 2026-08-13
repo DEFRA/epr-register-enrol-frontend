@@ -5,7 +5,7 @@ import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
-export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo1000', 'UpTo10000', 'Over10000']
+export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
 
 export function buildTonnageOptions(selectedTonnage, t) {
   return TONNAGE_OPTIONS.map((value) => ({

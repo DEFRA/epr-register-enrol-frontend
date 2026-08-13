@@ -155,7 +155,7 @@ describe('#submitConfirmationController', () => {
     test('shows payment details inline, including amount, bank details, and the payment reference', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          prns: { plannedTonnageBand: 'UpTo1000' }
+          prns: { plannedTonnageBand: 'UpTo5000' }
         })
       )
       const cookie = await getSessionCookieWithReference('RA-000000001')

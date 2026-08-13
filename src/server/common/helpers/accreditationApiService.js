@@ -84,6 +84,19 @@ function extractPostcodeFromAddressString(address) {
   return match ? match[0].toUpperCase().replace(/\s+/, ' ') : null
 }
 
+// The registered address is a UK CompanyDetails.Address (Line1/Line2/Town/
+// County/Postcode) rather than the overseas/reprocessing-site address, so it
+// gets its own formatter distinct from siteAddress above.
+function formatRegisteredAddress(addr) {
+  if (!addr) return null
+  if (typeof addr === 'string') return addr
+  return (
+    [addr.line1, addr.line2, addr.town, addr.county, addr.postcode]
+      .filter(Boolean)
+      .join(', ') || null
+  )
+}
+
 // The backend may return a dueDate that isn't a parseable ISO string; the
 // formatDate nunjucks filter throws on an Invalid Date, so treat anything
 // unparseable as absent rather than crashing the page.
@@ -127,6 +140,9 @@ function normalizeApplication(item) {
         : (item.isExporter ?? false),
     siteAddress,
     sitePostcode,
+    companyRegisteredAddress: formatRegisteredAddress(
+      item.companyRegisteredAddress
+    ),
     registrationId: item.registrationId ?? null,
     year: item.yearlyMetrics?.year
       ? parseInt(item.yearlyMetrics.year, 10)
