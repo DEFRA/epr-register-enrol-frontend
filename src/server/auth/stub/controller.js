@@ -7,6 +7,7 @@ import {
   confirmPostLoginRedirect,
   popPostLoginRedirect
 } from '../../common/helpers/auth/auth-redirect.js'
+import { ROLE_REGULATOR_STANDARD } from '../../common/helpers/auth/auth-scopes.js'
 
 export const STUB_USERS = {
   regulator: [
@@ -15,7 +16,8 @@ export const STUB_USERS = {
       name: 'Stub Regulator',
       email: 'regulator@stub.example',
       userType: 'regulator',
-      roles: ['admin']
+      roles: ['admin'],
+      regulatorRole: ROLE_REGULATOR_STANDARD
     }
   ],
   operator: [
