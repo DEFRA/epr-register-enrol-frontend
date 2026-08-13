@@ -111,6 +111,17 @@
       var errorTooLarge = {{ t('pages.samplingPlanUpload.validation.fileTooLarge') | dump | safe }}
       var errorInvalidType = {{ t('pages.samplingPlanUpload.validation.invalidType') | dump | safe }}
       var errorNoDocumentType = {{ t('pages.samplingPlanUpload.validation.noDocumentType') | dump | safe }}
+      var errorNoFile = {{ t('pages.samplingPlanUpload.validation.noFile') | dump | safe }}
+      // Set on a genuine 'change' event on the file input; reset on every
+      // pageshow (see below). Gating submission on this, rather than on
+      // fileInput.files directly, survives browsers silently reasserting a
+      // previously chosen file into the input across a back/forward
+      // navigation (bfcache restore, or Chrome's separate form-state
+      // restore-on-history-traversal, which Cache-Control: no-store does
+      // not prevent) — whatever the input's live value claims, submission
+      // still requires the user to have actually interacted with the
+      // picker since this page was last (re)shown.
+      var userSelectedFile = false
       var fileInput = document.querySelector('[data-testid="file-input"]')
       var documentTypeSelect = document.querySelector('[data-testid="document-type-input"]')
       var uploadForm = document.querySelector('[data-testid="upload-form"]')
@@ -180,6 +191,7 @@
       }
 
       fileInput.addEventListener('change', function () {
+        userSelectedFile = true
         var error = validate(this.files[0])
         if (error) { showError(error) } else { clearError() }
       })
@@ -191,7 +203,9 @@
       }
 
       uploadForm.addEventListener('submit', function (e) {
-        var fileErrorText = validate(fileInput.files[0])
+        var fileErrorText = !userSelectedFile
+          ? errorNoFile
+          : validate(fileInput.files[0])
         var documentTypeMissing = documentTypeSelect && !documentTypeSelect.value
 
         if (fileErrorText || documentTypeMissing) {
@@ -201,18 +215,18 @@
         }
       })
 
-      // A browser back/forward navigation can land on this page with a file
-      // still sitting in the input — either because it was restored whole
-      // from bfcache, or because Chrome reapplies the previous session
-      // history entry's form state (including file input selections) after
-      // a fresh reload, independently of bfcache and regardless of
-      // Cache-Control: no-store. Left alone, clicking "Upload file"
-      // resubmits that same file and adds it to the list again as a
-      // duplicate. pageshow fires after both kinds of load, so clear the
-      // selection unconditionally there — a no-op on a genuinely fresh
-      // visit — so upload always starts from an explicit, deliberate file
-      // choice.
+      // RA-436: a browser back/forward navigation can land on this page
+      // with a file still sitting in the input — either because it was
+      // restored whole from bfcache, or because the browser reapplies the
+      // previous session history entry's form state (including file input
+      // selections) after a fresh reload, independently of bfcache and
+      // regardless of Cache-Control: no-store. Left alone, clicking
+      // "Upload file" resubmits that same file and adds it to the list
+      // again as a duplicate. Clearing fileInput.value here is a best-effort
+      // visual reset, but the userSelectedFile flag above is what actually
+      // blocks the resubmit even if the browser reasserts a value later.
       window.addEventListener('pageshow', function () {
+        userSelectedFile = false
         fileInput.value = ''
         clearError()
       })
