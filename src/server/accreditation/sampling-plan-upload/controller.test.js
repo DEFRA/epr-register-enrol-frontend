@@ -4,6 +4,7 @@ import {
   expect,
   beforeAll,
   afterAll,
+  afterEach,
   vi,
   beforeEach
 } from 'vitest'
@@ -1591,6 +1592,10 @@ describe('#samplingPlanUploadController', () => {
   })
 
   describe('POST /accreditation/sampling-plan/{applicationId}/results — deleteFile', () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
     test('calls delete and redirects back to the results page', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const deleteSpy = vi
@@ -1613,21 +1618,49 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
-    test('returns 500 when delete API fails', async () => {
+    test('returns 500 when delete API fails on every retry', async () => {
+      vi.useFakeTimers()
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'delete').mockRejectedValue(
-        new Error('Delete failed')
-      )
+      const deleteSpy = vi
+        .spyOn(apiClient, 'delete')
+        .mockRejectedValue(new Error('Delete failed'))
 
-      const { statusCode, result } = await server.inject({
+      const injectPromise = server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
         headers: operatorHeaders,
         payload: { action: 'deleteFile', fileId: 'file-001' }
       })
+      await vi.advanceTimersByTimeAsync(15000)
+      const { statusCode, result } = await injectPromise
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+      expect(deleteSpy).toHaveBeenCalledTimes(3)
+    })
+
+    test('succeeds on the second attempt after one transient failure', async () => {
+      vi.useFakeTimers()
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const deleteSpy = vi
+        .spyOn(apiClient, 'delete')
+        .mockRejectedValueOnce(new Error('Delete failed'))
+        .mockResolvedValueOnce(undefined)
+
+      const injectPromise = server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'deleteFile', fileId: 'file-001' }
+      })
+      await vi.advanceTimersByTimeAsync(5000)
+      const { statusCode, headers } = await injectPromise
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results`
+      )
+      expect(deleteSpy).toHaveBeenCalledTimes(2)
     })
 
     test('redirects without calling delete when no fileId provided', async () => {
