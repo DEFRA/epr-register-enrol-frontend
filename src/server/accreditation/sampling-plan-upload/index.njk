@@ -200,6 +200,20 @@
           if (documentTypeMissing) { showDocumentTypeError() }
         }
       })
+
+      // A browser back/forward navigation can restore this page from
+      // bfcache with a file still sitting in the input (Cache-Control:
+      // no-store does not reliably stop this — Chrome allows no-store pages
+      // into bfcache). Left alone, clicking "Upload file" resubmits that
+      // same file and adds it to the list again as a duplicate. Clear the
+      // selection whenever the page is shown from bfcache so upload always
+      // starts from an explicit, deliberate file choice.
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+          fileInput.value = ''
+          clearError()
+        }
+      })
     })()
   </script>
 {% endblock %}
