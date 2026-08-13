@@ -1,6 +1,7 @@
 import { isValid, parseISO } from 'date-fns'
 
 import { apiClient } from '../api-client.js'
+import { retryWithBackoff } from './retryWithBackoff.js'
 
 const BASE = '/api/v1/accreditation-applications'
 
@@ -338,10 +339,26 @@ export const accreditationApiService = {
   },
 
   deleteFile(organisationId, applicationId, fileId) {
-    return call(() =>
-      apiClient.delete(
-        `${appBase(organisationId, applicationId)}/files/${fileId}`
-      )
-    )
+    return call(async () => {
+      try {
+        return await retryWithBackoff(
+          () =>
+            apiClient.delete(
+              `${appBase(organisationId, applicationId)}/files/${fileId}`
+            ),
+          // Don't burn the backoff window on a permanent failure (e.g. the
+          // section is no longer editable) — only retry errors that could
+          // plausibly be transient.
+          { isRetryable: (err) => !err.status || err.status >= 500 }
+        )
+      } catch (err) {
+        // A 404 means the file is already gone — including when an earlier
+        // attempt's delete succeeded server-side but its response was lost,
+        // which is the exact failure this retry was added to fix. Treat it
+        // as success rather than retrying into (or surfacing) a false error.
+        if (err.status === 404) return
+        throw err
+      }
+    })
   }
 }
