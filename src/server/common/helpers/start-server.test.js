@@ -15,8 +15,6 @@ describe('#startServer', () => {
 
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'auth.basicUsr') return 'test'
-      if (key === 'auth.basicPasswd') return 'test123'
       if (key === 'port') return 3097
       return originalGet(key)
     })
@@ -47,8 +45,7 @@ describe('#startServer', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/health',
-        headers: { Authorization: 'Basic dGVzdDp0ZXN0MTIz' }
+        url: '/health'
       })
 
       expect(result).toEqual({ message: 'success' })

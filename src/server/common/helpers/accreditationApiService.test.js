@@ -508,5 +508,27 @@ describe('accreditationApiService', () => {
         `${BASE}/${ORG_ID}/${APP_ID}/files/file-1`
       )
     })
+
+    test('treats a 404 as success — the file is already gone', async () => {
+      const notFound = new Error('not found')
+      notFound.status = 404
+      apiClient.delete.mockRejectedValue(notFound)
+
+      await expect(
+        accreditationApiService.deleteFile(ORG_ID, APP_ID, 'file-1')
+      ).resolves.toBeUndefined()
+      expect(apiClient.delete).toHaveBeenCalledTimes(1)
+    })
+
+    test('does not retry a permanent 4xx failure', async () => {
+      const conflict = new Error('section not editable')
+      conflict.status = 409
+      apiClient.delete.mockRejectedValue(conflict)
+
+      await expect(
+        accreditationApiService.deleteFile(ORG_ID, APP_ID, 'file-1')
+      ).rejects.toThrow('section not editable')
+      expect(apiClient.delete).toHaveBeenCalledTimes(1)
+    })
   })
 })
