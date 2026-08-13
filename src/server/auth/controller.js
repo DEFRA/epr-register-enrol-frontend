@@ -1,6 +1,11 @@
 import { createHash, randomBytes } from 'node:crypto'
 
 import { config } from '../../config/config.js'
+import { statusCodes } from '../common/constants/status-codes.js'
+import {
+  ROLE_REGULATOR_STANDARD,
+  ROLE_REGULATOR_SUPPORT_READONLY
+} from '../common/helpers/auth/auth-scopes.js'
 import { getAzureEntraIdConfig } from '../common/helpers/auth/providers/azure-entra-id.js'
 import { verifyAzureIdToken } from '../common/helpers/auth/providers/azure-id-token.js'
 import {
@@ -169,11 +174,38 @@ export async function regulatorCallbackController(request, h) {
     return h.redirect('/auth/regulator/login')
   }
 
+  // App roles surface on the id_token as a `roles` claim (an array) once
+  // assigned to the user in the Enterprise Application.
+  const regulatorRoleValue = config.get('auth.azureEntraId.regulatorRoleValue')
+  const supportUserRoleValue = config.get(
+    'auth.azureEntraId.supportUserRoleValue'
+  )
+  const claimRoles = Array.isArray(claims.roles) ? claims.roles : []
+
+  let regulatorRole
+  if (claimRoles.includes(regulatorRoleValue)) {
+    regulatorRole = ROLE_REGULATOR_STANDARD
+  } else if (claimRoles.includes(supportUserRoleValue)) {
+    regulatorRole = ROLE_REGULATOR_SUPPORT_READONLY
+  } else {
+    logWarn(
+      request,
+      'oauth callback: caller missing required regulator or support user role',
+      { regulatorRoleValue, supportUserRoleValue }
+    )
+    return h
+      .view('error/access-denied', {
+        pageTitle: 'You do not have permission to access this service'
+      })
+      .code(statusCodes.forbidden)
+  }
+
   const user = {
     id: claims.oid ?? claims.sub,
     email: claims.preferred_username ?? claims.email ?? null,
     name: claims.name ?? null,
-    userType: 'regulator'
+    userType: 'regulator',
+    regulatorRole
   }
 
   const redirectTo = popPostLoginRedirect(request, 'regulator', '/')
