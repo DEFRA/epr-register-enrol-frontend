@@ -10,6 +10,7 @@ import {
 import Boom from '@hapi/boom'
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { buildLandingViewModel } from './controller.js'
