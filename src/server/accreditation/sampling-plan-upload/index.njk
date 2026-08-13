@@ -201,18 +201,20 @@
         }
       })
 
-      // A browser back/forward navigation can restore this page from
-      // bfcache with a file still sitting in the input (Cache-Control:
-      // no-store does not reliably stop this — Chrome allows no-store pages
-      // into bfcache). Left alone, clicking "Upload file" resubmits that
-      // same file and adds it to the list again as a duplicate. Clear the
-      // selection whenever the page is shown from bfcache so upload always
-      // starts from an explicit, deliberate file choice.
-      window.addEventListener('pageshow', function (event) {
-        if (event.persisted) {
-          fileInput.value = ''
-          clearError()
-        }
+      // A browser back/forward navigation can land on this page with a file
+      // still sitting in the input — either because it was restored whole
+      // from bfcache, or because Chrome reapplies the previous session
+      // history entry's form state (including file input selections) after
+      // a fresh reload, independently of bfcache and regardless of
+      // Cache-Control: no-store. Left alone, clicking "Upload file"
+      // resubmits that same file and adds it to the list again as a
+      // duplicate. pageshow fires after both kinds of load, so clear the
+      // selection unconditionally there — a no-op on a genuinely fresh
+      // visit — so upload always starts from an explicit, deliberate file
+      // choice.
+      window.addEventListener('pageshow', function () {
+        fileInput.value = ''
+        clearError()
       })
     })()
   </script>
