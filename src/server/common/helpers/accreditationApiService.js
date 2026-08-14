@@ -84,16 +84,22 @@ function extractPostcodeFromAddressString(address) {
   return match ? match[0].toUpperCase().replace(/\s+/, ' ') : null
 }
 
+function joinAddressParts(addr, fields) {
+  return fields
+    .map((field) => addr[field])
+    .filter(Boolean)
+    .join(', ')
+}
+
 // The registered address is a UK CompanyDetails.Address (Line1/Line2/Town/
 // County/Postcode) rather than the overseas/reprocessing-site address, so it
-// gets its own formatter distinct from siteAddress above.
+// gets its own field set distinct from siteAddress below.
 function formatRegisteredAddress(addr) {
   if (!addr) return null
   if (typeof addr === 'string') return addr
   return (
-    [addr.line1, addr.line2, addr.town, addr.county, addr.postcode]
-      .filter(Boolean)
-      .join(', ') || null
+    joinAddressParts(addr, ['line1', 'line2', 'town', 'county', 'postcode']) ||
+    null
   )
 }
 
@@ -110,7 +116,7 @@ function normalizeApplication(item) {
   const sa = item.siteAddress
   const siteAddress =
     sa && typeof sa === 'object'
-      ? [sa.line1, sa.town, sa.postcode].filter(Boolean).join(', ')
+      ? joinAddressParts(sa, ['line1', 'town', 'postcode'])
       : typeof sa === 'string'
         ? sa
         : null
