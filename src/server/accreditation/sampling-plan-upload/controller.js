@@ -6,7 +6,10 @@ import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
-import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import {
+  buildRegulatorQuerySummary,
+  resolveRegulatorQueryNote
+} from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
@@ -148,10 +151,7 @@ export const samplingPlanUploadGetController = {
     const materialDisplay = t(
       `pages.materialSelection.materials.${application.materialType}`
     )
-    const queryNote =
-      application.applicationStatus === 'Queried' && !readOnly
-        ? (application.query?.queryNote ?? null)
-        : null
+    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
