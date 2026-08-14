@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
@@ -135,6 +136,24 @@ export function buildLandingViewModel(
   }
 }
 
+// RA-421: the stub chooser at /operator only exists on this frontend's own
+// stub auth, so it's only a valid "return" target when stub auth is active
+// (or on a local env, which never has a real Re-Ex frontend to link to even
+// if AUTH_STUB_ENABLED has been overridden false for testing). Otherwise the
+// operator must land back on the real Re-Ex frontend's registration page —
+// same organisationId/registrationId as this accreditation URL, just under
+// Re-Ex's own /organisations/<id>/registrations/<id> path shape.
+const STUB_RETURN_LINK = '/operator/'
+
+function reExBackLinkUrl(organisationId, registrationId) {
+  const useStub =
+    config.get('auth.stubEnabled') || config.get('environment') === 'local'
+  if (useStub) {
+    return STUB_RETURN_LINK
+  }
+  return `${config.get('reex.frontendBaseUrl')}/organisations/${organisationId}/registrations/${registrationId}`
+}
+
 export const operatorAccreditationController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -143,7 +162,7 @@ export const operatorAccreditationController = {
       request.params
     const yearInt = parseInt(year, 10)
     const userName = user?.name
-    const reExBackLink = '/operator/'
+    const reExBackLink = reExBackLinkUrl(organisationId, registrationId)
     const backLinkText = t('pages.operatorAccreditation.reExBackLink')
 
     const canAccess = await operatorCanAccessOrganisation(

@@ -282,6 +282,18 @@ export const config = convict({
         format: String,
         default: '',
         env: 'ENTRA_TENANT_ID'
+      },
+      regulatorRoleValue: {
+        doc: 'RA-429. Entra ID app role a signed-in user must hold to be treated as a regulator.',
+        format: String,
+        default: 'Waste.Regulator.Standard',
+        env: 'ENTRA_REGULATOR_ROLE_VALUE'
+      },
+      supportUserRoleValue: {
+        doc: 'RA-429. Entra ID app role a signed-in user must hold to be treated as a read-only support user.',
+        format: String,
+        default: 'Waste.SupportUser.ReadOnly',
+        env: 'ENTRA_SUPPORT_USER_ROLE_VALUE'
       }
     },
     defraId: {
@@ -351,6 +363,12 @@ export const config = convict({
       format: Number,
       default: 3600000,
       env: 'REEX_ORG_DEFRA_LINK_CACHE_TTL'
+    },
+    frontendBaseUrl: {
+      doc: 'Base URL of the Re-Ex frontend service (e.g. https://epr-frontend.dev.cdp-int.defra.cloud). Used to build the "Return to Re/Ex service" link from the operator accreditation page when AUTH_STUB_ENABLED is false and ENVIRONMENT is not local.',
+      format: String,
+      default: '',
+      env: 'REEX_FRONTEND_BASE_URL'
     }
   }
 })
