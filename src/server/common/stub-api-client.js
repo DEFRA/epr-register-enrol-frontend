@@ -164,7 +164,7 @@ export const STUB_ORG_DOCS = [
         },
         prnIssuance: {
           sectionStatus: 'Completed',
-          plannedIssuance: 'UpTo1000',
+          plannedIssuance: 'UpTo5000',
           signatories: [
             {
               fullName: 'Jane Doe',
@@ -250,7 +250,7 @@ export const STUB_ORG_DOCS = [
         },
         prnIssuance: {
           sectionStatus: 'Completed',
-          plannedIssuance: 'UpTo1000',
+          plannedIssuance: 'UpTo5000',
           signatories: [
             {
               fullName: 'Jane Doe',
@@ -430,6 +430,11 @@ export const STUB_ORG_DOCS = [
           line1: 'The Other Glassworks',
           town: 'Siteville',
           postcode: 'GL45 50T'
+        },
+        companyRegisteredAddress: {
+          line1: '4 Glassworks Court',
+          town: 'Bristol',
+          postcode: 'BS1 4AA'
         },
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
