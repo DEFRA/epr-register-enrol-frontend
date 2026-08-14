@@ -11,6 +11,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import {
   validateFileExtension,
   buildFilesViewModel,
@@ -466,6 +467,35 @@ describe('#samplingPlanUploadController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Please resubmit the sampling schedule.')
+    })
+
+    test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Queried', files: [] },
+          query: { queryNote: 'Please resubmit the sampling schedule.' }
+        })
+      )
+      const originalConfigGet = config.get.bind(config)
+      const configSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) =>
+          key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
+        )
+
+      try {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).not.toContain('data-testid="regulator-query-banner"')
+        expect(result).not.toContain('Please resubmit the sampling schedule.')
+      } finally {
+        configSpy.mockRestore()
+      }
     })
 
     test('returns 200 in Welsh locale', async () => {

@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { buildTonnageOptions, TONNAGE_OPTIONS } from './controller.js'
 
 const APPLICATION_ID = 'app-prns-001'
@@ -290,6 +291,35 @@ describe('#tonnageController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Please confirm the planned tonnage band.')
+    })
+
+    test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please confirm the planned tonnage band.' }
+        })
+      )
+      const originalConfigGet = config.get.bind(config)
+      const configSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) =>
+          key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
+        )
+
+      try {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/tonnage/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).not.toContain('data-testid="regulator-query-banner"')
+        expect(result).not.toContain('Please confirm the planned tonnage band.')
+      } finally {
+        configSpy.mockRestore()
+      }
     })
 
     test('renders the shared regulator-query banner (heading, summary sentence) when queried', async () => {
