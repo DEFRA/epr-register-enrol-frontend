@@ -1,0 +1,13 @@
+{% extends 'layouts/page.njk' %}
+
+{% block content %}
+  {{ appHeading({
+    text: pageTitle
+  }) }}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <p class="govuk-body" data-testid="access-denied-message">Your Entra ID account is not set up with the regulator or support user role needed to use this service. Contact your service administrator if you believe this is a mistake.</p>
+    </div>
+  </div>
+{% endblock %}

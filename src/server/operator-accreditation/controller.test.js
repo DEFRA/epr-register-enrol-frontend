@@ -10,6 +10,7 @@ import {
 import Boom from '@hapi/boom'
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { buildLandingViewModel } from './controller.js'
@@ -561,8 +562,19 @@ describe('#buildLandingViewModel', () => {
 
 describe('#operatorAccreditationController', () => {
   let server
+  // RA-431: lets individual tests flex auth.stubEnabled/environment/
+  // reex.frontendBaseUrl to exercise the Re/Ex back-link branches without
+  // re-spying config.get (re-spying an already-spied method recurses into
+  // itself rather than layering, per the comment on the equivalent pattern
+  // in auth/controller.test.js).
+  let configOverrides = {}
 
   beforeAll(async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key in configOverrides) return configOverrides[key]
+      return originalGet(key)
+    })
     server = await createServer()
     await server.initialize()
   })
@@ -573,6 +585,7 @@ describe('#operatorAccreditationController', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    configOverrides = {}
     operatorCanAccessOrganisation.mockImplementation(
       async (_user, orgId) => orgId === ORG_ID
     )
@@ -1000,6 +1013,62 @@ describe('#operatorAccreditationController', () => {
     })
 
     expect(result).toContain('data-testid="back-link"')
+  })
+
+  // RA-431: the back link used to be hardcoded to the local stub chooser
+  // regardless of AUTH_STUB_ENABLED, so a real operator on an integrated env
+  // was dropped back onto this frontend's own stub page instead of Re/Ex.
+  test('AC1: links to the Re/Ex frontend registration page when stub auth is disabled on a non-local env', async () => {
+    configOverrides = {
+      'auth.stubEnabled': false,
+      environment: 'dev',
+      'reex.frontendBaseUrl': 'https://epr-frontend.dev.cdp-int.defra.cloud'
+    }
+    mockAccreditationGet([makeApp()])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain(
+      `href="https://epr-frontend.dev.cdp-int.defra.cloud/organisations/${ORG_ID}/registrations/${REGISTRATION_ID}"`
+    )
+  })
+
+  test('AC2: links to the /operator stub page when stub auth is enabled', async () => {
+    configOverrides = {
+      'auth.stubEnabled': true,
+      environment: 'dev',
+      'reex.frontendBaseUrl': 'https://epr-frontend.dev.cdp-int.defra.cloud'
+    }
+    mockAccreditationGet([makeApp()])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('href="/operator/"')
+  })
+
+  test('AC2: links to the /operator stub page on a local env even when stub auth has been overridden false', async () => {
+    configOverrides = {
+      'auth.stubEnabled': false,
+      environment: 'local',
+      'reex.frontendBaseUrl': 'https://epr-frontend.dev.cdp-int.defra.cloud'
+    }
+    mockAccreditationGet([makeApp()])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('href="/operator/"')
   })
 
   test('persistent application header shows operator, material and site', async () => {
