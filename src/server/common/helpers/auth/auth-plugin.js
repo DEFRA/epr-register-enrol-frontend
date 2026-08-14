@@ -15,7 +15,13 @@ export const authPlugin = {
             return h.unauthenticated(Boom.unauthorized(null, 'session'))
           }
           return h.authenticated({
-            credentials: { ...user, scope: [user.userType] }
+            credentials: {
+              ...user,
+              scope: [
+                user.userType,
+                ...(user.regulatorRole ? [user.regulatorRole] : [])
+              ]
+            }
           })
         }
       }))

@@ -23,3 +23,15 @@
 export const requireRegulator = { auth: { scope: ['regulator'] } }
 
 export const requireOperator = { auth: { scope: ['operator'] } }
+
+// Internal regulator sub-roles, derived from the Entra ID app role a caller
+// holds at sign-in (see regulatorCallbackController). Support users are
+// currently granted the same access as standard regulators — there are no
+// mutating actions in this service yet — but routes can be locked down to
+// requireRegulatorStandard once that distinction matters.
+export const ROLE_REGULATOR_STANDARD = 'regulator-standard'
+export const ROLE_REGULATOR_SUPPORT_READONLY = 'regulator-support-readonly'
+
+export const requireRegulatorStandard = {
+  auth: { scope: [ROLE_REGULATOR_STANDARD] }
+}

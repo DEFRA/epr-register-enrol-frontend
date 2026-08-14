@@ -282,6 +282,18 @@ export const config = convict({
         format: String,
         default: '',
         env: 'ENTRA_TENANT_ID'
+      },
+      regulatorRoleValue: {
+        doc: 'RA-429. Entra ID app role a signed-in user must hold to be treated as a regulator.',
+        format: String,
+        default: 'Waste.Regulator.Standard',
+        env: 'ENTRA_REGULATOR_ROLE_VALUE'
+      },
+      supportUserRoleValue: {
+        doc: 'RA-429. Entra ID app role a signed-in user must hold to be treated as a read-only support user.',
+        format: String,
+        default: 'Waste.SupportUser.ReadOnly',
+        env: 'ENTRA_SUPPORT_USER_ROLE_VALUE'
       }
     },
     defraId: {

@@ -2,13 +2,15 @@ import Boom from '@hapi/boom'
 
 import { config } from '../../../../config/config.js'
 import { redirectToLogin } from './auth-redirect.js'
+import { ROLE_REGULATOR_STANDARD } from './auth-scopes.js'
 
 export const TEST_REGULATOR = {
   id: 'test-regulator-id',
   email: 'regulator@test.example',
   name: 'Test Regulator',
   userType: 'regulator',
-  scope: ['regulator']
+  regulatorRole: ROLE_REGULATOR_STANDARD,
+  scope: ['regulator', ROLE_REGULATOR_STANDARD]
 }
 
 export const TEST_OPERATOR = {
@@ -54,7 +56,13 @@ export const stubAuthPlugin = {
               return h.unauthenticated(Boom.unauthorized(null, 'session'))
             }
             return h.authenticated({
-              credentials: { ...user, scope: [user.userType] }
+              credentials: {
+                ...user,
+                scope: [
+                  user.userType,
+                  ...(user.regulatorRole ? [user.regulatorRole] : [])
+                ]
+              }
             })
           }
         }))
