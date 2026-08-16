@@ -173,6 +173,38 @@ describe('accreditationApiService', () => {
       expect(result.sitePostcode).toBeNull()
     })
 
+    test('sitePostcode falls back to companyRegisterAddressPostcode when siteAddress is absent (exporter case)', async () => {
+      apiClient.get.mockResolvedValue({
+        companyRegisterAddressPostcode: 'KW2 7LZ'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('KW2 7LZ')
+    })
+
+    test('sitePostcode prefers siteAddress.postcode over companyRegisterAddressPostcode when both present (reprocessor regression guard)', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
+        companyRegisterAddressPostcode: 'KW2 7LZ'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('BL4 7AQ')
+    })
+
+    test('sitePostcode is null when neither siteAddress nor companyRegisterAddressPostcode is present', async () => {
+      apiClient.get.mockResolvedValue({})
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBeNull()
+    })
+
     test('companyRegisteredAddress is formatted from an object shape', async () => {
       apiClient.get.mockResolvedValue({
         companyRegisteredAddress: {
