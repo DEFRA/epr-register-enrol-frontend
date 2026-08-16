@@ -25,7 +25,7 @@ function makeApplication(overrides = {}) {
     siteId: 'site-001',
     isExporter: false,
     prns: {
-      plannedTonnageBand: 'UpTo1000',
+      plannedTonnageBand: 'UpTo5000',
       authorisers: [{ fullName: 'Jane Smith', email: 'jane@example.com' }],
       sectionStatus: 'InProgress'
     },
@@ -252,7 +252,7 @@ describe('#tonnageCyaController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining('/tonnage'),
         expect.objectContaining({
-          plannedTonnageBand: 'UpTo1000',
+          plannedTonnageBand: 'UpTo5000',
           authorisers: expect.arrayContaining([
             expect.objectContaining({ fullName: 'Jane Smith' })
           ])
@@ -341,7 +341,7 @@ describe('#tonnageCyaController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers,
             sectionStatus: 'InProgress'
           }
@@ -366,7 +366,7 @@ describe('#tonnageCyaController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers,
             sectionStatus: 'InProgress'
           }

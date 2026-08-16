@@ -235,7 +235,7 @@ describe('#viewPaymentDetailsController', () => {
     test('calculates the correct fee for each tonnage band', async () => {
       const cases = [
         ['UpTo500', '£546.00'],
-        ['UpTo1000', '£2,184.00'],
+        ['UpTo5000', '£2,184.00'],
         ['UpTo10000', '£3,276.00'],
         ['Over10000', '£3,965.00']
       ]

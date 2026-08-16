@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { buildTonnageOptions, TONNAGE_OPTIONS } from './controller.js'
 
 const APPLICATION_ID = 'app-prns-001'
@@ -123,7 +124,7 @@ describe('#tonnageController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             sectionStatus: 'InProgress'
           }
         })
@@ -135,7 +136,7 @@ describe('#tonnageController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toMatch(/value="UpTo1000"[\s\S]*?checked/)
+      expect(result).toMatch(/value="UpTo5000"[\s\S]*?checked/)
     })
 
     test('no radio pre-selected when PlannedTonnageBand is null', async () => {
@@ -148,7 +149,7 @@ describe('#tonnageController', () => {
       })
 
       expect(result).not.toMatch(
-        /value="(UpTo500|UpTo1000|UpTo10000|Over10000)"[\s\S]*?checked/
+        /value="(UpTo500|UpTo5000|UpTo10000|Over10000)"[\s\S]*?checked/
       )
     })
 
@@ -292,6 +293,35 @@ describe('#tonnageController', () => {
       expect(result).toContain('Please confirm the planned tonnage band.')
     })
 
+    test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please confirm the planned tonnage band.' }
+        })
+      )
+      const originalConfigGet = config.get.bind(config)
+      const configSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) =>
+          key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
+        )
+
+      try {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/tonnage/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).not.toContain('data-testid="regulator-query-banner"')
+        expect(result).not.toContain('Please confirm the planned tonnage band.')
+      } finally {
+        configSpy.mockRestore()
+      }
+    })
+
     test('renders the shared regulator-query banner (heading, summary sentence) when queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -430,7 +460,7 @@ describe('#tonnageController', () => {
         url: `/accreditation/tonnage/${APPLICATION_ID}`,
         headers: operatorHeaders,
         payload: {
-          plannedTonnageBand: 'UpTo1000',
+          plannedTonnageBand: 'UpTo5000',
           submitAction: 'saveAndContinue'
         }
       })
@@ -442,7 +472,7 @@ describe('#tonnageController', () => {
       expect(getSpy).toHaveBeenCalledOnce()
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/tonnage`),
-        { plannedTonnageBand: 'UpTo1000' }
+        { plannedTonnageBand: 'UpTo5000' }
       )
     })
 

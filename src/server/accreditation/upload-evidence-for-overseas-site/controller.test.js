@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { besEvidenceRequired, evidenceStatus } from './controller.js'
 
 const APPLICATION_ID = 'app-uel-001'
@@ -439,6 +440,35 @@ describe('#uploadEvidenceListController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="sites-table"')
       expect(result).toContain('Please provide updated BES evidence.')
+    })
+
+    test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          besEvidence: { sectionStatus: 'Queried' },
+          query: { queryNote: 'Please provide updated BES evidence.' }
+        })
+      )
+      const originalConfigGet = config.get.bind(config)
+      const configSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) =>
+          key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
+        )
+
+      try {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).not.toContain('data-testid="regulator-query-banner"')
+        expect(result).not.toContain('Please provide updated BES evidence.')
+      } finally {
+        configSpy.mockRestore()
+      }
     })
 
     test('returns 200 in Welsh locale', async () => {

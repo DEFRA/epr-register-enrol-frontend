@@ -1,7 +1,9 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi } from 'vitest'
+import { config } from '../../../config/config.js'
 import {
   REGULATOR_QUERY_SECTION_LABEL_KEYS,
-  buildRegulatorQuerySummary
+  buildRegulatorQuerySummary,
+  resolveRegulatorQueryNote
 } from './regulatorQuery.js'
 
 const t = (key) => {
@@ -44,5 +46,92 @@ describe('buildRegulatorQuerySummary', () => {
         'samplingPlan'
       ].sort()
     )
+  })
+})
+
+describe('resolveRegulatorQueryNote', () => {
+  function makeApplication(overrides = {}) {
+    return {
+      applicationStatus: 'Queried',
+      query: { queryNote: 'Please confirm the planned tonnage band.' },
+      ...overrides
+    }
+  }
+
+  function mockFlag(disabled) {
+    const originalConfigGet = config.get.bind(config)
+    return vi
+      .spyOn(config, 'get')
+      .mockImplementation((key) =>
+        key === 'regulatorQuery.textDisabled'
+          ? disabled
+          : originalConfigGet(key)
+      )
+  }
+
+  test('returns the queryNote when Queried, not read-only, and the flag is off', () => {
+    const spy = mockFlag(false)
+    try {
+      expect(resolveRegulatorQueryNote(makeApplication())).toBe(
+        'Please confirm the planned tonnage band.'
+      )
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('defaults readOnly to false when no options are passed', () => {
+    const spy = mockFlag(false)
+    try {
+      expect(resolveRegulatorQueryNote(makeApplication())).toBe(
+        'Please confirm the planned tonnage band.'
+      )
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('returns null when the section is read-only', () => {
+    const spy = mockFlag(false)
+    try {
+      expect(
+        resolveRegulatorQueryNote(makeApplication(), { readOnly: true })
+      ).toBeNull()
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('returns null when applicationStatus is not Queried', () => {
+    const spy = mockFlag(false)
+    try {
+      expect(
+        resolveRegulatorQueryNote(
+          makeApplication({ applicationStatus: 'Submitted' })
+        )
+      ).toBeNull()
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('returns null when application.query is absent', () => {
+    const spy = mockFlag(false)
+    try {
+      expect(
+        resolveRegulatorQueryNote(makeApplication({ query: null }))
+      ).toBeNull()
+    } finally {
+      spy.mockRestore()
+    }
+  })
+
+  test('returns null when REGULATOR_QUERY_TEXT_DISABLED is true, even for a Queried, editable section', () => {
+    const spy = mockFlag(true)
+    try {
+      expect(resolveRegulatorQueryNote(makeApplication())).toBeNull()
+    } finally {
+      spy.mockRestore()
+    }
   })
 })
