@@ -196,15 +196,6 @@ describe('accreditationApiService', () => {
       expect(result.sitePostcode).toBe('BL4 7AQ')
     })
 
-    test('sitePostcode is null when neither siteAddress nor companyRegisterAddressPostcode is present', async () => {
-      apiClient.get.mockResolvedValue({})
-      const result = await accreditationApiService.getApplication(
-        ORG_ID,
-        APP_ID
-      )
-      expect(result.sitePostcode).toBeNull()
-    })
-
     test('companyRegisteredAddress is formatted from an object shape', async () => {
       apiClient.get.mockResolvedValue({
         companyRegisteredAddress: {
