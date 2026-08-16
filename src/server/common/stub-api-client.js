@@ -1080,7 +1080,8 @@ export const stubApiClient = {
           }
           const ref = generateApplicationReference({
             orgId: doc.orgId,
-            postcode: item.siteAddress?.postcode,
+            postcode:
+              item.siteAddress?.postcode ?? item.companyRegisterAddressPostcode,
             material: item.material,
             year: item.yearlyMetrics?.year
           })
