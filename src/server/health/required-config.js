@@ -22,6 +22,13 @@ export function getMissingRequiredConfig(cfg) {
     missing.push('API_BASE_URL')
   }
 
+  // FrontendAuthenticationHandler (epr-register-enrol-backend) rejects every request
+  // without this outside its own Development environment — a blank secret here is a
+  // live 401 on every backend call, not just a missing-config nuisance.
+  if (!isLocal && !cfg.get('api.stubEnabled') && !cfg.get('api.sharedSecret')) {
+    missing.push('AUTH_SHARED_SECRET__BACKEND')
+  }
+
   // Uploads go through the stub-complete-upload route instead of the real CDP
   // uploader flow when api.stubEnabled is true (see src/server/router.js).
   if (!cfg.get('api.stubEnabled') && !cfg.get('fileUpload.cdpUploaderUrl')) {
