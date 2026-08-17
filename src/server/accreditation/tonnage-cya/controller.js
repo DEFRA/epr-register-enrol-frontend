@@ -4,7 +4,7 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 
 const TONNAGE_LABEL_KEYS = {
   UpTo500: 'pages.tonnage.options.UpTo500',
-  UpTo1000: 'pages.tonnage.options.UpTo1000',
+  UpTo5000: 'pages.tonnage.options.UpTo5000',
   UpTo10000: 'pages.tonnage.options.UpTo10000',
   Over10000: 'pages.tonnage.options.Over10000'
 }

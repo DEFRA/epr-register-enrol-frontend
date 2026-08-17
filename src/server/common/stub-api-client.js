@@ -106,7 +106,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000390GL',
         applicationStatus: 'Started',
         material: 'glass',
-        glassRecyclingProcess: 'glass_other',
+        glassRecyclingProcess: ['glass_other'],
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050002',
         siteAddress: {
@@ -146,7 +146,7 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000390GL',
         applicationStatus: 'Started',
         material: 'glass',
-        glassRecyclingProcess: 'glass_re_melt',
+        glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
         registrationId: 'aaa000000000000000050003',
         siteAddress: {
@@ -164,7 +164,7 @@ export const STUB_ORG_DOCS = [
         },
         prnIssuance: {
           sectionStatus: 'Completed',
-          plannedIssuance: 'UpTo1000',
+          plannedIssuance: 'UpTo5000',
           signatories: [
             {
               fullName: 'Jane Doe',
@@ -235,11 +235,7 @@ export const STUB_ORG_DOCS = [
         material: 'steel',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050004',
-        siteAddress: {
-          line1: 'The Steelworks',
-          town: 'Siteville',
-          postcode: 'ST33 LO2'
-        },
+        companyRegisterAddressPostcode: 'ST33 LO2',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: '2026-12-01T10:00:00Z',
@@ -250,7 +246,7 @@ export const STUB_ORG_DOCS = [
         },
         prnIssuance: {
           sectionStatus: 'Completed',
-          plannedIssuance: 'UpTo1000',
+          plannedIssuance: 'UpTo5000',
           signatories: [
             {
               fullName: 'Jane Doe',
@@ -353,11 +349,7 @@ export const STUB_ORG_DOCS = [
         material: 'plastic',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050005',
-        siteAddress: {
-          line1: 'Plaxxtic Export Works',
-          town: 'Siteville',
-          postcode: 'PL45 T1C'
-        },
+        companyRegisterAddressPostcode: 'PL45 T1C',
         wasteRegistrationNumber: 'R26ER5000390068PL',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -423,14 +415,15 @@ export const STUB_ORG_DOCS = [
         applicationId: 'APP2027ER5000392GL',
         applicationStatus: 'Started',
         material: 'glass',
-        glassRecyclingProcess: 'glass_other',
+        glassRecyclingProcess: ['glass_other'],
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050006',
-        siteAddress: {
-          line1: 'The Other Glassworks',
-          town: 'Siteville',
-          postcode: 'GL45 50T'
+        companyRegisteredAddress: {
+          line1: '4 Glassworks Court',
+          town: 'Edinburgh',
+          postcode: 'KW2 7LZ'
         },
+        companyRegisterAddressPostcode: 'KW2 7LZ',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -551,11 +544,7 @@ export const STUB_ORG_DOCS = [
         material: 'steel',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050007',
-        siteAddress: {
-          line1: 'STEELERs ExPoCo',
-          town: 'Steelville',
-          postcode: 'ST33 3XP'
-        },
+        companyRegisterAddressPostcode: 'ST33 3XP',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -687,11 +676,7 @@ export const STUB_ORG_DOCS = [
         material: 'plastic',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050007',
-        siteAddress: {
-          line1: 'Pastic ExPoCo',
-          town: 'Plaston',
-          postcode: 'PL45 T1C'
-        },
+        companyRegisterAddressPostcode: 'PL45 T1C',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -845,53 +830,6 @@ export const STUB_ORG_DOCS = [
   }
 ]
 
-const STUB_ORGANISATIONS = [
-  { orgId: 50001, companyDetails: { name: 'NEWDEV RECYCLING LIMITED' } },
-  { orgId: 50002, companyDetails: { name: 'Beta Recycling Co' } }
-]
-
-export const STUB_ORG_MODELS = {
-  50001: {
-    orgId: 50001,
-    schemaVersion: 1,
-    version: 1,
-    companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
-    registrations: [
-      {
-        registrationId: 'REG001',
-        material: 'plastic',
-        wasteProcessingType: 'reprocessor',
-        siteAddress: {
-          line1: 'UNIT 5',
-          town: 'Bolton',
-          postcode: 'BL4 7AQ',
-          country: 'England'
-        }
-      }
-    ]
-  },
-  50002: {
-    orgId: 50002,
-    schemaVersion: 1,
-    version: 1,
-    companyDetails: { name: 'Delta Green Recycling Co' },
-    registrations: [
-      {
-        registrationId: 'REG002',
-        material: 'glass',
-        glassRecyclingProcess: 'glass_other',
-        wasteProcessingType: 'reprocessor',
-        siteAddress: {
-          line1: 'Site Lane 002',
-          town: 'Siteville',
-          postcode: 'SIT3 OO2',
-          country: 'England'
-        }
-      }
-    ]
-  }
-}
-
 // Matches /{orgId}/{itemId}[/{section}] at end of path
 // Does NOT match BES evidence paths (too many segments)
 const APP_PATH_RE =
@@ -1018,10 +956,6 @@ export const stubApiClient = {
       })
     }
 
-    if (endpoint === '/organisation') {
-      return Promise.resolve(STUB_ORGANISATIONS)
-    }
-
     if (/\/api\/v1\/accreditation-applications\/[^/]+$/.test(endpoint)) {
       const m = endpoint.match(
         /\/api\/v1\/accreditation-applications\/([^/]+)$/
@@ -1095,7 +1029,8 @@ export const stubApiClient = {
           }
           const ref = generateApplicationReference({
             orgId: doc.orgId,
-            postcode: item.siteAddress?.postcode,
+            postcode:
+              item.siteAddress?.postcode ?? item.companyRegisterAddressPostcode,
             material: item.material,
             year: item.yearlyMetrics?.year
           })

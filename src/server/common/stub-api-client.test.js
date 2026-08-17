@@ -278,12 +278,12 @@ describe('stubApiClient.patch — tonnage section', () => {
   })
 
   test('patching plannedTonnageBand persists it as prnIssuance.plannedIssuance', async () => {
-    await stub.patch(PATCH_URL, { plannedTonnageBand: 'UpTo1000' })
+    await stub.patch(PATCH_URL, { plannedTonnageBand: 'UpTo5000' })
 
     const app = await stub.get(
       '/api/v1/accreditation-applications/50001/app001'
     )
-    expect(app.prnIssuance.plannedIssuance).toBe('UpTo1000')
+    expect(app.prnIssuance.plannedIssuance).toBe('UpTo5000')
   })
 
   test('subsequent GET returns updated signatories (normaliser picks them up)', async () => {

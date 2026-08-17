@@ -2,7 +2,10 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
-import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import {
+  buildRegulatorQuerySummary,
+  resolveRegulatorQueryNote
+} from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -107,10 +110,7 @@ export const tonnageAuthorityGetController = {
 
     const isExporter = application.isExporter ?? false
     const sectionKey = isExporter ? 'perns' : 'prns'
-    const queryNote =
-      application.applicationStatus === 'Queried' && !readOnly
-        ? (application.query?.queryNote ?? null)
-        : null
+    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
 
     return renderPage(
       h,
