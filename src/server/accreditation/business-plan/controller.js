@@ -3,7 +3,10 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
-import { buildRegulatorQuerySummary } from '../../common/helpers/regulatorQuery.js'
+import {
+  buildRegulatorQuerySummary,
+  resolveRegulatorQueryNote
+} from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 export const BUSINESS_PLAN_FIELDS = [
@@ -178,10 +181,7 @@ export const businessPlanGetController = {
     }
 
     const isExporter = application.isExporter ?? false
-    const queryNote =
-      application.applicationStatus === 'Queried' && !readOnly
-        ? (application.query?.queryNote ?? null)
-        : null
+    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
 
     return renderPage(
       h,

@@ -5,6 +5,7 @@ import {
   resolveNation,
   buildPaymentDetails
 } from '../../common/helpers/paymentDetails.js'
+import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -26,14 +27,14 @@ export const submitConfirmationGetController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let materialType = ''
+    let materialDisplay = ''
     let paymentDetails = null
     try {
       const application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
-      materialType = application.materialType ?? ''
+      materialDisplay = materialDisplayName(application, t)
       paymentDetails = buildPaymentDetails(
         application,
         t,
@@ -44,10 +45,6 @@ export const submitConfirmationGetController = {
         `Error fetching payment details for ${applicationId} on confirmation: ${err.message}`
       )
     }
-
-    const materialDisplay = materialType
-      ? t(`pages.materialSelection.materials.${materialType}`)
-      : ''
 
     return h.view('accreditation/submit-confirmation/index', {
       pageTitle: t('pages.submitConfirmation.title'),

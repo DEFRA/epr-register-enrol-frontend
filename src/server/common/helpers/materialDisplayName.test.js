@@ -22,7 +22,7 @@ describe('materialDisplayName', () => {
   test('resolves Glass with the glass_re_melt process to its own copy', () => {
     expect(
       materialDisplayName(
-        { materialType: 'Glass', glassRecyclingProcess: 'glass_re_melt' },
+        { materialType: 'Glass', glassRecyclingProcess: ['glass_re_melt'] },
         t
       )
     ).toBe('Glass (re-melt)')
@@ -31,15 +31,36 @@ describe('materialDisplayName', () => {
   test('resolves Glass with the glass_other process to its own copy', () => {
     expect(
       materialDisplayName(
-        { materialType: 'Glass', glassRecyclingProcess: 'glass_other' },
+        { materialType: 'Glass', glassRecyclingProcess: ['glass_other'] },
         t
       )
     ).toBe('Glass (other)')
+  })
+
+  test('falls back to the generic material key for Glass with an empty glassRecyclingProcess array', () => {
+    expect(
+      materialDisplayName(
+        { materialType: 'Glass', glassRecyclingProcess: [] },
+        t
+      )
+    ).toBe('pages.materialSelection.materials.Glass')
   })
 
   test('falls back to the generic material key for Glass with no recognised process', () => {
     expect(materialDisplayName({ materialType: 'Glass' }, t)).toBe(
       'pages.materialSelection.materials.Glass'
     )
+  })
+
+  test('uses the first element defensively if glassRecyclingProcess ever has more than one', () => {
+    expect(
+      materialDisplayName(
+        {
+          materialType: 'Glass',
+          glassRecyclingProcess: ['glass_other', 'glass_re_melt']
+        },
+        t
+      )
+    ).toBe('Glass (other)')
   })
 })

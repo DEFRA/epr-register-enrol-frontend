@@ -173,6 +173,68 @@ describe('accreditationApiService', () => {
       expect(result.sitePostcode).toBeNull()
     })
 
+    test('sitePostcode falls back to companyRegisterAddressPostcode when siteAddress is absent (exporter case)', async () => {
+      apiClient.get.mockResolvedValue({
+        companyRegisterAddressPostcode: 'KW2 7LZ'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('KW2 7LZ')
+    })
+
+    test('sitePostcode prefers siteAddress.postcode over companyRegisterAddressPostcode when both present (reprocessor regression guard)', async () => {
+      apiClient.get.mockResolvedValue({
+        siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
+        companyRegisterAddressPostcode: 'KW2 7LZ'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.sitePostcode).toBe('BL4 7AQ')
+    })
+
+    test('companyRegisteredAddress is formatted from an object shape', async () => {
+      apiClient.get.mockResolvedValue({
+        companyRegisteredAddress: {
+          line1: '4 Glassworks Court',
+          town: 'Bristol',
+          postcode: 'BS1 4AA'
+        }
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.companyRegisteredAddress).toBe(
+        '4 Glassworks Court, Bristol, BS1 4AA'
+      )
+    })
+
+    test('companyRegisteredAddress is passed through when it is a plain string', async () => {
+      apiClient.get.mockResolvedValue({
+        companyRegisteredAddress: '4 Glassworks Court, Bristol, BS1 4AA'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.companyRegisteredAddress).toBe(
+        '4 Glassworks Court, Bristol, BS1 4AA'
+      )
+    })
+
+    test('companyRegisteredAddress is null when absent', async () => {
+      apiClient.get.mockResolvedValue({})
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.companyRegisteredAddress).toBeNull()
+    })
+
     test('dueDate is passed through when it is a valid ISO string', async () => {
       apiClient.get.mockResolvedValue({
         dueDate: '2026-09-30T00:00:00.000Z'
@@ -255,7 +317,7 @@ describe('accreditationApiService', () => {
         id: APP_ID,
         prnIssuance: {
           sectionStatus: 'InProgress',
-          plannedIssuance: 'UpTo1000',
+          plannedIssuance: 'UpTo5000',
           signatories: [
             { fullName: 'Jane', email: 'jane@example.com', isNew: true },
             { fullName: 'Bob', email: 'bob@example.com', isNew: false },
@@ -284,7 +346,7 @@ describe('accreditationApiService', () => {
         id: APP_ID,
         prns: {
           sectionStatus: 'InProgress',
-          plannedTonnageBand: 'UpTo1000',
+          plannedTonnageBand: 'UpTo5000',
           authorisers: [
             { fullName: 'Jane', email: 'jane@example.com', isNew: true }
           ]
