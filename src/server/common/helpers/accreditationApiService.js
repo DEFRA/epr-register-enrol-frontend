@@ -121,11 +121,13 @@ function normalizeApplication(item) {
         ? sa
         : null
   const sitePostcode =
-    sa && typeof sa === 'object'
+    (sa && typeof sa === 'object'
       ? (sa.postcode ?? null)
       : typeof sa === 'string'
         ? extractPostcodeFromAddressString(sa)
-        : null
+        : null) ??
+    item.companyRegisterAddressPostcode ??
+    null
   return {
     ...item,
     // item.id = internal UUID used in URLs; item.applicationId = human-readable ref (new schema)
