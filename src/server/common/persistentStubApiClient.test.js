@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 import { persistentStubApiClient } from './persistentStubApiClient.js'
 import { stubApiClient, stubCompleteUpload } from './stub-api-client.js'
+import { config } from '../../config/config.js'
 
 describe('#persistentStubApiClient CDP upload status', () => {
   let fetchSpy
@@ -119,5 +120,28 @@ describe('#persistentStubApiClient defra-link', () => {
       '/api/v1/organisations/50002/defra-link'
     )
     expect(result.linkedDefraOrganisationId).toBe(909999)
+  })
+
+  test('sends the shared-secret Bearer token on the real backend call', async () => {
+    const originalGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) =>
+      key === 'api.sharedSecret' ? 'test-secret' : originalGet(key)
+    )
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        organisationId: '50002',
+        linkedDefraOrganisationId: '50002'
+      })
+    })
+
+    await persistentStubApiClient.get('/api/v1/organisations/50002/defra-link')
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer test-secret' }
+      })
+    )
   })
 })
