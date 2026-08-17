@@ -830,53 +830,6 @@ export const STUB_ORG_DOCS = [
   }
 ]
 
-const STUB_ORGANISATIONS = [
-  { orgId: 50001, companyDetails: { name: 'NEWDEV RECYCLING LIMITED' } },
-  { orgId: 50002, companyDetails: { name: 'Beta Recycling Co' } }
-]
-
-export const STUB_ORG_MODELS = {
-  50001: {
-    orgId: 50001,
-    schemaVersion: 1,
-    version: 1,
-    companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
-    registrations: [
-      {
-        registrationId: 'REG001',
-        material: 'plastic',
-        wasteProcessingType: 'reprocessor',
-        siteAddress: {
-          line1: 'UNIT 5',
-          town: 'Bolton',
-          postcode: 'BL4 7AQ',
-          country: 'England'
-        }
-      }
-    ]
-  },
-  50002: {
-    orgId: 50002,
-    schemaVersion: 1,
-    version: 1,
-    companyDetails: { name: 'Delta Green Recycling Co' },
-    registrations: [
-      {
-        registrationId: 'REG002',
-        material: 'glass',
-        glassRecyclingProcess: ['glass_other'],
-        wasteProcessingType: 'reprocessor',
-        siteAddress: {
-          line1: 'Site Lane 002',
-          town: 'Siteville',
-          postcode: 'SIT3 OO2',
-          country: 'England'
-        }
-      }
-    ]
-  }
-}
-
 // Matches /{orgId}/{itemId}[/{section}] at end of path
 // Does NOT match BES evidence paths (too many segments)
 const APP_PATH_RE =
@@ -1001,10 +954,6 @@ export const stubApiClient = {
           }
         }
       })
-    }
-
-    if (endpoint === '/organisation') {
-      return Promise.resolve(STUB_ORGANISATIONS)
     }
 
     if (/\/api\/v1\/accreditation-applications\/[^/]+$/.test(endpoint)) {
