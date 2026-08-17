@@ -23,9 +23,13 @@ export function getMissingRequiredConfig(cfg) {
   }
 
   // FrontendAuthenticationHandler (epr-register-enrol-backend) rejects every request
-  // without this outside its own Development environment — a blank secret here is a
-  // live 401 on every backend call, not just a missing-config nuisance.
-  if (!isLocal && !cfg.get('api.stubEnabled') && !cfg.get('api.sharedSecret')) {
+  // without this outside its own Development environment. Same api.stubEnabled-agnostic
+  // condition as API_BASE_URL above, not the stub-exempt condition used further down —
+  // realApiClient reads this same sharedSecret and always contacts the real backend
+  // regardless of api.stubEnabled, so a blank secret in a stubbed-but-deployed
+  // environment would still send unauthenticated requests even though the main
+  // apiClient singleton is stubbed.
+  if (!isLocal && !cfg.get('api.sharedSecret')) {
     missing.push('AUTH_SHARED_SECRET__BACKEND')
   }
 

@@ -46,18 +46,18 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual(['API_BASE_URL'])
   })
 
-  test('flags AUTH_SHARED_SECRET__BACKEND when blank, non-stub, non-local', () => {
+  test('flags AUTH_SHARED_SECRET__BACKEND when blank, non-local', () => {
     expect(
       getMissingRequiredConfig(makeConfig({ 'api.sharedSecret': '' }))
     ).toEqual(['AUTH_SHARED_SECRET__BACKEND'])
   })
 
-  test('does not flag AUTH_SHARED_SECRET__BACKEND when api.stubEnabled is true', () => {
+  test('flags AUTH_SHARED_SECRET__BACKEND even when api.stubEnabled is true — realApiClient always contacts the backend', () => {
     expect(
       getMissingRequiredConfig(
         makeConfig({ 'api.sharedSecret': '', 'api.stubEnabled': true })
       )
-    ).toEqual([])
+    ).toEqual(['AUTH_SHARED_SECRET__BACKEND'])
   })
 
   test('does not flag AUTH_SHARED_SECRET__BACKEND in local', () => {
