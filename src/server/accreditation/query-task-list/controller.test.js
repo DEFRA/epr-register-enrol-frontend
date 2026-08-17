@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { buildQueryTaskListViewModel } from './controller.js'
 
 const APPLICATION_ID = 'app-query-001'
@@ -109,6 +110,22 @@ describe('#buildQueryTaskListViewModel', () => {
     expect(vm.queryNote).toBeNull()
   })
 
+  test('queryNote is null when REGULATOR_QUERY_TEXT_DISABLED is true', () => {
+    const originalConfigGet = config.get.bind(config)
+    const configSpy = vi
+      .spyOn(config, 'get')
+      .mockImplementation((key) =>
+        key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
+      )
+
+    try {
+      const vm = buildQueryTaskListViewModel(makeApplication(), t)
+      expect(vm.queryNote).toBeNull()
+    } finally {
+      configSpy.mockRestore()
+    }
+  })
+
   test('continueUrl points directly to query-declaration', () => {
     const vm = buildQueryTaskListViewModel(makeApplication(), t)
     expect(vm.continueUrl).toBe(
@@ -182,6 +199,31 @@ describe('#queryTaskListGetController', () => {
     expect(result).toContain(
       'Please provide more detail on your business plan.'
     )
+  })
+
+  test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+    const originalConfigGet = config.get.bind(config)
+    const configSpy = vi
+      .spyOn(config, 'get')
+      .mockImplementation((key) =>
+        key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
+      )
+
+    try {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/query-task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain(
+        'Please provide more detail on your business plan.'
+      )
+    } finally {
+      configSpy.mockRestore()
+    }
   })
 
   test('continue button links directly to query-declaration', async () => {

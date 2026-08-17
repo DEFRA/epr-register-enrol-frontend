@@ -34,7 +34,7 @@ export const ORS_FEE = 328
 
 export const TONNAGE_FEES = {
   UpTo500: 546,
-  UpTo1000: 2184,
+  UpTo5000: 2184,
   UpTo10000: 3276,
   Over10000: 3965
 }
