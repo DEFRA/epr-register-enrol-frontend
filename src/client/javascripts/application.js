@@ -192,17 +192,15 @@ function initSamplingPlanUpload(
     }
   })
 
-  // RA-436: a browser back/forward navigation can land on this page with a
-  // file still sitting in the input — either because it was restored whole
-  // from bfcache, or because the browser reapplies the previous session
-  // history entry's form state (including file input selections) after a
-  // fresh reload, independently of bfcache and regardless of
-  // Cache-Control: no-store. Left alone, clicking "Upload file" resubmits
-  // that same file and adds it to the list again as a duplicate. Replace
-  // the input element itself with a fresh clone on every pageshow: the
-  // browser only has restorable state for the specific element instance
-  // that existed in the page it navigated away from, so a freshly created
-  // element has nothing to restore onto.
+  // RA-436: a browser back/forward navigation can restore this page whole
+  // from bfcache with a file still sitting in the input. Left alone,
+  // clicking "Upload file" resubmits that same file and adds it to the
+  // list again as a duplicate. Cache-Control: no-store doesn't prevent
+  // this — Chrome still allows no-store pages into bfcache. Replace the
+  // input element itself with a fresh clone: the browser only has
+  // restorable state for the specific element instance that existed in
+  // the page it navigated away from, so a freshly created element has
+  // nothing to restore onto.
   function swapFileInput() {
     const freshInput = fileInput.cloneNode(true)
     freshInput.value = ''
@@ -211,7 +209,14 @@ function initSamplingPlanUpload(
     attachFileInputChangeListener(fileInput)
   }
 
-  window.addEventListener('pageshow', function () {
+  // Only a genuine bfcache restore (event.persisted) reasserts a
+  // previously selected file into the input — a normal load/reload never
+  // does. Gating on persisted is what keeps this from firing on the
+  // server's 400 re-render of this same view (noFile/invalidType/
+  // fileTooLarge/uploadError), which would otherwise wipe the
+  // server-rendered error the moment the page loads.
+  window.addEventListener('pageshow', function (event) {
+    if (!event.persisted) return
     userSelectedFile = false
     swapFileInput()
     clearError()
