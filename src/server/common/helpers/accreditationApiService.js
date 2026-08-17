@@ -84,6 +84,25 @@ function extractPostcodeFromAddressString(address) {
   return match ? match[0].toUpperCase().replace(/\s+/, ' ') : null
 }
 
+function joinAddressParts(addr, fields) {
+  return fields
+    .map((field) => addr[field])
+    .filter(Boolean)
+    .join(', ')
+}
+
+// The registered address is a UK CompanyDetails.Address (Line1/Line2/Town/
+// County/Postcode) rather than the overseas/reprocessing-site address, so it
+// gets its own field set distinct from siteAddress below.
+function formatRegisteredAddress(addr) {
+  if (!addr) return null
+  if (typeof addr === 'string') return addr
+  return (
+    joinAddressParts(addr, ['line1', 'line2', 'town', 'county', 'postcode']) ||
+    null
+  )
+}
+
 // The backend may return a dueDate that isn't a parseable ISO string; the
 // formatDate nunjucks filter throws on an Invalid Date, so treat anything
 // unparseable as absent rather than crashing the page.
@@ -97,16 +116,18 @@ function normalizeApplication(item) {
   const sa = item.siteAddress
   const siteAddress =
     sa && typeof sa === 'object'
-      ? [sa.line1, sa.town, sa.postcode].filter(Boolean).join(', ')
+      ? joinAddressParts(sa, ['line1', 'town', 'postcode'])
       : typeof sa === 'string'
         ? sa
         : null
   const sitePostcode =
-    sa && typeof sa === 'object'
+    (sa && typeof sa === 'object'
       ? (sa.postcode ?? null)
       : typeof sa === 'string'
         ? extractPostcodeFromAddressString(sa)
-        : null
+        : null) ??
+    item.companyRegisterAddressPostcode ??
+    null
   return {
     ...item,
     // item.id = internal UUID used in URLs; item.applicationId = human-readable ref (new schema)
@@ -127,6 +148,9 @@ function normalizeApplication(item) {
         : (item.isExporter ?? false),
     siteAddress,
     sitePostcode,
+    companyRegisteredAddress: formatRegisteredAddress(
+      item.companyRegisteredAddress
+    ),
     registrationId: item.registrationId ?? null,
     year: item.yearlyMetrics?.year
       ? parseInt(item.yearlyMetrics.year, 10)

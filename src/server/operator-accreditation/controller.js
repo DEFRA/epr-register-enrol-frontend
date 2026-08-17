@@ -84,7 +84,7 @@ export function buildLandingViewModel(
   }
   const matDisp = materialDisplayName(application, t)
   const siteName = isExporter
-    ? t('pages.operatorAccreditation.exporterLabel')
+    ? (application.companyRegisteredAddress ?? t('pages.taskList.siteNotSet'))
     : (siteAddress ?? t('pages.taskList.siteNotSet'))
   const priorYear = accreditationYear - 1
   return {

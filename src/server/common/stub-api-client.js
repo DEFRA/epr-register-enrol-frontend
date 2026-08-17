@@ -164,7 +164,7 @@ export const STUB_ORG_DOCS = [
         },
         prnIssuance: {
           sectionStatus: 'Completed',
-          plannedIssuance: 'UpTo1000',
+          plannedIssuance: 'UpTo5000',
           signatories: [
             {
               fullName: 'Jane Doe',
@@ -235,11 +235,7 @@ export const STUB_ORG_DOCS = [
         material: 'steel',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050004',
-        siteAddress: {
-          line1: 'The Steelworks',
-          town: 'Siteville',
-          postcode: 'ST33 LO2'
-        },
+        companyRegisterAddressPostcode: 'ST33 LO2',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: '2026-12-01T10:00:00Z',
@@ -250,7 +246,7 @@ export const STUB_ORG_DOCS = [
         },
         prnIssuance: {
           sectionStatus: 'Completed',
-          plannedIssuance: 'UpTo1000',
+          plannedIssuance: 'UpTo5000',
           signatories: [
             {
               fullName: 'Jane Doe',
@@ -353,11 +349,7 @@ export const STUB_ORG_DOCS = [
         material: 'plastic',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050005',
-        siteAddress: {
-          line1: 'Plaxxtic Export Works',
-          town: 'Siteville',
-          postcode: 'PL45 T1C'
-        },
+        companyRegisterAddressPostcode: 'PL45 T1C',
         wasteRegistrationNumber: 'R26ER5000390068PL',
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -426,11 +418,12 @@ export const STUB_ORG_DOCS = [
         glassRecyclingProcess: ['glass_other'],
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050006',
-        siteAddress: {
-          line1: 'The Other Glassworks',
-          town: 'Siteville',
-          postcode: 'GL45 50T'
+        companyRegisteredAddress: {
+          line1: '4 Glassworks Court',
+          town: 'Edinburgh',
+          postcode: 'KW2 7LZ'
         },
+        companyRegisterAddressPostcode: 'KW2 7LZ',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -551,11 +544,7 @@ export const STUB_ORG_DOCS = [
         material: 'steel',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050007',
-        siteAddress: {
-          line1: 'STEELERs ExPoCo',
-          town: 'Steelville',
-          postcode: 'ST33 3XP'
-        },
+        companyRegisterAddressPostcode: 'ST33 3XP',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -687,11 +676,7 @@ export const STUB_ORG_DOCS = [
         material: 'plastic',
         wasteProcessingType: 'exporter',
         registrationId: 'aaa000000000000000050007',
-        siteAddress: {
-          line1: 'Pastic ExPoCo',
-          town: 'Plaston',
-          postcode: 'PL45 T1C'
-        },
+        companyRegisterAddressPostcode: 'PL45 T1C',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
         formSubmissionTime: null,
@@ -1095,7 +1080,8 @@ export const stubApiClient = {
           }
           const ref = generateApplicationReference({
             orgId: doc.orgId,
-            postcode: item.siteAddress?.postcode,
+            postcode:
+              item.siteAddress?.postcode ?? item.companyRegisterAddressPostcode,
             material: item.material,
             year: item.yearlyMetrics?.year
           })

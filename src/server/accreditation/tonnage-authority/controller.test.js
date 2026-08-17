@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { buildHeading, buildAuthoriserRows } from './controller.js'
 
 const APPLICATION_ID = 'app-auth-001'
@@ -25,7 +26,7 @@ function makeApplication(overrides = {}) {
     siteId: 'site-001',
     isExporter: false,
     prns: {
-      plannedTonnageBand: 'UpTo1000',
+      plannedTonnageBand: 'UpTo5000',
       authorisers: [],
       sectionStatus: 'InProgress'
     },
@@ -142,7 +143,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -166,7 +167,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' },
               {
@@ -194,7 +195,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -285,7 +286,7 @@ describe('#tonnageAuthorityController', () => {
         makeApplication({
           applicationStatus: 'Queried',
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [],
             sectionStatus: 'NotStarted'
           }
@@ -309,7 +310,7 @@ describe('#tonnageAuthorityController', () => {
         makeApplication({
           applicationStatus: 'Queried',
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [{ fullName: 'Jane Doe', email: 'jane@example.com' }],
             sectionStatus: 'Completed'
           }
@@ -336,7 +337,7 @@ describe('#tonnageAuthorityController', () => {
         makeApplication({
           applicationStatus: 'Queried',
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [],
             sectionStatus: 'Completed'
           },
@@ -360,7 +361,7 @@ describe('#tonnageAuthorityController', () => {
         makeApplication({
           applicationStatus: 'Queried',
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [],
             sectionStatus: 'Queried'
           },
@@ -383,12 +384,45 @@ describe('#tonnageAuthorityController', () => {
       )
     })
 
+    test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo5000',
+            authorisers: [],
+            sectionStatus: 'Queried'
+          },
+          query: { queryNote: 'Please confirm the authorised issuers.' }
+        })
+      )
+      const originalConfigGet = config.get.bind(config)
+      const configSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) =>
+          key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
+        )
+
+      try {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).not.toContain('data-testid="regulator-query-banner"')
+        expect(result).not.toContain('Please confirm the authorised issuers.')
+      } finally {
+        configSpy.mockRestore()
+      }
+    })
+
     test('does not render the "Update the application" change-link section', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [],
             sectionStatus: 'Queried'
           },
@@ -447,7 +481,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [{ fullName: 'Alice', email: 'alice@example.com' }],
             sectionStatus: 'InProgress'
           }
@@ -535,7 +569,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -582,7 +616,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [{ fullName: 'Alice', email: 'alice@example.com' }],
             sectionStatus: 'InProgress'
           }
@@ -640,7 +674,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -664,7 +698,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' },
               { fullName: 'Bob', email: 'bob@example.com' }
@@ -749,7 +783,7 @@ describe('#tonnageAuthorityController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           prns: {
-            plannedTonnageBand: 'UpTo1000',
+            plannedTonnageBand: 'UpTo5000',
             authorisers: [
               { fullName: 'Jane Smith', email: 'jane@example.com' }
             ],
@@ -823,7 +857,7 @@ describe('#tonnageAuthorityController', () => {
     function appWithAuthorisers(authorisers) {
       return makeApplication({
         prns: {
-          plannedTonnageBand: 'UpTo1000',
+          plannedTonnageBand: 'UpTo5000',
           authorisers,
           sectionStatus: 'InProgress'
         }

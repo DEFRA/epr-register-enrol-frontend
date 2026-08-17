@@ -5,6 +5,7 @@ import {
   landingUrl,
   queryDeclarationUrl
 } from '../../common/helpers/accreditationUrls.js'
+import { resolveRegulatorQueryNote } from '../../common/helpers/regulatorQuery.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -98,7 +99,7 @@ export function buildQueryTaskListViewModel(application, t) {
   return {
     heading,
     isExporter: isExporter ?? false,
-    queryNote: application.query?.queryNote ?? null,
+    queryNote: resolveRegulatorQueryNote(application),
     tasks,
     continueUrl: queryDeclarationUrl(applicationId)
   }

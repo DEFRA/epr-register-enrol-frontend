@@ -173,7 +173,7 @@ describe('#submitConfirmationController', () => {
     test('shows payment details inline, including amount, bank details, and the payment reference', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          prns: { plannedTonnageBand: 'UpTo1000' }
+          prns: { plannedTonnageBand: 'UpTo5000' }
         })
       )
       const cookie = await getSessionCookieWithReference('RA-000000001')
@@ -191,6 +191,28 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('60-70-80')
       expect(result).toContain('data-testid="bank-payment-reference"')
       expect(result).toContain('RA-000000001')
+    })
+
+    test('exporter (no siteAddress) resolves Scotland from companyRegisterAddressPostcode', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          companyRegisterAddressPostcode: 'KW2 7LZ'
+        })
+      )
+      const cookie = await getSessionCookieWithReference()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(result).toContain('data-testid="bank-account-name"')
+      expect(result).toContain('Scottish Environment Protection Agency')
+      expect(result).toContain('83 – 34 – 00')
+      expect(result).not.toContain(
+        'Application submitted to the Environment Agency'
+      )
     })
 
     test('shows the "how long payments take" content as static text, not a collapsible link', async () => {
