@@ -185,7 +185,22 @@ describe('#buildLandingViewModel', () => {
     expect(vm.siteName).toBe('siteNotSet')
   })
 
-  test('siteName is "Exporter" when isExporter is true, regardless of siteAddress', () => {
+  test('siteName is the UK registered address when isExporter is true, regardless of siteAddress', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Unknown',
+        companyRegisteredAddress: '4 Glassworks Court, Bristol, BS1 4AA'
+      }),
+      'Org Name',
+      null,
+      2027,
+      t,
+      true
+    )
+    expect(vm.siteName).toBe('4 Glassworks Court, Bristol, BS1 4AA')
+  })
+
+  test('siteName falls back to translation key when isExporter is true and companyRegisteredAddress is missing', () => {
     const vm = buildLandingViewModel(
       makeApp({ applicationStatus: 'Unknown' }),
       'Org Name',
@@ -194,7 +209,7 @@ describe('#buildLandingViewModel', () => {
       t,
       true
     )
-    expect(vm.siteName).toBe('exporterLabel')
+    expect(vm.siteName).toBe('siteNotSet')
   })
 
   test.each([
@@ -262,7 +277,7 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({
         materialType: 'Glass',
-        glassRecyclingProcess: 'glass_re_melt'
+        glassRecyclingProcess: ['glass_re_melt']
       }),
       'Org',
       'siteAddr',
@@ -274,7 +289,10 @@ describe('#buildLandingViewModel', () => {
 
   test('glass with glass_other process uses the other display name', () => {
     const vm = buildLandingViewModel(
-      makeApp({ materialType: 'Glass', glassRecyclingProcess: 'glass_other' }),
+      makeApp({
+        materialType: 'Glass',
+        glassRecyclingProcess: ['glass_other']
+      }),
       'Org',
       'siteAddr',
       2027,
@@ -298,7 +316,7 @@ describe('#buildLandingViewModel', () => {
     const vm = buildLandingViewModel(
       makeApp({
         materialType: 'Steel',
-        glassRecyclingProcess: 'glass_re_melt'
+        glassRecyclingProcess: ['glass_re_melt']
       }),
       'Org',
       'siteAddr',

@@ -235,7 +235,7 @@ describe('#viewPaymentDetailsController', () => {
     test('calculates the correct fee for each tonnage band', async () => {
       const cases = [
         ['UpTo500', '£546.00'],
-        ['UpTo1000', '£2,184.00'],
+        ['UpTo5000', '£2,184.00'],
         ['UpTo10000', '£3,276.00'],
         ['Over10000', '£3,965.00']
       ]
@@ -320,7 +320,7 @@ describe('#viewPaymentDetailsController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           materialType: 'Glass',
-          glassRecyclingProcess: 'glass_re_melt'
+          glassRecyclingProcess: ['glass_re_melt']
         })
       )
 
@@ -338,7 +338,7 @@ describe('#viewPaymentDetailsController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           materialType: 'Glass',
-          glassRecyclingProcess: 'glass_other'
+          glassRecyclingProcess: ['glass_other']
         })
       )
 
@@ -352,9 +352,9 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).not.toContain('Glass - Remelt')
     })
 
-    test('falls back to plain Glass when glassRecyclingProcess is not set', async () => {
+    test('falls back to plain Glass when glassRecyclingProcess is an empty array', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ materialType: 'Glass', glassRecyclingProcess: null })
+        makeApplication({ materialType: 'Glass', glassRecyclingProcess: [] })
       )
 
       const { result } = await server.inject({
@@ -372,7 +372,7 @@ describe('#viewPaymentDetailsController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           materialType: 'Steel',
-          glassRecyclingProcess: 'glass_re_melt'
+          glassRecyclingProcess: ['glass_re_melt']
         })
       )
 
@@ -540,6 +540,60 @@ describe('#viewPaymentDetailsController', () => {
           for (const testId of expectAbsentTestIds) {
             expect(result).not.toContain(`data-testid="${testId}"`)
           }
+        }
+      )
+
+      test.each([
+        {
+          nation: 'Scotland',
+          companyRegisterAddressPostcode: 'KW2 7LZ',
+          expectPresent: {
+            'bank-sort-code': '83 – 34 – 00',
+            'bank-account-number': '00137187',
+            'bank-account-name': 'Scottish Environment Protection Agency'
+          }
+        },
+        {
+          nation: 'Wales',
+          companyRegisterAddressPostcode: 'CF10 1AA',
+          expectPresent: {
+            'bank-sort-code': '60-70-80',
+            'bank-account-number': '10014438',
+            'bank-company-name': 'Natural Resources Wales'
+          }
+        },
+        {
+          nation: 'Northern Ireland',
+          companyRegisterAddressPostcode: 'BT1 1AA',
+          expectPresent: {
+            'bank-sort-code': '95-01-21',
+            'bank-account-number': '61253506',
+            'bank-account-name': 'DAERA'
+          }
+        }
+      ])(
+        'exporter (no siteAddress) resolves $nation from companyRegisterAddressPostcode',
+        async ({ companyRegisterAddressPostcode, expectPresent }) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({
+              siteAddress: null,
+              companyRegisterAddressPostcode
+            })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+            headers: operatorHeaders
+          })
+
+          for (const [testId, value] of Object.entries(expectPresent)) {
+            expect(result).toContain(`data-testid="${testId}"`)
+            expect(result).toContain(value)
+          }
+          expect(result).not.toContain(
+            'Application submitted to the Environment Agency'
+          )
         }
       )
 

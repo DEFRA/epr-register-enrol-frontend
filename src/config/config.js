@@ -247,7 +247,7 @@ export const config = convict({
       env: 'AUTH_STUB_ENABLED'
     },
     basicEnabled: {
-      doc: 'Enable HTTP basic authentication. Defaults to false. Requires BASIC_USER and BASIC_PASSWD to be set — server will refuse to start if either is empty when this is enabled.',
+      doc: 'Enable HTTP basic authentication. Defaults to false. Requires BASIC_USER and BASIC_PASSWD to be set — basic-auth-plugin.js throws at server registration if either is empty when this is enabled (not enforced here in config.js).',
       format: Boolean,
       default: false,
       env: 'AUTH_BASIC_ENABLED'
@@ -335,6 +335,12 @@ export const config = convict({
       format: String,
       default: 'epr-register-enrol-file-uploads',
       env: 'FILE_UPLOAD_S3_BUCKET'
+    },
+    cdpUploaderUrl: {
+      doc: 'Base URL of the CDP uploader service, used to poll upload status',
+      format: String,
+      default: '',
+      env: 'CDP_UPLOADER_URL'
     }
   },
   api: {
@@ -369,6 +375,14 @@ export const config = convict({
       format: String,
       default: '',
       env: 'REEX_FRONTEND_BASE_URL'
+    }
+  },
+  regulatorQuery: {
+    textDisabled: {
+      doc: 'RA-439. Kill switch that hides the regulator-query banner (heading, summary, officer free-text queryNote, fields-to-update list) on queried section pages. Display-only — has no effect on applicationStatus/sectionStatus, read-only/blocked access, or CM/backend data.',
+      format: Boolean,
+      default: false,
+      env: 'REGULATOR_QUERY_TEXT_DISABLED'
     }
   }
 })
