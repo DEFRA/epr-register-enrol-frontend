@@ -11,6 +11,7 @@ import {
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -148,9 +149,8 @@ export const samplingPlanUploadGetController = {
       application.samplingPlan?.files,
       t
     ).length
-    const materialDisplay = t(
-      `pages.materialSelection.materials.${application.materialType}`
-    )
+
+    const materialDisplay = materialDisplayName(application, t)
     const queryNote = resolveRegulatorQueryNote(application, { readOnly })
 
     return renderPage(h, {

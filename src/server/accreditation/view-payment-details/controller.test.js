@@ -320,7 +320,7 @@ describe('#viewPaymentDetailsController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           materialType: 'Glass',
-          glassRecyclingProcess: 'glass_re_melt'
+          glassRecyclingProcess: ['glass_re_melt']
         })
       )
 
@@ -338,7 +338,7 @@ describe('#viewPaymentDetailsController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           materialType: 'Glass',
-          glassRecyclingProcess: 'glass_other'
+          glassRecyclingProcess: ['glass_other']
         })
       )
 
@@ -352,9 +352,9 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).not.toContain('Glass - Remelt')
     })
 
-    test('falls back to plain Glass when glassRecyclingProcess is not set', async () => {
+    test('falls back to plain Glass when glassRecyclingProcess is an empty array', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ materialType: 'Glass', glassRecyclingProcess: null })
+        makeApplication({ materialType: 'Glass', glassRecyclingProcess: [] })
       )
 
       const { result } = await server.inject({
@@ -372,7 +372,7 @@ describe('#viewPaymentDetailsController', () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           materialType: 'Steel',
-          glassRecyclingProcess: 'glass_re_melt'
+          glassRecyclingProcess: ['glass_re_melt']
         })
       )
 

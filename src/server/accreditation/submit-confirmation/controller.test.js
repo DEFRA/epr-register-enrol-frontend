@@ -122,6 +122,24 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('RA-000000001')
     })
 
+    test('appends the glass recycling type suffix to the panel body material', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          materialType: 'Glass',
+          glassRecyclingProcess: ['glass_re_melt']
+        })
+      )
+      const cookie = await getSessionCookieWithReference('RA-000000001')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(result).toContain('Glass - Remelt')
+    })
+
     test('panel heading prompts payment, and body has no trailing "is" suffix', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference('RA-000000001')
