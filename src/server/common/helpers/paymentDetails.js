@@ -44,6 +44,22 @@ export function resolveNation(application) {
   return resolveNationFromPostcode(application.sitePostcode)
 }
 
+export function buildPaymentReference(nation, organisationId, isExporter) {
+  switch (nation) {
+    case NATIONS.NORTHERN_IRELAND:
+      return `NI/PR/REEX/${organisationId}`
+    case NATIONS.WALES:
+      return `PREX/${organisationId}`
+    case NATIONS.SCOTLAND:
+      return `E800 81581/${organisationId}`
+    case NATIONS.ENGLAND:
+    default:
+      return isExporter
+        ? `PR/PK/EXP/${organisationId}`
+        : `PR/PK/REP/${organisationId}`
+  }
+}
+
 export function siteNameFromAddress(siteAddress) {
   if (!siteAddress) return ''
   return siteAddress.split(',')[0].trim()
