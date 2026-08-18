@@ -322,24 +322,30 @@ export async function logoutController(request, h) {
   const user = request.yar.get('user')
   const idToken = request.yar.get('idToken')
 
+  // Federated logout round-trips through this same route (Entra/Defra ID
+  // redirect back to post_logout_redirect_uri below) — by then the session,
+  // and with it `user`, has already been reset by the first pass. Carry the
+  // provider through as a query param on that redirect URI so the fallback
+  // below still lands on the right login page, rather than defaulting to
+  // operator regardless of who actually signed out.
+  const userType =
+    user?.userType === 'regulator' || request.query.userType === 'regulator'
+      ? 'regulator'
+      : 'operator'
+
   // Only do federated logout when we have an id_token — that means the user
-  // authenticated via a real upstream IdP (stub users never get one) — and
-  // we recognise which provider issued it, since Entra ID and Defra ID each
-  // have their own end_session endpoint.
-  if (
-    !idToken ||
-    (user?.userType !== 'operator' && user?.userType !== 'regulator')
-  ) {
+  // authenticated via a real upstream IdP (stub users never get one).
+  if (!idToken) {
     request.yar.reset()
     return h.redirect(
-      user?.userType === 'regulator'
+      userType === 'regulator'
         ? '/auth/regulator/login'
         : '/auth/operator/login'
     )
   }
 
   let endSessionUrl
-  if (user.userType === 'regulator') {
+  if (userType === 'regulator') {
     ;({ logoutUrl: endSessionUrl } = getAzureEntraIdConfig(config))
   } else {
     const provider = getDefraIdConfig(config)
@@ -353,7 +359,7 @@ export async function logoutController(request, h) {
   request.yar.reset()
 
   const params = new URLSearchParams({
-    post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout`
+    post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout?userType=${userType}`
   })
   params.set('id_token_hint', idToken)
 

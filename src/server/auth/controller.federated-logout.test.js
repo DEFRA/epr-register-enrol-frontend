@@ -44,13 +44,13 @@ afterEach(() => {
 })
 
 describe('#logoutController federated logout', () => {
-  test('regulator federated logout URL points at the tenant logout endpoint and carries the id_token', async () => {
+  test('regulator federated logout URL points at the tenant logout endpoint, carries the id_token, and tags the return leg with userType', async () => {
     const yar = fakeYar({
       user: { userType: 'regulator', id: 'reg-1' },
       idToken: 'the-entra-id-token'
     })
     const h = mockH()
-    const request = { yar }
+    const request = { yar, query: {} }
 
     await logoutController(request, h)
 
@@ -62,9 +62,16 @@ describe('#logoutController federated logout', () => {
       'https://login.microsoftonline.com/the-tenant-id/oauth2/v2.0/logout'
     )
     expect(url.searchParams.get('id_token_hint')).toBe('the-entra-id-token')
-    expect(url.searchParams.get('post_logout_redirect_uri')).toBe(
+
+    // post_logout_redirect_uri is itself a URL-with-query-string, correctly
+    // percent-encoded as a single param value.
+    const postLogoutRedirectUri = new URL(
+      url.searchParams.get('post_logout_redirect_uri')
+    )
+    expect(postLogoutRedirectUri.origin + postLogoutRedirectUri.pathname).toBe(
       'https://frontend.example/auth/logout'
     )
+    expect(postLogoutRedirectUri.searchParams.get('userType')).toBe('regulator')
   })
 
   test('operator federated logout still goes through the Defra ID end_session endpoint', async () => {
@@ -80,7 +87,7 @@ describe('#logoutController federated logout', () => {
       idToken: 'the-defra-id-token'
     })
     const h = mockH()
-    const request = { yar }
+    const request = { yar, query: {} }
 
     await logoutController(request, h)
 
@@ -98,7 +105,7 @@ describe('#logoutController federated logout', () => {
       idToken: 'the-entra-id-token'
     })
     const resetSpy = vi.spyOn(yar, 'reset')
-    const request = { yar }
+    const request = { yar, query: {} }
 
     await logoutController(request, mockH())
 
@@ -108,10 +115,59 @@ describe('#logoutController federated logout', () => {
   test('falls back to a plain local-session logout when there is no id_token', async () => {
     const yar = fakeYar({ user: { userType: 'regulator', id: 'reg-1' } })
     const h = mockH()
-    const request = { yar }
+    const request = { yar, query: {} }
 
     await logoutController(request, h)
 
     expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
+  })
+
+  // RA-437 fix: on the round trip back from a federated logout, `user` has
+  // already been reset by the first pass — the request that hits this
+  // route as Entra/Defra ID's callback has no session at all, only the
+  // userType query param this same controller put on
+  // post_logout_redirect_uri. Without reading it, the fallback below
+  // always defaulted to the operator login page regardless of who
+  // actually signed out.
+  describe('second pass — Entra/Defra ID redirecting back to /auth/logout with an already-empty session', () => {
+    test('a regulator lands on the regulator login page, not the operator one', async () => {
+      const yar = fakeYar()
+      const h = mockH()
+      const request = { yar, query: { userType: 'regulator' } }
+
+      await logoutController(request, h)
+
+      expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
+    })
+
+    test('an operator lands on the operator login page', async () => {
+      const yar = fakeYar()
+      const h = mockH()
+      const request = { yar, query: { userType: 'operator' } }
+
+      await logoutController(request, h)
+
+      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+    })
+
+    test('an unrecognised userType value defaults to the operator login page rather than throwing', async () => {
+      const yar = fakeYar()
+      const h = mockH()
+      const request = { yar, query: { userType: 'not-a-real-type' } }
+
+      await logoutController(request, h)
+
+      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+    })
+
+    test('a direct visit with no userType query param at all defaults to operator', async () => {
+      const yar = fakeYar()
+      const h = mockH()
+      const request = { yar, query: {} }
+
+      await logoutController(request, h)
+
+      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+    })
   })
 })
