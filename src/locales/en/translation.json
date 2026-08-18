@@ -280,6 +280,7 @@
     "samplingPlanUpload": {
       "title": "Upload sampling and inspection plan - part 2",
       "heading": "Upload sampling and inspection plan - part 2",
+      "subHeading": "You may also upload additional supporting information here",
       "requirements": {
         "intro": "The file(s) must be:",
         "maxSize": "no more than 20MB each",
@@ -329,7 +330,7 @@
       "heading": "Declaration",
       "declarationIntro": "By entering your name and submitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "you are an approved person or delegated person who is eligible to submit this application on behalf of {organisationName}",
+        "eligiblePerson": "you are a person with delegated authority who is eligible to submit this application on behalf of {organisationName}",
         "accurateInformation": "the information you are submitting is accurate",
         "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
       },
@@ -420,7 +421,7 @@
       "declarationSubHeading": "Declaration",
       "declarationIntro": "By entering your name and resubmitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "you are an approved person or delegated person who is eligible to respond to this query on behalf of {organisationName}",
+        "eligiblePerson": "you are a person with delegated authority who is eligible to respond to this query on behalf of {organisationName}",
         "accurateInformation": "the information you are submitting in response to the query is accurate",
         "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
       },
