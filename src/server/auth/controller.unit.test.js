@@ -63,6 +63,7 @@ const AZURE_PROVIDER = {
   tokenUrl: 'https://login.microsoftonline.com/tenant/token',
   jwksUri: 'https://login.microsoftonline.com/tenant/keys',
   issuer: 'https://login.microsoftonline.com/tenant/v2.0',
+  logoutUrl: 'https://login.microsoftonline.com/tenant/logout',
   scopes: ['openid', 'profile', 'email'],
   clientId: 'azure-client-id',
   clientSecret: 'azure-secret',
@@ -500,6 +501,7 @@ describe('#logoutController federated (Defra ID) branch', () => {
   test('resets the session and redirects to the Defra ID end-session URL when an operator has an id_token', async () => {
     const h = mockH()
     const request = {
+      query: {},
       yar: fakeYar({
         idToken: 'stored-id-token',
         user: { userType: 'operator' }
@@ -517,13 +519,18 @@ describe('#logoutController federated (Defra ID) branch', () => {
     const params = new URL(url).searchParams
     expect(params.get('id_token_hint')).toBe('stored-id-token')
     expect(params.get('post_logout_redirect_uri')).toBe(
-      'http://localhost:3000/auth/logout'
+      'http://localhost:3000/auth/logout?userType=operator'
     )
   })
 
-  test('does not federate logout for a regulator, even with an id_token present', async () => {
+  // RA-437: a regulator now federates through Entra ID's own end_session
+  // endpoint too, mirroring the operator/Defra ID branch above — signing
+  // out of our service used to leave the caller's Entra ID SSO session
+  // alive, so a later sign-in would silently re-authenticate via SSO.
+  test('federates logout for a regulator through Entra ID when an id_token is present', async () => {
     const h = mockH()
     const request = {
+      query: {},
       yar: fakeYar({
         idToken: 'stored-id-token',
         user: { userType: 'regulator' }
@@ -533,6 +540,25 @@ describe('#logoutController federated (Defra ID) branch', () => {
     await logoutController(request, h)
 
     expect(getDefraIdEndpoints).not.toHaveBeenCalled()
+    expect(request.yar.get('user')).toBeUndefined()
+    const [url] = h.redirect.mock.calls[0]
+    expect(url.startsWith(`${AZURE_PROVIDER.logoutUrl}?`)).toBe(true)
+    const params = new URL(url).searchParams
+    expect(params.get('id_token_hint')).toBe('stored-id-token')
+    expect(params.get('post_logout_redirect_uri')).toBe(
+      'http://localhost:3000/auth/logout?userType=regulator'
+    )
+  })
+
+  // The round trip: Entra/Defra ID redirect back to /auth/logout, by which
+  // point the session (and `user`) is already gone — only the userType
+  // query param this same controller set carries the provider through.
+  test('a regulator redirecting back from Entra ID (empty session, userType query param) lands on the regulator login page', async () => {
+    const h = mockH()
+    const request = { query: { userType: 'regulator' }, yar: fakeYar() }
+
+    await logoutController(request, h)
+
     expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
   })
 })
