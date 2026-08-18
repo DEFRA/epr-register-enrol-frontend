@@ -310,6 +310,8 @@ export async function operatorCallbackController(request, h) {
 
   const redirectTo = popPostLoginRedirect(request, 'operator', '/')
 
+  request.yar.reset()
+
   // Store the raw id_token so it can be passed as id_token_hint during logout.
   request.yar.set('idToken', idToken)
   request.yar.set('user', user)
