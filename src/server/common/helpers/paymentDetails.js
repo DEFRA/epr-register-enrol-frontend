@@ -30,6 +30,32 @@ export const BANK_DETAILS_BY_NATION = {
   }
 }
 
+export const REGULATOR_CONTACT_BY_NATION = {
+  [NATIONS.ENGLAND]: {
+    name: 'Environment Agency',
+    email: 'packagingnotifications@environment-agency.gov.uk'
+  },
+  [NATIONS.SCOTLAND]: {
+    name: 'Scottish Environment Protection Agency',
+    email: 'producer.responsibility@sepa.org.uk'
+  },
+  [NATIONS.WALES]: {
+    name: 'Natural Resources Wales',
+    email: 'packaging@naturalresourceswales.gov.uk'
+  },
+  [NATIONS.NORTHERN_IRELAND]: {
+    name: 'Northern Ireland Environment Agency',
+    email: 'repandexp@daera-ni.gov.uk'
+  }
+}
+
+export function resolveRegulatorContact(nation) {
+  return (
+    REGULATOR_CONTACT_BY_NATION[nation] ??
+    REGULATOR_CONTACT_BY_NATION[NATIONS.ENGLAND]
+  )
+}
+
 export const ORS_FEE = 328
 
 export const TONNAGE_FEES = {

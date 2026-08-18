@@ -6,6 +6,7 @@ import {
   resolveNation,
   buildPaymentDetails,
   buildPaymentReference,
+  resolveRegulatorContact,
   siteNameFromAddress
 } from '../../common/helpers/paymentDetails.js'
 
@@ -81,6 +82,7 @@ export const viewPaymentDetailsGetController = {
         application.isExporter
       ),
       regulatorName,
+      regulatorContact: resolveRegulatorContact(nation),
       paymentDetails
     })
   }

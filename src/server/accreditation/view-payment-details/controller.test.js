@@ -694,5 +694,62 @@ describe('#viewPaymentDetailsController', () => {
         }
       )
     })
+
+    describe('tailored regulator contact block (RA-426)', () => {
+      const ALL_REGULATOR_EMAILS = [
+        'packagingnotifications@environment-agency.gov.uk',
+        'repandexp@daera-ni.gov.uk',
+        'packaging@naturalresourceswales.gov.uk',
+        'producer.responsibility@sepa.org.uk'
+      ]
+
+      test.each([
+        [
+          'England',
+          'Environment Agency',
+          'packagingnotifications@environment-agency.gov.uk'
+        ],
+        [
+          'NorthernIreland',
+          'Northern Ireland Environment Agency',
+          'repandexp@daera-ni.gov.uk'
+        ],
+        [
+          'Wales',
+          'Natural Resources Wales',
+          'packaging@naturalresourceswales.gov.uk'
+        ],
+        [
+          'Scotland',
+          'Scottish Environment Protection Agency',
+          'producer.responsibility@sepa.org.uk'
+        ]
+      ])(
+        'shows only the %s regulator contact details, not the other three',
+        async (nation, expectedName, expectedEmail) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({ nation })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+            headers: operatorHeaders
+          })
+
+          expect(result).toContain('data-testid="contact-regulator-heading"')
+          expect(result).toContain('Contact your regulator')
+          expect(result).toContain(expectedName)
+          expect(result).toContain(expectedEmail)
+
+          const otherEmails = ALL_REGULATOR_EMAILS.filter(
+            (email) => email !== expectedEmail
+          )
+          for (const email of otherEmails) {
+            expect(result).not.toContain(email)
+          }
+        }
+      )
+    })
   })
 })
