@@ -327,6 +327,22 @@ describe('#uploadBesEvidenceController', () => {
       expect(result).toContain('Select a file to upload')
     })
 
+    test('returns 400 when file exceeds the maximum size', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          fileBytes: Buffer.alloc(MAX_FILE_BYTES + 1, 'a')
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+    })
+
     test('returns 400 for invalid file extension', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -564,6 +580,165 @@ describe('#uploadBesEvidenceController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="file-error"')
+    })
+  })
+
+  describe('GET /accreditation/upload-bes-evidence/{applicationId}/{siteId}/status', () => {
+    async function getStatusCookie() {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const postResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload()
+      })
+      const raw = postResponse.headers['set-cookie']
+      return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+    }
+
+    test('renders polling page with default processing status when not yet ready', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({ uploadStatus: 'pending' })
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="status-message"')
+    })
+
+    test('renders polling page reflecting an explicit processing status', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'pending',
+        processingStatus: 'pending'
+      })
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="status-message"')
+    })
+
+    test('redirects back to the upload form when CDP reports a form error', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        form: { file: { hasError: true } }
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
+      )
+    })
+
+    test('saves a Clean scanStatus for a validated file and redirects to upload-more-evidence', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: {
+          file: {
+            filename: 'evidence.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-validated',
+            s3Key: 'a/b/c',
+            s3Bucket: 'bucket-1'
+          }
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
+      )
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/bes-evidence/files'),
+        expect.objectContaining({
+          scanStatus: 'Clean',
+          filename: 'evidence.pdf',
+          contentType: 'application/pdf'
+        })
+      )
+    })
+
+    test('saves an Infected scanStatus when processing status is not validated', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'rejected',
+        form: {
+          file: {
+            filename: 'virus.pdf',
+            detectedContentType: 'application/pdf',
+            fileId: 'file-rejected'
+          }
+        }
+      })
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/bes-evidence/files'),
+        expect.objectContaining({
+          scanStatus: 'Infected',
+          contentType: 'application/pdf'
+        })
+      )
+    })
+
+    test('still redirects to upload-more-evidence when saving the file record fails', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: {
+          file: {
+            filename: 'evidence.pdf',
+            contentType: 'application/pdf',
+            fileId: 'file-validated'
+          }
+        }
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('save failed'))
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
+      )
     })
   })
 })

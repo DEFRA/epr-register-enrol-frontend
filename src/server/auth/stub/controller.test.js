@@ -90,6 +90,47 @@ describe('#stubLoginController', () => {
     })
   })
 
+  describe('Defra ID route registration', () => {
+    let defraIdServer
+
+    beforeAll(async () => {
+      vi.mocked(config.get).mockImplementation((key) => {
+        if (key === 'auth.defraId.discoveryUrl') {
+          return 'https://defra-id.example/.well-known/openid-configuration'
+        }
+        if (key === 'auth.defraId.clientId') return 'test-defra-client-id'
+        return realConfigGet(key)
+      })
+      defraIdServer = await createServer()
+      await defraIdServer.initialize()
+    })
+
+    afterAll(async () => {
+      await defraIdServer?.stop({ timeout: 0 })
+      vi.mocked(config.get).mockImplementation((key) => {
+        return realConfigGet(key)
+      })
+    })
+
+    test('registers /auth/operator/defra-id when Defra ID credentials are configured', async () => {
+      const { statusCode } = await defraIdServer.inject({
+        method: 'GET',
+        url: '/auth/operator/defra-id'
+      })
+
+      expect(statusCode).not.toBe(statusCodes.notFound)
+    })
+
+    test('does not register /auth/operator/defra-id when Defra ID credentials are absent', async () => {
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/auth/operator/defra-id'
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
   describe('GET /auth/stub/login', () => {
     test('renders chooser for regulator type', async () => {
       const { result, statusCode } = await server.inject({
@@ -150,6 +191,30 @@ describe('#stubLoginController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
+    })
+  })
+
+  describe('GET /auth/regulator/login stub chooser redirect', () => {
+    test('redirects to the stub chooser without an rt param when none is supplied', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/auth/regulator/login'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe('/auth/stub/login?type=regulator')
+    })
+
+    test('preserves an rt param, URL-encoded, on the stub chooser redirect', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: '/auth/operator/login?rt=%2Faccreditation%2Ftask-list%2F123'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        '/auth/stub/login?type=operator&rt=%2Faccreditation%2Ftask-list%2F123'
+      )
     })
   })
 })

@@ -25,13 +25,14 @@ export default defineConfig({
         '.sonarlint',
         'babel.config.cjs'
       ],
-      // Baseline as measured on 2026-08-18 (RA-437) — fails the build on regression.
-      // Raise these as coverage improves; do not lower without a reason.
+      // Baseline as measured on 2026-08-19 (RA-437 90%-branch-coverage follow-up)
+      // — fails the build on regression. Raise these as coverage improves; do
+      // not lower without a reason.
       thresholds: {
-        statements: 94,
-        branches: 84,
-        functions: 95,
-        lines: 94
+        statements: 98,
+        branches: 90,
+        functions: 97,
+        lines: 98
       }
     }
   }

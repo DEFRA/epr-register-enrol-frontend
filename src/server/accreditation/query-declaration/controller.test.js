@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { validateQueryDeclaration } from './controller.js'
 
 const APPLICATION_ID = 'app-query-002'
@@ -162,6 +163,36 @@ describe('#queryDeclarationController', () => {
       )
     })
 
+    test('returns 500 with a fetch error message when the application lookup fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('boom'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(500)
+      expect(result).toContain(
+        'Sorry, there was a problem loading your application. Please try again.'
+      )
+    })
+
+    test('renders without an organisation name when the application has none', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        makeApplication({ organisationName: undefined })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="declaration-form"')
+    })
+
     test('keeps the full name, email and job title fields, and the resubmit button label', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -182,6 +213,35 @@ describe('#queryDeclarationController', () => {
   describe('POST /accreditation/query-declaration/{applicationId}', () => {
     test('re-renders form with validation errors when fields missing', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { fullName: '', email: '', role: '' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('re-renders form with validation errors when no payload is sent at all', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('re-renders form with validation errors without an organisation name when the application has none', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        makeApplication({ organisationName: undefined })
+      )
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -271,6 +331,29 @@ describe('#queryDeclarationController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
+    test('surfaces a 409 conflict without an organisation name when the application has none', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        makeApplication({ organisationName: undefined })
+      )
+      const err = new Error('Conflict')
+      err.status = 409
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(409)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
     test('surfaces a 502 adapter failure explicitly and allows retry', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const err = new Error('Bad Gateway')
@@ -289,6 +372,137 @@ describe('#queryDeclarationController', () => {
       })
 
       expect(statusCode).toBe(502)
+      expect(result).toContain('data-testid="declaration-form"')
+    })
+
+    test('surfaces a 502 adapter failure without an organisation name when the application has none', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        makeApplication({ organisationName: undefined })
+      )
+      const err = new Error('Bad Gateway')
+      err.status = 502
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(502)
+      expect(result).toContain('data-testid="declaration-form"')
+    })
+
+    test('returns 500 with a fetch error message when the application lookup fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('boom'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(500)
+      expect(result).toContain(
+        'Sorry, there was a problem loading your application. Please try again.'
+      )
+    })
+
+    test('shows the generic service-problem page for an unspecified (>=500) resubmit failure', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = new Error('Internal Server Error')
+      err.status = 503
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(500)
+      expect(result).toContain('Sorry, there is a problem with the service')
+    })
+
+    test('shows the generic service-problem page when the resubmit error has no status', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = new Error('Network failure')
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(500)
+      expect(result).toContain('Sorry, there is a problem with the service')
+    })
+
+    test('re-renders the declaration form with a generic error for an unmapped 4xx resubmit failure', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = new Error('I am a teapot')
+      err.status = 418
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(400)
+      expect(result).toContain('data-testid="declaration-form"')
+      expect(result).toContain(
+        'Sorry, there was a problem resubmitting your application. Please try again.'
+      )
+    })
+
+    test('re-renders form for an unmapped 4xx resubmit failure without an organisation name when the application has none', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        makeApplication({ organisationName: undefined })
+      )
+      const err = new Error('I am a teapot')
+      err.status = 418
+      vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(400)
       expect(result).toContain('data-testid="declaration-form"')
     })
 
