@@ -357,6 +357,45 @@ describe('stubApiClient.patch — tonnage section', () => {
   })
 })
 
+describe('stubApiClient.patch — business-plan sectionStatus', () => {
+  test('updates sectionStatus without touching items', async () => {
+    const stub = await freshStub()
+    await stub.patch(
+      '/api/v1/accreditation-applications/50002/app002/business-plan',
+      { sectionStatus: 'Completed' }
+    )
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50002/app002'
+    )
+    expect(app.businessPlan.sectionStatus).toBe('Completed')
+  })
+})
+
+describe('stubApiClient.patch — generic mapped section', () => {
+  test('merges body into the mapped key for a known section (sampling-plan)', async () => {
+    const stub = await freshStub()
+    await stub.patch(
+      '/api/v1/accreditation-applications/50002/app002/sampling-plan',
+      { sectionStatus: 'Started' }
+    )
+
+    const app = await stub.get(
+      '/api/v1/accreditation-applications/50002/app002'
+    )
+    expect(app.samplingPlan.sectionStatus).toBe('Started')
+  })
+
+  test('no-op for an unknown section', async () => {
+    const stub = await freshStub()
+    const result = await stub.patch(
+      '/api/v1/accreditation-applications/50002/app002/unknown-section',
+      { foo: 'bar' }
+    )
+    expect(result.orgId).toBe(50002)
+  })
+})
+
 describe('stubApiClient.delete — BES evidence file', () => {
   let stub
 
