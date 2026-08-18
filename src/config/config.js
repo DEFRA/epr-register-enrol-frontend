@@ -361,6 +361,16 @@ export const config = convict({
       format: Number,
       default: 5000,
       env: 'API_TIMEOUT'
+    },
+    // Flat CDP secrets naming convention (not nested under `api`, matching
+    // AUTH_SHARED_SECRET__MANAGEMENT_BE etc on the backend) — must match
+    // AUTH_SHARED_SECRET__FRONTEND on epr-register-enrol-backend exactly.
+    sharedSecret: {
+      doc: 'Shared secret sent as a Bearer token on outbound backend calls',
+      format: String,
+      default: '',
+      env: 'AUTH_SHARED_SECRET__BACKEND',
+      sensitive: true
     }
   },
   reex: {

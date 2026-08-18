@@ -296,6 +296,21 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
+    test('renders the sub-heading about additional supporting information', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="sub-heading"')
+      expect(result).toContain(
+        'You may also upload additional supporting information here'
+      )
+    })
+
     test('renders file requirements list', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

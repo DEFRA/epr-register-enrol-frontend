@@ -15,6 +15,7 @@ describe('api-client', () => {
     vi.spyOn(config, 'get').mockImplementation((key) => {
       if (key === 'api.baseUrl') return BASE_URL
       if (key === 'api.timeout') return DEFAULT_TIMEOUT
+      if (key === 'api.sharedSecret') return ''
       return undefined
     })
 
@@ -121,5 +122,36 @@ describe('api-client', () => {
       status: 404,
       response: 'not found'
     })
+  })
+
+  test('does not send an Authorization header when no shared secret is configured', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true })
+    })
+
+    await client.get('/things')
+
+    const [, requestOptions] = fetchMock.mock.calls[0]
+    expect(requestOptions.headers.Authorization).toBeUndefined()
+  })
+
+  test('sends the shared secret as a Bearer token when configured', async () => {
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'api.baseUrl') return BASE_URL
+      if (key === 'api.timeout') return DEFAULT_TIMEOUT
+      if (key === 'api.sharedSecret') return 'top-secret'
+      return undefined
+    })
+    client = createApiClient()
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true })
+    })
+
+    await client.get('/things')
+
+    const [, requestOptions] = fetchMock.mock.calls[0]
+    expect(requestOptions.headers.Authorization).toBe('Bearer top-secret')
   })
 })

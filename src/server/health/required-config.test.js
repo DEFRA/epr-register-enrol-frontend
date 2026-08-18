@@ -8,6 +8,7 @@ function makeConfig(overrides = {}) {
     'auth.stubEnabled': false,
     'api.baseUrl': 'http://backend.test',
     'api.stubEnabled': false,
+    'api.sharedSecret': 'shared-secret',
     'fileUpload.cdpUploaderUrl': 'http://uploader.test',
     'reex.frontendBaseUrl': 'http://reex-frontend.test',
     'auth.azureEntraId.tenantId': 'tenant-id',
@@ -43,6 +44,28 @@ describe('#getMissingRequiredConfig', () => {
         makeConfig({ 'api.baseUrl': '', 'api.stubEnabled': true })
       )
     ).toEqual(['API_BASE_URL'])
+  })
+
+  test('flags AUTH_SHARED_SECRET__BACKEND when blank, non-local', () => {
+    expect(
+      getMissingRequiredConfig(makeConfig({ 'api.sharedSecret': '' }))
+    ).toEqual(['AUTH_SHARED_SECRET__BACKEND'])
+  })
+
+  test('flags AUTH_SHARED_SECRET__BACKEND even when api.stubEnabled is true — realApiClient always contacts the backend', () => {
+    expect(
+      getMissingRequiredConfig(
+        makeConfig({ 'api.sharedSecret': '', 'api.stubEnabled': true })
+      )
+    ).toEqual(['AUTH_SHARED_SECRET__BACKEND'])
+  })
+
+  test('does not flag AUTH_SHARED_SECRET__BACKEND in local', () => {
+    expect(
+      getMissingRequiredConfig(
+        makeConfig({ environment: 'local', 'api.sharedSecret': '' })
+      )
+    ).toEqual([])
   })
 
   test('flags CDP_UPLOADER_URL when blank and api.stubEnabled is false', () => {
@@ -136,6 +159,7 @@ describe('#getMissingRequiredConfig', () => {
       getMissingRequiredConfig(
         makeConfig({
           'api.baseUrl': '',
+          'api.sharedSecret': '',
           'fileUpload.cdpUploaderUrl': '',
           'reex.frontendBaseUrl': '',
           'auth.azureEntraId.tenantId': '',
@@ -145,6 +169,7 @@ describe('#getMissingRequiredConfig', () => {
       )
     ).toEqual([
       'API_BASE_URL',
+      'AUTH_SHARED_SECRET__BACKEND',
       'CDP_UPLOADER_URL',
       'REEX_FRONTEND_BASE_URL',
       'ENTRA_TENANT_ID',
