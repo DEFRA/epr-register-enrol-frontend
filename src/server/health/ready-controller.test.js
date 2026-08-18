@@ -34,6 +34,7 @@ describe('#readyController', () => {
       'auth.stubEnabled': false,
       'api.baseUrl': 'http://backend.test',
       'api.stubEnabled': false,
+      'api.sharedSecret': 'shared-secret',
       'fileUpload.cdpUploaderUrl': 'http://uploader.test',
       'reex.frontendBaseUrl': 'http://reex-frontend.test',
       'auth.azureEntraId.tenantId': 'tenant-id',
