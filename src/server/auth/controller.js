@@ -210,6 +210,10 @@ export async function regulatorCallbackController(request, h) {
 
   const redirectTo = popPostLoginRedirect(request, 'regulator', '/')
   request.yar.reset()
+
+  // Store the raw id_token so it can be passed as id_token_hint during
+  // federated logout from Entra ID.
+  request.yar.set('idToken', idToken)
   request.yar.set('user', user)
   return h.redirect(redirectTo)
 }
@@ -319,8 +323,13 @@ export async function logoutController(request, h) {
   const idToken = request.yar.get('idToken')
 
   // Only do federated logout when we have an id_token — that means the user
-  // authenticated via real Defra ID (stub users never get one).
-  if (!idToken || user?.userType !== 'operator') {
+  // authenticated via a real upstream IdP (stub users never get one) — and
+  // we recognise which provider issued it, since Entra ID and Defra ID each
+  // have their own end_session endpoint.
+  if (
+    !idToken ||
+    (user?.userType !== 'operator' && user?.userType !== 'regulator')
+  ) {
     request.yar.reset()
     return h.redirect(
       user?.userType === 'regulator'
@@ -329,12 +338,17 @@ export async function logoutController(request, h) {
     )
   }
 
-  const provider = getDefraIdConfig(config)
-  const { endSessionUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
+  let endSessionUrl
+  if (user.userType === 'regulator') {
+    ;({ logoutUrl: endSessionUrl } = getAzureEntraIdConfig(config))
+  } else {
+    const provider = getDefraIdConfig(config)
+    ;({ endSessionUrl } = await getDefraIdEndpoints(provider.discoveryUrl))
+  }
 
   // Reset (not clear) the local session before redirecting, so the server-side
   // cache entry is actually dropped rather than just nulling out these two keys.
-  // If the user returns to /auth/logout after Defra ID signs them out, the
+  // If the user returns to /auth/logout after the IdP signs them out, the
   // session will be empty and we fall through to the redirect above.
   request.yar.reset()
 
