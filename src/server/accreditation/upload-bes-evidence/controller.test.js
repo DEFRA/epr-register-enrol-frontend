@@ -646,7 +646,7 @@ describe('#uploadBesEvidenceController', () => {
       )
     })
 
-    test('saves a Clean scanStatus for a validated file and redirects to upload-more-evidence', async () => {
+    test('saves the file record for a validated file and redirects to upload-more-evidence', async () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
@@ -673,17 +673,19 @@ describe('#uploadBesEvidenceController', () => {
       expect(headers.location).toBe(
         `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       )
+      // Scan status/file identity are derived server-side from fileUploadId (H6) —
+      // the frontend no longer sends filename/contentType/scanStatus itself.
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/bes-evidence/files'),
         expect.objectContaining({
-          scanStatus: 'Clean',
-          filename: 'evidence.pdf',
-          contentType: 'application/pdf'
+          fileUploadId: expect.any(String),
+          besEvidenceValidFromDate: expect.any(String),
+          besEvidenceExpiryDate: expect.any(String)
         })
       )
     })
 
-    test('saves an Infected scanStatus when processing status is not validated', async () => {
+    test('still saves the file record and redirects when processing status is not validated', async () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
@@ -708,8 +710,7 @@ describe('#uploadBesEvidenceController', () => {
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/bes-evidence/files'),
         expect.objectContaining({
-          scanStatus: 'Infected',
-          contentType: 'application/pdf'
+          fileUploadId: expect.any(String)
         })
       )
     })

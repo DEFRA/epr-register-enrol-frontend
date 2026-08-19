@@ -7,7 +7,10 @@ import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 
 const postOptions = {
   ...requireOperator,
-  validate: { payload: queryDeclarationPayloadSchema }
+  validate: {
+    payload: queryDeclarationPayloadSchema,
+    failAction: 'ignore'
+  }
 }
 
 export const queryDeclaration = {
