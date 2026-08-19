@@ -1,8 +1,14 @@
 import {
   businessPlanGetController,
-  businessPlanPostController
+  businessPlanPostController,
+  businessPlanPayloadSchema
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+
+const postOptions = {
+  ...requireOperator,
+  validate: { payload: businessPlanPayloadSchema }
+}
 
 export const businessPlan = {
   plugin: {
@@ -24,13 +30,13 @@ export const businessPlan = {
         {
           method: 'POST',
           path: '/accreditation/business-plan/{applicationId}',
-          options: requireOperator,
+          options: postOptions,
           ...businessPlanPostController
         },
         {
           method: 'POST',
           path: '/{language}/accreditation/business-plan/{applicationId}',
-          options: requireOperator,
+          options: postOptions,
           ...businessPlanPostController
         }
       ])

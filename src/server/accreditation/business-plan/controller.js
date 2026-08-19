@@ -1,3 +1,4 @@
+import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
@@ -17,6 +18,21 @@ export const BUSINESS_PLAN_FIELDS = [
   'newMarketsPercent',
   'newUsesPercent'
 ]
+
+// Shape/size only, not business validity: validateBusinessPlanFields already
+// renders its own friendly inline errors for a missing/non-numeric percent
+// (M1, 2026-08-08 pentest report — Joi's job is blocking payloads the
+// controller was never built to handle, e.g. arrays/objects instead of a
+// scalar). .unknown(true) lets the CSRF crumb field through.
+export const businessPlanPayloadSchema = Joi.object({
+  submitAction: Joi.string().max(50).optional(),
+  ...Object.fromEntries(
+    BUSINESS_PLAN_FIELDS.map((field) => [
+      field,
+      Joi.string().allow('').max(20).optional()
+    ])
+  )
+}).unknown(true)
 
 export function parsePercent(value) {
   if (value === undefined || value === null) {

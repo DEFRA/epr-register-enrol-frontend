@@ -1,8 +1,14 @@
 import {
   queryDeclarationGetController,
-  queryDeclarationPostController
+  queryDeclarationPostController,
+  queryDeclarationPayloadSchema
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+
+const postOptions = {
+  ...requireOperator,
+  validate: { payload: queryDeclarationPayloadSchema }
+}
 
 export const queryDeclaration = {
   plugin: {
@@ -24,13 +30,13 @@ export const queryDeclaration = {
         {
           method: 'POST',
           path: '/accreditation/query-declaration/{applicationId}',
-          options: requireOperator,
+          options: postOptions,
           ...queryDeclarationPostController
         },
         {
           method: 'POST',
           path: '/{language}/accreditation/query-declaration/{applicationId}',
-          options: requireOperator,
+          options: postOptions,
           ...queryDeclarationPostController
         }
       ])

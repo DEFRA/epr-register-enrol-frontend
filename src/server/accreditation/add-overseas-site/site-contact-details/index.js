@@ -1,8 +1,14 @@
 import {
   addOrsSiteContactDetailsGetController,
-  addOrsSiteContactDetailsPostController
+  addOrsSiteContactDetailsPostController,
+  siteContactDetailsPayloadSchema
 } from './controller.js'
 import { requireOperator } from '../../../common/helpers/auth/auth-scopes.js'
+
+const postOptions = {
+  ...requireOperator,
+  validate: { payload: siteContactDetailsPayloadSchema }
+}
 
 export const addOverseasSiteSiteContactDetails = {
   plugin: {
@@ -24,13 +30,13 @@ export const addOverseasSiteSiteContactDetails = {
         {
           method: 'POST',
           path: '/accreditation/add-overseas-site/{applicationId}/site-contact-details',
-          options: requireOperator,
+          options: postOptions,
           ...addOrsSiteContactDetailsPostController
         },
         {
           method: 'POST',
           path: '/{language}/accreditation/add-overseas-site/{applicationId}/site-contact-details',
-          options: requireOperator,
+          options: postOptions,
           ...addOrsSiteContactDetailsPostController
         }
       ])
