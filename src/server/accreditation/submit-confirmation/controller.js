@@ -3,7 +3,8 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
   resolveNation,
-  buildPaymentDetails
+  buildPaymentDetails,
+  buildPaymentReference
 } from '../../common/helpers/paymentDetails.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
@@ -29,16 +30,19 @@ export const submitConfirmationGetController = {
 
     let materialDisplay = ''
     let paymentDetails = null
+    let paymentReference = accreditationReference
     try {
       const application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
       materialDisplay = materialDisplayName(application, t)
-      paymentDetails = buildPaymentDetails(
-        application,
-        t,
-        resolveNation(application)
+      const nation = resolveNation(application)
+      paymentDetails = buildPaymentDetails(application, t, nation)
+      paymentReference = buildPaymentReference(
+        nation,
+        application.organisationId,
+        application.isExporter
       )
     } catch (err) {
       request.server.logger.error(
@@ -57,7 +61,7 @@ export const submitConfirmationGetController = {
       materialDisplay,
       applicationId,
       paymentDetails,
-      paymentReference: accreditationReference
+      paymentReference
     })
   }
 }

@@ -380,6 +380,7 @@
       "paymentReference": "[Welsh] Payment reference",
       "alternativePayments": "[Welsh] Alternative payments",
       "alternativePaymentsBody": "[Welsh] Please contact your regulator if you need to discuss alternative payment methods.",
+      "contactYourRegulator": "[Welsh] Contact your regulator",
       "cardPayments": "[Welsh] Card payments",
       "cardPaymentsBody": "[Welsh] A card payment can be taken over the phone. Please contact your account manager to arrange taking a card payment over the phone.",
       "overseasPayments": "[Welsh] Overseas payments",
