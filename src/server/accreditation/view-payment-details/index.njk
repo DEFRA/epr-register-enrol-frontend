@@ -49,25 +49,13 @@
           </summary>
           <div class="govuk-details__text">
             <p>{{ t('pages.viewPaymentDetails.alternativePaymentsBody') }}</p>
-            <p>
-              Environment Agency
+            <h3 class="govuk-heading-s" data-testid="contact-regulator-heading">
+              {{ t('pages.viewPaymentDetails.contactYourRegulator') }}
+            </h3>
+            <p data-testid="contact-regulator-details">
+              {{ regulatorContact.name }}
               <br/>
-              Email: packagingnotifications@environment-agency.gov.uk
-            </p>
-            <p>
-              Natural Resources Wales
-              <br/>
-              Email: packaging@naturalresourceswales.gov.uk
-            </p>
-            <p>
-              Scottish Environment Protection Agency
-              <br/>
-              Email: producer.responsibility@sepa.org.uk
-            </p>
-            <p>
-              Northern Ireland Environment Agency
-              <br/>
-              Email: repandexp@daera-ni.gov.uk
+              Email: {{ regulatorContact.email }}
             </p>
           </div>
         </details>

@@ -5,6 +5,8 @@ import { materialDisplayName } from '../../common/helpers/materialDisplayName.js
 import {
   resolveNation,
   buildPaymentDetails,
+  buildPaymentReference,
+  resolveRegulatorContact,
   siteNameFromAddress
 } from '../../common/helpers/paymentDetails.js'
 
@@ -74,8 +76,13 @@ export const viewPaymentDetailsGetController = {
       materialDisplay,
       submitterName: submittedBy.name ?? '',
       submitterEmail: submittedBy.email ?? '',
-      paymentReference: application.accreditationReference ?? '',
+      paymentReference: buildPaymentReference(
+        nation,
+        application.organisationId,
+        application.isExporter
+      ),
       regulatorName,
+      regulatorContact: resolveRegulatorContact(nation),
       paymentDetails
     })
   }
