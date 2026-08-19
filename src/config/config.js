@@ -8,6 +8,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
+const twentyMinutesMs = 1200000
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
@@ -135,6 +136,12 @@ export const config = convict({
         default: fourHoursMs,
         env: 'SESSION_CACHE_TTL'
       }
+    },
+    idleTimeoutMs: {
+      doc: 'Idle-inactivity timeout in milliseconds. Applies alongside the absolute session.cache.ttl/session.cookie.ttl - whichever is reached first ends the session (RA-461).',
+      format: Number,
+      default: twentyMinutesMs,
+      env: 'SESSION_IDLE_TIMEOUT'
     },
     cookie: {
       ttl: {
