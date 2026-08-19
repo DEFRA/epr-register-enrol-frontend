@@ -76,8 +76,11 @@ export async function operatorLoginController(request, h) {
   const { authUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
   const state = crypto.randomUUID()
   const nonce = crypto.randomUUID()
+  const codeVerifier = randomToken(64)
+  const codeChallenge = pkceChallenge(codeVerifier)
   request.yar.set('oauthState', state)
   request.yar.set('oauthNonce', nonce)
+  request.yar.set('pkceVerifier', codeVerifier)
 
   const params = new URLSearchParams({
     client_id: provider.clientId,
@@ -86,7 +89,9 @@ export async function operatorLoginController(request, h) {
     redirect_uri: provider.callbackUrl,
     scope: provider.scopes.join(' '),
     state,
-    nonce
+    nonce,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256'
   })
 
   return h.redirect(`${authUrl}?${params}`)
@@ -222,6 +227,7 @@ export async function operatorCallbackController(request, h) {
   const { code, state } = request.query
   const storedState = request.yar.get('oauthState')
   const storedNonce = request.yar.get('oauthNonce')
+  const storedVerifier = request.yar.get('pkceVerifier')
 
   if (!code || !state || state !== storedState) {
     logWarn(request, 'oauth callback: state mismatch or missing code', {
@@ -234,9 +240,13 @@ export async function operatorCallbackController(request, h) {
 
   request.yar.clear('oauthState')
   request.yar.clear('oauthNonce')
+  request.yar.clear('pkceVerifier')
 
-  if (!storedNonce) {
-    logWarn(request, 'oauth callback: missing nonce in session')
+  if (!storedNonce || !storedVerifier) {
+    logWarn(
+      request,
+      'oauth callback: missing nonce or pkce verifier in session'
+    )
     return h.redirect('/auth/operator/login')
   }
 
@@ -256,7 +266,8 @@ export async function operatorCallbackController(request, h) {
         code,
         grant_type: 'authorization_code',
         redirect_uri: provider.callbackUrl,
-        scope: provider.scopes.join(' ')
+        scope: provider.scopes.join(' '),
+        code_verifier: storedVerifier
       })
     })
 
