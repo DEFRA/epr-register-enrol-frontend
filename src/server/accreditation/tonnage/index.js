@@ -1,5 +1,14 @@
-import { tonnageGetController, tonnagePostController } from './controller.js'
+import {
+  tonnageGetController,
+  tonnagePostController,
+  tonnagePayloadSchema
+} from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+
+const postOptions = {
+  ...requireOperator,
+  validate: { payload: tonnagePayloadSchema }
+}
 
 export const tonnage = {
   plugin: {
@@ -21,13 +30,13 @@ export const tonnage = {
         {
           method: 'POST',
           path: '/accreditation/tonnage/{applicationId}',
-          options: requireOperator,
+          options: postOptions,
           ...tonnagePostController
         },
         {
           method: 'POST',
           path: '/{language}/accreditation/tonnage/{applicationId}',
-          options: requireOperator,
+          options: postOptions,
           ...tonnagePostController
         }
       ])

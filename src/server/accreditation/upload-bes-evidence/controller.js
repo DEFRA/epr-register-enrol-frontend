@@ -298,6 +298,7 @@ export const uploadBesEvidencePostController = {
 
     request.yar.set(BES_EVIDENCE_UPLOAD_SESSION_KEY, {
       statusUrl: uploadDetail.statusUrl,
+      fileUploadId: uploadDetail.fileUploadId,
       applicationId,
       siteId: siteIdInt,
       organisationId,
@@ -335,23 +336,15 @@ export const besEvidenceCdpStatusController = {
       )
     }
 
-    const scanStatus =
-      uploadStatus.processingStatus === 'validated' ? 'Clean' : 'Infected'
-
     try {
       await accreditationApiService.addBesEvidenceFile(
         session?.organisationId,
         session?.applicationId ?? applicationId,
         session?.siteId ?? parseInt(siteId, 10),
         {
-          filename: fileInput?.filename,
-          contentType: fileInput?.contentType ?? fileInput?.detectedContentType,
-          scanStatus,
-          fileId: fileInput?.fileId,
+          fileUploadId: session?.fileUploadId,
           besEvidenceValidFromDate: session?.besEvidenceValidFromDate,
-          besEvidenceExpiryDate: session?.besEvidenceExpiryDate,
-          s3Key: fileInput?.s3Key,
-          s3Bucket: fileInput?.s3Bucket
+          besEvidenceExpiryDate: session?.besEvidenceExpiryDate
         }
       )
     } catch (err) {

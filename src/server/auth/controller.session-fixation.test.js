@@ -141,7 +141,8 @@ describe('session fixation: reset() before writing the authenticated session', (
 
     const yar = fakeYar({
       oauthState: 'the-state',
-      oauthNonce: 'the-nonce'
+      oauthNonce: 'the-nonce',
+      pkceVerifier: 'the-verifier'
     })
     const request = {
       query: { code: 'auth-code', state: 'the-state' },

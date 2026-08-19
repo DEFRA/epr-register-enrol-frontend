@@ -307,6 +307,7 @@ export const samplingPlanUploadPostController = {
 
     request.yar.set(SAMPLING_PLAN_UPLOAD_SESSION_KEY, {
       statusUrl: uploadDetail.statusUrl,
+      fileUploadId: uploadDetail.fileUploadId,
       applicationId,
       organisationId,
       documentType
@@ -545,12 +546,7 @@ export const samplingPlanCdpStatusController = {
         session?.organisationId,
         session?.applicationId ?? applicationId,
         {
-          filename: fileInput?.filename,
-          contentType: fileInput?.contentType ?? fileInput?.detectedContentType,
-          scanStatus,
-          fileId: fileInput?.fileId,
-          s3Key: fileInput?.s3Key,
-          s3Bucket: fileInput?.s3Bucket,
+          fileUploadId: session?.fileUploadId,
           documentType: session?.documentType
         }
       )

@@ -364,7 +364,8 @@ describe('#operatorCallbackController', () => {
       yar: fakeYar(
         yarInitial ?? {
           oauthState: 'the-state',
-          oauthNonce: 'the-nonce'
+          oauthNonce: 'the-nonce',
+          pkceVerifier: 'the-verifier'
         }
       ),
       logger: { warn: vi.fn() }
