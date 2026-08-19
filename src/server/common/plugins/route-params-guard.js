@@ -36,7 +36,12 @@ const PARAM_SCHEMAS = {
   registrationId: SAFE_ID,
   companiesHouseNo: SAFE_ID,
   siteId: Joi.number().integer().positive(),
-  year: Joi.number().integer().min(1900).max(2200),
+  // Not a calendar-year range check on purpose: E2E/test tooling seeds
+  // disposable accreditation years thousands of years in the future
+  // (year + a large offset band) specifically to dodge collisions with
+  // records Mongo persists between runs. This just bounds it to a sane
+  // positive integer, not "a real year".
+  year: Joi.number().integer().positive().max(999999),
   language: Joi.string().valid('en', 'cy'),
   materialType: Joi.string().valid(...MATERIAL_TYPES)
 }

@@ -18,6 +18,10 @@ describe('findInvalidParam', () => {
     ['companiesHouseNo', '12345678'],
     ['siteId', '900001'],
     ['year', '2026'],
+    // E2E/test tooling seeds disposable accreditation years thousands of
+    // years in the future to dodge Mongo-persisted-between-runs collisions.
+    ['year', '3347'],
+    ['year', '4520'],
     ['language', 'en'],
     ['language', 'cy'],
     ['materialType', 'Steel'],
