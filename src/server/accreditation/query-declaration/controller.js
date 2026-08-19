@@ -1,3 +1,4 @@
+import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
@@ -8,6 +9,18 @@ function renderPage(h, viewData) {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Type/size only, not "is this a real name/email": validateQueryDeclaration
+// already renders its own friendly inline errors for missing/malformed
+// values. Without this, a non-string fullName/email/role (e.g. an array)
+// crashes `.trim()` below with an unhandled exception rather than a graceful
+// error (M1, 2026-08-08 pentest report). .unknown(true) lets the CSRF crumb
+// field through.
+export const queryDeclarationPayloadSchema = Joi.object({
+  fullName: Joi.string().allow('').max(200).optional(),
+  email: Joi.string().allow('').max(320).optional(),
+  role: Joi.string().allow('').max(200).optional()
+}).unknown(true)
 
 export function validateQueryDeclaration(fullName, email, role, t) {
   const errors = {}

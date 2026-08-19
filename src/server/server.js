@@ -22,6 +22,7 @@ import { authPlugin } from './common/helpers/auth/auth-plugin.js'
 import { basicAuthPlugin } from './common/helpers/auth/basic-auth-plugin.js'
 import { stubAuthPlugin } from './common/helpers/auth/stub-auth-plugin.js'
 import { accreditationSessionGuard } from './common/plugins/accreditationSessionGuard.js'
+import { routeParamsGuard } from './common/plugins/route-params-guard.js'
 
 export async function createServer() {
   setupProxy()
@@ -104,6 +105,7 @@ export async function createServer() {
         }
       }
     },
+    routeParamsGuard,
     accreditationSessionGuard,
     router // Register all the controllers/routes defined in src/server/router.js
   ])
