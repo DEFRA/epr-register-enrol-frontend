@@ -511,3 +511,16 @@ if (config.get('isProduction') || redisUseTLS) {
     )
   }
 }
+
+// Production hardening: refuse to boot with the stub API client enabled
+// when ENVIRONMENT=prod. The stub client never calls the real backend —
+// every accreditation/case-working request would be served fake data
+// instead of failing loudly. Same `environment`-gated pattern as the
+// AUTH_STUB_ENABLED guard above: deployed non-prod tiers legitimately run
+// with API_STUB_ENABLED=true while a backend isn't available yet.
+if (config.get('environment') === 'prod' && config.get('api.stubEnabled')) {
+  throw new Error(
+    'API_STUB_ENABLED must be false when ENVIRONMENT=prod. The stub API ' +
+      'client never contacts the real backend and serves fake data instead.'
+  )
+}
