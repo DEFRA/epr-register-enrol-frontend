@@ -139,7 +139,7 @@ describe('#addOrsCyaController', () => {
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
-        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=G0010'
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC030'
       })
       const sessionCookie = baselCodePostResponse.headers['set-cookie']
         ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
@@ -157,7 +157,7 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="row-basel-codes"')
       expect(result).toContain('Basel Convention codes')
       expect(result).toContain('A1181')
-      expect(result).toContain('G0010')
+      expect(result).toContain('GC030')
       expect(result).toContain('data-testid="delete-code-0"')
       expect(result).toContain('data-testid="delete-code-1"')
     })
@@ -237,7 +237,7 @@ describe('#addOrsCyaController', () => {
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
-        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC010'
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC050'
       })
       const sessionCookie = baselCodePostResponse.headers['set-cookie']
         ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
@@ -264,7 +264,7 @@ describe('#addOrsCyaController', () => {
         APPLICATION_ID,
         expect.objectContaining({
           code1: 'A1181',
-          code2: 'GC010',
+          code2: 'GC050',
           code3: null
         })
       )
@@ -471,7 +471,7 @@ describe('#addOrsCyaController', () => {
           cookie
         },
         payload:
-          'action=continue&visibleCount=3&code-0=A1181&code-1=GC010&code-2=B3011'
+          'action=continue&visibleCount=3&code-0=A1181&code-1=GC050&code-2=B3011'
       })
       const sessionCookie = baselCodePostResponse.headers['set-cookie']
         ? (Array.isArray(baselCodePostResponse.headers['set-cookie'])
@@ -509,7 +509,7 @@ describe('#addOrsCyaController', () => {
 
       expect(result).toContain('A1181')
       expect(result).toContain('B3011')
-      expect(result).not.toContain('GC010')
+      expect(result).not.toContain('GC050')
     })
   })
 
