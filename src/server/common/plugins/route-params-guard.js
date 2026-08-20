@@ -43,7 +43,15 @@ const PARAM_SCHEMAS = {
   // positive integer, not "a real year".
   year: Joi.number().integer().positive().max(999999),
   language: Joi.string().valid('en', 'cy'),
-  materialType: Joi.string().valid(...MATERIAL_TYPES)
+  // Insensitive: the Re-Ex frontend links here with lowercase material
+  // slugs (the same casing the backend's own material field uses, e.g.
+  // "paper"), while everywhere downstream in this app — translation keys,
+  // the backend seed URL, STATUS_CONFIG lookups — expects the capitalised
+  // form ("Paper"). Reject on shape, but let normaliseParams below fix the
+  // case rather than 400ing a link this app doesn't control the source of.
+  materialType: Joi.string()
+    .valid(...MATERIAL_TYPES)
+    .insensitive()
 }
 
 export function findInvalidParam(params) {
@@ -58,6 +66,19 @@ export function findInvalidParam(params) {
   return null
 }
 
+// Rewrites params in place to the canonical casing their schema validated
+// against (currently only materialType varies in practice) so every
+// consumer downstream of this guard can keep comparing against the
+// capitalised MATERIAL_TYPES form.
+export function normaliseParams(params) {
+  for (const [key, value] of Object.entries(params ?? {})) {
+    const schema = PARAM_SCHEMAS[key]
+    if (!schema) continue
+    const { value: normalised } = schema.validate(value)
+    params[key] = normalised
+  }
+}
+
 export const routeParamsGuard = {
   plugin: {
     name: 'route-params-guard',
@@ -67,6 +88,7 @@ export const routeParamsGuard = {
         if (invalidParam) {
           throw Boom.badRequest(`Invalid ${invalidParam} in request path.`)
         }
+        normaliseParams(request.params)
         return h.continue
       })
     }
