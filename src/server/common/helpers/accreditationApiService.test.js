@@ -62,6 +62,13 @@ describe('accreditationApiService', () => {
         accreditationApiService.seedApplication(ORG_ID, SITE_ID, MATERIAL, YEAR)
       ).rejects.toMatchObject({ status: 500, isApiError: true })
     })
+
+    test('normalises an error with no message to "Unknown error"', async () => {
+      apiClient.post.mockRejectedValue({ status: 400 })
+      await expect(
+        accreditationApiService.seedApplication(ORG_ID, SITE_ID, MATERIAL, YEAR)
+      ).rejects.toMatchObject({ message: 'Unknown error', status: 400 })
+    })
   })
 
   describe('listApplications', () => {

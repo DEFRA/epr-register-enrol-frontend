@@ -8,7 +8,7 @@ function makeConfig(overrides = {}) {
     'auth.stubEnabled': false,
     'api.baseUrl': 'http://backend.test',
     'api.stubEnabled': false,
-    'fileUpload.cdpUploaderUrl': 'http://uploader.test',
+    'api.sharedSecret': 'shared-secret',
     'reex.frontendBaseUrl': 'http://reex-frontend.test',
     'auth.azureEntraId.tenantId': 'tenant-id',
     'auth.defraId.serviceId': 'service-id',
@@ -45,16 +45,24 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual(['API_BASE_URL'])
   })
 
-  test('flags CDP_UPLOADER_URL when blank and api.stubEnabled is false', () => {
+  test('flags AUTH_SHARED_SECRET__BACKEND when blank, non-local', () => {
     expect(
-      getMissingRequiredConfig(makeConfig({ 'fileUpload.cdpUploaderUrl': '' }))
-    ).toEqual(['CDP_UPLOADER_URL'])
+      getMissingRequiredConfig(makeConfig({ 'api.sharedSecret': '' }))
+    ).toEqual(['AUTH_SHARED_SECRET__BACKEND'])
   })
 
-  test('does not flag CDP_UPLOADER_URL when api.stubEnabled is true', () => {
+  test('flags AUTH_SHARED_SECRET__BACKEND even when api.stubEnabled is true — realApiClient always contacts the backend', () => {
     expect(
       getMissingRequiredConfig(
-        makeConfig({ 'fileUpload.cdpUploaderUrl': '', 'api.stubEnabled': true })
+        makeConfig({ 'api.sharedSecret': '', 'api.stubEnabled': true })
+      )
+    ).toEqual(['AUTH_SHARED_SECRET__BACKEND'])
+  })
+
+  test('does not flag AUTH_SHARED_SECRET__BACKEND in local', () => {
+    expect(
+      getMissingRequiredConfig(
+        makeConfig({ environment: 'local', 'api.sharedSecret': '' })
       )
     ).toEqual([])
   })
@@ -136,7 +144,7 @@ describe('#getMissingRequiredConfig', () => {
       getMissingRequiredConfig(
         makeConfig({
           'api.baseUrl': '',
-          'fileUpload.cdpUploaderUrl': '',
+          'api.sharedSecret': '',
           'reex.frontendBaseUrl': '',
           'auth.azureEntraId.tenantId': '',
           'auth.defraId.serviceId': '',
@@ -145,7 +153,7 @@ describe('#getMissingRequiredConfig', () => {
       )
     ).toEqual([
       'API_BASE_URL',
-      'CDP_UPLOADER_URL',
+      'AUTH_SHARED_SECRET__BACKEND',
       'REEX_FRONTEND_BASE_URL',
       'ENTRA_TENANT_ID',
       'DEFRA_ID_SERVICE_ID',

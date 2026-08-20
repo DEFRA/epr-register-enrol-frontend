@@ -277,6 +277,7 @@
     "samplingPlanUpload": {
       "title": "[Welsh] Upload sampling and inspection plan - part 2",
       "heading": "[Welsh] Upload sampling and inspection plan - part 2",
+      "subHeading": "[Welsh] You may also upload additional supporting information here",
       "requirements": {
         "intro": "[Welsh] The file(s) must be:",
         "maxSize": "[Welsh] no more than 20MB each",
@@ -326,7 +327,7 @@
       "heading": "[Welsh] Declaration",
       "declarationIntro": "[Welsh] By entering your name and submitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "[Welsh] you are an approved person or delegated person who is eligible to submit this application on behalf of {organisationName}",
+        "eligiblePerson": "[Welsh] you are a person with delegated authority who is eligible to submit this application on behalf of {organisationName}",
         "accurateInformation": "[Welsh] the information you are submitting is accurate",
         "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading data"
       },
@@ -379,6 +380,7 @@
       "paymentReference": "[Welsh] Payment reference",
       "alternativePayments": "[Welsh] Alternative payments",
       "alternativePaymentsBody": "[Welsh] Please contact your regulator if you need to discuss alternative payment methods.",
+      "contactYourRegulator": "[Welsh] Contact your regulator",
       "cardPayments": "[Welsh] Card payments",
       "cardPaymentsBody": "[Welsh] A card payment can be taken over the phone. Please contact your account manager to arrange taking a card payment over the phone.",
       "overseasPayments": "[Welsh] Overseas payments",
@@ -417,7 +419,7 @@
       "declarationSubHeading": "[Welsh] Declaration",
       "declarationIntro": "[Welsh] By entering your name and resubmitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "[Welsh] you are an approved person or delegated person who is eligible to respond to this query on behalf of {organisationName}",
+        "eligiblePerson": "[Welsh] you are a person with delegated authority who is eligible to respond to this query on behalf of {organisationName}",
         "accurateInformation": "[Welsh] the information you are submitting in response to the query is accurate",
         "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading data"
       },

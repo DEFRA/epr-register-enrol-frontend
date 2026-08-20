@@ -8,6 +8,7 @@ import { persistentStubApiClient } from './persistentStubApiClient.js'
 export function createApiClient() {
   const baseUrl = config.get('api.baseUrl')
   const timeout = config.get('api.timeout')
+  const sharedSecret = config.get('api.sharedSecret')
 
   /**
    * Makes an HTTP request to the API
@@ -37,6 +38,7 @@ export function createApiClient() {
       method,
       headers: {
         'Content-Type': 'application/json',
+        ...(sharedSecret ? { Authorization: `Bearer ${sharedSecret}` } : {}),
         ...headers
       },
       signal: AbortSignal.timeout(effectiveTimeout),

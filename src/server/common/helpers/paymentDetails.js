@@ -30,6 +30,32 @@ export const BANK_DETAILS_BY_NATION = {
   }
 }
 
+export const REGULATOR_CONTACT_BY_NATION = {
+  [NATIONS.ENGLAND]: {
+    name: 'Environment Agency',
+    email: 'packagingnotifications@environment-agency.gov.uk'
+  },
+  [NATIONS.SCOTLAND]: {
+    name: 'Scottish Environment Protection Agency',
+    email: 'producer.responsibility@sepa.org.uk'
+  },
+  [NATIONS.WALES]: {
+    name: 'Natural Resources Wales',
+    email: 'packaging@naturalresourceswales.gov.uk'
+  },
+  [NATIONS.NORTHERN_IRELAND]: {
+    name: 'Northern Ireland Environment Agency',
+    email: 'repandexp@daera-ni.gov.uk'
+  }
+}
+
+export function resolveRegulatorContact(nation) {
+  return (
+    REGULATOR_CONTACT_BY_NATION[nation] ??
+    REGULATOR_CONTACT_BY_NATION[NATIONS.ENGLAND]
+  )
+}
+
 export const ORS_FEE = 328
 
 export const TONNAGE_FEES = {
@@ -42,6 +68,22 @@ export const TONNAGE_FEES = {
 export function resolveNation(application) {
   if (application.nation) return application.nation
   return resolveNationFromPostcode(application.sitePostcode)
+}
+
+export function buildPaymentReference(nation, organisationId, isExporter) {
+  switch (nation) {
+    case NATIONS.NORTHERN_IRELAND:
+      return `NI/PR/REEX/${organisationId}`
+    case NATIONS.WALES:
+      return `PREX/${organisationId}`
+    case NATIONS.SCOTLAND:
+      return `E800 81581/${organisationId}`
+    case NATIONS.ENGLAND:
+    default:
+      return isExporter
+        ? `PR/PK/EXP/${organisationId}`
+        : `PR/PK/REP/${organisationId}`
+  }
 }
 
 export function siteNameFromAddress(siteAddress) {

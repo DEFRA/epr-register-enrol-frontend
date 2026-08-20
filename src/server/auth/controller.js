@@ -76,8 +76,11 @@ export async function operatorLoginController(request, h) {
   const { authUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
   const state = crypto.randomUUID()
   const nonce = crypto.randomUUID()
+  const codeVerifier = randomToken(64)
+  const codeChallenge = pkceChallenge(codeVerifier)
   request.yar.set('oauthState', state)
   request.yar.set('oauthNonce', nonce)
+  request.yar.set('pkceVerifier', codeVerifier)
 
   const params = new URLSearchParams({
     client_id: provider.clientId,
@@ -86,7 +89,9 @@ export async function operatorLoginController(request, h) {
     redirect_uri: provider.callbackUrl,
     scope: provider.scopes.join(' '),
     state,
-    nonce
+    nonce,
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256'
   })
 
   return h.redirect(`${authUrl}?${params}`)
@@ -210,6 +215,10 @@ export async function regulatorCallbackController(request, h) {
 
   const redirectTo = popPostLoginRedirect(request, 'regulator', '/')
   request.yar.reset()
+
+  // Store the raw id_token so it can be passed as id_token_hint during
+  // federated logout from Entra ID.
+  request.yar.set('idToken', idToken)
   request.yar.set('user', user)
   return h.redirect(redirectTo)
 }
@@ -218,6 +227,7 @@ export async function operatorCallbackController(request, h) {
   const { code, state } = request.query
   const storedState = request.yar.get('oauthState')
   const storedNonce = request.yar.get('oauthNonce')
+  const storedVerifier = request.yar.get('pkceVerifier')
 
   if (!code || !state || state !== storedState) {
     logWarn(request, 'oauth callback: state mismatch or missing code', {
@@ -230,9 +240,13 @@ export async function operatorCallbackController(request, h) {
 
   request.yar.clear('oauthState')
   request.yar.clear('oauthNonce')
+  request.yar.clear('pkceVerifier')
 
-  if (!storedNonce) {
-    logWarn(request, 'oauth callback: missing nonce in session')
+  if (!storedNonce || !storedVerifier) {
+    logWarn(
+      request,
+      'oauth callback: missing nonce or pkce verifier in session'
+    )
     return h.redirect('/auth/operator/login')
   }
 
@@ -252,7 +266,8 @@ export async function operatorCallbackController(request, h) {
         code,
         grant_type: 'authorization_code',
         redirect_uri: provider.callbackUrl,
-        scope: provider.scopes.join(' ')
+        scope: provider.scopes.join(' '),
+        code_verifier: storedVerifier
       })
     })
 
@@ -306,6 +321,8 @@ export async function operatorCallbackController(request, h) {
 
   const redirectTo = popPostLoginRedirect(request, 'operator', '/')
 
+  request.yar.reset()
+
   // Store the raw id_token so it can be passed as id_token_hint during logout.
   request.yar.set('idToken', idToken)
   request.yar.set('user', user)
@@ -318,28 +335,44 @@ export async function logoutController(request, h) {
   const user = request.yar.get('user')
   const idToken = request.yar.get('idToken')
 
+  // Federated logout round-trips through this same route (Entra/Defra ID
+  // redirect back to post_logout_redirect_uri below) — by then the session,
+  // and with it `user`, has already been reset by the first pass. Carry the
+  // provider through as a query param on that redirect URI so the fallback
+  // below still lands on the right login page, rather than defaulting to
+  // operator regardless of who actually signed out.
+  const userType =
+    user?.userType === 'regulator' || request.query.userType === 'regulator'
+      ? 'regulator'
+      : 'operator'
+
   // Only do federated logout when we have an id_token — that means the user
-  // authenticated via real Defra ID (stub users never get one).
-  if (!idToken || user?.userType !== 'operator') {
+  // authenticated via a real upstream IdP (stub users never get one).
+  if (!idToken) {
     request.yar.reset()
     return h.redirect(
-      user?.userType === 'regulator'
+      userType === 'regulator'
         ? '/auth/regulator/login'
         : '/auth/operator/login'
     )
   }
 
-  const provider = getDefraIdConfig(config)
-  const { endSessionUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
+  let endSessionUrl
+  if (userType === 'regulator') {
+    ;({ logoutUrl: endSessionUrl } = getAzureEntraIdConfig(config))
+  } else {
+    const provider = getDefraIdConfig(config)
+    ;({ endSessionUrl } = await getDefraIdEndpoints(provider.discoveryUrl))
+  }
 
   // Reset (not clear) the local session before redirecting, so the server-side
   // cache entry is actually dropped rather than just nulling out these two keys.
-  // If the user returns to /auth/logout after Defra ID signs them out, the
+  // If the user returns to /auth/logout after the IdP signs them out, the
   // session will be empty and we fall through to the redirect above.
   request.yar.reset()
 
   const params = new URLSearchParams({
-    post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout`
+    post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout?userType=${userType}`
   })
   params.set('id_token_hint', idToken)
 

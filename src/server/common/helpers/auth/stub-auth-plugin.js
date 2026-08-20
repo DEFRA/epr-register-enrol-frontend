@@ -1,8 +1,7 @@
-import Boom from '@hapi/boom'
-
 import { config } from '../../../../config/config.js'
 import { redirectToLogin } from './auth-redirect.js'
 import { ROLE_REGULATOR_STANDARD } from './auth-scopes.js'
+import { yarSessionAuthenticate } from './session-idle-timeout.js'
 
 export const TEST_REGULATOR = {
   id: 'test-regulator-id',
@@ -48,23 +47,11 @@ export const stubAuthPlugin = {
         server.auth.default('session')
         server.ext('onPreResponse', redirectToLogin)
       } else {
-        // Stub mode (local/dev): yar-session scheme + stub chooser
+        // Stub mode (local/dev): yar-session scheme + stub chooser.
+        // Enforces the idle-timeout (RA-461) via the same shared authenticate
+        // used by the real-OAuth auth-plugin.js, so the two paths can't drift.
         server.auth.scheme('yar-session', () => ({
-          authenticate(request, h) {
-            const user = request.yar.get('user')
-            if (!user) {
-              return h.unauthenticated(Boom.unauthorized(null, 'session'))
-            }
-            return h.authenticated({
-              credentials: {
-                ...user,
-                scope: [
-                  user.userType,
-                  ...(user.regulatorRole ? [user.regulatorRole] : [])
-                ]
-              }
-            })
-          }
+          authenticate: yarSessionAuthenticate
         }))
         server.auth.strategy('session', 'yar-session')
         server.auth.default('session')

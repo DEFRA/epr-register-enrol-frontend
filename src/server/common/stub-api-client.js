@@ -827,6 +827,74 @@ export const STUB_ORG_DOCS = [
         samplingPlan: { sectionStatus: 'NotStarted', files: [] }
       }
     ]
+  },
+  {
+    orgId: 50013,
+    companyDetails: { name: 'Interim Site Test Exports Ltd' },
+    accreditations: [
+      {
+        id: 'app013exp',
+        applicationId: 'APP2027ER5000391PL',
+        applicationStatus: 'Started',
+        material: 'plastic',
+        wasteProcessingType: 'exporter',
+        registrationId: 'aaa000000000000000050013',
+        companyRegisterAddressPostcode: 'PL45 T1C',
+        wasteRegistrationNumber: 'R26ER5000390068PL',
+        yearlyMetrics: { year: '2027' },
+        formSubmissionTime: null,
+        submitterContactDetails: null,
+        prnIssuance: {
+          sectionStatus: 'NotStarted',
+          plannedIssuance: null,
+          signatories: []
+        },
+        businessPlan: { sectionStatus: 'NotStarted', items: [] },
+        samplingPlan: {
+          sectionStatus: 'Completed',
+          files: [
+            {
+              fileId: 'file013',
+              filename: 'code13-nightmare-green.pdf',
+              uploadedAt: '2026-11-01T12:00:00Z',
+              uploadedBy: 'Jane Doe',
+              scanStatus: 'Clean'
+            }
+          ]
+        },
+        overseasSites: {
+          sectionStatus: 'NotStarted',
+          sites: [
+            {
+              siteId: 900001,
+              orsId: '001',
+              siteName: 'Rotterdam Recycling BV',
+              siteAddress: 'Industrieweg 44, Rotterdam',
+              country: 'Netherlands',
+              isEu: true,
+              isOecd: true,
+              selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            }
+          ]
+        },
+        besEvidence: { sectionStatus: 'NotStarted' },
+        organisation: {
+          accreditation: {
+            accreditationNumber: 'A26EX5000391PL',
+            regulator: 'Environment Agency',
+            tonnage: 'Up to 500 tonnes',
+            authorisedUsers: ['Priya Sharma'],
+            overseasSites: ['Bharat Recycling', 'Dragon Recyclers']
+          }
+        }
+      }
+    ]
   }
 ]
 

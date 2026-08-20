@@ -190,7 +190,51 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('data-testid="bank-sort-code"')
       expect(result).toContain('60-70-80')
       expect(result).toContain('data-testid="bank-payment-reference"')
-      expect(result).toContain('RA-000000001')
+      expect(result).toContain('PR/PK/REP/test-operator-id')
+    })
+
+    describe('regulator payment reference (RA-426)', () => {
+      test.each([
+        ['England', false, 'PR/PK/REP/test-operator-id'],
+        ['England', true, 'PR/PK/EXP/test-operator-id'],
+        ['NorthernIreland', false, 'NI/PR/REEX/test-operator-id'],
+        ['NorthernIreland', true, 'NI/PR/REEX/test-operator-id'],
+        ['Wales', false, 'PREX/test-operator-id'],
+        ['Wales', true, 'PREX/test-operator-id'],
+        ['Scotland', false, 'E800 81581/test-operator-id'],
+        ['Scotland', true, 'E800 81581/test-operator-id']
+      ])(
+        'renders %s reference for nation %s isExporter %s',
+        async (nation, isExporter, expectedReference) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({ nation, isExporter })
+          )
+          const cookie = await getSessionCookieWithReference()
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+            headers: { ...operatorHeaders, Cookie: cookie }
+          })
+
+          expect(result).toContain('data-testid="bank-payment-reference"')
+          expect(result).toContain(expectedReference)
+        }
+      )
+
+      test('application-reference is unaffected by the payment reference change', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+        const cookie = await getSessionCookieWithReference('RA-000000001')
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+          headers: { ...operatorHeaders, Cookie: cookie }
+        })
+
+        expect(result).toContain('data-testid="application-reference"')
+        expect(result).toContain('RA-000000001')
+      })
     })
 
     test('exporter (no siteAddress) resolves Scotland from companyRegisterAddressPostcode', async () => {

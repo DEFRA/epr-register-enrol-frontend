@@ -8,6 +8,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const fourHoursMs = 14400000
 const oneWeekMs = 604800000
+const twentyMinutesMs = 1200000
 
 const isProduction = process.env.NODE_ENV === 'production'
 const isTest = process.env.NODE_ENV === 'test'
@@ -135,6 +136,12 @@ export const config = convict({
         default: fourHoursMs,
         env: 'SESSION_CACHE_TTL'
       }
+    },
+    idleTimeoutMs: {
+      doc: 'Idle-inactivity timeout in milliseconds. Applies alongside the absolute session.cache.ttl/session.cookie.ttl - whichever is reached first ends the session (RA-461).',
+      format: Number,
+      default: twentyMinutesMs,
+      env: 'SESSION_IDLE_TIMEOUT'
     },
     cookie: {
       ttl: {
@@ -335,12 +342,6 @@ export const config = convict({
       format: String,
       default: 'epr-register-enrol-file-uploads',
       env: 'FILE_UPLOAD_S3_BUCKET'
-    },
-    cdpUploaderUrl: {
-      doc: 'Base URL of the CDP uploader service, used to poll upload status',
-      format: String,
-      default: '',
-      env: 'CDP_UPLOADER_URL'
     }
   },
   api: {
@@ -361,6 +362,16 @@ export const config = convict({
       format: Number,
       default: 5000,
       env: 'API_TIMEOUT'
+    },
+    // Flat CDP secrets naming convention (not nested under `api`, matching
+    // AUTH_SHARED_SECRET__MANAGEMENT_BE etc on the backend) — must match
+    // AUTH_SHARED_SECRET__FRONTEND on epr-register-enrol-backend exactly.
+    sharedSecret: {
+      doc: 'Shared secret sent as a Bearer token on outbound backend calls',
+      format: String,
+      default: '',
+      env: 'AUTH_SHARED_SECRET__BACKEND',
+      sensitive: true
     }
   },
   reex: {
@@ -493,4 +504,17 @@ if (config.get('isProduction') || redisUseTLS) {
         'REDIS_TLS is true. Wire the value via Secrets Manager.'
     )
   }
+}
+
+// Production hardening: refuse to boot with the stub API client enabled
+// when ENVIRONMENT=prod. The stub client never calls the real backend —
+// every accreditation/case-working request would be served fake data
+// instead of failing loudly. Same `environment`-gated pattern as the
+// AUTH_STUB_ENABLED guard above: deployed non-prod tiers legitimately run
+// with API_STUB_ENABLED=true while a backend isn't available yet.
+if (config.get('environment') === 'prod' && config.get('api.stubEnabled')) {
+  throw new Error(
+    'API_STUB_ENABLED must be false when ENVIRONMENT=prod. The stub API ' +
+      'client never contacts the real backend and serves fake data instead.'
+  )
 }

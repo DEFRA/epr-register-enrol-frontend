@@ -39,6 +39,11 @@ export const STUB_OPERATOR_ORGS = [
     name: 'Withdrawn Application Test Co'
   },
   {
+    reExOrgId: '50013',
+    defraOrgId: '50013',
+    name: 'Interim Site Test Exports Ltd'
+  },
+  {
     reExOrgId: '6a2fcd74e16883c137d01188',
     defraOrgId: '67b9e8fc-2235-431a-a7b9-80663c81b6ff',
     name: 'Bednar - Frami Limited xTklApuT'

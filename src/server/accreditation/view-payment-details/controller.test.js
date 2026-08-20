@@ -93,7 +93,7 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).toContain('Rosina Campbell')
     })
 
-    test('renders the payment reference', async () => {
+    test('renders the regulator-tailored payment reference, not the accreditation reference', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -103,7 +103,8 @@ describe('#viewPaymentDetailsController', () => {
       })
 
       expect(result).toContain('data-testid="bank-payment-reference"')
-      expect(result).toContain('APP2027ER5000390GL')
+      expect(result).toContain('PR/PK/REP/test-operator-id')
+      expect(result).not.toContain('APP2027ER5000390GL')
     })
 
     test('renders England bank details by default (no derivable postcode)', async () => {
@@ -663,6 +664,92 @@ describe('#viewPaymentDetailsController', () => {
           'Application submitted to the Environment Agency'
         )
       })
+    })
+
+    describe('regulator payment reference (RA-426)', () => {
+      test.each([
+        ['England', false, 'PR/PK/REP/test-operator-id'],
+        ['England', true, 'PR/PK/EXP/test-operator-id'],
+        ['NorthernIreland', false, 'NI/PR/REEX/test-operator-id'],
+        ['NorthernIreland', true, 'NI/PR/REEX/test-operator-id'],
+        ['Wales', false, 'PREX/test-operator-id'],
+        ['Wales', true, 'PREX/test-operator-id'],
+        ['Scotland', false, 'E800 81581/test-operator-id'],
+        ['Scotland', true, 'E800 81581/test-operator-id']
+      ])(
+        'renders %s reference for nation %s isExporter %s',
+        async (nation, isExporter, expectedReference) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({ nation, isExporter })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+            headers: operatorHeaders
+          })
+
+          expect(result).toContain('data-testid="bank-payment-reference"')
+          expect(result).toContain(expectedReference)
+        }
+      )
+    })
+
+    describe('tailored regulator contact block (RA-426)', () => {
+      const ALL_REGULATOR_EMAILS = [
+        'packagingnotifications@environment-agency.gov.uk',
+        'repandexp@daera-ni.gov.uk',
+        'packaging@naturalresourceswales.gov.uk',
+        'producer.responsibility@sepa.org.uk'
+      ]
+
+      test.each([
+        [
+          'England',
+          'Environment Agency',
+          'packagingnotifications@environment-agency.gov.uk'
+        ],
+        [
+          'NorthernIreland',
+          'Northern Ireland Environment Agency',
+          'repandexp@daera-ni.gov.uk'
+        ],
+        [
+          'Wales',
+          'Natural Resources Wales',
+          'packaging@naturalresourceswales.gov.uk'
+        ],
+        [
+          'Scotland',
+          'Scottish Environment Protection Agency',
+          'producer.responsibility@sepa.org.uk'
+        ]
+      ])(
+        'shows only the %s regulator contact details, not the other three',
+        async (nation, expectedName, expectedEmail) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({ nation })
+          )
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+            headers: operatorHeaders
+          })
+
+          expect(result).toContain('data-testid="contact-regulator-heading"')
+          expect(result).toContain('Contact your regulator')
+          expect(result).toContain(expectedName)
+          expect(result).toContain(expectedEmail)
+
+          const otherEmails = ALL_REGULATOR_EMAILS.filter(
+            (email) => email !== expectedEmail
+          )
+          for (const email of otherEmails) {
+            expect(result).not.toContain(email)
+          }
+        }
+      )
     })
   })
 })

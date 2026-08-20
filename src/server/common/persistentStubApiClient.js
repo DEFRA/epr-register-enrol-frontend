@@ -25,6 +25,11 @@ function backendUrl() {
   return config.get('api.baseUrl')
 }
 
+function authHeaders() {
+  const sharedSecret = config.get('api.sharedSecret')
+  return sharedSecret ? { Authorization: `Bearer ${sharedSecret}` } : {}
+}
+
 async function tryBackendPut(orgId, appId, data) {
   try {
     await fetch(`${backendUrl()}${STUB_BASE}/${orgId}/${appId}`, {
@@ -64,7 +69,7 @@ export const persistentStubApiClient = {
       try {
         const res = await fetch(
           `${backendUrl()}/api/v1/organisations/${orgId}/defra-link`,
-          { signal: AbortSignal.timeout(TIMEOUT_MS) }
+          { headers: authHeaders(), signal: AbortSignal.timeout(TIMEOUT_MS) }
         )
         if (res.ok) return res.json()
       } catch (err) {

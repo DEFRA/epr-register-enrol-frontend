@@ -1,3 +1,4 @@
+import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
@@ -10,6 +11,19 @@ import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSection
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
+
+// Deliberately checks shape/size, not the exact enum values: the controller
+// already renders its own friendly inline error for a missing or business-
+// invalid plannedTonnageBand/submitAction (see the tests above), and a hard
+// Joi .valid() reject would replace that with a bare Boom 400 page instead.
+// Joi's job here is only to reject payloads the controller was never built
+// to handle safely — wrong types, absurd lengths (M1, 2026-08-08 pentest
+// report) — .unknown(true) lets the CSRF crumb field and anything else
+// Hapi/Crumb add to the payload through.
+export const tonnagePayloadSchema = Joi.object({
+  plannedTonnageBand: Joi.string().max(50).optional(),
+  submitAction: Joi.string().max(50).optional()
+}).unknown(true)
 
 export function buildTonnageOptions(selectedTonnage, t) {
   return TONNAGE_OPTIONS.map((value) => ({

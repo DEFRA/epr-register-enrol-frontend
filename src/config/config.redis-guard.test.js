@@ -16,6 +16,7 @@ describe('redis boot guard', () => {
     process.env.ENVIRONMENT = 'prod'
     process.env.SESSION_COOKIE_PASSWORD = REAL_SECRET
     process.env.AUTH_STUB_ENABLED = 'false'
+    process.env.API_STUB_ENABLED = 'false'
     process.env.ENTRA_CLIENT_ID = 'azure-client-id'
     process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
     process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'

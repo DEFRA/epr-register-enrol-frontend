@@ -34,7 +34,7 @@ describe('#readyController', () => {
       'auth.stubEnabled': false,
       'api.baseUrl': 'http://backend.test',
       'api.stubEnabled': false,
-      'fileUpload.cdpUploaderUrl': 'http://uploader.test',
+      'api.sharedSecret': 'shared-secret',
       'reex.frontendBaseUrl': 'http://reex-frontend.test',
       'auth.azureEntraId.tenantId': 'tenant-id',
       'auth.defraId.serviceId': 'service-id',
@@ -55,8 +55,7 @@ describe('#readyController', () => {
       environment: 'ext-test',
       'auth.stubEnabled': false,
       'api.baseUrl': '',
-      'api.stubEnabled': false,
-      'fileUpload.cdpUploaderUrl': ''
+      'api.stubEnabled': false
     }
 
     const { result, statusCode } = await server.inject({
@@ -67,7 +66,6 @@ describe('#readyController', () => {
     expect(statusCode).toBe(statusCodes.serviceUnavailable)
     expect(result.status).toBe('unhealthy')
     expect(result.missing).toContain('API_BASE_URL')
-    expect(result.missing).toContain('CDP_UPLOADER_URL')
   })
 
   test('is healthy by default in local dev config, with no overrides', async () => {

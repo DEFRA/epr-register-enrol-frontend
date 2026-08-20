@@ -659,6 +659,27 @@ describe('#operatorAccreditationController', () => {
     expect(postSpy).not.toHaveBeenCalled()
   })
 
+  // Regression test for the ext-test 400: the Re-Ex frontend links here with
+  // the backend's lowercase material slug casing (e.g. "paper"), not this
+  // app's capitalised MATERIAL_TYPES form. route-params-guard must normalise
+  // that to "Steel" before the handler runs — otherwise this 200s but the
+  // strict materialType match in resolveLandingApplication misses the
+  // existing (capitalised) application and wrongly re-seeds one on every
+  // request, silently, without ever 400ing.
+  test('normalises a lowercase materialType segment and matches the existing application', async () => {
+    mockAccreditationGet([makeApp({ applicationStatus: 'Started' })])
+    const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL.toLowerCase()}/${YEAR}`,
+      headers: operatorHeaders
+    })
+
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(postSpy).not.toHaveBeenCalled()
+  })
+
   test('calls seedApplication when no matching application found for site/material/year', async () => {
     mockAccreditationGet([makeApp({ registrationId: 'other-ref' })])
     const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())

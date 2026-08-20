@@ -87,6 +87,11 @@ export async function stubLoginPostController(request, h) {
   }
 
   const redirectTo = popPostLoginRedirect(request, type, '/')
+  // Session fixation defence-in-depth (M3, 2026-08-08 pentest report),
+  // matching the real OAuth callbacks (controller.js) — reset before
+  // establishing the authenticated session so a pre-auth session id can't be
+  // reused post-login.
+  request.yar.reset()
   request.yar.set('user', user)
   return h.redirect(redirectTo)
 }

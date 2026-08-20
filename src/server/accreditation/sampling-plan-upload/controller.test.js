@@ -296,6 +296,21 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
+    test('renders the sub-heading about additional supporting information', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="sub-heading"')
+      expect(result).toContain(
+        'You may also upload additional supporting information here'
+      )
+    })
+
     test('renders file requirements list', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -960,7 +975,7 @@ describe('#samplingPlanUploadController', () => {
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/files'),
         expect.objectContaining({
-          scanStatus: 'Clean',
+          fileUploadId: 'stub-test-id',
           documentType: 'SamplingPlan'
         })
       )
@@ -993,7 +1008,7 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
-    test('saves Infected scanStatus and redirects to results with the shared failure flag', async () => {
+    test('saves file via fileUploadId and redirects to results with the shared failure flag when the scan is Infected', async () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({
         uploadStatus: 'ready',
@@ -1020,7 +1035,7 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(postSpy).toHaveBeenCalledWith(
         expect.stringContaining('/files'),
-        expect.objectContaining({ scanStatus: 'Infected' })
+        expect.objectContaining({ fileUploadId: 'stub-test-id' })
       )
     })
 
@@ -1160,7 +1175,7 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(first.addFileSpy).toHaveBeenCalledWith(
         expect.stringContaining('/files'),
-        expect.objectContaining({ filename: 'first.pdf' })
+        expect.objectContaining({ fileUploadId: 'stub-test-id' })
       )
 
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -1194,7 +1209,7 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(second.addFileSpy).toHaveBeenCalledWith(
         expect.stringContaining('/files'),
-        expect.objectContaining({ filename: 'second.pdf' })
+        expect.objectContaining({ fileUploadId: 'stub-test-id' })
       )
 
       vi.spyOn(apiClient, 'get').mockResolvedValue(

@@ -1,3 +1,4 @@
+import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import {
   getAddOrsSession,
@@ -5,6 +6,17 @@ import {
 } from '../../../common/helpers/addOverseasSiteSession.js'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+// Type/size only, not "is this valid": the handler renders its own friendly
+// inline errors for missing/malformed values already. Without this, a
+// non-string field (e.g. an array) crashes `.trim()` above with an
+// unhandled exception rather than a graceful error (M1, 2026-08-08 pentest
+// report). .unknown(true) lets the CSRF crumb field through.
+export const siteContactDetailsPayloadSchema = Joi.object({
+  siteContactName: Joi.string().allow('').max(200).optional(),
+  siteContactEmail: Joi.string().allow('').max(320).optional(),
+  siteContactPhone: Joi.string().allow('').max(50).optional()
+}).unknown(true)
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`

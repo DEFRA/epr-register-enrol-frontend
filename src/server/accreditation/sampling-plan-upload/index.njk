@@ -26,6 +26,8 @@
 
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
+      <h2 class="govuk-heading-m" data-testid="sub-heading">{{ t('pages.samplingPlanUpload.subHeading') }}</h2>
+
       <p class="govuk-body">{{ t('pages.samplingPlanUpload.requirements.intro') }}</p>
       <ul class="govuk-list govuk-list--bullet" data-testid="file-requirements">
         <li>{{ t('pages.samplingPlanUpload.requirements.maxSize') }}</li>
@@ -49,7 +51,11 @@
         </div>
       {% else %}
 
-      <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">
+      <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form"
+            data-error-too-large="{{ t('pages.samplingPlanUpload.validation.fileTooLarge') }}"
+            data-error-invalid-type="{{ t('pages.samplingPlanUpload.validation.invalidType') }}"
+            data-error-no-document-type="{{ t('pages.samplingPlanUpload.validation.noDocumentType') }}"
+            data-error-no-file="{{ t('pages.samplingPlanUpload.validation.noFile') }}">
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
         <div class="govuk-form-group{% if documentTypeError %} govuk-form-group--error{% endif %}">
@@ -100,106 +106,4 @@
 
     </div>
   </div>
-{% endblock %}
-
-{% block bodyEnd %}
-  {{ super() }}
-  <script>
-    (function () {
-      var MAX_BYTES = 20 * 1024 * 1024
-      var ALLOWED_EXTS = ['pdf','doc','docx','xls','csv','png','tif','jpg','msg']
-      var errorTooLarge = {{ t('pages.samplingPlanUpload.validation.fileTooLarge') | dump | safe }}
-      var errorInvalidType = {{ t('pages.samplingPlanUpload.validation.invalidType') | dump | safe }}
-      var errorNoDocumentType = {{ t('pages.samplingPlanUpload.validation.noDocumentType') | dump | safe }}
-      var fileInput = document.querySelector('[data-testid="file-input"]')
-      var documentTypeSelect = document.querySelector('[data-testid="document-type-input"]')
-      var uploadForm = document.querySelector('[data-testid="upload-form"]')
-      if (!fileInput || !uploadForm) return
-      var formGroup = fileInput.closest('.govuk-form-group')
-      var documentTypeFormGroup = documentTypeSelect && documentTypeSelect.closest('.govuk-form-group')
-
-      function showDocumentTypeError() {
-        if (!documentTypeSelect) return
-        documentTypeFormGroup.classList.add('govuk-form-group--error')
-        documentTypeSelect.classList.add('govuk-select--error')
-        var errorEl = document.getElementById('document-type-error')
-        if (!errorEl) {
-          errorEl = document.createElement('p')
-          errorEl.id = 'document-type-error'
-          errorEl.className = 'govuk-error-message'
-          errorEl.setAttribute('data-testid', 'document-type-error')
-          documentTypeSelect.insertAdjacentElement('beforebegin', errorEl)
-        }
-        errorEl.innerHTML = '<span class="govuk-visually-hidden">Error:</span> ' + errorNoDocumentType
-        documentTypeSelect.setAttribute('aria-describedby', 'document-type-error')
-      }
-
-      function clearDocumentTypeError() {
-        if (!documentTypeSelect) return
-        documentTypeFormGroup.classList.remove('govuk-form-group--error')
-        documentTypeSelect.classList.remove('govuk-select--error')
-        documentTypeSelect.removeAttribute('aria-describedby')
-        var errorEl = document.getElementById('document-type-error')
-        if (errorEl) errorEl.remove()
-      }
-
-      function getExt(filename) {
-        var parts = (filename || '').split('.')
-        return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ''
-      }
-
-      function validate(file) {
-        if (!file) return null
-        if (ALLOWED_EXTS.indexOf(getExt(file.name)) === -1) return errorInvalidType
-        if (file.size > MAX_BYTES) return errorTooLarge
-        return null
-      }
-
-      function showError(text) {
-        formGroup.classList.add('govuk-form-group--error')
-        fileInput.classList.add('govuk-file-upload--error')
-        var errorEl = document.getElementById('file-error')
-        if (!errorEl) {
-          errorEl = document.createElement('p')
-          errorEl.id = 'file-error'
-          errorEl.className = 'govuk-error-message'
-          errorEl.setAttribute('data-testid', 'file-error')
-          fileInput.insertAdjacentElement('beforebegin', errorEl)
-        }
-        errorEl.innerHTML = '<span class="govuk-visually-hidden">Error:</span> ' + text
-        fileInput.setAttribute('aria-describedby', 'file-error')
-        fileInput.value = ''
-      }
-
-      function clearError() {
-        formGroup.classList.remove('govuk-form-group--error')
-        fileInput.classList.remove('govuk-file-upload--error')
-        fileInput.removeAttribute('aria-describedby')
-        var errorEl = document.getElementById('file-error')
-        if (errorEl) errorEl.remove()
-      }
-
-      fileInput.addEventListener('change', function () {
-        var error = validate(this.files[0])
-        if (error) { showError(error) } else { clearError() }
-      })
-
-      if (documentTypeSelect) {
-        documentTypeSelect.addEventListener('change', function () {
-          if (this.value) { clearDocumentTypeError() } else { showDocumentTypeError() }
-        })
-      }
-
-      uploadForm.addEventListener('submit', function (e) {
-        var fileErrorText = validate(fileInput.files[0])
-        var documentTypeMissing = documentTypeSelect && !documentTypeSelect.value
-
-        if (fileErrorText || documentTypeMissing) {
-          e.preventDefault()
-          if (fileErrorText) { showError(fileErrorText) }
-          if (documentTypeMissing) { showDocumentTypeError() }
-        }
-      })
-    })()
-  </script>
 {% endblock %}
