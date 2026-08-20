@@ -38,6 +38,13 @@ if (countrySelect) {
 // GDS-style error handling, and Continue-button gating that #country has no
 // need for — folding them into one helper risked that behaviour leaking
 // onto #country.
+const BASEL_FORM_GROUP_ERROR_CLASS = 'govuk-form-group--error'
+const BASEL_INPUT_ERROR_CLASS = 'govuk-input--error'
+const BASEL_ARIA_DESCRIBEDBY = 'aria-describedby'
+const BASEL_ERROR_MESSAGE_CLASS = 'govuk-error-message'
+const BASEL_ERROR_MESSAGE_PREFIX =
+  '<span class="govuk-visually-hidden">Error:</span> '
+
 const baselOecdCodeSelects = Array.from(
   document.querySelectorAll('[data-autocomplete="basel-oecd-code"]')
 )
@@ -46,19 +53,239 @@ if (baselOecdCodeSelects.length > 0) {
   initBaselOecdCodeAutocomplete(baselOecdCodeSelects)
 }
 
+function allCodesForRow(row) {
+  return Array.from(row.selectElement.options)
+    .map((option) => option.value)
+    .filter(Boolean)
+}
+
+function codesSelectedElsewhere(rows, row) {
+  return new Set(
+    rows
+      .filter((other) => other !== row)
+      .map((other) => other.selectElement.value)
+      .filter(Boolean)
+  )
+}
+
+function isCodeValid(row, rawValue) {
+  const value = rawValue.trim()
+  if (value === '') {
+    return true
+  }
+  return allCodesForRow(row).some(
+    (code) => code.toLowerCase() === value.toLowerCase()
+  )
+}
+
+function updateBaselErrorSummary(rows, errorSummaryTitle) {
+  const erroredRows = rows.filter((row) => row.hasError)
+  let summary = document.querySelector('[data-testid="error-summary"]')
+
+  if (erroredRows.length === 0) {
+    summary?.remove()
+    return
+  }
+
+  if (!summary) {
+    summary = document.createElement('div')
+    summary.className = 'govuk-error-summary'
+    summary.dataset.module = 'govuk-error-summary'
+    summary.setAttribute('role', 'alert')
+    summary.dataset.testid = 'error-summary'
+    summary.innerHTML =
+      '<h2 class="govuk-error-summary__title"></h2>' +
+      '<div class="govuk-error-summary__body">' +
+      '<ul class="govuk-list govuk-error-summary__list"></ul></div>'
+    summary.querySelector('.govuk-error-summary__title').textContent =
+      errorSummaryTitle
+    const heading = document.querySelector('[data-testid="page-heading"]')
+    heading?.insertAdjacentElement('beforebegin', summary)
+  }
+
+  const list = summary.querySelector('.govuk-error-summary__list')
+  list.innerHTML = ''
+  erroredRows.forEach((row) => {
+    const item = document.createElement('li')
+    const link = document.createElement('a')
+    link.setAttribute('href', '#' + row.originalId)
+    link.textContent = row.noResultsText
+    item.appendChild(link)
+    list.appendChild(item)
+  })
+}
+
+function showRowError(row, rows, errorSummaryTitle) {
+  row.hasError = true
+  row.formGroup?.classList.add(BASEL_FORM_GROUP_ERROR_CLASS)
+  row.inputElement?.classList.add(BASEL_INPUT_ERROR_CLASS)
+
+  const errorId = row.originalId + '-client-error'
+  if (row.inputElement && !document.getElementById(errorId)) {
+    const errorEl = document.createElement('p')
+    errorEl.id = errorId
+    errorEl.className = BASEL_ERROR_MESSAGE_CLASS
+    errorEl.innerHTML = BASEL_ERROR_MESSAGE_PREFIX + row.noResultsText
+    row.inputElement.insertAdjacentElement('beforebegin', errorEl)
+  }
+  row.inputElement?.setAttribute(BASEL_ARIA_DESCRIBEDBY, errorId)
+  updateBaselErrorSummary(rows, errorSummaryTitle)
+}
+
+function clearRowError(row, rows, errorSummaryTitle) {
+  if (!row.hasError) {
+    return
+  }
+  row.hasError = false
+  row.formGroup?.classList.remove(BASEL_FORM_GROUP_ERROR_CLASS)
+  row.inputElement?.classList.remove(BASEL_INPUT_ERROR_CLASS)
+  document.getElementById(row.originalId + '-client-error')?.remove()
+  row.inputElement?.removeAttribute(BASEL_ARIA_DESCRIBEDBY)
+  updateBaselErrorSummary(rows, errorSummaryTitle)
+}
+
+function updateContinueButton(rows, continueButton) {
+  if (!continueButton) {
+    return
+  }
+  const allValid = rows.every((row) => isCodeValid(row, row.currentValue))
+  continueButton.disabled = !allValid
+  if (allValid) {
+    continueButton.removeAttribute('aria-disabled')
+  } else {
+    continueButton.setAttribute('aria-disabled', 'true')
+  }
+}
+
+function recomputeRow(row, rawValue, rows, continueButton, errorSummaryTitle) {
+  row.currentValue = rawValue
+  if (isCodeValid(row, rawValue)) {
+    clearRowError(row, rows, errorSummaryTitle)
+  } else {
+    showRowError(row, rows, errorSummaryTitle)
+  }
+  updateContinueButton(rows, continueButton)
+}
+
+// Starts-with match capped at 10, excluding codes already picked in
+// sibling rows (AC02/AC03/AC04).
+function buildBaselSourceHandler(row, rows) {
+  return (query, populateResults) => {
+    const excluded = codesSelectedElsewhere(rows, row)
+    const available = allCodesForRow(row).filter((code) => !excluded.has(code))
+
+    if (!query) {
+      populateResults(available.slice(0, 10))
+      return
+    }
+
+    const lowerQuery = query.toLowerCase()
+    populateResults(
+      available.filter((code) => code.toLowerCase().startsWith(lowerQuery))
+    )
+  }
+}
+
+// Preact updates the visible input's value directly when a suggestion is
+// confirmed (click, enter, or blur-with-a-highlighted-option) — that
+// doesn't dispatch a native `input` event, so the per-keystroke listener
+// wouldn't otherwise see it. Hooking onConfirm covers that path too.
+//
+// On confirmOnBlur with nothing highlighted, the library calls
+// onConfirm(undefined) — fall back to the input's current DOM value
+// (accurate here: real keystrokes already wrote it, and it's what the
+// per-keystroke listener was already validating against).
+function buildBaselConfirmHandler(
+  row,
+  rows,
+  continueButton,
+  errorSummaryTitle
+) {
+  return (value) => {
+    const { selectElement } = row
+    const resolvedValue = (value || row.inputElement?.value || '').trim()
+    const requestedOption = Array.from(selectElement.options).find(
+      (option) => (option.textContent || option.innerText) === resolvedValue
+    )
+    if (requestedOption) {
+      requestedOption.selected = true
+    } else {
+      selectElement.value = ''
+    }
+    recomputeRow(row, resolvedValue, rows, continueButton, errorSummaryTitle)
+  }
+}
+
+// accessible-autocomplete replaces the original <select> with a new
+// enhanced <input>; the data-testid has to be moved across by hand so
+// existing locators (server-rendered and e2e) keep resolving to whichever
+// element is now visible.
+function preserveDataTestId(selectElement, originalId) {
+  const testId = selectElement.dataset.testid
+  if (!testId) {
+    return
+  }
+  const enhancedInput = document.getElementById(originalId)
+  if (enhancedInput) {
+    delete selectElement.dataset.testid
+    enhancedInput.dataset.testid = testId
+  }
+}
+
+function wireBaselOecdRow(row, rows, continueButton, errorSummaryTitle) {
+  const { selectElement, originalId, noResultsText } = row
+
+  accessibleAutocomplete.enhanceSelectElement({
+    selectElement,
+    // NOTE: despite the name, this does not mean "show all codes" — that
+    // would defeat the point of capping the empty-query case. It's what
+    // makes the library call `source('', cb)` on click/focus of an empty
+    // field at all (see handleInputClick/handleInputChange in
+    // accessible-autocomplete's autocomplete.js); with it left false (as
+    // originally planned), the library never asks for suggestions until
+    // the user types a character, and AC03's "focus an empty field, see
+    // the first 10 codes" never fires. The actual cap to 10 results is
+    // still enforced by our own `source` below, regardless of this flag.
+    showAllValues: true,
+    confirmOnBlur: true,
+    defaultValue: selectElement.value,
+    tNoResults: () => noResultsText,
+    tStatusNoResults: () => noResultsText,
+    source: buildBaselSourceHandler(row, rows),
+    onConfirm: buildBaselConfirmHandler(
+      row,
+      rows,
+      continueButton,
+      errorSummaryTitle
+    )
+  })
+
+  preserveDataTestId(selectElement, originalId)
+
+  row.inputElement = document.getElementById(originalId)
+  row.inputElement?.addEventListener('input', (event) => {
+    recomputeRow(
+      row,
+      event.target.value,
+      rows,
+      continueButton,
+      errorSummaryTitle
+    )
+  })
+}
+
 function initBaselOecdCodeAutocomplete(selectElements) {
   const continueButton = document.querySelector(
     '[data-testid="continue-button"]'
   )
   const form = document.querySelector('[data-testid="basel-codes-form"]')
   const errorSummaryTitle =
-    form?.getAttribute('data-error-summary-title') || 'There is a problem'
+    form?.dataset.errorSummaryTitle || 'There is a problem'
 
   const rows = selectElements.map((selectElement) => ({
     selectElement,
     originalId: selectElement.id,
-    noResultsText:
-      selectElement.getAttribute('data-no-results-text') || 'No matches found',
+    noResultsText: selectElement.dataset.noResultsText || 'No matches found',
     formGroup: selectElement.closest('.govuk-form-group'),
     inputElement: null,
     hasError: false,
@@ -70,186 +297,11 @@ function initBaselOecdCodeAutocomplete(selectElements) {
     currentValue: selectElement.value
   }))
 
-  function allCodesForRow(row) {
-    return Array.from(row.selectElement.options)
-      .map((option) => option.value)
-      .filter(Boolean)
-  }
+  rows.forEach((row) =>
+    wireBaselOecdRow(row, rows, continueButton, errorSummaryTitle)
+  )
 
-  function codesSelectedElsewhere(row) {
-    return new Set(
-      rows
-        .filter((other) => other !== row)
-        .map((other) => other.selectElement.value)
-        .filter(Boolean)
-    )
-  }
-
-  function isCodeValid(row, rawValue) {
-    const value = rawValue.trim()
-    if (value === '') return true
-    return allCodesForRow(row).some(
-      (code) => code.toLowerCase() === value.toLowerCase()
-    )
-  }
-
-  function updateErrorSummary() {
-    const erroredRows = rows.filter((row) => row.hasError)
-    let summary = document.querySelector('[data-testid="error-summary"]')
-
-    if (erroredRows.length === 0) {
-      summary?.remove()
-      return
-    }
-
-    if (!summary) {
-      summary = document.createElement('div')
-      summary.className = 'govuk-error-summary'
-      summary.setAttribute('data-module', 'govuk-error-summary')
-      summary.setAttribute('role', 'alert')
-      summary.setAttribute('data-testid', 'error-summary')
-      summary.innerHTML =
-        '<h2 class="govuk-error-summary__title"></h2>' +
-        '<div class="govuk-error-summary__body">' +
-        '<ul class="govuk-list govuk-error-summary__list"></ul></div>'
-      summary.querySelector('.govuk-error-summary__title').textContent =
-        errorSummaryTitle
-      const heading = document.querySelector('[data-testid="page-heading"]')
-      heading?.insertAdjacentElement('beforebegin', summary)
-    }
-
-    const list = summary.querySelector('.govuk-error-summary__list')
-    list.innerHTML = ''
-    erroredRows.forEach((row) => {
-      const item = document.createElement('li')
-      const link = document.createElement('a')
-      link.setAttribute('href', '#' + row.originalId)
-      link.textContent = row.noResultsText
-      item.appendChild(link)
-      list.appendChild(item)
-    })
-  }
-
-  function showRowError(row) {
-    row.hasError = true
-    row.formGroup?.classList.add('govuk-form-group--error')
-    row.inputElement?.classList.add('govuk-input--error')
-
-    const errorId = row.originalId + '-client-error'
-    if (row.inputElement && !document.getElementById(errorId)) {
-      const errorEl = document.createElement('p')
-      errorEl.id = errorId
-      errorEl.className = 'govuk-error-message'
-      errorEl.innerHTML =
-        '<span class="govuk-visually-hidden">Error:</span> ' + row.noResultsText
-      row.inputElement.insertAdjacentElement('beforebegin', errorEl)
-    }
-    row.inputElement?.setAttribute('aria-describedby', errorId)
-    updateErrorSummary()
-  }
-
-  function clearRowError(row) {
-    if (!row.hasError) return
-    row.hasError = false
-    row.formGroup?.classList.remove('govuk-form-group--error')
-    row.inputElement?.classList.remove('govuk-input--error')
-    document.getElementById(row.originalId + '-client-error')?.remove()
-    row.inputElement?.removeAttribute('aria-describedby')
-    updateErrorSummary()
-  }
-
-  function updateContinueButton() {
-    if (!continueButton) return
-    const allValid = rows.every((row) => isCodeValid(row, row.currentValue))
-    continueButton.disabled = !allValid
-    if (allValid) {
-      continueButton.removeAttribute('aria-disabled')
-    } else {
-      continueButton.setAttribute('aria-disabled', 'true')
-    }
-  }
-
-  function recomputeRow(row, rawValue) {
-    row.currentValue = rawValue
-    if (isCodeValid(row, rawValue)) {
-      clearRowError(row)
-    } else {
-      showRowError(row)
-    }
-    updateContinueButton()
-  }
-
-  rows.forEach((row) => {
-    const { selectElement, originalId, noResultsText } = row
-    const testId = selectElement.getAttribute('data-testid')
-
-    accessibleAutocomplete.enhanceSelectElement({
-      selectElement,
-      // NOTE: despite the name, this does not mean "show all codes" — that
-      // would defeat the point of capping the empty-query case. It's what
-      // makes the library call `source('', cb)` on click/focus of an empty
-      // field at all (see handleInputClick/handleInputChange in
-      // accessible-autocomplete's autocomplete.js); with it left false (as
-      // originally planned), the library never asks for suggestions until
-      // the user types a character, and AC03's "focus an empty field, see
-      // the first 10 codes" never fires. The actual cap to 10 results is
-      // still enforced by our own `source` below, regardless of this flag.
-      showAllValues: true,
-      confirmOnBlur: true,
-      defaultValue: selectElement.value,
-      tNoResults: () => noResultsText,
-      tStatusNoResults: () => noResultsText,
-      source(query, populateResults) {
-        const excluded = codesSelectedElsewhere(row)
-        const available = allCodesForRow(row).filter(
-          (code) => !excluded.has(code)
-        )
-
-        if (!query) {
-          populateResults(available.slice(0, 10))
-          return
-        }
-
-        const lowerQuery = query.toLowerCase()
-        populateResults(
-          available.filter((code) => code.toLowerCase().startsWith(lowerQuery))
-        )
-      },
-      // Preact updates the visible input's value directly when a suggestion
-      // is confirmed (click, enter, or blur-with-a-highlighted-option) —
-      // that doesn't dispatch a native `input` event, so the listener below
-      // wouldn't otherwise see it. Hook onConfirm to cover that path too.
-      //
-      // On confirmOnBlur with nothing highlighted, the library calls
-      // onConfirm(undefined) — fall back to the input's current DOM value
-      // (accurate here: real keystrokes already wrote it, and it's what the
-      // per-keystroke listener below was already validating against).
-      onConfirm(value) {
-        const resolvedValue = (value || row.inputElement?.value || '').trim()
-        const requestedOption = Array.from(selectElement.options).find(
-          (option) => (option.textContent || option.innerText) === resolvedValue
-        )
-        if (requestedOption) {
-          requestedOption.selected = true
-        } else {
-          selectElement.value = ''
-        }
-        recomputeRow(row, resolvedValue)
-      }
-    })
-
-    if (testId) {
-      selectElement.removeAttribute('data-testid')
-      document.getElementById(originalId)?.setAttribute('data-testid', testId)
-    }
-
-    row.inputElement = document.getElementById(originalId)
-    row.inputElement?.addEventListener('input', (event) => {
-      recomputeRow(row, event.target.value)
-    })
-  })
-
-  updateContinueButton()
+  updateContinueButton(rows, continueButton)
 }
 
 // The sampling-plan-upload page's client-side validation lives here rather
