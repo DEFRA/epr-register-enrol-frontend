@@ -221,7 +221,9 @@ describe('#stubAuthPlugin (stub/local-dev mode)', () => {
       userType: 'regulator',
       regulatorRole: ROLE_REGULATOR_STANDARD
     }
-    const request = { yar: { get: vi.fn().mockReturnValue(user) } }
+    const request = {
+      yar: { get: vi.fn().mockReturnValue(user), set: vi.fn() }
+    }
     const h = { unauthenticated: vi.fn(), authenticated: vi.fn((v) => v) }
 
     authenticate(request, h)
@@ -237,7 +239,9 @@ describe('#stubAuthPlugin (stub/local-dev mode)', () => {
   test('omits the regulatorRole from scope when the session user has none', async () => {
     const authenticate = await getYarSessionAuthenticate()
     const user = { userType: 'operator' }
-    const request = { yar: { get: vi.fn().mockReturnValue(user) } }
+    const request = {
+      yar: { get: vi.fn().mockReturnValue(user), set: vi.fn() }
+    }
     const h = { unauthenticated: vi.fn(), authenticated: vi.fn((v) => v) }
 
     authenticate(request, h)
