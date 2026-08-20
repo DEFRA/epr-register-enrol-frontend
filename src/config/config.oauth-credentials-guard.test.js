@@ -93,6 +93,7 @@ describe('OAuth credentials boot guard', () => {
   test('production boot succeeds when all Entra and Defra ID credentials are set', async () => {
     setProdWithRedisDeps()
     process.env.AUTH_STUB_ENABLED = 'false'
+    process.env.API_STUB_ENABLED = 'false'
     process.env.ENTRA_CLIENT_ID = 'azure-client-id'
     process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
     process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'
