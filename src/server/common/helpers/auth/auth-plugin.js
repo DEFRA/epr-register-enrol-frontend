@@ -1,29 +1,15 @@
-import Boom from '@hapi/boom'
-
 import { redirectToLogin } from './auth-redirect.js'
+import { yarSessionAuthenticate } from './session-idle-timeout.js'
 
 export const authPlugin = {
   plugin: {
     name: 'auth',
     async register(server) {
-      // Custom scheme: reads the authenticated user from the yar server-side session.
-      // Yar is loaded in onPreAuth (before this runs), so request.yar is always available.
+      // Custom scheme: reads the authenticated user from the yar server-side session
+      // and enforces the idle-timeout (RA-461). Yar is loaded in onPreAuth (before
+      // this runs), so request.yar is always available.
       server.auth.scheme('yar-session', () => ({
-        authenticate(request, h) {
-          const user = request.yar.get('user')
-          if (!user) {
-            return h.unauthenticated(Boom.unauthorized(null, 'session'))
-          }
-          return h.authenticated({
-            credentials: {
-              ...user,
-              scope: [
-                user.userType,
-                ...(user.regulatorRole ? [user.regulatorRole] : [])
-              ]
-            }
-          })
-        }
+        authenticate: yarSessionAuthenticate
       }))
 
       server.auth.strategy('session', 'yar-session')
