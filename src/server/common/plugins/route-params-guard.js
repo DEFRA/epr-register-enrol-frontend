@@ -90,20 +90,19 @@ export const routeParamsGuard = {
     name: 'route-params-guard',
     register(server) {
       server.ext('onPreHandler', (request, h) => {
-        // Single pass per param (not findInvalidParam then normaliseParams)
-        // so a request with N schema-having params only calls
-        // schema.validate() N times, not 2N.
-        for (const [key, value] of Object.entries(request.params ?? {})) {
-          const schema = PARAM_SCHEMAS[key]
-          if (!schema) continue
-          const { error, value: normalised } = schema.validate(value)
-          if (error) {
-            throw Boom.badRequest(`Invalid ${key} in request path.`)
-          }
-          if (NORMALISED_PARAM_KEYS.includes(key)) {
-            request.params[key] = normalised
-          }
+        // findInvalidParam validates every schema-having param once (N
+        // calls); normaliseParams only re-validates the keys in
+        // NORMALISED_PARAM_KEYS (materialType — effectively O(1)), so this
+        // is N+1 schema.validate() calls, not the pre-PR 2N. Calling the
+        // exported functions here (rather than reimplementing the same
+        // validate/normalise logic inline) keeps a single source of truth —
+        // see the review discussion on PR #260 for why a second inline
+        // implementation was rejected.
+        const invalidParam = findInvalidParam(request.params)
+        if (invalidParam) {
+          throw Boom.badRequest(`Invalid ${invalidParam} in request path.`)
         }
+        normaliseParams(request.params)
         return h.continue
       })
     }
