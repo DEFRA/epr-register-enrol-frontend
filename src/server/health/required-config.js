@@ -33,12 +33,6 @@ export function getMissingRequiredConfig(cfg) {
     missing.push('AUTH_SHARED_SECRET__BACKEND')
   }
 
-  // Uploads go through the stub-complete-upload route instead of the real CDP
-  // uploader flow when api.stubEnabled is true (see src/server/router.js).
-  if (!cfg.get('api.stubEnabled') && !cfg.get('fileUpload.cdpUploaderUrl')) {
-    missing.push('CDP_UPLOADER_URL')
-  }
-
   // Only load-bearing once real (non-stub) auth is active outside local dev —
   // mirrors the condition reExBackLinkUrl itself uses (operator-accreditation/controller.js).
   if (!stubEnabled && !isLocal && !cfg.get('reex.frontendBaseUrl')) {

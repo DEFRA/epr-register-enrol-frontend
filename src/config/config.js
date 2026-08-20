@@ -342,12 +342,6 @@ export const config = convict({
       format: String,
       default: 'epr-register-enrol-file-uploads',
       env: 'FILE_UPLOAD_S3_BUCKET'
-    },
-    cdpUploaderUrl: {
-      doc: 'Base URL of the CDP uploader service, used to poll upload status',
-      format: String,
-      default: '',
-      env: 'CDP_UPLOADER_URL'
     }
   },
   api: {
