@@ -9,6 +9,15 @@ import {
 } from 'govuk-frontend'
 import accessibleAutocomplete from 'accessible-autocomplete'
 
+// Shared across the client-side validation below (Basel/OECD codes and the
+// sampling-plan file upload both build their own inline GDS error markup).
+const GOVUK_FORM_GROUP_SELECTOR = '.govuk-form-group'
+const GOVUK_FORM_GROUP_ERROR_CLASS = 'govuk-form-group--error'
+const GOVUK_ERROR_MESSAGE_CLASS = 'govuk-error-message'
+const ARIA_DESCRIBEDBY = 'aria-describedby'
+const ERROR_MESSAGE_PREFIX =
+  '<span class="govuk-visually-hidden">Error:</span> '
+
 createAll(Button)
 createAll(CharacterCount)
 createAll(Checkboxes)
@@ -38,12 +47,7 @@ if (countrySelect) {
 // GDS-style error handling, and Continue-button gating that #country has no
 // need for — folding them into one helper risked that behaviour leaking
 // onto #country.
-const BASEL_FORM_GROUP_ERROR_CLASS = 'govuk-form-group--error'
 const BASEL_INPUT_ERROR_CLASS = 'govuk-input--error'
-const BASEL_ARIA_DESCRIBEDBY = 'aria-describedby'
-const BASEL_ERROR_MESSAGE_CLASS = 'govuk-error-message'
-const BASEL_ERROR_MESSAGE_PREFIX =
-  '<span class="govuk-visually-hidden">Error:</span> '
 
 const baselOecdCodeSelects = Array.from(
   document.querySelectorAll('[data-autocomplete="basel-oecd-code"]')
@@ -117,18 +121,18 @@ function updateBaselErrorSummary(rows, errorSummaryTitle) {
 
 function showRowError(row, rows, errorSummaryTitle) {
   row.hasError = true
-  row.formGroup?.classList.add(BASEL_FORM_GROUP_ERROR_CLASS)
+  row.formGroup?.classList.add(GOVUK_FORM_GROUP_ERROR_CLASS)
   row.inputElement?.classList.add(BASEL_INPUT_ERROR_CLASS)
 
   const errorId = row.originalId + '-client-error'
   if (row.inputElement && !document.getElementById(errorId)) {
     const errorEl = document.createElement('p')
     errorEl.id = errorId
-    errorEl.className = BASEL_ERROR_MESSAGE_CLASS
-    errorEl.innerHTML = BASEL_ERROR_MESSAGE_PREFIX + row.noResultsText
+    errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
+    errorEl.innerHTML = ERROR_MESSAGE_PREFIX + row.noResultsText
     row.inputElement.insertAdjacentElement('beforebegin', errorEl)
   }
-  row.inputElement?.setAttribute(BASEL_ARIA_DESCRIBEDBY, errorId)
+  row.inputElement?.setAttribute(ARIA_DESCRIBEDBY, errorId)
   updateBaselErrorSummary(rows, errorSummaryTitle)
 }
 
@@ -137,10 +141,10 @@ function clearRowError(row, rows, errorSummaryTitle) {
     return
   }
   row.hasError = false
-  row.formGroup?.classList.remove(BASEL_FORM_GROUP_ERROR_CLASS)
+  row.formGroup?.classList.remove(GOVUK_FORM_GROUP_ERROR_CLASS)
   row.inputElement?.classList.remove(BASEL_INPUT_ERROR_CLASS)
   document.getElementById(row.originalId + '-client-error')?.remove()
-  row.inputElement?.removeAttribute(BASEL_ARIA_DESCRIBEDBY)
+  row.inputElement?.removeAttribute(ARIA_DESCRIBEDBY)
   updateBaselErrorSummary(rows, errorSummaryTitle)
 }
 
@@ -286,7 +290,7 @@ function initBaselOecdCodeAutocomplete(selectElements) {
     selectElement,
     originalId: selectElement.id,
     noResultsText: selectElement.dataset.noResultsText || 'No matches found',
-    formGroup: selectElement.closest('.govuk-form-group'),
+    formGroup: selectElement.closest(GOVUK_FORM_GROUP_SELECTOR),
     inputElement: null,
     hasError: false,
     // The value this row was last known to hold — from the server-rendered
@@ -364,29 +368,30 @@ function initSamplingPlanUpload(
   // Cache-Control: no-store nor clearing fileInput.value survives that.
   let userSelectedFile = false
   let fileInput = initialFileInput
-  const formGroup = fileInput.closest('.govuk-form-group')
-  const documentTypeFormGroup = documentTypeSelect.closest('.govuk-form-group')
+  const formGroup = fileInput.closest(GOVUK_FORM_GROUP_SELECTOR)
+  const documentTypeFormGroup = documentTypeSelect.closest(
+    GOVUK_FORM_GROUP_SELECTOR
+  )
 
   function showDocumentTypeError() {
-    documentTypeFormGroup.classList.add('govuk-form-group--error')
+    documentTypeFormGroup.classList.add(GOVUK_FORM_GROUP_ERROR_CLASS)
     documentTypeSelect.classList.add('govuk-select--error')
     let errorEl = document.getElementById('document-type-error')
     if (!errorEl) {
       errorEl = document.createElement('p')
       errorEl.id = 'document-type-error'
-      errorEl.className = 'govuk-error-message'
+      errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
       errorEl.setAttribute('data-testid', 'document-type-error')
       documentTypeSelect.insertAdjacentElement('beforebegin', errorEl)
     }
-    errorEl.innerHTML =
-      '<span class="govuk-visually-hidden">Error:</span> ' + errorNoDocumentType
-    documentTypeSelect.setAttribute('aria-describedby', 'document-type-error')
+    errorEl.innerHTML = ERROR_MESSAGE_PREFIX + errorNoDocumentType
+    documentTypeSelect.setAttribute(ARIA_DESCRIBEDBY, 'document-type-error')
   }
 
   function clearDocumentTypeError() {
-    documentTypeFormGroup.classList.remove('govuk-form-group--error')
+    documentTypeFormGroup.classList.remove(GOVUK_FORM_GROUP_ERROR_CLASS)
     documentTypeSelect.classList.remove('govuk-select--error')
-    documentTypeSelect.removeAttribute('aria-describedby')
+    documentTypeSelect.removeAttribute(ARIA_DESCRIBEDBY)
     const errorEl = document.getElementById('document-type-error')
     if (errorEl) errorEl.remove()
   }
@@ -404,26 +409,25 @@ function initSamplingPlanUpload(
   }
 
   function showError(text) {
-    formGroup.classList.add('govuk-form-group--error')
+    formGroup.classList.add(GOVUK_FORM_GROUP_ERROR_CLASS)
     fileInput.classList.add('govuk-file-upload--error')
     let errorEl = document.getElementById('file-error')
     if (!errorEl) {
       errorEl = document.createElement('p')
       errorEl.id = 'file-error'
-      errorEl.className = 'govuk-error-message'
+      errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
       errorEl.setAttribute('data-testid', 'file-error')
       fileInput.insertAdjacentElement('beforebegin', errorEl)
     }
-    errorEl.innerHTML =
-      '<span class="govuk-visually-hidden">Error:</span> ' + text
-    fileInput.setAttribute('aria-describedby', 'file-error')
+    errorEl.innerHTML = ERROR_MESSAGE_PREFIX + text
+    fileInput.setAttribute(ARIA_DESCRIBEDBY, 'file-error')
     fileInput.value = ''
   }
 
   function clearError() {
-    formGroup.classList.remove('govuk-form-group--error')
+    formGroup.classList.remove(GOVUK_FORM_GROUP_ERROR_CLASS)
     fileInput.classList.remove('govuk-file-upload--error')
-    fileInput.removeAttribute('aria-describedby')
+    fileInput.removeAttribute(ARIA_DESCRIBEDBY)
     const errorEl = document.getElementById('file-error')
     if (errorEl) errorEl.remove()
   }
