@@ -54,6 +54,14 @@ const PARAM_SCHEMAS = {
     .insensitive()
 }
 
+// Only materialType's schema value can differ from its raw input (case
+// normalisation) — every other schema here validates shape without
+// transforming the value. Scoped explicitly rather than rewriting every
+// schema-having param, so this guard can't silently start coercing types
+// (e.g. siteId/year strings to numbers) for params no route has asked for
+// or tested that coercion against.
+const NORMALISED_PARAM_KEYS = ['materialType']
+
 export function findInvalidParam(params) {
   for (const [key, value] of Object.entries(params ?? {})) {
     const schema = PARAM_SCHEMAS[key]
@@ -67,14 +75,12 @@ export function findInvalidParam(params) {
 }
 
 // Rewrites params in place to the canonical casing their schema validated
-// against (currently only materialType varies in practice) so every
-// consumer downstream of this guard can keep comparing against the
-// capitalised MATERIAL_TYPES form.
+// against. Only touches the keys in NORMALISED_PARAM_KEYS (materialType) —
+// see the comment there for why the rest are left as-is.
 export function normaliseParams(params) {
-  for (const [key, value] of Object.entries(params ?? {})) {
-    const schema = PARAM_SCHEMAS[key]
-    if (!schema) continue
-    const { value: normalised } = schema.validate(value)
+  for (const key of NORMALISED_PARAM_KEYS) {
+    if (!(key in (params ?? {}))) continue
+    const { value: normalised } = PARAM_SCHEMAS[key].validate(params[key])
     params[key] = normalised
   }
 }
@@ -84,11 +90,20 @@ export const routeParamsGuard = {
     name: 'route-params-guard',
     register(server) {
       server.ext('onPreHandler', (request, h) => {
-        const invalidParam = findInvalidParam(request.params)
-        if (invalidParam) {
-          throw Boom.badRequest(`Invalid ${invalidParam} in request path.`)
+        // Single pass per param (not findInvalidParam then normaliseParams)
+        // so a request with N schema-having params only calls
+        // schema.validate() N times, not 2N.
+        for (const [key, value] of Object.entries(request.params ?? {})) {
+          const schema = PARAM_SCHEMAS[key]
+          if (!schema) continue
+          const { error, value: normalised } = schema.validate(value)
+          if (error) {
+            throw Boom.badRequest(`Invalid ${key} in request path.`)
+          }
+          if (NORMALISED_PARAM_KEYS.includes(key)) {
+            request.params[key] = normalised
+          }
         }
-        normaliseParams(request.params)
         return h.continue
       })
     }

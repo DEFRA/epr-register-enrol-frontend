@@ -1,5 +1,10 @@
+import Hapi from '@hapi/hapi'
 import { describe, test, expect } from 'vitest'
-import { findInvalidParam, normaliseParams } from './route-params-guard.js'
+import {
+  findInvalidParam,
+  normaliseParams,
+  routeParamsGuard
+} from './route-params-guard.js'
 
 describe('findInvalidParam', () => {
   test('returns null when there are no params', () => {
@@ -74,5 +79,51 @@ describe('normaliseParams', () => {
       materialType: 'Steel',
       someOtherParam: 'unchanged'
     })
+  })
+
+  // siteId/year have Joi.number() schemas (needed so findInvalidParam can
+  // reject non-numeric values), but normaliseParams must not write their
+  // coerced-to-number value back — every current consumer expects the raw
+  // string param, and this guard has no route-scoped reason to change that
+  // app-wide.
+  test('does not coerce siteId/year to numbers', () => {
+    const params = { siteId: '900001', year: '2026' }
+    normaliseParams(params)
+    expect(params).toEqual({ siteId: '900001', year: '2026' })
+    expect(typeof params.siteId).toBe('string')
+    expect(typeof params.year).toBe('string')
+  })
+})
+
+describe('routeParamsGuard plugin', () => {
+  async function makeServer() {
+    const server = Hapi.server()
+    await server.register(routeParamsGuard)
+    server.route({
+      method: 'GET',
+      path: '/test/{siteId}/{materialType}',
+      handler: (request) => request.params
+    })
+    await server.initialize()
+    return server
+  }
+
+  test('rejects an invalid param with a 400 before the handler runs', async () => {
+    const server = await makeServer()
+
+    const { statusCode } = await server.inject('/test/not-a-number/Steel')
+
+    expect(statusCode).toBe(400)
+    await server.stop({ timeout: 0 })
+  })
+
+  test('normalises materialType casing but leaves siteId as the raw string', async () => {
+    const server = await makeServer()
+
+    const { statusCode, result } = await server.inject('/test/900001/steel')
+
+    expect(statusCode).toBe(200)
+    expect(result).toEqual({ siteId: '900001', materialType: 'Steel' })
+    await server.stop({ timeout: 0 })
   })
 })
