@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { findInvalidParam } from './route-params-guard.js'
+import { findInvalidParam, normaliseParams } from './route-params-guard.js'
 
 describe('findInvalidParam', () => {
   test('returns null when there are no params', () => {
@@ -47,5 +47,32 @@ describe('findInvalidParam', () => {
     expect(findInvalidParam({ applicationId: 'app-001', siteId: 'nope' })).toBe(
       'siteId'
     )
+  })
+
+  // The Re-Ex frontend links here with lowercase material slugs (e.g.
+  // "paper"), matching the backend's own material field casing rather than
+  // this app's capitalised MATERIAL_TYPES form.
+  test.each([
+    ['materialType', 'paper'],
+    ['materialType', 'STEEL']
+  ])('accepts a differently-cased %s value', (key, value) => {
+    expect(findInvalidParam({ [key]: value })).toBeNull()
+  })
+})
+
+describe('normaliseParams', () => {
+  test('rewrites materialType to its canonical case in place', () => {
+    const params = { materialType: 'paper' }
+    normaliseParams(params)
+    expect(params.materialType).toBe('Paper')
+  })
+
+  test('leaves already-canonical and unregistered params untouched', () => {
+    const params = { materialType: 'Steel', someOtherParam: 'unchanged' }
+    normaliseParams(params)
+    expect(params).toEqual({
+      materialType: 'Steel',
+      someOtherParam: 'unchanged'
+    })
   })
 })
