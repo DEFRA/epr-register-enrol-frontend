@@ -262,8 +262,6 @@ Before rendering the file input page, the server calls `initUpload()` ([src/serv
 
 The CDP uploader responds with `uploadId`, `uploadUrl` (the form action URL), and `statusUrl`. The `uploadId` and `statusUrl` are saved to the session. The `uploadUrl` is passed to the Nunjucks template as the form `action`.
 
-> **Docker hostname rewriting:** The CDP uploader constructs its URLs using its own internal hostname. `initUpload()` rewrites the `hostname`, `protocol`, and `port` of both `uploadUrl` and `statusUrl` to match the configured `CDP_UPLOADER_URL` so that both the browser and the server can reach them.
-
 **Step 3 — Browser posts file directly to CDP uploader**
 
 The upload form submits a `multipart/form-data` POST directly to the CDP uploader's `uploadUrl` — the frontend server is not involved in receiving the file bytes. The CDP uploader:
@@ -340,7 +338,7 @@ The `ScanStatus` is derived from `fileInput.fileStatus` (`complete` → `"Clean"
 | [src/server/file-upload/controllers/list-controller.js](src/server/file-upload/controllers/list-controller.js)                   | Lists all files uploaded by the user's organisation               |
 | [src/server/file-upload/controllers/file-controller.js](src/server/file-upload/controllers/file-controller.js)                   | Individual file detail view                                       |
 | [src/server/file-upload/controllers/download-controller.js](src/server/file-upload/controllers/download-controller.js)           | Streams file from S3 to browser                                   |
-| [src/server/common/helpers/upload/init-upload.js](src/server/common/helpers/upload/init-upload.js)                               | POSTs to CDP uploader `/initiate`, rewrites internal hostnames    |
+| [src/server/common/helpers/upload/init-upload.js](src/server/common/helpers/upload/init-upload.js)                               | POSTs to CDP uploader `/initiate`                                 |
 | [src/server/common/helpers/upload/provide-upload-status.js](src/server/common/helpers/upload/provide-upload-status.js)           | Hapi pre-handler — fetches scan status before handler runs        |
 | [src/server/file-upload/helpers/file-upload-api-service.js](src/server/file-upload/helpers/file-upload-api-service.js)           | Typed client for the backend file upload API                      |
 | [src/server/file-upload/constants.js](src/server/file-upload/constants.js)                                                       | Material list, year options, session key                          |
@@ -349,13 +347,12 @@ The `ScanStatus` is derived from `fileInput.fileStatus` (`complete` → `"Clean"
 
 | Variable                  | Default                           | Description                                             |
 | ------------------------- | --------------------------------- | ------------------------------------------------------- |
-| `CDP_UPLOADER_URL`        | `http://localhost:7337`           | Base URL of the CDP uploader service                    |
 | `FILE_UPLOAD_S3_BUCKET`   | `epr-register-enrol-file-uploads` | S3 bucket where clean files are stored                  |
 | `FILE_UPLOAD_S3_ENDPOINT` | `http://localhost:4566`           | S3 endpoint URL (LocalStack locally, AWS in production) |
 
 ### Running locally
 
-The Docker Compose setup (see [Docker Compose](#docker-compose)) starts LocalStack for S3/SQS and provides the required infrastructure. The CDP uploader must also be running and reachable at `CDP_UPLOADER_URL`.
+The Docker Compose setup (see [Docker Compose](#docker-compose)) starts LocalStack for S3/SQS and provides the required infrastructure. The CDP uploader must also be running.
 
 For a complete local stack:
 

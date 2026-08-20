@@ -9,7 +9,6 @@ function makeConfig(overrides = {}) {
     'api.baseUrl': 'http://backend.test',
     'api.stubEnabled': false,
     'api.sharedSecret': 'shared-secret',
-    'fileUpload.cdpUploaderUrl': 'http://uploader.test',
     'reex.frontendBaseUrl': 'http://reex-frontend.test',
     'auth.azureEntraId.tenantId': 'tenant-id',
     'auth.defraId.serviceId': 'service-id',
@@ -64,20 +63,6 @@ describe('#getMissingRequiredConfig', () => {
     expect(
       getMissingRequiredConfig(
         makeConfig({ environment: 'local', 'api.sharedSecret': '' })
-      )
-    ).toEqual([])
-  })
-
-  test('flags CDP_UPLOADER_URL when blank and api.stubEnabled is false', () => {
-    expect(
-      getMissingRequiredConfig(makeConfig({ 'fileUpload.cdpUploaderUrl': '' }))
-    ).toEqual(['CDP_UPLOADER_URL'])
-  })
-
-  test('does not flag CDP_UPLOADER_URL when api.stubEnabled is true', () => {
-    expect(
-      getMissingRequiredConfig(
-        makeConfig({ 'fileUpload.cdpUploaderUrl': '', 'api.stubEnabled': true })
       )
     ).toEqual([])
   })
@@ -160,7 +145,6 @@ describe('#getMissingRequiredConfig', () => {
         makeConfig({
           'api.baseUrl': '',
           'api.sharedSecret': '',
-          'fileUpload.cdpUploaderUrl': '',
           'reex.frontendBaseUrl': '',
           'auth.azureEntraId.tenantId': '',
           'auth.defraId.serviceId': '',
@@ -170,7 +154,6 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual([
       'API_BASE_URL',
       'AUTH_SHARED_SECRET__BACKEND',
-      'CDP_UPLOADER_URL',
       'REEX_FRONTEND_BASE_URL',
       'ENTRA_TENANT_ID',
       'DEFRA_ID_SERVICE_ID',
