@@ -103,6 +103,11 @@ export function buildLandingViewModel(
     // -> AccreditationApplicationModel.DueDate), null until the application has
     // a linked CM work item — see dueDateNotAvailable fallback in the template.
     dueDate: application.dueDate ?? null,
+    // RA-423: once CM has reached a terminal state there is no further SLA to
+    // count down to, so the due-date cell shows "COMPLETED" regardless of
+    // whether a dueDate happens to be set — checked before the dueDate/
+    // dueDateNotAvailable fallback in the template.
+    isDueDateComplete: TERMINAL_STATUSES.has(application.applicationStatus),
     currentAccreditation: buildCurrentAccreditation(
       application,
       siteName,

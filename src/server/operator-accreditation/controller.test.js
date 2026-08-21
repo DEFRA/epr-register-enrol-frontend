@@ -378,6 +378,27 @@ describe('#buildLandingViewModel', () => {
     expect(vm.dueDate).toBeNull()
   })
 
+  test.each([
+    ['Saved', false],
+    ['Started', false],
+    ['Queried', false],
+    ['Approved', true],
+    ['Rejected', true],
+    ['Withdrawn', true]
+  ])(
+    'isDueDateComplete for status %s is %s (RA-423: due date shows COMPLETED once CM is terminal)',
+    (applicationStatus, expected) => {
+      const vm = buildLandingViewModel(
+        makeApp({ applicationStatus }),
+        'Org Name',
+        'siteAddr',
+        2027,
+        t
+      )
+      expect(vm.isDueDateComplete).toBe(expected)
+    }
+  )
+
   test('currentAccreditation is null when the application has no organisation.accreditation', () => {
     const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
     expect(vm.currentAccreditation).toBeNull()
@@ -784,6 +805,44 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Not yet available')
   })
 
+  // RA-423: once CM has reached a terminal state, the due-date cell shows
+  // COMPLETED ahead of both the formatted-date and "Not yet available"
+  // fallbacks — whether or not a dueDate happens to be set.
+  test('renders COMPLETED for the due date once the application status is terminal, even with a dueDate set', async () => {
+    mockAccreditationGet([
+      makeApp({
+        applicationStatus: 'Rejected',
+        dueDate: '2026-09-30T00:00:00.000Z'
+      })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="application-due-date"')
+    expect(result).toContain('COMPLETED')
+    expect(result).not.toContain('30th September 2026')
+  })
+
+  test('renders COMPLETED for the due date once the application status is terminal, even with no linked CM work item', async () => {
+    mockAccreditationGet([
+      makeApp({ applicationStatus: 'Withdrawn', dueDate: null })
+    ])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="application-due-date"')
+    expect(result).toContain('COMPLETED')
+    expect(result).not.toContain('Not yet available')
+  })
+
   // Regression: a malformed (non-empty, unparseable) dueDate from the backend
   // must render the fallback copy, not crash formatDate() with a 500 — see
   // accreditationApiService normalizeDueDate, which drops it to null upstream
@@ -911,6 +970,23 @@ describe('#operatorAccreditationController', () => {
 
     expect(result).toContain('govuk-tag--blue')
     expect(result).toContain('IN PROGRESS')
+  })
+
+  // RA-423: OJ's own label for the Rejected status must read REFUSED (CM
+  // already calls this outcome "Refused") — the applicationStatus value
+  // itself is unchanged, only this display label.
+  test('renders status tag with REFUSED (not REJECTED) for Rejected', async () => {
+    mockAccreditationGet([makeApp({ applicationStatus: 'Rejected' })])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('govuk-tag--red')
+    expect(result).toContain('REFUSED')
+    expect(result).not.toContain('REJECTED')
   })
 
   test('reapply text is NOT shown when application status is Saved', async () => {
