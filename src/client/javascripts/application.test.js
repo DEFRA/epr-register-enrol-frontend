@@ -598,6 +598,59 @@ describe('basel/OECD code type-ahead client validation', () => {
     expect(getContinueButton().disabled).toBe(false)
   })
 
+  it('seeds hasError from a server-rendered error so Continue stays disabled until the row is fixed, and the server error can be cleared', async () => {
+    document.body.innerHTML = `
+      <h1 data-testid="page-heading">What are the Basel Convention codes for the waste?</h1>
+      <form data-testid="basel-codes-form" data-error-summary-title="There is a problem">
+        <div class="govuk-form-group govuk-form-group--error">
+          <label class="govuk-label" for="basel-code-1">Code 1</label>
+          <p class="govuk-error-message" id="basel-code-1-client-error">Enter at least one code</p>
+          <select class="govuk-select govuk-select--error" id="basel-code-1" name="code-0"
+                  data-testid="basel-code-1-input"
+                  data-autocomplete="basel-oecd-code"
+                  data-no-results-text="No matches found"
+                  data-has-error="true">
+            <option value="">Choose a code</option>
+            ${SAMPLE_CODES.map((code) => `<option value="${code}">${code}</option>`).join('')}
+          </select>
+        </div>
+        <button type="submit" data-testid="continue-button">Continue</button>
+      </form>
+    `
+
+    await loadApplication()
+
+    expect(getContinueButton().disabled).toBe(true)
+
+    const input = document.getElementById('basel-code-1')
+    typeInto(input, 'A1010')
+
+    expect(getContinueButton().disabled).toBe(false)
+    expect(document.getElementById('basel-code-1-client-error')).toBeNull()
+  })
+
+  it('syncs the hidden select case-insensitively when blurring after hand-typing a valid code in non-canonical case', async () => {
+    renderBaselCodesForm([''])
+    await loadApplication()
+
+    const input = document.getElementById('basel-code-1')
+    const hiddenSelect = document.getElementById('basel-code-1-select')
+
+    input.dispatchEvent(new Event('focus', { bubbles: true }))
+    await vi.waitFor(() => {
+      if (!input.classList.contains('autocomplete__input--focused')) {
+        throw new Error('focus state not applied yet')
+      }
+    })
+    typeInto(input, 'b2010')
+    input.dispatchEvent(new Event('blur'))
+
+    await vi.waitFor(() => {
+      if (hiddenSelect.value !== 'B2010') throw new Error('not synced yet')
+    })
+    expect(getContinueButton().disabled).toBe(false)
+  })
+
   it('lists multiple errored rows in one error summary, reusing it across rows', async () => {
     renderBaselCodesForm(['', ''])
     await loadApplication()

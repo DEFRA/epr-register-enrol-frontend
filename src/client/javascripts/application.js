@@ -152,7 +152,9 @@ function updateContinueButton(rows, continueButton) {
   if (!continueButton) {
     return
   }
-  const allValid = rows.every((row) => isCodeValid(row, row.currentValue))
+  const allValid = rows.every(
+    (row) => !row.hasError && isCodeValid(row, row.currentValue)
+  )
   continueButton.disabled = !allValid
   if (allValid) {
     continueButton.removeAttribute('aria-disabled')
@@ -208,8 +210,11 @@ function buildBaselConfirmHandler(
   return (value) => {
     const { selectElement } = row
     const resolvedValue = (value || row.inputElement?.value || '').trim()
+    const lowerResolvedValue = resolvedValue.toLowerCase()
     const requestedOption = Array.from(selectElement.options).find(
-      (option) => (option.textContent || option.innerText) === resolvedValue
+      (option) =>
+        (option.textContent || option.innerText).toLowerCase() ===
+        lowerResolvedValue
     )
     if (requestedOption) {
       requestedOption.selected = true
@@ -292,7 +297,12 @@ function initBaselOecdCodeAutocomplete(selectElements) {
     noResultsText: selectElement.dataset.noResultsText || 'No matches found',
     formGroup: selectElement.closest(GOVUK_FORM_GROUP_SELECTOR),
     inputElement: null,
-    hasError: false,
+    // Seeded from the server-rendered form-group's error state so a 400
+    // re-render for a server-only rule (atLeastOneCodeRequired,
+    // duplicateCode — neither of which isCodeValid can see, since it only
+    // checks per-row membership) still gates Continue and can later be
+    // cleared by clearRowError once the row is fixed.
+    hasError: selectElement.dataset.hasError === 'true',
     // The value this row was last known to hold — from the server-rendered
     // <select> on load, then kept in step by the input/onConfirm handlers
     // below. Used for Continue-button gating instead of re-reading the DOM

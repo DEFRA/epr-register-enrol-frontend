@@ -40,13 +40,14 @@
           <div class="govuk-form-group{% if code.error %} govuk-form-group--error{% endif %}">
             <label class="govuk-label" for="basel-code-{{ code.index + 1 }}">{{ codeLabel }} {{ code.index + 1 }}</label>
             {% if code.error %}
-              <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ code.error }}</p>
+              <p class="govuk-error-message" id="basel-code-{{ code.index + 1 }}-client-error"><span class="govuk-visually-hidden">Error:</span> {{ code.error }}</p>
             {% endif %}
             <select class="govuk-select{% if code.error %} govuk-select--error{% endif %}"
                     id="basel-code-{{ code.index + 1 }}" name="code-{{ code.index }}"
                     data-testid="basel-code-{{ code.index + 1 }}-input"
                     data-autocomplete="basel-oecd-code"
-                    data-no-results-text="{{ noMatchesFound }}">
+                    data-no-results-text="{{ noMatchesFound }}"
+                    data-has-error="{{ 'true' if code.error else 'false' }}">
               <option value="">{{ chooseOption }}</option>
               {% for oecdCode in baselOecdCodes %}
                 <option value="{{ oecdCode }}"{% if oecdCode == code.value %} selected{% endif %}>{{ oecdCode }}</option>
