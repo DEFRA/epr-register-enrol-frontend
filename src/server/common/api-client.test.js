@@ -124,6 +124,21 @@ describe('api-client', () => {
     })
   })
 
+  test('redacts an email address embedded in the error response body', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      text: async () =>
+        '{"error":"Invalid contact email: jane.doe@example.com"}'
+    })
+
+    await expect(client.get('/things')).rejects.toMatchObject({
+      status: 400,
+      response: '{"error":"Invalid contact email: [REDACTED]"}'
+    })
+  })
+
   test('does not send an Authorization header when no shared secret is configured', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
