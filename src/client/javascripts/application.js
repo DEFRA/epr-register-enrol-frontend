@@ -17,6 +17,8 @@ const GOVUK_ERROR_MESSAGE_CLASS = 'govuk-error-message'
 const ARIA_DESCRIBEDBY = 'aria-describedby'
 const ERROR_MESSAGE_PREFIX =
   '<span class="govuk-visually-hidden">Error:</span> '
+const GOVUK_ERROR_SUMMARY_CLASS = 'govuk-error-summary'
+const INSERT_BEFOREBEGIN = 'beforebegin'
 
 createAll(Button)
 createAll(CharacterCount)
@@ -93,8 +95,8 @@ function updateBaselErrorSummary(rows, errorSummaryTitle) {
 
   if (!summary) {
     summary = document.createElement('div')
-    summary.className = 'govuk-error-summary'
-    summary.dataset.module = 'govuk-error-summary'
+    summary.className = GOVUK_ERROR_SUMMARY_CLASS
+    summary.dataset.module = GOVUK_ERROR_SUMMARY_CLASS
     summary.setAttribute('role', 'alert')
     summary.dataset.testid = 'error-summary'
     summary.innerHTML =
@@ -104,7 +106,7 @@ function updateBaselErrorSummary(rows, errorSummaryTitle) {
     summary.querySelector('.govuk-error-summary__title').textContent =
       errorSummaryTitle
     const heading = document.querySelector('[data-testid="page-heading"]')
-    heading?.insertAdjacentElement('beforebegin', summary)
+    heading?.insertAdjacentElement(INSERT_BEFOREBEGIN, summary)
   }
 
   const list = summary.querySelector('.govuk-error-summary__list')
@@ -130,7 +132,7 @@ function showRowError(row, rows, errorSummaryTitle) {
     errorEl.id = errorId
     errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
     errorEl.innerHTML = ERROR_MESSAGE_PREFIX + row.noResultsText
-    row.inputElement.insertAdjacentElement('beforebegin', errorEl)
+    row.inputElement.insertAdjacentElement(INSERT_BEFOREBEGIN, errorEl)
   }
   row.inputElement?.setAttribute(ARIA_DESCRIBEDBY, errorId)
   updateBaselErrorSummary(rows, errorSummaryTitle)
@@ -392,7 +394,7 @@ function initSamplingPlanUpload(
       errorEl.id = 'document-type-error'
       errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
       errorEl.setAttribute('data-testid', 'document-type-error')
-      documentTypeSelect.insertAdjacentElement('beforebegin', errorEl)
+      documentTypeSelect.insertAdjacentElement(INSERT_BEFOREBEGIN, errorEl)
     }
     errorEl.innerHTML = ERROR_MESSAGE_PREFIX + errorNoDocumentType
     documentTypeSelect.setAttribute(ARIA_DESCRIBEDBY, 'document-type-error')
@@ -427,7 +429,7 @@ function initSamplingPlanUpload(
       errorEl.id = 'file-error'
       errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
       errorEl.setAttribute('data-testid', 'file-error')
-      fileInput.insertAdjacentElement('beforebegin', errorEl)
+      fileInput.insertAdjacentElement(INSERT_BEFOREBEGIN, errorEl)
     }
     errorEl.innerHTML = ERROR_MESSAGE_PREFIX + text
     fileInput.setAttribute(ARIA_DESCRIBEDBY, 'file-error')
