@@ -2,9 +2,12 @@ export const REDACTED_VALUE = '[REDACTED]'
 
 // Matches an email address anywhere within a string (e.g. one echoed back
 // inside a raw downstream-API error response body), not just a value that
-// is itself nothing but an email address.
-const EMAIL_PATTERN =
-  /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+/g
+// is itself nothing but an email address. Deliberately simple (no nested
+// or overlapping quantifiers) rather than a full RFC 5322 pattern: this is
+// a defensive redaction scan over arbitrary text, not validation, and a
+// more "complete" pattern here risks super-linear backtracking on
+// adversarial input (SonarCloud javascript:S8786).
+const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
 
 /**
  * Redacts any email address embedded in a string. Used at the point a raw
