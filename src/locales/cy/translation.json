@@ -74,6 +74,7 @@
       "periodLabel": "[Welsh] Period",
       "dueDateLabel": "[Welsh] Due date",
       "dueDateNotAvailable": "[Welsh] Not yet available",
+      "dueDateCompleteLabel": "[Welsh] COMPLETED",
       "currentAccreditationHeading": "[Welsh] Current accreditation details",
       "accreditationNumberLabel": "[Welsh] Accreditation number",
       "regulatorLabel": "[Welsh] Regulator",
@@ -92,7 +93,7 @@
         "Updated": "[Welsh] UPDATED",
         "AwaitingDecision": "[Welsh] AWAITING DECISION",
         "Approved": "[Welsh] GRANTED",
-        "Rejected": "[Welsh] REJECTED",
+        "Rejected": "[Welsh] REFUSED",
         "Withdrawn": "[Welsh] WITHDRAWN"
       },
       "materials": {

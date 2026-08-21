@@ -77,6 +77,7 @@
       "periodLabel": "Period",
       "dueDateLabel": "Due date",
       "dueDateNotAvailable": "Not yet available",
+      "dueDateCompleteLabel": "COMPLETED",
       "currentAccreditationHeading": "Current accreditation details",
       "accreditationNumberLabel": "Accreditation number",
       "regulatorLabel": "Regulator",
@@ -96,7 +97,7 @@
         "Updated": "UPDATED",
         "AwaitingDecision": "AWAITING DECISION",
         "Approved": "GRANTED",
-        "Rejected": "REJECTED",
+        "Rejected": "REFUSED",
         "Withdrawn": "WITHDRAWN"
       },
       "materials": {
