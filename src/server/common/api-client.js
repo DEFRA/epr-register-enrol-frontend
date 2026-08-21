@@ -1,4 +1,5 @@
 import { config } from '../../config/config.js'
+import { redactEmailAddresses } from './helpers/logging/pii-redaction.js'
 import { persistentStubApiClient } from './persistentStubApiClient.js'
 
 /**
@@ -59,7 +60,11 @@ export function createApiClient() {
           `API request failed: ${response.status} ${response.statusText}`
         )
         error.status = response.status
-        error.response = errorText
+        // Redacted here, at the single point this raw body is first
+        // captured, so every downstream consumer - including plain string
+        // interpolation into a log message, which no pino serializer can
+        // see - gets the safe version rather than the raw API response.
+        error.response = redactEmailAddresses(errorText)
         throw error
       }
 
