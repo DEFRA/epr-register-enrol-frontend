@@ -2,9 +2,33 @@ import { describe, test, expect } from 'vitest'
 
 import {
   REDACTED_VALUE,
+  redactEmailAddresses,
   redactedReqSerializer,
   piiSerializers
 } from './pii-redaction.js'
+
+describe('#redactEmailAddresses', () => {
+  test('redacts a bare email address', () => {
+    expect(redactEmailAddresses('person@example.com')).toBe(REDACTED_VALUE)
+  })
+
+  test('redacts an email embedded in a JSON error body without eating surrounding punctuation', () => {
+    const input = '{"error":"Invalid contact email: jane.doe@example.com"}'
+
+    expect(redactEmailAddresses(input)).toBe(
+      '{"error":"Invalid contact email: [REDACTED]"}'
+    )
+  })
+
+  test('leaves text with no email address untouched', () => {
+    expect(redactEmailAddresses('not found')).toBe('not found')
+  })
+
+  test('passes through non-string values unchanged', () => {
+    expect(redactEmailAddresses(undefined)).toBeUndefined()
+    expect(redactEmailAddresses(null)).toBeNull()
+  })
+})
 
 describe('#redactedReqSerializer', () => {
   test('replaces remoteAddress with the redacted placeholder', () => {
