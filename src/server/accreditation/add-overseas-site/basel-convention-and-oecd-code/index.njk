@@ -30,7 +30,9 @@
         </a>
       </p>
 
-      <form method="post">
+      <form method="post"
+            data-testid="basel-codes-form"
+            data-error-summary-title="{{ errorSummaryTitle }}">
         <input type="hidden" name="crumb" value="{{ crumb }}">
         <input type="hidden" name="visibleCount" value="{{ visibleCount }}">
 
@@ -38,12 +40,19 @@
           <div class="govuk-form-group{% if code.error %} govuk-form-group--error{% endif %}">
             <label class="govuk-label" for="basel-code-{{ code.index + 1 }}">{{ codeLabel }} {{ code.index + 1 }}</label>
             {% if code.error %}
-              <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ code.error }}</p>
+              <p class="govuk-error-message" id="basel-code-{{ code.index + 1 }}-client-error"><span class="govuk-visually-hidden">Error:</span> {{ code.error }}</p>
             {% endif %}
-            <input class="govuk-input govuk-input--width-10{% if code.error %} govuk-input--error{% endif %}"
-                   id="basel-code-{{ code.index + 1 }}" name="code-{{ code.index }}" type="text"
-                   value="{{ code.value }}"
-                   data-testid="basel-code-{{ code.index + 1 }}-input">
+            <select class="govuk-select{% if code.error %} govuk-select--error{% endif %}"
+                    id="basel-code-{{ code.index + 1 }}" name="code-{{ code.index }}"
+                    data-testid="basel-code-{{ code.index + 1 }}-input"
+                    data-autocomplete="basel-oecd-code"
+                    data-no-results-text="{{ noMatchesFound }}"
+                    data-has-error="{{ 'true' if code.error else 'false' }}">
+              <option value="">{{ chooseOption }}</option>
+              {% for oecdCode in baselOecdCodes %}
+                <option value="{{ oecdCode }}"{% if oecdCode == code.value %} selected{% endif %}>{{ oecdCode }}</option>
+              {% endfor %}
+            </select>
             {% if canRemove %}
               <button type="submit" name="action" value="removeCode-{{ code.index }}"
                       class="govuk-button govuk-button--secondary govuk-!-margin-left-2"

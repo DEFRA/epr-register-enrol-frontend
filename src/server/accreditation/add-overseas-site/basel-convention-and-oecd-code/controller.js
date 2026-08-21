@@ -4,8 +4,11 @@ import {
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
+import { BASEL_OECD_CODES } from '../../../common/data/baselOecdCodes.js'
 
-const CODE_REGEX = /^(?:[A-Za-z]\d{4}|[A-Za-z]{2}\d{3})$/
+const BASEL_OECD_CODES_SET = new Set(
+  BASEL_OECD_CODES.map((code) => code.toUpperCase())
+)
 const MAX_CODES = 3
 const GUIDANCE_LINK_URL =
   'https://www.gov.uk/government/publications/waste-shipments-regulation-wsr-consolidated-waste-list'
@@ -41,6 +44,9 @@ function buildViewData(t, applicationId, session, values, errors) {
     heading: t('pages.addOverseasSite.baselAndOecdCodes.heading'),
     codeLabel: t('pages.addOverseasSite.baselAndOecdCodes.codeLabel'),
     hint: t('pages.addOverseasSite.baselAndOecdCodes.hint'),
+    chooseOption: t('pages.addOverseasSite.baselAndOecdCodes.chooseOption'),
+    noMatchesFound: t('pages.addOverseasSite.baselAndOecdCodes.noMatchesFound'),
+    errorSummaryTitle: t('common.errorSummaryTitle'),
     guidanceLinkUrl: GUIDANCE_LINK_URL,
     guidanceLinkText: t(
       'pages.addOverseasSite.baselAndOecdCodes.guidanceLinkText'
@@ -57,6 +63,7 @@ function buildViewData(t, applicationId, session, values, errors) {
     cancelUrl: selectOrsUrl(applicationId),
     siteName: session.siteName ?? '',
     siteAddress: formatSiteAddress(session),
+    baselOecdCodes: BASEL_OECD_CODES,
     codes,
     visibleCount: values.length,
     canAddMore: values.length < MAX_CODES,
@@ -119,13 +126,38 @@ export const addOrsBaselCodePostController = {
     }
 
     const errors = {}
+    const seenCodes = new Set()
+    let anyCodeEntered = false
+
     values.forEach((value, index) => {
-      if (value && !CODE_REGEX.test(value)) {
+      if (!value) {
+        return
+      }
+
+      anyCodeEntered = true
+
+      if (!BASEL_OECD_CODES_SET.has(value.toUpperCase())) {
         errors[index] = t(
           'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
         )
+        return
       }
+
+      if (seenCodes.has(value.toUpperCase())) {
+        errors[index] = t(
+          'pages.addOverseasSite.baselAndOecdCodes.validation.duplicateCode'
+        )
+        return
+      }
+
+      seenCodes.add(value.toUpperCase())
     })
+
+    if (!anyCodeEntered) {
+      errors[0] = t(
+        'pages.addOverseasSite.baselAndOecdCodes.validation.atLeastOneCodeRequired'
+      )
+    }
 
     if (Object.keys(errors).length > 0) {
       return renderPage(
