@@ -732,12 +732,16 @@
         "title": "Basel Convention code — Add overseas reprocessing site",
         "heading": "What are the Basel Convention codes for the waste?",
         "codeLabel": "Code",
-        "hint": "Basel codes start with one letter followed by 4 digits, for example A1181.",
+        "hint": "Start typing a Basel Convention or OECD code and choose it from the list, for example A1181.",
         "guidanceLinkText": "Check the Consolidated waste list for the correct code",
         "addCodeButton": "Add another code",
         "removeCodeButton": "Remove",
+        "chooseOption": "Choose a code",
+        "noMatchesFound": "No matches found",
         "validation": {
-          "codeInvalid": "Enter a valid Basel Convention or OECD code"
+          "codeInvalid": "Enter a valid Basel Convention or OECD code",
+          "atLeastOneCodeRequired": "Enter at least one Basel Convention or OECD code",
+          "duplicateCode": "You have entered this code more than once"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"

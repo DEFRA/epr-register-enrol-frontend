@@ -98,6 +98,25 @@ describe('#addOrsBaselCodeController', () => {
       expect(result).toContain('data-testid="add-code-button"')
     })
 
+    test('renders the code field as a type-ahead select sourced from the approved list, not free text', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('<select')
+      expect(result).toContain('data-autocomplete="basel-oecd-code"')
+      expect(result).toContain('data-no-results-text=')
+      expect(result).not.toContain('type="text"')
+      // Y-codes are on the approved list and must be selectable — this is
+      // the fix for the Y46-Y49 regex bug.
+      expect(result).toContain('<option value="Y46"')
+      expect(result).toContain('<option value="Y47"')
+      expect(result).toContain('<option value="Y48"')
+      expect(result).toContain('<option value="Y49"')
+    })
+
     test('shows the site name and address', async () => {
       const cookie = await seedSiteNameAndAddress()
       const { result } = await server.inject({
@@ -156,7 +175,7 @@ describe('#addOrsBaselCodeController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC010'
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=GC030'
       })
       expect(postResponse.statusCode).toBe(statusCodes.redirect)
 
@@ -168,8 +187,8 @@ describe('#addOrsBaselCodeController', () => {
 
       expect(result).toContain('data-testid="basel-code-1-input"')
       expect(result).toContain('data-testid="basel-code-2-input"')
-      expect(result).toContain('value="A1181"')
-      expect(result).toContain('value="GC010"')
+      expect(result).toContain('value="A1181" selected')
+      expect(result).toContain('value="GC030" selected')
       expect(result).toContain('data-testid="remove-code-1-button"')
       expect(result).toContain('data-testid="remove-code-2-button"')
     })
@@ -198,7 +217,7 @@ describe('#addOrsBaselCodeController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('value="A1181"')
+      expect(result).toContain('value="A1181" selected')
       expect(result).toContain('data-testid="basel-code-2-input"')
     })
 
@@ -222,14 +241,17 @@ describe('#addOrsBaselCodeController', () => {
         url: BASE_URL,
         headers: postHeaders,
         payload:
-          'action=removeCode-1&visibleCount=3&code-0=A1181&code-1=GC010&code-2=B3011'
+          'action=removeCode-1&visibleCount=3&code-0=A1181&code-1=GC030&code-2=B3011'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).not.toContain('data-testid="basel-code-3-input"')
-      expect(result).toContain('value="A1181"')
-      expect(result).toContain('value="B3011"')
-      expect(result).not.toContain('value="GC010"')
+      expect(result).toContain('value="A1181" selected')
+      expect(result).toContain('value="B3011" selected')
+      // Every row's <select> lists all approved codes as <option>s, so
+      // "GC030" still appears as an unselected option elsewhere on the
+      // page — assert it isn't the *chosen* value on any remaining row.
+      expect(result).not.toContain('value="GC030" selected')
     })
 
     test('removeCode never drops below one visible input', async () => {
@@ -264,7 +286,7 @@ describe('#addOrsBaselCodeController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'action=continue&visibleCount=1&code-0=GC010'
+        payload: 'action=continue&visibleCount=1&code-0=GC030'
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -275,7 +297,7 @@ describe('#addOrsBaselCodeController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
-        payload: 'action=continue&visibleCount=2&code-0=a1181&code-1=gc010'
+        payload: 'action=continue&visibleCount=2&code-0=a1181&code-1=gc030'
       })
 
       const { result } = await server.inject({
@@ -285,7 +307,7 @@ describe('#addOrsBaselCodeController', () => {
       })
 
       expect(result).toContain('A1181')
-      expect(result).toContain('GC010')
+      expect(result).toContain('GC030')
     })
 
     test('clamps a spoofed visibleCount server-side, ignoring codes beyond MAX_CODES', async () => {
@@ -294,7 +316,7 @@ describe('#addOrsBaselCodeController', () => {
         url: BASE_URL,
         headers: postHeaders,
         payload:
-          'action=continue&visibleCount=10&code-0=A1181&code-1=GC010&code-2=B3011&code-3=Y1010&code-4=Y2020'
+          'action=continue&visibleCount=10&code-0=A1181&code-1=GC030&code-2=B3011&code-3=Y1010&code-4=Y2020'
       })
 
       expect(postResponse.statusCode).toBe(statusCodes.redirect)
@@ -306,24 +328,77 @@ describe('#addOrsBaselCodeController', () => {
         headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
       })
 
-      expect(result).toContain('value="A1181"')
-      expect(result).toContain('value="GC010"')
-      expect(result).toContain('value="B3011"')
+      expect(result).toContain('value="A1181" selected')
+      expect(result).toContain('value="GC030" selected')
+      expect(result).toContain('value="B3011" selected')
       expect(result).not.toContain('value="Y1010"')
       expect(result).not.toContain('value="Y2020"')
       expect(result).not.toContain('data-testid="basel-code-4-input"')
     })
 
-    test('leaving all codes blank is allowed and continues the journey', async () => {
-      const { statusCode, headers } = await server.inject({
+    test('returns 400 when all codes are left blank', async () => {
+      const { statusCode, result } = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: postHeaders,
         payload: 'action=continue&visibleCount=1&code-0='
       })
 
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain(
+        'Enter at least one Basel Convention or OECD code'
+      )
+    })
+
+    test('accepts a Y-code (Y46-Y49), fixing the regex bug that excluded them', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'action=continue&visibleCount=1&code-0=Y46'
+      })
+
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(NEXT_URL)
+    })
+
+    test('returns 400 for a code that matches the old shape regex but is not on the approved list', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'action=continue&visibleCount=1&code-0=Z9999'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Enter a valid Basel Convention or OECD code')
+    })
+
+    test('returns 400 when the same code is entered more than once', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'action=continue&visibleCount=2&code-0=A1181&code-1=A1181'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('You have entered this code more than once')
+    })
+
+    test('returns 400 when the same code is entered more than once, case-insensitively', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'action=continue&visibleCount=2&code-0=a1181&code-1=A1181'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('You have entered this code more than once')
     })
 
     test('blank slots amongst entered codes are dropped, not saved', async () => {
@@ -345,8 +420,8 @@ describe('#addOrsBaselCodeController', () => {
       expect(result).toContain('data-testid="basel-code-1-input"')
       expect(result).toContain('data-testid="basel-code-2-input"')
       expect(result).not.toContain('data-testid="basel-code-3-input"')
-      expect(result).toContain('value="A1181"')
-      expect(result).toContain('value="B3011"')
+      expect(result).toContain('value="A1181" selected')
+      expect(result).toContain('value="B3011" selected')
     })
 
     test('returns 400 when an entered code has an invalid format', async () => {
