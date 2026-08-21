@@ -4,15 +4,16 @@ export const REDACTED_VALUE = '[REDACTED]'
 // inside a raw downstream-API error response body), not just a value that
 // is itself nothing but an email address. Deliberately simple (no
 // requirement for a dotted TLD) rather than a full RFC 5322 pattern: this
-// is a defensive redaction scan over arbitrary text, not validation, and
-// SonarCloud (javascript:S8786) flags super-linear backtracking risk on
-// any pattern where a quantified character class can also match the
-// literal that follows it (e.g. a domain-label class that includes "."
-// immediately before a literal "."). Excluding "@" and whitespace from
-// both sides removes that ambiguity entirely: each side can only stop at
-// the boundary the other quantifier is looking for, never partway through
-// its own match.
-const EMAIL_PATTERN = /[^\s@"'<>,;)}\]]+@[^\s@"'<>,;)}\]]+/g
+// is a defensive redaction scan over arbitrary text, not validation.
+// SonarCloud (javascript:S8786) flags any regex with more than one
+// unbounded quantifier as a potential super-linear-backtracking risk,
+// regardless of whether the quantified classes actually overlap - so
+// beyond excluding "@"/whitespace/wrapping punctuation from both sides
+// (removing any real ambiguity), both quantifiers are also explicitly
+// bounded to RFC 5321's own length limits (64 chars for the local part,
+// 255 for the domain), so the search space is provably finite no matter
+// what static analysis assumes about the pattern shape.
+const EMAIL_PATTERN = /[^\s@"'<>,;)}\]]{1,64}@[^\s@"'<>,;)}\]]{1,255}/g
 
 /**
  * Redacts any email address embedded in a string. Used at the point a raw
