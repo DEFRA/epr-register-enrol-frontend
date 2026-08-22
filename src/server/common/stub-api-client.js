@@ -2,15 +2,15 @@ import {
   resolveNationFromPostcode,
   NATIONS
 } from './helpers/nation-from-postcode.js'
+import {
+  BUSINESS_PLAN_CATEGORIES,
+  PERCENT_FIELD_TO_CATEGORY,
+  DETAIL_FIELD_TO_CATEGORY
+} from './constants/businessPlanCategories.js'
 
-const BP_CATEGORIES = [
-  'newInfrastructure',
-  'priceSupport',
-  'businessCollections',
-  'communications',
-  'newMarkets',
-  'newUses'
-]
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+const BP_CATEGORIES = BUSINESS_PLAN_CATEGORIES
 
 function makeBpItems(percents = {}, details = {}) {
   return BP_CATEGORIES.map((category) => ({
@@ -177,12 +177,13 @@ export const STUB_ORG_DOCS = [
           sectionStatus: 'Completed',
           items: makeBpItems(
             {
-              newInfrastructure: 30,
+              newInfrastructure: 25,
               priceSupport: 20,
               businessCollections: 15,
               communications: 10,
               newMarkets: 15,
-              newUses: 10
+              newUses: 10,
+              other: 5
             },
             {
               newInfrastructure:
@@ -196,7 +197,9 @@ export const STUB_ORG_DOCS = [
               newMarkets:
                 'Development of relationships with construction sector to use recycled glass aggregate.',
               newUses:
-                'Trials of cullet use in road surfacing and insulation manufacturing.'
+                'Trials of cullet use in road surfacing and insulation manufacturing.',
+              other:
+                'Miscellaneous activities not captured by the other categories above.'
             }
           )
         },
@@ -259,12 +262,13 @@ export const STUB_ORG_DOCS = [
           sectionStatus: 'Completed',
           items: makeBpItems(
             {
-              newInfrastructure: 30,
+              newInfrastructure: 25,
               priceSupport: 20,
               businessCollections: 15,
               communications: 10,
               newMarkets: 15,
-              newUses: 10
+              newUses: 10,
+              other: 5
             },
             {
               newInfrastructure:
@@ -278,7 +282,9 @@ export const STUB_ORG_DOCS = [
               newMarkets:
                 'Development of relationships with construction sector to use recycled glass aggregate.',
               newUses:
-                'Trials of cullet use in road surfacing and insulation manufacturing.'
+                'Trials of cullet use in road surfacing and insulation manufacturing.',
+              other:
+                'Miscellaneous activities not captured by the other categories above.'
             }
           )
         },
@@ -447,12 +453,13 @@ export const STUB_ORG_DOCS = [
         businessPlan: {
           sectionStatus: 'Completed',
           items: makeBpItems({
-            newInfrastructure: 20,
+            newInfrastructure: 15,
             priceSupport: 20,
             businessCollections: 20,
-            communications: 20,
+            communications: 15,
             newMarkets: 10,
-            newUses: 10
+            newUses: 10,
+            other: 10
           })
         },
         samplingPlan: {
@@ -563,12 +570,13 @@ export const STUB_ORG_DOCS = [
         businessPlan: {
           sectionStatus: 'NotStarted',
           items: makeBpItems({
-            newInfrastructure: 20,
+            newInfrastructure: 15,
             priceSupport: 20,
             businessCollections: 20,
-            communications: 20,
+            communications: 15,
             newMarkets: 10,
-            newUses: 10
+            newUses: 10,
+            other: 10
           })
         },
         samplingPlan: {
@@ -695,12 +703,13 @@ export const STUB_ORG_DOCS = [
         businessPlan: {
           sectionStatus: 'NotStarted',
           items: makeBpItems({
-            newInfrastructure: 20,
+            newInfrastructure: 15,
             priceSupport: 20,
             businessCollections: 20,
-            communications: 20,
+            communications: 15,
             newMarkets: 10,
-            newUses: 10
+            newUses: 10,
+            other: 10
           })
         },
         samplingPlan: {
@@ -911,23 +920,11 @@ const SECTION_KEY_MAP = {
   'bes-evidence': 'besEvidence'
 }
 
-const BP_PERCENT_FIELD_CATEGORY = {
-  newInfrastructurePercent: 'newInfrastructure',
-  priceSupportPercent: 'priceSupport',
-  businessCollectionsPercent: 'businessCollections',
-  communicationsPercent: 'communications',
-  newMarketsPercent: 'newMarkets',
-  newUsesPercent: 'newUses'
-}
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+const BP_PERCENT_FIELD_CATEGORY = PERCENT_FIELD_TO_CATEGORY
 
-const BP_DETAIL_FIELD_CATEGORY = {
-  newInfrastructureDetail: 'newInfrastructure',
-  priceSupportDetail: 'priceSupport',
-  businessCollectionsDetail: 'businessCollections',
-  communicationsDetail: 'communications',
-  newMarketsDetail: 'newMarkets',
-  newUsesDetail: 'newUses'
-}
+const BP_DETAIL_FIELD_CATEGORY = DETAIL_FIELD_TO_CATEGORY
 
 function findOrgDoc(orgId) {
   return STUB_ORG_DOCS.find((d) => String(d.orgId) === String(orgId)) ?? null
