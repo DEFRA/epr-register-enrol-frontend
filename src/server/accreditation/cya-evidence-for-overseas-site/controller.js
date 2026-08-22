@@ -42,7 +42,7 @@ export const cyaEvidenceForSiteGetController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId, siteId } = request.params
-    const siteIdInt = Number.parseInt(siteId, 10)
+    const siteIdInt = parseInt(siteId, 10)
 
     let application
     try {
