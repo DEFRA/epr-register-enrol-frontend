@@ -22,8 +22,8 @@ function randomToken(bytes = 32) {
   return randomBytes(bytes)
     .toString('base64')
     .replace(/=+$/, '')
-    .replaceAll(/\+/g, '-')
-    .replaceAll(/\//g, '_')
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
 }
 
 function pkceChallenge(verifier) {
@@ -32,8 +32,8 @@ function pkceChallenge(verifier) {
     .digest()
     .toString('base64')
     .replace(/=+$/, '')
-    .replaceAll(/\+/g, '-')
-    .replaceAll(/\//g, '_')
+    .replaceAll('+', '-')
+    .replaceAll('/', '_')
 }
 
 function logWarn(request, msg, data) {
