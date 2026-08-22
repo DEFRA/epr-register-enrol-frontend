@@ -40,10 +40,10 @@ export function validateFileExtension(filename) {
 }
 
 export function parseDate(day, month, year) {
-  const d = parseInt(day, 10)
-  const m = parseInt(month, 10)
-  const y = parseInt(year, 10)
-  if (isNaN(d) || isNaN(m) || isNaN(y)) return null
+  const d = Number.parseInt(day, 10)
+  const m = Number.parseInt(month, 10)
+  const y = Number.parseInt(year, 10)
+  if (Number.isNaN(d) || Number.isNaN(m) || Number.isNaN(y)) return null
   const date = new Date(y, m - 1, d)
   if (date.getMonth() !== m - 1 || date.getDate() !== d) return null
   return date
@@ -93,7 +93,7 @@ export const uploadBesEvidenceGetController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId, siteId } = request.params
-    const siteIdInt = parseInt(siteId, 10)
+    const siteIdInt = Number.parseInt(siteId, 10)
 
     let application
     try {
@@ -139,7 +139,7 @@ export const uploadBesEvidencePostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId, siteId } = request.params
-    const siteIdInt = parseInt(siteId, 10)
+    const siteIdInt = Number.parseInt(siteId, 10)
     const payload = request.payload ?? {}
 
     let application
@@ -340,7 +340,7 @@ export const besEvidenceCdpStatusController = {
       await accreditationApiService.addBesEvidenceFile(
         session?.organisationId,
         session?.applicationId ?? applicationId,
-        session?.siteId ?? parseInt(siteId, 10),
+        session?.siteId ?? Number.parseInt(siteId, 10),
         {
           fileUploadId: session?.fileUploadId,
           besEvidenceValidFromDate: session?.besEvidenceValidFromDate,

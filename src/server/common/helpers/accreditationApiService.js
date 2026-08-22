@@ -153,9 +153,9 @@ function normalizeApplication(item) {
     ),
     registrationId: item.registrationId ?? null,
     year: item.yearlyMetrics?.year
-      ? parseInt(item.yearlyMetrics.year, 10)
+      ? Number.parseInt(item.yearlyMetrics.year, 10)
       : typeof item.year === 'string'
-        ? parseInt(item.year, 10)
+        ? Number.parseInt(item.year, 10)
         : (item.year ?? null),
     dateSent: item.formSubmissionTime ?? item.dateSent ?? null,
     applicationStatus: item.applicationStatus,
