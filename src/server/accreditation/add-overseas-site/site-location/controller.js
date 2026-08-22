@@ -40,10 +40,12 @@ function parseCoordinates(raw) {
   const parts = trimmed.split(',')
   if (parts.length !== 2) return { valid: false, error: 'invalid' }
 
-  const lat = parseFloat(parts[0].trim())
-  const lng = parseFloat(parts[1].trim())
+  const lat = Number.parseFloat(parts[0].trim())
+  const lng = Number.parseFloat(parts[1].trim())
 
-  if (isNaN(lat) || isNaN(lng)) return { valid: false, error: 'invalid' }
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+    return { valid: false, error: 'invalid' }
+  }
   if (lat < -90 || lat > 90) return { valid: false, error: 'latRange' }
   if (lng < -180 || lng > 180) return { valid: false, error: 'lngRange' }
 

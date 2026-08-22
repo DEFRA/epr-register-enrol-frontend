@@ -165,7 +165,7 @@ export const operatorAccreditationController = {
     const user = getUser(request)
     const { organisationId, registrationId, materialType, year } =
       request.params
-    const yearInt = parseInt(year, 10)
+    const yearInt = Number.parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = reExBackLinkUrl(organisationId, registrationId)
     const backLinkText = t('pages.operatorAccreditation.reExBackLink')
@@ -264,7 +264,7 @@ async function handleStartNew(request, h, { isExporter, kind }) {
   const { t } = getLocaleAndTranslator(request)
   const user = getUser(request)
   const { organisationId, registrationId, materialType, year } = request.params
-  const yearInt = parseInt(year, 10)
+  const yearInt = Number.parseInt(year, 10)
 
   const canAccess = await operatorCanAccessOrganisation(user, organisationId, {
     logger: request.logger

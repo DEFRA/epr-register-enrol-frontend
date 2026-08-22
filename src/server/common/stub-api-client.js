@@ -1158,7 +1158,7 @@ export const stubApiClient = {
     )
     if (promoteOrsMatch) {
       const item = findAccreditation(promoteOrsMatch[1], promoteOrsMatch[2])
-      const siteId = parseInt(promoteOrsMatch[3], 10)
+      const siteId = Number.parseInt(promoteOrsMatch[3], 10)
       const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
       if (site) {
         if (!site.previousSites) site.previousSites = []
@@ -1184,7 +1184,7 @@ export const stubApiClient = {
     )
     if (revertOrsMatch) {
       const item = findAccreditation(revertOrsMatch[1], revertOrsMatch[2])
-      const siteId = parseInt(revertOrsMatch[3], 10)
+      const siteId = Number.parseInt(revertOrsMatch[3], 10)
       const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
       if (site?.previousSites?.length) {
         const snapshot = site.previousSites.pop()
@@ -1209,7 +1209,7 @@ export const stubApiClient = {
         newInterimSiteMatch[1],
         newInterimSiteMatch[2]
       )
-      const siteId = parseInt(newInterimSiteMatch[3], 10)
+      const siteId = Number.parseInt(newInterimSiteMatch[3], 10)
       const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
       const newInterimSite = {
         siteId: Date.now(),
@@ -1230,7 +1230,7 @@ export const stubApiClient = {
       )
       if (appMatch) {
         const item = findAccreditation(appMatch[1], appMatch[2])
-        const siteId = parseInt(appMatch[3], 10)
+        const siteId = Number.parseInt(appMatch[3], 10)
         const site = item?.overseasSites?.sites?.find(
           (s) => s.siteId === siteId
         )
@@ -1283,7 +1283,7 @@ export const stubApiClient = {
       )
       if (appMatch) {
         const item = findAccreditation(appMatch[1], appMatch[2])
-        const siteId = parseInt(appMatch[3], 10)
+        const siteId = Number.parseInt(appMatch[3], 10)
         const site = item?.overseasSites?.sites?.find(
           (s) => s.siteId === siteId
         )
@@ -1367,7 +1367,7 @@ export const stubApiClient = {
     )
     if (besMatch) {
       const item = findAccreditation(besMatch[1], besMatch[2])
-      const siteId = parseInt(besMatch[3], 10)
+      const siteId = Number.parseInt(besMatch[3], 10)
       const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
       if (site?.besEvidence?.besEvidenceUploads) {
         site.besEvidence.besEvidenceUploads =
