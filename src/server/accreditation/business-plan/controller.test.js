@@ -44,6 +44,7 @@ function makeApplication(overrides = {}) {
       communicationsPercent: 20,
       newMarketsPercent: 10,
       newUsesPercent: 10,
+      otherPercent: 0,
       sectionStatus: 'InProgress'
     },
     samplingPlan: { sectionStatus: 'NotStarted' },
@@ -58,7 +59,8 @@ function validPayload() {
     businessCollectionsPercent: '20',
     communicationsPercent: '20',
     newMarketsPercent: '10',
-    newUsesPercent: '10'
+    newUsesPercent: '10',
+    otherPercent: '0'
   }
 }
 
@@ -155,6 +157,24 @@ describe('#validateBusinessPlanFields', () => {
     const { errors } = validateBusinessPlanFields(payload, t, true)
     expect(errors.communicationsPercent).toBeDefined()
   })
+
+  test('accepts a non-zero otherPercent as part of a valid 100% total', () => {
+    const payload = {
+      ...validPayload(),
+      newInfrastructurePercent: '15',
+      otherPercent: '5'
+    }
+    const { errors, values } = validateBusinessPlanFields(payload, t)
+    expect(Object.keys(errors)).toHaveLength(0)
+    expect(values.otherPercent).toBe(5)
+  })
+
+  test('returns field error for non-numeric otherPercent input', () => {
+    const payload = { ...validPayload(), otherPercent: 'abc' }
+    const { errors } = validateBusinessPlanFields(payload, t)
+    expect(errors.otherPercent).toBeDefined()
+    expect(errors.otherPercent.text).toContain('whole number')
+  })
 })
 
 describe('#buildFieldInputs', () => {
@@ -216,7 +236,7 @@ describe('#businessPlanController', () => {
       expect(result).toContain('data-testid="page-heading"')
     })
 
-    test('renders all six field inputs', async () => {
+    test('renders all seven field inputs, including the "other" category', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -225,6 +245,7 @@ describe('#businessPlanController', () => {
         headers: operatorHeaders
       })
 
+      expect(BUSINESS_PLAN_FIELDS).toContain('otherPercent')
       BUSINESS_PLAN_FIELDS.forEach((field) => {
         expect(result).toContain(`data-testid="input-${field}"`)
       })
@@ -631,6 +652,7 @@ describe('#businessPlanController', () => {
           communicationsPercent: '',
           newMarketsPercent: '',
           newUsesPercent: '',
+          otherPercent: '',
           submitAction: 'saveAndComeLater'
         }
       })
@@ -656,6 +678,7 @@ describe('#businessPlanController', () => {
           communicationsPercent: '',
           newMarketsPercent: '',
           newUsesPercent: '',
+          otherPercent: '',
           submitAction: 'saveAndComeLater'
         }
       })
