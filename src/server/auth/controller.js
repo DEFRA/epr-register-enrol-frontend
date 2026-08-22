@@ -21,7 +21,7 @@ import {
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
     .toString('base64')
-    .replace(/=+$/, '')
+    .replace(/={1,2}$/, '')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
 }
@@ -31,7 +31,7 @@ function pkceChallenge(verifier) {
     .update(verifier)
     .digest()
     .toString('base64')
-    .replace(/=+$/, '')
+    .replace(/={1,2}$/, '')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
 }
