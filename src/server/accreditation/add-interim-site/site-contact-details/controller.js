@@ -4,7 +4,7 @@ import {
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`

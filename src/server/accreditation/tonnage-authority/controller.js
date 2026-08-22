@@ -8,7 +8,7 @@ import {
 } from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
 // Material and site are shown once, in the persistent application-header
 // (see src/server/common/helpers/applicationHeader.js), so this heading no
