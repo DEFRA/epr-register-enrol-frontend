@@ -155,8 +155,8 @@ function buildViewData(t, applicationId, session, error) {
 
 function nextOrsId(sites) {
   const existingNums = (sites ?? [])
-    .map((s) => parseInt(s.orsId ?? '0', 10))
-    .filter((n) => !isNaN(n))
+    .map((s) => Number.parseInt(s.orsId ?? '0', 10))
+    .filter((n) => !Number.isNaN(n))
   const max = existingNums.length > 0 ? Math.max(...existingNums) : 0
   return String(max + 1).padStart(3, '0')
 }
@@ -223,7 +223,7 @@ export const addOrsCyaPostController = {
     const action = request.payload?.action ?? ''
 
     if (action.startsWith(DELETE_BASEL_CODE_ACTION_PREFIX)) {
-      const codeIndex = parseInt(
+      const codeIndex = Number.parseInt(
         action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
         10
       )
