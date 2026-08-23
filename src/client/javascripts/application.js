@@ -29,14 +29,17 @@ createAll(SkipLink)
 
 const countrySelect = document.getElementById('country')
 if (countrySelect) {
-  const testId = countrySelect.getAttribute('data-testid')
+  const testId = countrySelect.dataset.testid
   accessibleAutocomplete.enhanceSelectElement({
     selectElement: countrySelect,
     showAllValues: true
   })
   if (testId) {
-    countrySelect.removeAttribute('data-testid')
-    document.getElementById('country')?.setAttribute('data-testid', testId)
+    delete countrySelect.dataset.testid
+    const enhanced = document.getElementById('country')
+    if (enhanced) {
+      enhanced.dataset.testid = testId
+    }
   }
 }
 
@@ -337,6 +340,10 @@ const samplingPlanFileInput = samplingPlanUploadForm?.querySelector(
 const samplingPlanDocumentTypeSelect = samplingPlanUploadForm?.querySelector(
   '[data-testid="document-type-input"]'
 )
+// Element ids for the two inline GDS error messages this page creates on the
+// fly — each is used as the id, the data-testid, and the aria-describedby.
+const DOCUMENT_TYPE_ERROR_ID = 'document-type-error'
+const FILE_ERROR_ID = 'file-error'
 
 if (
   samplingPlanUploadForm &&
@@ -388,23 +395,23 @@ function initSamplingPlanUpload(
   function showDocumentTypeError() {
     documentTypeFormGroup.classList.add(GOVUK_FORM_GROUP_ERROR_CLASS)
     documentTypeSelect.classList.add('govuk-select--error')
-    let errorEl = document.getElementById('document-type-error')
+    let errorEl = document.getElementById(DOCUMENT_TYPE_ERROR_ID)
     if (!errorEl) {
       errorEl = document.createElement('p')
-      errorEl.id = 'document-type-error'
+      errorEl.id = DOCUMENT_TYPE_ERROR_ID
       errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
-      errorEl.setAttribute('data-testid', 'document-type-error')
+      errorEl.dataset.testid = DOCUMENT_TYPE_ERROR_ID
       documentTypeSelect.insertAdjacentElement(INSERT_BEFOREBEGIN, errorEl)
     }
     errorEl.innerHTML = ERROR_MESSAGE_PREFIX + errorNoDocumentType
-    documentTypeSelect.setAttribute(ARIA_DESCRIBEDBY, 'document-type-error')
+    documentTypeSelect.setAttribute(ARIA_DESCRIBEDBY, DOCUMENT_TYPE_ERROR_ID)
   }
 
   function clearDocumentTypeError() {
     documentTypeFormGroup.classList.remove(GOVUK_FORM_GROUP_ERROR_CLASS)
     documentTypeSelect.classList.remove('govuk-select--error')
     documentTypeSelect.removeAttribute(ARIA_DESCRIBEDBY)
-    const errorEl = document.getElementById('document-type-error')
+    const errorEl = document.getElementById(DOCUMENT_TYPE_ERROR_ID)
     if (errorEl) errorEl.remove()
   }
 
@@ -423,16 +430,16 @@ function initSamplingPlanUpload(
   function showError(text) {
     formGroup.classList.add(GOVUK_FORM_GROUP_ERROR_CLASS)
     fileInput.classList.add('govuk-file-upload--error')
-    let errorEl = document.getElementById('file-error')
+    let errorEl = document.getElementById(FILE_ERROR_ID)
     if (!errorEl) {
       errorEl = document.createElement('p')
-      errorEl.id = 'file-error'
+      errorEl.id = FILE_ERROR_ID
       errorEl.className = GOVUK_ERROR_MESSAGE_CLASS
-      errorEl.setAttribute('data-testid', 'file-error')
+      errorEl.dataset.testid = FILE_ERROR_ID
       fileInput.insertAdjacentElement(INSERT_BEFOREBEGIN, errorEl)
     }
     errorEl.innerHTML = ERROR_MESSAGE_PREFIX + text
-    fileInput.setAttribute(ARIA_DESCRIBEDBY, 'file-error')
+    fileInput.setAttribute(ARIA_DESCRIBEDBY, FILE_ERROR_ID)
     fileInput.value = ''
   }
 
@@ -440,7 +447,7 @@ function initSamplingPlanUpload(
     formGroup.classList.remove(GOVUK_FORM_GROUP_ERROR_CLASS)
     fileInput.classList.remove('govuk-file-upload--error')
     fileInput.removeAttribute(ARIA_DESCRIBEDBY)
-    const errorEl = document.getElementById('file-error')
+    const errorEl = document.getElementById(FILE_ERROR_ID)
     if (errorEl) errorEl.remove()
   }
 

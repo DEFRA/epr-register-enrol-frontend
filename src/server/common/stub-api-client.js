@@ -3,6 +3,22 @@ import {
   NATIONS
 } from './helpers/nation-from-postcode.js'
 
+// Fixture values reused across several stub organisations/applications below.
+const REGULATOR_EA = 'Environment Agency'
+const TONNAGE_UP_TO_500 = 'Up to 500 tonnes'
+const TONNAGE_UP_TO_10000 = 'Up to 10,000 tonnes'
+const SUBMITTED_AT = '2026-12-01T10:00:00Z'
+const FILE_UPLOADED_AT = '2026-11-01T12:00:00Z'
+const JANE_EMAIL = 'jane@deltagreen.co.uk'
+const SAMPLING_PLAN_FILENAME = 'code-nightmare-green.pdf'
+const ROTTERDAM_SITE_NAME = 'Rotterdam Recycling BV'
+const ROTTERDAM_SITE_ADDRESS = 'Industrieweg 44, Rotterdam'
+const BERLIN_SITE_ADDRESS = 'Recyclingstraße 12, Berlin'
+const PARIS_SITE_NAME = 'Paris Verre SAS'
+const PARIS_SITE_ADDRESS = '8 Rue du Recyclage, Paris'
+const CONTACT_ALICE_GREEN = 'Alice Green'
+const CONTACT_ALICE_IRON = 'Alice Iron'
+
 const BP_CATEGORIES = [
   'newInfrastructure',
   'priceSupport',
@@ -50,8 +66,8 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26RE5000390068PL',
-            regulator: 'Environment Agency',
-            tonnage: 'Up to 500 tonnes',
+            regulator: REGULATOR_EA,
+            tonnage: TONNAGE_UP_TO_500,
             authorisedUsers: ['Harry Edge', 'Rosina Campbell'],
             overseasSites: []
           }
@@ -88,8 +104,8 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26RE5000390011PL',
-            regulator: 'Environment Agency',
-            tonnage: 'Up to 500 tonnes',
+            regulator: REGULATOR_EA,
+            tonnage: TONNAGE_UP_TO_500,
             authorisedUsers: ['Harry Edge'],
             overseasSites: []
           }
@@ -128,7 +144,7 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26RE5000390002GL',
-            regulator: 'Environment Agency',
+            regulator: REGULATOR_EA,
             tonnage: 'Up to 1,000 tonnes',
             authorisedUsers: ['Beth Carter'],
             overseasSites: []
@@ -156,10 +172,10 @@ export const STUB_ORG_DOCS = [
         },
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
-        formSubmissionTime: '2026-12-01T10:00:00Z',
+        formSubmissionTime: SUBMITTED_AT,
         submitterContactDetails: {
           fullName: 'Jane Doe',
-          email: 'jane@deltagreen.co.uk',
+          email: JANE_EMAIL,
           role: 'Manager'
         },
         prnIssuance: {
@@ -168,7 +184,7 @@ export const STUB_ORG_DOCS = [
           signatories: [
             {
               fullName: 'Jane Doe',
-              email: 'jane@deltagreen.co.uk',
+              email: JANE_EMAIL,
               isNew: false
             }
           ]
@@ -205,8 +221,8 @@ export const STUB_ORG_DOCS = [
           files: [
             {
               fileId: 'file003',
-              filename: 'code-nightmare-green.pdf',
-              uploadedAt: '2026-11-01T12:00:00Z',
+              filename: SAMPLING_PLAN_FILENAME,
+              uploadedAt: FILE_UPLOADED_AT,
               uploadedBy: 'Jane Doe',
               scanStatus: 'Clean'
             }
@@ -215,7 +231,7 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26RE5000390003GL',
-            regulator: 'Environment Agency',
+            regulator: REGULATOR_EA,
             tonnage: 'Up to 1,000 tonnes',
             authorisedUsers: ['Jane Doe'],
             overseasSites: []
@@ -238,10 +254,10 @@ export const STUB_ORG_DOCS = [
         companyRegisterAddressPostcode: 'ST33 LO2',
         wasteRegistrationNumber: null,
         yearlyMetrics: { year: '2027' },
-        formSubmissionTime: '2026-12-01T10:00:00Z',
+        formSubmissionTime: SUBMITTED_AT,
         submitterContactDetails: {
           fullName: 'Jane Doe',
-          email: 'jane@deltagreen.co.uk',
+          email: JANE_EMAIL,
           role: 'Manager'
         },
         prnIssuance: {
@@ -250,7 +266,7 @@ export const STUB_ORG_DOCS = [
           signatories: [
             {
               fullName: 'Jane Doe',
-              email: 'jane@deltagreen.co.uk',
+              email: JANE_EMAIL,
               isNew: false
             }
           ]
@@ -287,8 +303,8 @@ export const STUB_ORG_DOCS = [
           files: [
             {
               fileId: 'file003',
-              filename: 'code-nightmare-green.pdf',
-              uploadedAt: '2026-11-01T12:00:00Z',
+              filename: SAMPLING_PLAN_FILENAME,
+              uploadedAt: FILE_UPLOADED_AT,
               uploadedBy: 'Jane Doe',
               scanStatus: 'Clean'
             }
@@ -310,11 +326,11 @@ export const STUB_ORG_DOCS = [
               besEvidence: {
                 besEvidenceUploads: [
                   {
-                    besEvidenceValidFromDate: '2026-11-01T12:00:00Z',
+                    besEvidenceValidFromDate: FILE_UPLOADED_AT,
                     besEvidenceExpiryDate: '2027-11-30T12:00:00Z',
                     fileId: 'file003',
-                    filename: 'code-nightmare-green.pdf',
-                    uploadedAt: '2026-11-01T12:00:00Z',
+                    filename: SAMPLING_PLAN_FILENAME,
+                    uploadedAt: FILE_UPLOADED_AT,
                     uploadedBy: 'Jane Doe',
                     scanStatus: 'Clean'
                   }
@@ -366,7 +382,7 @@ export const STUB_ORG_DOCS = [
             {
               fileId: 'file005',
               filename: 'code5-nightmare-green.pdf',
-              uploadedAt: '2026-11-01T12:00:00Z',
+              uploadedAt: FILE_UPLOADED_AT,
               uploadedBy: 'Jane Doe',
               scanStatus: 'Clean'
             }
@@ -378,8 +394,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900001,
               orsId: '001',
-              siteName: 'Rotterdam Recycling BV',
-              siteAddress: 'Industrieweg 44, Rotterdam',
+              siteName: ROTTERDAM_SITE_NAME,
+              siteAddress: ROTTERDAM_SITE_ADDRESS,
               country: 'Netherlands',
               isEu: true,
               isOecd: true,
@@ -397,8 +413,8 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26EX5000391PL',
-            regulator: 'Environment Agency',
-            tonnage: 'Up to 500 tonnes',
+            regulator: REGULATOR_EA,
+            tonnage: TONNAGE_UP_TO_500,
             authorisedUsers: ['Priya Sharma'],
             overseasSites: ['Bharat Recycling', 'Dragon Recyclers']
           }
@@ -433,7 +449,7 @@ export const STUB_ORG_DOCS = [
           plannedIssuance: 'UpTo10000',
           signatories: [
             {
-              fullName: 'Alice Green',
+              fullName: CONTACT_ALICE_GREEN,
               email: 'alice@globalglassexp.co.uk',
               isNew: false
             },
@@ -461,8 +477,8 @@ export const STUB_ORG_DOCS = [
             {
               fileId: 'file006',
               filename: 'sampling-plan-glass.pdf',
-              uploadedAt: '2026-12-01T10:00:00Z',
-              uploadedBy: 'Alice Green',
+              uploadedAt: SUBMITTED_AT,
+              uploadedBy: CONTACT_ALICE_GREEN,
               scanStatus: 'Clean'
             }
           ]
@@ -473,8 +489,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900003,
               orsId: '001',
-              siteName: 'Rotterdam Recycling BV',
-              siteAddress: 'Industrieweg 44, Rotterdam',
+              siteName: ROTTERDAM_SITE_NAME,
+              siteAddress: ROTTERDAM_SITE_ADDRESS,
               country: 'Netherlands',
               isEu: true,
               isOecd: true,
@@ -490,7 +506,7 @@ export const STUB_ORG_DOCS = [
               siteId: 900004,
               orsId: '002',
               siteName: 'Berlin Glass GmbH',
-              siteAddress: 'Recyclingstraße 12, Berlin',
+              siteAddress: BERLIN_SITE_ADDRESS,
               country: 'Germany',
               isEu: true,
               isOecd: true,
@@ -505,8 +521,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900005,
               orsId: '003',
-              siteName: 'Paris Verre SAS',
-              siteAddress: '8 Rue du Recyclage, Paris',
+              siteName: PARIS_SITE_NAME,
+              siteAddress: PARIS_SITE_ADDRESS,
               country: 'France',
               isEu: true,
               isOecd: true,
@@ -524,10 +540,10 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26EX5000392GL',
-            regulator: 'Environment Agency',
-            tonnage: 'Up to 10,000 tonnes',
-            authorisedUsers: ['Alice Green'],
-            overseasSites: ['Rotterdam Recycling BV', 'Berlin Glass GmbH']
+            regulator: REGULATOR_EA,
+            tonnage: TONNAGE_UP_TO_10000,
+            authorisedUsers: [CONTACT_ALICE_GREEN],
+            overseasSites: [ROTTERDAM_SITE_NAME, 'Berlin Glass GmbH']
           }
         }
       }
@@ -554,7 +570,7 @@ export const STUB_ORG_DOCS = [
           plannedIssuance: 'UpTo10000',
           signatories: [
             {
-              fullName: 'Alice Iron',
+              fullName: CONTACT_ALICE_IRON,
               email: 'alice@globalsteelexp.co.uk',
               isNew: false
             }
@@ -577,8 +593,8 @@ export const STUB_ORG_DOCS = [
             {
               fileId: 'file006',
               filename: 'sampling-plan-steel.pdf',
-              uploadedAt: '2026-12-01T10:00:00Z',
-              uploadedBy: 'Alice Iron',
+              uploadedAt: SUBMITTED_AT,
+              uploadedBy: CONTACT_ALICE_IRON,
               scanStatus: 'Clean'
             }
           ]
@@ -589,8 +605,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900003,
               orsId: '001',
-              siteName: 'Rotterdam Recycling BV',
-              siteAddress: 'Industrieweg 44, Rotterdam',
+              siteName: ROTTERDAM_SITE_NAME,
+              siteAddress: ROTTERDAM_SITE_ADDRESS,
               country: 'Netherlands',
               isEu: true,
               isOecd: true,
@@ -606,7 +622,7 @@ export const STUB_ORG_DOCS = [
               siteId: 900004,
               orsId: '002',
               siteName: 'Berlin Steel GmbH',
-              siteAddress: 'Recyclingstraße 12, Berlin',
+              siteAddress: BERLIN_SITE_ADDRESS,
               country: 'Germany',
               isEu: true,
               isOecd: true,
@@ -621,8 +637,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900005,
               orsId: '003',
-              siteName: 'Paris Verre SAS',
-              siteAddress: '8 Rue du Recyclage, Paris',
+              siteName: PARIS_SITE_NAME,
+              siteAddress: PARIS_SITE_ADDRESS,
               country: 'France',
               isEu: true,
               isOecd: true,
@@ -656,10 +672,10 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26EX5000392SL',
-            regulator: 'Environment Agency',
-            tonnage: 'Up to 10,000 tonnes',
-            authorisedUsers: ['Alice Iron'],
-            overseasSites: ['Rotterdam Recycling BV', 'Berlin Steel GmbH']
+            regulator: REGULATOR_EA,
+            tonnage: TONNAGE_UP_TO_10000,
+            authorisedUsers: [CONTACT_ALICE_IRON],
+            overseasSites: [ROTTERDAM_SITE_NAME, 'Berlin Steel GmbH']
           }
         }
       }
@@ -709,7 +725,7 @@ export const STUB_ORG_DOCS = [
             {
               fileId: 'file006',
               filename: 'sampling-plan-plastic_2026.pdf',
-              uploadedAt: '2026-12-01T10:00:00Z',
+              uploadedAt: SUBMITTED_AT,
               uploadedBy: 'Nygel London',
               scanStatus: 'Clean'
             }
@@ -721,8 +737,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900003,
               orsId: '001',
-              siteName: 'Rotterdam Recycling BV',
-              siteAddress: 'Industrieweg 44, Rotterdam',
+              siteName: ROTTERDAM_SITE_NAME,
+              siteAddress: ROTTERDAM_SITE_ADDRESS,
               country: 'Netherlands',
               isEu: true,
               isOecd: true,
@@ -738,7 +754,7 @@ export const STUB_ORG_DOCS = [
               siteId: 900004,
               orsId: '002',
               siteName: 'Berlin Plastics GmbH',
-              siteAddress: 'Recyclingstraße 12, Berlin',
+              siteAddress: BERLIN_SITE_ADDRESS,
               country: 'Germany',
               isEu: true,
               isOecd: true,
@@ -753,8 +769,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900005,
               orsId: '003',
-              siteName: 'Paris Verre SAS',
-              siteAddress: '8 Rue du Recyclage, Paris',
+              siteName: PARIS_SITE_NAME,
+              siteAddress: PARIS_SITE_ADDRESS,
               country: 'France',
               isEu: true,
               isOecd: true,
@@ -788,10 +804,10 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26EA5000392PL',
-            regulator: 'Environment Agency',
-            tonnage: 'Up to 10,000 tonnes',
+            regulator: REGULATOR_EA,
+            tonnage: TONNAGE_UP_TO_10000,
             authorisedUsers: ['Paul Stick'],
-            overseasSites: ['Rotterdam Recycling BV', 'Berlin Plastics GmbH']
+            overseasSites: [ROTTERDAM_SITE_NAME, 'Berlin Plastics GmbH']
           }
         }
       }
@@ -856,7 +872,7 @@ export const STUB_ORG_DOCS = [
             {
               fileId: 'file013',
               filename: 'code13-nightmare-green.pdf',
-              uploadedAt: '2026-11-01T12:00:00Z',
+              uploadedAt: FILE_UPLOADED_AT,
               uploadedBy: 'Jane Doe',
               scanStatus: 'Clean'
             }
@@ -868,8 +884,8 @@ export const STUB_ORG_DOCS = [
             {
               siteId: 900001,
               orsId: '001',
-              siteName: 'Rotterdam Recycling BV',
-              siteAddress: 'Industrieweg 44, Rotterdam',
+              siteName: ROTTERDAM_SITE_NAME,
+              siteAddress: ROTTERDAM_SITE_ADDRESS,
               country: 'Netherlands',
               isEu: true,
               isOecd: true,
@@ -887,8 +903,8 @@ export const STUB_ORG_DOCS = [
         organisation: {
           accreditation: {
             accreditationNumber: 'A26EX5000391PL',
-            regulator: 'Environment Agency',
-            tonnage: 'Up to 500 tonnes',
+            regulator: REGULATOR_EA,
+            tonnage: TONNAGE_UP_TO_500,
             authorisedUsers: ['Priya Sharma'],
             overseasSites: ['Bharat Recycling', 'Dragon Recyclers']
           }

@@ -439,42 +439,25 @@ if (
 // empty strings so dev/test work without secrets; an empty value reaching
 // production means missing Secrets Manager wiring and would fail opaquely
 // on first login. Fail loudly at boot instead.
+const REQUIRED_IN_PROD_WITHOUT_STUB_AUTH =
+  'production when AUTH_STUB_ENABLED is false. Wire the value via ' +
+  'Secrets Manager.'
+
+function requireAuthCredential(envVar, configPath) {
+  if (!config.get(configPath)) {
+    throw new Error(
+      `${envVar} (${configPath}) must be set in ` +
+        REQUIRED_IN_PROD_WITHOUT_STUB_AUTH
+    )
+  }
+}
+
 if (config.get('isProduction') && !config.get('auth.stubEnabled')) {
-  if (!config.get('auth.azureEntraId.clientId')) {
-    throw new Error(
-      'ENTRA_CLIENT_ID (auth.azureEntraId.clientId) must be set in ' +
-        'production when AUTH_STUB_ENABLED is false. Wire the value via ' +
-        'Secrets Manager.'
-    )
-  }
-  if (!config.get('auth.azureEntraId.clientSecret')) {
-    throw new Error(
-      'ENTRA_CLIENT_SECRET (auth.azureEntraId.clientSecret) must be set ' +
-        'in production when AUTH_STUB_ENABLED is false. Wire the value ' +
-        'via Secrets Manager.'
-    )
-  }
-  if (!config.get('auth.defraId.clientId')) {
-    throw new Error(
-      'DEFRA_ID_CLIENT_ID (auth.defraId.clientId) must be set in ' +
-        'production when AUTH_STUB_ENABLED is false. Wire the value via ' +
-        'Secrets Manager.'
-    )
-  }
-  if (!config.get('auth.defraId.clientSecret')) {
-    throw new Error(
-      'DEFRA_ID_CLIENT_SECRET (auth.defraId.clientSecret) must be set in ' +
-        'production when AUTH_STUB_ENABLED is false. Wire the value via ' +
-        'Secrets Manager.'
-    )
-  }
-  if (!config.get('auth.defraId.discoveryUrl')) {
-    throw new Error(
-      'DEFRA_ID_DISCOVERY_URL (auth.defraId.discoveryUrl) must be set in ' +
-        'production when AUTH_STUB_ENABLED is false. Wire the value via ' +
-        'Secrets Manager.'
-    )
-  }
+  requireAuthCredential('ENTRA_CLIENT_ID', 'auth.azureEntraId.clientId')
+  requireAuthCredential('ENTRA_CLIENT_SECRET', 'auth.azureEntraId.clientSecret')
+  requireAuthCredential('DEFRA_ID_CLIENT_ID', 'auth.defraId.clientId')
+  requireAuthCredential('DEFRA_ID_CLIENT_SECRET', 'auth.defraId.clientSecret')
+  requireAuthCredential('DEFRA_ID_DISCOVERY_URL', 'auth.defraId.discoveryUrl')
 }
 
 // Production hardening: convict defaults target local dev (host=127.0.0.1,

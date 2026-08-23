@@ -25,6 +25,7 @@ export const basicAuthExcludedPaths = Object.freeze([
 export const basicAuthExcludedPrefixes = Object.freeze(['/public/'])
 
 // Not exported — internal to this module. Tests assert the value via HTTP response headers.
+const WWW_AUTHENTICATE_HEADER = 'WWW-Authenticate'
 const WWW_AUTHENTICATE = 'Basic realm="Secure"'
 
 export const basicAuthPlugin = {
@@ -59,7 +60,7 @@ export const basicAuthPlugin = {
           return h
             .response()
             .code(401)
-            .header('WWW-Authenticate', WWW_AUTHENTICATE)
+            .header(WWW_AUTHENTICATE_HEADER, WWW_AUTHENTICATE)
             .takeover()
         }
 
@@ -72,7 +73,7 @@ export const basicAuthPlugin = {
           return h
             .response()
             .code(401)
-            .header('WWW-Authenticate', WWW_AUTHENTICATE)
+            .header(WWW_AUTHENTICATE_HEADER, WWW_AUTHENTICATE)
             .takeover()
         }
 
@@ -87,7 +88,7 @@ export const basicAuthPlugin = {
           return h
             .response()
             .code(401)
-            .header('WWW-Authenticate', WWW_AUTHENTICATE)
+            .header(WWW_AUTHENTICATE_HEADER, WWW_AUTHENTICATE)
             .takeover()
         }
 

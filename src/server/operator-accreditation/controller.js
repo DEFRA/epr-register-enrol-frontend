@@ -24,10 +24,14 @@ import {
 // silently creating an application every time it was re-visited.
 const START_NEW_SEGMENT = '/start-new'
 
+const TAG_GREY = 'govuk-tag--grey'
+const VIEW = 'operator-accreditation/index'
+const SEED_ERROR_HEADING_KEY = 'pages.operatorAccreditation.seedErrorHeading'
+
 const STATUS_CONFIG = {
-  Saved: { tagClass: 'govuk-tag--grey' },
+  Saved: { tagClass: TAG_GREY },
   Started: { tagClass: 'govuk-tag--blue' },
-  NotStarted: { tagClass: 'govuk-tag--grey' },
+  NotStarted: { tagClass: TAG_GREY },
   InProgress: { tagClass: 'govuk-tag--blue' },
   Submitted: { tagClass: 'govuk-tag--green' },
   DulyMade: { tagClass: 'govuk-tag--turquoise' },
@@ -36,7 +40,7 @@ const STATUS_CONFIG = {
   AwaitingDecision: { tagClass: 'govuk-tag--purple' },
   Approved: { tagClass: 'govuk-tag--green' },
   Rejected: { tagClass: 'govuk-tag--red' },
-  Withdrawn: { tagClass: 'govuk-tag--grey' }
+  Withdrawn: { tagClass: TAG_GREY }
 }
 
 // The reapply prompt only makes sense while an application is still live —
@@ -183,9 +187,9 @@ export const operatorAccreditationController = {
 
     const errorView = (message) =>
       h
-        .view('operator-accreditation/index', {
-          pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
-          heading: t('pages.operatorAccreditation.seedErrorHeading'),
+        .view(VIEW, {
+          pageTitle: t(SEED_ERROR_HEADING_KEY),
+          heading: t(SEED_ERROR_HEADING_KEY),
           userName,
           backLink: '#',
           backLinkText,
@@ -237,7 +241,7 @@ export const operatorAccreditationController = {
       t
     )
 
-    return h.view('operator-accreditation/index', {
+    return h.view(VIEW, {
       pageTitle: t('pages.operatorAccreditation.title'),
       backLink: reExBackLink,
       backLinkText,
@@ -285,9 +289,9 @@ async function handleStartNew(request, h, { isExporter, kind }) {
 
   if (failed) {
     return h
-      .view('operator-accreditation/index', {
-        pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
-        heading: t('pages.operatorAccreditation.seedErrorHeading'),
+      .view(VIEW, {
+        pageTitle: t(SEED_ERROR_HEADING_KEY),
+        heading: t(SEED_ERROR_HEADING_KEY),
         userName: user?.name,
         backLink: '#',
         backLinkText: t('pages.operatorAccreditation.reExBackLink'),

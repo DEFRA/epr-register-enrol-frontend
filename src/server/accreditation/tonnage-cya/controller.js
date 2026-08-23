@@ -9,6 +9,9 @@ const TONNAGE_LABEL_KEYS = {
   Over10000: 'pages.tonnage.options.Over10000'
 }
 
+const TITLE_KEY = 'pages.tonnageCya.title'
+const HEADING_KEY = 'pages.tonnageCya.heading'
+
 export function buildTonnageLabel(tonnageBand, t) {
   const key = TONNAGE_LABEL_KEYS[tonnageBand]
   return key ? t(key) : t('pages.tonnageCya.notSelected')
@@ -62,8 +65,8 @@ export const tonnageCyaGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.tonnageCya.title'),
-        heading: t('pages.tonnageCya.heading'),
+        pageTitle: t(TITLE_KEY),
+        heading: t(HEADING_KEY),
         backLink: taskListUrl(applicationId),
         error: t('pages.tonnageCya.validation.fetchError')
       }).code(500)
@@ -75,8 +78,8 @@ export const tonnageCyaGetController = {
     const fromCYA = '?fromCYA=true'
 
     return renderPage(h, {
-      pageTitle: t('pages.tonnageCya.title'),
-      heading: t('pages.tonnageCya.heading'),
+      pageTitle: t(TITLE_KEY),
+      heading: t(HEADING_KEY),
       tonnageLabel: buildTonnageLabel(tonnageBand, t),
       authorisersSummary: buildAuthorisersSummary(authorisers, t),
       changeTonnageLink: `/accreditation/tonnage/${applicationId}${fromCYA}`,
@@ -113,8 +116,8 @@ export const tonnageCyaPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.tonnageCya.title'),
-        heading: t('pages.tonnageCya.heading'),
+        pageTitle: t(TITLE_KEY),
+        heading: t(HEADING_KEY),
         backLink: taskListUrl(applicationId),
         error: t('pages.tonnageCya.validation.fetchError')
       }).code(500)
@@ -140,8 +143,8 @@ export const tonnageCyaPostController = {
         `Error confirming tonnage section for ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.tonnageCya.title'),
-        heading: t('pages.tonnageCya.heading'),
+        pageTitle: t(TITLE_KEY),
+        heading: t(HEADING_KEY),
         tonnageLabel: buildTonnageLabel(tonnageBand, t),
         authorisersSummary: buildAuthorisersSummary(authorisers, t),
         changeTonnageLink: `/accreditation/tonnage/${applicationId}${fromCYA}`,

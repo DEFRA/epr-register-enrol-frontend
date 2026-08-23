@@ -10,6 +10,10 @@ import {
   siteNameFromAddress
 } from '../../common/helpers/paymentDetails.js'
 
+const VIEW = 'accreditation/view-payment-details/index'
+const TITLE_KEY = 'pages.viewPaymentDetails.title'
+const BACK_LINK_KEY = 'pages.viewPaymentDetails.backLink'
+
 function confirmationUrl(applicationId) {
   return `/accreditation/submit-confirmation/${applicationId}`
 }
@@ -34,10 +38,10 @@ export const viewPaymentDetailsGetController = {
         `Error fetching application ${applicationId} for payment details: ${err.message}`
       )
       return h
-        .view('accreditation/view-payment-details/index', {
-          pageTitle: t('pages.viewPaymentDetails.title'),
+        .view(VIEW, {
+          pageTitle: t(TITLE_KEY),
           backLink: confirmationUrl(applicationId),
-          backLinkText: t('pages.viewPaymentDetails.backLink'),
+          backLinkText: t(BACK_LINK_KEY),
           error: t('pages.viewPaymentDetails.loadError')
         })
         .code(500)
@@ -53,10 +57,10 @@ export const viewPaymentDetailsGetController = {
         `Error calculating payment details for ${applicationId}: ${err.message}`
       )
       return h
-        .view('accreditation/view-payment-details/index', {
-          pageTitle: t('pages.viewPaymentDetails.title'),
+        .view(VIEW, {
+          pageTitle: t(TITLE_KEY),
           backLink: confirmationUrl(applicationId),
-          backLinkText: t('pages.viewPaymentDetails.backLink'),
+          backLinkText: t(BACK_LINK_KEY),
           error: t('pages.viewPaymentDetails.loadError')
         })
         .code(500)
@@ -68,10 +72,10 @@ export const viewPaymentDetailsGetController = {
     const regulatorName =
       paymentDetails.companyName ?? paymentDetails.accountName
 
-    return h.view('accreditation/view-payment-details/index', {
-      pageTitle: t('pages.viewPaymentDetails.title'),
+    return h.view(VIEW, {
+      pageTitle: t(TITLE_KEY),
       backLink: confirmationUrl(applicationId),
-      backLinkText: t('pages.viewPaymentDetails.backLink'),
+      backLinkText: t(BACK_LINK_KEY),
       siteName: siteNameFromAddress(application.siteAddress),
       materialDisplay,
       submitterName: submittedBy.name ?? '',

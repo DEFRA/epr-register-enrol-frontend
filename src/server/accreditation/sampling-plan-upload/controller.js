@@ -48,6 +48,14 @@ const DOCUMENT_TYPE_LABEL_KEYS = {
   SupportingEvidence: 'pages.samplingPlanUpload.documentType.supportingEvidence'
 }
 
+const TITLE_KEY = 'pages.samplingPlanUpload.title'
+const HEADING_KEY = 'pages.samplingPlanUpload.heading'
+const RESULTS_TITLE_KEY = 'pages.samplingPlanUpload.resultsTitle'
+const UPLOADED_FILES_HEADING_KEY =
+  'pages.samplingPlanUpload.uploadedFilesHeading'
+const FETCH_ERROR_KEY = 'pages.samplingPlanUpload.validation.fetchError'
+const UPLOAD_ERROR_KEY = 'pages.samplingPlanUpload.validation.uploadError'
+
 export function documentTypeLabel(t, documentType) {
   const key = DOCUMENT_TYPE_LABEL_KEYS[documentType]
   return t(key ?? 'pages.samplingPlanUpload.documentType.notSpecified')
@@ -126,13 +134,13 @@ export const samplingPlanUploadGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.title'),
-        heading: t('pages.samplingPlanUpload.heading'),
+        pageTitle: t(TITLE_KEY),
+        heading: t(HEADING_KEY),
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         files: [],
         documentTypeOptions: documentTypeOptions(t),
-        error: t('pages.samplingPlanUpload.validation.fetchError')
+        error: t(FETCH_ERROR_KEY)
       }).code(500)
     }
 
@@ -154,8 +162,8 @@ export const samplingPlanUploadGetController = {
     const queryNote = resolveRegulatorQueryNote(application, { readOnly })
 
     return renderPage(h, {
-      pageTitle: t('pages.samplingPlanUpload.title'),
-      heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
+      pageTitle: t(TITLE_KEY),
+      heading: `${t(HEADING_KEY)} - ${materialDisplay}`,
       backLink: readOnly
         ? queryTaskListUrl(applicationId)
         : taskListUrl(applicationId),
@@ -197,13 +205,13 @@ export const samplingPlanUploadPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.title'),
-        heading: t('pages.samplingPlanUpload.heading'),
+        pageTitle: t(TITLE_KEY),
+        heading: t(HEADING_KEY),
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         files: [],
         documentTypeOptions: documentTypeOptions(t),
-        error: t('pages.samplingPlanUpload.validation.fetchError')
+        error: t(FETCH_ERROR_KEY)
       }).code(500)
     }
 
@@ -222,8 +230,8 @@ export const samplingPlanUploadPostController = {
 
     function baseView(overrides = {}) {
       return {
-        pageTitle: t('pages.samplingPlanUpload.title'),
-        heading: t('pages.samplingPlanUpload.heading'),
+        pageTitle: t(TITLE_KEY),
+        heading: t(HEADING_KEY),
         backLink: taskListUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         resultsLink: resultsUrl(applicationId),
@@ -281,7 +289,7 @@ export const samplingPlanUploadPostController = {
       return renderPage(
         h,
         baseView({
-          fileError: t('pages.samplingPlanUpload.validation.uploadError')
+          fileError: t(UPLOAD_ERROR_KEY)
         })
       ).code(500)
     }
@@ -300,7 +308,7 @@ export const samplingPlanUploadPostController = {
       return renderPage(
         h,
         baseView({
-          fileError: t('pages.samplingPlanUpload.validation.uploadError')
+          fileError: t(UPLOAD_ERROR_KEY)
         })
       ).code(500)
     }
@@ -346,13 +354,13 @@ export const samplingPlanResultsGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+        pageTitle: t(RESULTS_TITLE_KEY),
+        heading: t(UPLOADED_FILES_HEADING_KEY),
         backLink: samplingPlanUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         uploadAnotherLink: samplingPlanUrl(applicationId),
         files: [],
-        error: t('pages.samplingPlanUpload.validation.fetchError')
+        error: t(FETCH_ERROR_KEY)
       }).code(500)
     }
 
@@ -372,15 +380,13 @@ export const samplingPlanResultsGetController = {
     }
 
     return renderResultsPage(h, {
-      pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-      heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+      pageTitle: t(RESULTS_TITLE_KEY),
+      heading: t(UPLOADED_FILES_HEADING_KEY),
       backLink: samplingPlanUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       uploadAnotherLink: samplingPlanUrl(applicationId),
       files,
-      error: uploadFailed
-        ? t('pages.samplingPlanUpload.validation.uploadError')
-        : null,
+      error: uploadFailed ? t(UPLOAD_ERROR_KEY) : null,
       readOnly
     })
   }
@@ -406,13 +412,13 @@ export const samplingPlanResultsPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+        pageTitle: t(RESULTS_TITLE_KEY),
+        heading: t(UPLOADED_FILES_HEADING_KEY),
         backLink: samplingPlanUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         uploadAnotherLink: samplingPlanUrl(applicationId),
         files: [],
-        error: t('pages.samplingPlanUpload.validation.fetchError')
+        error: t(FETCH_ERROR_KEY)
       }).code(500)
     }
 
@@ -428,8 +434,8 @@ export const samplingPlanResultsPostController = {
 
     function baseView(overrides = {}) {
       return {
-        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+        pageTitle: t(RESULTS_TITLE_KEY),
+        heading: t(UPLOADED_FILES_HEADING_KEY),
         backLink: samplingPlanUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         uploadAnotherLink: samplingPlanUrl(applicationId),
