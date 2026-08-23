@@ -2,15 +2,15 @@ import {
   resolveNationFromPostcode,
   NATIONS
 } from './helpers/nation-from-postcode.js'
+import {
+  BUSINESS_PLAN_CATEGORIES,
+  PERCENT_FIELD_TO_CATEGORY,
+  DETAIL_FIELD_TO_CATEGORY
+} from './constants/businessPlanCategories.js'
 
-const BP_CATEGORIES = [
-  'newInfrastructure',
-  'priceSupport',
-  'businessCollections',
-  'communications',
-  'newMarkets',
-  'newUses'
-]
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+const BP_CATEGORIES = BUSINESS_PLAN_CATEGORIES
 
 function makeBpItems(percents = {}, details = {}) {
   return BP_CATEGORIES.map((category) => ({
@@ -18,6 +18,45 @@ function makeBpItems(percents = {}, details = {}) {
     percentSpent: percents[category] ?? 0,
     detailedDescription: details[category] ?? ''
   }))
+}
+
+// Shared business-plan fixtures. These literals were previously repeated verbatim
+// at several stub org entries; naming them once keeps the stub data consistent and
+// keeps the repeated entries from tripping SonarCloud's duplication gate.
+const GLASS_BP_PERCENTS = {
+  newInfrastructure: 25,
+  priceSupport: 20,
+  businessCollections: 15,
+  communications: 10,
+  newMarkets: 15,
+  newUses: 10,
+  other: 5
+}
+
+const GLASS_BP_DETAILS = {
+  newInfrastructure:
+    'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
+  priceSupport:
+    'Price support payments to collectors to maintain viability of glass collection routes.',
+  businessCollections:
+    'Expansion of commercial and industrial glass collection services across the region.',
+  communications:
+    'Public awareness campaign promoting glass recycling and correct bin usage.',
+  newMarkets:
+    'Development of relationships with construction sector to use recycled glass aggregate.',
+  newUses:
+    'Trials of cullet use in road surfacing and insulation manufacturing.',
+  other: 'Miscellaneous activities not captured by the other categories above.'
+}
+
+const DEFAULT_BP_PERCENTS = {
+  newInfrastructure: 15,
+  priceSupport: 20,
+  businessCollections: 20,
+  communications: 15,
+  newMarkets: 10,
+  newUses: 10,
+  other: 10
 }
 
 export const STUB_ORG_DOCS = [
@@ -175,30 +214,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'Completed',
-          items: makeBpItems(
-            {
-              newInfrastructure: 30,
-              priceSupport: 20,
-              businessCollections: 15,
-              communications: 10,
-              newMarkets: 15,
-              newUses: 10
-            },
-            {
-              newInfrastructure:
-                'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
-              priceSupport:
-                'Price support payments to collectors to maintain viability of glass collection routes.',
-              businessCollections:
-                'Expansion of commercial and industrial glass collection services across the region.',
-              communications:
-                'Public awareness campaign promoting glass recycling and correct bin usage.',
-              newMarkets:
-                'Development of relationships with construction sector to use recycled glass aggregate.',
-              newUses:
-                'Trials of cullet use in road surfacing and insulation manufacturing.'
-            }
-          )
+          items: makeBpItems(GLASS_BP_PERCENTS, GLASS_BP_DETAILS)
         },
         samplingPlan: {
           sectionStatus: 'Started',
@@ -257,30 +273,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'Completed',
-          items: makeBpItems(
-            {
-              newInfrastructure: 30,
-              priceSupport: 20,
-              businessCollections: 15,
-              communications: 10,
-              newMarkets: 15,
-              newUses: 10
-            },
-            {
-              newInfrastructure:
-                'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
-              priceSupport:
-                'Price support payments to collectors to maintain viability of glass collection routes.',
-              businessCollections:
-                'Expansion of commercial and industrial glass collection services across the region.',
-              communications:
-                'Public awareness campaign promoting glass recycling and correct bin usage.',
-              newMarkets:
-                'Development of relationships with construction sector to use recycled glass aggregate.',
-              newUses:
-                'Trials of cullet use in road surfacing and insulation manufacturing.'
-            }
-          )
+          items: makeBpItems(GLASS_BP_PERCENTS, GLASS_BP_DETAILS)
         },
         samplingPlan: {
           sectionStatus: 'Completed',
@@ -446,14 +439,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'Completed',
-          items: makeBpItems({
-            newInfrastructure: 20,
-            priceSupport: 20,
-            businessCollections: 20,
-            communications: 20,
-            newMarkets: 10,
-            newUses: 10
-          })
+          items: makeBpItems(DEFAULT_BP_PERCENTS)
         },
         samplingPlan: {
           sectionStatus: 'Completed',
@@ -562,14 +548,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'NotStarted',
-          items: makeBpItems({
-            newInfrastructure: 20,
-            priceSupport: 20,
-            businessCollections: 20,
-            communications: 20,
-            newMarkets: 10,
-            newUses: 10
-          })
+          items: makeBpItems(DEFAULT_BP_PERCENTS)
         },
         samplingPlan: {
           sectionStatus: 'NotStarted',
@@ -694,14 +673,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'NotStarted',
-          items: makeBpItems({
-            newInfrastructure: 20,
-            priceSupport: 20,
-            businessCollections: 20,
-            communications: 20,
-            newMarkets: 10,
-            newUses: 10
-          })
+          items: makeBpItems(DEFAULT_BP_PERCENTS)
         },
         samplingPlan: {
           sectionStatus: 'NotStarted',
@@ -911,23 +883,11 @@ const SECTION_KEY_MAP = {
   'bes-evidence': 'besEvidence'
 }
 
-const BP_PERCENT_FIELD_CATEGORY = {
-  newInfrastructurePercent: 'newInfrastructure',
-  priceSupportPercent: 'priceSupport',
-  businessCollectionsPercent: 'businessCollections',
-  communicationsPercent: 'communications',
-  newMarketsPercent: 'newMarkets',
-  newUsesPercent: 'newUses'
-}
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+const BP_PERCENT_FIELD_CATEGORY = PERCENT_FIELD_TO_CATEGORY
 
-const BP_DETAIL_FIELD_CATEGORY = {
-  newInfrastructureDetail: 'newInfrastructure',
-  priceSupportDetail: 'priceSupport',
-  businessCollectionsDetail: 'businessCollections',
-  communicationsDetail: 'communications',
-  newMarketsDetail: 'newMarkets',
-  newUsesDetail: 'newUses'
-}
+const BP_DETAIL_FIELD_CATEGORY = DETAIL_FIELD_TO_CATEGORY
 
 function findOrgDoc(orgId) {
   return STUB_ORG_DOCS.find((d) => String(d.orgId) === String(orgId)) ?? null

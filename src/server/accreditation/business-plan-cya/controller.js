@@ -6,24 +6,16 @@ import {
   PERCENT_FIELD_TO_CATEGORY,
   DETAIL_FIELD_TO_CATEGORY
 } from '../business-plan/helpers.js'
+import {
+  BUSINESS_PLAN_PERCENT_FIELDS,
+  BUSINESS_PLAN_DETAIL_FIELDS
+} from '../../common/constants/businessPlanCategories.js'
 
-const PERCENT_FIELDS = [
-  'newInfrastructurePercent',
-  'priceSupportPercent',
-  'businessCollectionsPercent',
-  'communicationsPercent',
-  'newMarketsPercent',
-  'newUsesPercent'
-]
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+const PERCENT_FIELDS = BUSINESS_PLAN_PERCENT_FIELDS
 
-const DETAIL_FIELDS = [
-  'newInfrastructureDetail',
-  'priceSupportDetail',
-  'businessCollectionsDetail',
-  'communicationsDetail',
-  'newMarketsDetail',
-  'newUsesDetail'
-]
+const DETAIL_FIELDS = BUSINESS_PLAN_DETAIL_FIELDS
 
 export function buildSummaryRows(application, t, applicationId) {
   const bp = application.businessPlan

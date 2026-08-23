@@ -5,15 +5,11 @@ import {
   findBpItem,
   DETAIL_FIELD_TO_CATEGORY
 } from '../business-plan/helpers.js'
+import { BUSINESS_PLAN_DETAIL_FIELDS } from '../../common/constants/businessPlanCategories.js'
 
-export const DETAIL_FIELDS = [
-  'newInfrastructureDetail',
-  'priceSupportDetail',
-  'businessCollectionsDetail',
-  'communicationsDetail',
-  'newMarketsDetail',
-  'newUsesDetail'
-]
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+export const DETAIL_FIELDS = BUSINESS_PLAN_DETAIL_FIELDS
 
 const MAX_CHARS = 500
 

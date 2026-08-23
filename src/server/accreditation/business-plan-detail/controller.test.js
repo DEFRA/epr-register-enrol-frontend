@@ -44,18 +44,20 @@ function makeApplication(overrides = {}) {
     registrationId: 'REG001',
     prns: { sectionStatus: 'Completed' },
     businessPlan: {
-      newInfrastructurePercent: 20,
+      newInfrastructurePercent: 15,
       priceSupportPercent: 20,
       businessCollectionsPercent: 20,
       communicationsPercent: 20,
       newMarketsPercent: 10,
       newUsesPercent: 10,
+      otherPercent: 5,
       newInfrastructureDetail: 'Investing in sorting lines',
       priceSupportDetail: '',
       businessCollectionsDetail: '',
       communicationsDetail: '',
       newMarketsDetail: '',
       newUsesDetail: '',
+      otherDetail: '',
       sectionStatus: 'InProgress'
     },
     samplingPlan: { sectionStatus: 'NotStarted' },
@@ -130,6 +132,20 @@ describe('#validateDetailFields', () => {
       null
     )
     expect(errors.newInfrastructureDetail).toBeUndefined()
+  })
+
+  test('returns error when otherPercent > 0 and otherDetail is empty', () => {
+    const application = makeApplication()
+    const errors = validateDetailFields({ otherDetail: '' }, t, application)
+    expect(errors.otherDetail).toBeDefined()
+    expect(errors.otherDetail.text).toContain('allocated a percentage')
+  })
+
+  test('returns error for otherDetail exceeding 500 chars', () => {
+    const payload = { otherDetail: 'a'.repeat(501) }
+    const errors = validateDetailFields(payload, t)
+    expect(errors.otherDetail).toBeDefined()
+    expect(errors.otherDetail.text).toContain('500 characters')
   })
 })
 
@@ -240,7 +256,7 @@ describe('#businessPlanDetailController', () => {
       expect(result).toContain('data-testid="page-heading"')
     })
 
-    test('renders all six textarea inputs', async () => {
+    test('renders all seven textarea inputs, including the "other" category', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -249,6 +265,7 @@ describe('#businessPlanDetailController', () => {
         headers: operatorHeaders
       })
 
+      expect(DETAIL_FIELDS).toContain('otherDetail')
       DETAIL_FIELDS.forEach((field) => {
         expect(result).toContain(`data-testid="textarea-${field}"`)
       })
@@ -379,6 +396,7 @@ describe('#businessPlanDetailController', () => {
           communicationsDetail: 'Public awareness campaigns',
           newMarketsDetail: 'Construction sector partnerships',
           newUsesDetail: 'Insulation manufacturing trials',
+          otherDetail: 'Miscellaneous other activities',
           submitAction: 'saveAndContinue'
         }
       })
@@ -390,7 +408,8 @@ describe('#businessPlanDetailController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
         expect.objectContaining({
-          newInfrastructureDetail: 'Sorting lines investment'
+          newInfrastructureDetail: 'Sorting lines investment',
+          otherDetail: 'Miscellaneous other activities'
         })
       )
     })

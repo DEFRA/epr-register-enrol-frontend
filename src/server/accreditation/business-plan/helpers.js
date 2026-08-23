@@ -1,31 +1,14 @@
-export const CATEGORY_FIELD_MAP = {
-  newInfrastructure: {
-    percent: 'newInfrastructurePercent',
-    detail: 'newInfrastructureDetail'
-  },
-  priceSupport: {
-    percent: 'priceSupportPercent',
-    detail: 'priceSupportDetail'
-  },
-  businessCollections: {
-    percent: 'businessCollectionsPercent',
-    detail: 'businessCollectionsDetail'
-  },
-  communications: {
-    percent: 'communicationsPercent',
-    detail: 'communicationsDetail'
-  },
-  newMarkets: { percent: 'newMarketsPercent', detail: 'newMarketsDetail' },
-  newUses: { percent: 'newUsesPercent', detail: 'newUsesDetail' }
-}
+import { BUSINESS_PLAN_CATEGORY_FIELD_MAP } from '../../common/constants/businessPlanCategories.js'
 
-export const PERCENT_FIELD_TO_CATEGORY = Object.fromEntries(
-  Object.entries(CATEGORY_FIELD_MAP).map(([cat, { percent }]) => [percent, cat])
-)
-
-export const DETAIL_FIELD_TO_CATEGORY = Object.fromEntries(
-  Object.entries(CATEGORY_FIELD_MAP).map(([cat, { detail }]) => [detail, cat])
-)
+// Re-exported for backwards compatibility — CATEGORY_FIELD_MAP,
+// PERCENT_FIELD_TO_CATEGORY and DETAIL_FIELD_TO_CATEGORY now derive from the
+// single shared source of truth in common/constants/businessPlanCategories.js
+// (see RA-456) rather than being declared here.
+export const CATEGORY_FIELD_MAP = BUSINESS_PLAN_CATEGORY_FIELD_MAP
+export {
+  PERCENT_FIELD_TO_CATEGORY,
+  DETAIL_FIELD_TO_CATEGORY
+} from '../../common/constants/businessPlanCategories.js'
 
 /**
  * Finds one businessPlan item by category.
