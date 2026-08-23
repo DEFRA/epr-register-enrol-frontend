@@ -27,7 +27,9 @@ export const REGULATOR_QUERY_SECTION_LABEL_KEYS = {
  */
 export function buildRegulatorQuerySummary(sectionKey, t) {
   const labelKey = REGULATOR_QUERY_SECTION_LABEL_KEYS[sectionKey]
-  if (!labelKey) return null
+  if (!labelKey) {
+    return null
+  }
   return `${t('common.regulatorQuery.summaryPrefix')} ${t(labelKey)}.`
 }
 

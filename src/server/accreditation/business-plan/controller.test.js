@@ -23,9 +23,15 @@ const APPLICATION_ID = 'app-bp-001'
 const t = (key) => {
   const last = key.split('.').pop()
   // Return placeholder-containing strings for validation messages
-  if (last === 'wholeNumber') return 'Enter a whole number for {field}'
-  if (last === 'outOfRange') return '{field} must be between 0 and 100'
-  if (last === 'mustSumTo100') return 'The percentages must add up to 100'
+  if (last === 'wholeNumber') {
+    return 'Enter a whole number for {field}'
+  }
+  if (last === 'outOfRange') {
+    return '{field} must be between 0 and 100'
+  }
+  if (last === 'mustSumTo100') {
+    return 'The percentages must add up to 100'
+  }
   return last
 }
 

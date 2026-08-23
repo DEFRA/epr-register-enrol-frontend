@@ -71,7 +71,9 @@ export const persistentStubApiClient = {
           `${backendUrl()}/api/v1/organisations/${orgId}/defra-link`,
           { headers: authHeaders(), signal: AbortSignal.timeout(TIMEOUT_MS) }
         )
-        if (res.ok) return res.json()
+        if (res.ok) {
+          return res.json()
+        }
       } catch (err) {
         console.warn(
           `[persistentStubApiClient] backend GET defra-link failed: ${err.message}`
@@ -114,7 +116,9 @@ export const persistentStubApiClient = {
             signal: AbortSignal.timeout(TIMEOUT_MS)
           }
         )
-        if (res.ok) return res.json()
+        if (res.ok) {
+          return res.json()
+        }
       } catch (err) {
         console.warn(
           `[persistentStubApiClient] backend GET single failed: ${err.message}`
