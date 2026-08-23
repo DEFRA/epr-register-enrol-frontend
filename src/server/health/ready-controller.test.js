@@ -13,7 +13,9 @@ describe('#readyController', () => {
   beforeAll(async () => {
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key in configOverrides) return configOverrides[key]
+      if (key in configOverrides) {
+        return configOverrides[key]
+      }
       return originalGet(key)
     })
     server = await createServer()

@@ -50,10 +50,16 @@ function createdAtTime(application) {
 
 function latest(applications) {
   return applications.reduce((best, application) => {
-    if (best === null) return application
+    if (best === null) {
+      return application
+    }
     const difference = createdAtTime(application) - createdAtTime(best)
-    if (difference > 0) return application
-    if (difference < 0) return best
+    if (difference > 0) {
+      return application
+    }
+    if (difference < 0) {
+      return best
+    }
     return String(application.applicationId) > String(best.applicationId)
       ? application
       : best

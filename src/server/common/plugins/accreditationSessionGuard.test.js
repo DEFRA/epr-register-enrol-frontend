@@ -252,7 +252,9 @@ describe('guard handler behaviour', () => {
     const yar = makeYarWithFlash(accreditationId)
     const request = { path, yar }
 
-    if (!shouldGuardPath(request.path)) return h.continue
+    if (!shouldGuardPath(request.path)) {
+      return h.continue
+    }
     if (!hasValidSession(request.yar)) {
       request.yar.flash(
         'notification',

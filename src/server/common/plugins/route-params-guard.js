@@ -57,7 +57,9 @@ const PARAM_SCHEMAS = {
 export function findInvalidParam(params) {
   for (const [key, value] of Object.entries(params ?? {})) {
     const schema = PARAM_SCHEMAS[key]
-    if (!schema) continue
+    if (!schema) {
+      continue
+    }
     const { error } = schema.validate(value)
     if (error) {
       return key
@@ -73,7 +75,9 @@ export function findInvalidParam(params) {
 export function normaliseParams(params) {
   for (const [key, value] of Object.entries(params ?? {})) {
     const schema = PARAM_SCHEMAS[key]
-    if (!schema) continue
+    if (!schema) {
+      continue
+    }
     const { value: normalised } = schema.validate(value)
     params[key] = normalised
   }

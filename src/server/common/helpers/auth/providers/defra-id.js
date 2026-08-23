@@ -22,7 +22,9 @@ export function getDefraIdConfig(config) {
 }
 
 export async function getDefraIdEndpoints(discoveryUrl) {
-  if (endpointCache) return endpointCache
+  if (endpointCache) {
+    return endpointCache
+  }
   const response = await fetch(discoveryUrl)
   if (!response.ok) {
     throw new Error(`Defra ID OIDC discovery failed: ${response.status}`)

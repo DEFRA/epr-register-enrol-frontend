@@ -26,7 +26,9 @@ describe('#stubLoginController', () => {
 
     beforeAll(async () => {
       vi.mocked(config.get).mockImplementation((key) => {
-        if (key === 'auth.azureEntraId.clientId') return 'test-client-id'
+        if (key === 'auth.azureEntraId.clientId') {
+          return 'test-client-id'
+        }
         if (key === 'auth.azureEntraId.tenantId') {
           return 'Defradev.onmicrosoft.com'
         }
@@ -68,7 +70,9 @@ describe('#stubLoginController', () => {
 
       // Restore Entra ID mock for remaining tests in this block
       vi.mocked(config.get).mockImplementation((key) => {
-        if (key === 'auth.azureEntraId.clientId') return 'test-client-id'
+        if (key === 'auth.azureEntraId.clientId') {
+          return 'test-client-id'
+        }
         if (key === 'auth.azureEntraId.tenantId') {
           return 'Defradev.onmicrosoft.com'
         }
@@ -98,7 +102,9 @@ describe('#stubLoginController', () => {
         if (key === 'auth.defraId.discoveryUrl') {
           return 'https://defra-id.example/.well-known/openid-configuration'
         }
-        if (key === 'auth.defraId.clientId') return 'test-defra-client-id'
+        if (key === 'auth.defraId.clientId') {
+          return 'test-defra-client-id'
+        }
         return realConfigGet(key)
       })
       defraIdServer = await createServer()
