@@ -39,7 +39,9 @@ function buildHeading(application, isExporter, t) {
     ? t('pages.tonnage.headingSuffixExporter')
     : t('pages.tonnage.headingSuffix')
   const material = application ? materialDisplayName(application, t) : ''
-  if (!material) return `${prefix} ${suffix}`
+  if (!material) {
+    return `${prefix} ${suffix}`
+  }
   return `${prefix} ${material} ${suffix}`
 }
 

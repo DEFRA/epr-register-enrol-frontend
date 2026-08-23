@@ -935,7 +935,9 @@ function findOrgDoc(orgId) {
 
 function findAccreditation(orgId, itemId) {
   const doc = findOrgDoc(orgId)
-  if (!doc) return null
+  if (!doc) {
+    return null
+  }
   return doc.accreditations.find((a) => a.id === itemId) ?? null
 }
 
@@ -945,7 +947,9 @@ function withOrgData(doc, item) {
 
 function parseEndpoint(endpoint) {
   const match = endpoint.match(APP_PATH_RE)
-  if (!match) return null
+  if (!match) {
+    return null
+  }
   return { orgId: match[1], itemId: match[2], section: match[3] ?? null }
 }
 
@@ -1029,20 +1033,28 @@ export const stubApiClient = {
         /\/api\/v1\/accreditation-applications\/([^/]+)$/
       )
       const doc = findOrgDoc(m[1])
-      if (!doc) return Promise.resolve([])
+      if (!doc) {
+        return Promise.resolve([])
+      }
       return Promise.resolve(
         doc.accreditations.map((item) => withOrgData(doc, item))
       )
     }
 
     const parsed = parseEndpoint(endpoint)
-    if (!parsed) return Promise.resolve({})
+    if (!parsed) {
+      return Promise.resolve({})
+    }
     const { orgId, itemId } = parsed
     const doc = findOrgDoc(orgId)
-    if (!doc) return Promise.resolve({})
+    if (!doc) {
+      return Promise.resolve({})
+    }
     const item =
       doc.accreditations.find((a) => a.id === itemId) ?? doc.accreditations[0]
-    if (!item) return Promise.resolve({})
+    if (!item) {
+      return Promise.resolve({})
+    }
     return Promise.resolve(withOrgData(doc, item))
   },
 
@@ -1138,7 +1150,9 @@ export const stubApiClient = {
         if (!item.overseasSites) {
           item.overseasSites = { sectionStatus: 'InProgress', sites: [] }
         }
-        if (!item.overseasSites.sites) item.overseasSites.sites = []
+        if (!item.overseasSites.sites) {
+          item.overseasSites.sites = []
+        }
         const newSite = {
           siteId: Date.now(),
           isNewSite: true,
@@ -1161,7 +1175,9 @@ export const stubApiClient = {
       const siteId = parseInt(promoteOrsMatch[3], 10)
       const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
       if (site) {
-        if (!site.previousSites) site.previousSites = []
+        if (!site.previousSites) {
+          site.previousSites = []
+        }
         const { previousSites, ...snapshot } = site
         site.previousSites.push(snapshot)
         Object.assign(site, body, {
@@ -1244,10 +1260,8 @@ export const stubApiClient = {
           scanStatus: body?.scanStatus ?? 'Clean'
         }
         if (site) {
-          if (!site.besEvidence) site.besEvidence = { besEvidenceUploads: [] }
-          if (!site.besEvidence.besEvidenceUploads) {
-            site.besEvidence.besEvidenceUploads = []
-          }
+          site.besEvidence ??= { besEvidenceUploads: [] }
+          site.besEvidence.besEvidenceUploads ??= []
           site.besEvidence.besEvidenceUploads.push(newFile)
         }
         return Promise.resolve({ fileId: newFile.fileId })
@@ -1267,7 +1281,9 @@ export const stubApiClient = {
         scanStatus: body?.scanStatus ?? 'Clean'
       }
       if (item) {
-        if (!item.samplingPlan.files) item.samplingPlan.files = []
+        if (!item.samplingPlan.files) {
+          item.samplingPlan.files = []
+        }
         item.samplingPlan.files.push(newFile)
       }
       return Promise.resolve({ fileId: newFile.fileId })
@@ -1288,7 +1304,7 @@ export const stubApiClient = {
           (s) => s.siteId === siteId
         )
         if (site) {
-          if (!site.besEvidence) site.besEvidence = {}
+          site.besEvidence ??= {}
           Object.assign(site.besEvidence, body)
         }
       }
@@ -1296,16 +1312,24 @@ export const stubApiClient = {
     }
 
     const parsed = parseEndpoint(endpoint)
-    if (!parsed) return Promise.resolve({})
+    if (!parsed) {
+      return Promise.resolve({})
+    }
     const { orgId, itemId, section } = parsed
     const doc = findOrgDoc(orgId)
-    if (!doc) return Promise.resolve({})
+    if (!doc) {
+      return Promise.resolve({})
+    }
     const item = doc.accreditations.find((a) => a.id === itemId)
-    if (!item || !section) return Promise.resolve({})
+    if (!item || !section) {
+      return Promise.resolve({})
+    }
 
     if (section === 'business-plan') {
       if (body.items) {
-        if (!item.businessPlan.items) item.businessPlan.items = []
+        if (!item.businessPlan.items) {
+          item.businessPlan.items = []
+        }
         item.businessPlan.items = mergeBpItems(
           item.businessPlan.items,
           body.items
@@ -1329,7 +1353,9 @@ export const stubApiClient = {
         }
       }
       if (Object.keys(flatUpdates).length > 0) {
-        if (!item.businessPlan.items) item.businessPlan.items = []
+        if (!item.businessPlan.items) {
+          item.businessPlan.items = []
+        }
         item.businessPlan.items = mergeBpItems(
           item.businessPlan.items,
           Object.values(flatUpdates)
@@ -1339,7 +1365,9 @@ export const stubApiClient = {
         item.businessPlan.sectionStatus = body.sectionStatus
       }
     } else if (section === 'tonnage') {
-      if (!item.prnIssuance) item.prnIssuance = {}
+      if (!item.prnIssuance) {
+        item.prnIssuance = {}
+      }
       if (body.authorisers !== undefined) {
         item.prnIssuance.signatories = body.authorisers
       }
@@ -1351,7 +1379,9 @@ export const stubApiClient = {
       }
     } else {
       const key = SECTION_KEY_MAP[section]
-      if (key) Object.assign(item[key], body)
+      if (key) {
+        Object.assign(item[key], body)
+      }
     }
 
     return Promise.resolve(withOrgData(doc, item))

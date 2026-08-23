@@ -66,7 +66,9 @@ export const TONNAGE_FEES = {
 }
 
 export function resolveNation(application) {
-  if (application.nation) return application.nation
+  if (application.nation) {
+    return application.nation
+  }
   return resolveNationFromPostcode(application.sitePostcode)
 }
 
@@ -87,7 +89,9 @@ export function buildPaymentReference(nation, organisationId, isExporter) {
 }
 
 export function siteNameFromAddress(siteAddress) {
-  if (!siteAddress) return ''
+  if (!siteAddress) {
+    return ''
+  }
   return siteAddress.split(',')[0].trim()
 }
 

@@ -29,8 +29,12 @@ function makeMockRequest(materialType, text = VALID_TEXT) {
     params: { applicationId: APPLICATION_ID },
     yar: {
       get: vi.fn((key) => {
-        if (key === ACCREDITATION_SESSION_KEYS.materialType) return materialType
-        if (key === ACCREDITATION_SESSION_KEYS.addOverseasSite) return {}
+        if (key === ACCREDITATION_SESSION_KEYS.materialType) {
+          return materialType
+        }
+        if (key === ACCREDITATION_SESSION_KEYS.addOverseasSite) {
+          return {}
+        }
         return null
       }),
       set: vi.fn()

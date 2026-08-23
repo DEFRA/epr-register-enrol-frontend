@@ -12,7 +12,9 @@ const GLASS_RECYCLING_PROCESS_KEYS = {
  */
 export function materialDisplayName(application, t) {
   const { materialType, glassRecyclingProcess } = application
-  if (!materialType) return ''
+  if (!materialType) {
+    return ''
+  }
 
   // glassRecyclingProcess is an array containing 0 or 1 elements from the
   // ReEx API; an empty array means no recycling process was specified.
@@ -21,7 +23,9 @@ export function materialDisplayName(application, t) {
     : glassRecyclingProcess
 
   const glassKey = GLASS_RECYCLING_PROCESS_KEYS[glassRecyclingType]
-  if (materialType === 'Glass' && glassKey) return t(glassKey)
+  if (materialType === 'Glass' && glassKey) {
+    return t(glassKey)
+  }
 
   return t(`pages.materialSelection.materials.${materialType}`)
 }
