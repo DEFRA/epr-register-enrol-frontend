@@ -220,7 +220,8 @@
         "businessCollectionsPercent": "Support for business collections",
         "communicationsPercent": "Communications, including information campaigns",
         "newMarketsPercent": "Developing new markets for products made from recycled packaging waste",
-        "newUsesPercent": "Developing new uses for recycled waste"
+        "newUsesPercent": "Developing new uses for recycled waste",
+        "otherPercent": "Activities or investment not covered by the other categories"
       },
       "validation": {
         "wholeNumber": "Enter a whole number for {field}",
@@ -245,7 +246,8 @@
         "businessCollectionsDetail": "Support for business collections",
         "communicationsDetail": "Communications, including information campaigns",
         "newMarketsDetail": "Developing new markets for products made from recycled packaging waste",
-        "newUsesDetail": "Developing new uses for recycled waste"
+        "newUsesDetail": "Developing new uses for recycled waste",
+        "otherDetail": "Activities or investment not covered by the other categories"
       },
       "validation": {
         "tooLong": "{field} must be 500 characters or fewer",
@@ -271,7 +273,8 @@
         "businessCollectionsPercent": "Support for business collections",
         "communicationsPercent": "Communications, including information campaigns",
         "newMarketsPercent": "Developing new markets for products made from recycled packaging waste",
-        "newUsesPercent": "Developing new uses for recycled waste"
+        "newUsesPercent": "Developing new uses for recycled waste",
+        "otherPercent": "Activities or investment not covered by the other categories"
       },
       "validation": {
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",

@@ -216,7 +216,8 @@
         "businessCollectionsPercent": "[Welsh] Support for business collections",
         "communicationsPercent": "[Welsh] Communications, including information campaigns",
         "newMarketsPercent": "[Welsh] Developing new markets for products made from recycled packaging waste",
-        "newUsesPercent": "[Welsh] Developing new uses for recycled waste"
+        "newUsesPercent": "[Welsh] Developing new uses for recycled waste",
+        "otherPercent": "Gweithgareddau neu fuddsoddiadau nad ydynt wedi'u cynnwys yn y categorïau eraill"
       },
       "validation": {
         "wholeNumber": "[Welsh] Enter a whole number for {field}",
@@ -242,7 +243,8 @@
         "businessCollectionsDetail": "[Welsh] Support for business collections",
         "communicationsDetail": "[Welsh] Communications, including information campaigns",
         "newMarketsDetail": "[Welsh] Developing new markets for products made from recycled packaging waste",
-        "newUsesDetail": "[Welsh] Developing new uses for recycled waste"
+        "newUsesDetail": "[Welsh] Developing new uses for recycled waste",
+        "otherDetail": "Gweithgareddau neu fuddsoddiadau nad ydynt wedi'u cynnwys yn y categorïau eraill"
       },
       "validation": {
         "tooLong": "[Welsh] {field} must be 500 characters or fewer",
@@ -268,7 +270,8 @@
         "businessCollectionsPercent": "[Welsh] Support for business collections",
         "communicationsPercent": "[Welsh] Communications, including information campaigns",
         "newMarketsPercent": "[Welsh] Developing new markets for products made from recycled packaging waste",
-        "newUsesPercent": "[Welsh] Developing new uses for recycled waste"
+        "newUsesPercent": "[Welsh] Developing new uses for recycled waste",
+        "otherPercent": "Gweithgareddau neu fuddsoddiadau nad ydynt wedi'u cynnwys yn y categorïau eraill"
       },
       "validation": {
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
