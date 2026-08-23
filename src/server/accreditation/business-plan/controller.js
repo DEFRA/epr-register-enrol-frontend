@@ -9,15 +9,11 @@ import {
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import { BUSINESS_PLAN_PERCENT_FIELDS } from '../../common/constants/businessPlanCategories.js'
 
-export const BUSINESS_PLAN_FIELDS = [
-  'newInfrastructurePercent',
-  'priceSupportPercent',
-  'businessCollectionsPercent',
-  'communicationsPercent',
-  'newMarketsPercent',
-  'newUsesPercent'
-]
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+export const BUSINESS_PLAN_FIELDS = BUSINESS_PLAN_PERCENT_FIELDS
 
 // Shape/size only, not business validity: validateBusinessPlanFields already
 // renders its own friendly inline errors for a missing/non-numeric percent
