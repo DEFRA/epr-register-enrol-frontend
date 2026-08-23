@@ -76,7 +76,7 @@ export const uploadMoreEvidencePostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId, siteId } = request.params
-    const siteIdInt = parseInt(siteId, 10)
+    const siteIdInt = Number.parseInt(siteId, 10)
     const { answer } = request.payload ?? {}
 
     let application
