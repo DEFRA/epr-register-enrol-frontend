@@ -39,9 +39,9 @@ export function parsePercent(value) {
     return 0
   }
   if (!/^\d+$/.test(trimmed)) {
-    return NaN
+    return Number.NaN
   }
-  return parseInt(trimmed, 10)
+  return Number.parseInt(trimmed, 10)
 }
 
 export function validateBusinessPlanFields(payload, t, skipSumCheck = false) {
@@ -62,7 +62,7 @@ export function validateBusinessPlanFields(payload, t, skipSumCheck = false) {
           )
         }
       }
-    } else if (isNaN(parsed)) {
+    } else if (Number.isNaN(parsed)) {
       errors[field] = {
         text: t('pages.businessPlan.validation.wholeNumber').replace(
           '{field}',
