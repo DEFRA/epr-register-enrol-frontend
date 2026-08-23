@@ -20,6 +20,45 @@ function makeBpItems(percents = {}, details = {}) {
   }))
 }
 
+// Shared business-plan fixtures. These literals were previously repeated verbatim
+// at several stub org entries; naming them once keeps the stub data consistent and
+// keeps the repeated entries from tripping SonarCloud's duplication gate.
+const GLASS_BP_PERCENTS = {
+  newInfrastructure: 25,
+  priceSupport: 20,
+  businessCollections: 15,
+  communications: 10,
+  newMarkets: 15,
+  newUses: 10,
+  other: 5
+}
+
+const GLASS_BP_DETAILS = {
+  newInfrastructure:
+    'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
+  priceSupport:
+    'Price support payments to collectors to maintain viability of glass collection routes.',
+  businessCollections:
+    'Expansion of commercial and industrial glass collection services across the region.',
+  communications:
+    'Public awareness campaign promoting glass recycling and correct bin usage.',
+  newMarkets:
+    'Development of relationships with construction sector to use recycled glass aggregate.',
+  newUses:
+    'Trials of cullet use in road surfacing and insulation manufacturing.',
+  other: 'Miscellaneous activities not captured by the other categories above.'
+}
+
+const DEFAULT_BP_PERCENTS = {
+  newInfrastructure: 15,
+  priceSupport: 20,
+  businessCollections: 20,
+  communications: 15,
+  newMarkets: 10,
+  newUses: 10,
+  other: 10
+}
+
 export const STUB_ORG_DOCS = [
   {
     orgId: 50001,
@@ -175,33 +214,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'Completed',
-          items: makeBpItems(
-            {
-              newInfrastructure: 25,
-              priceSupport: 20,
-              businessCollections: 15,
-              communications: 10,
-              newMarkets: 15,
-              newUses: 10,
-              other: 5
-            },
-            {
-              newInfrastructure:
-                'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
-              priceSupport:
-                'Price support payments to collectors to maintain viability of glass collection routes.',
-              businessCollections:
-                'Expansion of commercial and industrial glass collection services across the region.',
-              communications:
-                'Public awareness campaign promoting glass recycling and correct bin usage.',
-              newMarkets:
-                'Development of relationships with construction sector to use recycled glass aggregate.',
-              newUses:
-                'Trials of cullet use in road surfacing and insulation manufacturing.',
-              other:
-                'Miscellaneous activities not captured by the other categories above.'
-            }
-          )
+          items: makeBpItems(GLASS_BP_PERCENTS, GLASS_BP_DETAILS)
         },
         samplingPlan: {
           sectionStatus: 'Started',
@@ -260,33 +273,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'Completed',
-          items: makeBpItems(
-            {
-              newInfrastructure: 25,
-              priceSupport: 20,
-              businessCollections: 15,
-              communications: 10,
-              newMarkets: 15,
-              newUses: 10,
-              other: 5
-            },
-            {
-              newInfrastructure:
-                'Investment in new sorting and processing equipment at the Delta Green Recycling site.',
-              priceSupport:
-                'Price support payments to collectors to maintain viability of glass collection routes.',
-              businessCollections:
-                'Expansion of commercial and industrial glass collection services across the region.',
-              communications:
-                'Public awareness campaign promoting glass recycling and correct bin usage.',
-              newMarkets:
-                'Development of relationships with construction sector to use recycled glass aggregate.',
-              newUses:
-                'Trials of cullet use in road surfacing and insulation manufacturing.',
-              other:
-                'Miscellaneous activities not captured by the other categories above.'
-            }
-          )
+          items: makeBpItems(GLASS_BP_PERCENTS, GLASS_BP_DETAILS)
         },
         samplingPlan: {
           sectionStatus: 'Completed',
@@ -452,15 +439,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'Completed',
-          items: makeBpItems({
-            newInfrastructure: 15,
-            priceSupport: 20,
-            businessCollections: 20,
-            communications: 15,
-            newMarkets: 10,
-            newUses: 10,
-            other: 10
-          })
+          items: makeBpItems(DEFAULT_BP_PERCENTS)
         },
         samplingPlan: {
           sectionStatus: 'Completed',
@@ -569,15 +548,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'NotStarted',
-          items: makeBpItems({
-            newInfrastructure: 15,
-            priceSupport: 20,
-            businessCollections: 20,
-            communications: 15,
-            newMarkets: 10,
-            newUses: 10,
-            other: 10
-          })
+          items: makeBpItems(DEFAULT_BP_PERCENTS)
         },
         samplingPlan: {
           sectionStatus: 'NotStarted',
@@ -702,15 +673,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'NotStarted',
-          items: makeBpItems({
-            newInfrastructure: 15,
-            priceSupport: 20,
-            businessCollections: 20,
-            communications: 15,
-            newMarkets: 10,
-            newUses: 10,
-            other: 10
-          })
+          items: makeBpItems(DEFAULT_BP_PERCENTS)
         },
         samplingPlan: {
           sectionStatus: 'NotStarted',
