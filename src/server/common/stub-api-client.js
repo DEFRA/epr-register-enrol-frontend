@@ -106,7 +106,7 @@ export const STUB_ORG_DOCS = [
           accreditation: {
             accreditationNumber: 'A26RE5000391012ST',
             regulator: 'Environment Agency',
-            tonnage: 'Up to 1,000 tonnes',
+            tonnage: 'Up to 5,000 tonnes',
             authorisedUsers: ['Parry Edge'],
             overseasSites: []
           }
