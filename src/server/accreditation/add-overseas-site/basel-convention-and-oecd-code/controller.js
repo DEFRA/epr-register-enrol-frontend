@@ -95,7 +95,7 @@ export const addOrsBaselCodePostController = {
     const { applicationId } = request.params
     const session = getAddOrsSession(request)
     const action = request.payload?.action ?? 'continue'
-    const rawVisibleCount = parseInt(request.payload?.visibleCount, 10)
+    const rawVisibleCount = Number.parseInt(request.payload?.visibleCount, 10)
     const visibleCount = Math.min(
       Math.max(Number.isNaN(rawVisibleCount) ? 1 : rawVisibleCount, 1),
       MAX_CODES
@@ -114,7 +114,7 @@ export const addOrsBaselCodePostController = {
     }
 
     if (action.startsWith('removeCode-')) {
-      const removeIndex = parseInt(action.replace('removeCode-', ''), 10)
+      const removeIndex = Number.parseInt(action.replace('removeCode-', ''), 10)
       const newValues = values.filter((_, i) => i !== removeIndex)
       if (newValues.length === 0) {
         newValues.push('')

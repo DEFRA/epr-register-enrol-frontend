@@ -47,10 +47,10 @@ function parseCoordinates(raw) {
     return { valid: false, error: 'invalid' }
   }
 
-  const lat = parseFloat(parts[0].trim())
-  const lng = parseFloat(parts[1].trim())
+  const lat = Number.parseFloat(parts[0].trim())
+  const lng = Number.parseFloat(parts[1].trim())
 
-  if (isNaN(lat) || isNaN(lng)) {
+  if (Number.isNaN(lat) || Number.isNaN(lng)) {
     return { valid: false, error: 'invalid' }
   }
   if (lat < MIN_LATITUDE || lat > MAX_LATITUDE) {
