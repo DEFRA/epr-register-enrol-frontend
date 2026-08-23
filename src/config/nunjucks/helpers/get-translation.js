@@ -8,7 +8,9 @@ const localesPath = path.resolve(dirname, '../../../locales')
 let translations = null
 
 function loadTranslations() {
-  if (translations) return translations
+  if (translations) {
+    return translations
+  }
 
   const en = JSON.parse(
     readFileSync(path.join(localesPath, 'en/translation.json'), 'utf-8')

@@ -15,7 +15,9 @@ describe('#startServer', () => {
 
     const originalGet = config.get.bind(config)
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'port') return 3097
+      if (key === 'port') {
+        return 3097
+      }
       return originalGet(key)
     })
 

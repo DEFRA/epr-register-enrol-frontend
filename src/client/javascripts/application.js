@@ -405,7 +405,9 @@ function initSamplingPlanUpload(
     documentTypeSelect.classList.remove('govuk-select--error')
     documentTypeSelect.removeAttribute(ARIA_DESCRIBEDBY)
     const errorEl = document.getElementById('document-type-error')
-    if (errorEl) errorEl.remove()
+    if (errorEl) {
+      errorEl.remove()
+    }
   }
 
   function getExt(filename) {
@@ -414,9 +416,15 @@ function initSamplingPlanUpload(
   }
 
   function validate(file) {
-    if (!file) return null
-    if (!ALLOWED_EXTS.includes(getExt(file.name))) return errorInvalidType
-    if (file.size > MAX_BYTES) return errorTooLarge
+    if (!file) {
+      return null
+    }
+    if (!ALLOWED_EXTS.includes(getExt(file.name))) {
+      return errorInvalidType
+    }
+    if (file.size > MAX_BYTES) {
+      return errorTooLarge
+    }
     return null
   }
 
@@ -441,7 +449,9 @@ function initSamplingPlanUpload(
     fileInput.classList.remove('govuk-file-upload--error')
     fileInput.removeAttribute(ARIA_DESCRIBEDBY)
     const errorEl = document.getElementById('file-error')
-    if (errorEl) errorEl.remove()
+    if (errorEl) {
+      errorEl.remove()
+    }
   }
 
   function attachFileInputChangeListener(input) {
@@ -507,7 +517,9 @@ function initSamplingPlanUpload(
   // fileTooLarge/uploadError), which would otherwise wipe the
   // server-rendered error the moment the page loads.
   window.addEventListener('pageshow', function (event) {
-    if (!event.persisted) return
+    if (!event.persisted) {
+      return
+    }
     userSelectedFile = false
     swapFileInput()
     clearError()

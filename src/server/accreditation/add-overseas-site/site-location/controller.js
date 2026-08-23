@@ -5,6 +5,11 @@ import {
 } from '../../../common/helpers/addOverseasSiteSession.js'
 import { COUNTRIES } from '../../../common/data/countries.js'
 
+const MIN_LATITUDE = -90
+const MAX_LATITUDE = 90
+const MIN_LONGITUDE = -180
+const MAX_LONGITUDE = 180
+
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
 }
@@ -38,7 +43,9 @@ function buildViewData(t, applicationId, fields, errors) {
 function parseCoordinates(raw) {
   const trimmed = (raw ?? '').trim()
   const parts = trimmed.split(',')
-  if (parts.length !== 2) return { valid: false, error: 'invalid' }
+  if (parts.length !== 2) {
+    return { valid: false, error: 'invalid' }
+  }
 
   const lat = Number.parseFloat(parts[0].trim())
   const lng = Number.parseFloat(parts[1].trim())
@@ -46,8 +53,12 @@ function parseCoordinates(raw) {
   if (Number.isNaN(lat) || Number.isNaN(lng)) {
     return { valid: false, error: 'invalid' }
   }
-  if (lat < -90 || lat > 90) return { valid: false, error: 'latRange' }
-  if (lng < -180 || lng > 180) return { valid: false, error: 'lngRange' }
+  if (lat < MIN_LATITUDE || lat > MAX_LATITUDE) {
+    return { valid: false, error: 'latRange' }
+  }
+  if (lng < MIN_LONGITUDE || lng > MAX_LONGITUDE) {
+    return { valid: false, error: 'lngRange' }
+  }
 
   return { valid: true, value: trimmed }
 }

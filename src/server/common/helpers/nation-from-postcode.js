@@ -37,9 +37,17 @@ function extractPostcodeAreaCode(postcode) {
  */
 export function resolveNationFromPostcode(postcode) {
   const area = extractPostcodeAreaCode(postcode)
-  if (!area) return NATIONS.ENGLAND
-  if (area === NI_POSTCODE_PREFIX) return NATIONS.NORTHERN_IRELAND
-  if (SCOTLAND_POSTCODE_PREFIXES.includes(area)) return NATIONS.SCOTLAND
-  if (WALES_POSTCODE_PREFIXES.includes(area)) return NATIONS.WALES
+  if (!area) {
+    return NATIONS.ENGLAND
+  }
+  if (area === NI_POSTCODE_PREFIX) {
+    return NATIONS.NORTHERN_IRELAND
+  }
+  if (SCOTLAND_POSTCODE_PREFIXES.includes(area)) {
+    return NATIONS.SCOTLAND
+  }
+  if (WALES_POSTCODE_PREFIXES.includes(area)) {
+    return NATIONS.WALES
+  }
   return NATIONS.ENGLAND
 }

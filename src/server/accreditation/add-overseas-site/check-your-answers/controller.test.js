@@ -352,7 +352,9 @@ describe('#addOrsCyaController', () => {
         payload
       })
       const raw = response.headers['set-cookie']
-      if (!raw) return cookie
+      if (!raw) {
+        return cookie
+      }
       return (Array.isArray(raw) ? raw[0] : raw).split(';')[0]
     }
 
@@ -518,7 +520,9 @@ describe('#addOrsCyaController', () => {
 
     function cookieHeaderFrom(response, fallback) {
       const raw = response.headers['set-cookie']
-      if (!raw) return fallback
+      if (!raw) {
+        return fallback
+      }
       return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
     }
 
@@ -688,7 +692,9 @@ describe('#addOrsCyaController', () => {
 
     function cookieHeaderFrom(response, fallback) {
       const raw = response.headers['set-cookie']
-      if (!raw) return fallback
+      if (!raw) {
+        return fallback
+      }
       return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
     }
 

@@ -34,7 +34,9 @@ export const ALLOWED_MIME_TYPES = [
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
 export function validateFileExtension(filename) {
-  if (!filename) return false
+  if (!filename) {
+    return false
+  }
   const ext = filename.split('.').pop()?.toLowerCase()
   return ALLOWED_EXTENSIONS.includes(ext ?? '')
 }
@@ -43,9 +45,13 @@ export function parseDate(day, month, year) {
   const d = Number.parseInt(day, 10)
   const m = Number.parseInt(month, 10)
   const y = Number.parseInt(year, 10)
-  if (Number.isNaN(d) || Number.isNaN(m) || Number.isNaN(y)) return null
+  if (Number.isNaN(d) || Number.isNaN(m) || Number.isNaN(y)) {
+    return null
+  }
   const date = new Date(y, m - 1, d)
-  if (date.getMonth() !== m - 1 || date.getDate() !== d) return null
+  if (date.getMonth() !== m - 1 || date.getDate() !== d) {
+    return null
+  }
   return date
 }
 
