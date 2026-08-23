@@ -16,9 +16,15 @@ const APPLICATION_ID = 'app-bpcya-001'
 
 const t = (key) => {
   const last = key.split('.').pop()
-  if (last === 'notProvided') return 'Not provided'
-  if (last === 'changePercentContext') return 'percentage for {field}'
-  if (last === 'changeDetailContext') return 'detail for {field}'
+  if (last === 'notProvided') {
+    return 'Not provided'
+  }
+  if (last === 'changePercentContext') {
+    return 'percentage for {field}'
+  }
+  if (last === 'changeDetailContext') {
+    return 'detail for {field}'
+  }
   return last
 }
 

@@ -13,9 +13,15 @@ describe('api-client', () => {
 
   beforeEach(() => {
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'api.baseUrl') return BASE_URL
-      if (key === 'api.timeout') return DEFAULT_TIMEOUT
-      if (key === 'api.sharedSecret') return ''
+      if (key === 'api.baseUrl') {
+        return BASE_URL
+      }
+      if (key === 'api.timeout') {
+        return DEFAULT_TIMEOUT
+      }
+      if (key === 'api.sharedSecret') {
+        return ''
+      }
       return undefined
     })
 
@@ -153,9 +159,15 @@ describe('api-client', () => {
 
   test('sends the shared secret as a Bearer token when configured', async () => {
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'api.baseUrl') return BASE_URL
-      if (key === 'api.timeout') return DEFAULT_TIMEOUT
-      if (key === 'api.sharedSecret') return 'top-secret'
+      if (key === 'api.baseUrl') {
+        return BASE_URL
+      }
+      if (key === 'api.timeout') {
+        return DEFAULT_TIMEOUT
+      }
+      if (key === 'api.sharedSecret') {
+        return 'top-secret'
+      }
       return undefined
     })
     client = createApiClient()

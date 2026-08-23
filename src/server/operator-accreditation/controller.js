@@ -56,7 +56,9 @@ const REAPPLY_TEXT_HIDDEN_STATUSES = new Set([
 // The prior accreditation year always runs to 31 December.
 function buildCurrentAccreditation(application, siteName, priorYear) {
   const accreditation = application.organisation?.accreditation
-  if (!accreditation) return null
+  if (!accreditation) {
+    return null
+  }
 
   return {
     accreditationNumber: accreditation.accreditationNumber,

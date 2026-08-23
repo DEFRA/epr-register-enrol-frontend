@@ -20,7 +20,9 @@ const SITE_LOCATION_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/si
 
 function cookiesFrom(response) {
   const raw = response.headers['set-cookie']
-  if (!raw) return ''
+  if (!raw) {
+    return ''
+  }
   return Array.isArray(raw)
     ? raw.map((c) => c.split(';')[0]).join('; ')
     : raw.split(';')[0]

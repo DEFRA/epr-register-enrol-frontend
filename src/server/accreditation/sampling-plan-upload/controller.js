@@ -61,7 +61,9 @@ export function documentTypeOptions(t) {
 }
 
 export function validateFileExtension(filename) {
-  if (!filename) return false
+  if (!filename) {
+    return false
+  }
   const ext = filename.split('.').pop()?.toLowerCase()
   return ALLOWED_EXTENSIONS.includes(ext ?? '')
 }

@@ -33,9 +33,15 @@ describe('#basicAuthPlugin', () => {
 
     beforeAll(async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return 'test123'
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return 'test'
+        }
+        if (key === 'auth.basicPasswd') {
+          return 'test123'
+        }
       })
       server = await makeServer()
     })
@@ -132,9 +138,15 @@ describe('#basicAuthPlugin', () => {
 
     beforeAll(async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return 'test123'
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return 'test'
+        }
+        if (key === 'auth.basicPasswd') {
+          return 'test123'
+        }
       })
       server = await makeServer()
     })
@@ -212,9 +224,15 @@ describe('#basicAuthPlugin', () => {
 
     beforeAll(async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return 'test123'
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return 'test'
+        }
+        if (key === 'auth.basicPasswd') {
+          return 'test123'
+        }
       })
       server = await makeServer()
     })
@@ -292,9 +310,15 @@ describe('#basicAuthPlugin', () => {
 
     beforeAll(async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return 'test123'
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return 'test'
+        }
+        if (key === 'auth.basicPasswd') {
+          return 'test123'
+        }
       })
       server = hapi.server()
       await server.register(basicAuthPlugin)
@@ -341,9 +365,15 @@ describe('#basicAuthPlugin', () => {
 
     beforeAll(async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return 'test123'
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return 'test'
+        }
+        if (key === 'auth.basicPasswd') {
+          return 'test123'
+        }
       })
       server = hapi.server()
       await server.register(basicAuthPlugin)
@@ -394,9 +424,15 @@ describe('#basicAuthPlugin', () => {
   describe('when basicEnabled is true but credentials are empty', () => {
     test('throws at registration time when username is empty', async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return ''
-        if (key === 'auth.basicPasswd') return 'test123'
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return ''
+        }
+        if (key === 'auth.basicPasswd') {
+          return 'test123'
+        }
       })
       const server = hapi.server()
       await expect(server.register(basicAuthPlugin)).rejects.toThrow(
@@ -406,9 +442,15 @@ describe('#basicAuthPlugin', () => {
 
     test('throws at registration time when password is empty', async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return 'test'
-        if (key === 'auth.basicPasswd') return ''
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return 'test'
+        }
+        if (key === 'auth.basicPasswd') {
+          return ''
+        }
       })
       const server = hapi.server()
       await expect(server.register(basicAuthPlugin)).rejects.toThrow(
@@ -418,9 +460,15 @@ describe('#basicAuthPlugin', () => {
 
     test('throws at registration time when both username and password are empty', async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return true
-        if (key === 'auth.basicUsr') return ''
-        if (key === 'auth.basicPasswd') return ''
+        if (key === 'auth.basicEnabled') {
+          return true
+        }
+        if (key === 'auth.basicUsr') {
+          return ''
+        }
+        if (key === 'auth.basicPasswd') {
+          return ''
+        }
       })
       const server = hapi.server()
       await expect(server.register(basicAuthPlugin)).rejects.toThrow(
@@ -434,7 +482,9 @@ describe('#basicAuthPlugin', () => {
 
     beforeAll(async () => {
       config.get.mockImplementation((key) => {
-        if (key === 'auth.basicEnabled') return false
+        if (key === 'auth.basicEnabled') {
+          return false
+        }
       })
       server = await makeServer()
     })
