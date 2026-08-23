@@ -37,18 +37,20 @@ function makeApplication(overrides = {}) {
     registrationId: 'REG001',
     prns: { sectionStatus: 'Completed' },
     businessPlan: {
-      newInfrastructurePercent: 40,
+      newInfrastructurePercent: 35,
       priceSupportPercent: 20,
       businessCollectionsPercent: 15,
       communicationsPercent: 10,
       newMarketsPercent: 10,
       newUsesPercent: 5,
+      otherPercent: 5,
       newInfrastructureDetail: 'Investing in sorting lines',
       priceSupportDetail: '',
       businessCollectionsDetail: '',
       communicationsDetail: '',
       newMarketsDetail: '',
       newUsesDetail: '',
+      otherDetail: '',
       sectionStatus: 'InProgress'
     },
     samplingPlan: { sectionStatus: 'NotStarted' },
@@ -57,14 +59,16 @@ function makeApplication(overrides = {}) {
 }
 
 describe('#buildSummaryRows', () => {
-  test('returns 6 percent rows and 6 detail rows', () => {
+  test('returns 7 percent rows and 7 detail rows, including the "other" category', () => {
     const { percentRows, detailRows } = buildSummaryRows(
       makeApplication(),
       t,
       APPLICATION_ID
     )
-    expect(percentRows).toHaveLength(6)
-    expect(detailRows).toHaveLength(6)
+    expect(percentRows).toHaveLength(7)
+    expect(detailRows).toHaveLength(7)
+    expect(percentRows.map((r) => r.id)).toContain('otherPercent')
+    expect(detailRows.map((r) => r.id)).toContain('otherDetail')
   })
 
   test('percent row value includes % suffix', () => {
@@ -74,7 +78,17 @@ describe('#buildSummaryRows', () => {
       APPLICATION_ID
     )
     const row = percentRows.find((r) => r.id === 'newInfrastructurePercent')
-    expect(row.value).toBe('40%')
+    expect(row.value).toBe('35%')
+  })
+
+  test('other percent row value includes % suffix', () => {
+    const { percentRows } = buildSummaryRows(
+      makeApplication(),
+      t,
+      APPLICATION_ID
+    )
+    const row = percentRows.find((r) => r.id === 'otherPercent')
+    expect(row.value).toBe('5%')
   })
 
   test('shows "Not provided" when percent value is undefined', () => {
@@ -195,7 +209,7 @@ describe('#businessPlanCyaController', () => {
       expect(result).toContain(
         'data-testid="percent-value-newInfrastructurePercent"'
       )
-      expect(result).toContain('40%')
+      expect(result).toContain('35%')
     })
 
     test('shows "Not provided" for empty detail', async () => {
@@ -297,8 +311,10 @@ describe('#businessPlanCyaController', () => {
       expect(patchSpy).toHaveBeenCalledWith(
         expect.stringContaining(`${APPLICATION_ID}/business-plan`),
         expect.objectContaining({
-          newInfrastructurePercent: 40,
-          newInfrastructureDetail: 'Investing in sorting lines'
+          newInfrastructurePercent: 35,
+          newInfrastructureDetail: 'Investing in sorting lines',
+          otherPercent: 5,
+          otherDetail: ''
         })
       )
     })

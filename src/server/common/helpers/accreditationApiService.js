@@ -3,6 +3,7 @@ import { isValid, parseISO } from 'date-fns'
 import { apiClient } from '../api-client.js'
 import { statusCodes } from '../constants/status-codes.js'
 import { retryWithBackoff } from './retryWithBackoff.js'
+import { BUSINESS_PLAN_CATEGORY_FIELD_MAP } from '../constants/businessPlanCategories.js'
 
 const BASE = '/api/v1/accreditation-applications'
 
@@ -32,38 +33,11 @@ async function call(fn) {
 // Schema normalisation
 // ---------------------------------------------------------------------------
 
-const BP_CATEGORIES = [
-  {
-    category: 'newInfrastructure',
-    percent: 'newInfrastructurePercent',
-    detail: 'newInfrastructureDetail'
-  },
-  {
-    category: 'priceSupport',
-    percent: 'priceSupportPercent',
-    detail: 'priceSupportDetail'
-  },
-  {
-    category: 'businessCollections',
-    percent: 'businessCollectionsPercent',
-    detail: 'businessCollectionsDetail'
-  },
-  {
-    category: 'communications',
-    percent: 'communicationsPercent',
-    detail: 'communicationsDetail'
-  },
-  {
-    category: 'newMarkets',
-    percent: 'newMarketsPercent',
-    detail: 'newMarketsDetail'
-  },
-  {
-    category: 'newUses',
-    percent: 'newUsesPercent',
-    detail: 'newUsesDetail'
-  }
-]
+// RA-456: derived from the shared category map — see
+// common/constants/businessPlanCategories.js
+const BP_CATEGORIES = Object.entries(BUSINESS_PLAN_CATEGORY_FIELD_MAP).map(
+  ([category, { percent, detail }]) => ({ category, percent, detail })
+)
 
 function normalizeBp(bp) {
   if (!bp) {
