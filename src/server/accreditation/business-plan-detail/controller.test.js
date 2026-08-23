@@ -20,12 +20,18 @@ const APPLICATION_ID = 'app-bpd-001'
 
 const t = (key) => {
   const last = key.split('.').pop()
-  if (last === 'tooLong') return '{field} must be 500 characters or fewer'
+  if (last === 'tooLong') {
+    return '{field} must be 500 characters or fewer'
+  }
   if (last === 'requiredWhenPercent') {
     return 'Enter a description when you have allocated a percentage to this category'
   }
-  if (last === 'optional') return '(optional)'
-  if (last === 'characterCountHint') return 'You can enter up to 500 characters'
+  if (last === 'optional') {
+    return '(optional)'
+  }
+  if (last === 'characterCountHint') {
+    return 'You can enter up to 500 characters'
+  }
   return last
 }
 

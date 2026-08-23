@@ -12,7 +12,9 @@ export function provideUploadStatusFromSession(sessionKey) {
         const statusPath = new URL(session.statusUrl).pathname
         return await apiClient.get(statusPath)
       } catch (err) {
-        if (err.isBoom) throw err
+        if (err.isBoom) {
+          throw err
+        }
         throw Boom.badGateway('CDP uploader status check failed')
       }
     },

@@ -89,7 +89,9 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
 
   beforeAll(async () => {
     vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'isTest') return false
+      if (key === 'isTest') {
+        return false
+      }
       return originalConfigGet(key)
     })
     server = await createServer()

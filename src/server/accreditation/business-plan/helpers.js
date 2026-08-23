@@ -20,9 +20,13 @@ export function findBpItem(businessPlan, category) {
   if (businessPlan?.items !== undefined) {
     return businessPlan.items.find((i) => i.category === category) ?? {}
   }
-  if (!businessPlan) return {}
+  if (!businessPlan) {
+    return {}
+  }
   const fields = CATEGORY_FIELD_MAP[category]
-  if (!fields) return {}
+  if (!fields) {
+    return {}
+  }
   return {
     category,
     percentSpent: businessPlan[fields.percent],

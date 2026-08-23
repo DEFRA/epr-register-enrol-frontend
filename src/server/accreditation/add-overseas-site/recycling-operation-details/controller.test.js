@@ -23,7 +23,9 @@ const SELECT_ORS_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}`
 
 function cookiesFrom(response) {
   const raw = response.headers['set-cookie']
-  if (!raw) return ''
+  if (!raw) {
+    return ''
+  }
   return Array.isArray(raw)
     ? raw.map((c) => c.split(';')[0]).join('; ')
     : raw.split(';')[0]
@@ -36,8 +38,12 @@ function makeMockRequest(materialType, session = {}, payload) {
     payload,
     yar: {
       get: vi.fn((key) => {
-        if (key === ACCREDITATION_SESSION_KEYS.materialType) return materialType
-        if (key === ACCREDITATION_SESSION_KEYS.addOverseasSite) return session
+        if (key === ACCREDITATION_SESSION_KEYS.materialType) {
+          return materialType
+        }
+        if (key === ACCREDITATION_SESSION_KEYS.addOverseasSite) {
+          return session
+        }
         return null
       }),
       set: vi.fn()

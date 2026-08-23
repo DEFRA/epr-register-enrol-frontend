@@ -1,6 +1,7 @@
 import { isValid, parseISO } from 'date-fns'
 
 import { apiClient } from '../api-client.js'
+import { statusCodes } from '../constants/status-codes.js'
 import { retryWithBackoff } from './retryWithBackoff.js'
 import { BUSINESS_PLAN_CATEGORY_FIELD_MAP } from '../constants/businessPlanCategories.js'
 
@@ -39,8 +40,12 @@ const BP_CATEGORIES = Object.entries(BUSINESS_PLAN_CATEGORY_FIELD_MAP).map(
 )
 
 function normalizeBp(bp) {
-  if (!bp) return { sectionStatus: 'NotStarted', items: [] }
-  if (bp.items !== undefined) return bp
+  if (!bp) {
+    return { sectionStatus: 'NotStarted', items: [] }
+  }
+  if (bp.items !== undefined) {
+    return bp
+  }
   // Legacy flat format → convert to { sectionStatus, items }
   const { sectionStatus = 'NotStarted' } = bp
   const items = BP_CATEGORIES.map(({ category, percent, detail }) => ({
@@ -69,8 +74,12 @@ function joinAddressParts(addr, fields) {
 // County/Postcode) rather than the overseas/reprocessing-site address, so it
 // gets its own field set distinct from siteAddress below.
 function formatRegisteredAddress(addr) {
-  if (!addr) return null
-  if (typeof addr === 'string') return addr
+  if (!addr) {
+    return null
+  }
+  if (typeof addr === 'string') {
+    return addr
+  }
   return (
     joinAddressParts(addr, ['line1', 'line2', 'town', 'county', 'postcode']) ||
     null
@@ -81,12 +90,16 @@ function formatRegisteredAddress(addr) {
 // formatDate nunjucks filter throws on an Invalid Date, so treat anything
 // unparseable as absent rather than crashing the page.
 function normalizeDueDate(dueDate) {
-  if (typeof dueDate !== 'string' || !dueDate) return null
+  if (typeof dueDate !== 'string' || !dueDate) {
+    return null
+  }
   return isValid(parseISO(dueDate)) ? dueDate : null
 }
 
 function normalizeApplication(item) {
-  if (!item || typeof item !== 'object' || Array.isArray(item)) return item
+  if (!item || typeof item !== 'object' || Array.isArray(item)) {
+    return item
+  }
   const sa = item.siteAddress
   const siteAddress =
     sa && typeof sa === 'object'
@@ -354,7 +367,9 @@ export const accreditationApiService = {
         // attempt's delete succeeded server-side but its response was lost,
         // which is the exact failure this retry was added to fix. Treat it
         // as success rather than retrying into (or surfacing) a false error.
-        if (err.status === 404) return
+        if (err.status === statusCodes.notFound) {
+          return
+        }
         throw err
       }
     })
