@@ -10,11 +10,6 @@ import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSection
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const TITLE_KEY = 'pages.tonnageAuthority.title'
-const TITLE_EXPORTER_KEY = 'pages.tonnageAuthority.titleExporter'
-const INTRO_KEY = 'pages.tonnageAuthority.intro'
-const SELECT_SUB_HEADING_KEY = 'pages.tonnageAuthority.selectSubHeading'
-
 // Material and site are shown once, in the persistent application-header
 // (see src/server/common/helpers/applicationHeader.js), so this heading no
 // longer repeats them.
@@ -52,7 +47,9 @@ function renderPage(h, viewData) {
 function buildViewData(application, t, applicationId, opts = {}) {
   const isExporter = application.isExporter ?? false
   return {
-    pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+    pageTitle: isExporter
+      ? t('pages.tonnageAuthority.titleExporter')
+      : t('pages.tonnageAuthority.title'),
     heading: buildHeading(isExporter, t),
     authoriserRows: buildAuthoriserRows(application.prns?.authorisers),
     backLink: tonnageUrl(applicationId),
@@ -60,10 +57,10 @@ function buildViewData(application, t, applicationId, opts = {}) {
     isExporter,
     intro: isExporter
       ? t('pages.tonnageAuthority.introExporter')
-      : t(INTRO_KEY),
+      : t('pages.tonnageAuthority.intro'),
     selectSubHeading: isExporter
       ? t('pages.tonnageAuthority.selectSubHeadingExporter')
-      : t(SELECT_SUB_HEADING_KEY),
+      : t('pages.tonnageAuthority.selectSubHeading'),
     ...opts
   }
 }
@@ -87,14 +84,14 @@ export const tonnageAuthorityGetController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t(TITLE_KEY),
+        pageTitle: t('pages.tonnageAuthority.title'),
         heading: buildHeading(false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         isExporter: false,
-        intro: t(INTRO_KEY),
-        selectSubHeading: t(SELECT_SUB_HEADING_KEY),
+        intro: t('pages.tonnageAuthority.intro'),
+        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
         error: t('pages.tonnageAuthority.validation.fetchError')
       }).code(500)
     }
@@ -156,14 +153,14 @@ export const tonnageAuthorityPostController = {
         `Error fetching application ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: t(TITLE_KEY),
+        pageTitle: t('pages.tonnageAuthority.title'),
         heading: buildHeading(false, t),
         authoriserRows: [],
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         isExporter: false,
-        intro: t(INTRO_KEY),
-        selectSubHeading: t(SELECT_SUB_HEADING_KEY),
+        intro: t('pages.tonnageAuthority.intro'),
+        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
         error: t('pages.tonnageAuthority.validation.fetchError')
       }).code(500)
     }
@@ -183,10 +180,10 @@ export const tonnageAuthorityPostController = {
     const heading = buildHeading(isExporter, t)
     const intro = isExporter
       ? t('pages.tonnageAuthority.introExporter')
-      : t(INTRO_KEY)
+      : t('pages.tonnageAuthority.intro')
     const selectSubHeading = isExporter
       ? t('pages.tonnageAuthority.selectSubHeadingExporter')
-      : t(SELECT_SUB_HEADING_KEY)
+      : t('pages.tonnageAuthority.selectSubHeading')
     const currentAuthorisers = application.prns?.authorisers ?? []
 
     if (submitAction === 'addAuthoriser') {
@@ -208,7 +205,9 @@ export const tonnageAuthorityPostController = {
 
       if (Object.keys(addErrors).length > 0) {
         return renderPage(h, {
-          pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+          pageTitle: isExporter
+            ? t('pages.tonnageAuthority.titleExporter')
+            : t('pages.tonnageAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers),
           backLink: tonnageUrl(applicationId),
@@ -235,7 +234,9 @@ export const tonnageAuthorityPostController = {
 
       if (Object.keys(addErrors).length > 0) {
         return renderPage(h, {
-          pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+          pageTitle: isExporter
+            ? t('pages.tonnageAuthority.titleExporter')
+            : t('pages.tonnageAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers),
           backLink: tonnageUrl(applicationId),
@@ -269,7 +270,9 @@ export const tonnageAuthorityPostController = {
           `Error adding authoriser for ${applicationId}: ${err.message}`
         )
         return renderPage(h, {
-          pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+          pageTitle: isExporter
+            ? t('pages.tonnageAuthority.titleExporter')
+            : t('pages.tonnageAuthority.title'),
           heading,
           authoriserRows: buildAuthoriserRows(currentAuthorisers),
           backLink: tonnageUrl(applicationId),
@@ -294,7 +297,9 @@ export const tonnageAuthorityPostController = {
 
     if (submitAction !== 'saveAndComeLater' && checkedEmails.length === 0) {
       return renderPage(h, {
-        pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+        pageTitle: isExporter
+          ? t('pages.tonnageAuthority.titleExporter')
+          : t('pages.tonnageAuthority.title'),
         heading,
         authoriserRows: buildAuthoriserRows(currentAuthorisers).map((r) => ({
           ...r,
@@ -330,7 +335,9 @@ export const tonnageAuthorityPostController = {
         `Error saving authorisers for ${applicationId}: ${err.message}`
       )
       return renderPage(h, {
-        pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+        pageTitle: isExporter
+          ? t('pages.tonnageAuthority.titleExporter')
+          : t('pages.tonnageAuthority.title'),
         heading,
         authoriserRows: buildAuthoriserRows(currentAuthorisers).map((r) => ({
           ...r,
