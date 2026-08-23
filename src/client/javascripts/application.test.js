@@ -482,7 +482,9 @@ describe('basel/OECD code type-ahead client validation', () => {
       const match = Array.from(
         document.querySelectorAll('li[role="option"]')
       ).find((el) => el.textContent.trim() === 'B2010')
-      if (!match) throw new Error('suggestion not rendered yet')
+      if (!match) {
+        throw new Error('suggestion not rendered yet')
+      }
       return match
     })
 
@@ -514,7 +516,9 @@ describe('basel/OECD code type-ahead client validation', () => {
       const options = Array.from(
         wrapper.querySelectorAll('li[role="option"]')
       ).map((el) => el.textContent.trim())
-      if (options.length === 0) throw new Error('suggestions not rendered yet')
+      if (options.length === 0) {
+        throw new Error('suggestions not rendered yet')
+      }
       expect(options).toEqual(['B2020'])
     })
   })
@@ -531,7 +535,9 @@ describe('basel/OECD code type-ahead client validation', () => {
       const options = Array.from(
         wrapper.querySelectorAll('li[role="option"]')
       ).map((el) => el.textContent.trim())
-      if (options.length === 0) throw new Error('suggestions not rendered yet')
+      if (options.length === 0) {
+        throw new Error('suggestions not rendered yet')
+      }
       expect(options).toHaveLength(10)
       expect(options).not.toContain('Y46')
     })
@@ -548,7 +554,9 @@ describe('basel/OECD code type-ahead client validation', () => {
     await vi.waitFor(() => {
       const wrapper = input.closest('.autocomplete__wrapper')
       const noResults = wrapper.querySelector('li[aria-disabled="true"]')
-      if (!noResults) throw new Error('not rendered yet')
+      if (!noResults) {
+        throw new Error('not rendered yet')
+      }
       expect(noResults.textContent).toBe('No matches found')
     })
   })
@@ -571,7 +579,9 @@ describe('basel/OECD code type-ahead client validation', () => {
     input.dispatchEvent(new Event('blur'))
 
     await vi.waitFor(() => {
-      if (hiddenSelect.value !== '') throw new Error('not cleared yet')
+      if (hiddenSelect.value !== '') {
+        throw new Error('not cleared yet')
+      }
     })
     expect(getContinueButton().disabled).toBe(true)
   })
@@ -593,7 +603,9 @@ describe('basel/OECD code type-ahead client validation', () => {
     input.dispatchEvent(new Event('blur'))
 
     await vi.waitFor(() => {
-      if (hiddenSelect.value !== 'B2010') throw new Error('not synced yet')
+      if (hiddenSelect.value !== 'B2010') {
+        throw new Error('not synced yet')
+      }
     })
     expect(getContinueButton().disabled).toBe(false)
   })
@@ -646,7 +658,9 @@ describe('basel/OECD code type-ahead client validation', () => {
     input.dispatchEvent(new Event('blur'))
 
     await vi.waitFor(() => {
-      if (hiddenSelect.value !== 'B2010') throw new Error('not synced yet')
+      if (hiddenSelect.value !== 'B2010') {
+        throw new Error('not synced yet')
+      }
     })
     expect(getContinueButton().disabled).toBe(false)
   })
