@@ -84,8 +84,8 @@ export const STUB_ORG_DOCS = [
           plannedIssuance: 'UpTo1000',
           signatories: [
             {
-              fullName: 'Barry Edge',
-              email: 'barry@approvedrecycling.co.uk',
+              fullName: 'Larry Edge',
+              email: 'larry@approvedrecycling.co.uk',
               isNew: false
             }
           ]
@@ -107,7 +107,7 @@ export const STUB_ORG_DOCS = [
             accreditationNumber: 'A26RE5000391012ST',
             regulator: 'Environment Agency',
             tonnage: 'Up to 1,000 tonnes',
-            authorisedUsers: ['Barry Edge'],
+            authorisedUsers: ['Parry Edge'],
             overseasSites: []
           }
         }
