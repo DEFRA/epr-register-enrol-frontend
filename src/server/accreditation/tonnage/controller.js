@@ -12,9 +12,6 @@ import { materialDisplayName } from '../../common/helpers/materialDisplayName.js
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
 
-const TITLE_KEY = 'pages.tonnage.title'
-const TITLE_EXPORTER_KEY = 'pages.tonnage.titleExporter'
-
 // Deliberately checks shape/size, not the exact enum values: the controller
 // already renders its own friendly inline error for a missing or business-
 // invalid plannedTonnageBand/submitAction (see the tests above), and a hard
@@ -73,7 +70,7 @@ export const tonnageGetController = {
         `Error fetching application ${applicationId}: ${error.message}`
       )
       return renderForm(h, {
-        pageTitle: t(TITLE_KEY),
+        pageTitle: t('pages.tonnage.title'),
         heading: buildHeading(null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
@@ -94,7 +91,9 @@ export const tonnageGetController = {
     const queryNote = resolveRegulatorQueryNote(application, { readOnly })
 
     return renderForm(h, {
-      pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+      pageTitle: isExporter
+        ? t('pages.tonnage.titleExporter')
+        : t('pages.tonnage.title'),
       heading: buildHeading(application, isExporter, t),
       tonnageOptions: buildTonnageOptions(
         application.prns?.plannedTonnageBand ?? null,
@@ -134,7 +133,7 @@ export const tonnagePostController = {
         `Error fetching application ${applicationId}: ${error.message}`
       )
       return renderForm(h, {
-        pageTitle: t(TITLE_KEY),
+        pageTitle: t('pages.tonnage.title'),
         heading: buildHeading(null, false, t),
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
@@ -161,7 +160,9 @@ export const tonnagePostController = {
 
     if (!plannedTonnageBand || !TONNAGE_OPTIONS.includes(plannedTonnageBand)) {
       return renderForm(h, {
-        pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+        pageTitle: isExporter
+          ? t('pages.tonnage.titleExporter')
+          : t('pages.tonnage.title'),
         heading,
         tonnageOptions: buildTonnageOptions(null, t),
         backLink: taskListUrl(applicationId),
@@ -195,7 +196,9 @@ export const tonnagePostController = {
           .code(500)
       }
       return renderForm(h, {
-        pageTitle: isExporter ? t(TITLE_EXPORTER_KEY) : t(TITLE_KEY),
+        pageTitle: isExporter
+          ? t('pages.tonnage.titleExporter')
+          : t('pages.tonnage.title'),
         heading,
         tonnageOptions: buildTonnageOptions(plannedTonnageBand, t),
         backLink: taskListUrl(applicationId),

@@ -73,18 +73,35 @@ export const STUB_ORG_DOCS = [
         siteAddress: { line1: 'UNIT 6', town: 'Bolton', postcode: 'BL4 7AR' },
         wasteRegistrationNumber: 'R26ER5000391069ST',
         yearlyMetrics: { year: '2027' },
-        formSubmissionTime: null,
-        submitterContactDetails: null,
+        formSubmissionTime: '2026-12-02T09:30:00Z',
+        submitterContactDetails: {
+          fullName: 'Barry Edge',
+          email: 'barry@approvedrecycling.co.uk',
+          role: 'Site Manager'
+        },
         prnIssuance: {
-          sectionStatus: 'NotStarted',
-          plannedIssuance: null,
-          signatories: []
+          sectionStatus: 'Completed',
+          plannedIssuance: 'UpTo1000',
+          signatories: [
+            {
+              fullName: 'Barry Edge',
+              email: 'barry@approvedrecycling.co.uk',
+              isNew: false
+            }
+          ]
         },
         businessPlan: {
-          sectionStatus: 'NotStarted',
-          items: makeBpItems()
+          sectionStatus: 'Completed',
+          items: makeBpItems({
+            newInfrastructure: 40,
+            priceSupport: 20,
+            businessCollections: 15,
+            communications: 5,
+            newMarkets: 10,
+            newUses: 10
+          })
         },
-        samplingPlan: { sectionStatus: 'NotStarted', files: [] },
+        samplingPlan: { sectionStatus: 'Completed', files: [] },
         organisation: {
           accreditation: {
             accreditationNumber: 'A26RE5000391012ST',

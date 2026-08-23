@@ -18,9 +18,6 @@ import {
   popPostLoginRedirect
 } from '../common/helpers/auth/auth-redirect.js'
 
-const REGULATOR_LOGIN_URL = '/auth/regulator/login'
-const OPERATOR_LOGIN_URL = '/auth/operator/login'
-
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
     .toString('base64')
@@ -114,7 +111,7 @@ export async function regulatorCallbackController(request, h) {
       hasState: Boolean(state),
       stateMatches: state === storedState
     })
-    return h.redirect(REGULATOR_LOGIN_URL)
+    return h.redirect('/auth/regulator/login')
   }
 
   request.yar.clear('oauthState')
@@ -126,7 +123,7 @@ export async function regulatorCallbackController(request, h) {
       request,
       'oauth callback: missing nonce or pkce verifier in session'
     )
-    return h.redirect(REGULATOR_LOGIN_URL)
+    return h.redirect('/auth/regulator/login')
   }
 
   const provider = getAzureEntraIdConfig(config)
@@ -150,7 +147,7 @@ export async function regulatorCallbackController(request, h) {
       logWarn(request, 'oauth callback: token endpoint returned non-2xx', {
         status: tokenResponse.status
       })
-      return h.redirect(REGULATOR_LOGIN_URL)
+      return h.redirect('/auth/regulator/login')
     }
 
     tokenJson = await tokenResponse.json()
@@ -158,13 +155,13 @@ export async function regulatorCallbackController(request, h) {
     logWarn(request, 'oauth callback: token endpoint request failed', {
       err
     })
-    return h.redirect(REGULATOR_LOGIN_URL)
+    return h.redirect('/auth/regulator/login')
   }
 
   const idToken = tokenJson?.id_token
   if (!idToken) {
     logWarn(request, 'oauth callback: token response missing id_token')
-    return h.redirect(REGULATOR_LOGIN_URL)
+    return h.redirect('/auth/regulator/login')
   }
 
   let claims
@@ -179,7 +176,7 @@ export async function regulatorCallbackController(request, h) {
     logWarn(request, 'oauth callback: id_token verification failed', {
       err
     })
-    return h.redirect(REGULATOR_LOGIN_URL)
+    return h.redirect('/auth/regulator/login')
   }
 
   // App roles surface on the id_token as a `roles` claim (an array) once
@@ -238,7 +235,7 @@ export async function operatorCallbackController(request, h) {
       hasState: Boolean(state),
       stateMatches: state === storedState
     })
-    return h.redirect(OPERATOR_LOGIN_URL)
+    return h.redirect('/auth/operator/login')
   }
 
   request.yar.clear('oauthState')
@@ -250,7 +247,7 @@ export async function operatorCallbackController(request, h) {
       request,
       'oauth callback: missing nonce or pkce verifier in session'
     )
-    return h.redirect(OPERATOR_LOGIN_URL)
+    return h.redirect('/auth/operator/login')
   }
 
   const provider = getDefraIdConfig(config)
@@ -278,7 +275,7 @@ export async function operatorCallbackController(request, h) {
       logWarn(request, 'oauth callback: token endpoint returned non-2xx', {
         status: tokenResponse.status
       })
-      return h.redirect(OPERATOR_LOGIN_URL)
+      return h.redirect('/auth/operator/login')
     }
 
     tokenJson = await tokenResponse.json()
@@ -286,14 +283,14 @@ export async function operatorCallbackController(request, h) {
     logWarn(request, 'oauth callback: token endpoint request failed', {
       err
     })
-    return h.redirect(OPERATOR_LOGIN_URL)
+    return h.redirect('/auth/operator/login')
   }
 
   const idToken = tokenJson?.id_token
 
   if (!idToken) {
     logWarn(request, 'oauth callback: token response missing id_token')
-    return h.redirect(OPERATOR_LOGIN_URL)
+    return h.redirect('/auth/operator/login')
   }
 
   let claims
@@ -308,7 +305,7 @@ export async function operatorCallbackController(request, h) {
     logWarn(request, 'oauth callback: id_token verification failed', {
       err
     })
-    return h.redirect(OPERATOR_LOGIN_URL)
+    return h.redirect('/auth/operator/login')
   }
 
   const user = {
@@ -354,7 +351,9 @@ export async function logoutController(request, h) {
   if (!idToken) {
     request.yar.reset()
     return h.redirect(
-      userType === 'regulator' ? REGULATOR_LOGIN_URL : OPERATOR_LOGIN_URL
+      userType === 'regulator'
+        ? '/auth/regulator/login'
+        : '/auth/operator/login'
     )
   }
 
