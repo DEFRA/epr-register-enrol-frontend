@@ -8,10 +8,6 @@
       "title": "Hafan",
       "heading": "Hafan"
     },
-    "about": {
-      "title": "Ynghylch",
-      "heading": "Ynghylch"
-    },
     "regulator": {
       "title": "Rheoleiddiwr",
       "heading": "Rheoleiddiwr",
@@ -918,7 +914,6 @@
   },
   "navigation": {
     "home": "Hafan",
-    "about": "Ynghylch",
     "regulator": "Rheoleiddiwr",
     "organisationList": "Sefydliadau"
   },

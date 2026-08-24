@@ -3,7 +3,6 @@ import inert from '@hapi/inert'
 import { config } from '../config/config.js'
 import { stubCompleteUpload } from './common/stub-api-client.js'
 import { home } from './home/index.js'
-import { about } from './about/index.js'
 import { contact } from './contact/index.js'
 import { cookies } from './cookies/index.js'
 import { health } from './health/index.js'
@@ -90,7 +89,6 @@ export const router = {
       // Application specific routes, add your own routes here
       await server.register([
         home,
-        about,
         contact,
         cookies,
         regulator,
