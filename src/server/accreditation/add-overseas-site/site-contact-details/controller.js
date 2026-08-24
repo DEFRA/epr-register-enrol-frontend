@@ -5,7 +5,7 @@ import {
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a

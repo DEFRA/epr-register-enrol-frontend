@@ -8,7 +8,7 @@ function renderPage(h, viewData) {
   return h.view('accreditation/query-declaration/index', viewData)
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
 // Type/size only, not "is this a real name/email": validateQueryDeclaration
 // already renders its own friendly inline errors for missing/malformed
