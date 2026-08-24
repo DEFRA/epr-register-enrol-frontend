@@ -43,6 +43,15 @@ export const STUB_USERS = {
 // it can't be disabled by simply not registering a route — both handlers
 // must check regulatorAccessDisabled() explicitly.
 
+// `type` is caller-controlled (query param / form field); a plain STUB_USERS[type]
+// lookup resolves inherited Object.prototype keys (e.g. type=constructor
+// returns the Object constructor function, not undefined), which then blows
+// up wherever the result is treated as a user array. Object.hasOwn confines
+// the lookup to STUB_USERS' own keys.
+function getStubUsers(type) {
+  return Object.hasOwn(STUB_USERS, type) ? STUB_USERS[type] : undefined
+}
+
 export function stubLoginGetController(request, h) {
   const type = request.query.type
   const rt = request.query.rt
@@ -51,7 +60,7 @@ export function stubLoginGetController(request, h) {
     throw Boom.notFound()
   }
 
-  const users = STUB_USERS[type]
+  const users = getStubUsers(type)
 
   if (!users) {
     const fallbackType = regulatorAccessDisabled() ? 'operator' : 'regulator'
@@ -93,14 +102,14 @@ export async function stubLoginPostController(request, h) {
     throw Boom.notFound()
   }
 
-  const users = STUB_USERS[type] ?? []
+  const users = getStubUsers(type) ?? []
   const user = users.find((u) => u.id === userId)
 
   if (!user) {
     return h
       .view('auth/stub/login', {
         type,
-        users: STUB_USERS[type] ?? [],
+        users: getStubUsers(type) ?? [],
         regulatorAccessDisabled: regulatorAccessDisabled(),
         error: 'Please select a user'
       })
