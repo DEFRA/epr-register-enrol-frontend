@@ -421,16 +421,23 @@ describe('accreditationSessionGuard plugin registration', () => {
   // RA-459: /operator is a test-only page that 404s once TEST_PAGES_DISABLED
   // is on — the session-expiry redirect goes to the real Re-Ex frontend
   // unconditionally (not gated on that flag), so it never dead-ends there
-  // regardless of TEST_PAGES_DISABLED's value.
-  test('registered callback redirects to the Re-Ex frontend regardless of TEST_PAGES_DISABLED', () => {
-    const callback = registerAndGetCallback({
-      'testPages.disabled': false,
-      'reex.frontendBaseUrl': 'https://reex.example'
-    })
-    const h = makeH()
-    callback({ path: '/accreditation/task-list/app-1', yar: makeYar(null) }, h)
-    expect(h.redirect).toHaveBeenCalledWith('https://reex.example')
-  })
+  // regardless of TEST_PAGES_DISABLED's value. Both values exercised, not
+  // just one, to actually prove the decoupling.
+  test.each([true, false])(
+    'registered callback redirects to the Re-Ex frontend when testPages.disabled is %s',
+    (testPagesDisabled) => {
+      const callback = registerAndGetCallback({
+        'testPages.disabled': testPagesDisabled,
+        'reex.frontendBaseUrl': 'https://reex.example'
+      })
+      const h = makeH()
+      callback(
+        { path: '/accreditation/task-list/app-1', yar: makeYar(null) },
+        h
+      )
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example')
+    }
+  )
 
   test('registered callback passes through Welsh accreditation routes with valid session', async () => {
     const callback = registerAndGetCallback()

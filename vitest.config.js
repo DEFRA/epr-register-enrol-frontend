@@ -6,7 +6,12 @@ export default defineConfig({
     environment: 'node',
     env: {
       BASIC_USER: 'test-user',
-      BASIC_PASSWD: 'test-pass'
+      BASIC_PASSWD: 'test-pass',
+      // RA-459: REEX_FRONTEND_BASE_URL is unconditionally required
+      // (required-config.js) now that it's the fallback destination for
+      // operatorHomeUrl() — set here so the default/no-overrides test
+      // suite state matches what .env.example now documents as required.
+      REEX_FRONTEND_BASE_URL: 'https://epr-frontend.dev.cdp-int.defra.cloud'
     },
     clearMocks: true,
     hookTimeout: 30000,

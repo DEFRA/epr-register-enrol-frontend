@@ -226,21 +226,28 @@ describe('#buildTaskListViewModel', () => {
 
   // RA-459: /operator is a test-only page — the "save and come back later"
   // link always points at the real Re-Ex frontend instead, regardless of
-  // TEST_PAGES_DISABLED, so it never dead-ends there.
-  test('save-and-come-back link points to the Re-Ex frontend', () => {
-    const realConfigGet = config.get.bind(config)
-    const spy = vi.spyOn(config, 'get').mockImplementation((key) => {
-      if (key === 'reex.frontendBaseUrl') {
-        return 'https://reex.example'
-      }
-      return realConfigGet(key)
-    })
+  // TEST_PAGES_DISABLED, so it never dead-ends there. Both values exercised,
+  // not just the default, to actually prove the decoupling.
+  test.each([true, false])(
+    'save-and-come-back link points to the Re-Ex frontend when testPages.disabled is %s',
+    (testPagesDisabled) => {
+      const realConfigGet = config.get.bind(config)
+      const spy = vi.spyOn(config, 'get').mockImplementation((key) => {
+        if (key === 'reex.frontendBaseUrl') {
+          return 'https://reex.example'
+        }
+        if (key === 'testPages.disabled') {
+          return testPagesDisabled
+        }
+        return realConfigGet(key)
+      })
 
-    const vm = buildTaskListViewModel(makeApplication(), t)
-    expect(vm.saveAndComeLaterLink).toBe('https://reex.example')
+      const vm = buildTaskListViewModel(makeApplication(), t)
+      expect(vm.saveAndComeLaterLink).toBe('https://reex.example')
 
-    spy.mockRestore()
-  })
+      spy.mockRestore()
+    }
+  )
 
   test('reprocessor: isExporter flag is false', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
