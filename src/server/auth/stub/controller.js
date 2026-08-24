@@ -52,6 +52,31 @@ function getStubUsers(type) {
   return Object.hasOwn(STUB_USERS, type) ? STUB_USERS[type] : undefined
 }
 
+function stubLoginUrl(type, rt) {
+  const rtParam = rt ? `&rt=${encodeURIComponent(rt)}` : ''
+  return `/auth/stub/login?type=${type}${rtParam}`
+}
+
+function isDefraIdConfigured(type) {
+  return (
+    type === 'operator' &&
+    Boolean(
+      config.get('auth.defraId.discoveryUrl') &&
+      config.get('auth.defraId.clientId')
+    )
+  )
+}
+
+function isEntraIdConfigured(type) {
+  return (
+    type === 'regulator' &&
+    Boolean(
+      config.get('auth.azureEntraId.clientId') &&
+      config.get('auth.azureEntraId.tenantId')
+    )
+  )
+}
+
 export function stubLoginGetController(request, h) {
   const type = request.query.type
   const rt = request.query.rt
@@ -64,32 +89,16 @@ export function stubLoginGetController(request, h) {
 
   if (!users) {
     const fallbackType = regulatorAccessDisabled() ? 'operator' : 'regulator'
-    return h.redirect(
-      `/auth/stub/login?type=${fallbackType}${rt ? `&rt=${encodeURIComponent(rt)}` : ''}`
-    )
+    return h.redirect(stubLoginUrl(fallbackType, rt))
   }
 
   confirmPostLoginRedirect(request, type)
 
-  const defraIdConfigured =
-    type === 'operator' &&
-    !!(
-      config.get('auth.defraId.discoveryUrl') &&
-      config.get('auth.defraId.clientId')
-    )
-
-  const entraIdConfigured =
-    type === 'regulator' &&
-    !!(
-      config.get('auth.azureEntraId.clientId') &&
-      config.get('auth.azureEntraId.tenantId')
-    )
-
   return h.view('auth/stub/login', {
     type,
     users,
-    defraIdConfigured,
-    entraIdConfigured,
+    defraIdConfigured: isDefraIdConfigured(type),
+    entraIdConfigured: isEntraIdConfigured(type),
     regulatorAccessDisabled: regulatorAccessDisabled(),
     rt: rt ?? ''
   })
