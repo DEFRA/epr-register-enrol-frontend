@@ -10,10 +10,9 @@ export function isTestPagesDisabled() {
 
 // A couple of in-app flows link/redirect to /operator as a "go back to the
 // start" fallback (accreditation session-expiry recovery, the task list's
-// save-and-come-back-later link) — once test pages are disabled that page
-// 404s, so send the operator to the real Re-Ex frontend instead.
+// save-and-come-back-later link). /operator is a test-only page — send the
+// operator to the real Re-Ex frontend instead, regardless of
+// TEST_PAGES_DISABLED.
 export function operatorHomeUrl() {
-  return isTestPagesDisabled()
-    ? config.get('reex.frontendBaseUrl')
-    : '/operator'
+  return config.get('reex.frontendBaseUrl')
 }
