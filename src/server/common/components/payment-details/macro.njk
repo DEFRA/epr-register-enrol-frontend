@@ -21,7 +21,7 @@
     <h3 class="govuk-heading-s" data-testid="description-heading">
       {{ params.t('pages.viewPaymentDetails.description') }}
     </h3>
-    <p>
+    <p data-testid="description-body">
     {{ params.t('pages.viewPaymentDetails.descriptionTonnageLine').replace('{amount}', paymentDetails.amountTonnageDue | formatCurrency).replace('{tonnage}', paymentDetails.tonnageDisplay).replace('{material}', paymentDetails.materialName) }}
     {% if paymentDetails.numberOfORSs > 0 %}
       <br/>
