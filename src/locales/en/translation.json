@@ -490,17 +490,6 @@
       "changeLink": "Change",
       "confirmButton": "Confirm and continue"
     },
-    "operatorOrganisationDetails": {
-      "title": "Operator Organisation Details",
-      "heading": "Operator Organisation Details",
-      "description": "Operator Organisation details of ",
-      "schemeRegistrationId": "Registration ID",
-      "companiesHouseNumber": "Companies house number",
-      "registeredAddress": "Registered address",
-      "companyName": "Company name",
-      "approvedPerson": "Approved person",
-      "directors": "Directors"
-    },
     "fileUpload": {
       "details": {
         "title": "File upload details",

@@ -12,7 +12,6 @@ import { regulator } from './regulator/index.js'
 import { operator } from './operator/index.js'
 import { operatorAccreditation } from './operator-accreditation/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
-import { operatorOrganisationDetails } from './operator-organisation-details/index.js'
 import { taskList } from './accreditation/task-list/index.js'
 import { queryTaskList } from './accreditation/query-task-list/index.js'
 import { queryDeclaration } from './accreditation/query-declaration/index.js'
@@ -97,7 +96,6 @@ export const router = {
         regulator,
         operator,
         operatorAccreditation,
-        operatorOrganisationDetails,
         taskList,
         queryTaskList,
         queryDeclaration,
