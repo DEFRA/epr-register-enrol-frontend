@@ -1,3 +1,8 @@
+// Fallback used wherever the operator has no application context to
+// deep-link to (nav bar, submit-confirmation) — the bare operator
+// accreditation listing.
+export const FALLBACK_HOME_HREF = '/operator-accreditation/'
+
 export function queryTaskListUrl(applicationId) {
   return `/accreditation/query-task-list/${applicationId}`
 }
