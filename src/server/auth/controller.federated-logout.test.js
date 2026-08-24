@@ -1,14 +1,17 @@
 import { describe, test, expect, vi, afterEach } from 'vitest'
 
+function defaultConfigGet(key) {
+  const values = {
+    'auth.callbackBaseUrl': 'https://frontend.example',
+    'auth.azureEntraId.tenantId': 'the-tenant-id',
+    'auth.regulatorAccessDisabled': false
+  }
+  return values[key]
+}
+
 vi.mock('../../config/config.js', () => ({
   config: {
-    get: vi.fn((key) => {
-      const values = {
-        'auth.callbackBaseUrl': 'https://frontend.example',
-        'auth.azureEntraId.tenantId': 'the-tenant-id'
-      }
-      return values[key]
-    })
+    get: vi.fn((key) => defaultConfigGet(key))
   }
 }))
 vi.mock('../common/helpers/auth/providers/defra-id.js', () => ({
@@ -19,6 +22,7 @@ vi.mock('../common/helpers/auth/providers/defra-id.js', () => ({
 const { getDefraIdConfig, getDefraIdEndpoints } =
   await import('../common/helpers/auth/providers/defra-id.js')
 
+const { config } = await import('../../config/config.js')
 const { logoutController } = await import('./controller.js')
 
 // AC04-adjacent: signing out of our service should also end the session at
@@ -41,6 +45,11 @@ function mockH() {
 
 afterEach(() => {
   vi.restoreAllMocks()
+  // restoreAllMocks only restores vi.spyOn-created mocks — config.get is a
+  // plain vi.fn() from the module factory above, so a test that overrides
+  // it with .mockImplementation() (below) would otherwise leak that
+  // override into every later test in this file.
+  config.get.mockImplementation((key) => defaultConfigGet(key))
 })
 
 describe('#logoutController federated logout', () => {
@@ -122,6 +131,23 @@ describe('#logoutController federated logout', () => {
     expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
   })
 
+  // RA-427: a regulator session that predates REGULATOR_ACCESS_DISABLED
+  // being switched on can still reach logout — /auth/regulator/login 404s
+  // once disabled, so this must not dead-end the caller there.
+  test('falls back to the operator login page when regulator access is disabled', async () => {
+    config.get.mockImplementation((key) =>
+      key === 'auth.regulatorAccessDisabled' ? true : undefined
+    )
+
+    const yar = fakeYar({ user: { userType: 'regulator', id: 'reg-1' } })
+    const h = mockH()
+    const request = { yar, query: {} }
+
+    await logoutController(request, h)
+
+    expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+  })
+
   // RA-437 fix: on the round trip back from a federated logout, `user` has
   // already been reset by the first pass — the request that hits this
   // route as Entra/Defra ID's callback has no session at all, only the
@@ -138,6 +164,20 @@ describe('#logoutController federated logout', () => {
       await logoutController(request, h)
 
       expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
+    })
+
+    test('a regulator lands on the operator login page when regulator access is disabled', async () => {
+      config.get.mockImplementation((key) =>
+        key === 'auth.regulatorAccessDisabled' ? true : undefined
+      )
+
+      const yar = fakeYar()
+      const h = mockH()
+      const request = { yar, query: { userType: 'regulator' } }
+
+      await logoutController(request, h)
+
+      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
     })
 
     test('an operator lands on the operator login page', async () => {
