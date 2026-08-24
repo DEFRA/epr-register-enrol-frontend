@@ -7,6 +7,10 @@ import {
   buildPaymentReference
 } from '../../common/helpers/paymentDetails.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
+import {
+  landingUrl,
+  FALLBACK_HOME_HREF
+} from '../../common/helpers/accreditationUrls.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -31,6 +35,7 @@ export const submitConfirmationGetController = {
     let materialDisplay = ''
     let paymentDetails = null
     let paymentReference = accreditationReference
+    let returnHomeUrl = FALLBACK_HOME_HREF
     try {
       const application = await accreditationApiService.getApplication(
         organisationId,
@@ -44,6 +49,7 @@ export const submitConfirmationGetController = {
         application.organisationId,
         application.isExporter
       )
+      returnHomeUrl = landingUrl(application)
     } catch (err) {
       request.server.logger.error(
         `Error fetching payment details for ${applicationId} on confirmation: ${err.message}`
@@ -61,7 +67,8 @@ export const submitConfirmationGetController = {
       materialDisplay,
       applicationId,
       paymentDetails,
-      paymentReference
+      paymentReference,
+      returnHomeUrl
     })
   }
 }

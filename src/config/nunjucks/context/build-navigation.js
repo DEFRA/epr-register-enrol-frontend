@@ -1,7 +1,8 @@
 import { ACCREDITATION_SESSION_KEYS } from '../../../server/common/constants/accreditationSessionKeys.js'
-import { landingUrl } from '../../../server/common/helpers/accreditationUrls.js'
-
-const FALLBACK_HOME_HREF = '/operator-accreditation/'
+import {
+  landingUrl,
+  FALLBACK_HOME_HREF
+} from '../../../server/common/helpers/accreditationUrls.js'
 
 // Pages with no application context to deep-link to: the stub login chooser
 // (no user yet), the WIP operator testing page, and the bare

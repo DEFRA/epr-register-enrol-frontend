@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { landingUrl } from '../../common/helpers/accreditationUrls.js'
 
 const APPLICATION_ID = 'app-conf-001'
 
@@ -17,6 +18,7 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    registrationId: 'reg-conf-001',
     materialType: 'Steel',
     year: 2025,
     siteId: 'site-001',
@@ -168,6 +170,38 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('data-testid="payment-text"')
       expect(result).toContain('data-testid="return-home-link"')
       expect(result).not.toContain('data-testid="view-payment-details-link"')
+    })
+
+    test('return home link points at the application landing page (RA-453)', async () => {
+      const application = makeApplication()
+      vi.spyOn(apiClient, 'get').mockResolvedValue(application)
+      const cookie = await getSessionCookieWithReference()
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(result).toContain(
+        `href="${landingUrl(application)}" class="govuk-link" data-testid="return-home-link"`
+      )
+    })
+
+    test('return home link falls back to /operator-accreditation/ when the application fetch fails (RA-453)', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API error'))
+      const cookie = await getSessionCookieWithReference()
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'href="/operator-accreditation/" class="govuk-link" data-testid="return-home-link"'
+      )
     })
 
     test('shows payment details inline, including amount, bank details, and the payment reference', async () => {
