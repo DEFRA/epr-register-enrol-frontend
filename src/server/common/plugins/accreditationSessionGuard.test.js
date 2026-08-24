@@ -342,10 +342,13 @@ describe('accreditationSessionGuard plugin registration', () => {
     }
   }
 
-  function registerAndGetCallback() {
-    vi.spyOn(config, 'get').mockImplementation((key) =>
-      key === 'isTest' ? false : undefined
-    )
+  function registerAndGetCallback(overrides = {}) {
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key in overrides) {
+        return overrides[key]
+      }
+      return key === 'isTest' ? false : undefined
+    })
     const mockServer = { ext: vi.fn() }
     accreditationSessionGuard.plugin.register(mockServer)
     return mockServer.ext.mock.calls[0][1]
@@ -407,6 +410,18 @@ describe('accreditationSessionGuard plugin registration', () => {
       'notification',
       'Your session has expired. Please sign in again to continue.'
     )
+  })
+
+  // RA-459: /operator 404s once test pages are disabled — the session-expiry
+  // redirect must not dead-end there.
+  test('registered callback redirects to the Re-Ex frontend instead of /operator when test pages are disabled', () => {
+    const callback = registerAndGetCallback({
+      'testPages.disabled': true,
+      'reex.frontendBaseUrl': 'https://reex.example'
+    })
+    const h = makeH()
+    callback({ path: '/accreditation/task-list/app-1', yar: makeYar(null) }, h)
+    expect(h.redirect).toHaveBeenCalledWith('https://reex.example')
   })
 
   test('registered callback passes through Welsh accreditation routes with valid session', async () => {

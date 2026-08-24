@@ -401,6 +401,14 @@ export const config = convict({
       default: false,
       env: 'REGULATOR_QUERY_TEXT_DISABLED'
     }
+  },
+  testPages: {
+    disabled: {
+      doc: 'RA-459. Kill switch for the placeholder "/" home page and "/operator" landing page — neither is wired to any real application context (no site/material selected) and both should not be reachable in the integrated environment. When true, both 404 rather than rendering.',
+      format: Boolean,
+      default: false,
+      env: 'TEST_PAGES_DISABLED'
+    }
   }
 })
 

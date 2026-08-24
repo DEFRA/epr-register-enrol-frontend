@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { buildTaskListViewModel } from './controller.js'
 
 const APPLICATION_ID = 'app-steel-001'
@@ -222,6 +223,26 @@ describe('#buildTaskListViewModel', () => {
       `/operator-accreditation/test-operator-id/reg-abc/Steel/${CURRENT_YEAR}`
     )
     expect(vm.saveAndComeLaterLink).toBe('/operator')
+  })
+
+  // RA-459: /operator 404s once test pages are disabled — the "save and
+  // come back later" link must not dead-end there.
+  test('save-and-come-back link points to the Re-Ex frontend when test pages are disabled', () => {
+    const realConfigGet = config.get.bind(config)
+    const spy = vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key === 'testPages.disabled') {
+        return true
+      }
+      if (key === 'reex.frontendBaseUrl') {
+        return 'https://reex.example'
+      }
+      return realConfigGet(key)
+    })
+
+    const vm = buildTaskListViewModel(makeApplication(), t)
+    expect(vm.saveAndComeLaterLink).toBe('https://reex.example')
+
+    spy.mockRestore()
   })
 
   test('reprocessor: isExporter flag is false', () => {
