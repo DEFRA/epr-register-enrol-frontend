@@ -93,6 +93,10 @@ describe('normaliseParams', () => {
     expect(typeof params.siteId).toBe('string')
     expect(typeof params.year).toBe('string')
   })
+
+  test('does not throw when params is undefined', () => {
+    expect(() => normaliseParams(undefined)).not.toThrow()
+  })
 })
 
 describe('routeParamsGuard plugin', () => {
