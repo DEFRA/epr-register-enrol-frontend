@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { buildTaskListViewModel } from './controller.js'
 
 const APPLICATION_ID = 'app-steel-001'
@@ -216,13 +217,37 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.tasks[2].testId).toBe('task-sampling-plan')
   })
 
-  test('back link and save-and-come-back link point to /operator-accreditation', () => {
+  test('back link points to /operator-accreditation', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
     expect(vm.backLink).toBe(
       `/operator-accreditation/test-operator-id/reg-abc/Steel/${CURRENT_YEAR}`
     )
-    expect(vm.saveAndComeLaterLink).toBe('/operator')
   })
+
+  // RA-459: /operator is a test-only page — the "save and come back later"
+  // link always points at the real Re-Ex frontend instead, regardless of
+  // TEST_PAGES_DISABLED, so it never dead-ends there. Both values exercised,
+  // not just the default, to actually prove the decoupling.
+  test.each([true, false])(
+    'save-and-come-back link points to the Re-Ex frontend when testPages.disabled is %s',
+    (testPagesDisabled) => {
+      const realConfigGet = config.get.bind(config)
+      const spy = vi.spyOn(config, 'get').mockImplementation((key) => {
+        if (key === 'reex.frontendBaseUrl') {
+          return 'https://reex.example'
+        }
+        if (key === 'testPages.disabled') {
+          return testPagesDisabled
+        }
+        return realConfigGet(key)
+      })
+
+      const vm = buildTaskListViewModel(makeApplication(), t)
+      expect(vm.saveAndComeLaterLink).toBe('https://reex.example')
+
+      spy.mockRestore()
+    }
+  )
 
   test('reprocessor: isExporter flag is false', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
@@ -567,7 +592,15 @@ describe('#taskListGetController', () => {
       expect(result).toContain(`/accreditation/business-plan/${APPLICATION_ID}`)
     })
 
-    test('renders save-and-come-back-later link to /operator-accreditation', async () => {
+    test('renders save-and-come-back-later link to the Re-Ex frontend', async () => {
+      const realConfigGet = config.get.bind(config)
+      const spy = vi.spyOn(config, 'get').mockImplementation((key) => {
+        if (key === 'reex.frontendBaseUrl') {
+          return 'https://reex.example'
+        }
+        return realConfigGet(key)
+      })
+
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -577,7 +610,9 @@ describe('#taskListGetController', () => {
       })
 
       expect(result).toContain('data-testid="save-come-back-link"')
-      expect(result).toContain('href="/operator"')
+      expect(result).toContain('href="https://reex.example"')
+
+      spy.mockRestore()
     })
 
     test('renders back link to /operator-accreditation', async () => {
