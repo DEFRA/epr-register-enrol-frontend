@@ -169,6 +169,23 @@ describe('#stubLoginController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe('/auth/stub/login?type=regulator')
     })
+
+    // `type` is a caller-controlled query param — a plain STUB_USERS[type]
+    // lookup would resolve inherited Object.prototype keys instead of
+    // treating them as "no such type", crashing wherever the result is used
+    // as a user array.
+    test.each(['constructor', 'toString', 'hasOwnProperty'])(
+      'treats type=%s as an unknown type, not an inherited Object.prototype member',
+      async (type) => {
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: `/auth/stub/login?type=${type}`
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe('/auth/stub/login?type=regulator')
+      }
+    )
   })
 
   describe('POST /auth/stub/login', () => {
@@ -193,6 +210,19 @@ describe('#stubLoginController', () => {
         payload: {
           userId: 'nonexistent-user',
           type: 'regulator'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('returns 400 rather than crashing for type=constructor', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: '/auth/stub/login',
+        payload: {
+          userId: 'anyone',
+          type: 'constructor'
         }
       })
 

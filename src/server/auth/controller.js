@@ -17,6 +17,7 @@ import {
   confirmPostLoginRedirect,
   popPostLoginRedirect
 } from '../common/helpers/auth/auth-redirect.js'
+import { isRegulatorAccessDisabled } from '../common/helpers/auth/regulator-access.js'
 
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
@@ -350,8 +351,12 @@ export async function logoutController(request, h) {
   // authenticated via a real upstream IdP (stub users never get one).
   if (!idToken) {
     request.yar.reset()
+    // RA-427: a regulator session created before the flag was switched on
+    // can still reach here (logging out doesn't require regulator pages to
+    // be reachable) — /auth/regulator/login 404s once disabled, so fall
+    // back to the operator login page rather than dead-ending them.
     return h.redirect(
-      userType === 'regulator'
+      userType === 'regulator' && !isRegulatorAccessDisabled()
         ? '/auth/regulator/login'
         : '/auth/operator/login'
     )

@@ -66,11 +66,13 @@
         </a>
       {% endif %}
 
-      <p class="govuk-body">
-        <a href="/auth/stub/login?type={{ 'operator' if type == 'regulator' else 'regulator' }}" class="govuk-link">
-          Switch to {{ 'operator' if type == 'regulator' else 'regulator' }} login
-        </a>
-      </p>
+      {% if not (type == 'operator' and regulatorAccessDisabled) %}
+        <p class="govuk-body">
+          <a href="/auth/stub/login?type={{ 'operator' if type == 'regulator' else 'regulator' }}" class="govuk-link">
+            Switch to {{ 'operator' if type == 'regulator' else 'regulator' }} login
+          </a>
+        </p>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

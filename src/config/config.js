@@ -334,6 +334,12 @@ export const config = convict({
       format: String,
       default: 'http://localhost:3000',
       env: 'AUTH_CALLBACK_BASE_URL'
+    },
+    regulatorAccessDisabled: {
+      doc: 'RA-427. Kill switch for the regulator side of the app while no regulator-facing features are built out yet. When true: the stub login chooser hides the "switch to regulator login" link, regulator login (both stub and real Entra ID) is not accessible (404), and no regulator pages are accessible (404). Operator login/pages are unaffected.',
+      format: Boolean,
+      default: false,
+      env: 'REGULATOR_ACCESS_DISABLED'
     }
   },
   fileUpload: {
