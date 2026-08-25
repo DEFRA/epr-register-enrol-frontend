@@ -33,9 +33,13 @@ export function getMissingRequiredConfig(cfg) {
     missing.push('AUTH_SHARED_SECRET__BACKEND')
   }
 
-  // Only load-bearing once real (non-stub) auth is active outside local dev —
-  // mirrors the condition reExBackLinkUrl itself uses (operator-accreditation/controller.js).
-  if (!stubEnabled && !isLocal && !cfg.get('reex.frontendBaseUrl')) {
+  // RA-459: unconditionally load-bearing regardless of stub/local — it's now
+  // the fallback destination for the accreditation session-expiry redirect
+  // and the task list's save-and-come-back-later link (operatorHomeUrl(),
+  // test-pages-access.js) any time /operator can't be trusted as reachable,
+  // not just when real (non-stub) auth is active. A blank value here
+  // produces a blank Location header / href rather than a visible error.
+  if (!cfg.get('reex.frontendBaseUrl')) {
     missing.push('REEX_FRONTEND_BASE_URL')
   }
 

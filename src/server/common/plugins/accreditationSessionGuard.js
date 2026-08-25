@@ -8,6 +8,7 @@ import { landingUrl } from '../helpers/accreditationUrls.js'
 import { getLocaleAndTranslator } from '../helpers/get-locale-translator.js'
 import { buildApplicationHeaderViewModel } from '../helpers/applicationHeader.js'
 import { TERMINAL_STATUSES } from '../helpers/accreditationSelection.js'
+import { operatorHomeUrl } from '../helpers/test-pages-access.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -98,7 +99,7 @@ export const accreditationSessionGuard = {
             'notification',
             'Your session has expired. Please sign in again to continue.'
           )
-          return h.redirect('/operator').takeover()
+          return h.redirect(operatorHomeUrl()).takeover()
         }
 
         const allowed = await hasOrganisationAccess(

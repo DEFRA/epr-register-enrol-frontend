@@ -73,20 +73,24 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual(['REEX_FRONTEND_BASE_URL'])
   })
 
-  test('does not flag REEX_FRONTEND_BASE_URL when auth.stubEnabled is true', () => {
+  // RA-459: unconditionally required now — it's the fallback destination for
+  // operatorHomeUrl() (accreditation session-expiry redirect, task list's
+  // save-and-come-back-later link) regardless of stub/local, unlike the
+  // other real-auth-only config below.
+  test('flags REEX_FRONTEND_BASE_URL when blank even with auth.stubEnabled true', () => {
     expect(
       getMissingRequiredConfig(
         makeConfig({ 'reex.frontendBaseUrl': '', 'auth.stubEnabled': true })
       )
-    ).toEqual([])
+    ).toEqual(['REEX_FRONTEND_BASE_URL'])
   })
 
-  test('does not flag REEX_FRONTEND_BASE_URL in local', () => {
+  test('flags REEX_FRONTEND_BASE_URL when blank even in local', () => {
     expect(
       getMissingRequiredConfig(
         makeConfig({ environment: 'local', 'reex.frontendBaseUrl': '' })
       )
-    ).toEqual([])
+    ).toEqual(['REEX_FRONTEND_BASE_URL'])
   })
 
   test('flags ENTRA_TENANT_ID when blank, real auth, non-local', () => {
