@@ -250,6 +250,35 @@ describe('#addOrsCyaController', () => {
       }
     )
 
+    // RA-482: orsId is generated server-side now -- the frontend must not compute or send one.
+    // (RA-481's guard now fetches the application on every write to check lock status, so
+    // unlike before RA-481 existed, getApplication IS expected to be called here.)
+    test('does not include orsId on the create-site payload', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([{ siteId: 1, orsId: '001' }])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2, orsId: '002' }
+      )
+
+      await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        expect.not.objectContaining({ orsId: expect.anything() })
+      )
+    })
+
     test('renders error when API call fails', async () => {
       vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
         makeApplication([])
