@@ -161,7 +161,6 @@ export const operatorAccreditationController = {
     const yearInt = Number.parseInt(year, 10)
     const userName = user?.name
     const reExBackLink = reExBackLinkUrl(organisationId, registrationId)
-    const backLinkText = t('pages.operatorAccreditation.reExBackLink')
 
     const canAccess = await operatorCanAccessOrganisation(
       user,
@@ -181,7 +180,6 @@ export const operatorAccreditationController = {
           heading: t('pages.operatorAccreditation.seedErrorHeading'),
           userName,
           backLink: '#',
-          backLinkText,
           error: message
         })
         .code(500)
@@ -233,7 +231,6 @@ export const operatorAccreditationController = {
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),
       backLink: reExBackLink,
-      backLinkText,
       isExporter: application.isExporter,
       notification,
       ...viewModel
@@ -283,7 +280,6 @@ async function handleStartNew(request, h, { isExporter, kind }) {
         heading: t('pages.operatorAccreditation.seedErrorHeading'),
         userName: user?.name,
         backLink: '#',
-        backLinkText: t('pages.operatorAccreditation.reExBackLink'),
         error: t('pages.operatorAccreditation.seedError')
       })
       .code(500)

@@ -1117,6 +1117,24 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('data-testid="back-link"')
   })
 
+  // RA-488: labelled "Return to Re/Ex service" until now — changed to "Back"
+  // so the transition into Re/Ex doesn't read as leaving to a different
+  // service; Re/Ex and this app are presented as one continuous journey.
+  // Incidentally now identical to the shared common.back fallback every
+  // other back link in the app already uses (page.njk), which is why the
+  // override translation could be dropped rather than just re-worded.
+  test('Re/Ex back link is labelled "Back"', async () => {
+    mockAccreditationGet([makeApp()])
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toMatch(/data-testid="back-link"[^>]*>\s*Back\s*</)
+  })
+
   // RA-431: the back link used to be hardcoded to the local stub chooser
   // regardless of AUTH_STUB_ENABLED, so a real operator on an integrated env
   // was dropped back onto this frontend's own stub page instead of Re/Ex.

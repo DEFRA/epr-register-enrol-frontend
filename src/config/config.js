@@ -388,7 +388,7 @@ export const config = convict({
       env: 'REEX_ORG_DEFRA_LINK_CACHE_TTL'
     },
     frontendBaseUrl: {
-      doc: 'RA-459. Base URL of the Re-Ex frontend service (e.g. https://epr-frontend.dev.cdp-int.defra.cloud). Used to build the "Return to Re/Ex service" link from the operator accreditation page when AUTH_STUB_ENABLED is false and ENVIRONMENT is not local, and unconditionally as the fallback destination wherever the app would otherwise send an operator back to the test-only /operator page. Should be set per-environment (see .env.example) rather than left blank — the empty default here exists only because a value cannot be hardcoded in source.',
+      doc: 'RA-459. Base URL of the Re-Ex frontend service (e.g. https://epr-frontend.dev.cdp-int.defra.cloud). Used to build the "Back" link from the operator accreditation page when AUTH_STUB_ENABLED is false and ENVIRONMENT is not local, and unconditionally as the fallback destination wherever the app would otherwise send an operator back to the test-only /operator page. Should be set per-environment (see .env.example) rather than left blank — the empty default here exists only because a value cannot be hardcoded in source.',
       format: String,
       default: '',
       env: 'REEX_FRONTEND_BASE_URL'
