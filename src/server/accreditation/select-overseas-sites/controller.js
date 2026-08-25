@@ -97,6 +97,104 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
   }
 }
 
+// Shared by every mutating POST branch's catch block below, so the error
+// copy/status code lives in one place rather than being repeated per branch.
+function renderSaveError(h, t, applicationId, rawSites) {
+  return renderPage(
+    h,
+    buildViewData(
+      t,
+      applicationId,
+      partitionSites(rawSites),
+      t('pages.selectOverseasSites.validation.saveError')
+    )
+  ).code(500)
+}
+
+// The three mutating POST actions below are split out of
+// selectOverseasSitesPostController.handler to keep its cyclomatic
+// complexity/line count under SonarCloud's per-function thresholds.
+
+async function removeOrDeleteSite(
+  h,
+  t,
+  logger,
+  organisationId,
+  applicationId,
+  rawSites,
+  submitAction,
+  siteId
+) {
+  const siteIdInt = Number.parseInt(siteId, 10)
+  const updatedSites =
+    submitAction === 'deleteNewSite'
+      ? rawSites.filter((s) => s.siteId !== siteIdInt)
+      : rawSites.map((s) =>
+          s.siteId === siteIdInt ? { ...s, selected: false } : s
+        )
+
+  try {
+    await accreditationApiService.patchOverseasSites(
+      organisationId,
+      applicationId,
+      { sites: updatedSites }
+    )
+  } catch (err) {
+    logger.error(
+      `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
+    )
+    return renderSaveError(h, t, applicationId, rawSites)
+  }
+  return h.redirect(selectOverseasSitesUrl(applicationId))
+}
+
+async function saveOverseasSitesForLater(
+  h,
+  t,
+  logger,
+  organisationId,
+  applicationId,
+  rawSites
+) {
+  try {
+    await accreditationApiService.patchOverseasSites(
+      organisationId,
+      applicationId,
+      { sectionStatus: 'InProgress' }
+    )
+  } catch (err) {
+    logger.error(
+      `Error saving overseas sites for ${applicationId}: ${err.message}`
+    )
+    return renderSaveError(h, t, applicationId, rawSites)
+  }
+  return h.redirect(taskListUrl(applicationId))
+}
+
+async function revertSiteAccreditation(
+  h,
+  t,
+  logger,
+  organisationId,
+  applicationId,
+  rawSites,
+  siteId
+) {
+  try {
+    await accreditationApiService.revertOverseasSite(
+      organisationId,
+      applicationId,
+      Number.parseInt(siteId, 10)
+    )
+  } catch (err) {
+    logger.error(
+      `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
+    )
+    return renderSaveError(h, t, applicationId, rawSites)
+  }
+  return h.redirect(selectOverseasSitesUrl(applicationId))
+}
+
 export const selectOverseasSitesGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -272,83 +370,39 @@ export const selectOverseasSitesPostController = {
       submitAction === 'removeAccredited' ||
       submitAction === 'deleteNewSite'
     ) {
-      const siteIdInt = Number.parseInt(siteId, 10)
-      const updatedSites =
-        submitAction === 'deleteNewSite'
-          ? rawSites.filter((s) => s.siteId !== siteIdInt)
-          : rawSites.map((s) =>
-              s.siteId === siteIdInt ? { ...s, selected: false } : s
-            )
-
-      try {
-        await accreditationApiService.patchOverseasSites(
-          organisationId,
-          applicationId,
-          { sites: updatedSites }
-        )
-      } catch (err) {
-        request.server.logger.error(
-          `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            partitionSites(rawSites),
-            t('pages.selectOverseasSites.validation.saveError')
-          )
-        ).code(500)
-      }
-      return h.redirect(selectOverseasSitesUrl(applicationId))
+      return removeOrDeleteSite(
+        h,
+        t,
+        request.server.logger,
+        organisationId,
+        applicationId,
+        rawSites,
+        submitAction,
+        siteId
+      )
     }
 
     if (submitAction === 'saveAndComeLater') {
-      try {
-        await accreditationApiService.patchOverseasSites(
-          organisationId,
-          applicationId,
-          { sectionStatus: 'InProgress' }
-        )
-      } catch (err) {
-        request.server.logger.error(
-          `Error saving overseas sites for ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            partitionSites(rawSites),
-            t('pages.selectOverseasSites.validation.saveError')
-          )
-        ).code(500)
-      }
-      return h.redirect(taskListUrl(applicationId))
+      return saveOverseasSitesForLater(
+        h,
+        t,
+        request.server.logger,
+        organisationId,
+        applicationId,
+        rawSites
+      )
     }
 
     if (submitAction === 'revertAccreditation') {
-      try {
-        await accreditationApiService.revertOverseasSite(
-          organisationId,
-          applicationId,
-          Number.parseInt(siteId, 10)
-        )
-      } catch (err) {
-        request.server.logger.error(
-          `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
-        )
-        return renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            partitionSites(rawSites),
-            t('pages.selectOverseasSites.validation.saveError')
-          )
-        ).code(500)
-      }
-      return h.redirect(selectOverseasSitesUrl(applicationId))
+      return revertSiteAccreditation(
+        h,
+        t,
+        request.server.logger,
+        organisationId,
+        applicationId,
+        rawSites,
+        siteId
+      )
     }
 
     const sections = partitionSites(rawSites)
