@@ -153,18 +153,9 @@ function buildViewData(t, applicationId, session, error) {
   }
 }
 
-function nextOrsId(sites) {
-  const existingNums = (sites ?? [])
-    .map((s) => Number.parseInt(s.orsId ?? '0', 10))
-    .filter((n) => !Number.isNaN(n))
-  const max = existingNums.length > 0 ? Math.max(...existingNums) : 0
-  return String(max + 1).padStart(3, '0')
-}
-
-function buildSitePayload(orsId, session) {
+function buildSitePayload(session) {
   const codes = session.baselAndOecdCodes ?? []
   return {
-    orsId,
     siteName: session.siteName,
     addressLine1: session.addressLine1,
     addressLine2: session.addressLine2 ?? null,
@@ -184,8 +175,8 @@ function buildSitePayload(orsId, session) {
 }
 
 // Promoting a registered site keeps its existing orsId/siteId server-side, so the payload
-// omits them — matches the backend's PromoteOverseasSiteRequest shape (AddOverseasSiteRequest
-// minus orsId).
+// omits them — matches the backend's PromoteOverseasSiteRequest shape, now identical to
+// AddOverseasSiteRequest's own shape since RA-482 moved orsId generation server-side too.
 function buildPromotePayload(session) {
   const codes = session.baselAndOecdCodes ?? []
   return {
@@ -251,20 +242,6 @@ export const addOrsCyaPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(`CYA getApplication error: ${err.message}`)
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))
-      ).code(500)
-    }
-
     const isPromoting = session.promotingSiteId != null
 
     let createdSite
@@ -277,11 +254,12 @@ export const addOrsCyaPostController = {
           buildPromotePayload(session)
         )
       } else {
-        const orsId = nextOrsId(application.overseasSites?.sites)
+        // RA-482: orsId is generated server-side now -- createdSite (read from the response
+        // below) carries the id the server assigned, so there is nothing to compute here.
         createdSite = await accreditationApiService.createOverseasSite(
           organisationId,
           applicationId,
-          buildSitePayload(orsId, session)
+          buildSitePayload(session)
         )
       }
     } catch (err) {
