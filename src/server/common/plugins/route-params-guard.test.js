@@ -108,6 +108,11 @@ describe('routeParamsGuard plugin', () => {
       path: '/test/{siteId}/{materialType}',
       handler: (request) => request.params
     })
+    server.route({
+      method: 'GET',
+      path: '/{language}',
+      handler: (request) => request.params
+    })
     await server.initialize()
     return server
   }
@@ -118,6 +123,72 @@ describe('routeParamsGuard plugin', () => {
     const { statusCode } = await server.inject('/test/not-a-number/Steel')
 
     expect(statusCode).toBe(400)
+    await server.stop({ timeout: 0 })
+  })
+
+  // RA-485: every route in the app has both a plain and a /{language}-
+  // prefixed variant, and /{language} alone is the app-wide single-segment
+  // catch-all — an invalid language segment means "no such page", not "bad
+  // input to a real page". This is also what makes a removed/never-built
+  // single-segment page (no route registered for it at all) 404 correctly:
+  // it falls through to this catch-all with language set to its own path
+  // segment.
+  test('404s an invalid language segment rather than 400ing it', async () => {
+    const server = await makeServer()
+
+    const { statusCode } = await server.inject('/operator-details')
+
+    expect(statusCode).toBe(404)
+    await server.stop({ timeout: 0 })
+  })
+
+  test.each(['en', 'cy'])(
+    'still accepts a valid language segment (%s)',
+    async (language) => {
+      const server = await makeServer()
+
+      const { statusCode, result } = await server.inject(`/${language}`)
+
+      expect(statusCode).toBe(200)
+      expect(result).toEqual({ language })
+      await server.stop({ timeout: 0 })
+    }
+  )
+
+  // RA-485: the app's real auth setup requires a session on every route by
+  // default and redirects a 401 to login (rather than surfacing it) — so an
+  // onPreHandler-stage check never runs for a logged-out caller; Hapi's auth
+  // lifecycle step always intercepts first. Reproduces that same shape here
+  // (a default-required "always-401" strategy + a 401->302 onPreResponse,
+  // mirroring auth-redirect.js) to prove the guard's 404 wins the race
+  // rather than being pre-empted by a login redirect.
+  test('404s an invalid language segment even when the route requires auth and the caller is unauthenticated', async () => {
+    const server = Hapi.server()
+    server.auth.scheme('always-unauthenticated', () => ({
+      authenticate(request, h) {
+        return h.unauthenticated(new Error('no session'))
+      }
+    }))
+    server.auth.strategy('session', 'always-unauthenticated')
+    server.auth.default('session')
+    server.ext('onPreResponse', (request, h) => {
+      const { response } = request
+      if (response.isBoom && response.output.statusCode === 401) {
+        return h.redirect('/login').takeover()
+      }
+      return h.continue
+    })
+    await server.register(routeParamsGuard)
+    server.route({
+      method: 'GET',
+      path: '/{language}',
+      handler: (request) => request.params
+    })
+    await server.initialize()
+
+    const { statusCode } = await server.inject('/operator-details')
+
+    expect(statusCode).toBe(404)
     await server.stop({ timeout: 0 })
   })
 
