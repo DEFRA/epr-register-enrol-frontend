@@ -43,6 +43,13 @@ export function getMissingRequiredConfig(cfg) {
     missing.push('REEX_FRONTEND_BASE_URL')
   }
 
+  // RA-487: the operator top nav's "Manage account" link. Same real-auth-outside-
+  // local condition as REEX_FRONTEND_BASE_URL above — both are only rendered once
+  // an operator session exists, which requires real (non-stub) auth outside local dev.
+  if (!stubEnabled && !isLocal && !cfg.get('auth.defraId.manageAccountUrl')) {
+    missing.push('DEFRA_ID_MANAGE_ACCOUNT_URL')
+  }
+
   // Same real-auth-outside-local condition as the existing ENTRA_CLIENT_ID/
   // ENTRA_CLIENT_SECRET boot guard in config.js — tenantId is just as load-bearing
   // (used to build the Microsoft OAuth URLs) but was never included in that guard.

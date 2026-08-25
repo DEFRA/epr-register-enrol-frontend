@@ -915,7 +915,9 @@
   "navigation": {
     "home": "Hafan",
     "regulator": "Rheoleiddiwr",
-    "organisationList": "Sefydliadau"
+    "organisationList": "Sefydliadau",
+    "manageAccount": "Rheoli cyfrif",
+    "signOut": "Allgofnodi"
   },
   "common": {
     "yes": "Hoffwn",
@@ -923,7 +925,6 @@
     "back": "Yn ôl",
     "continue": "Parhau",
     "save": "Cadw",
-    "signOut": "[Welsh] Sign out",
     "errorSummaryTitle": "Mae yna broblem",
     "error": "Gwall",
     "warning": "Rhybudd",

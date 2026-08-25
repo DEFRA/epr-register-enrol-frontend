@@ -917,7 +917,9 @@
   "navigation": {
     "home": "Home",
     "regulator": "Regulator",
-    "organisationList": "Organisations"
+    "organisationList": "Organisations",
+    "manageAccount": "Manage account",
+    "signOut": "Sign out"
   },
   "common": {
     "yes": "Yes",
@@ -925,7 +927,6 @@
     "back": "Back",
     "continue": "Continue",
     "save": "Save",
-    "signOut": "Sign out",
     "errorSummaryTitle": "There is a problem",
     "error": "Error",
     "warning": "Warning",
