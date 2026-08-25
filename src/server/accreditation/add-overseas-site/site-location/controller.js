@@ -47,16 +47,39 @@ function decimalPlaces(value) {
   return pointIndex === -1 ? 0 : value.length - pointIndex - 1
 }
 
-function parseCoordinates(raw) {
-  const trimmed = (raw ?? '').trim()
+function splitCoordinateParts(trimmed) {
   const parts = trimmed.split(',')
   if (parts.length !== 2) {
+    return null
+  }
+  return [parts[0].trim(), parts[1].trim()]
+}
+
+function coordinateRangeError(lat, lng) {
+  if (lat < MIN_LATITUDE || lat > MAX_LATITUDE) {
+    return 'latRange'
+  }
+  if (lng < MIN_LONGITUDE || lng > MAX_LONGITUDE) {
+    return 'lngRange'
+  }
+  return null
+}
+
+function coordinatePrecisionError(latRaw, lngRaw) {
+  const hasSufficientPrecision =
+    decimalPlaces(latRaw) >= MIN_COORDINATE_DECIMAL_PLACES &&
+    decimalPlaces(lngRaw) >= MIN_COORDINATE_DECIMAL_PLACES
+  return hasSufficientPrecision ? null : 'precision'
+}
+
+function parseCoordinates(raw) {
+  const trimmed = (raw ?? '').trim()
+  const parts = splitCoordinateParts(trimmed)
+  if (!parts) {
     return { valid: false, error: 'invalid' }
   }
 
-  const latRaw = parts[0].trim()
-  const lngRaw = parts[1].trim()
-
+  const [latRaw, lngRaw] = parts
   if (
     !COORDINATE_NUMBER_PATTERN.test(latRaw) ||
     !COORDINATE_NUMBER_PATTERN.test(lngRaw)
@@ -64,20 +87,17 @@ function parseCoordinates(raw) {
     return { valid: false, error: 'invalid' }
   }
 
-  const lat = Number.parseFloat(latRaw)
-  const lng = Number.parseFloat(lngRaw)
+  const rangeError = coordinateRangeError(
+    Number.parseFloat(latRaw),
+    Number.parseFloat(lngRaw)
+  )
+  if (rangeError) {
+    return { valid: false, error: rangeError }
+  }
 
-  if (lat < MIN_LATITUDE || lat > MAX_LATITUDE) {
-    return { valid: false, error: 'latRange' }
-  }
-  if (lng < MIN_LONGITUDE || lng > MAX_LONGITUDE) {
-    return { valid: false, error: 'lngRange' }
-  }
-  if (
-    decimalPlaces(latRaw) < MIN_COORDINATE_DECIMAL_PLACES ||
-    decimalPlaces(lngRaw) < MIN_COORDINATE_DECIMAL_PLACES
-  ) {
-    return { valid: false, error: 'precision' }
+  const precisionError = coordinatePrecisionError(latRaw, lngRaw)
+  if (precisionError) {
+    return { valid: false, error: precisionError }
   }
 
   return { valid: true, value: trimmed }
@@ -93,6 +113,58 @@ function extractFields(payload) {
     country: (payload?.country ?? '').trim(),
     coordinates: (payload?.coordinates ?? '').trim()
   }
+}
+
+const COORDINATES_ERROR_KEYS = {
+  latRange: 'coordinatesLatRange',
+  lngRange: 'coordinatesLngRange',
+  precision: 'coordinatesPrecision',
+  invalid: 'coordinatesInvalid'
+}
+
+function validateRequiredFields(t, fields) {
+  const errors = {}
+  if (!fields.addressLine1) {
+    errors.addressLine1 = t(
+      'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
+    )
+  }
+  if (!fields.townOrCity) {
+    errors.townOrCity = t(
+      'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
+    )
+  }
+  if (!fields.country) {
+    errors.country = t(
+      'pages.addOverseasSite.siteLocation.validation.countryRequired'
+    )
+  }
+  return errors
+}
+
+function validateCoordinates(t, coordinates) {
+  if (!coordinates) {
+    return t(
+      'pages.addOverseasSite.siteLocation.validation.coordinatesRequired'
+    )
+  }
+
+  const coordResult = parseCoordinates(coordinates)
+  if (coordResult.valid) {
+    return null
+  }
+
+  const key = COORDINATES_ERROR_KEYS[coordResult.error]
+  return t(`pages.addOverseasSite.siteLocation.validation.${key}`)
+}
+
+function validateSiteLocationFields(t, fields) {
+  const errors = validateRequiredFields(t, fields)
+  const coordinatesError = validateCoordinates(t, fields.coordinates)
+  if (coordinatesError) {
+    errors.coordinates = coordinatesError
+  }
+  return errors
 }
 
 export const addOrsSiteLocationGetController = {
@@ -118,44 +190,7 @@ export const addOrsSiteLocationPostController = {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
     const fields = extractFields(request.payload)
-    const errors = {}
-
-    if (!fields.addressLine1) {
-      errors.addressLine1 = t(
-        'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
-      )
-    }
-    if (!fields.townOrCity) {
-      errors.townOrCity = t(
-        'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
-      )
-    }
-    if (!fields.country) {
-      errors.country = t(
-        'pages.addOverseasSite.siteLocation.validation.countryRequired'
-      )
-    }
-
-    if (!fields.coordinates) {
-      errors.coordinates = t(
-        'pages.addOverseasSite.siteLocation.validation.coordinatesRequired'
-      )
-    } else {
-      const coordResult = parseCoordinates(fields.coordinates)
-      if (!coordResult.valid) {
-        const key =
-          coordResult.error === 'latRange'
-            ? 'coordinatesLatRange'
-            : coordResult.error === 'lngRange'
-              ? 'coordinatesLngRange'
-              : coordResult.error === 'precision'
-                ? 'coordinatesPrecision'
-                : 'coordinatesInvalid'
-        errors.coordinates = t(
-          `pages.addOverseasSite.siteLocation.validation.${key}`
-        )
-      }
-    }
+    const errors = validateSiteLocationFields(t, fields)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(
