@@ -459,10 +459,19 @@ describe('accreditationSessionGuard plugin registration', () => {
     }
   }
 
-  function registerAndGetCallback() {
-    vi.spyOn(config, 'get').mockImplementation((key) =>
-      key === 'isTest' ? false : undefined
-    )
+  function registerAndGetCallback(overrides = {}) {
+    vi.spyOn(config, 'get').mockImplementation((key) => {
+      if (key in overrides) {
+        return overrides[key]
+      }
+      if (key === 'isTest') {
+        return false
+      }
+      if (key === 'reex.frontendBaseUrl') {
+        return 'https://reex.example'
+      }
+      return undefined
+    })
     const mockServer = { ext: vi.fn() }
     accreditationSessionGuard.plugin.register(mockServer)
     return mockServer.ext.mock.calls[0][1]
@@ -508,11 +517,11 @@ describe('accreditationSessionGuard plugin registration', () => {
     expect(h.redirect).not.toHaveBeenCalled()
   })
 
-  test('registered callback redirects accreditation routes with missing session', () => {
+  test('registered callback redirects accreditation routes with missing session to the Re-Ex frontend', () => {
     const callback = registerAndGetCallback()
     const h = makeH()
     callback({ path: '/accreditation/task-list/app-1', yar: makeYar(null) }, h)
-    expect(h.redirect).toHaveBeenCalledWith('/operator')
+    expect(h.redirect).toHaveBeenCalledWith('https://reex.example')
   })
 
   test('registered callback writes flash notification before redirecting', () => {
@@ -525,6 +534,27 @@ describe('accreditationSessionGuard plugin registration', () => {
       'Your session has expired. Please sign in again to continue.'
     )
   })
+
+  // RA-459: /operator is a test-only page that 404s once TEST_PAGES_DISABLED
+  // is on — the session-expiry redirect goes to the real Re-Ex frontend
+  // unconditionally (not gated on that flag), so it never dead-ends there
+  // regardless of TEST_PAGES_DISABLED's value. Both values exercised, not
+  // just one, to actually prove the decoupling.
+  test.each([true, false])(
+    'registered callback redirects to the Re-Ex frontend when testPages.disabled is %s',
+    (testPagesDisabled) => {
+      const callback = registerAndGetCallback({
+        'testPages.disabled': testPagesDisabled,
+        'reex.frontendBaseUrl': 'https://reex.example'
+      })
+      const h = makeH()
+      callback(
+        { path: '/accreditation/task-list/app-1', yar: makeYar(null) },
+        h
+      )
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example')
+    }
+  )
 
   test('registered callback passes through Welsh accreditation routes with valid session', async () => {
     const callback = registerAndGetCallback()
@@ -544,7 +574,7 @@ describe('accreditationSessionGuard plugin registration', () => {
       { path: '/cy/accreditation/task-list/app-1', yar: makeYar(null) },
       h
     )
-    expect(h.redirect).toHaveBeenCalledWith('/operator')
+    expect(h.redirect).toHaveBeenCalledWith('https://reex.example')
   })
 
   function makeYarWithOrg(accreditationId, organisationId) {

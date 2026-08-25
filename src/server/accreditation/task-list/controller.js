@@ -10,6 +10,7 @@ import {
   TERMINAL_STATUSES,
   LOCKED_STATUSES
 } from '../../common/helpers/accreditationSelection.js'
+import { operatorHomeUrl } from '../../common/helpers/test-pages-access.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -181,7 +182,7 @@ export function buildTaskListViewModel(application, t) {
       ? `/accreditation/submit-declaration/${applicationId}`
       : null,
     backLink,
-    saveAndComeLaterLink: '/operator',
+    saveAndComeLaterLink: operatorHomeUrl(),
     isSubmitted,
     viewPaymentDetailsLink: `/accreditation/view-payment-details/${applicationId}`
   }

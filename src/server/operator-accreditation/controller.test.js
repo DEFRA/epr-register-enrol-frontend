@@ -1120,7 +1120,12 @@ describe('#operatorAccreditationController', () => {
   // RA-431: the back link used to be hardcoded to the local stub chooser
   // regardless of AUTH_STUB_ENABLED, so a real operator on an integrated env
   // was dropped back onto this frontend's own stub page instead of Re/Ex.
-  test('AC1: links to the Re/Ex frontend registration page when stub auth is disabled on a non-local env', async () => {
+  //
+  // RA-459: /operator is a test-only page (test-pages-access.js) — the back
+  // link now always points at the real Re/Ex frontend, regardless of
+  // stub/local, so it can't dead-end into a 404 if TEST_PAGES_DISABLED is
+  // ever true at the same time as stub auth or a local env.
+  test('links to the Re/Ex frontend registration page when stub auth is disabled on a non-local env', async () => {
     configOverrides = {
       'auth.stubEnabled': false,
       environment: 'dev',
@@ -1139,7 +1144,7 @@ describe('#operatorAccreditationController', () => {
     )
   })
 
-  test('AC2: links to the /operator stub page when stub auth is enabled', async () => {
+  test('links to the Re/Ex frontend registration page even when stub auth is enabled', async () => {
     configOverrides = {
       'auth.stubEnabled': true,
       environment: 'dev',
@@ -1153,10 +1158,12 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain('href="/operator/"')
+    expect(result).toContain(
+      `href="https://epr-frontend.dev.cdp-int.defra.cloud/organisations/${ORG_ID}/registrations/${REGISTRATION_ID}"`
+    )
   })
 
-  test('AC2: links to the /operator stub page on a local env even when stub auth has been overridden false', async () => {
+  test('links to the Re/Ex frontend registration page on a local env even with stub auth overridden false', async () => {
     configOverrides = {
       'auth.stubEnabled': false,
       environment: 'local',
@@ -1170,7 +1177,9 @@ describe('#operatorAccreditationController', () => {
       headers: operatorHeaders
     })
 
-    expect(result).toContain('href="/operator/"')
+    expect(result).toContain(
+      `href="https://epr-frontend.dev.cdp-int.defra.cloud/organisations/${ORG_ID}/registrations/${REGISTRATION_ID}"`
+    )
   })
 
   test('persistent application header shows operator, material and site', async () => {

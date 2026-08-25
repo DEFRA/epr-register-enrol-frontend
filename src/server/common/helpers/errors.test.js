@@ -22,7 +22,9 @@ describe('#errors', () => {
       url: '/non-existent/path'
     })
 
-    expect(result).toContain('Page not found | epr-register-enrol-frontend')
+    expect(result).toContain(
+      'Page not found | Record reprocessed or exported packaging waste'
+    )
     expect(statusCode).toBe(statusCodes.notFound)
   })
 })

@@ -46,9 +46,12 @@ export const config = convict({
     env: 'STATIC_CACHE_TIMEOUT'
   },
   serviceName: {
+    // RA-487: matches the Re-Ex frontend's own service name verbatim — the
+    // top nav is meant to present as one continuous service regardless of
+    // which of the two apps a user is actually on.
     doc: 'Applications Service Name',
     format: String,
-    default: 'epr-register-enrol-frontend'
+    default: 'Record reprocessed or exported packaging waste'
   },
   root: {
     doc: 'Project root',
@@ -327,6 +330,16 @@ export const config = convict({
         format: String,
         default: '',
         env: 'DEFRA_ID_SERVICE_ID'
+      },
+      // RA-487: mirrors the Re-Ex frontend's own DEFRA_ID_MANAGE_ACCOUNT_URL —
+      // used for the top nav's "Manage account" link, the same Defra ID
+      // account-management page Re-Ex itself links to, so the two services
+      // present a single seamless identity.
+      manageAccountUrl: {
+        doc: 'Defra ID account-management URL, used for the top nav "Manage account" link.',
+        format: String,
+        default: '',
+        env: 'DEFRA_ID_MANAGE_ACCOUNT_URL'
       }
     },
     callbackBaseUrl: {
@@ -334,6 +347,12 @@ export const config = convict({
       format: String,
       default: 'http://localhost:3000',
       env: 'AUTH_CALLBACK_BASE_URL'
+    },
+    regulatorAccessDisabled: {
+      doc: 'RA-427. Kill switch for the regulator side of the app while no regulator-facing features are built out yet. When true: the stub login chooser hides the "switch to regulator login" link, regulator login (both stub and real Entra ID) is not accessible (404), and no regulator pages are accessible (404). Operator login/pages are unaffected.',
+      format: Boolean,
+      default: false,
+      env: 'REGULATOR_ACCESS_DISABLED'
     }
   },
   fileUpload: {
@@ -382,7 +401,7 @@ export const config = convict({
       env: 'REEX_ORG_DEFRA_LINK_CACHE_TTL'
     },
     frontendBaseUrl: {
-      doc: 'Base URL of the Re-Ex frontend service (e.g. https://epr-frontend.dev.cdp-int.defra.cloud). Used to build the "Return to Re/Ex service" link from the operator accreditation page when AUTH_STUB_ENABLED is false and ENVIRONMENT is not local.',
+      doc: 'RA-459. Base URL of the Re-Ex frontend service (e.g. https://epr-frontend.dev.cdp-int.defra.cloud). Used to build the "Return to Re/Ex service" link from the operator accreditation page when AUTH_STUB_ENABLED is false and ENVIRONMENT is not local, and unconditionally as the fallback destination wherever the app would otherwise send an operator back to the test-only /operator page. Should be set per-environment (see .env.example) rather than left blank — the empty default here exists only because a value cannot be hardcoded in source.',
       format: String,
       default: '',
       env: 'REEX_FRONTEND_BASE_URL'
@@ -394,6 +413,14 @@ export const config = convict({
       format: Boolean,
       default: false,
       env: 'REGULATOR_QUERY_TEXT_DISABLED'
+    }
+  },
+  testPages: {
+    disabled: {
+      doc: 'RA-459. Kill switch for the placeholder "/" home page and "/operator" landing page — neither is wired to any real application context (no site/material selected) and both should not be reachable in the integrated environment. When true, both 404 rather than rendering.',
+      format: Boolean,
+      default: false,
+      env: 'TEST_PAGES_DISABLED'
     }
   }
 })

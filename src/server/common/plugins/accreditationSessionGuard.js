@@ -11,6 +11,7 @@ import {
   TERMINAL_STATUSES,
   LOCKED_STATUSES
 } from '../helpers/accreditationSelection.js'
+import { operatorHomeUrl } from '../helpers/test-pages-access.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -155,7 +156,7 @@ export const accreditationSessionGuard = {
             'notification',
             'Your session has expired. Please sign in again to continue.'
           )
-          return h.redirect('/operator').takeover()
+          return h.redirect(operatorHomeUrl()).takeover()
         }
 
         const allowed = await hasOrganisationAccess(

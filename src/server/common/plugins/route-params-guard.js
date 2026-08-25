@@ -54,6 +54,14 @@ const PARAM_SCHEMAS = {
     .insensitive()
 }
 
+// Only materialType's schema value can differ from its raw input (case
+// normalisation) — every other schema here validates shape without
+// transforming the value. Scoped explicitly rather than rewriting every
+// schema-having param, so this guard can't silently start coercing types
+// (e.g. siteId/year strings to numbers) for params no route has asked for
+// or tested that coercion against.
+const NORMALISED_PARAM_KEYS = ['materialType']
+
 export function findInvalidParam(params) {
   for (const [key, value] of Object.entries(params ?? {})) {
     const schema = PARAM_SCHEMAS[key]
@@ -69,16 +77,14 @@ export function findInvalidParam(params) {
 }
 
 // Rewrites params in place to the canonical casing their schema validated
-// against (currently only materialType varies in practice) so every
-// consumer downstream of this guard can keep comparing against the
-// capitalised MATERIAL_TYPES form.
+// against. Only touches the keys in NORMALISED_PARAM_KEYS (materialType) —
+// see the comment there for why the rest are left as-is.
 export function normaliseParams(params) {
-  for (const [key, value] of Object.entries(params ?? {})) {
-    const schema = PARAM_SCHEMAS[key]
-    if (!schema) {
+  for (const key of NORMALISED_PARAM_KEYS) {
+    if (!(key in (params ?? {}))) {
       continue
     }
-    const { value: normalised } = schema.validate(value)
+    const { value: normalised } = PARAM_SCHEMAS[key].validate(params[key])
     params[key] = normalised
   }
 }
@@ -87,8 +93,37 @@ export const routeParamsGuard = {
   plugin: {
     name: 'route-params-guard',
     register(server) {
-      server.ext('onPreHandler', (request, h) => {
+      // RA-485: onPreAuth, not onPreHandler — Hapi's auth lifecycle step
+      // runs before onPreHandler, and this app's redirectToLogin converts
+      // the resulting 401 into a 302 to the login page for any
+      // unauthenticated request, on every route (auth is required by
+      // default). An onPreHandler check for the /{language} catch-all would
+      // never even run for a logged-out caller hitting a removed page —
+      // they'd be sent to login instead of getting the 404 the page's
+      // absence should produce regardless of auth state. onPreAuth runs
+      // before that gate, so the 404 (or 400) happens first either way.
+      server.ext('onPreAuth', (request, h) => {
+        // findInvalidParam validates every schema-having param once (N
+        // calls); normaliseParams only re-validates the keys in
+        // NORMALISED_PARAM_KEYS (materialType — effectively O(1)), so this
+        // is N+1 schema.validate() calls, not the pre-PR 2N. Calling the
+        // exported functions here (rather than reimplementing the same
+        // validate/normalise logic inline) keeps a single source of truth —
+        // see the review discussion on PR #260 for why a second inline
+        // implementation was rejected.
         const invalidParam = findInvalidParam(request.params)
+        if (invalidParam === 'language') {
+          // Every route in the app has both a plain and a /{language}-
+          // prefixed variant, and `/{language}` alone is the app-wide
+          // single-segment catch-all (home/index.js) — so an invalid
+          // language segment doesn't mean "bad input to a real page", it
+          // means "there's no page here" (RA-485). Also what makes a
+          // removed/never-built single-segment page (e.g. the former
+          // /operator-details) 404 correctly without needing its own
+          // registered route: without one, it falls through to this
+          // catch-all with language set to its own path segment.
+          throw Boom.notFound()
+        }
         if (invalidParam) {
           throw Boom.badRequest(`Invalid ${invalidParam} in request path.`)
         }
