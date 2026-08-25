@@ -271,6 +271,9 @@ export const businessPlanPostController = {
     for (const field of BUSINESS_PLAN_FIELDS) {
       patchBody[field] = values[field] ?? null
     }
+    if (isSaveAndComeLater) {
+      patchBody.sectionStatus = 'InProgress'
+    }
 
     try {
       await accreditationApiService.patchBusinessPlan(

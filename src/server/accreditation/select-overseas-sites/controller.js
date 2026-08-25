@@ -303,6 +303,30 @@ export const selectOverseasSitesPostController = {
       return h.redirect(selectOverseasSitesUrl(applicationId))
     }
 
+    if (submitAction === 'saveAndComeLater') {
+      try {
+        await accreditationApiService.patchOverseasSites(
+          organisationId,
+          applicationId,
+          { sectionStatus: 'InProgress' }
+        )
+      } catch (err) {
+        request.server.logger.error(
+          `Error saving overseas sites for ${applicationId}: ${err.message}`
+        )
+        return renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            partitionSites(rawSites),
+            t('pages.selectOverseasSites.validation.saveError')
+          )
+        ).code(500)
+      }
+      return h.redirect(taskListUrl(applicationId))
+    }
+
     if (submitAction === 'revertAccreditation') {
       try {
         await accreditationApiService.revertOverseasSite(

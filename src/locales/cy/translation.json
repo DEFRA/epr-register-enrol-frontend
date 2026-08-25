@@ -461,6 +461,7 @@
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "continueButton": "Parhau",
+      "saveAndComeLater": "[Welsh] Save and come back later",
       "removeFromAccreditationButton": "[Welsh] Remove from accreditation",
       "addToAccreditationButton": "[Welsh] Add to accreditation",
       "sections": {
@@ -558,6 +559,7 @@
       "notRequiredOecd": "[Welsh] Not required for application",
       "incompleteEvidence": "[Welsh] All non-EU, non-OECD sites must have evidence uploaded before continuing.",
       "continueButton": "Parhau",
+      "saveAndComeLater": "[Welsh] Save and come back later",
       "table": {
         "siteName": "[Welsh] Site name",
         "country": "[Welsh] Country",

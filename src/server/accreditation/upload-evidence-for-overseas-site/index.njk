@@ -73,8 +73,15 @@
         {% if not readOnly %}
           <form method="post" novalidate data-testid="continue-form">
             <input type="hidden" name="crumb" value="{{ crumb }}">
-            <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+            <button type="submit" name="submitAction" value="saveAndContinue"
+                    class="govuk-button" data-module="govuk-button" data-testid="continue-button">
               {{ t('pages.uploadEvidenceList.continueButton') }}
+            </button>
+
+            <button type="submit" name="submitAction" value="saveAndComeLater"
+                    class="govuk-button govuk-button--secondary" data-module="govuk-button"
+                    data-testid="save-come-back-button">
+              {{ t('pages.uploadEvidenceList.saveAndComeLater') }}
             </button>
           </form>
         {% endif %}
