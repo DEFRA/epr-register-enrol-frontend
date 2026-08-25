@@ -1,5 +1,6 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddOrsSession,
   setAddOrsSession,
@@ -38,9 +39,23 @@ function buildViewData(t, applicationId, siteName, error) {
 }
 
 export const addOrsiteNameGetController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     return renderPage(
       h,
@@ -50,9 +65,23 @@ export const addOrsiteNameGetController = {
 }
 
 export const addOrsiteNamePostController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const siteName = (request.payload?.siteName ?? '').trim()
 
     if (!siteName) {
@@ -86,8 +115,22 @@ export const addOrsCancelController = {
 // get silently promoted onto it (site-name's own GET handler must NOT do this reset, since it
 // also serves as the wizard's "Back" target and would wipe in-progress answers).
 export const addOrsStartController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     resetAddOrsSession(request)
     return h.redirect(siteNameUrl(applicationId))
   }

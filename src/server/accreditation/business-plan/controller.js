@@ -125,7 +125,8 @@ function buildViewData(
   queryNote = null,
   querySummary = null,
   regulatorQueryFields = null,
-  readOnly = false
+  readOnly = false,
+  isQueriedApplication = false
 ) {
   return {
     pageTitle: t('pages.businessPlan.title'),
@@ -133,7 +134,11 @@ function buildViewData(
     intro: isExporter
       ? t('pages.businessPlan.introExporter')
       : t('pages.businessPlan.intro'),
-    backLink: readOnly
+    // RA-481: only route back to the query task list while the application
+    // itself is mid-query — a locked-but-not-queried application is
+    // read-only for a different reason and belongs back on the ordinary
+    // task list, which renders read-only in that case too.
+    backLink: isQueriedApplication
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
@@ -143,7 +148,8 @@ function buildViewData(
     queryNote,
     querySummary,
     regulatorQueryFields,
-    readOnly
+    readOnly,
+    isQueriedApplication
   }
 }
 
@@ -213,7 +219,8 @@ export const businessPlanGetController = {
               }
             ]
           : null,
-        readOnly
+        readOnly,
+        application.applicationStatus === 'Queried'
       )
     )
   }
@@ -245,11 +252,25 @@ export const businessPlanPostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.businessPlan?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.businessPlan?.sectionStatus
+      )
+      if (blocked) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      // RA-481: readOnly while the application is Queried means this
+      // particular section isn't the queried one — preserve the existing
+      // query-flow redirect target. readOnly for any other reason (a locked
+      // status like Submitted) sends the operator back to this same page,
+      // which now renders read-only.
+      if (readOnly && application.applicationStatus === 'Queried') {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
     }
 
     const isExporter = application.isExporter ?? false
@@ -282,6 +303,14 @@ export const businessPlanPostController = {
       request.server.logger.error(
         `Error saving business plan for ${applicationId}: ${err.message}`
       )
+      // RA-481: the guard above already checked read/write access before this
+      // patch was sent, but a 409 here means the application locked (e.g. was
+      // submitted) in the gap between that check and this request landing —
+      // send the operator to the section's own page so it re-fetches and
+      // renders read-only, rather than a raw error.
+      if (err.status === 409) {
+        return h.redirect(request.path)
+      }
       if (!err.status || err.status >= 500) {
         return h
           .view('errors/service-problem', {

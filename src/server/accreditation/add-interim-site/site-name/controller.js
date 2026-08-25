@@ -1,4 +1,6 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
@@ -36,9 +38,23 @@ function buildViewData(t, applicationId, siteName, error) {
 }
 
 export const addInterimSiteNameGetController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddInterimSiteSession(request)
     return renderPage(
       h,
@@ -48,9 +64,23 @@ export const addInterimSiteNameGetController = {
 }
 
 export const addInterimSiteNamePostController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const siteName = (request.payload?.siteName ?? '').trim()
 
     if (!siteName) {

@@ -1,4 +1,6 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddOrsSession,
   setAddOrsSession
@@ -79,9 +81,23 @@ function fieldsFromPayload(payload, visibleCount) {
 }
 
 export const addOrsBaselCodeGetController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     const codes = session.baselAndOecdCodes ?? []
     const values = codes.length > 0 ? codes : ['']
@@ -90,9 +106,23 @@ export const addOrsBaselCodeGetController = {
 }
 
 export const addOrsBaselCodePostController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     const action = request.payload?.action ?? 'continue'
     const rawVisibleCount = Number.parseInt(request.payload?.visibleCount, 10)

@@ -4,6 +4,8 @@ import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -75,7 +77,16 @@ function renderPage(h, viewData) {
   return h.view('accreditation/upload-bes-evidence/index', viewData)
 }
 
-function buildViewData(t, applicationId, siteId, siteName, payload, errors) {
+function buildViewData(
+  t,
+  applicationId,
+  siteId,
+  siteName,
+  payload,
+  errors,
+  readOnly = false,
+  isQueriedApplication = false
+) {
   return {
     pageTitle: t('pages.uploadBesEvidence.title'),
     heading: `${t('pages.uploadBesEvidence.heading')} ${siteName}`,
@@ -88,6 +99,8 @@ function buildViewData(t, applicationId, siteId, siteName, payload, errors) {
     validToDay: payload?.validToDay ?? '',
     validToMonth: payload?.validToMonth ?? '',
     validToYear: payload?.validToYear ?? '',
+    readOnly,
+    isQueriedApplication,
     ...errors
   }
 }
@@ -126,6 +139,14 @@ export const uploadBesEvidenceGetController = {
       ).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.besEvidence?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const site = application.overseasSites?.sites?.find(
       (s) => s.siteId === siteIdInt
     )
@@ -133,7 +154,16 @@ export const uploadBesEvidenceGetController = {
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, siteId, siteName, {}, {})
+      buildViewData(
+        t,
+        applicationId,
+        siteId,
+        siteName,
+        {},
+        {},
+        readOnly,
+        application.applicationStatus === 'Queried'
+      )
     )
   }
 }
@@ -164,6 +194,22 @@ export const uploadBesEvidencePostController = {
           error: t('pages.uploadBesEvidence.validation.fetchError')
         })
       ).code(500)
+    }
+
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.besEvidence?.sectionStatus
+      )
+      if (
+        blocked ||
+        (readOnly && application.applicationStatus === 'Queried')
+      ) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
     }
 
     const site = application.overseasSites?.sites?.find(

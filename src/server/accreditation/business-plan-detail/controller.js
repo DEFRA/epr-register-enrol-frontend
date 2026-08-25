@@ -1,6 +1,8 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 import {
   findBpItem,
   DETAIL_FIELD_TO_CATEGORY
@@ -80,7 +82,15 @@ function renderPage(h, viewData) {
   return h.view('accreditation/business-plan-detail/index', viewData)
 }
 
-function buildViewData(t, applicationId, payload, errors, application) {
+function buildViewData(
+  t,
+  applicationId,
+  payload,
+  errors,
+  application,
+  readOnly = false,
+  isQueriedApplication = false
+) {
   const isExporter = application?.isExporter ?? false
   return {
     pageTitle: isExporter
@@ -93,7 +103,9 @@ function buildViewData(t, applicationId, payload, errors, application) {
     backLink: businessPlanUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     textareaInputs: buildTextareaInputs(payload, errors, t, application),
-    errors
+    errors,
+    readOnly,
+    isQueriedApplication
   }
 }
 
@@ -133,6 +145,14 @@ export const businessPlanDetailGetController = {
       }).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.businessPlan?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     return renderPage(
       h,
       buildViewData(
@@ -140,7 +160,9 @@ export const businessPlanDetailGetController = {
         applicationId,
         payloadFromApplication(application),
         {},
-        application
+        application,
+        readOnly,
+        application.applicationStatus === 'Queried'
       )
     )
   }
@@ -158,15 +180,33 @@ export const businessPlanDetailPostController = {
 
     const isSaveAndComeLater = submitAction === 'saveAndComeLater'
 
+    // Always attempted (even for saveAndComeLater, which the previous
+    // percentage-validation-only fetch skipped) so the RA-481 lock guard
+    // below applies to every write path. Fails open on error, same as
+    // before — the backend's own write-side guard is the real boundary.
     let application
-    if (!isSaveAndComeLater) {
-      try {
-        application = await accreditationApiService.getApplication(
-          organisationId,
-          applicationId
-        )
-      } catch {
-        // If fetch fails, skip percentage-based validation
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+    } catch {
+      // If fetch fails, skip percentage-based validation and the lock guard
+    }
+
+    if (application) {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.businessPlan?.sectionStatus
+      )
+      if (
+        blocked ||
+        (readOnly && application.applicationStatus === 'Queried')
+      ) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
       }
     }
 
@@ -197,6 +237,12 @@ export const businessPlanDetailPostController = {
       request.server.logger.error(
         `Error saving business plan detail for ${applicationId}: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to this page
+      // so it re-fetches and renders read-only.
+      if (err.status === 409) {
+        return h.redirect(request.path)
+      }
       if (!err.status || err.status >= 500) {
         return h
           .view('errors/service-problem', {

@@ -1,6 +1,8 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 function uploadBesEvidenceUrl(applicationId, siteId) {
   return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
@@ -14,14 +16,25 @@ function renderPage(h, viewData) {
   return h.view('accreditation/upload-more-evidence/index', viewData)
 }
 
-function buildViewData(t, applicationId, siteId, siteName, answer, error) {
+function buildViewData(
+  t,
+  applicationId,
+  siteId,
+  siteName,
+  answer,
+  error,
+  readOnly = false,
+  isQueriedApplication = false
+) {
   return {
     pageTitle: t('pages.uploadMoreEvidence.title'),
     heading: `${t('pages.uploadMoreEvidence.heading')} ${siteName}?`,
     backLink: uploadBesEvidenceUrl(applicationId, siteId),
     siteName,
     answer,
-    error
+    error,
+    readOnly,
+    isQueriedApplication
   }
 }
 
@@ -57,6 +70,14 @@ export const uploadMoreEvidenceGetController = {
       ).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.besEvidence?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const site = application.overseasSites?.sites?.find(
       (s) => s.siteId === siteIdInt
     )
@@ -64,7 +85,16 @@ export const uploadMoreEvidenceGetController = {
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, siteId, siteName, null, null)
+      buildViewData(
+        t,
+        applicationId,
+        siteId,
+        siteName,
+        null,
+        null,
+        readOnly,
+        application.applicationStatus === 'Queried'
+      )
     )
   }
 }
@@ -102,6 +132,22 @@ export const uploadMoreEvidencePostController = {
       ).code(500)
     }
 
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.besEvidence?.sectionStatus
+      )
+      if (
+        blocked ||
+        (readOnly && application.applicationStatus === 'Queried')
+      ) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
+    }
+
     const site = application.overseasSites?.sites?.find(
       (s) => s.siteId === siteIdInt
     )
@@ -136,6 +182,12 @@ export const uploadMoreEvidencePostController = {
       request.server.logger.error(
         `Error patching BES evidence for site ${siteId} on ${applicationId}: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to this page
+      // so it re-fetches and renders read-only.
+      if (err.status === 409) {
+        return h.redirect(request.path)
+      }
       return renderPage(
         h,
         buildViewData(

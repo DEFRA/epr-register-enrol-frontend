@@ -219,6 +219,26 @@ describe('#uploadBesEvidenceController', () => {
   }
 
   describe('GET /accreditation/upload-bes-evidence/{applicationId}/{siteId}', () => {
+    test('redirects to query-task-list when application is Queried and BES evidence section has not been started', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
     test('returns 200 with page heading including site name', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -277,6 +297,28 @@ describe('#uploadBesEvidenceController', () => {
         '[Welsh] Upload broadly equivalent standards evidence for'
       )
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect), without the upload form, when application is locked (%s) and BES evidence section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+        expect(result).not.toContain('data-testid="upload-form"')
+      }
+    )
   })
 
   describe('POST /accreditation/upload-bes-evidence/{applicationId}/{siteId} — saveAndComeLater', () => {
@@ -312,6 +354,28 @@ describe('#uploadBesEvidenceController', () => {
   })
 
   describe('POST /accreditation/upload-bes-evidence/{applicationId}/{siteId} — uploadFile', () => {
+    test('redirects to query-task-list when application is Queried and BES evidence section has not been started, without initiating an upload', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload()
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
     test('returns 400 when no file selected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -456,6 +520,31 @@ describe('#uploadBesEvidenceController', () => {
         `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`
       )
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page without initiating an upload when application is locked (%s) and BES evidence section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+          headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+          payload: buildMultipartPayload()
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
+        )
+        expect(initUpload).not.toHaveBeenCalled()
+      }
+    )
 
     test('CDP redirect response (opaqueredirect) is treated as a successful upload', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())

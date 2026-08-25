@@ -82,7 +82,11 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     })),
     newSites: sections.newSites,
     registeredSitesAddedSites: sections.registeredSitesAdded,
-    backLink: banners.readOnly
+    // RA-481: only route back to the query task list while the application
+    // itself is mid-query — a locked-but-not-queried application is
+    // read-only for a different reason and belongs back on the ordinary
+    // task list, which renders read-only in that case too.
+    backLink: banners.isQueriedApplication
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     addOrsUrl: addOrsUrl(applicationId),
@@ -93,7 +97,8 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
     querySummary: banners.querySummary ?? null,
     regulatorQueryFields: banners.regulatorQueryFields ?? null,
-    readOnly: banners.readOnly ?? false
+    readOnly: banners.readOnly ?? false,
+    isQueriedApplication: banners.isQueriedApplication ?? false
   }
 }
 
@@ -167,7 +172,8 @@ export const selectOverseasSitesGetController = {
                 }
               ]
             : null,
-          readOnly
+          readOnly,
+          isQueriedApplication: application.applicationStatus === 'Queried'
         }
       )
     )
@@ -259,11 +265,25 @@ export const selectOverseasSitesPostController = {
       ).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.overseasSites?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.overseasSites?.sectionStatus
+      )
+      if (blocked) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      // RA-481: readOnly while the application is Queried means this
+      // particular section isn't the queried one — preserve the existing
+      // query-flow redirect target. readOnly for any other reason (a locked
+      // status like Submitted) sends the operator back to this same page,
+      // which now renders read-only.
+      if (readOnly && application.applicationStatus === 'Queried') {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
     }
 
     const rawSites = application.overseasSites?.sites ?? []
@@ -290,6 +310,12 @@ export const selectOverseasSitesPostController = {
         request.server.logger.error(
           `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
         )
+        // RA-481: a 409 means the application locked between the guard check
+        // above and this write landing — send the operator back to the
+        // section's own page so it re-fetches and renders read-only.
+        if (err.status === 409) {
+          return h.redirect(request.path)
+        }
         return renderPage(
           h,
           buildViewData(
@@ -314,6 +340,12 @@ export const selectOverseasSitesPostController = {
         request.server.logger.error(
           `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
         )
+        // RA-481: a 409 means the application locked between the guard check
+        // above and this write landing — send the operator back to the
+        // section's own page so it re-fetches and renders read-only.
+        if (err.status === 409) {
+          return h.redirect(request.path)
+        }
         return renderPage(
           h,
           buildViewData(

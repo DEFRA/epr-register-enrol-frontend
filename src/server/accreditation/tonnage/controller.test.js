@@ -245,6 +245,45 @@ describe('#tonnageController', () => {
       )
     })
 
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect) when application is locked (%s) and PRNs section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            prns: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/tonnage/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+      }
+    )
+
+    test('renders editable when the application is locked but the PRNs section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Updated',
+          prns: { sectionStatus: 'Queried' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('data-testid="read-only-notice"')
+    })
+
     test('renders the form read-only when application is Queried and PRNs section is Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -419,6 +458,51 @@ describe('#tonnageController', () => {
   })
 
   describe('POST /accreditation/tonnage/{applicationId}', () => {
+    test('redirects to query-task-list when application is Queried and PRNs section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { sectionStatus: 'NotStarted' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          plannedTonnageBand: 'UpTo500',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns 400 with inline save error when PATCH fails with a non-server, non-conflict status', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('bad request'), { status: 422 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          plannedTonnageBand: 'UpTo500',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="field-error"')
+    })
+
     test('returns 400 with validation error when no selection', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -539,6 +623,77 @@ describe('#tonnageController', () => {
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
       expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page when application is locked (%s) and PRNs section is not Queried, without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            prns: { sectionStatus: 'Completed' }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/tonnage/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: {
+            plannedTonnageBand: 'UpTo500',
+            submitAction: 'saveAndContinue'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/tonnage/${APPLICATION_ID}`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
+
+    test('allows the save when the application is locked but the PRNs section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Updated',
+          prns: { sectionStatus: 'Queried' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          plannedTonnageBand: 'UpTo500',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(patchSpy).toHaveBeenCalled()
+    })
+
+    test('redirects back to this page (not the raw error page) when the PATCH fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          plannedTonnageBand: 'UpTo500',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(`/accreditation/tonnage/${APPLICATION_ID}`)
     })
 
     test('returns 500 with error when GET fetch fails on POST', async () => {

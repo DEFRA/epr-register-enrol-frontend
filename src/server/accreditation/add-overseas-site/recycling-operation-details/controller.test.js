@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import {
   addOrsRecyclingOperationGetController,
   addOrsRecyclingOperationPostController
@@ -131,6 +132,28 @@ describe('#addOrsRecyclingOperationController', () => {
       expect(result).toContain(SELECT_ORS_URL)
     })
 
+    // RA-481: this wizard holds its draft in session, not on the
+    // application, so once overseasSites is locked there's nothing
+    // meaningful to render read-only — send the operator back to the
+    // section's list page instead.
+    test('redirects to select-overseas-sites when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+
     test('pre-selects codes from session when returning via Back', async () => {
       const postResponse = await server.inject({
         method: 'POST',
@@ -175,6 +198,25 @@ describe('#addOrsRecyclingOperationController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(NEXT_URL)
+    })
+
+    test('redirects to select-overseas-sites without saving when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'recyclingOperationCodes=R3'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
     test('redirects and persists all codes when multiple checkboxes are selected', async () => {
@@ -299,7 +341,7 @@ describe('#addOrsRecyclingOperationController', () => {
       'shows only %s codes for materialType %s',
       async (materialType, expectedCodes) => {
         const mockH = makeMockH()
-        const data = addOrsRecyclingOperationGetController.handler(
+        const data = await addOrsRecyclingOperationGetController.handler(
           makeMockRequest(materialType),
           mockH
         )
@@ -312,7 +354,7 @@ describe('#addOrsRecyclingOperationController', () => {
 
     test('shows all codes when materialType is unset (graceful fallback)', async () => {
       const mockH = makeMockH()
-      const data = addOrsRecyclingOperationGetController.handler(
+      const data = await addOrsRecyclingOperationGetController.handler(
         makeMockRequest(null),
         mockH
       )
@@ -324,7 +366,7 @@ describe('#addOrsRecyclingOperationController', () => {
 
     test('re-displays only the new materialType codes after it changes, dropping stale selections', async () => {
       const mockH = makeMockH()
-      const data = addOrsRecyclingOperationGetController.handler(
+      const data = await addOrsRecyclingOperationGetController.handler(
         makeMockRequest('Wood', { recyclingOperationCodes: ['R4', 'R12'] }),
         mockH
       )
@@ -335,9 +377,9 @@ describe('#addOrsRecyclingOperationController', () => {
       expect(data.options.find((o) => o.value === 'R12').checked).toBe(true)
     })
 
-    test('POST rejects a code that is valid overall but not applicable to the current materialType', () => {
+    test('POST rejects a code that is valid overall but not applicable to the current materialType', async () => {
       const mockH = makeMockH()
-      const data = addOrsRecyclingOperationPostController.handler(
+      const data = await addOrsRecyclingOperationPostController.handler(
         makeMockRequest('Wood', {}, { recyclingOperationCodes: 'R4' }),
         mockH
       )
@@ -346,9 +388,9 @@ describe('#addOrsRecyclingOperationController', () => {
       expect(data.error).toBeTruthy()
     })
 
-    test('POST accepts a code that is applicable to the current materialType', () => {
+    test('POST accepts a code that is applicable to the current materialType', async () => {
       const mockH = makeMockH()
-      addOrsRecyclingOperationPostController.handler(
+      await addOrsRecyclingOperationPostController.handler(
         makeMockRequest('Wood', {}, { recyclingOperationCodes: 'R3' }),
         mockH
       )

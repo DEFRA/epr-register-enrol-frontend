@@ -1,6 +1,8 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 import {
   findBpItem,
   PERCENT_FIELD_TO_CATEGORY,
@@ -107,6 +109,14 @@ export const businessPlanCyaGetController = {
       }).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.businessPlan?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const { percentRows, detailRows } = buildSummaryRows(
       application,
       t,
@@ -118,7 +128,9 @@ export const businessPlanCyaGetController = {
       percentRows,
       detailRows,
       backLink: taskListUrl(applicationId),
-      taskListLink: taskListUrl(applicationId)
+      taskListLink: taskListUrl(applicationId),
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
 }
@@ -153,6 +165,22 @@ export const businessPlanCyaPostController = {
       }).code(500)
     }
 
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.businessPlan?.sectionStatus
+      )
+      if (
+        blocked ||
+        (readOnly && application.applicationStatus === 'Queried')
+      ) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
+    }
+
     const bp = application.businessPlan
     const patchBody = { sectionStatus: 'Completed' }
     for (const field of PERCENT_FIELDS) {
@@ -176,6 +204,12 @@ export const businessPlanCyaPostController = {
       request.server.logger.error(
         `Error confirming business plan for ${applicationId}: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to this page
+      // so it re-fetches and renders read-only.
+      if (err.status === 409) {
+        return h.redirect(request.path)
+      }
       const { percentRows, detailRows } = buildSummaryRows(
         application,
         t,

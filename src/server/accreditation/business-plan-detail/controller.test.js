@@ -243,6 +243,29 @@ describe('#businessPlanDetailController', () => {
   }
 
   describe('GET /accreditation/business-plan-detail/{applicationId}', () => {
+    test('redirects to query-task-list when application is Queried and business plan section has not been started', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: {
+            ...makeApplication().businessPlan,
+            sectionStatus: 'NotStarted'
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
     test('returns 200 with page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -378,9 +401,94 @@ describe('#businessPlanDetailController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect) when application is locked (%s) and business plan section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            businessPlan: {
+              ...makeApplication().businessPlan,
+              sectionStatus: 'Completed'
+            }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+        expect(result).not.toContain('data-testid="continue-button"')
+      }
+    )
   })
 
   describe('POST /accreditation/business-plan-detail/{applicationId} - save-and-continue', () => {
+    test('redirects to query-task-list when application is Queried and business plan section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: {
+            ...makeApplication().businessPlan,
+            sectionStatus: 'NotStarted'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'Details',
+          priceSupportDetail: 'Details',
+          businessCollectionsDetail: 'Details',
+          communicationsDetail: 'Details',
+          newMarketsDetail: 'Details',
+          newUsesDetail: 'Details',
+          otherDetail: 'Details',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns 400 with inline save error when PATCH fails with a non-server, non-conflict status', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('bad request'), { status: 422 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'Details',
+          priceSupportDetail: 'Details',
+          businessCollectionsDetail: 'Details',
+          communicationsDetail: 'Details',
+          newMarketsDetail: 'Details',
+          newUsesDetail: 'Details',
+          otherDetail: 'Details',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
     test('patches all detail fields and redirects to business-plan-cya', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
@@ -552,6 +660,71 @@ describe('#businessPlanDetailController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="try-again-link"')
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page when application is locked (%s), without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            businessPlan: {
+              ...makeApplication().businessPlan,
+              sectionStatus: 'Completed'
+            }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: {
+            newInfrastructureDetail: 'Details',
+            priceSupportDetail: 'Details',
+            businessCollectionsDetail: 'Details',
+            communicationsDetail: 'Details',
+            newMarketsDetail: 'Details',
+            newUsesDetail: 'Details',
+            otherDetail: 'Details',
+            submitAction: 'saveAndContinue'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/business-plan-detail/${APPLICATION_ID}`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
+
+    test('redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'Details',
+          priceSupportDetail: 'Details',
+          businessCollectionsDetail: 'Details',
+          communicationsDetail: 'Details',
+          newMarketsDetail: 'Details',
+          newUsesDetail: 'Details',
+          otherDetail: 'Details',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/business-plan-detail/${APPLICATION_ID}`
+      )
+    })
   })
 
   describe('POST /accreditation/business-plan-detail/{applicationId} - save-and-come-later', () => {
@@ -582,6 +755,14 @@ describe('#businessPlanDetailController', () => {
 
     test('re-renders the textarea with its value when it exceeds 500 chars', async () => {
       const overLength = 'a'.repeat(501)
+      // RA-481: the guard fetch is now attempted even on saveAndComeLater, but
+      // it must fail open (not filter fields down to whatever a leftover
+      // application mock from an earlier test would imply) — force it to
+      // reject here so this test isolates the "no application context"
+      // behaviour saveAndComeLater always had.
+      vi.spyOn(apiClient, 'get').mockRejectedValueOnce(
+        new Error('not needed for saveAndComeLater')
+      )
 
       const { statusCode, result } = await server.inject({
         method: 'POST',

@@ -9,6 +9,7 @@ import {
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
+import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 
 const APPLICATION_ID = 'app-is-sn-001'
 const BASE_URL = `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`
@@ -81,6 +82,28 @@ describe('#addInterimSiteNameController', () => {
       expect(result).toContain(SELECT_ORS_URL)
     })
 
+    // RA-481: this wizard holds its draft in session, not on the
+    // application, so once overseasSites is locked there's nothing
+    // meaningful to render read-only — send the operator back to the
+    // section's list page instead.
+    test('redirects to select-overseas-sites when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+
     test('pre-populates input with value from session when returning via Back', async () => {
       const postResponse = await server.inject({
         method: 'POST',
@@ -135,6 +158,28 @@ describe('#addInterimSiteNameController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(SITE_LOCATION_URL)
+    })
+
+    test('redirects to select-overseas-sites without saving when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'siteName=Interim+Staging+GmbH'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
     test('saves site name to session on valid POST', async () => {

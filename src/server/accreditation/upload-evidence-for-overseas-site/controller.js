@@ -76,20 +76,26 @@ function buildViewData(
   queryNote = null,
   querySummary = null,
   regulatorQueryFields = null,
-  readOnly = false
+  readOnly = false,
+  isQueriedApplication = false
 ) {
   return {
     pageTitle: t('pages.uploadEvidenceList.title'),
     heading: t('pages.uploadEvidenceList.heading'),
     sites,
-    backLink: readOnly
+    // RA-481: only route back to the query task list while the application
+    // itself is mid-query — a locked-but-not-queried application is
+    // read-only for a different reason and belongs back on the ordinary
+    // task list, which renders read-only in that case too.
+    backLink: isQueriedApplication
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     error,
     queryNote,
     querySummary,
     regulatorQueryFields,
-    readOnly
+    readOnly,
+    isQueriedApplication
   }
 }
 
@@ -152,7 +158,8 @@ export const uploadEvidenceListGetController = {
               }
             ]
           : null,
-        readOnly
+        readOnly,
+        application.applicationStatus === 'Queried'
       )
     )
   }
@@ -187,11 +194,25 @@ export const uploadEvidenceListPostController = {
       ).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.besEvidence?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.besEvidence?.sectionStatus
+      )
+      if (blocked) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      // RA-481: readOnly while the application is Queried means this
+      // particular section isn't the queried one — preserve the existing
+      // query-flow redirect target. readOnly for any other reason (a locked
+      // status like Submitted) sends the operator back to this same page,
+      // which now renders read-only.
+      if (readOnly && application.applicationStatus === 'Queried') {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
     }
 
     const selectedSites = (application.overseasSites?.sites ?? []).filter(
@@ -226,6 +247,12 @@ export const uploadEvidenceListPostController = {
       request.server.logger.error(
         `Error completing BES evidence section for ${applicationId}: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to the
+      // section's own page so it re-fetches and renders read-only.
+      if (err.status === 409) {
+        return h.redirect(request.path)
+      }
       if (!err.status || err.status >= 500) {
         return h
           .view('errors/service-problem', {

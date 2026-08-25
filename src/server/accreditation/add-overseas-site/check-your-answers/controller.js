@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddOrsSession,
   setAddOrsSession,
@@ -208,9 +209,23 @@ function buildPromotePayload(session) {
 }
 
 export const addOrsCyaGetController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     return renderPage(h, buildViewData(t, applicationId, session, null))
   }
@@ -219,6 +234,20 @@ export const addOrsCyaGetController = {
 export const addOrsCyaPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     const action = request.payload?.action ?? ''
 
@@ -246,10 +275,6 @@ export const addOrsCyaPostController = {
         400
       )
     }
-
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
 
     let application
     try {
@@ -288,6 +313,12 @@ export const addOrsCyaPostController = {
       request.server.logger.error(
         `CYA ${isPromoting ? 'promoteOverseasSite' : 'createOverseasSite'} error: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to the
+      // section's own (now read-only) list page rather than a raw error.
+      if (err.status === 409) {
+        return h.redirect(selectOrsUrl(applicationId))
+      }
       return renderPage(
         h,
         buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))

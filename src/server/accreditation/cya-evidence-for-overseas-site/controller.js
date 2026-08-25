@@ -1,6 +1,8 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
 
 function evidenceListUrl(applicationId) {
   return `/accreditation/upload-evidence-for-overseas-site/${applicationId}`
@@ -26,14 +28,25 @@ function mapUploads(uploads) {
   }))
 }
 
-function buildViewData(t, applicationId, siteId, siteName, uploads, error) {
+function buildViewData(
+  t,
+  applicationId,
+  siteId,
+  siteName,
+  uploads,
+  error,
+  readOnly = false,
+  isQueriedApplication = false
+) {
   return {
     pageTitle: t('pages.cyaEvidenceForSite.title'),
     heading: `${t('pages.cyaEvidenceForSite.heading')} ${siteName}`,
     backLink: `/accreditation/upload-more-evidence/${applicationId}/${siteId}`,
     uploads,
     siteName,
-    error
+    error,
+    readOnly,
+    isQueriedApplication
   }
 }
 
@@ -69,6 +82,14 @@ export const cyaEvidenceForSiteGetController = {
       ).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.besEvidence?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const site = application.overseasSites?.sites?.find(
       (s) => s.siteId === siteIdInt
     )
@@ -77,7 +98,16 @@ export const cyaEvidenceForSiteGetController = {
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, siteId, siteName, uploads, null)
+      buildViewData(
+        t,
+        applicationId,
+        siteId,
+        siteName,
+        uploads,
+        null,
+        readOnly,
+        application.applicationStatus === 'Queried'
+      )
     )
   }
 }

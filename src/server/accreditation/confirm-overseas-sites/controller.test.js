@@ -67,6 +67,26 @@ describe('#confirmOverseasSitesController', () => {
   }
 
   describe('GET /accreditation/confirm-overseas-sites/{applicationId}', () => {
+    test('redirects to query-task-list when application is Queried and overseas sites section has not been started', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: { sectionStatus: 'NotStarted', sites: [] }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
     test('returns 200 with page heading and sites list', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -183,9 +203,58 @@ describe('#confirmOverseasSitesController', () => {
         '[Welsh] Confirm your overseas reprocessing sites'
       )
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect), without Change links or confirm button, when locked (%s)',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            overseasSites: {
+              sectionStatus: 'Completed',
+              sites: [SITE_ONE, SITE_TWO]
+            }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+        expect(result).not.toContain('data-testid="change-link-900001"')
+        expect(result).not.toContain('data-testid="confirm-button"')
+      }
+    )
   })
 
   describe('POST /accreditation/confirm-overseas-sites/{applicationId}', () => {
+    test('redirects to query-task-list when application is Queried and overseas sites section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: { sectionStatus: 'NotStarted', sites: [] }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('returns 500 when GET application fails on POST', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
 
@@ -234,6 +303,53 @@ describe('#confirmOverseasSitesController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page when locked (%s), without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            overseasSites: {
+              sectionStatus: 'Completed',
+              sites: [SITE_ONE, SITE_TWO]
+            }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: { submitAction: 'confirm' }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
+
+    test('redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
+      )
     })
   })
 })

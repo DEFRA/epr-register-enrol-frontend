@@ -144,6 +144,120 @@ describe('#buildTaskListViewModel', () => {
     expect(vm.isSubmitted).toBe(true)
   })
 
+  // RA-481: once locked, sections stay viewable read-only (never fully
+  // blocked) except the one section that is currently Queried, which stays
+  // fully editable — mirrors query-task-list's viewable/locked logic.
+  describe('locked application (RA-481)', () => {
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'keeps every Completed task linked and read-only when locked (%s)',
+      (applicationStatus) => {
+        const vm = buildTaskListViewModel(
+          makeApplication({
+            applicationStatus,
+            prns: { sectionStatus: 'Completed' },
+            businessPlan: { sectionStatus: 'Completed' },
+            samplingPlan: { sectionStatus: 'Completed' }
+          }),
+          t
+        )
+
+        vm.tasks.forEach((task) => {
+          expect(task.locked).toBe(false)
+          expect(task.url).not.toBeNull()
+          expect(task.readOnly).toBe(true)
+        })
+      }
+    )
+
+    test('a Queried section stays linked and editable (readOnly false) even while the application is locked', () => {
+      const vm = buildTaskListViewModel(
+        makeApplication({
+          applicationStatus: 'Updated',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Queried' },
+          samplingPlan: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+
+      const bpTask = vm.tasks.find(
+        (task) => task.testId === 'task-business-plan'
+      )
+      expect(bpTask.locked).toBe(false)
+      expect(bpTask.url).toContain('/business-plan/')
+      expect(bpTask.readOnly).toBe(false)
+
+      const prnsTask = vm.tasks.find((task) => task.testId === 'task-prns')
+      expect(prnsTask.readOnly).toBe(true)
+    })
+
+    test('a NotStarted/InProgress section stays locked (no link) even while the application is locked', () => {
+      const vm = buildTaskListViewModel(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'InProgress' },
+          samplingPlan: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+
+      const bpTask = vm.tasks.find(
+        (task) => task.testId === 'task-business-plan'
+      )
+      expect(bpTask.locked).toBe(true)
+      expect(bpTask.url).toBeNull()
+    })
+
+    test('progression gating (previous section required) no longer applies once locked', () => {
+      // Business plan would ordinarily be locked while PRNs isn't Completed,
+      // but once the application is locked that progression rule is
+      // replaced by the queried/viewable check.
+      const vm = buildTaskListViewModel(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          prns: { sectionStatus: 'Queried' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+
+      const bpTask = vm.tasks.find(
+        (task) => task.testId === 'task-business-plan'
+      )
+      expect(bpTask.locked).toBe(false)
+      expect(bpTask.url).toContain('/business-plan/')
+    })
+
+    test('exporter: overseas sites and BES evidence tasks are also read-only-viewable when locked', () => {
+      const vm = buildTaskListViewModel(
+        makeApplication({
+          applicationStatus: 'DulyMade',
+          isExporter: true,
+          materialType: 'Plastic',
+          prns: { sectionStatus: 'Completed' },
+          businessPlan: { sectionStatus: 'Completed' },
+          samplingPlan: { sectionStatus: 'Completed' },
+          overseasSites: { sectionStatus: 'Completed' },
+          besEvidence: { sectionStatus: 'Completed' }
+        }),
+        t
+      )
+
+      const osTask = vm.tasks.find(
+        (task) => task.testId === 'task-overseas-sites'
+      )
+      const besTask = vm.tasks.find(
+        (task) => task.testId === 'task-bes-evidence'
+      )
+      expect(osTask.locked).toBe(false)
+      expect(osTask.readOnly).toBe(true)
+      expect(besTask.locked).toBe(false)
+      expect(besTask.readOnly).toBe(true)
+    })
+  })
+
   test('viewPaymentDetailsLink contains applicationId', () => {
     const vm = buildTaskListViewModel(makeApplication(), t)
 
@@ -487,6 +601,32 @@ describe('#taskListGetController', () => {
       expect(result).not.toContain('data-testid="continue-button"')
       expect(result).not.toContain('data-testid="save-come-back-link"')
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders 200 with the completed sections still linked when locked (%s), not redirected',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            prns: { sectionStatus: 'Completed' },
+            businessPlan: { sectionStatus: 'Completed' },
+            samplingPlan: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { result, statusCode } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/task-list/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain(`/accreditation/tonnage/${APPLICATION_ID}`)
+        expect(result).toContain(
+          `/accreditation/business-plan/${APPLICATION_ID}`
+        )
+      }
+    )
 
     test('submitted text and view-payment-details link shown when application is Submitted', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(

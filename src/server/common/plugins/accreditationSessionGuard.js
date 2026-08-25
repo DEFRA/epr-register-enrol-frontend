@@ -7,7 +7,10 @@ import { accreditationApiService } from '../helpers/accreditationApiService.js'
 import { landingUrl } from '../helpers/accreditationUrls.js'
 import { getLocaleAndTranslator } from '../helpers/get-locale-translator.js'
 import { buildApplicationHeaderViewModel } from '../helpers/applicationHeader.js'
-import { TERMINAL_STATUSES } from '../helpers/accreditationSelection.js'
+import {
+  TERMINAL_STATUSES,
+  LOCKED_STATUSES
+} from '../helpers/accreditationSelection.js'
 
 const ACCREDITATION_ROUTE_PREFIX = '/accreditation/'
 
@@ -28,12 +31,66 @@ const READ_ONLY_SAFE_SEGMENTS = new Set([
   'view-payment-details'
 ])
 
+function routeSegment(path) {
+  return path.match(/^\/(?:[a-z]{2}\/)?accreditation\/([^/]+)\//)?.[1] ?? null
+}
+
 export function isEditRestrictedPath(path) {
-  const match = path.match(/^\/(?:[a-z]{2}\/)?accreditation\/([^/]+)\//)
-  if (!match) {
+  const segment = routeSegment(path)
+  if (!segment) {
     return false
   }
-  return !READ_ONLY_SAFE_SEGMENTS.has(match[1])
+  return !READ_ONLY_SAFE_SEGMENTS.has(segment)
+}
+
+// RA-481: maps an /accreditation/<segment>/ route prefix to the application
+// field holding that section's own sectionStatus, so a POST/save request can
+// be checked against the locked-status rule without this plugin needing to
+// know each page's own logic. Every routeSegment() that edits one of the
+// five accreditation sections is listed here (including its CYA/detail/
+// upload sub-pages and the add-overseas-site/add-interim-site wizards, which
+// all ultimately write into overseasSites or besEvidence); routes that
+// aren't a single section's editor (task-list, submit-declaration,
+// query-declaration, withdraw-application, view-payment-details) are left
+// out on purpose and rely on their own controller-level checks instead.
+const SECTION_STATUS_FIELD_BY_ROUTE_SEGMENT = {
+  tonnage: 'prns',
+  'tonnage-authority': 'prns',
+  'tonnage-cya': 'prns',
+  'business-plan': 'businessPlan',
+  'business-plan-detail': 'businessPlan',
+  'business-plan-cya': 'businessPlan',
+  'sampling-plan': 'samplingPlan',
+  'select-overseas-sites': 'overseasSites',
+  'confirm-overseas-sites': 'overseasSites',
+  'add-overseas-site': 'overseasSites',
+  'add-interim-site': 'overseasSites',
+  'upload-evidence-for-overseas-site': 'besEvidence',
+  'cya-evidence-for-overseas-site': 'besEvidence',
+  'check-site-conditions': 'besEvidence',
+  'upload-bes-evidence': 'besEvidence',
+  'upload-more-evidence': 'besEvidence'
+}
+
+// RA-481 defence in depth: true when a POST/save to this locked-but-not-
+// terminal application must be refused because the section it targets isn't
+// the one currently Queried. Unlike TERMINAL_STATUSES, a locked application
+// must still render normally on GET (the controller renders read-only via
+// resolveQueriedSectionAccess) — this only ever blocks a write.
+export function isLockedSectionWrite(request, application) {
+  if (
+    request.method !== 'post' ||
+    !application ||
+    !LOCKED_STATUSES.has(application.applicationStatus)
+  ) {
+    return false
+  }
+  const sectionField =
+    SECTION_STATUS_FIELD_BY_ROUTE_SEGMENT[routeSegment(request.path)]
+  if (!sectionField) {
+    return false
+  }
+  return application[sectionField]?.sectionStatus !== 'Queried'
 }
 
 export function hasValidSession(yar) {
@@ -120,6 +177,13 @@ export const accreditationSessionGuard = {
           TERMINAL_STATUSES.has(application?.applicationStatus)
         ) {
           return h.redirect(landingUrl(application)).takeover()
+        }
+
+        if (
+          isEditRestrictedPath(request.path) &&
+          isLockedSectionWrite(request, application)
+        ) {
+          return h.redirect(request.path).takeover()
         }
 
         if (application) {

@@ -379,6 +379,27 @@ describe('#uploadEvidenceListController', () => {
       )
     })
 
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect) when application is locked (%s) and BES evidence section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+      }
+    )
+
     test('renders read-only, without upload links, when application is Queried and BES evidence section is Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -488,6 +509,29 @@ describe('#uploadEvidenceListController', () => {
   })
 
   describe('POST /accreditation/upload-evidence-for-overseas-site/{applicationId}', () => {
+    test('redirects to query-task-list when application is Queried and BES evidence section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {}
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('redirects to query-task-list when application is Queried and BES evidence section is not, without patching', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -510,6 +554,32 @@ describe('#uploadEvidenceListController', () => {
       )
       expect(patchSpy).not.toHaveBeenCalled()
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page when application is locked (%s) and BES evidence section is not Queried, without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: {}
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
 
     test('returns 500 when GET application fails on POST', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
@@ -615,6 +685,52 @@ describe('#uploadEvidenceListController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="try-again-link"')
+    })
+
+    test('redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
+      const allComplete = makeApplication({
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [SITE_WITH_EVIDENCE]
+        }
+      })
+      vi.spyOn(apiClient, 'get').mockResolvedValue(allComplete)
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {}
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
+      )
+    })
+
+    test('returns 400 with inline save error when PATCH fails with a non-server, non-conflict status', async () => {
+      const allComplete = makeApplication({
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [SITE_WITH_EVIDENCE]
+        }
+      })
+      vi.spyOn(apiClient, 'get').mockResolvedValue(allComplete)
+      const err = Object.assign(new Error('bad request'), { status: 422 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {}
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
     })
   })
 })

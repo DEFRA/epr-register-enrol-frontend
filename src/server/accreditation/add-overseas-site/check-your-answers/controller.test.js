@@ -172,6 +172,26 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="row-basel-codes"')
       expect(result).toContain('None entered')
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects to select-overseas-sites when the application is locked (%s) and overseasSites is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
+          ...makeApplication([]),
+          applicationStatus,
+          overseasSites: { sectionStatus: 'Completed', sites: [] }
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: BASE_URL,
+          headers: { ...operatorHeaders, cookie }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(SELECT_ORS_URL)
+      }
+    )
   })
 
   describe(`POST ${BASE_URL}`, () => {
@@ -198,6 +218,38 @@ describe('#addOrsCyaController', () => {
       expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects to select-overseas-sites without creating the site when the application is locked (%s)',
+      async (applicationStatus) => {
+        vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
+          ...makeApplication([{ siteId: 1, orsId: '001' }]),
+          applicationStatus,
+          overseasSites: {
+            sectionStatus: 'Completed',
+            sites: [{ siteId: 1, orsId: '001' }]
+          }
+        })
+        const createSpy = vi
+          .spyOn(accreditationApiService, 'createOverseasSite')
+          .mockResolvedValue({ siteId: 2 })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: BASE_URL,
+          headers: {
+            ...operatorHeaders,
+            'content-type': 'application/x-www-form-urlencoded',
+            Cookie: cookie
+          },
+          payload: ''
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(SELECT_ORS_URL)
+        expect(createSpy).not.toHaveBeenCalled()
+      }
+    )
+
     test('renders error when API call fails', async () => {
       vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
         makeApplication([])
@@ -219,6 +271,50 @@ describe('#addOrsCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('renders error when the application fetch itself fails', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockRejectedValue(
+        new Error('network error')
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('redirects to select-overseas-sites (not a raw error) when createOverseasSite fails with a 409', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockRejectedValue(
+        err
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
     test('maps entered codes onto code1/code2/code3 for the backend, filling gaps with null', async () => {

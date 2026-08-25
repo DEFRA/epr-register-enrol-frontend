@@ -102,6 +102,26 @@ describe('#tonnageCyaController', () => {
   }
 
   describe('GET /accreditation/tonnage-cya/{applicationId}', () => {
+    test('redirects to query-task-list when application is Queried and PRNs section has not been started', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { ...makeApplication().prns, sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
     test('returns 200 with page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -231,9 +251,56 @@ describe('#tonnageCyaController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect), without Change links, when application is locked (%s)',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            prns: { ...makeApplication().prns, sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+        expect(result).not.toContain('data-testid="change-tonnage-link"')
+        expect(result).not.toContain('data-testid="change-authority-link"')
+        expect(result).not.toContain('data-testid="confirm-button"')
+      }
+    )
   })
 
   describe('POST /accreditation/tonnage-cya/{applicationId} - confirm', () => {
+    test('redirects to query-task-list when application is Queried and PRNs section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: { ...makeApplication().prns, sectionStatus: 'NotStarted' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('PATCHes application and redirects to task list on confirm', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
@@ -305,6 +372,50 @@ describe('#tonnageCyaController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
       expect(result).toContain('PERNs you plan to issue')
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page when application is locked (%s), without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            prns: { ...makeApplication().prns, sectionStatus: 'Completed' }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: { submitAction: 'confirm' }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/tonnage-cya/${APPLICATION_ID}`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
+
+    test('redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/tonnage-cya/${APPLICATION_ID}`
+      )
     })
   })
 

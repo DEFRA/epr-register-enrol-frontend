@@ -40,10 +40,17 @@
 
       {% if readOnly %}
         <div class="govuk-inset-text" data-testid="read-only-notice">
-          <p class="govuk-body">
-            <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
-            {{ t('common.readOnlySection.body') }}
-          </p>
+          {% if isQueriedApplication %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+              {{ t('common.readOnlySection.body') }}
+            </p>
+          {% else %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySubmittedSection.heading') }}</strong><br>
+              {{ t('common.readOnlySubmittedSection.body') }}
+            </p>
+          {% endif %}
         </div>
       {% endif %}
 

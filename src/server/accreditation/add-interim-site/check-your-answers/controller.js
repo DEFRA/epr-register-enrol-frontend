@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddInterimSiteSession,
   clearAddInterimSiteSession
@@ -127,9 +128,23 @@ function buildSitePayload(session) {
 }
 
 export const addInterimSiteCyaGetController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddInterimSiteSession(request)
     return renderPage(h, buildViewData(t, applicationId, session, null))
   }
@@ -142,6 +157,17 @@ export const addInterimSiteCyaPostController = {
     const organisationId = request.yar.get(
       ACCREDITATION_SESSION_KEYS.organisationId
     )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddInterimSiteSession(request)
     const sitePayload = buildSitePayload(session)
 
@@ -156,6 +182,12 @@ export const addInterimSiteCyaPostController = {
       request.server.logger.error(
         `Interim site CYA createInterimSite error: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to the
+      // section's own (now read-only) list page rather than a raw error.
+      if (err.status === 409) {
+        return h.redirect(selectOverseasSitesUrl(applicationId))
+      }
       return renderPage(
         h,
         buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))

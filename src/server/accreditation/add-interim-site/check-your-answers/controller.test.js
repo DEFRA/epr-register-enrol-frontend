@@ -116,6 +116,30 @@ describe('#addInterimSiteCyaController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] Check your answers')
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects to select-overseas-sites when the application is locked (%s) and overseasSites is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(
+          accreditationApiService,
+          'getApplication'
+        ).mockResolvedValueOnce({
+          applicationId: APPLICATION_ID,
+          organisationId: 'org-001',
+          applicationStatus,
+          overseasSites: { sectionStatus: 'Completed', sites: [] }
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: BASE_URL,
+          headers: { ...operatorHeaders, cookie }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(SELECT_ORS_URL)
+      }
+    )
   })
 
   describe(`POST ${BASE_URL}`, () => {
@@ -140,6 +164,60 @@ describe('#addInterimSiteCyaController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(SELECT_ORS_URL)
       expect(accreditationApiService.createInterimSite).toHaveBeenCalled()
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects to select-overseas-sites without creating the site when the application is locked (%s)',
+      async (applicationStatus) => {
+        vi.spyOn(
+          accreditationApiService,
+          'getApplication'
+        ).mockResolvedValueOnce({
+          applicationId: APPLICATION_ID,
+          organisationId: 'org-001',
+          applicationStatus,
+          overseasSites: { sectionStatus: 'Completed', sites: [] }
+        })
+        const createSpy = vi
+          .spyOn(accreditationApiService, 'createInterimSite')
+          .mockResolvedValue({ siteId: 2 })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: BASE_URL,
+          headers: {
+            ...operatorHeaders,
+            'content-type': 'application/x-www-form-urlencoded',
+            Cookie: cookie
+          },
+          payload: ''
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(SELECT_ORS_URL)
+        expect(createSpy).not.toHaveBeenCalled()
+      }
+    )
+
+    test('redirects to select-overseas-sites (not a raw error) when createInterimSite fails with a 409', async () => {
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockRejectedValue(
+        err
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
     test('renders error when API call fails', async () => {

@@ -101,15 +101,22 @@ export const tonnageGetController = {
         application.prns?.plannedTonnageBand ?? null,
         t
       ),
-      backLink: readOnly
-        ? queryTaskListUrl(applicationId)
-        : taskListUrl(applicationId),
+      // RA-481: only route back to the query task list while the
+      // application itself is mid-query — a locked-but-not-queried
+      // application (e.g. Submitted) is read-only for a different reason
+      // and belongs back on the ordinary task list, which renders read-only
+      // in that case too.
+      backLink:
+        application.applicationStatus === 'Queried'
+          ? queryTaskListUrl(applicationId)
+          : taskListUrl(applicationId),
       isExporter,
       queryNote,
       querySummary: queryNote
         ? buildRegulatorQuerySummary(sectionKey, t)
         : null,
-      readOnly
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
 }
@@ -147,11 +154,25 @@ export const tonnagePostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.prns?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.prns?.sectionStatus
+      )
+      if (blocked) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      // RA-481: readOnly while the application is Queried means this
+      // particular section isn't the queried one — preserve the existing
+      // query-flow redirect target. readOnly for any other reason (a locked
+      // status like Submitted) sends the operator back to this same page,
+      // which now renders read-only.
+      if (readOnly && application.applicationStatus === 'Queried') {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
     }
 
     const isExporter = application.isExporter ?? false
@@ -189,6 +210,12 @@ export const tonnagePostController = {
       request.server.logger.error(
         `Error saving tonnage for ${applicationId}: ${error.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to the
+      // section's own page so it re-fetches and renders read-only.
+      if (error.status === 409) {
+        return h.redirect(request.path)
+      }
       if (!error.status || error.status >= 500) {
         return h
           .view('errors/service-problem', {

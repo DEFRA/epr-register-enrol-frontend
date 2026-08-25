@@ -158,9 +158,14 @@ export const samplingPlanUploadGetController = {
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
       heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
-      backLink: readOnly
-        ? queryTaskListUrl(applicationId)
-        : taskListUrl(applicationId),
+      // RA-481: only route back to the query task list while the
+      // application itself is mid-query — a locked-but-not-queried
+      // application is read-only for a different reason and belongs back on
+      // the ordinary task list, which renders read-only in that case too.
+      backLink:
+        application.applicationStatus === 'Queried'
+          ? queryTaskListUrl(applicationId)
+          : taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files,
       viewableFilesCount,
@@ -178,7 +183,8 @@ export const samplingPlanUploadGetController = {
             }
           ]
         : null,
-      readOnly
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
 }
@@ -209,11 +215,25 @@ export const samplingPlanUploadPostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.samplingPlan?.sectionStatus
+      )
+      if (blocked) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      // RA-481: readOnly while the application is Queried means this
+      // particular section isn't the queried one — preserve the existing
+      // query-flow redirect target. readOnly for any other reason (a locked
+      // status like Submitted) sends the operator back to this same page,
+      // which now renders read-only.
+      if (readOnly && application.applicationStatus === 'Queried') {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
@@ -383,7 +403,8 @@ export const samplingPlanResultsGetController = {
       error: uploadFailed
         ? t('pages.samplingPlanUpload.validation.uploadError')
         : null,
-      readOnly
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
 }
@@ -418,11 +439,25 @@ export const samplingPlanResultsPostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    {
+      const { blocked, readOnly } = resolveQueriedSectionAccess(
+        application,
+        application.samplingPlan?.sectionStatus
+      )
+      if (blocked) {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      // RA-481: readOnly while the application is Queried means this
+      // particular section isn't the queried one — preserve the existing
+      // query-flow redirect target. readOnly for any other reason (a locked
+      // status like Submitted) sends the operator back to this same page,
+      // which now renders read-only.
+      if (readOnly && application.applicationStatus === 'Queried') {
+        return h.redirect(queryTaskListUrl(applicationId))
+      }
+      if (readOnly) {
+        return h.redirect(request.path)
+      }
     }
 
     const rawFiles = application.samplingPlan?.files ?? []

@@ -8,6 +8,22 @@ export const WITHDRAWN_STATUS = 'Withdrawn'
 // on the frontend so navigation/UI defends the same boundary, not just the API.
 export const TERMINAL_STATUSES = new Set(['Withdrawn', 'Approved', 'Rejected'])
 
+// RA-481: once an application has been submitted (and is awaiting/undergoing
+// regulator review) every section becomes read-only, UNLESS that specific
+// section currently has sectionStatus 'Queried' — mirrors the backend's
+// IsSectionEditable rule so the frontend never renders/accepts an edit the
+// API would reject anyway. Distinct from TERMINAL_STATUSES: a locked
+// application is still "live" (can still receive a regulator decision or a
+// query response), it just isn't operator-editable outside a queried
+// section. See common/helpers/queriedSectionAccess.js for how the two
+// combine into a single access decision.
+export const LOCKED_STATUSES = new Set([
+  'Submitted',
+  'DulyMade',
+  'Updated',
+  'AwaitingDecision'
+])
+
 // An application can only be withdrawn before a final regulator decision —
 // shared with accreditation/withdraw-application so the withdraw route and the
 // landing page can never disagree about which statuses are withdrawable.

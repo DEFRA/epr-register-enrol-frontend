@@ -440,6 +440,27 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect) when application is locked (%s) and sampling plan section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            samplingPlan: { sectionStatus: 'Completed', files: [] }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+      }
+    )
+
     test('renders read-only, without the upload form, when application is Queried and sampling plan section is Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -622,6 +643,78 @@ describe('#samplingPlanUploadController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/sampling-plan/${APPLICATION_ID}/status`
+      )
+    })
+
+    test('redirects to query-task-list when application is Queried and sampling plan section has not been started, without uploading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'NotStarted', files: [] }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects to query-task-list when application is Queried and sampling plan section is Completed (not the queried one), without uploading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'Completed', files: [] }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects back to this page when application is locked (Submitted) and sampling plan section is not Queried, without uploading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          samplingPlan: { sectionStatus: 'Completed', files: [] }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'sampling-plan.png',
+          contentType: 'image/png'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}`
       )
     })
 
@@ -1480,6 +1573,29 @@ describe('#samplingPlanUploadController', () => {
   })
 
   describe('POST /accreditation/sampling-plan/{applicationId}/results — saveAndContinue', () => {
+    test('redirects to query-task-list when application is Queried and sampling plan section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          samplingPlan: { sectionStatus: 'NotStarted', files: [] }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
     test('redirects to query-task-list when application is Queried and sampling plan section is not, without patching', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -1502,6 +1618,32 @@ describe('#samplingPlanUploadController', () => {
       )
       expect(patchSpy).not.toHaveBeenCalled()
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to the results page when application is locked (%s) and sampling plan section is not Queried, without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            samplingPlan: { sectionStatus: 'Completed', files: [] }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+          headers: operatorHeaders,
+          payload: { action: 'saveAndContinue' }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/sampling-plan/${APPLICATION_ID}/results`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
 
     test('returns 400 with error when no files uploaded', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())

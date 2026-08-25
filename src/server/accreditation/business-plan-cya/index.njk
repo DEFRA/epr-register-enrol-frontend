@@ -17,17 +17,35 @@
 
       <h2 class="govuk-heading-m" data-testid="sub-heading">{{ subHeading }}</h2>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          {% if isQueriedApplication %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+              {{ t('common.readOnlySection.body') }}
+            </p>
+          {% else %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySubmittedSection.heading') }}</strong><br>
+              {{ t('common.readOnlySubmittedSection.body') }}
+            </p>
+          {% endif %}
+        </div>
+      {% endif %}
+
       <dl class="govuk-summary-list" data-testid="percent-summary-list">
 
         {% for row in percentRows %}
           <div class="govuk-summary-list__row" data-testid="percent-row-{{ row.id }}">
             <dt class="govuk-summary-list__key">{{ row.label }}</dt>
             <dd class="govuk-summary-list__value" data-testid="percent-value-{{ row.id }}">{{ row.value }}</dd>
-            <dd class="govuk-summary-list__actions">
-              <a class="govuk-link" href="{{ row.changeLink }}" data-testid="change-percent-{{ row.id }}">
-                {{ t('pages.businessPlanCya.change') }}<span class="govuk-visually-hidden"> {{ row.changeContext }}</span>
-              </a>
-            </dd>
+            {% if not readOnly %}
+              <dd class="govuk-summary-list__actions">
+                <a class="govuk-link" href="{{ row.changeLink }}" data-testid="change-percent-{{ row.id }}">
+                  {{ t('pages.businessPlanCya.change') }}<span class="govuk-visually-hidden"> {{ row.changeContext }}</span>
+                </a>
+              </dd>
+            {% endif %}
           </div>
         {% endfor %}
 
@@ -35,28 +53,32 @@
           <div class="govuk-summary-list__row" data-testid="detail-row-{{ row.id }}">
             <dt class="govuk-summary-list__key">{{ row.label }}</dt>
             <dd class="govuk-summary-list__value" data-testid="detail-value-{{ row.id }}">{{ row.value }}</dd>
-            <dd class="govuk-summary-list__actions">
-              <a class="govuk-link" href="{{ row.changeLink }}" data-testid="change-detail-{{ row.id }}">
-                {{ t('pages.businessPlanCya.change') }}<span class="govuk-visually-hidden"> {{ row.changeContext }}</span>
-              </a>
-            </dd>
+            {% if not readOnly %}
+              <dd class="govuk-summary-list__actions">
+                <a class="govuk-link" href="{{ row.changeLink }}" data-testid="change-detail-{{ row.id }}">
+                  {{ t('pages.businessPlanCya.change') }}<span class="govuk-visually-hidden"> {{ row.changeContext }}</span>
+                </a>
+              </dd>
+            {% endif %}
           </div>
         {% endfor %}
 
       </dl>
 
-      <form method="post" novalidate>
-        <input type="hidden" name="crumb" value="{{ crumb }}">
+      {% if not readOnly %}
+        <form method="post" novalidate>
+          <input type="hidden" name="crumb" value="{{ crumb }}">
 
-        <button type="submit" name="submitAction" value="confirm" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">
-          {{ t('pages.businessPlanCya.confirmAndContinue') }}
-        </button>
+          <button type="submit" name="submitAction" value="confirm" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">
+            {{ t('pages.businessPlanCya.confirmAndContinue') }}
+          </button>
 
-        <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.businessPlanCya.saveAndComeLater') }}
-        </button>
+          <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+            {{ t('pages.businessPlanCya.saveAndComeLater') }}
+          </button>
 
-      </form>
+        </form>
+      {% endif %}
 
     </div>
   </div>
