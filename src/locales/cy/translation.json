@@ -655,7 +655,8 @@
           "coordinatesRequired": "[Welsh] Enter the coordinates",
           "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.5034, -0.1275",
           "coordinatesLatRange": "[Welsh] Latitude must be between -90 and 90",
-          "coordinatesLngRange": "[Welsh] Longitude must be between -180 and 180"
+          "coordinatesLngRange": "[Welsh] Longitude must be between -180 and 180",
+          "coordinatesPrecision": "[Welsh] Enter the latitude and longitude to at least 4 decimal places, for example 51.5034, -0.1275"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"

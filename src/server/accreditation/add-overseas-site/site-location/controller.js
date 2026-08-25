@@ -9,6 +9,8 @@ const MIN_LATITUDE = -90
 const MAX_LATITUDE = 90
 const MIN_LONGITUDE = -180
 const MAX_LONGITUDE = 180
+const MIN_COORDINATE_DECIMAL_PLACES = 4
+const COORDINATE_NUMBER_PATTERN = /^-?\d+(\.\d+)?$/
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -40,6 +42,11 @@ function buildViewData(t, applicationId, fields, errors) {
   }
 }
 
+function decimalPlaces(value) {
+  const pointIndex = value.indexOf('.')
+  return pointIndex === -1 ? 0 : value.length - pointIndex - 1
+}
+
 function parseCoordinates(raw) {
   const trimmed = (raw ?? '').trim()
   const parts = trimmed.split(',')
@@ -47,17 +54,30 @@ function parseCoordinates(raw) {
     return { valid: false, error: 'invalid' }
   }
 
-  const lat = Number.parseFloat(parts[0].trim())
-  const lng = Number.parseFloat(parts[1].trim())
+  const latRaw = parts[0].trim()
+  const lngRaw = parts[1].trim()
 
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
+  if (
+    !COORDINATE_NUMBER_PATTERN.test(latRaw) ||
+    !COORDINATE_NUMBER_PATTERN.test(lngRaw)
+  ) {
     return { valid: false, error: 'invalid' }
   }
+
+  const lat = Number.parseFloat(latRaw)
+  const lng = Number.parseFloat(lngRaw)
+
   if (lat < MIN_LATITUDE || lat > MAX_LATITUDE) {
     return { valid: false, error: 'latRange' }
   }
   if (lng < MIN_LONGITUDE || lng > MAX_LONGITUDE) {
     return { valid: false, error: 'lngRange' }
+  }
+  if (
+    decimalPlaces(latRaw) < MIN_COORDINATE_DECIMAL_PLACES ||
+    decimalPlaces(lngRaw) < MIN_COORDINATE_DECIMAL_PLACES
+  ) {
+    return { valid: false, error: 'precision' }
   }
 
   return { valid: true, value: trimmed }
@@ -128,7 +148,9 @@ export const addOrsSiteLocationPostController = {
             ? 'coordinatesLatRange'
             : coordResult.error === 'lngRange'
               ? 'coordinatesLngRange'
-              : 'coordinatesInvalid'
+              : coordResult.error === 'precision'
+                ? 'coordinatesPrecision'
+                : 'coordinatesInvalid'
         errors.coordinates = t(
           `pages.addOverseasSite.siteLocation.validation.${key}`
         )
