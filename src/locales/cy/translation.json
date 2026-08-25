@@ -8,10 +8,6 @@
       "title": "Hafan",
       "heading": "Hafan"
     },
-    "about": {
-      "title": "Ynghylch",
-      "heading": "Ynghylch"
-    },
     "regulator": {
       "title": "Rheoleiddiwr",
       "heading": "Rheoleiddiwr",
@@ -487,17 +483,6 @@
       "changeLink": "[Welsh] Change",
       "confirmButton": "[Welsh] Confirm and continue"
     },
-    "operatorOrganisationDetails": {
-      "title": "[Welsh] Operator Organisation Details",
-      "heading": "[Welsh] Operator Organisation Details",
-      "description": "[Welsh] Organisation details of ",
-      "schemeRegistrationId": "[Welsh] Registration ID",
-      "companiesHouseNumber": "[Welsh] Companies house number",
-      "registeredAddress": "[Welsh] Registered address",
-      "companyName": "[Welsh] Company name",
-      "approvedPerson": "[Welsh] Approved person",
-      "directors": "[Welsh] Directors"
-    },
     "fileUpload": {
       "details": {
         "title": "[Welsh] File upload details",
@@ -929,7 +914,6 @@
   },
   "navigation": {
     "home": "Hafan",
-    "about": "Ynghylch",
     "regulator": "Rheoleiddiwr",
     "organisationList": "Sefydliadau"
   },

@@ -38,11 +38,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/50003/aaa000000000000000050003/Plastic/2027'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -57,11 +52,6 @@ describe('#buildNavigation', () => {
         current: true,
         text: 'Home',
         href
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -74,11 +64,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -95,11 +80,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -110,11 +90,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -129,11 +104,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -148,11 +118,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -170,11 +135,6 @@ describe('#buildNavigation', () => {
         current: true,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -185,11 +145,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })
@@ -207,11 +162,6 @@ describe('#buildNavigation', () => {
         current: false,
         text: 'Home',
         href: '/operator-accreditation/'
-      },
-      {
-        current: false,
-        text: 'About',
-        href: '/about'
       }
     ])
   })

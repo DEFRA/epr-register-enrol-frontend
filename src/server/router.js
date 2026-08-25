@@ -3,7 +3,6 @@ import inert from '@hapi/inert'
 import { config } from '../config/config.js'
 import { stubCompleteUpload } from './common/stub-api-client.js'
 import { home } from './home/index.js'
-import { about } from './about/index.js'
 import { contact } from './contact/index.js'
 import { cookies } from './cookies/index.js'
 import { health } from './health/index.js'
@@ -12,7 +11,6 @@ import { regulator } from './regulator/index.js'
 import { operator } from './operator/index.js'
 import { operatorAccreditation } from './operator-accreditation/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
-import { operatorOrganisationDetails } from './operator-organisation-details/index.js'
 import { taskList } from './accreditation/task-list/index.js'
 import { queryTaskList } from './accreditation/query-task-list/index.js'
 import { queryDeclaration } from './accreditation/query-declaration/index.js'
@@ -91,13 +89,11 @@ export const router = {
       // Application specific routes, add your own routes here
       await server.register([
         home,
-        about,
         contact,
         cookies,
         regulator,
         operator,
         operatorAccreditation,
-        operatorOrganisationDetails,
         taskList,
         queryTaskList,
         queryDeclaration,
