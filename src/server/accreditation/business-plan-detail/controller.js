@@ -2,7 +2,10 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 import {
   findBpItem,
   DETAIL_FIELD_TO_CATEGORY
@@ -168,6 +171,41 @@ export const businessPlanDetailGetController = {
   }
 }
 
+// Extracted from businessPlanDetailPostController (SonarCloud cyclomatic
+// complexity): the 409/5xx/other three-way error response was inlined in
+// the handler's catch block.
+function handleBusinessPlanDetailSaveError({
+  h,
+  request,
+  t,
+  err,
+  applicationId,
+  fieldPayload,
+  application
+}) {
+  request.server.logger.error(
+    `Error saving business plan detail for ${applicationId}: ${err.message}`
+  )
+  // RA-481: a 409 means the application locked between the guard check
+  // above and this write landing — send the operator back to this page
+  // so it re-fetches and renders read-only.
+  if (err.status === 409) {
+    return h.redirect(request.path)
+  }
+  if (!err.status || err.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderPage(h, {
+    ...buildViewData(t, applicationId, fieldPayload, {}, application),
+    error: t('pages.businessPlanDetail.validation.saveError')
+  }).code(400)
+}
+
 export const businessPlanDetailPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -195,18 +233,15 @@ export const businessPlanDetailPostController = {
     }
 
     if (application) {
-      const { blocked, readOnly } = resolveQueriedSectionAccess(
+      const guardRedirect = guardSectionWrite({
+        h,
         application,
-        application.businessPlan?.sectionStatus
-      )
-      if (
-        blocked ||
-        (readOnly && application.applicationStatus === 'Queried')
-      ) {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      if (readOnly) {
-        return h.redirect(request.path)
+        sectionStatus: application.businessPlan?.sectionStatus,
+        applicationId,
+        ownPageUrl: request.path
+      })
+      if (guardRedirect) {
+        return guardRedirect
       }
     }
 
@@ -234,27 +269,15 @@ export const businessPlanDetailPostController = {
         patchBody
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error saving business plan detail for ${applicationId}: ${err.message}`
-      )
-      // RA-481: a 409 means the application locked between the guard check
-      // above and this write landing — send the operator back to this page
-      // so it re-fetches and renders read-only.
-      if (err.status === 409) {
-        return h.redirect(request.path)
-      }
-      if (!err.status || err.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, {}, application),
-        error: t('pages.businessPlanDetail.validation.saveError')
-      }).code(400)
+      return handleBusinessPlanDetailSaveError({
+        h,
+        request,
+        t,
+        err,
+        applicationId,
+        fieldPayload,
+        application
+      })
     }
 
     if (isSaveAndComeLater) {

@@ -7,7 +7,10 @@ import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
@@ -121,6 +124,52 @@ export const tonnageGetController = {
   }
 }
 
+// Extracted from tonnagePostController (SonarCloud cognitive complexity):
+// the 409/5xx/other three-way error response was inlined in the handler's
+// catch block.
+function handleTonnageSaveError({
+  h,
+  request,
+  t,
+  error,
+  applicationId,
+  isExporter,
+  heading,
+  plannedTonnageBand
+}) {
+  request.server.logger.error(
+    `Error saving tonnage for ${applicationId}: ${error.message}`
+  )
+  // RA-481: a 409 means the application locked between the guard check
+  // above and this write landing — send the operator back to the
+  // section's own page so it re-fetches and renders read-only.
+  if (error.status === 409) {
+    return h.redirect(request.path)
+  }
+  if (!error.status || error.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderForm(h, {
+    pageTitle: isExporter
+      ? t('pages.tonnage.titleExporter')
+      : t('pages.tonnage.title'),
+    heading,
+    tonnageOptions: buildTonnageOptions(plannedTonnageBand, t),
+    backLink: taskListUrl(applicationId),
+    isExporter,
+    errors: {
+      plannedTonnageBand: {
+        text: t('pages.tonnage.validation.saveError')
+      }
+    }
+  }).code(400)
+}
+
 export const tonnagePostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -154,25 +203,15 @@ export const tonnagePostController = {
       }).code(500)
     }
 
-    {
-      const { blocked, readOnly } = resolveQueriedSectionAccess(
-        application,
-        application.prns?.sectionStatus
-      )
-      if (blocked) {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      // RA-481: readOnly while the application is Queried means this
-      // particular section isn't the queried one — preserve the existing
-      // query-flow redirect target. readOnly for any other reason (a locked
-      // status like Submitted) sends the operator back to this same page,
-      // which now renders read-only.
-      if (readOnly && application.applicationStatus === 'Queried') {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      if (readOnly) {
-        return h.redirect(request.path)
-      }
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.prns?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const isExporter = application.isExporter ?? false
@@ -207,37 +246,16 @@ export const tonnagePostController = {
         }
       )
     } catch (error) {
-      request.server.logger.error(
-        `Error saving tonnage for ${applicationId}: ${error.message}`
-      )
-      // RA-481: a 409 means the application locked between the guard check
-      // above and this write landing — send the operator back to the
-      // section's own page so it re-fetches and renders read-only.
-      if (error.status === 409) {
-        return h.redirect(request.path)
-      }
-      if (!error.status || error.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderForm(h, {
-        pageTitle: isExporter
-          ? t('pages.tonnage.titleExporter')
-          : t('pages.tonnage.title'),
-        heading,
-        tonnageOptions: buildTonnageOptions(plannedTonnageBand, t),
-        backLink: taskListUrl(applicationId),
+      return handleTonnageSaveError({
+        h,
+        request,
+        t,
+        error,
+        applicationId,
         isExporter,
-        errors: {
-          plannedTonnageBand: {
-            text: t('pages.tonnage.validation.saveError')
-          }
-        }
-      }).code(400)
+        heading,
+        plannedTonnageBand
+      })
     }
 
     if (submitAction === 'saveAndComeLater') {

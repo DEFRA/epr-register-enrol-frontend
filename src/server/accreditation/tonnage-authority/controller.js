@@ -6,7 +6,10 @@ import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
@@ -171,25 +174,15 @@ export const tonnageAuthorityPostController = {
       }).code(500)
     }
 
-    {
-      const { blocked, readOnly } = resolveQueriedSectionAccess(
-        application,
-        application.prns?.sectionStatus
-      )
-      if (blocked) {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      // RA-481: readOnly while the application is Queried means this
-      // particular section isn't the queried one — preserve the existing
-      // query-flow redirect target. readOnly for any other reason (a locked
-      // status like Submitted) sends the operator back to this same page,
-      // which now renders read-only.
-      if (readOnly && application.applicationStatus === 'Queried') {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      if (readOnly) {
-        return h.redirect(request.path)
-      }
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.prns?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     if (!application.prns?.plannedTonnageBand) {

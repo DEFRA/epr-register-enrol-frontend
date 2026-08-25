@@ -184,6 +184,23 @@ function buildSitePayload(orsId, session) {
   }
 }
 
+// Extracted from addOrsCyaPostController (SonarCloud cognitive complexity):
+// pulls the "delete one Basel/OECD code row" action fully out of the POST
+// handler's own branching, since it's a self-contained session mutation with
+// no dependency on the rest of the handler's flow.
+function handleDeleteBaselCode(request, h, session, action, applicationId) {
+  const codeIndex = Number.parseInt(
+    action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
+    10
+  )
+  const codes = [...(session.baselAndOecdCodes ?? [])]
+  if (!Number.isNaN(codeIndex) && codeIndex >= 0 && codeIndex < codes.length) {
+    codes.splice(codeIndex, 1)
+    setAddOrsSession(request, { baselAndOecdCodes: codes })
+  }
+  return h.redirect(cyaUrl(applicationId))
+}
+
 // Promoting a registered site keeps its existing orsId/siteId server-side, so the payload
 // omits them — matches the backend's PromoteOverseasSiteRequest shape (AddOverseasSiteRequest
 // minus orsId).
@@ -206,6 +223,26 @@ function buildPromotePayload(session) {
     repatriatedLoads: session.repatriatedLoads,
     conditionsOfExport: session.conditionsOfExport ?? null
   }
+}
+
+// Extracted from addOrsCyaPostController (SonarCloud cognitive complexity):
+// isolates the promote-vs-create branching so the handler's own try/catch
+// only has to decide how to report failure, not which API call to make.
+function submitOrsSite(organisationId, applicationId, session, application) {
+  if (session.promotingSiteId != null) {
+    return accreditationApiService.promoteOverseasSite(
+      organisationId,
+      applicationId,
+      session.promotingSiteId,
+      buildPromotePayload(session)
+    )
+  }
+  const orsId = nextOrsId(application.overseasSites?.sites)
+  return accreditationApiService.createOverseasSite(
+    organisationId,
+    applicationId,
+    buildSitePayload(orsId, session)
+  )
 }
 
 export const addOrsCyaGetController = {
@@ -252,20 +289,7 @@ export const addOrsCyaPostController = {
     const action = request.payload?.action ?? ''
 
     if (action.startsWith(DELETE_BASEL_CODE_ACTION_PREFIX)) {
-      const codeIndex = Number.parseInt(
-        action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
-        10
-      )
-      const codes = [...(session.baselAndOecdCodes ?? [])]
-      if (
-        !Number.isNaN(codeIndex) &&
-        codeIndex >= 0 &&
-        codeIndex < codes.length
-      ) {
-        codes.splice(codeIndex, 1)
-        setAddOrsSession(request, { baselAndOecdCodes: codes })
-      }
-      return h.redirect(cyaUrl(applicationId))
+      return handleDeleteBaselCode(request, h, session, action, applicationId)
     }
 
     const { t } = getLocaleAndTranslator(request)
@@ -294,21 +318,12 @@ export const addOrsCyaPostController = {
 
     let createdSite
     try {
-      if (isPromoting) {
-        createdSite = await accreditationApiService.promoteOverseasSite(
-          organisationId,
-          applicationId,
-          session.promotingSiteId,
-          buildPromotePayload(session)
-        )
-      } else {
-        const orsId = nextOrsId(application.overseasSites?.sites)
-        createdSite = await accreditationApiService.createOverseasSite(
-          organisationId,
-          applicationId,
-          buildSitePayload(orsId, session)
-        )
-      }
+      createdSite = await submitOrsSite(
+        organisationId,
+        applicationId,
+        session,
+        application
+      )
     } catch (err) {
       request.server.logger.error(
         `CYA ${isPromoting ? 'promoteOverseasSite' : 'createOverseasSite'} error: ${err.message}`

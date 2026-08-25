@@ -5,7 +5,10 @@ import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -63,6 +66,42 @@ export function isDateBlank(day, month, year) {
     !(month ?? '').toString().trim() &&
     !(year ?? '').toString().trim()
   )
+}
+
+// Extracted from uploadBesEvidencePostController (SonarCloud cognitive
+// complexity): the optional "valid to" date was parsed and validated in a
+// block nested inside an `if (!validToBlank)`, which is exactly the kind of
+// nesting cognitive complexity penalises hardest. Flattened into its own
+// function so the handler gets back a plain { validTo, error } result.
+function resolveBesEvidenceValidTo(payload, validFrom, t) {
+  const validToBlank = isDateBlank(
+    payload.validToDay,
+    payload.validToMonth,
+    payload.validToYear
+  )
+  if (validToBlank) {
+    return { validTo: null, error: null }
+  }
+
+  const validTo = parseDate(
+    payload.validToDay,
+    payload.validToMonth,
+    payload.validToYear
+  )
+  if (!validTo) {
+    return {
+      validTo: null,
+      error: t('pages.uploadBesEvidence.validation.invalidDate')
+    }
+  }
+  if (validTo <= validFrom) {
+    return {
+      validTo: null,
+      error: t('pages.uploadBesEvidence.validation.validToBeforeFrom')
+    }
+  }
+
+  return { validTo, error: null }
 }
 
 function taskListUrl(applicationId) {
@@ -196,20 +235,15 @@ export const uploadBesEvidencePostController = {
       ).code(500)
     }
 
-    {
-      const { blocked, readOnly } = resolveQueriedSectionAccess(
-        application,
-        application.besEvidence?.sectionStatus
-      )
-      if (
-        blocked ||
-        (readOnly && application.applicationStatus === 'Queried')
-      ) {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      if (readOnly) {
-        return h.redirect(request.path)
-      }
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.besEvidence?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const site = application.overseasSites?.sites?.find(
@@ -271,36 +305,18 @@ export const uploadBesEvidencePostController = {
       ).code(400)
     }
 
-    const validToBlank = isDateBlank(
-      payload.validToDay,
-      payload.validToMonth,
-      payload.validToYear
+    const { validTo, error: validToError } = resolveBesEvidenceValidTo(
+      payload,
+      validFrom,
+      t
     )
-    let validTo = null
-    if (!validToBlank) {
-      validTo = parseDate(
-        payload.validToDay,
-        payload.validToMonth,
-        payload.validToYear
-      )
-      if (!validTo) {
-        return renderPage(
-          h,
-          buildViewData(t, applicationId, siteId, siteName, payload, {
-            validToError: t('pages.uploadBesEvidence.validation.invalidDate')
-          })
-        ).code(400)
-      }
-      if (validTo <= validFrom) {
-        return renderPage(
-          h,
-          buildViewData(t, applicationId, siteId, siteName, payload, {
-            validToError: t(
-              'pages.uploadBesEvidence.validation.validToBeforeFrom'
-            )
-          })
-        ).code(400)
-      }
+    if (validToError) {
+      return renderPage(
+        h,
+        buildViewData(t, applicationId, siteId, siteName, payload, {
+          validToError
+        })
+      ).code(400)
     }
 
     const besEvidenceValidFromDate = validFrom.toISOString()

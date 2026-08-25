@@ -6,7 +6,10 @@ import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 import {
   resetAddOrsSession,
   setAddOrsSession
@@ -235,6 +238,99 @@ export const selectOverseasSitesPromoteEntryGetController = {
   }
 }
 
+// Extracted from selectOverseasSitesPostController (SonarCloud cognitive/
+// cyclomatic complexity): the removeAccredited/deleteNewSite action was one
+// of three independent branches inlined in the POST handler, each with its
+// own try/catch and 409 handling — pulling it out to its own function keeps
+// the handler itself to a flat dispatch over submitAction.
+async function removeOrDeleteSite({
+  h,
+  request,
+  t,
+  organisationId,
+  applicationId,
+  rawSites,
+  submitAction,
+  siteId
+}) {
+  const siteIdInt = Number.parseInt(siteId, 10)
+  const updatedSites =
+    submitAction === 'deleteNewSite'
+      ? rawSites.filter((s) => s.siteId !== siteIdInt)
+      : rawSites.map((s) =>
+          s.siteId === siteIdInt ? { ...s, selected: false } : s
+        )
+
+  try {
+    await accreditationApiService.patchOverseasSites(
+      organisationId,
+      applicationId,
+      { sites: updatedSites }
+    )
+  } catch (err) {
+    request.server.logger.error(
+      `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
+    )
+    // RA-481: a 409 means the application locked between the guard check
+    // above and this write landing — send the operator back to the
+    // section's own page so it re-fetches and renders read-only.
+    if (err.status === 409) {
+      return h.redirect(request.path)
+    }
+    return renderPage(
+      h,
+      buildViewData(
+        t,
+        applicationId,
+        partitionSites(rawSites),
+        t('pages.selectOverseasSites.validation.saveError')
+      )
+    ).code(500)
+  }
+  return h.redirect(selectOverseasSitesUrl(applicationId))
+}
+
+// Extracted from selectOverseasSitesPostController alongside
+// removeOrDeleteSite, for the same reason — the revertAccreditation action
+// was another independent try/catch branch inlined in the handler.
+async function revertSiteAccreditation({
+  h,
+  request,
+  t,
+  organisationId,
+  applicationId,
+  rawSites,
+  siteId
+}) {
+  try {
+    await accreditationApiService.revertOverseasSite(
+      organisationId,
+      applicationId,
+      Number.parseInt(siteId, 10)
+    )
+  } catch (err) {
+    request.server.logger.error(
+      `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
+    )
+    // RA-481: a 409 means the application locked between the guard check
+    // above and this write landing — send the operator back to the
+    // section's own page so it re-fetches and renders read-only.
+    if (err.status === 409) {
+      return h.redirect(request.path)
+    }
+    return renderPage(
+      h,
+      buildViewData(
+        t,
+        applicationId,
+        partitionSites(rawSites),
+        t('pages.selectOverseasSites.validation.saveError')
+      )
+    ).code(500)
+  }
+  return h.redirect(selectOverseasSitesUrl(applicationId))
+}
+
 export const selectOverseasSitesPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -265,25 +361,15 @@ export const selectOverseasSitesPostController = {
       ).code(500)
     }
 
-    {
-      const { blocked, readOnly } = resolveQueriedSectionAccess(
-        application,
-        application.overseasSites?.sectionStatus
-      )
-      if (blocked) {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      // RA-481: readOnly while the application is Queried means this
-      // particular section isn't the queried one — preserve the existing
-      // query-flow redirect target. readOnly for any other reason (a locked
-      // status like Submitted) sends the operator back to this same page,
-      // which now renders read-only.
-      if (readOnly && application.applicationStatus === 'Queried') {
-        return h.redirect(queryTaskListUrl(applicationId))
-      }
-      if (readOnly) {
-        return h.redirect(request.path)
-      }
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.overseasSites?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const rawSites = application.overseasSites?.sites ?? []
@@ -292,71 +378,28 @@ export const selectOverseasSitesPostController = {
       submitAction === 'removeAccredited' ||
       submitAction === 'deleteNewSite'
     ) {
-      const siteIdInt = Number.parseInt(siteId, 10)
-      const updatedSites =
-        submitAction === 'deleteNewSite'
-          ? rawSites.filter((s) => s.siteId !== siteIdInt)
-          : rawSites.map((s) =>
-              s.siteId === siteIdInt ? { ...s, selected: false } : s
-            )
-
-      try {
-        await accreditationApiService.patchOverseasSites(
-          organisationId,
-          applicationId,
-          { sites: updatedSites }
-        )
-      } catch (err) {
-        request.server.logger.error(
-          `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
-        )
-        // RA-481: a 409 means the application locked between the guard check
-        // above and this write landing — send the operator back to the
-        // section's own page so it re-fetches and renders read-only.
-        if (err.status === 409) {
-          return h.redirect(request.path)
-        }
-        return renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            partitionSites(rawSites),
-            t('pages.selectOverseasSites.validation.saveError')
-          )
-        ).code(500)
-      }
-      return h.redirect(selectOverseasSitesUrl(applicationId))
+      return removeOrDeleteSite({
+        h,
+        request,
+        t,
+        organisationId,
+        applicationId,
+        rawSites,
+        submitAction,
+        siteId
+      })
     }
 
     if (submitAction === 'revertAccreditation') {
-      try {
-        await accreditationApiService.revertOverseasSite(
-          organisationId,
-          applicationId,
-          Number.parseInt(siteId, 10)
-        )
-      } catch (err) {
-        request.server.logger.error(
-          `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
-        )
-        // RA-481: a 409 means the application locked between the guard check
-        // above and this write landing — send the operator back to the
-        // section's own page so it re-fetches and renders read-only.
-        if (err.status === 409) {
-          return h.redirect(request.path)
-        }
-        return renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            partitionSites(rawSites),
-            t('pages.selectOverseasSites.validation.saveError')
-          )
-        ).code(500)
-      }
-      return h.redirect(selectOverseasSitesUrl(applicationId))
+      return revertSiteAccreditation({
+        h,
+        request,
+        t,
+        organisationId,
+        applicationId,
+        rawSites,
+        siteId
+      })
     }
 
     const sections = partitionSites(rawSites)

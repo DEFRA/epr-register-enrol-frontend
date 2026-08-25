@@ -65,6 +65,51 @@ function parseCoordinates(raw) {
   return { valid: true, value: trimmed }
 }
 
+// Extracted from addOrsSiteLocationPostController (SonarCloud cognitive
+// complexity): the field-by-field + coordinate-parsing validation is a pure
+// function of the submitted fields, so it doesn't need to live inline in the
+// handler alongside the guard/redirect/session-save flow.
+function validateSiteLocationFields(fields, t) {
+  const errors = {}
+
+  if (!fields.addressLine1) {
+    errors.addressLine1 = t(
+      'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
+    )
+  }
+  if (!fields.townOrCity) {
+    errors.townOrCity = t(
+      'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
+    )
+  }
+  if (!fields.country) {
+    errors.country = t(
+      'pages.addOverseasSite.siteLocation.validation.countryRequired'
+    )
+  }
+
+  if (!fields.coordinates) {
+    errors.coordinates = t(
+      'pages.addOverseasSite.siteLocation.validation.coordinatesRequired'
+    )
+  } else {
+    const coordResult = parseCoordinates(fields.coordinates)
+    if (!coordResult.valid) {
+      const key =
+        coordResult.error === 'latRange'
+          ? 'coordinatesLatRange'
+          : coordResult.error === 'lngRange'
+            ? 'coordinatesLngRange'
+            : 'coordinatesInvalid'
+      errors.coordinates = t(
+        `pages.addOverseasSite.siteLocation.validation.${key}`
+      )
+    }
+  }
+
+  return errors
+}
+
 function extractFields(payload) {
   return {
     addressLine1: (payload?.addressLine1 ?? '').trim(),
@@ -128,42 +173,7 @@ export const addOrsSiteLocationPostController = {
     }
 
     const fields = extractFields(request.payload)
-    const errors = {}
-
-    if (!fields.addressLine1) {
-      errors.addressLine1 = t(
-        'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
-      )
-    }
-    if (!fields.townOrCity) {
-      errors.townOrCity = t(
-        'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
-      )
-    }
-    if (!fields.country) {
-      errors.country = t(
-        'pages.addOverseasSite.siteLocation.validation.countryRequired'
-      )
-    }
-
-    if (!fields.coordinates) {
-      errors.coordinates = t(
-        'pages.addOverseasSite.siteLocation.validation.coordinatesRequired'
-      )
-    } else {
-      const coordResult = parseCoordinates(fields.coordinates)
-      if (!coordResult.valid) {
-        const key =
-          coordResult.error === 'latRange'
-            ? 'coordinatesLatRange'
-            : coordResult.error === 'lngRange'
-              ? 'coordinatesLngRange'
-              : 'coordinatesInvalid'
-        errors.coordinates = t(
-          `pages.addOverseasSite.siteLocation.validation.${key}`
-        )
-      }
-    }
+    const errors = validateSiteLocationFields(fields, t)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(
