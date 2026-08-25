@@ -153,31 +153,11 @@ function buildViewData(t, applicationId, session, error) {
   }
 }
 
+// RA-482: shared by both createOverseasSite and promoteOverseasSite -- their payload shapes
+// converged once orsId (the one field that differed) moved to server-side generation.
+// Promoting a registered site keeps its existing orsId/siteId server-side either way, so
+// this payload never carries them for that path either.
 function buildSitePayload(session) {
-  const codes = session.baselAndOecdCodes ?? []
-  return {
-    siteName: session.siteName,
-    addressLine1: session.addressLine1,
-    addressLine2: session.addressLine2 ?? null,
-    townOrCity: session.townOrCity,
-    country: session.country,
-    coordinates: session.coordinates ?? null,
-    contactName: session.siteContactName,
-    contactEmail: session.siteContactEmail,
-    contactPhone: session.siteContactPhone ?? null,
-    operationCodes: session.recyclingOperationCodes ?? [],
-    code1: codes[0] ?? null,
-    code2: codes[1] ?? null,
-    code3: codes[2] ?? null,
-    repatriatedLoads: session.repatriatedLoads,
-    conditionsOfExport: session.conditionsOfExport ?? null
-  }
-}
-
-// Promoting a registered site keeps its existing orsId/siteId server-side, so the payload
-// omits them — matches the backend's PromoteOverseasSiteRequest shape, now identical to
-// AddOverseasSiteRequest's own shape since RA-482 moved orsId generation server-side too.
-function buildPromotePayload(session) {
   const codes = session.baselAndOecdCodes ?? []
   return {
     siteName: session.siteName,
@@ -251,7 +231,7 @@ export const addOrsCyaPostController = {
           organisationId,
           applicationId,
           session.promotingSiteId,
-          buildPromotePayload(session)
+          buildSitePayload(session)
         )
       } else {
         // RA-482: orsId is generated server-side now -- createdSite (read from the response
