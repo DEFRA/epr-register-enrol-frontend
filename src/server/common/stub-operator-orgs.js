@@ -49,6 +49,11 @@ export const STUB_OPERATOR_ORGS = [
     name: 'ORS Fee Test Exports Ltd'
   },
   {
+    reExOrgId: '50015',
+    defraOrgId: '50015',
+    name: 'Exporter Accreditation Test Exports Ltd'
+  },
+  {
     reExOrgId: '6a2fcd74e16883c137d01188',
     defraOrgId: '67b9e8fc-2235-431a-a7b9-80663c81b6ff',
     name: 'Bednar - Frami Limited xTklApuT'
