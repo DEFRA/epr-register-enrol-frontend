@@ -46,9 +46,12 @@ export const config = convict({
     env: 'STATIC_CACHE_TIMEOUT'
   },
   serviceName: {
+    // RA-487: matches the Re-Ex frontend's own service name verbatim — the
+    // top nav is meant to present as one continuous service regardless of
+    // which of the two apps a user is actually on.
     doc: 'Applications Service Name',
     format: String,
-    default: 'epr-register-enrol-frontend'
+    default: 'Record reprocessed or exported packaging waste'
   },
   root: {
     doc: 'Project root',
@@ -327,6 +330,16 @@ export const config = convict({
         format: String,
         default: '',
         env: 'DEFRA_ID_SERVICE_ID'
+      },
+      // RA-487: mirrors the Re-Ex frontend's own DEFRA_ID_MANAGE_ACCOUNT_URL —
+      // used for the top nav's "Manage account" link, the same Defra ID
+      // account-management page Re-Ex itself links to, so the two services
+      // present a single seamless identity.
+      manageAccountUrl: {
+        doc: 'Defra ID account-management URL, used for the top nav "Manage account" link.',
+        format: String,
+        default: '',
+        env: 'DEFRA_ID_MANAGE_ACCOUNT_URL'
       }
     },
     callbackBaseUrl: {

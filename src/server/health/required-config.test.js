@@ -10,6 +10,7 @@ function makeConfig(overrides = {}) {
     'api.stubEnabled': false,
     'api.sharedSecret': 'shared-secret',
     'reex.frontendBaseUrl': 'http://reex-frontend.test',
+    'auth.defraId.manageAccountUrl': 'http://manage-account.test',
     'auth.azureEntraId.tenantId': 'tenant-id',
     'auth.defraId.serviceId': 'service-id',
     'auth.callbackBaseUrl': 'https://app.test',
@@ -93,6 +94,39 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual(['REEX_FRONTEND_BASE_URL'])
   })
 
+  test('flags DEFRA_ID_MANAGE_ACCOUNT_URL when blank, non-local', () => {
+    expect(
+      getMissingRequiredConfig(
+        makeConfig({ 'auth.defraId.manageAccountUrl': '' })
+      )
+    ).toEqual(['DEFRA_ID_MANAGE_ACCOUNT_URL'])
+  })
+
+  // RA-487: unconditionally required like REEX_FRONTEND_BASE_URL above — stub
+  // auth's TEST_OPERATOR still has userType 'operator' and renders this nav
+  // item, and stub mode runs in deployed dev tiers too, not just local.
+  test('flags DEFRA_ID_MANAGE_ACCOUNT_URL when blank even with auth.stubEnabled true', () => {
+    expect(
+      getMissingRequiredConfig(
+        makeConfig({
+          'auth.defraId.manageAccountUrl': '',
+          'auth.stubEnabled': true
+        })
+      )
+    ).toEqual(['DEFRA_ID_MANAGE_ACCOUNT_URL'])
+  })
+
+  test('does not flag DEFRA_ID_MANAGE_ACCOUNT_URL in local', () => {
+    expect(
+      getMissingRequiredConfig(
+        makeConfig({
+          environment: 'local',
+          'auth.defraId.manageAccountUrl': ''
+        })
+      )
+    ).toEqual([])
+  })
+
   test('flags ENTRA_TENANT_ID when blank, real auth, non-local', () => {
     expect(
       getMissingRequiredConfig(makeConfig({ 'auth.azureEntraId.tenantId': '' }))
@@ -150,6 +184,7 @@ describe('#getMissingRequiredConfig', () => {
           'api.baseUrl': '',
           'api.sharedSecret': '',
           'reex.frontendBaseUrl': '',
+          'auth.defraId.manageAccountUrl': '',
           'auth.azureEntraId.tenantId': '',
           'auth.defraId.serviceId': '',
           'auth.callbackBaseUrl': 'http://localhost:3000'
@@ -159,6 +194,7 @@ describe('#getMissingRequiredConfig', () => {
       'API_BASE_URL',
       'AUTH_SHARED_SECRET__BACKEND',
       'REEX_FRONTEND_BASE_URL',
+      'DEFRA_ID_MANAGE_ACCOUNT_URL',
       'ENTRA_TENANT_ID',
       'DEFRA_ID_SERVICE_ID',
       'AUTH_CALLBACK_BASE_URL'

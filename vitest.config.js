@@ -7,11 +7,13 @@ export default defineConfig({
     env: {
       BASIC_USER: 'test-user',
       BASIC_PASSWD: 'test-pass',
-      // RA-459: REEX_FRONTEND_BASE_URL is unconditionally required
-      // (required-config.js) now that it's the fallback destination for
-      // operatorHomeUrl() — set here so the default/no-overrides test
-      // suite state matches what .env.example now documents as required.
-      REEX_FRONTEND_BASE_URL: 'https://epr-frontend.dev.cdp-int.defra.cloud'
+      // RA-459/RA-487: REEX_FRONTEND_BASE_URL and DEFRA_ID_MANAGE_ACCOUNT_URL
+      // are both unconditionally required (required-config.js) and never
+      // blank in any real environment, so tests shouldn't exercise the
+      // (nonsensical) blank-default case either. Placeholders, not real
+      // URLs — nothing here should ever call out to them.
+      REEX_FRONTEND_BASE_URL: 'https://reex.example.test',
+      DEFRA_ID_MANAGE_ACCOUNT_URL: 'https://manage-account.example.test'
     },
     clearMocks: true,
     hookTimeout: 30000,
