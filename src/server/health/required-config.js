@@ -43,10 +43,14 @@ export function getMissingRequiredConfig(cfg) {
     missing.push('REEX_FRONTEND_BASE_URL')
   }
 
-  // RA-487: the operator top nav's "Manage account" link. Same real-auth-outside-
-  // local condition as REEX_FRONTEND_BASE_URL above — both are only rendered once
-  // an operator session exists, which requires real (non-stub) auth outside local dev.
-  if (!stubEnabled && !isLocal && !cfg.get('auth.defraId.manageAccountUrl')) {
+  // RA-487: the operator top nav's "Manage account" link. Unconditional like
+  // REEX_FRONTEND_BASE_URL above, not stub-exempt — stub auth's TEST_OPERATOR
+  // still has userType 'operator' and renders this nav item, and stub mode
+  // runs in deployed dev tiers too, not just local. A blank value here
+  // doesn't produce a broken href though: govuk-frontend's service-navigation
+  // template falls back to rendering the item as plain unlinked text rather
+  // than an anchor when href is empty, so this degrades rather than breaks.
+  if (!isLocal && !cfg.get('auth.defraId.manageAccountUrl')) {
     missing.push('DEFRA_ID_MANAGE_ACCOUNT_URL')
   }
 

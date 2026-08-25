@@ -94,7 +94,7 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual(['REEX_FRONTEND_BASE_URL'])
   })
 
-  test('flags DEFRA_ID_MANAGE_ACCOUNT_URL when blank, real auth, non-local', () => {
+  test('flags DEFRA_ID_MANAGE_ACCOUNT_URL when blank, non-local', () => {
     expect(
       getMissingRequiredConfig(
         makeConfig({ 'auth.defraId.manageAccountUrl': '' })
@@ -102,7 +102,10 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual(['DEFRA_ID_MANAGE_ACCOUNT_URL'])
   })
 
-  test('does not flag DEFRA_ID_MANAGE_ACCOUNT_URL when auth.stubEnabled is true', () => {
+  // RA-487: unconditionally required like REEX_FRONTEND_BASE_URL above — stub
+  // auth's TEST_OPERATOR still has userType 'operator' and renders this nav
+  // item, and stub mode runs in deployed dev tiers too, not just local.
+  test('flags DEFRA_ID_MANAGE_ACCOUNT_URL when blank even with auth.stubEnabled true', () => {
     expect(
       getMissingRequiredConfig(
         makeConfig({
@@ -110,7 +113,7 @@ describe('#getMissingRequiredConfig', () => {
           'auth.stubEnabled': true
         })
       )
-    ).toEqual([])
+    ).toEqual(['DEFRA_ID_MANAGE_ACCOUNT_URL'])
   })
 
   test('does not flag DEFRA_ID_MANAGE_ACCOUNT_URL in local', () => {
