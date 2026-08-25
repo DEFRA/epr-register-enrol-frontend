@@ -153,40 +153,11 @@ function buildViewData(t, applicationId, session, error) {
   }
 }
 
-function nextOrsId(sites) {
-  const existingNums = (sites ?? [])
-    .map((s) => Number.parseInt(s.orsId ?? '0', 10))
-    .filter((n) => !Number.isNaN(n))
-  const max = existingNums.length > 0 ? Math.max(...existingNums) : 0
-  return String(max + 1).padStart(3, '0')
-}
-
-function buildSitePayload(orsId, session) {
-  const codes = session.baselAndOecdCodes ?? []
-  return {
-    orsId,
-    siteName: session.siteName,
-    addressLine1: session.addressLine1,
-    addressLine2: session.addressLine2 ?? null,
-    townOrCity: session.townOrCity,
-    country: session.country,
-    coordinates: session.coordinates ?? null,
-    contactName: session.siteContactName,
-    contactEmail: session.siteContactEmail,
-    contactPhone: session.siteContactPhone ?? null,
-    operationCodes: session.recyclingOperationCodes ?? [],
-    code1: codes[0] ?? null,
-    code2: codes[1] ?? null,
-    code3: codes[2] ?? null,
-    repatriatedLoads: session.repatriatedLoads,
-    conditionsOfExport: session.conditionsOfExport ?? null
-  }
-}
-
-// Promoting a registered site keeps its existing orsId/siteId server-side, so the payload
-// omits them — matches the backend's PromoteOverseasSiteRequest shape (AddOverseasSiteRequest
-// minus orsId).
-function buildPromotePayload(session) {
+// RA-482: shared by both createOverseasSite and promoteOverseasSite -- their payload shapes
+// converged once orsId (the one field that differed) moved to server-side generation.
+// Promoting a registered site keeps its existing orsId/siteId server-side either way, so
+// this payload never carries them for that path either.
+function buildSitePayload(session) {
   const codes = session.baselAndOecdCodes ?? []
   return {
     siteName: session.siteName,
@@ -251,20 +222,6 @@ export const addOrsCyaPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(`CYA getApplication error: ${err.message}`)
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))
-      ).code(500)
-    }
-
     const isPromoting = session.promotingSiteId != null
 
     let createdSite
@@ -274,14 +231,15 @@ export const addOrsCyaPostController = {
           organisationId,
           applicationId,
           session.promotingSiteId,
-          buildPromotePayload(session)
+          buildSitePayload(session)
         )
       } else {
-        const orsId = nextOrsId(application.overseasSites?.sites)
+        // RA-482: orsId is generated server-side now -- createdSite (read from the response
+        // below) carries the id the server assigned, so there is nothing to compute here.
         createdSite = await accreditationApiService.createOverseasSite(
           organisationId,
           applicationId,
-          buildSitePayload(orsId, session)
+          buildSitePayload(session)
         )
       }
     } catch (err) {
