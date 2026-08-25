@@ -50,14 +50,8 @@ describe('context and cache', () => {
           currentLocale: 'en',
           currentPath: '/',
           getAssetPath: expect.any(Function),
-          navigation: [
-            {
-              current: false,
-              text: 'Home',
-              href: '/operator-accreditation/'
-            }
-          ],
-          serviceName: 'epr-register-enrol-frontend',
+          navigation: [],
+          serviceName: 'Record reprocessed or exported packaging waste',
           serviceUrl: '/',
           t: expect.any(Function),
           user: null,
@@ -165,14 +159,8 @@ describe('context and cache', () => {
           currentLocale: 'en',
           currentPath: '/',
           getAssetPath: expect.any(Function),
-          navigation: [
-            {
-              current: false,
-              text: 'Home',
-              href: '/operator-accreditation/'
-            }
-          ],
-          serviceName: 'epr-register-enrol-frontend',
+          navigation: [],
+          serviceName: 'Record reprocessed or exported packaging waste',
           serviceUrl: '/',
           t: expect.any(Function),
           user: null,

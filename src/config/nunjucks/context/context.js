@@ -38,7 +38,7 @@ export function context(request) {
     serviceName: config.get('serviceName'),
     serviceUrl: '/',
     breadcrumbs: [],
-    navigation: buildNavigation(request),
+    navigation: buildNavigation(request, t),
     getAssetPath(asset) {
       const webpackAssetPath = webpackManifest?.[asset]
       return `${assetPath}/${webpackAssetPath ?? asset}`
