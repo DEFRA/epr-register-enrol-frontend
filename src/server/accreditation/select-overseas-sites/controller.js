@@ -113,18 +113,20 @@ function renderSaveError(h, t, applicationId, rawSites) {
 
 // The three mutating POST actions below are split out of
 // selectOverseasSitesPostController.handler to keep its cyclomatic
-// complexity/line count under SonarCloud's per-function thresholds.
+// complexity/line count under SonarCloud's per-function thresholds. Each
+// takes the request-scoped { h, t, logger } bundled as one `ctx` object
+// rather than three separate parameters, to stay under the max-params limit
+// too.
 
 async function removeOrDeleteSite(
-  h,
-  t,
-  logger,
+  ctx,
   organisationId,
   applicationId,
   rawSites,
   submitAction,
   siteId
 ) {
+  const { h, t, logger } = ctx
   const siteIdInt = Number.parseInt(siteId, 10)
   const updatedSites =
     submitAction === 'deleteNewSite'
@@ -149,13 +151,12 @@ async function removeOrDeleteSite(
 }
 
 async function saveOverseasSitesForLater(
-  h,
-  t,
-  logger,
+  ctx,
   organisationId,
   applicationId,
   rawSites
 ) {
+  const { h, t, logger } = ctx
   try {
     await accreditationApiService.patchOverseasSites(
       organisationId,
@@ -172,14 +173,13 @@ async function saveOverseasSitesForLater(
 }
 
 async function revertSiteAccreditation(
-  h,
-  t,
-  logger,
+  ctx,
   organisationId,
   applicationId,
   rawSites,
   siteId
 ) {
+  const { h, t, logger } = ctx
   try {
     await accreditationApiService.revertOverseasSite(
       organisationId,
@@ -366,14 +366,14 @@ export const selectOverseasSitesPostController = {
 
     const rawSites = application.overseasSites?.sites ?? []
 
+    const ctx = { h, t, logger: request.server.logger }
+
     if (
       submitAction === 'removeAccredited' ||
       submitAction === 'deleteNewSite'
     ) {
       return removeOrDeleteSite(
-        h,
-        t,
-        request.server.logger,
+        ctx,
         organisationId,
         applicationId,
         rawSites,
@@ -384,9 +384,7 @@ export const selectOverseasSitesPostController = {
 
     if (submitAction === 'saveAndComeLater') {
       return saveOverseasSitesForLater(
-        h,
-        t,
-        request.server.logger,
+        ctx,
         organisationId,
         applicationId,
         rawSites
@@ -395,9 +393,7 @@ export const selectOverseasSitesPostController = {
 
     if (submitAction === 'revertAccreditation') {
       return revertSiteAccreditation(
-        h,
-        t,
-        request.server.logger,
+        ctx,
         organisationId,
         applicationId,
         rawSites,
