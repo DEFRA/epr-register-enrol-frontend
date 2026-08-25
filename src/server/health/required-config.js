@@ -33,10 +33,25 @@ export function getMissingRequiredConfig(cfg) {
     missing.push('AUTH_SHARED_SECRET__BACKEND')
   }
 
-  // Only load-bearing once real (non-stub) auth is active outside local dev —
-  // mirrors the condition reExBackLinkUrl itself uses (operator-accreditation/controller.js).
-  if (!stubEnabled && !isLocal && !cfg.get('reex.frontendBaseUrl')) {
+  // RA-459: unconditionally load-bearing regardless of stub/local — it's now
+  // the fallback destination for the accreditation session-expiry redirect
+  // and the task list's save-and-come-back-later link (operatorHomeUrl(),
+  // test-pages-access.js) any time /operator can't be trusted as reachable,
+  // not just when real (non-stub) auth is active. A blank value here
+  // produces a blank Location header / href rather than a visible error.
+  if (!cfg.get('reex.frontendBaseUrl')) {
     missing.push('REEX_FRONTEND_BASE_URL')
+  }
+
+  // RA-487: the operator top nav's "Manage account" link. Unconditional like
+  // REEX_FRONTEND_BASE_URL above, not stub-exempt — stub auth's TEST_OPERATOR
+  // still has userType 'operator' and renders this nav item, and stub mode
+  // runs in deployed dev tiers too, not just local. A blank value here
+  // doesn't produce a broken href though: govuk-frontend's service-navigation
+  // template falls back to rendering the item as plain unlinked text rather
+  // than an anchor when href is empty, so this degrades rather than breaks.
+  if (!isLocal && !cfg.get('auth.defraId.manageAccountUrl')) {
+    missing.push('DEFRA_ID_MANAGE_ACCOUNT_URL')
   }
 
   // Same real-auth-outside-local condition as the existing ENTRA_CLIENT_ID/

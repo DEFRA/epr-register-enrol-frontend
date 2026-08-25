@@ -6,7 +6,14 @@ export default defineConfig({
     environment: 'node',
     env: {
       BASIC_USER: 'test-user',
-      BASIC_PASSWD: 'test-pass'
+      BASIC_PASSWD: 'test-pass',
+      // RA-459/RA-487: REEX_FRONTEND_BASE_URL and DEFRA_ID_MANAGE_ACCOUNT_URL
+      // are both unconditionally required (required-config.js) and never
+      // blank in any real environment, so tests shouldn't exercise the
+      // (nonsensical) blank-default case either. Placeholders, not real
+      // URLs — nothing here should ever call out to them.
+      REEX_FRONTEND_BASE_URL: 'https://reex.example.test',
+      DEFRA_ID_MANAGE_ACCOUNT_URL: 'https://manage-account.example.test'
     },
     clearMocks: true,
     hookTimeout: 30000,

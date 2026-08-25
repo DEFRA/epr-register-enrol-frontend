@@ -1,68 +1,61 @@
-import { ACCREDITATION_SESSION_KEYS } from '../../../server/common/constants/accreditationSessionKeys.js'
-import {
-  landingUrl,
-  FALLBACK_HOME_HREF
-} from '../../../server/common/helpers/accreditationUrls.js'
+import { config } from '../../config.js'
 
-// Pages with no application context to deep-link to: the stub login chooser
-// (no user yet), the WIP operator testing page, and the bare
-// operator-accreditation path with no application selected.
-function isPreContextPath(path) {
-  return (
-    path === '/operator' ||
-    path === '/operator-accreditation' ||
-    path === '/operator-accreditation/' ||
-    (typeof path === 'string' && path.startsWith('/auth/stub'))
-  )
-}
+// RA-487: the top nav is meant to match Re-Ex's own — Home and Manage
+// account both leave this app entirely and land back on Re-Ex (this app has
+// no equivalent pages of its own to deep-link to), and Sign out ends the
+// session here. All three render as one flat, left-aligned list, same as
+// Re-Ex's own service navigation.
 
-// request.yar is only initialized during hapi's onPreAuth phase, which is
-// skipped entirely for a request that never matched a route (404s go
-// straight from onRequest to onPreResponse) — so yar.get() throws rather
-// than returning undefined on those error-page renders. Read defensively.
-function readAccreditationSession(yar) {
-  try {
-    return {
-      organisationId: yar?.get(ACCREDITATION_SESSION_KEYS.organisationId),
-      registrationId: yar?.get(ACCREDITATION_SESSION_KEYS.registrationId),
-      materialType: yar?.get(ACCREDITATION_SESSION_KEYS.materialType),
-      year: yar?.get(ACCREDITATION_SESSION_KEYS.year)
-    }
-  } catch {
-    return {}
-  }
-}
-
-// Home points at the operator's landing status page for whichever
-// application they last visited, so it always returns them to where they
-// left off rather than the generic operator selection page.
-function resolveHomeHref(request) {
-  if (isPreContextPath(request?.path)) {
-    return FALLBACK_HOME_HREF
-  }
-
-  const { organisationId, registrationId, materialType, year } =
-    readAccreditationSession(request?.yar)
-
-  if (!organisationId || !registrationId || !materialType || !year) {
-    return FALLBACK_HOME_HREF
-  }
-
-  return landingUrl({ organisationId, registrationId, materialType, year })
-}
-
-export function buildNavigation(request) {
-  const homeHref = resolveHomeHref(request)
+function operatorNavigation(t) {
   return [
     {
-      text: 'Home',
-      href: homeHref,
-      current: request?.path === homeHref
+      text: t('navigation.home'),
+      href: config.get('reex.frontendBaseUrl'),
+      attributes: { 'data-testid': 'nav-home-link' }
     },
     {
-      text: 'About',
-      href: '/about',
-      current: request?.path === '/about'
+      text: t('navigation.manageAccount'),
+      href: config.get('auth.defraId.manageAccountUrl'),
+      attributes: { 'data-testid': 'nav-manage-account-link' }
+    },
+    {
+      text: t('navigation.signOut'),
+      href: '/auth/logout',
+      attributes: { 'data-testid': 'nav-sign-out-link' }
     }
   ]
+}
+
+// Regulators aren't Re-Ex users — they sign in to this app directly via
+// Entra ID, have no Defra ID account to manage, and their only page is the
+// regulator landing page itself.
+function regulatorNavigation(t) {
+  return [
+    {
+      text: t('navigation.home'),
+      href: '/regulator',
+      attributes: { 'data-testid': 'nav-home-link' }
+    },
+    {
+      text: t('navigation.signOut'),
+      href: '/auth/logout',
+      attributes: { 'data-testid': 'nav-sign-out-link' }
+    }
+  ]
+}
+
+export function buildNavigation(request, t) {
+  const userType = request?.auth?.credentials?.userType
+
+  if (userType === 'operator') {
+    return operatorNavigation(t)
+  }
+
+  if (userType === 'regulator') {
+    return regulatorNavigation(t)
+  }
+
+  // No session (pre-login pages, 404s, etc.) — nothing to navigate to or
+  // sign out of.
+  return []
 }
