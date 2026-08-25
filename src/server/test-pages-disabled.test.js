@@ -61,13 +61,18 @@ describe('#test pages (RA-459) — TEST_PAGES_DISABLED=true', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  test('other single-segment paths are unaffected (still 400 via the language param guard)', async () => {
+  // RA-485 landed after this test was first written and made the language
+  // param guard 404 an invalid segment rather than 400 it — genuinely
+  // unrelated paths already 404'd before TEST_PAGES_DISABLED existed, so
+  // this just confirms the flag doesn't change that pre-existing behaviour
+  // either way.
+  test('other single-segment paths are unaffected by the flag (still 404 via the language param guard)', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',
       url: '/not-a-real-language'
     })
 
-    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(statusCode).toBe(statusCodes.notFound)
   })
 })
 
