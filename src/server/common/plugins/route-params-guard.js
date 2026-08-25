@@ -93,7 +93,16 @@ export const routeParamsGuard = {
   plugin: {
     name: 'route-params-guard',
     register(server) {
-      server.ext('onPreHandler', (request, h) => {
+      // RA-485: onPreAuth, not onPreHandler — Hapi's auth lifecycle step
+      // runs before onPreHandler, and this app's redirectToLogin converts
+      // the resulting 401 into a 302 to the login page for any
+      // unauthenticated request, on every route (auth is required by
+      // default). An onPreHandler check for the /{language} catch-all would
+      // never even run for a logged-out caller hitting a removed page —
+      // they'd be sent to login instead of getting the 404 the page's
+      // absence should produce regardless of auth state. onPreAuth runs
+      // before that gate, so the 404 (or 400) happens first either way.
+      server.ext('onPreAuth', (request, h) => {
         // findInvalidParam validates every schema-having param once (N
         // calls); normaliseParams only re-validates the keys in
         // NORMALISED_PARAM_KEYS (materialType — effectively O(1)), so this
@@ -103,6 +112,18 @@ export const routeParamsGuard = {
         // see the review discussion on PR #260 for why a second inline
         // implementation was rejected.
         const invalidParam = findInvalidParam(request.params)
+        if (invalidParam === 'language') {
+          // Every route in the app has both a plain and a /{language}-
+          // prefixed variant, and `/{language}` alone is the app-wide
+          // single-segment catch-all (home/index.js) — so an invalid
+          // language segment doesn't mean "bad input to a real page", it
+          // means "there's no page here" (RA-485). Also what makes a
+          // removed/never-built single-segment page (e.g. the former
+          // /operator-details) 404 correctly without needing its own
+          // registered route: without one, it falls through to this
+          // catch-all with language set to its own path segment.
+          throw Boom.notFound()
+        }
         if (invalidParam) {
           throw Boom.badRequest(`Invalid ${invalidParam} in request path.`)
         }

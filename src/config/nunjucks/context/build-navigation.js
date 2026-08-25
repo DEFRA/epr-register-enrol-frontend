@@ -58,11 +58,6 @@ export function buildNavigation(request) {
       text: 'Home',
       href: homeHref,
       current: request?.path === homeHref
-    },
-    {
-      text: 'About',
-      href: '/about',
-      current: request?.path === '/about'
     }
   ]
 }

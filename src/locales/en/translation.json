@@ -8,11 +8,6 @@
       "title": "Home",
       "heading": "Home"
     },
-    "about": {
-      "title": "About",
-      "heading": "About",
-      "description": "This service allows organisations to manage their details and enrol in the EPR register."
-    },
     "regulator": {
       "title": "Regulator",
       "heading": "Regulator Landing Page",
@@ -46,9 +41,7 @@
       "title": "Operator Testing Flows Landing Page",
       "heading": "Operator Testing Flows Landing Page",
       "description": "This page allows test users to select the different flows for accreditation, registration and details.",
-      "accreditation": "Operator accreditation",
-      "details": "Operator details",
-      "registration": "Operator registration"
+      "accreditation": "Operator accreditation"
     },
     "operatorAccreditation": {
       "heading": "Accreditation applications",
@@ -492,37 +485,6 @@
       "changeLink": "Change",
       "confirmButton": "Confirm and continue"
     },
-    "operatorRegistration": {
-      "heading": "Operator Registration",
-      "title": "Registration",
-      "registerOnly": "Register only:",
-      "registerMustIf": "You must register with your regulator if you either:",
-      "registerRecycleListInfo": "recycle UK-sourced packaging waste",
-      "registerExportListInfo": "export UK-sourced packaging waste for recycling",
-      "registerBeforeYou": "Before you register, you need to be actively recycling or exporting the packaging waste material you are applying to be registered for.",
-      "registerOnceYouAre": "Once you are registered, you can maintain this for future years by paying an annual charge and keeping your registration details up to date.",
-      "registerAnnualFee": "Annual fee:",
-      "registerToMaintainRegistration": "To maintain each registration you'll  need to pay an annual charge by 30 September to maintain your active registrations for the next calendar year and keep your registration details up to date.",
-      "registerNew": "New Registration",
-      "registerRenewal": "Renew Registration",
-      "continueTo": "Continue to "
-    },
-    "operatorDetails": {
-      "title": "Operator Details",
-      "heading": "Operator Details",
-      "description": "This page is the Operator Details Page."
-    },
-    "operatorOrganisationDetails": {
-      "title": "Operator Organisation Details",
-      "heading": "Operator Organisation Details",
-      "description": "Operator Organisation details of ",
-      "schemeRegistrationId": "Registration ID",
-      "companiesHouseNumber": "Companies house number",
-      "registeredAddress": "Registered address",
-      "companyName": "Company name",
-      "approvedPerson": "Approved person",
-      "directors": "Directors"
-    },
     "fileUpload": {
       "details": {
         "title": "File upload details",
@@ -954,7 +916,6 @@
   },
   "navigation": {
     "home": "Home",
-    "about": "About",
     "regulator": "Regulator",
     "organisationList": "Organisations"
   },

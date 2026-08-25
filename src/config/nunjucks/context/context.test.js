@@ -55,11 +55,6 @@ describe('context and cache', () => {
               current: false,
               text: 'Home',
               href: '/operator-accreditation/'
-            },
-            {
-              current: false,
-              text: 'About',
-              href: '/about'
             }
           ],
           serviceName: 'epr-register-enrol-frontend',
@@ -175,11 +170,6 @@ describe('context and cache', () => {
               current: false,
               text: 'Home',
               href: '/operator-accreditation/'
-            },
-            {
-              current: false,
-              text: 'About',
-              href: '/about'
             }
           ],
           serviceName: 'epr-register-enrol-frontend',

@@ -195,6 +195,37 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).not.toContain('3 Overseas Sites')
     })
 
+    test('RA-477: a nested interim site does not inflate the ORS fee count', async () => {
+      // 2 ORS, one with a nested interimSite (chargeable-for-information only,
+      // per RA-477) — the fee must still be for 2 sites, never 3.
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: { plannedTonnageBand: 'UpTo500' },
+          overseasSites: {
+            sites: [
+              {
+                siteId: 1,
+                selected: true,
+                interimSite: { siteId: 101, siteName: 'Interim Site A' }
+              },
+              { siteId: 2, selected: true }
+            ]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      // 2 ORS x £328 = £656; total = £546 + £656 = £1,202
+      expect(result).toContain('£656.00 for 2 Overseas Sites')
+      expect(result).toContain('£1,202.00')
+      expect(result).not.toContain('3 Overseas Sites')
+    })
+
     test('omits the ORS fee line entirely when all overseas sites are deselected', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
