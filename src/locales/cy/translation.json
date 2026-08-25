@@ -662,13 +662,13 @@
         "postcodeLabel": "[Welsh] Postcode (optional)",
         "countryLabel": "[Welsh] Country",
         "coordinatesLabel": "[Welsh] Coordinates",
-        "coordinatesHint": "[Welsh] Enter the latitude and longitude separated by a comma. For example, 51.503, -0.127",
+        "coordinatesHint": "[Welsh] Enter the latitude and longitude separated by a comma. For example, 51.5034, -0.1275",
         "validation": {
           "addressLine1Required": "[Welsh] Enter address line 1",
           "townOrCityRequired": "[Welsh] Enter the town or city",
           "countryRequired": "[Welsh] Select a country",
           "coordinatesRequired": "[Welsh] Enter the coordinates",
-          "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.503, -0.127",
+          "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.5034, -0.1275",
           "coordinatesLatRange": "[Welsh] Latitude must be between -90 and 90",
           "coordinatesLngRange": "[Welsh] Longitude must be between -180 and 180"
         },
