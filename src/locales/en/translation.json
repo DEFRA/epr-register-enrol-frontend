@@ -465,6 +465,7 @@
       "saveAndComeLater": "Save and come back later",
       "removeFromAccreditationButton": "Remove from accreditation",
       "addToAccreditationButton": "Add to accreditation",
+      "changeButton": "Change",
       "sections": {
         "accredited": "Accredited",
         "registered": "Registered",
@@ -771,6 +772,10 @@
       "promoteSuccessBanner": {
         "title": "Success",
         "heading": "Site added to accreditation"
+      },
+      "editSuccessBanner": {
+        "title": "Success",
+        "heading": "Overseas reprocessing site updated"
       },
       "successBanner": {
         "title": "Success",

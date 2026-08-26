@@ -905,4 +905,215 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
   })
+
+  describe('POST — arriving via the edit (Change) entry point', () => {
+    const EDIT_ENTRY_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
+
+    function cookieHeaderFrom(response, fallback) {
+      const raw = response.headers['set-cookie']
+      if (!raw) {
+        return fallback
+      }
+      return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+    }
+
+    const ACCREDITED_SITE = {
+      siteId: 900001,
+      orsId: '001',
+      siteName: 'Accredited Site',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      country: 'Netherlands',
+      contactName: 'Jane Smith',
+      contactEmail: 'jane@example.com',
+      operationCodes: ['R3'],
+      code1: 'A1181',
+      repatriatedLoads: 'Details',
+      selected: true
+    }
+
+    async function seedEditSession() {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([ACCREDITED_SITE])
+      )
+      const entryResponse = await server.inject({
+        method: 'GET',
+        url: EDIT_ENTRY_URL,
+        headers: operatorHeaders
+      })
+      expect(entryResponse.statusCode).toBe(statusCodes.redirect)
+      expect(entryResponse.headers.location).toBe(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+      )
+      return cookieHeaderFrom(entryResponse, cookie)
+    }
+
+    test('calls updateOverseasSite instead of createOverseasSite/promoteOverseasSite, keyed on the original siteId', async () => {
+      const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'updateOverseasSite').mockResolvedValue(
+        { siteId: 900001 }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.updateOverseasSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        900001,
+        expect.objectContaining({ siteName: 'Accredited Site' })
+      )
+      expect(accreditationApiService.createOverseasSite).not.toHaveBeenCalled()
+      expect(accreditationApiService.promoteOverseasSite).not.toHaveBeenCalled()
+    })
+
+    test('returns 500 with error summary when updateOverseasSite fails', async () => {
+      const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'updateOverseasSite').mockRejectedValue(
+        new Error('update failed')
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('flashes the edit success banner, rendered back on select-overseas-sites', async () => {
+      const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'updateOverseasSite').mockResolvedValue(
+        { siteId: 900001 }
+      )
+
+      const cyaPostResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+      expect(cyaPostResponse.statusCode).toBe(statusCodes.redirect)
+      const selectOrsCookie = cookieHeaderFrom(cyaPostResponse, sessionCookie)
+
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([ACCREDITED_SITE])
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: SELECT_ORS_URL,
+        headers: { ...operatorHeaders, cookie: selectOrsCookie }
+      })
+
+      expect(result).toContain('data-testid="ors-edit-success-banner"')
+    })
+
+    // The edit-entry tests above all seed the session via seedEditSession() (one GET, then
+    // straight to CYA) and never drive an individual step's own POST handler in edit mode --
+    // including recycling-operation-details, the step CI's own E2E run reported as stalling on
+    // this story. Walk the real step chain instead, submitting the site's already-selected
+    // recycling operation code back through recycling-operation-details exactly as an edit
+    // replay does, to prove a regression in any one step's redirect fails this suite too.
+    test('walks the full edit-mode step chain (site-name through repatriated-loads) and reaches check-your-answers', async () => {
+      const sessionCookie = await seedEditSession()
+      const stepUrl = (step) =>
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/${step}`
+      const postStep = (step, payload) =>
+        server.inject({
+          method: 'POST',
+          url: stepUrl(step),
+          headers: {
+            ...operatorHeaders,
+            'content-type': 'application/x-www-form-urlencoded',
+            cookie: sessionCookie
+          },
+          payload
+        })
+
+      const siteNameResponse = await postStep(
+        'site-name',
+        'siteName=Accredited Site'
+      )
+      expect(siteNameResponse.statusCode).toBe(statusCodes.redirect)
+      expect(siteNameResponse.headers.location).toBe(stepUrl('site-location'))
+
+      const siteLocationResponse = await postStep(
+        'site-location',
+        'addressLine1=Unit+1&townOrCity=Rotterdam&country=Netherlands&coordinates=51.9225%2C+4.4792'
+      )
+      expect(siteLocationResponse.statusCode).toBe(statusCodes.redirect)
+      expect(siteLocationResponse.headers.location).toBe(
+        stepUrl('site-contact-details')
+      )
+
+      const contactDetailsResponse = await postStep(
+        'site-contact-details',
+        'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com'
+      )
+      expect(contactDetailsResponse.statusCode).toBe(statusCodes.redirect)
+      expect(contactDetailsResponse.headers.location).toBe(
+        stepUrl('recycling-operation-details')
+      )
+
+      // ACCREDITED_SITE's own operationCodes (['R3']) is what edit-entry pre-populates the
+      // session with -- submitting that same code back is exactly what a real edit replay
+      // does, whether via a checkbox that was already checked or (as here) an explicit repost.
+      const recyclingOperationResponse = await postStep(
+        'recycling-operation-details',
+        'recyclingOperationCodes=R3'
+      )
+      expect(recyclingOperationResponse.statusCode).toBe(statusCodes.redirect)
+      expect(recyclingOperationResponse.headers.location).toBe(
+        stepUrl('basel-convention-and-oecd-code')
+      )
+
+      const baselCodesResponse = await postStep(
+        'basel-convention-and-oecd-code',
+        'visibleCount=1&code-0=A1181'
+      )
+      expect(baselCodesResponse.statusCode).toBe(statusCodes.redirect)
+      expect(baselCodesResponse.headers.location).toBe(
+        stepUrl('repatriated-loads')
+      )
+
+      const repatriatedLoadsResponse = await postStep(
+        'repatriated-loads',
+        'repatriatedLoads=Details'
+      )
+      expect(repatriatedLoadsResponse.statusCode).toBe(statusCodes.redirect)
+      expect(repatriatedLoadsResponse.headers.location).toBe(
+        stepUrl('check-your-answers')
+      )
+
+      const cyaGetResponse = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+      expect(cyaGetResponse.statusCode).toBe(statusCodes.ok)
+      expect(cyaGetResponse.result).toContain('Accredited Site')
+    })
+  })
 })
