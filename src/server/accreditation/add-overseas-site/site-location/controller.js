@@ -9,6 +9,8 @@ const MIN_LATITUDE = -90
 const MAX_LATITUDE = 90
 const MIN_LONGITUDE = -180
 const MAX_LONGITUDE = 180
+const MIN_COORDINATE_DECIMAL_PLACES = 4
+const COORDINATE_NUMBER_PATTERN = /^-?\d+(\.\d+)?$/
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -40,24 +42,62 @@ function buildViewData(t, applicationId, fields, errors) {
   }
 }
 
-function parseCoordinates(raw) {
-  const trimmed = (raw ?? '').trim()
+function decimalPlaces(value) {
+  const pointIndex = value.indexOf('.')
+  return pointIndex === -1 ? 0 : value.length - pointIndex - 1
+}
+
+function splitCoordinateParts(trimmed) {
   const parts = trimmed.split(',')
   if (parts.length !== 2) {
-    return { valid: false, error: 'invalid' }
+    return null
   }
+  return [parts[0].trim(), parts[1].trim()]
+}
 
-  const lat = Number.parseFloat(parts[0].trim())
-  const lng = Number.parseFloat(parts[1].trim())
-
-  if (Number.isNaN(lat) || Number.isNaN(lng)) {
-    return { valid: false, error: 'invalid' }
-  }
+function coordinateRangeError(lat, lng) {
   if (lat < MIN_LATITUDE || lat > MAX_LATITUDE) {
-    return { valid: false, error: 'latRange' }
+    return 'latRange'
   }
   if (lng < MIN_LONGITUDE || lng > MAX_LONGITUDE) {
-    return { valid: false, error: 'lngRange' }
+    return 'lngRange'
+  }
+  return null
+}
+
+function coordinatePrecisionError(latRaw, lngRaw) {
+  const hasSufficientPrecision =
+    decimalPlaces(latRaw) >= MIN_COORDINATE_DECIMAL_PLACES &&
+    decimalPlaces(lngRaw) >= MIN_COORDINATE_DECIMAL_PLACES
+  return hasSufficientPrecision ? null : 'precision'
+}
+
+function parseCoordinates(raw) {
+  const trimmed = (raw ?? '').trim()
+  const parts = splitCoordinateParts(trimmed)
+  if (!parts) {
+    return { valid: false, error: 'invalid' }
+  }
+
+  const [latRaw, lngRaw] = parts
+  if (
+    !COORDINATE_NUMBER_PATTERN.test(latRaw) ||
+    !COORDINATE_NUMBER_PATTERN.test(lngRaw)
+  ) {
+    return { valid: false, error: 'invalid' }
+  }
+
+  const rangeError = coordinateRangeError(
+    Number.parseFloat(latRaw),
+    Number.parseFloat(lngRaw)
+  )
+  if (rangeError) {
+    return { valid: false, error: rangeError }
+  }
+
+  const precisionError = coordinatePrecisionError(latRaw, lngRaw)
+  if (precisionError) {
+    return { valid: false, error: precisionError }
   }
 
   return { valid: true, value: trimmed }
@@ -73,6 +113,58 @@ function extractFields(payload) {
     country: (payload?.country ?? '').trim(),
     coordinates: (payload?.coordinates ?? '').trim()
   }
+}
+
+const COORDINATES_ERROR_KEYS = {
+  latRange: 'coordinatesLatRange',
+  lngRange: 'coordinatesLngRange',
+  precision: 'coordinatesPrecision',
+  invalid: 'coordinatesInvalid'
+}
+
+function validateRequiredFields(t, fields) {
+  const errors = {}
+  if (!fields.addressLine1) {
+    errors.addressLine1 = t(
+      'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
+    )
+  }
+  if (!fields.townOrCity) {
+    errors.townOrCity = t(
+      'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
+    )
+  }
+  if (!fields.country) {
+    errors.country = t(
+      'pages.addOverseasSite.siteLocation.validation.countryRequired'
+    )
+  }
+  return errors
+}
+
+function validateCoordinates(t, coordinates) {
+  if (!coordinates) {
+    return t(
+      'pages.addOverseasSite.siteLocation.validation.coordinatesRequired'
+    )
+  }
+
+  const coordResult = parseCoordinates(coordinates)
+  if (coordResult.valid) {
+    return null
+  }
+
+  const key = COORDINATES_ERROR_KEYS[coordResult.error]
+  return t(`pages.addOverseasSite.siteLocation.validation.${key}`)
+}
+
+function validateSiteLocationFields(t, fields) {
+  const errors = validateRequiredFields(t, fields)
+  const coordinatesError = validateCoordinates(t, fields.coordinates)
+  if (coordinatesError) {
+    errors.coordinates = coordinatesError
+  }
+  return errors
 }
 
 export const addOrsSiteLocationGetController = {
@@ -98,42 +190,7 @@ export const addOrsSiteLocationPostController = {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
     const fields = extractFields(request.payload)
-    const errors = {}
-
-    if (!fields.addressLine1) {
-      errors.addressLine1 = t(
-        'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
-      )
-    }
-    if (!fields.townOrCity) {
-      errors.townOrCity = t(
-        'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
-      )
-    }
-    if (!fields.country) {
-      errors.country = t(
-        'pages.addOverseasSite.siteLocation.validation.countryRequired'
-      )
-    }
-
-    if (!fields.coordinates) {
-      errors.coordinates = t(
-        'pages.addOverseasSite.siteLocation.validation.coordinatesRequired'
-      )
-    } else {
-      const coordResult = parseCoordinates(fields.coordinates)
-      if (!coordResult.valid) {
-        const key =
-          coordResult.error === 'latRange'
-            ? 'coordinatesLatRange'
-            : coordResult.error === 'lngRange'
-              ? 'coordinatesLngRange'
-              : 'coordinatesInvalid'
-        errors.coordinates = t(
-          `pages.addOverseasSite.siteLocation.validation.${key}`
-        )
-      }
-    }
+    const errors = validateSiteLocationFields(t, fields)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

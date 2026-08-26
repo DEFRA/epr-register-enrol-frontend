@@ -326,7 +326,7 @@
       "bullets": {
         "eligiblePerson": "[Welsh] you are a person with delegated authority who is eligible to submit this application on behalf of {organisationName}",
         "accurateInformation": "[Welsh] the information you are submitting is accurate",
-        "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading data"
+        "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Rhowch eich enw llawn",
       "fullNameHint": "[Welsh] This is your full name as it appears on this account",
@@ -418,7 +418,7 @@
       "bullets": {
         "eligiblePerson": "[Welsh] you are a person with delegated authority who is eligible to respond to this query on behalf of {organisationName}",
         "accurateInformation": "[Welsh] the information you are submitting in response to the query is accurate",
-        "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading data"
+        "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Rhowch eich enw llawn",
       "emailLabel": "[Welsh] Enter your email address",
@@ -460,6 +460,7 @@
       "loadError": "[Welsh] Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "continueButton": "Parhau",
+      "saveAndComeLater": "[Welsh] Save and come back later",
       "removeFromAccreditationButton": "[Welsh] Remove from accreditation",
       "addToAccreditationButton": "[Welsh] Add to accreditation",
       "changeButton": "[Welsh] Change",
@@ -558,6 +559,7 @@
       "notRequiredOecd": "[Welsh] Not required for application",
       "incompleteEvidence": "[Welsh] All non-EU, non-OECD sites must have evidence uploaded before continuing.",
       "continueButton": "Parhau",
+      "saveAndComeLater": "[Welsh] Save and come back later",
       "table": {
         "siteName": "[Welsh] Site name",
         "country": "[Welsh] Country",
@@ -647,15 +649,16 @@
         "postcodeLabel": "[Welsh] Postcode (optional)",
         "countryLabel": "[Welsh] Country",
         "coordinatesLabel": "[Welsh] Coordinates",
-        "coordinatesHint": "[Welsh] Enter the latitude and longitude separated by a comma. For example, 51.503, -0.127",
+        "coordinatesHint": "[Welsh] Enter the latitude and longitude separated by a comma. For example, 51.5034, -0.1275",
         "validation": {
           "addressLine1Required": "[Welsh] Enter address line 1",
           "townOrCityRequired": "[Welsh] Enter the town or city",
           "countryRequired": "[Welsh] Select a country",
           "coordinatesRequired": "[Welsh] Enter the coordinates",
-          "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.503, -0.127",
+          "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.5034, -0.1275",
           "coordinatesLatRange": "[Welsh] Latitude must be between -90 and 90",
-          "coordinatesLngRange": "[Welsh] Longitude must be between -180 and 180"
+          "coordinatesLngRange": "[Welsh] Longitude must be between -180 and 180",
+          "coordinatesPrecision": "[Welsh] Enter the latitude and longitude to at least 4 decimal places, for example 51.5034, -0.1275"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
