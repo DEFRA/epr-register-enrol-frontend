@@ -19,3 +19,27 @@ export function buildApplicationHeaderViewModel(application, t) {
     year: application.year
   }
 }
+
+/**
+ * Composes the "operatorName (year, material and siteName)" caption shown
+ * above the page heading on journey pages (RA-506). siteName is omitted,
+ * along with its leading "and", when null, undefined, or empty.
+ * @param {{operatorName: string, year: number, materialType: string, siteName?: string}} params
+ * @returns {string}
+ */
+export function composeApplicationCaption({
+  operatorName,
+  year,
+  materialType,
+  siteName
+}) {
+  const detailParts = [year, materialType].filter(
+    (part) => part !== null && part !== undefined && part !== ''
+  )
+
+  if (siteName !== null && siteName !== undefined && siteName !== '') {
+    return `${operatorName} (${detailParts.join(', ')} and ${siteName})`
+  }
+
+  return `${operatorName} (${detailParts.join(', ')})`
+}
