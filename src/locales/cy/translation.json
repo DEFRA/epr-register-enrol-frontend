@@ -676,7 +676,7 @@
       "recyclingOperationDetails": {
         "title": "[Welsh] Recycling operation — Add overseas reprocessing site",
         "heading": "[Welsh] What recycling operations are carried out at the site?",
-        "label": "[Welsh] Select all recycling operations that apply",
+        "label": "[Welsh] Select all recycling operations that apply. If this site has an interim site, please select an additional R12 or R13",
         "operations": {
           "R3": "[Welsh] R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
           "R4": "[Welsh] R4 — Recycling/reclamation of metals and metal compounds (Scrap metal recycling, metal recovery)",
