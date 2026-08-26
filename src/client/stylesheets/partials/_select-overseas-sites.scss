@@ -1,13 +1,41 @@
 @use 'govuk-frontend' as *;
 
-// The "Change" link and "Remove from accreditation" button share one
-// govuk-summary-list actions cell here (unlike the single-action cells
-// elsewhere in the app), so the default 20% actions column is too narrow
-// to hold both on one line.
-.select-overseas-sites__actions {
-  width: 40%;
+// Each row here pairs a "Change" link with a "Remove from accreditation"
+// button in one actions cell (unlike the single-action cells elsewhere in
+// the app). The default govuk-summary-list table-cell layout gives that
+// cell a fixed 20% width and lets the link and button wrap onto separate
+// lines; below we flex the row instead so both actions - and the country
+// value beside them - sit on one line. Scoped to tablet+ to match the
+// breakpoint at which govuk-frontend itself switches the summary list from
+// a stacked mobile layout to the table layout we're overriding.
+@include govuk-media-query($from: tablet) {
+  .select-overseas-sites-row {
+    display: flex;
+    align-items: center;
+  }
 
-  .govuk-link {
+  .select-overseas-sites-row .govuk-summary-list__key {
+    display: block;
+    width: auto;
+    flex: 1 1 auto;
+  }
+
+  .select-overseas-sites-row .govuk-summary-list__value {
+    display: block;
+    width: auto;
+    flex: 0 1 auto;
+  }
+
+  .select-overseas-sites-row .govuk-summary-list__actions {
+    display: flex;
+    align-items: center;
+    width: auto;
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .select-overseas-sites-row .govuk-summary-list__actions .govuk-link {
     margin-right: govuk-spacing(4);
+    white-space: nowrap;
   }
 }
