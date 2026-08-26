@@ -648,15 +648,16 @@
         "postcodeLabel": "Postcode (optional)",
         "countryLabel": "Country",
         "coordinatesLabel": "Coordinates",
-        "coordinatesHint": "Enter the latitude and longitude separated by a comma. For example, 51.503, -0.127",
+        "coordinatesHint": "Enter the latitude and longitude separated by a comma. For example, 51.5034, -0.1275",
         "validation": {
           "addressLine1Required": "Enter address line 1",
           "townOrCityRequired": "Enter the town or city",
           "countryRequired": "Select a country",
           "coordinatesRequired": "Enter the coordinates",
-          "coordinatesInvalid": "Enter coordinates in the correct format, for example 51.503, -0.127",
+          "coordinatesInvalid": "Enter coordinates in the correct format, for example 51.5034, -0.1275",
           "coordinatesLatRange": "Latitude must be between -90 and 90",
-          "coordinatesLngRange": "Longitude must be between -180 and 180"
+          "coordinatesLngRange": "Longitude must be between -180 and 180",
+          "coordinatesPrecision": "Enter the latitude and longitude to at least 4 decimal places, for example 51.5034, -0.1275"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"
