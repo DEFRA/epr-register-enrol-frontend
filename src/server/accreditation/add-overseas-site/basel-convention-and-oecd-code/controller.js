@@ -1,4 +1,6 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddOrsSession,
   setAddOrsSession
@@ -79,9 +81,23 @@ function fieldsFromPayload(payload, visibleCount) {
 }
 
 export const addOrsBaselCodeGetController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     const codes = session.baselAndOecdCodes ?? []
     const values = codes.length > 0 ? codes : ['']
@@ -89,10 +105,66 @@ export const addOrsBaselCodeGetController = {
   }
 }
 
+// Extracted from addOrsBaselCodePostController (SonarCloud: function too
+// long) — the invalid/duplicate/at-least-one-required checks are a
+// self-contained pass over `values` with no dependency on the rest of the
+// handler's flow.
+function validateBaselCodes(values, t) {
+  const errors = {}
+  const seenCodes = new Set()
+  let anyCodeEntered = false
+
+  values.forEach((value, index) => {
+    if (!value) {
+      return
+    }
+
+    anyCodeEntered = true
+
+    if (!BASEL_OECD_CODES_SET.has(value.toUpperCase())) {
+      errors[index] = t(
+        'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
+      )
+      return
+    }
+
+    if (seenCodes.has(value.toUpperCase())) {
+      errors[index] = t(
+        'pages.addOverseasSite.baselAndOecdCodes.validation.duplicateCode'
+      )
+      return
+    }
+
+    seenCodes.add(value.toUpperCase())
+  })
+
+  if (!anyCodeEntered) {
+    errors[0] = t(
+      'pages.addOverseasSite.baselAndOecdCodes.validation.atLeastOneCodeRequired'
+    )
+  }
+
+  return errors
+}
+
 export const addOrsBaselCodePostController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     const action = request.payload?.action ?? 'continue'
     const rawVisibleCount = Number.parseInt(request.payload?.visibleCount, 10)
@@ -125,39 +197,7 @@ export const addOrsBaselCodePostController = {
       )
     }
 
-    const errors = {}
-    const seenCodes = new Set()
-    let anyCodeEntered = false
-
-    values.forEach((value, index) => {
-      if (!value) {
-        return
-      }
-
-      anyCodeEntered = true
-
-      if (!BASEL_OECD_CODES_SET.has(value.toUpperCase())) {
-        errors[index] = t(
-          'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
-        )
-        return
-      }
-
-      if (seenCodes.has(value.toUpperCase())) {
-        errors[index] = t(
-          'pages.addOverseasSite.baselAndOecdCodes.validation.duplicateCode'
-        )
-        return
-      }
-
-      seenCodes.add(value.toUpperCase())
-    })
-
-    if (!anyCodeEntered) {
-      errors[0] = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.atLeastOneCodeRequired'
-      )
-    }
+    const errors = validateBaselCodes(values, t)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

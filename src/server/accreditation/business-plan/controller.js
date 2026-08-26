@@ -2,13 +2,17 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
 import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 import { BUSINESS_PLAN_PERCENT_FIELDS } from '../../common/constants/businessPlanCategories.js'
 
 // RA-456: derived from the shared category map — see
@@ -125,7 +129,8 @@ function buildViewData(
   queryNote = null,
   querySummary = null,
   regulatorQueryFields = null,
-  readOnly = false
+  readOnly = false,
+  isQueriedApplication = false
 ) {
   return {
     pageTitle: t('pages.businessPlan.title'),
@@ -133,7 +138,11 @@ function buildViewData(
     intro: isExporter
       ? t('pages.businessPlan.introExporter')
       : t('pages.businessPlan.intro'),
-    backLink: readOnly
+    // RA-481: only route back to the query task list while the application
+    // itself is mid-query — a locked-but-not-queried application is
+    // read-only for a different reason and belongs back on the ordinary
+    // task list, which renders read-only in that case too.
+    backLink: isQueriedApplication
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
@@ -143,7 +152,8 @@ function buildViewData(
     queryNote,
     querySummary,
     regulatorQueryFields,
-    readOnly
+    readOnly,
+    isQueriedApplication
   }
 }
 
@@ -226,10 +236,48 @@ export const businessPlanGetController = {
               }
             ]
           : null,
-        readOnly
+        readOnly,
+        application.applicationStatus === 'Queried'
       )
     )
   }
+}
+
+// Extracted from businessPlanPostController (SonarCloud cyclomatic
+// complexity): the 409/5xx/other three-way error response was inlined in
+// the handler's catch block.
+function handleBusinessPlanSaveError({
+  h,
+  request,
+  t,
+  err,
+  applicationId,
+  fieldPayload,
+  isExporter
+}) {
+  request.server.logger.error(
+    `Error saving business plan for ${applicationId}: ${err.message}`
+  )
+  // RA-481: the guard above already checked read/write access before this
+  // patch was sent, but a 409 here means the application locked (e.g. was
+  // submitted) in the gap between that check and this request landing —
+  // send the operator to the section's own page so it re-fetches and
+  // renders read-only, rather than a raw error.
+  if (err.status === statusCodes.conflict) {
+    return h.redirect(request.path)
+  }
+  if (!err.status || err.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderPage(h, {
+    ...buildViewData(t, applicationId, fieldPayload, {}, isExporter),
+    error: t('pages.businessPlan.validation.saveError')
+  }).code(400)
 }
 
 export const businessPlanPostController = {
@@ -258,11 +306,15 @@ export const businessPlanPostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.businessPlan?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.businessPlan?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const isExporter = application.isExporter ?? false
@@ -289,21 +341,15 @@ export const businessPlanPostController = {
         patchBody
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error saving business plan for ${applicationId}: ${err.message}`
-      )
-      if (!err.status || err.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, {}, isExporter),
-        error: t('pages.businessPlan.validation.saveError')
-      }).code(400)
+      return handleBusinessPlanSaveError({
+        h,
+        request,
+        t,
+        err,
+        applicationId,
+        fieldPayload,
+        isExporter
+      })
     }
 
     if (isSaveAndComeLater) {

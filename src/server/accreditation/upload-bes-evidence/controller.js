@@ -4,6 +4,11 @@ import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -63,6 +68,42 @@ export function isDateBlank(day, month, year) {
   )
 }
 
+// Extracted from uploadBesEvidencePostController (SonarCloud cognitive
+// complexity): the optional "valid to" date was parsed and validated in a
+// block nested inside an `if (!validToBlank)`, which is exactly the kind of
+// nesting cognitive complexity penalises hardest. Flattened into its own
+// function so the handler gets back a plain { validTo, error } result.
+function resolveBesEvidenceValidTo(payload, validFrom, t) {
+  const validToBlank = isDateBlank(
+    payload.validToDay,
+    payload.validToMonth,
+    payload.validToYear
+  )
+  if (validToBlank) {
+    return { validTo: null, error: null }
+  }
+
+  const validTo = parseDate(
+    payload.validToDay,
+    payload.validToMonth,
+    payload.validToYear
+  )
+  if (!validTo) {
+    return {
+      validTo: null,
+      error: t('pages.uploadBesEvidence.validation.invalidDate')
+    }
+  }
+  if (validTo <= validFrom) {
+    return {
+      validTo: null,
+      error: t('pages.uploadBesEvidence.validation.validToBeforeFrom')
+    }
+  }
+
+  return { validTo, error: null }
+}
+
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
@@ -75,7 +116,14 @@ function renderPage(h, viewData) {
   return h.view('accreditation/upload-bes-evidence/index', viewData)
 }
 
-function buildViewData(t, applicationId, siteId, siteName, payload, errors) {
+function buildViewData(
+  t,
+  applicationId,
+  siteName,
+  payload,
+  errors,
+  { readOnly = false, isQueriedApplication = false } = {}
+) {
   return {
     pageTitle: t('pages.uploadBesEvidence.title'),
     heading: `${t('pages.uploadBesEvidence.heading')} ${siteName}`,
@@ -88,6 +136,8 @@ function buildViewData(t, applicationId, siteId, siteName, payload, errors) {
     validToDay: payload?.validToDay ?? '',
     validToMonth: payload?.validToMonth ?? '',
     validToYear: payload?.validToYear ?? '',
+    readOnly,
+    isQueriedApplication,
     ...errors
   }
 }
@@ -116,7 +166,6 @@ export const uploadBesEvidenceGetController = {
         buildViewData(
           t,
           applicationId,
-          siteId,
           '',
           {},
           {
@@ -126,6 +175,14 @@ export const uploadBesEvidenceGetController = {
       ).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.besEvidence?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const site = application.overseasSites?.sites?.find(
       (s) => s.siteId === siteIdInt
     )
@@ -133,7 +190,17 @@ export const uploadBesEvidenceGetController = {
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, siteId, siteName, {}, {})
+      buildViewData(
+        t,
+        applicationId,
+        siteName,
+        {},
+        {},
+        {
+          readOnly,
+          isQueriedApplication: application.applicationStatus === 'Queried'
+        }
+      )
     )
   }
 }
@@ -160,10 +227,21 @@ export const uploadBesEvidencePostController = {
       )
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, '', payload, {
+        buildViewData(t, applicationId, '', payload, {
           error: t('pages.uploadBesEvidence.validation.fetchError')
         })
       ).code(500)
+    }
+
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.besEvidence?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const site = application.overseasSites?.sites?.find(
@@ -185,7 +263,7 @@ export const uploadBesEvidencePostController = {
     if (!filename) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.noFile')
         })
       ).code(400)
@@ -194,7 +272,7 @@ export const uploadBesEvidencePostController = {
     if (!validateFileExtension(filename)) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.invalidType')
         })
       ).code(400)
@@ -203,7 +281,7 @@ export const uploadBesEvidencePostController = {
     if (fileSize > MAX_FILE_BYTES) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.fileTooLarge')
         })
       ).code(400)
@@ -217,7 +295,7 @@ export const uploadBesEvidencePostController = {
     if (!validFrom) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           validFromError: t(
             'pages.uploadBesEvidence.validation.validFromRequired'
           )
@@ -225,36 +303,18 @@ export const uploadBesEvidencePostController = {
       ).code(400)
     }
 
-    const validToBlank = isDateBlank(
-      payload.validToDay,
-      payload.validToMonth,
-      payload.validToYear
+    const { validTo, error: validToError } = resolveBesEvidenceValidTo(
+      payload,
+      validFrom,
+      t
     )
-    let validTo = null
-    if (!validToBlank) {
-      validTo = parseDate(
-        payload.validToDay,
-        payload.validToMonth,
-        payload.validToYear
-      )
-      if (!validTo) {
-        return renderPage(
-          h,
-          buildViewData(t, applicationId, siteId, siteName, payload, {
-            validToError: t('pages.uploadBesEvidence.validation.invalidDate')
-          })
-        ).code(400)
-      }
-      if (validTo <= validFrom) {
-        return renderPage(
-          h,
-          buildViewData(t, applicationId, siteId, siteName, payload, {
-            validToError: t(
-              'pages.uploadBesEvidence.validation.validToBeforeFrom'
-            )
-          })
-        ).code(400)
-      }
+    if (validToError) {
+      return renderPage(
+        h,
+        buildViewData(t, applicationId, siteName, payload, {
+          validToError
+        })
+      ).code(400)
     }
 
     const besEvidenceValidFromDate = validFrom.toISOString()
@@ -277,7 +337,7 @@ export const uploadBesEvidencePostController = {
       )
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.uploadError')
         })
       ).code(500)
@@ -296,7 +356,7 @@ export const uploadBesEvidencePostController = {
       )
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.uploadError')
         })
       ).code(500)

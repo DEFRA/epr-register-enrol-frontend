@@ -5,6 +5,7 @@ import {
   hasValidSession,
   hasOrganisationAccess,
   isEditRestrictedPath,
+  isLockedSectionWrite,
   fetchApplication,
   accreditationSessionGuard
 } from './accreditationSessionGuard.js'
@@ -76,6 +77,122 @@ describe('isEditRestrictedPath', () => {
   test('returns false for paths with no matching segment', () => {
     expect(isEditRestrictedPath('/accreditation/')).toBe(false)
     expect(isEditRestrictedPath('/health')).toBe(false)
+  })
+})
+
+describe('isLockedSectionWrite', () => {
+  function postRequest(path) {
+    return { method: 'post', path }
+  }
+
+  function getRequest(path) {
+    return { method: 'get', path }
+  }
+
+  test('false for GET requests, even on a locked application', () => {
+    const application = {
+      applicationStatus: 'Submitted',
+      businessPlan: { sectionStatus: 'Completed' }
+    }
+    expect(
+      isLockedSectionWrite(
+        getRequest('/accreditation/business-plan/abc'),
+        application
+      )
+    ).toBe(false)
+  })
+
+  test('false when there is no application (fails open, like the header fetch)', () => {
+    expect(
+      isLockedSectionWrite(
+        postRequest('/accreditation/business-plan/abc'),
+        null
+      )
+    ).toBe(false)
+  })
+
+  test('false when the application is not in a locked status', () => {
+    const application = {
+      applicationStatus: 'Started',
+      businessPlan: { sectionStatus: 'InProgress' }
+    }
+    expect(
+      isLockedSectionWrite(
+        postRequest('/accreditation/business-plan/abc'),
+        application
+      )
+    ).toBe(false)
+  })
+
+  test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+    'true for a POST to a mapped section route when locked (%s) and the section is not Queried',
+    (applicationStatus) => {
+      const application = {
+        applicationStatus,
+        businessPlan: { sectionStatus: 'Completed' }
+      }
+      expect(
+        isLockedSectionWrite(
+          postRequest('/accreditation/business-plan/abc'),
+          application
+        )
+      ).toBe(true)
+    }
+  )
+
+  test('false when the targeted section is itself Queried', () => {
+    const application = {
+      applicationStatus: 'Submitted',
+      businessPlan: { sectionStatus: 'Queried' }
+    }
+    expect(
+      isLockedSectionWrite(
+        postRequest('/accreditation/business-plan/abc'),
+        application
+      )
+    ).toBe(false)
+  })
+
+  test('false for a route not mapped to a section (e.g. task-list)', () => {
+    const application = { applicationStatus: 'Submitted' }
+    expect(
+      isLockedSectionWrite(
+        postRequest('/accreditation/task-list/abc'),
+        application
+      )
+    ).toBe(false)
+  })
+
+  test('resolves nested wizard/CYA sub-pages to their owning section', () => {
+    const application = {
+      applicationStatus: 'Submitted',
+      overseasSites: { sectionStatus: 'Completed' }
+    }
+    expect(
+      isLockedSectionWrite(
+        postRequest('/accreditation/add-overseas-site/abc/site-name'),
+        application
+      )
+    ).toBe(true)
+    expect(
+      isLockedSectionWrite(
+        postRequest('/accreditation/add-interim-site/abc/country'),
+        application
+      )
+    ).toBe(true)
+  })
+
+  test('Welsh-prefixed routes resolve the same way', () => {
+    const application = {
+      applicationStatus: 'Submitted',
+      businessPlan: { sectionStatus: 'Completed' }
+    }
+    expect(
+      isLockedSectionWrite(
+        postRequest('/cy/accreditation/business-plan/abc'),
+        application
+      )
+    ).toBe(true)
   })
 })
 
@@ -815,6 +932,88 @@ describe('accreditationSessionGuard plugin registration', () => {
     const result = await callback(request, h)
 
     expect(request.app.applicationHeader).toBeUndefined()
+    expect(result).toBe(h.continue)
+  })
+
+  test('registered callback redirects a POST to a locked, non-queried section back to the same page', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Submitted',
+      businessPlan: { sectionStatus: 'Completed' }
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = await callback(
+      {
+        method: 'post',
+        path: '/accreditation/business-plan/app-1',
+        yar: makeYarWithOrg('app-1', '50001'),
+        auth: {
+          credentials: {
+            userType: 'operator',
+            relationships: ['rel-1:50001:First Org']
+          }
+        }
+      },
+      h
+    )
+
+    expect(h.redirect).toHaveBeenCalledWith(
+      '/accreditation/business-plan/app-1'
+    )
+    expect(result).toBe('redirect')
+  })
+
+  test('registered callback does NOT redirect a GET to a locked, non-queried section — it must render read-only', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Submitted',
+      businessPlan: { sectionStatus: 'Completed' }
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = await callback(
+      {
+        method: 'get',
+        path: '/accreditation/business-plan/app-1',
+        yar: makeYarWithOrg('app-1', '50001'),
+        auth: {
+          credentials: {
+            userType: 'operator',
+            relationships: ['rel-1:50001:First Org']
+          }
+        },
+        app: {}
+      },
+      h
+    )
+
+    expect(h.redirect).not.toHaveBeenCalled()
+    expect(result).toBe(h.continue)
+  })
+
+  test('registered callback allows a POST to the section the regulator queried, even while locked', async () => {
+    accreditationApiService.getApplication.mockResolvedValue({
+      applicationStatus: 'Updated',
+      businessPlan: { sectionStatus: 'Queried' }
+    })
+    const callback = registerAndGetCallback()
+    const h = makeH()
+    const result = await callback(
+      {
+        method: 'post',
+        path: '/accreditation/business-plan/app-1',
+        yar: makeYarWithOrg('app-1', '50001'),
+        auth: {
+          credentials: {
+            userType: 'operator',
+            relationships: ['rel-1:50001:First Org']
+          }
+        },
+        app: {}
+      },
+      h
+    )
+
+    expect(h.redirect).not.toHaveBeenCalled()
     expect(result).toBe(h.continue)
   })
 })

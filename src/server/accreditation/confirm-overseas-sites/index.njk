@@ -15,6 +15,22 @@
 
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          {% if isQueriedApplication %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+              {{ t('common.readOnlySection.body') }}
+            </p>
+          {% else %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySubmittedSection.heading') }}</strong><br>
+              {{ t('common.readOnlySubmittedSection.body') }}
+            </p>
+          {% endif %}
+        </div>
+      {% endif %}
+
       {% if sites.length === 0 %}
         <p class="govuk-body" data-testid="no-sites-message">
           {{ t('pages.confirmOverseasSites.noSites') }}
@@ -25,24 +41,28 @@
             <div class="govuk-summary-list__row" data-testid="site-row-{{ site.siteId }}">
               <dt class="govuk-summary-list__key" data-testid="site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
               <dd class="govuk-summary-list__value" data-testid="site-country-{{ site.siteId }}">{{ site.country }}</dd>
-              <dd class="govuk-summary-list__actions">
-                <a class="govuk-link" href="{{ backLink }}" data-testid="change-link-{{ site.siteId }}">
-                  {{ t('pages.confirmOverseasSites.changeLink') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span>
-                </a>
-              </dd>
+              {% if not readOnly %}
+                <dd class="govuk-summary-list__actions">
+                  <a class="govuk-link" href="{{ backLink }}" data-testid="change-link-{{ site.siteId }}">
+                    {{ t('pages.confirmOverseasSites.changeLink') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span>
+                  </a>
+                </dd>
+              {% endif %}
             </div>
           {% endfor %}
         </dl>
       {% endif %}
 
-      <form method="post" data-testid="confirm-form">
-        <input type="hidden" name="crumb" value="{{ crumb }}">
-        <button type="submit" name="submitAction" value="confirm"
-                class="govuk-button" data-module="govuk-button"
-                data-testid="confirm-button">
-          {{ t('pages.confirmOverseasSites.confirmButton') }}
-        </button>
-      </form>
+      {% if not readOnly %}
+        <form method="post" data-testid="confirm-form">
+          <input type="hidden" name="crumb" value="{{ crumb }}">
+          <button type="submit" name="submitAction" value="confirm"
+                  class="govuk-button" data-module="govuk-button"
+                  data-testid="confirm-button">
+            {{ t('pages.confirmOverseasSites.confirmButton') }}
+          </button>
+        </form>
+      {% endif %}
 
     </div>
   </div>

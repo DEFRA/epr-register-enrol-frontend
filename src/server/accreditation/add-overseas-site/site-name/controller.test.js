@@ -9,6 +9,7 @@ import {
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
+import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 
 const APPLICATION_ID = 'app-sn-001'
 const BASE_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
@@ -124,6 +125,28 @@ describe('#addOverseasSiteSiteNameController', () => {
         '[Welsh] What is the name of the overseas reprocessing site?'
       )
     })
+
+    // RA-481: this wizard holds its draft in session, not on the
+    // application, so once overseasSites is locked there's nothing
+    // meaningful to render read-only — send the operator back to the
+    // section's list page instead (see guardOverseasSiteWizardEntry).
+    test('redirects to select-overseas-sites when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
   })
 
   describe(`POST ${BASE_URL}`, () => {
@@ -226,10 +249,50 @@ describe('#addOverseasSiteSiteNameController', () => {
       expect(cancelResponse.statusCode).toBe(statusCodes.redirect)
       expect(cancelResponse.headers.location).toBe(SELECT_ORS_URL)
     })
+
+    test('redirects to select-overseas-sites without saving when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        payload: 'siteName=Acme+Recyclers+GmbH'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
   })
 
   describe(`GET /accreditation/add-overseas-site/${APPLICATION_ID}/new`, () => {
     const NEW_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/new`
+
+    test('redirects to select-overseas-sites when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: NEW_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
 
     test('redirects to site-name', async () => {
       const { statusCode, headers } = await server.inject({

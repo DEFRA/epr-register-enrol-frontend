@@ -1,12 +1,16 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 import {
   resetAddOrsSession,
   setAddOrsSession
@@ -82,7 +86,11 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     })),
     newSites: sections.newSites,
     registeredSitesAddedSites: sections.registeredSitesAdded,
-    backLink: banners.readOnly
+    // RA-481: only route back to the query task list while the application
+    // itself is mid-query — a locked-but-not-queried application is
+    // read-only for a different reason and belongs back on the ordinary
+    // task list, which renders read-only in that case too.
+    backLink: banners.isQueriedApplication
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     addOrsUrl: addOrsUrl(applicationId),
@@ -93,7 +101,8 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
     querySummary: banners.querySummary ?? null,
     regulatorQueryFields: banners.regulatorQueryFields ?? null,
-    readOnly: banners.readOnly ?? false
+    readOnly: banners.readOnly ?? false,
+    isQueriedApplication: banners.isQueriedApplication ?? false
   }
 }
 
@@ -126,7 +135,7 @@ async function removeOrDeleteSite(
   submitAction,
   siteId
 ) {
-  const { h, t, logger } = ctx
+  const { h, t, logger, request } = ctx
   const siteIdInt = Number.parseInt(siteId, 10)
   const updatedSites =
     submitAction === 'deleteNewSite'
@@ -145,6 +154,12 @@ async function removeOrDeleteSite(
     logger.error(
       `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
     )
+    // RA-481: a 409 means the application locked between the guard check
+    // in the handler and this write landing — send the operator back to
+    // the same page so it re-fetches and renders the section read-only.
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
     return renderSaveError(h, t, applicationId, rawSites)
   }
   return h.redirect(selectOverseasSitesUrl(applicationId))
@@ -156,7 +171,7 @@ async function saveOverseasSitesForLater(
   applicationId,
   rawSites
 ) {
-  const { h, t, logger } = ctx
+  const { h, t, logger, request } = ctx
   try {
     await accreditationApiService.patchOverseasSites(
       organisationId,
@@ -167,6 +182,12 @@ async function saveOverseasSitesForLater(
     logger.error(
       `Error saving overseas sites for ${applicationId}: ${err.message}`
     )
+    // RA-481: a 409 means the application locked between the guard check
+    // in the handler and this write landing — send the operator back to
+    // the same page so it re-fetches and renders the section read-only.
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
     return renderSaveError(h, t, applicationId, rawSites)
   }
   return h.redirect(taskListUrl(applicationId))
@@ -179,7 +200,7 @@ async function revertSiteAccreditation(
   rawSites,
   siteId
 ) {
-  const { h, t, logger } = ctx
+  const { h, t, logger, request } = ctx
   try {
     await accreditationApiService.revertOverseasSite(
       organisationId,
@@ -190,6 +211,12 @@ async function revertSiteAccreditation(
     logger.error(
       `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
     )
+    // RA-481: a 409 means the application locked between the guard check
+    // in the handler and this write landing — send the operator back to
+    // the same page so it re-fetches and renders the section read-only.
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
     return renderSaveError(h, t, applicationId, rawSites)
   }
   return h.redirect(selectOverseasSitesUrl(applicationId))
@@ -265,7 +292,8 @@ export const selectOverseasSitesGetController = {
                 }
               ]
             : null,
-          readOnly
+          readOnly,
+          isQueriedApplication: application.applicationStatus === 'Queried'
         }
       )
     )
@@ -357,16 +385,20 @@ export const selectOverseasSitesPostController = {
       ).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.overseasSites?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.overseasSites?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const rawSites = application.overseasSites?.sites ?? []
 
-    const ctx = { h, t, logger: request.server.logger }
+    const ctx = { h, t, request, logger: request.server.logger }
 
     if (
       submitAction === 'removeAccredited' ||

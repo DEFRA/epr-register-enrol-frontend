@@ -9,6 +9,7 @@ import {
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
+import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 
 const APPLICATION_ID = 'app-is-scd-001'
 const BASE_URL = `/accreditation/add-interim-site/${APPLICATION_ID}/site-contact-details`
@@ -101,6 +102,28 @@ describe('#addInterimSiteContactDetailsController', () => {
       expect(result).toContain(SELECT_ORS_URL)
     })
 
+    // RA-481: this wizard holds its draft in session, not on the
+    // application, so once overseasSites is locked there's nothing
+    // meaningful to render read-only — send the operator back to the
+    // section's list page instead.
+    test('redirects to select-overseas-sites when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+
     test('pre-populates fields from session when returning via Back', async () => {
       const postResponse = await server.inject({
         method: 'POST',
@@ -145,6 +168,25 @@ describe('#addInterimSiteContactDetailsController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(NEXT_URL)
+    })
+
+    test('redirects to select-overseas-sites without saving when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: VALID_PAYLOAD
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
     test('returns 400 when contact name is empty', async () => {
