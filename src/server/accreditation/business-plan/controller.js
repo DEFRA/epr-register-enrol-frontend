@@ -2,6 +2,7 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
 import {
@@ -249,7 +250,7 @@ function handleBusinessPlanSaveError({
   // submitted) in the gap between that check and this request landing —
   // send the operator to the section's own page so it re-fetches and
   // renders read-only, rather than a raw error.
-  if (err.status === 409) {
+  if (err.status === statusCodes.conflict) {
     return h.redirect(request.path)
   }
   if (!err.status || err.status >= 500) {

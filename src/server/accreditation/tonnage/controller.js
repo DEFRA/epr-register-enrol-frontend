@@ -2,6 +2,7 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
@@ -143,7 +144,7 @@ function handleTonnageSaveError({
   // RA-481: a 409 means the application locked between the guard check
   // above and this write landing — send the operator back to the
   // section's own page so it re-fetches and renders read-only.
-  if (error.status === 409) {
+  if (error.status === statusCodes.conflict) {
     return h.redirect(request.path)
   }
   if (!error.status || error.status >= 500) {

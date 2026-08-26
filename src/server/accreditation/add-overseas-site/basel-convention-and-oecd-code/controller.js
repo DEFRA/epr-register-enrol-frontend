@@ -105,6 +105,48 @@ export const addOrsBaselCodeGetController = {
   }
 }
 
+// Extracted from addOrsBaselCodePostController (SonarCloud: function too
+// long) — the invalid/duplicate/at-least-one-required checks are a
+// self-contained pass over `values` with no dependency on the rest of the
+// handler's flow.
+function validateBaselCodes(values, t) {
+  const errors = {}
+  const seenCodes = new Set()
+  let anyCodeEntered = false
+
+  values.forEach((value, index) => {
+    if (!value) {
+      return
+    }
+
+    anyCodeEntered = true
+
+    if (!BASEL_OECD_CODES_SET.has(value.toUpperCase())) {
+      errors[index] = t(
+        'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
+      )
+      return
+    }
+
+    if (seenCodes.has(value.toUpperCase())) {
+      errors[index] = t(
+        'pages.addOverseasSite.baselAndOecdCodes.validation.duplicateCode'
+      )
+      return
+    }
+
+    seenCodes.add(value.toUpperCase())
+  })
+
+  if (!anyCodeEntered) {
+    errors[0] = t(
+      'pages.addOverseasSite.baselAndOecdCodes.validation.atLeastOneCodeRequired'
+    )
+  }
+
+  return errors
+}
+
 export const addOrsBaselCodePostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -155,39 +197,7 @@ export const addOrsBaselCodePostController = {
       )
     }
 
-    const errors = {}
-    const seenCodes = new Set()
-    let anyCodeEntered = false
-
-    values.forEach((value, index) => {
-      if (!value) {
-        return
-      }
-
-      anyCodeEntered = true
-
-      if (!BASEL_OECD_CODES_SET.has(value.toUpperCase())) {
-        errors[index] = t(
-          'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
-        )
-        return
-      }
-
-      if (seenCodes.has(value.toUpperCase())) {
-        errors[index] = t(
-          'pages.addOverseasSite.baselAndOecdCodes.validation.duplicateCode'
-        )
-        return
-      }
-
-      seenCodes.add(value.toUpperCase())
-    })
-
-    if (!anyCodeEntered) {
-      errors[0] = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.atLeastOneCodeRequired'
-      )
-    }
+    const errors = validateBaselCodes(values, t)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

@@ -119,12 +119,10 @@ function renderPage(h, viewData) {
 function buildViewData(
   t,
   applicationId,
-  siteId,
   siteName,
   payload,
   errors,
-  readOnly = false,
-  isQueriedApplication = false
+  { readOnly = false, isQueriedApplication = false } = {}
 ) {
   return {
     pageTitle: t('pages.uploadBesEvidence.title'),
@@ -168,7 +166,6 @@ export const uploadBesEvidenceGetController = {
         buildViewData(
           t,
           applicationId,
-          siteId,
           '',
           {},
           {
@@ -196,12 +193,13 @@ export const uploadBesEvidenceGetController = {
       buildViewData(
         t,
         applicationId,
-        siteId,
         siteName,
         {},
         {},
-        readOnly,
-        application.applicationStatus === 'Queried'
+        {
+          readOnly,
+          isQueriedApplication: application.applicationStatus === 'Queried'
+        }
       )
     )
   }
@@ -229,7 +227,7 @@ export const uploadBesEvidencePostController = {
       )
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, '', payload, {
+        buildViewData(t, applicationId, '', payload, {
           error: t('pages.uploadBesEvidence.validation.fetchError')
         })
       ).code(500)
@@ -265,7 +263,7 @@ export const uploadBesEvidencePostController = {
     if (!filename) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.noFile')
         })
       ).code(400)
@@ -274,7 +272,7 @@ export const uploadBesEvidencePostController = {
     if (!validateFileExtension(filename)) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.invalidType')
         })
       ).code(400)
@@ -283,7 +281,7 @@ export const uploadBesEvidencePostController = {
     if (fileSize > MAX_FILE_BYTES) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.fileTooLarge')
         })
       ).code(400)
@@ -297,7 +295,7 @@ export const uploadBesEvidencePostController = {
     if (!validFrom) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           validFromError: t(
             'pages.uploadBesEvidence.validation.validFromRequired'
           )
@@ -313,7 +311,7 @@ export const uploadBesEvidencePostController = {
     if (validToError) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           validToError
         })
       ).code(400)
@@ -339,7 +337,7 @@ export const uploadBesEvidencePostController = {
       )
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.uploadError')
         })
       ).code(500)
@@ -358,7 +356,7 @@ export const uploadBesEvidencePostController = {
       )
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteId, siteName, payload, {
+        buildViewData(t, applicationId, siteName, payload, {
           fileError: t('pages.uploadBesEvidence.validation.uploadError')
         })
       ).code(500)

@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
 import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddOrsSession,
@@ -284,7 +285,7 @@ export const addOrsCyaPostController = {
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the
       // section's own (now read-only) list page rather than a raw error.
-      if (err.status === 409) {
+      if (err.status === statusCodes.conflict) {
         return h.redirect(selectOrsUrl(applicationId))
       }
       return renderPage(

@@ -35,8 +35,7 @@ function buildViewData(
   siteName,
   uploads,
   error,
-  readOnly = false,
-  isQueriedApplication = false
+  { readOnly = false, isQueriedApplication = false } = {}
 ) {
   return {
     pageTitle: t('pages.cyaEvidenceForSite.title'),
@@ -98,16 +97,10 @@ export const cyaEvidenceForSiteGetController = {
 
     return renderPage(
       h,
-      buildViewData(
-        t,
-        applicationId,
-        siteId,
-        siteName,
-        uploads,
-        null,
+      buildViewData(t, applicationId, siteId, siteName, uploads, null, {
         readOnly,
-        application.applicationStatus === 'Queried'
-      )
+        isQueriedApplication: application.applicationStatus === 'Queried'
+      })
     )
   }
 }

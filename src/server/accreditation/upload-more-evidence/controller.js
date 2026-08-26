@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
@@ -26,8 +27,7 @@ function buildViewData(
   siteName,
   answer,
   error,
-  readOnly = false,
-  isQueriedApplication = false
+  { readOnly = false, isQueriedApplication = false } = {}
 ) {
   return {
     pageTitle: t('pages.uploadMoreEvidence.title'),
@@ -88,17 +88,52 @@ export const uploadMoreEvidenceGetController = {
 
     return renderPage(
       h,
+      buildViewData(t, applicationId, siteId, siteName, null, null, {
+        readOnly,
+        isQueriedApplication: application.applicationStatus === 'Queried'
+      })
+    )
+  }
+}
+
+// Extracted from uploadMoreEvidencePostController (SonarCloud: function too
+// long) — isolates the patch-and-handle-409 step so the handler's own flow
+// reads as a sequence of guards/redirects rather than one long block.
+async function submitNoMoreEvidenceAnswer(
+  request,
+  h,
+  t,
+  { organisationId, applicationId, siteIdInt, siteId, siteName, answer }
+) {
+  try {
+    await accreditationApiService.patchBesEvidence(
+      organisationId,
+      applicationId,
+      siteIdInt,
+      { doYouWantToUploadMoreEvidence: false }
+    )
+    return null
+  } catch (err) {
+    request.server.logger.error(
+      `Error patching BES evidence for site ${siteId} on ${applicationId}: ${err.message}`
+    )
+    // RA-481: a 409 means the application locked between the guard check
+    // above and this write landing — send the operator back to this page
+    // so it re-fetches and renders read-only.
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
+    return renderPage(
+      h,
       buildViewData(
         t,
         applicationId,
         siteId,
         siteName,
-        null,
-        null,
-        readOnly,
-        application.applicationStatus === 'Queried'
+        answer,
+        t('pages.uploadMoreEvidence.saveError')
       )
-    )
+    ).code(500)
   }
 }
 
@@ -169,34 +204,14 @@ export const uploadMoreEvidencePostController = {
       return h.redirect(uploadBesEvidenceUrl(applicationId, siteId))
     }
 
-    try {
-      await accreditationApiService.patchBesEvidence(
-        organisationId,
-        applicationId,
-        siteIdInt,
-        { doYouWantToUploadMoreEvidence: false }
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error patching BES evidence for site ${siteId} on ${applicationId}: ${err.message}`
-      )
-      // RA-481: a 409 means the application locked between the guard check
-      // above and this write landing — send the operator back to this page
-      // so it re-fetches and renders read-only.
-      if (err.status === 409) {
-        return h.redirect(request.path)
-      }
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteId,
-          siteName,
-          answer,
-          t('pages.uploadMoreEvidence.saveError')
-        )
-      ).code(500)
+    const patchFailureResponse = await submitNoMoreEvidenceAnswer(
+      request,
+      h,
+      t,
+      { organisationId, applicationId, siteIdInt, siteId, siteName, answer }
+    )
+    if (patchFailureResponse) {
+      return patchFailureResponse
     }
 
     return h.redirect(cyaUrl(applicationId, siteId))

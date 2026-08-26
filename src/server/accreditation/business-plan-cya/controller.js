@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
@@ -138,6 +139,65 @@ export const businessPlanCyaGetController = {
   }
 }
 
+function buildBusinessPlanPatchBody(bp) {
+  const patchBody = { sectionStatus: 'Completed' }
+  for (const field of PERCENT_FIELDS) {
+    const category = PERCENT_FIELD_TO_CATEGORY[field]
+    const item = findBpItem(bp, category)
+    patchBody[field] = item.percentSpent ?? null
+  }
+  for (const field of DETAIL_FIELDS) {
+    const category = DETAIL_FIELD_TO_CATEGORY[field]
+    const item = findBpItem(bp, category)
+    patchBody[field] = item.detailedDescription ?? ''
+  }
+  return patchBody
+}
+
+// Extracted from businessPlanCyaPostController (SonarCloud: function too
+// long) — isolates the patch-and-handle-409 step, returning a response only
+// on failure so the handler's own flow stays a simple "confirm, then
+// redirect" sequence.
+async function confirmBusinessPlan(
+  request,
+  h,
+  t,
+  { organisationId, applicationId, application }
+) {
+  const patchBody = buildBusinessPlanPatchBody(application.businessPlan)
+  try {
+    await accreditationApiService.patchBusinessPlan(
+      organisationId,
+      applicationId,
+      patchBody
+    )
+    return null
+  } catch (err) {
+    request.server.logger.error(
+      `Error confirming business plan for ${applicationId}: ${err.message}`
+    )
+    // RA-481: a 409 means the application locked between the guard check
+    // above and this write landing — send the operator back to this page
+    // so it re-fetches and renders read-only.
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
+    const { percentRows, detailRows } = buildSummaryRows(
+      application,
+      t,
+      applicationId
+    )
+    return renderPage(h, {
+      ...headingViewData(t, application),
+      percentRows,
+      detailRows,
+      backLink: taskListUrl(applicationId),
+      taskListLink: taskListUrl(applicationId),
+      error: t('pages.businessPlanCya.validation.confirmError')
+    }).code(500)
+  }
+}
+
 export const businessPlanCyaPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -179,48 +239,13 @@ export const businessPlanCyaPostController = {
       return guardRedirect
     }
 
-    const bp = application.businessPlan
-    const patchBody = { sectionStatus: 'Completed' }
-    for (const field of PERCENT_FIELDS) {
-      const category = PERCENT_FIELD_TO_CATEGORY[field]
-      const item = findBpItem(bp, category)
-      patchBody[field] = item.percentSpent ?? null
-    }
-    for (const field of DETAIL_FIELDS) {
-      const category = DETAIL_FIELD_TO_CATEGORY[field]
-      const item = findBpItem(bp, category)
-      patchBody[field] = item.detailedDescription ?? ''
-    }
-
-    try {
-      await accreditationApiService.patchBusinessPlan(
-        organisationId,
-        applicationId,
-        patchBody
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error confirming business plan for ${applicationId}: ${err.message}`
-      )
-      // RA-481: a 409 means the application locked between the guard check
-      // above and this write landing — send the operator back to this page
-      // so it re-fetches and renders read-only.
-      if (err.status === 409) {
-        return h.redirect(request.path)
-      }
-      const { percentRows, detailRows } = buildSummaryRows(
-        application,
-        t,
-        applicationId
-      )
-      return renderPage(h, {
-        ...headingViewData(t, application),
-        percentRows,
-        detailRows,
-        backLink: taskListUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        error: t('pages.businessPlanCya.validation.confirmError')
-      }).code(500)
+    const confirmFailureResponse = await confirmBusinessPlan(request, h, t, {
+      organisationId,
+      applicationId,
+      application
+    })
+    if (confirmFailureResponse) {
+      return confirmFailureResponse
     }
 
     return h.redirect(taskListUrl(applicationId))
