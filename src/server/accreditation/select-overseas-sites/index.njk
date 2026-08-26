@@ -117,7 +117,7 @@
                 <dt class="govuk-summary-list__key" data-testid="accredited-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
                 <dd class="govuk-summary-list__value" data-testid="accredited-site-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
-                  <dd class="govuk-summary-list__actions">
+                  <dd class="govuk-summary-list__actions select-overseas-sites__actions">
                     <a href="{{ site.editUrl }}" class="govuk-link"
                        data-testid="edit-button-accredited-{{ site.siteId }}">
                       {{ t('pages.selectOverseasSites.changeButton') }}
@@ -172,7 +172,7 @@
                 <dt class="govuk-summary-list__key" data-testid="new-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
                 <dd class="govuk-summary-list__value" data-testid="new-site-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
-                  <dd class="govuk-summary-list__actions">
+                  <dd class="govuk-summary-list__actions select-overseas-sites__actions">
                     <a href="{{ site.editUrl }}" class="govuk-link"
                        data-testid="edit-button-new-{{ site.siteId }}">
                       {{ t('pages.selectOverseasSites.changeButton') }}
@@ -203,7 +203,7 @@
                 <dt class="govuk-summary-list__key" data-testid="registered-sites-added-name-{{ site.siteId }}">{{ site.siteName }}</dt>
                 <dd class="govuk-summary-list__value" data-testid="registered-sites-added-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
-                  <dd class="govuk-summary-list__actions">
+                  <dd class="govuk-summary-list__actions select-overseas-sites__actions">
                     <a href="{{ site.editUrl }}" class="govuk-link"
                        data-testid="edit-button-registered-added-{{ site.siteId }}">
                       {{ t('pages.selectOverseasSites.changeButton') }}
