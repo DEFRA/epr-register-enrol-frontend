@@ -246,6 +246,29 @@ async function loadSiteForWizardEntry(request, h) {
   return { applicationId, site }
 }
 
+// Shared by the promote-entry and edit-entry controllers below: the wizard-session fields
+// common to both journeys, keyed off the existing site (mirrors the buildSitePayload precedent
+// in add-overseas-site/check-your-answers/controller.js, which the same RA-482 change
+// extracted for the same reason -- create/promote/update all shape this data identically, so
+// only the id key that ties the session back to the site on submit differs per entry point).
+function buildOrsSessionSeed(site) {
+  return {
+    siteName: site.siteName ?? '',
+    addressLine1: site.addressLine1 ?? '',
+    addressLine2: site.addressLine2 ?? '',
+    townOrCity: site.townOrCity ?? '',
+    country: site.country ?? '',
+    coordinates: site.coordinates ?? '',
+    siteContactName: site.contactName ?? '',
+    siteContactEmail: site.contactEmail ?? '',
+    siteContactPhone: site.contactPhone ?? '',
+    recyclingOperationCodes: site.operationCodes ?? [],
+    baselAndOecdCodes: [site.code1, site.code2, site.code3].filter(Boolean),
+    repatriatedLoads: site.repatriatedLoads ?? '',
+    conditionsOfExport: site.conditionsOfExport ?? null
+  }
+}
+
 // Entry point for the Registered section's "Add To Accreditation" button — seeds the
 // add-overseas-site wizard session from an existing registered site's known fields (mirrors
 // the linkedSiteId precedent used to seed the add-interim-site wizard from check-your-answers)
@@ -263,19 +286,7 @@ export const selectOverseasSitesPromoteEntryGetController = {
 
     resetAddOrsSession(request)
     setAddOrsSession(request, {
-      siteName: site.siteName ?? '',
-      addressLine1: site.addressLine1 ?? '',
-      addressLine2: site.addressLine2 ?? '',
-      townOrCity: site.townOrCity ?? '',
-      country: site.country ?? '',
-      coordinates: site.coordinates ?? '',
-      siteContactName: site.contactName ?? '',
-      siteContactEmail: site.contactEmail ?? '',
-      siteContactPhone: site.contactPhone ?? '',
-      recyclingOperationCodes: site.operationCodes ?? [],
-      baselAndOecdCodes: [site.code1, site.code2, site.code3].filter(Boolean),
-      repatriatedLoads: site.repatriatedLoads ?? '',
-      conditionsOfExport: site.conditionsOfExport ?? null,
+      ...buildOrsSessionSeed(site),
       promotingSiteId: site.siteId
     })
 
@@ -300,19 +311,7 @@ export const selectOverseasSitesEditEntryGetController = {
 
     resetAddOrsSession(request)
     setAddOrsSession(request, {
-      siteName: site.siteName ?? '',
-      addressLine1: site.addressLine1 ?? '',
-      addressLine2: site.addressLine2 ?? '',
-      townOrCity: site.townOrCity ?? '',
-      country: site.country ?? '',
-      coordinates: site.coordinates ?? '',
-      siteContactName: site.contactName ?? '',
-      siteContactEmail: site.contactEmail ?? '',
-      siteContactPhone: site.contactPhone ?? '',
-      recyclingOperationCodes: site.operationCodes ?? [],
-      baselAndOecdCodes: [site.code1, site.code2, site.code3].filter(Boolean),
-      repatriatedLoads: site.repatriatedLoads ?? '',
-      conditionsOfExport: site.conditionsOfExport ?? null,
+      ...buildOrsSessionSeed(site),
       editingSiteId: site.siteId
     })
 
