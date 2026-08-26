@@ -930,5 +930,91 @@ describe('#addOrsCyaController', () => {
 
       expect(result).toContain('data-testid="ors-edit-success-banner"')
     })
+
+    // The edit-entry tests above all seed the session via seedEditSession() (one GET, then
+    // straight to CYA) and never drive an individual step's own POST handler in edit mode --
+    // including recycling-operation-details, the step CI's own E2E run reported as stalling on
+    // this story. Walk the real step chain instead, submitting the site's already-selected
+    // recycling operation code back through recycling-operation-details exactly as an edit
+    // replay does, to prove a regression in any one step's redirect fails this suite too.
+    test('walks the full edit-mode step chain (site-name through repatriated-loads) and reaches check-your-answers', async () => {
+      const sessionCookie = await seedEditSession()
+      const stepUrl = (step) =>
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/${step}`
+      const postStep = (step, payload) =>
+        server.inject({
+          method: 'POST',
+          url: stepUrl(step),
+          headers: {
+            ...operatorHeaders,
+            'content-type': 'application/x-www-form-urlencoded',
+            cookie: sessionCookie
+          },
+          payload
+        })
+
+      const siteNameResponse = await postStep(
+        'site-name',
+        'siteName=Accredited Site'
+      )
+      expect(siteNameResponse.statusCode).toBe(statusCodes.redirect)
+      expect(siteNameResponse.headers.location).toBe(stepUrl('site-location'))
+
+      const siteLocationResponse = await postStep(
+        'site-location',
+        'addressLine1=Unit+1&townOrCity=Rotterdam&country=Netherlands&coordinates=51.9225%2C+4.4792'
+      )
+      expect(siteLocationResponse.statusCode).toBe(statusCodes.redirect)
+      expect(siteLocationResponse.headers.location).toBe(
+        stepUrl('site-contact-details')
+      )
+
+      const contactDetailsResponse = await postStep(
+        'site-contact-details',
+        'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com'
+      )
+      expect(contactDetailsResponse.statusCode).toBe(statusCodes.redirect)
+      expect(contactDetailsResponse.headers.location).toBe(
+        stepUrl('recycling-operation-details')
+      )
+
+      // ACCREDITED_SITE's own operationCodes (['R3']) is what edit-entry pre-populates the
+      // session with -- submitting that same code back is exactly what a real edit replay
+      // does, whether via a checkbox that was already checked or (as here) an explicit repost.
+      const recyclingOperationResponse = await postStep(
+        'recycling-operation-details',
+        'recyclingOperationCodes=R3'
+      )
+      expect(recyclingOperationResponse.statusCode).toBe(statusCodes.redirect)
+      expect(recyclingOperationResponse.headers.location).toBe(
+        stepUrl('basel-convention-and-oecd-code')
+      )
+
+      const baselCodesResponse = await postStep(
+        'basel-convention-and-oecd-code',
+        'visibleCount=1&code-0=A1181'
+      )
+      expect(baselCodesResponse.statusCode).toBe(statusCodes.redirect)
+      expect(baselCodesResponse.headers.location).toBe(
+        stepUrl('repatriated-loads')
+      )
+
+      const repatriatedLoadsResponse = await postStep(
+        'repatriated-loads',
+        'repatriatedLoads=Details'
+      )
+      expect(repatriatedLoadsResponse.statusCode).toBe(statusCodes.redirect)
+      expect(repatriatedLoadsResponse.headers.location).toBe(
+        stepUrl('check-your-answers')
+      )
+
+      const cyaGetResponse = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+      expect(cyaGetResponse.statusCode).toBe(statusCodes.ok)
+      expect(cyaGetResponse.result).toContain('Accredited Site')
+    })
   })
 })

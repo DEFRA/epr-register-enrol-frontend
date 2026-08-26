@@ -251,22 +251,34 @@ async function loadSiteForWizardEntry(request, h) {
 // in add-overseas-site/check-your-answers/controller.js, which the same RA-482 change
 // extracted for the same reason -- create/promote/update all shape this data identically, so
 // only the id key that ties the session back to the site on submit differs per entry point).
+// [sessionField, siteField, fallback] rather than a `??`-per-line object literal — a chain of
+// that many nullish-coalescing operators in one expression trips SonarCloud's cyclomatic-
+// complexity gate even though there's no real branching here, just a flat field-by-field default.
+const ORS_SESSION_SEED_FIELDS = [
+  ['siteName', 'siteName', ''],
+  ['addressLine1', 'addressLine1', ''],
+  ['addressLine2', 'addressLine2', ''],
+  ['townOrCity', 'townOrCity', ''],
+  ['country', 'country', ''],
+  ['coordinates', 'coordinates', ''],
+  ['siteContactName', 'contactName', ''],
+  ['siteContactEmail', 'contactEmail', ''],
+  ['siteContactPhone', 'contactPhone', ''],
+  ['recyclingOperationCodes', 'operationCodes', []],
+  ['repatriatedLoads', 'repatriatedLoads', ''],
+  ['conditionsOfExport', 'conditionsOfExport', null]
+]
+
 function buildOrsSessionSeed(site) {
-  return {
-    siteName: site.siteName ?? '',
-    addressLine1: site.addressLine1 ?? '',
-    addressLine2: site.addressLine2 ?? '',
-    townOrCity: site.townOrCity ?? '',
-    country: site.country ?? '',
-    coordinates: site.coordinates ?? '',
-    siteContactName: site.contactName ?? '',
-    siteContactEmail: site.contactEmail ?? '',
-    siteContactPhone: site.contactPhone ?? '',
-    recyclingOperationCodes: site.operationCodes ?? [],
-    baselAndOecdCodes: [site.code1, site.code2, site.code3].filter(Boolean),
-    repatriatedLoads: site.repatriatedLoads ?? '',
-    conditionsOfExport: site.conditionsOfExport ?? null
-  }
+  const seed = ORS_SESSION_SEED_FIELDS.reduce(
+    (acc, [sessionField, siteField, fallback]) => {
+      acc[sessionField] = site[siteField] ?? fallback
+      return acc
+    },
+    {}
+  )
+  seed.baselAndOecdCodes = [site.code1, site.code2, site.code3].filter(Boolean)
+  return seed
 }
 
 // Entry point for the Registered section's "Add To Accreditation" button — seeds the

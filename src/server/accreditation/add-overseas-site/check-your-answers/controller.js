@@ -188,6 +188,75 @@ export const addOrsCyaGetController = {
   }
 }
 
+function handleDeleteBaselCode(request, h, session, action, applicationId) {
+  const codeIndex = Number.parseInt(
+    action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
+    10
+  )
+  const codes = [...(session.baselAndOecdCodes ?? [])]
+  if (!Number.isNaN(codeIndex) && codeIndex >= 0 && codeIndex < codes.length) {
+    codes.splice(codeIndex, 1)
+    setAddOrsSession(request, { baselAndOecdCodes: codes })
+  }
+  return h.redirect(cyaUrl(applicationId))
+}
+
+// editingSiteId and promotingSiteId are never both set -- resetAddOrsSession clears the wizard
+// session before either entry point seeds its own key -- so these are mutually exclusive. Each
+// mode's API method and success-flash key are resolved once here, rather than re-derived
+// separately for the API call, the error log label, and the flash key.
+const SITE_SAVE_MODES = {
+  editing: {
+    apiMethod: 'updateOverseasSite',
+    successFlash: ORS_EDIT_SUCCESS_FLASH
+  },
+  promoting: {
+    apiMethod: 'promoteOverseasSite',
+    successFlash: ORS_PROMOTE_SUCCESS_FLASH
+  },
+  creating: {
+    apiMethod: 'createOverseasSite',
+    successFlash: ORS_SUCCESS_FLASH
+  }
+}
+
+function resolveSiteSaveMode(session) {
+  if (session.editingSiteId != null) {
+    return 'editing'
+  }
+  if (session.promotingSiteId != null) {
+    return 'promoting'
+  }
+  return 'creating'
+}
+
+async function saveSite(mode, session, organisationId, applicationId) {
+  const payload = buildSitePayload(session)
+  if (mode === 'editing') {
+    return accreditationApiService.updateOverseasSite(
+      organisationId,
+      applicationId,
+      session.editingSiteId,
+      payload
+    )
+  }
+  if (mode === 'promoting') {
+    return accreditationApiService.promoteOverseasSite(
+      organisationId,
+      applicationId,
+      session.promotingSiteId,
+      payload
+    )
+  }
+  // RA-482: orsId is generated server-side now -- savedSite (read from the response below)
+  // carries the id the server assigned, so there is nothing to compute here.
+  return accreditationApiService.createOverseasSite(
+    organisationId,
+    applicationId,
+    payload
+  )
+}
+
 export const addOrsCyaPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
@@ -195,20 +264,7 @@ export const addOrsCyaPostController = {
     const action = request.payload?.action ?? ''
 
     if (action.startsWith(DELETE_BASEL_CODE_ACTION_PREFIX)) {
-      const codeIndex = Number.parseInt(
-        action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
-        10
-      )
-      const codes = [...(session.baselAndOecdCodes ?? [])]
-      if (
-        !Number.isNaN(codeIndex) &&
-        codeIndex >= 0 &&
-        codeIndex < codes.length
-      ) {
-        codes.splice(codeIndex, 1)
-        setAddOrsSession(request, { baselAndOecdCodes: codes })
-      }
-      return h.redirect(cyaUrl(applicationId))
+      return handleDeleteBaselCode(request, h, session, action, applicationId)
     }
 
     const { t } = getLocaleAndTranslator(request)
@@ -222,45 +278,15 @@ export const addOrsCyaPostController = {
     const organisationId = request.yar.get(
       ACCREDITATION_SESSION_KEYS.organisationId
     )
-
-    // editingSiteId and promotingSiteId are never both set -- resetAddOrsSession clears the
-    // wizard session before either entry point seeds its own key -- so these are mutually
-    // exclusive.
-    const isEditing = session.editingSiteId != null
-    const isPromoting = session.promotingSiteId != null
+    const mode = resolveSiteSaveMode(session)
 
     let savedSite
     try {
-      if (isEditing) {
-        savedSite = await accreditationApiService.updateOverseasSite(
-          organisationId,
-          applicationId,
-          session.editingSiteId,
-          buildSitePayload(session)
-        )
-      } else if (isPromoting) {
-        savedSite = await accreditationApiService.promoteOverseasSite(
-          organisationId,
-          applicationId,
-          session.promotingSiteId,
-          buildSitePayload(session)
-        )
-      } else {
-        // RA-482: orsId is generated server-side now -- savedSite (read from the response
-        // below) carries the id the server assigned, so there is nothing to compute here.
-        savedSite = await accreditationApiService.createOverseasSite(
-          organisationId,
-          applicationId,
-          buildSitePayload(session)
-        )
-      }
+      savedSite = await saveSite(mode, session, organisationId, applicationId)
     } catch (err) {
-      const action = isEditing
-        ? 'updateOverseasSite'
-        : isPromoting
-          ? 'promoteOverseasSite'
-          : 'createOverseasSite'
-      request.server.logger.error(`CYA ${action} error: ${err.message}`)
+      request.server.logger.error(
+        `CYA ${SITE_SAVE_MODES[mode].apiMethod} error: ${err.message}`
+      )
       return renderPage(
         h,
         buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))
@@ -269,17 +295,12 @@ export const addOrsCyaPostController = {
 
     clearAddOrsSession(request)
 
-    if (request.payload?.action === ADD_INTERIM_SITE_ACTION) {
+    if (action === ADD_INTERIM_SITE_ACTION) {
       setAddInterimSiteSession(request, { linkedSiteId: savedSite?.siteId })
       return h.redirect(addInterimSiteCountryUrl(applicationId))
     }
 
-    const successFlash = isEditing
-      ? ORS_EDIT_SUCCESS_FLASH
-      : isPromoting
-        ? ORS_PROMOTE_SUCCESS_FLASH
-        : ORS_SUCCESS_FLASH
-    request.yar.flash(successFlash, true)
+    request.yar.flash(SITE_SAVE_MODES[mode].successFlash, true)
     return h.redirect(selectOrsUrl(applicationId))
   }
 }
