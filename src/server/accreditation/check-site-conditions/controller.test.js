@@ -57,6 +57,26 @@ describe('#checkSiteConditionsController', () => {
   }
 
   describe('GET /accreditation/check-site-conditions/{applicationId}/{siteId}', () => {
+    test('redirects to query-task-list when application is Queried and BES evidence section has not been started', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
     test('returns 200 with page heading and site name', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -138,6 +158,28 @@ describe('#checkSiteConditionsController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('[Welsh] Check the site fulfils the conditions')
     })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect), without the confirm button, when application is locked (%s) and BES evidence section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+        expect(result).not.toContain('data-testid="confirm-button"')
+      }
+    )
   })
 
   describe('POST /accreditation/check-site-conditions/{applicationId}/{siteId}', () => {

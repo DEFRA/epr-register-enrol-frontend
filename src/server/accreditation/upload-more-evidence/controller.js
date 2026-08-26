@@ -1,6 +1,12 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 
 function uploadBesEvidenceUrl(applicationId, siteId) {
   return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
@@ -14,14 +20,24 @@ function renderPage(h, viewData) {
   return h.view('accreditation/upload-more-evidence/index', viewData)
 }
 
-function buildViewData(t, applicationId, siteId, siteName, answer, error) {
+function buildViewData(
+  t,
+  applicationId,
+  siteId,
+  siteName,
+  answer,
+  error,
+  { readOnly = false, isQueriedApplication = false } = {}
+) {
   return {
     pageTitle: t('pages.uploadMoreEvidence.title'),
     heading: `${t('pages.uploadMoreEvidence.heading')} ${siteName}?`,
     backLink: uploadBesEvidenceUrl(applicationId, siteId),
     siteName,
     answer,
-    error
+    error,
+    readOnly,
+    isQueriedApplication
   }
 }
 
@@ -57,6 +73,14 @@ export const uploadMoreEvidenceGetController = {
       ).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.besEvidence?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const site = application.overseasSites?.sites?.find(
       (s) => s.siteId === siteIdInt
     )
@@ -64,8 +88,52 @@ export const uploadMoreEvidenceGetController = {
 
     return renderPage(
       h,
-      buildViewData(t, applicationId, siteId, siteName, null, null)
+      buildViewData(t, applicationId, siteId, siteName, null, null, {
+        readOnly,
+        isQueriedApplication: application.applicationStatus === 'Queried'
+      })
     )
+  }
+}
+
+// Extracted from uploadMoreEvidencePostController (SonarCloud: function too
+// long) — isolates the patch-and-handle-409 step so the handler's own flow
+// reads as a sequence of guards/redirects rather than one long block.
+async function submitNoMoreEvidenceAnswer(
+  request,
+  h,
+  t,
+  { organisationId, applicationId, siteIdInt, siteId, siteName, answer }
+) {
+  try {
+    await accreditationApiService.patchBesEvidence(
+      organisationId,
+      applicationId,
+      siteIdInt,
+      { doYouWantToUploadMoreEvidence: false }
+    )
+    return null
+  } catch (err) {
+    request.server.logger.error(
+      `Error patching BES evidence for site ${siteId} on ${applicationId}: ${err.message}`
+    )
+    // RA-481: a 409 means the application locked between the guard check
+    // above and this write landing — send the operator back to this page
+    // so it re-fetches and renders read-only.
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
+    return renderPage(
+      h,
+      buildViewData(
+        t,
+        applicationId,
+        siteId,
+        siteName,
+        answer,
+        t('pages.uploadMoreEvidence.saveError')
+      )
+    ).code(500)
   }
 }
 
@@ -102,6 +170,17 @@ export const uploadMoreEvidencePostController = {
       ).code(500)
     }
 
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.besEvidence?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const site = application.overseasSites?.sites?.find(
       (s) => s.siteId === siteIdInt
     )
@@ -125,28 +204,14 @@ export const uploadMoreEvidencePostController = {
       return h.redirect(uploadBesEvidenceUrl(applicationId, siteId))
     }
 
-    try {
-      await accreditationApiService.patchBesEvidence(
-        organisationId,
-        applicationId,
-        siteIdInt,
-        { doYouWantToUploadMoreEvidence: false }
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error patching BES evidence for site ${siteId} on ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteId,
-          siteName,
-          answer,
-          t('pages.uploadMoreEvidence.saveError')
-        )
-      ).code(500)
+    const patchFailureResponse = await submitNoMoreEvidenceAnswer(
+      request,
+      h,
+      t,
+      { organisationId, applicationId, siteIdInt, siteId, siteName, answer }
+    )
+    if (patchFailureResponse) {
+      return patchFailureResponse
     }
 
     return h.redirect(cyaUrl(applicationId, siteId))

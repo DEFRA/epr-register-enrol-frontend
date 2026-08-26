@@ -962,6 +962,10 @@
       "body": "[Welsh] This section has already been completed and is not part of the regulator's query. Go back to the query task list to update the queried section.",
       "backToQueryTaskList": "[Welsh] Back to query task list"
     },
+    "readOnlySubmittedSection": {
+      "heading": "[Welsh] You cannot edit this section",
+      "body": "[Welsh] This application has already been submitted, so this section is now read-only. Go back to the task list to view the rest of your application."
+    },
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",
       "tryAgain": "Trio eto"

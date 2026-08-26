@@ -305,6 +305,33 @@ describe('#tonnageAuthorityController', () => {
       )
     })
 
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders read-only (200, not a redirect) when application is locked (%s) and PRNs section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            prns: {
+              plannedTonnageBand: 'UpTo5000',
+              authorisers: [
+                { fullName: 'Jane Doe', email: 'jane@example.com' }
+              ],
+              sectionStatus: 'Completed'
+            }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+      }
+    )
+
     test('renders the page read-only when application is Queried and PRNs section is Completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -641,6 +668,69 @@ describe('#tonnageAuthorityController', () => {
   })
 
   describe('POST /accreditation/tonnage-authority/{applicationId} - saveAndContinue', () => {
+    test('redirects to query-task-list when application is Queried and PRNs section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          prns: {
+            plannedTonnageBand: 'UpTo5000',
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' }
+            ],
+            sectionStatus: 'NotStarted'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch')
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          prns: {
+            plannedTonnageBand: 'UpTo5000',
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' }
+            ],
+            sectionStatus: 'InProgress'
+          }
+        })
+      )
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/tonnage-authority/${APPLICATION_ID}`
+      )
+    })
+
     test('redirects to tonnage page without patching when tonnage has not been completed', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -758,6 +848,69 @@ describe('#tonnageAuthorityController', () => {
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
       expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page when application is locked (%s) and PRNs section is not Queried, without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            prns: {
+              authorisers: [
+                { fullName: 'Jane Smith', email: 'jane@example.com' }
+              ],
+              sectionStatus: 'Completed'
+            }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch')
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: {
+            submitAction: 'saveAndContinue',
+            selectedEmails: 'jane@example.com'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/tonnage-authority/${APPLICATION_ID}`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
+
+    test('allows the save when the application is locked but the PRNs section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Updated',
+          prns: {
+            plannedTonnageBand: 'UpTo5000',
+            authorisers: [
+              { fullName: 'Jane Smith', email: 'jane@example.com' }
+            ],
+            sectionStatus: 'Queried'
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: 'jane@example.com'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(patchSpy).toHaveBeenCalled()
     })
   })
 

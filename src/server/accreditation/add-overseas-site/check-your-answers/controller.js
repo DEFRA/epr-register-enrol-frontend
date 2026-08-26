@@ -1,6 +1,8 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddOrsSession,
   setAddOrsSession,
@@ -179,10 +181,60 @@ function buildSitePayload(session) {
   }
 }
 
+// Extracted from addOrsCyaPostController (SonarCloud cognitive complexity):
+// pulls the "delete one Basel/OECD code row" action fully out of the POST
+// handler's own branching, since it's a self-contained session mutation with
+// no dependency on the rest of the handler's flow.
+function handleDeleteBaselCode(request, h, session, action, applicationId) {
+  const codeIndex = Number.parseInt(
+    action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
+    10
+  )
+  const codes = [...(session.baselAndOecdCodes ?? [])]
+  if (!Number.isNaN(codeIndex) && codeIndex >= 0 && codeIndex < codes.length) {
+    codes.splice(codeIndex, 1)
+    setAddOrsSession(request, { baselAndOecdCodes: codes })
+  }
+  return h.redirect(cyaUrl(applicationId))
+}
+
+// Extracted from addOrsCyaPostController (SonarCloud cognitive complexity):
+// isolates the promote-vs-create branching so the handler's own try/catch
+// only has to decide how to report failure, not which API call to make.
+function submitOrsSite(organisationId, applicationId, session) {
+  if (session.promotingSiteId != null) {
+    return accreditationApiService.promoteOverseasSite(
+      organisationId,
+      applicationId,
+      session.promotingSiteId,
+      buildSitePayload(session)
+    )
+  }
+  return accreditationApiService.createOverseasSite(
+    organisationId,
+    applicationId,
+    buildSitePayload(session)
+  )
+}
+
 export const addOrsCyaGetController = {
-  handler(request, h) {
+  async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     return renderPage(h, buildViewData(t, applicationId, session, null))
   }
@@ -260,6 +312,20 @@ async function saveSite(mode, session, organisationId, applicationId) {
 export const addOrsCyaPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     const action = request.payload?.action ?? ''
 
@@ -287,6 +353,12 @@ export const addOrsCyaPostController = {
       request.server.logger.error(
         `CYA ${SITE_SAVE_MODES[mode].apiMethod} error: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to the
+      // section's own (now read-only) list page rather than a raw error.
+      if (err.status === statusCodes.conflict) {
+        return h.redirect(selectOrsUrl(applicationId))
+      }
       return renderPage(
         h,
         buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))

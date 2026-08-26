@@ -1,12 +1,16 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
@@ -120,9 +124,15 @@ export const tonnageAuthorityGetController = {
           ? buildRegulatorQuerySummary(sectionKey, t)
           : null,
         readOnly,
-        backLink: readOnly
-          ? queryTaskListUrl(applicationId)
-          : tonnageUrl(applicationId)
+        // RA-481: only route back to the query task list while the
+        // application itself is mid-query — a locked-but-not-queried
+        // application is read-only for a different reason and belongs back
+        // on the tonnage page, which renders read-only in that case too.
+        backLink:
+          application.applicationStatus === 'Queried'
+            ? queryTaskListUrl(applicationId)
+            : tonnageUrl(applicationId),
+        isQueriedApplication: application.applicationStatus === 'Queried'
       })
     )
   }
@@ -165,11 +175,15 @@ export const tonnageAuthorityPostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.prns?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.prns?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     if (!application.prns?.plannedTonnageBand) {
@@ -336,6 +350,12 @@ export const tonnageAuthorityPostController = {
       request.server.logger.error(
         `Error saving authorisers for ${applicationId}: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to the
+      // section's own page so it re-fetches and renders read-only.
+      if (err.status === statusCodes.conflict) {
+        return h.redirect(request.path)
+      }
       return renderPage(h, {
         pageTitle: isExporter
           ? t('pages.tonnageAuthority.titleExporter')

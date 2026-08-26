@@ -422,6 +422,78 @@ describe('#businessPlanController', () => {
       )
     })
 
+    // RA-481: a locked (submitted) application must still render on GET —
+    // it just renders read-only, unlike the fully-blocked NotStarted/
+    // InProgress case in the Queried flow above.
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'renders the form read-only (200, not a redirect) when application is locked (%s) and business plan section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            businessPlan: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/business-plan/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="read-only-notice"')
+        expect(result).not.toContain('data-testid="continue-button"')
+        expect(result).not.toContain('data-testid="save-come-back-button"')
+        // Unlike the Queried-flow case, the back link goes to the ordinary
+        // task list (also read-only), not the query task list.
+        expect(result).toContain(
+          `href="/accreditation/task-list/${APPLICATION_ID}"`
+        )
+      }
+    )
+
+    // RA-481: the plain-submitted read-only notice is distinct copy from the
+    // regulator-query one — it must not mention the query task list.
+    test('shows the plain-submitted read-only copy (not the query-flow copy) when locked and not queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          businessPlan: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'This application has already been submitted, so this section is now read-only.'
+      )
+      expect(result).not.toContain("is not part of the regulator's query")
+    })
+
+    test('renders the form editable when the application is locked but the business plan section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Updated',
+          businessPlan: { sectionStatus: 'Queried' }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('data-testid="read-only-notice"')
+      expect(result).toContain('data-testid="continue-button"')
+    })
+
     test('does not render the regulator-query banner for a read-only section, even though another section is Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -511,6 +583,45 @@ describe('#businessPlanController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
+    test('redirects to query-task-list when application is Queried and business plan section has not been started, without patching', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          businessPlan: { sectionStatus: 'NotStarted' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns 400 with inline save error when PATCH fails with a non-server, non-conflict status', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('bad request'), { status: 422 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
     test('returns 400 with error summary when all fields are empty', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -546,6 +657,76 @@ describe('#businessPlanController', () => {
         `/accreditation/query-task-list/${APPLICATION_ID}`
       )
       expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    // RA-481: once submitted, a save to a non-queried section must be
+    // refused server-side, redirecting back to this same page (which then
+    // re-fetches and renders read-only) rather than processing the write.
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page when application is locked (%s) and business plan section is not Queried, without patching',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            businessPlan: { sectionStatus: 'Completed' }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/business-plan/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/business-plan/${APPLICATION_ID}`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
+
+    test('allows the save when the application is locked but the business plan section itself is Queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Updated',
+          businessPlan: { sectionStatus: 'Queried' }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/business-plan-detail/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalled()
+    })
+
+    test('redirects back to this page (not the raw error page) when the PATCH fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { ...validPayload(), submitAction: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/business-plan/${APPLICATION_ID}`
+      )
     })
 
     test('returns 400 when percentages do not sum to 100', async () => {
