@@ -12,9 +12,13 @@ import { materialDisplayName } from './materialDisplayName.js'
 export function buildApplicationHeaderViewModel(application, t) {
   const operatorName = application.organisationName
   const materialType = materialDisplayName(application, t)
-  const siteName = application.isExporter
-    ? (application.companyRegisteredAddress ?? t('pages.taskList.siteNotSet'))
-    : (application.siteAddress ?? t('pages.taskList.siteNotSet'))
+  // Raw, pre-fallback site value: composeApplicationCaption must omit the
+  // site entirely when it's genuinely unset, not include the translated
+  // "Not set" placeholder text (RA102-mgwh).
+  const rawSiteName = application.isExporter
+    ? application.companyRegisteredAddress
+    : application.siteAddress
+  const siteName = rawSiteName ?? t('pages.taskList.siteNotSet')
   const year = application.year
 
   return {
@@ -26,16 +30,17 @@ export function buildApplicationHeaderViewModel(application, t) {
       operatorName,
       year,
       materialType,
-      siteName
+      siteName: rawSiteName
     }),
     showFullHeader: false
   }
 }
 
 /**
- * Composes the "operatorName (year, material and siteName)" caption shown
- * above the page heading on journey pages (RA-506). siteName is omitted,
- * along with its leading "and", when null, undefined, or empty.
+ * Composes the "operatorName (year, material, siteName)" caption shown
+ * above the page heading on journey pages (RA-506). Every present part is
+ * comma-joined; siteName is omitted entirely when null, undefined, or
+ * empty.
  * @param {{operatorName: string, year: number, materialType: string, siteName?: string}} params
  * @returns {string}
  */
@@ -45,13 +50,9 @@ export function composeApplicationCaption({
   materialType,
   siteName
 }) {
-  const detailParts = [year, materialType].filter(
+  const parts = [year, materialType, siteName].filter(
     (part) => part !== null && part !== undefined && part !== ''
   )
 
-  if (siteName !== null && siteName !== undefined && siteName !== '') {
-    return `${operatorName} (${detailParts.join(', ')} and ${siteName})`
-  }
-
-  return `${operatorName} (${detailParts.join(', ')})`
+  return `${operatorName} (${parts.join(', ')})`
 }

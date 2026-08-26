@@ -30,7 +30,7 @@ describe('buildApplicationHeaderViewModel', () => {
       materialType: 'Plastic',
       siteName: '1 Recycling Way, Leeds',
       year: 2027,
-      captionText: 'Delta Green Ltd (2027, Plastic and 1 Recycling Way, Leeds)',
+      captionText: 'Delta Green Ltd (2027, Plastic, 1 Recycling Way, Leeds)',
       showFullHeader: false
     })
   })
@@ -54,7 +54,7 @@ describe('buildApplicationHeaderViewModel', () => {
       siteName: '4 Glassworks Court, Bristol, BS1 4AA',
       year: 2027,
       captionText:
-        'Delta Green Ltd (2027, Plastic and 4 Glassworks Court, Bristol, BS1 4AA)',
+        'Delta Green Ltd (2027, Plastic, 4 Glassworks Court, Bristol, BS1 4AA)',
       showFullHeader: false
     })
   })
@@ -77,7 +77,7 @@ describe('buildApplicationHeaderViewModel', () => {
       materialType: 'Plastic',
       siteName: 'Not set',
       year: 2027,
-      captionText: 'Delta Green Ltd (2027, Plastic and Not set)',
+      captionText: 'Delta Green Ltd (2027, Plastic)',
       showFullHeader: false
     })
   })
@@ -99,14 +99,14 @@ describe('buildApplicationHeaderViewModel', () => {
       materialType: 'Plastic',
       siteName: 'Not set',
       year: 2027,
-      captionText: 'Delta Green Ltd (2027, Plastic and Not set)',
+      captionText: 'Delta Green Ltd (2027, Plastic)',
       showFullHeader: false
     })
   })
 })
 
 describe('composeApplicationCaption', () => {
-  test('returns formatted caption with all parameters', () => {
+  test('returns formatted caption with all parameters, comma-joined', () => {
     expect(
       composeApplicationCaption({
         operatorName: 'Acme Ltd',
@@ -114,7 +114,20 @@ describe('composeApplicationCaption', () => {
         materialType: 'Plastic',
         siteName: 'Kings Warehouse'
       })
-    ).toBe('Acme Ltd (2025, Plastic and Kings Warehouse)')
+    ).toBe('Acme Ltd (2025, Plastic, Kings Warehouse)')
+  })
+
+  // RA102-mgwh: a multi-part site address (already comma-separated) must
+  // not be preceded by "and" -- every part is joined with ", " throughout.
+  test('comma-joins a multi-part site address without an "and"', () => {
+    expect(
+      composeApplicationCaption({
+        operatorName: 'NEWDEV RECYCLING LIMITED',
+        year: 2027,
+        materialType: 'Plastic',
+        siteName: 'UNIT 5, Bolton, BL4 7AQ'
+      })
+    ).toBe('NEWDEV RECYCLING LIMITED (2027, Plastic, UNIT 5, Bolton, BL4 7AQ)')
   })
 
   test('omits siteName when null', () => {
