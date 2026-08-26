@@ -328,7 +328,7 @@
       "bullets": {
         "eligiblePerson": "you are a person with delegated authority who is eligible to submit this application on behalf of {organisationName}",
         "accurateInformation": "the information you are submitting is accurate",
-        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
+        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Enter your full name",
       "fullNameHint": "This is your full name as it appears on this account",
@@ -420,7 +420,7 @@
       "bullets": {
         "eligiblePerson": "you are a person with delegated authority who is eligible to respond to this query on behalf of {organisationName}",
         "accurateInformation": "the information you are submitting in response to the query is accurate",
-        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
+        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Enter your full name",
       "emailLabel": "Enter your email address",
