@@ -238,12 +238,15 @@ export const tonnagePostController = {
       }).code(400)
     }
 
+    const isSaveAndComeLater = submitAction === 'saveAndComeLater'
+
     try {
       await accreditationApiService.patchTonnage(
         organisationId,
         applicationId,
         {
-          plannedTonnageBand
+          plannedTonnageBand,
+          ...(isSaveAndComeLater ? { sectionStatus: 'InProgress' } : {})
         }
       )
     } catch (error) {
@@ -259,7 +262,7 @@ export const tonnagePostController = {
       })
     }
 
-    if (submitAction === 'saveAndComeLater') {
+    if (isSaveAndComeLater) {
       return h.redirect(taskListUrl(applicationId))
     }
 

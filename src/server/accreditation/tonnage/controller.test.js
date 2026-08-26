@@ -578,7 +578,7 @@ describe('#tonnageController', () => {
       )
     })
 
-    test('save-and-come-back-later patches tonnage and redirects to task list', async () => {
+    test('save-and-come-back-later patches tonnage with InProgress status and redirects to task list', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
@@ -596,7 +596,10 @@ describe('#tonnageController', () => {
       expect(headers.location).toBe(
         `/accreditation/task-list/${APPLICATION_ID}`
       )
-      expect(patchSpy).toHaveBeenCalledOnce()
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/tonnage`),
+        { plannedTonnageBand: 'UpTo500', sectionStatus: 'InProgress' }
+      )
     })
 
     test('redirects to query-task-list when application is Queried and PRNs section is not, without patching', async () => {

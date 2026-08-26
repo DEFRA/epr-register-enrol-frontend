@@ -15,7 +15,7 @@ import { config } from '../../../config/config.js'
 import {
   validateFileExtension,
   buildFilesViewModel,
-  hasEligibleFile,
+  isSamplingPlanComplete,
   documentTypeLabel,
   documentTypeOptions,
   ALLOWED_EXTENSIONS,
@@ -176,39 +176,69 @@ describe('#documentTypeOptions', () => {
   })
 })
 
-describe('#hasEligibleFile', () => {
-  test('returns true when at least one Pending file exists', () => {
-    expect(hasEligibleFile([makeFile({ scanStatus: 'Pending' })])).toBe(true)
+describe('#isSamplingPlanComplete', () => {
+  test('returns false when the only file is Pending', () => {
+    expect(isSamplingPlanComplete([makeFile({ scanStatus: 'Pending' })])).toBe(
+      false
+    )
   })
 
-  test('returns true when at least one Clean file exists', () => {
-    expect(hasEligibleFile([makeFile({ scanStatus: 'Clean' })])).toBe(true)
+  test('returns true when all files are Clean', () => {
+    expect(isSamplingPlanComplete([makeFile({ scanStatus: 'Clean' })])).toBe(
+      true
+    )
   })
 
   test('returns false when all files are Infected', () => {
     expect(
-      hasEligibleFile([
+      isSamplingPlanComplete([
         makeFile({ scanStatus: 'Infected' }),
         makeFile({ scanStatus: 'Infected' })
       ])
     ).toBe(false)
   })
 
-  test('returns true when mixed Infected and Clean', () => {
+  test('returns false when mixed Infected and Clean', () => {
     expect(
-      hasEligibleFile([
+      isSamplingPlanComplete([
         makeFile({ scanStatus: 'Infected' }),
         makeFile({ scanStatus: 'Clean' })
+      ])
+    ).toBe(false)
+  })
+
+  test('returns false when mixed Pending and Clean', () => {
+    expect(
+      isSamplingPlanComplete([
+        makeFile({ scanStatus: 'Pending' }),
+        makeFile({ scanStatus: 'Clean' })
+      ])
+    ).toBe(false)
+  })
+
+  test('returns false for empty array', () => {
+    expect(isSamplingPlanComplete([])).toBe(false)
+  })
+
+  test('returns false for undefined', () => {
+    expect(isSamplingPlanComplete(undefined)).toBe(false)
+  })
+
+  test('ignores SupportingEvidence files when checking completeness', () => {
+    expect(
+      isSamplingPlanComplete([
+        makeFile({ scanStatus: 'Clean', documentType: 'SamplingPlan' }),
+        makeFile({ scanStatus: 'Infected', documentType: 'SupportingEvidence' })
       ])
     ).toBe(true)
   })
 
-  test('returns false for empty array', () => {
-    expect(hasEligibleFile([])).toBe(false)
-  })
-
-  test('returns false for undefined', () => {
-    expect(hasEligibleFile(undefined)).toBe(false)
+  test('returns false when only SupportingEvidence files are uploaded', () => {
+    expect(
+      isSamplingPlanComplete([
+        makeFile({ scanStatus: 'Clean', documentType: 'SupportingEvidence' })
+      ])
+    ).toBe(false)
   })
 })
 
@@ -1684,12 +1714,37 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
-    test('patches SectionStatus Completed and redirects to task list when eligible file exists', async () => {
+    test('returns 400 when the only file is still Pending a scan', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           samplingPlan: {
             sectionStatus: 'InProgress',
             files: [makeFile({ scanStatus: 'Pending' })]
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
+        headers: operatorHeaders,
+        payload: { action: 'saveAndContinue' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'You must upload at least one file before continuing'
+      )
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('patches SectionStatus Completed and redirects to task list when file is Clean', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ scanStatus: 'Clean' })]
           }
         })
       )
@@ -1717,7 +1772,7 @@ describe('#samplingPlanUploadController', () => {
         makeApplication({
           samplingPlan: {
             sectionStatus: 'InProgress',
-            files: [makeFile()]
+            files: [makeFile({ scanStatus: 'Clean' })]
           }
         })
       )

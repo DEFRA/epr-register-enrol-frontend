@@ -735,6 +735,42 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
+    test('saveAndComeLater patches InProgress status and redirects to task list', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'saveAndComeLater' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('overseas-sites'),
+        { sectionStatus: 'InProgress' }
+      )
+    })
+
+    test('saveAndComeLater returns 500 when PATCH fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('patch failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'saveAndComeLater' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
     test('removeAccredited patches the site to selected:false and redirects back', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})

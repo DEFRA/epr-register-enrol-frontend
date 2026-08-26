@@ -630,6 +630,27 @@ describe('#uploadEvidenceListController', () => {
       )
     })
 
+    test('saveAndComeLater patches InProgress status and skips the incomplete-evidence check', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'saveAndComeLater' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/bes-evidence`),
+        { sectionStatus: 'InProgress' }
+      )
+    })
+
     test('returns 400 when non-EU non-OECD site has no evidence', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

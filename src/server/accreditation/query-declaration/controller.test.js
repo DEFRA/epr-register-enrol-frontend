@@ -155,7 +155,7 @@ describe('#queryDeclarationController', () => {
         'the information you are submitting in response to the query is accurate'
       )
       expect(result).toContain(
-        'you understand that you may face enforcement action if you submit false or misleading data'
+        'you understand that you may face enforcement action if you submit false or misleading information'
       )
       expect(result).toContain('data-testid="warning-text"')
       expect(result).toContain(

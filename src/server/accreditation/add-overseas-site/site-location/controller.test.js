@@ -18,7 +18,7 @@ const NEXT_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/site-contac
 const SELECT_ORS_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}`
 
 const VALID_PAYLOAD =
-  'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=10115&country=Germany&coordinates=52.52%2C+13.40'
+  'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=10115&country=Germany&coordinates=52.5200%2C+13.4050'
 
 function cookiesFrom(response) {
   const raw = response.headers['set-cookie']
@@ -313,7 +313,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
         url: BASE_URL,
         headers: postHeaders,
         payload:
-          'addressLine1=1+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates=52.52%2C+13.40'
+          'addressLine1=1+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates=52.5200%2C+13.4050'
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -326,10 +326,25 @@ describe('#addOverseasSiteSiteLocationController', () => {
         url: BASE_URL,
         headers: postHeaders,
         payload:
-          'addressLine1=123+St&addressLine2=&townOrCity=Paris&stateOrRegion=&postcode=&country=France&coordinates=48.85%2C+2.35'
+          'addressLine1=123+St&addressLine2=&townOrCity=Paris&stateOrRegion=&postcode=&country=France&coordinates=48.8566%2C+2.3522'
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('returns 400 when coordinates have fewer than 4 decimal places', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates=52.52%2C+13.4'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'Enter the latitude and longitude to at least 4 decimal places'
+      )
     })
   })
 })

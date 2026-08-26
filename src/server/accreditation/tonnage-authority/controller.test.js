@@ -816,6 +816,7 @@ describe('#tonnageAuthorityController', () => {
       const patchBody = patchSpy.mock.calls[0][1]
       expect(patchBody.authorisers).toHaveLength(1)
       expect(patchBody.authorisers[0].email).toBe('jane@example.com')
+      expect(patchBody.sectionStatus).toBeUndefined()
     })
 
     test('redirects to query-task-list when application is Queried and PRNs section is not, without patching', async () => {
@@ -914,7 +915,7 @@ describe('#tonnageAuthorityController', () => {
   })
 
   describe('POST /accreditation/tonnage-authority/{applicationId} - saveAndComeLater', () => {
-    test('patches and redirects to task list without requiring selection', async () => {
+    test('patches with InProgress status and redirects to task list without requiring selection', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
@@ -929,7 +930,8 @@ describe('#tonnageAuthorityController', () => {
       expect(headers.location).toContain(
         `/accreditation/task-list/${APPLICATION_ID}`
       )
-      expect(patchSpy).toHaveBeenCalled()
+      const patchBody = patchSpy.mock.calls[0][1]
+      expect(patchBody.sectionStatus).toBe('InProgress')
     })
 
     test('returns 500 when PATCH fails during saveAndContinue', async () => {

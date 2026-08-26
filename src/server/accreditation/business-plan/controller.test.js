@@ -804,6 +804,7 @@ describe('#businessPlanController', () => {
           newInfrastructurePercent: 20
         })
       )
+      expect(patchSpy.mock.calls[0][1].sectionStatus).toBeUndefined()
     })
 
     test('returns 500 service-problem page when PATCH fails with server error', async () => {
@@ -848,7 +849,10 @@ describe('#businessPlanController', () => {
       expect(headers.location).toContain(
         `/accreditation/task-list/${APPLICATION_ID}`
       )
-      expect(patchSpy).toHaveBeenCalledOnce()
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/business-plan`),
+        expect.objectContaining({ sectionStatus: 'InProgress' })
+      )
     })
 
     test('returns 400 when non-numeric value present even on save-and-come-later', async () => {

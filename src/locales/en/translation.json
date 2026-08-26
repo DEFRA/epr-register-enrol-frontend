@@ -191,7 +191,7 @@
       "notSelected": "Not selected",
       "noneSelected": "None selected",
       "confirmAndContinue": "Confirm and continue",
-      "saveAndComeLater": "Save and continue later",
+      "saveAndComeLater": "Save and come back later",
       "validation": {
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "confirmError": "Sorry, there was a problem confirming your answers. Please try again."
@@ -258,7 +258,7 @@
       "changePercentContext": "percentage for {field}",
       "changeDetailContext": "detail for {field}",
       "confirmAndContinue": "Confirm and continue",
-      "saveAndComeLater": "Save and continue later",
+      "saveAndComeLater": "Save and come back later",
       "fields": {
         "newInfrastructurePercent": "New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportPercent": "Price support for buying packaging waste or selling recycled packaging waste",
@@ -328,7 +328,7 @@
       "bullets": {
         "eligiblePerson": "you are a person with delegated authority who is eligible to submit this application on behalf of {organisationName}",
         "accurateInformation": "the information you are submitting is accurate",
-        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
+        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Enter your full name",
       "fullNameHint": "This is your full name as it appears on this account",
@@ -420,7 +420,7 @@
       "bullets": {
         "eligiblePerson": "you are a person with delegated authority who is eligible to respond to this query on behalf of {organisationName}",
         "accurateInformation": "the information you are submitting in response to the query is accurate",
-        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading data"
+        "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Enter your full name",
       "emailLabel": "Enter your email address",
@@ -462,6 +462,7 @@
       "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "continueButton": "Continue",
+      "saveAndComeLater": "Save and come back later",
       "removeFromAccreditationButton": "Remove from accreditation",
       "addToAccreditationButton": "Add to accreditation",
       "sections": {
@@ -559,6 +560,7 @@
       "notRequiredOecd": "Not required for application",
       "incompleteEvidence": "All non-EU, non-OECD sites must have evidence uploaded before continuing.",
       "continueButton": "Continue",
+      "saveAndComeLater": "Save and come back later",
       "table": {
         "siteName": "Site name",
         "country": "Country",
@@ -648,15 +650,16 @@
         "postcodeLabel": "Postcode (optional)",
         "countryLabel": "Country",
         "coordinatesLabel": "Coordinates",
-        "coordinatesHint": "Enter the latitude and longitude separated by a comma. For example, 51.503, -0.127",
+        "coordinatesHint": "Enter the latitude and longitude separated by a comma. For example, 51.5034, -0.1275",
         "validation": {
           "addressLine1Required": "Enter address line 1",
           "townOrCityRequired": "Enter the town or city",
           "countryRequired": "Select a country",
           "coordinatesRequired": "Enter the coordinates",
-          "coordinatesInvalid": "Enter coordinates in the correct format, for example 51.503, -0.127",
+          "coordinatesInvalid": "Enter coordinates in the correct format, for example 51.5034, -0.1275",
           "coordinatesLatRange": "Latitude must be between -90 and 90",
-          "coordinatesLngRange": "Longitude must be between -180 and 180"
+          "coordinatesLngRange": "Longitude must be between -180 and 180",
+          "coordinatesPrecision": "Enter the latitude and longitude to at least 4 decimal places, for example 51.5034, -0.1275"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"

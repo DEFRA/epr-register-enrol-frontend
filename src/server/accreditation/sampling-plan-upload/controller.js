@@ -84,8 +84,17 @@ export function buildFilesViewModel(files) {
   }))
 }
 
-export function hasEligibleFile(files) {
-  return (files ?? []).some((f) => (f.scanStatus ?? 'Pending') !== 'Infected')
+// Mirrors the backend's ComputeSamplingPlan gate for a requested Completed status: files with
+// documentType SupportingEvidence don't count towards completeness, and every remaining file
+// must have passed its virus scan (Clean) — a Pending or Infected file keeps the section from
+// completing. See SectionStatusService.ComputeSamplingPlan in epr-register-enrol-backend.
+export function isSamplingPlanComplete(files) {
+  const planFiles = (files ?? []).filter(
+    (f) => f.documentType !== 'SupportingEvidence'
+  )
+  return (
+    planFiles.length > 0 && planFiles.every((f) => f.scanStatus === 'Clean')
+  )
 }
 
 function appUrl(organisationId, applicationId) {
@@ -476,7 +485,7 @@ async function completeSamplingPlan({
   baseView,
   t
 }) {
-  if (!hasEligibleFile(rawFiles)) {
+  if (!isSamplingPlanComplete(rawFiles)) {
     return renderResultsPage(
       h,
       baseView({ error: t('pages.samplingPlanUpload.validation.noCleanFile') })

@@ -106,7 +106,7 @@ describe('#submitDeclarationController', () => {
       )
       expect(result).toContain('the information you are submitting is accurate')
       expect(result).toContain(
-        'you understand that you may face enforcement action if you submit false or misleading data'
+        'you understand that you may face enforcement action if you submit false or misleading information'
       )
     })
 

@@ -176,6 +176,8 @@ export const uploadEvidenceListPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId } = request.params
+    const { submitAction = 'saveAndContinue' } = request.payload ?? {}
+    const isSaveAndComeLater = submitAction === 'saveAndComeLater'
 
     let application
     try {
@@ -214,28 +216,30 @@ export const uploadEvidenceListPostController = {
     )
     const sites = mapSites(t, applicationId, selectedSites)
 
-    const incomplete = selectedSites.some(
-      (s) =>
-        besEvidenceRequired(s) &&
-        (s.besEvidence?.besEvidenceUploads?.length ?? 0) === 0
-    )
-    if (incomplete) {
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          sites,
-          t('pages.uploadEvidenceList.incompleteEvidence')
-        )
-      ).code(400)
+    if (!isSaveAndComeLater) {
+      const incomplete = selectedSites.some(
+        (s) =>
+          besEvidenceRequired(s) &&
+          (s.besEvidence?.besEvidenceUploads?.length ?? 0) === 0
+      )
+      if (incomplete) {
+        return renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            sites,
+            t('pages.uploadEvidenceList.incompleteEvidence')
+          )
+        ).code(400)
+      }
     }
 
     try {
       await accreditationApiService.patchBesEvidenceSection(
         organisationId,
         applicationId,
-        { sectionStatus: 'Completed' }
+        { sectionStatus: isSaveAndComeLater ? 'InProgress' : 'Completed' }
       )
     } catch (err) {
       request.server.logger.error(
