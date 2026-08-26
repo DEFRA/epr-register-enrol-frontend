@@ -101,6 +101,22 @@ function withEditUrl(applicationId, sites) {
   }))
 }
 
+// Extracted from buildViewData (SonarCloud cognitive complexity): the ?? defaulting for
+// each banner/flash flag was pushing buildViewData itself over the complexity threshold.
+function resolveBannerDefaults(banners) {
+  return {
+    successBanner: banners.successBanner ?? false,
+    queryNote: banners.queryNote ?? null,
+    interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
+    promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
+    editSuccessBanner: banners.editSuccessBanner ?? false,
+    querySummary: banners.querySummary ?? null,
+    regulatorQueryFields: banners.regulatorQueryFields ?? null,
+    readOnly: banners.readOnly ?? false,
+    isQueriedApplication: banners.isQueriedApplication ?? false
+  }
+}
+
 function buildViewData(t, applicationId, sections, error, banners = {}) {
   return {
     pageTitle: t('pages.selectOverseasSites.title'),
@@ -123,16 +139,8 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     addOrsUrl: addOrsUrl(applicationId),
-    successBanner: banners.successBanner ?? false,
     error,
-    queryNote: banners.queryNote ?? null,
-    interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
-    promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
-    editSuccessBanner: banners.editSuccessBanner ?? false,
-    querySummary: banners.querySummary ?? null,
-    regulatorQueryFields: banners.regulatorQueryFields ?? null,
-    readOnly: banners.readOnly ?? false,
-    isQueriedApplication: banners.isQueriedApplication ?? false
+    ...resolveBannerDefaults(banners)
   }
 }
 
