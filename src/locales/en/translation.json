@@ -191,7 +191,7 @@
       "notSelected": "Not selected",
       "noneSelected": "None selected",
       "confirmAndContinue": "Confirm and continue",
-      "saveAndComeLater": "Save and continue later",
+      "saveAndComeLater": "Save and come back later",
       "validation": {
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "confirmError": "Sorry, there was a problem confirming your answers. Please try again."
@@ -258,7 +258,7 @@
       "changePercentContext": "percentage for {field}",
       "changeDetailContext": "detail for {field}",
       "confirmAndContinue": "Confirm and continue",
-      "saveAndComeLater": "Save and continue later",
+      "saveAndComeLater": "Save and come back later",
       "fields": {
         "newInfrastructurePercent": "New reprocessing infrastructure and maintaining existing infrastructure",
         "priceSupportPercent": "Price support for buying packaging waste or selling recycled packaging waste",
@@ -462,6 +462,7 @@
       "loadError": "Sorry, we were unable to load your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "continueButton": "Continue",
+      "saveAndComeLater": "Save and come back later",
       "removeFromAccreditationButton": "Remove from accreditation",
       "addToAccreditationButton": "Add to accreditation",
       "sections": {
@@ -559,6 +560,7 @@
       "notRequiredOecd": "Not required for application",
       "incompleteEvidence": "All non-EU, non-OECD sites must have evidence uploaded before continuing.",
       "continueButton": "Continue",
+      "saveAndComeLater": "Save and come back later",
       "table": {
         "siteName": "Site name",
         "country": "Country",

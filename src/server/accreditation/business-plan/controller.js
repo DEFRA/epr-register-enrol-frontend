@@ -147,6 +147,19 @@ function buildViewData(
   }
 }
 
+// Split out of businessPlanPostController.handler to keep its cyclomatic
+// complexity/line count under SonarCloud's per-function thresholds.
+function buildBusinessPlanPatchBody(values, isSaveAndComeLater) {
+  const patchBody = { isPartialSave: true }
+  for (const field of BUSINESS_PLAN_FIELDS) {
+    patchBody[field] = values[field] ?? null
+  }
+  if (isSaveAndComeLater) {
+    patchBody.sectionStatus = 'InProgress'
+  }
+  return patchBody
+}
+
 function payloadFromApplication(application) {
   const payload = {}
   for (const field of BUSINESS_PLAN_FIELDS) {
@@ -267,10 +280,7 @@ export const businessPlanPostController = {
       }).code(400)
     }
 
-    const patchBody = { isPartialSave: true }
-    for (const field of BUSINESS_PLAN_FIELDS) {
-      patchBody[field] = values[field] ?? null
-    }
+    const patchBody = buildBusinessPlanPatchBody(values, isSaveAndComeLater)
 
     try {
       await accreditationApiService.patchBusinessPlan(

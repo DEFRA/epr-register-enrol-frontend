@@ -412,6 +412,7 @@ describe('#businessPlanDetailController', () => {
           otherDetail: 'Miscellaneous other activities'
         })
       )
+      expect(patchSpy.mock.calls[0][1].sectionStatus).toBeUndefined()
     })
 
     test('returns 400 with field error when textarea exceeds 500 chars', async () => {
@@ -577,7 +578,10 @@ describe('#businessPlanDetailController', () => {
       expect(headers.location).toContain(
         `/accreditation/task-list/${APPLICATION_ID}`
       )
-      expect(patchSpy).toHaveBeenCalledOnce()
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/business-plan`),
+        expect.objectContaining({ sectionStatus: 'InProgress' })
+      )
     })
 
     test('re-renders the textarea with its value when it exceeds 500 chars', async () => {

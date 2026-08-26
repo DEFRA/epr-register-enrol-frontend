@@ -321,13 +321,15 @@ export const tonnageAuthorityPostController = {
     const authorisersToSave = currentAuthorisers.filter((a) =>
       checkedEmails.includes(a.email)
     )
+    const isSaveAndComeLater = submitAction === 'saveAndComeLater'
 
     try {
       await accreditationApiService.patchTonnage(
         organisationId,
         applicationId,
         {
-          authorisers: authorisersToSave
+          authorisers: authorisersToSave,
+          ...(isSaveAndComeLater ? { sectionStatus: 'InProgress' } : {})
         }
       )
     } catch (err) {
