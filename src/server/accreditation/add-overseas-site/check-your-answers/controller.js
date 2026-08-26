@@ -11,6 +11,7 @@ import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
+const ORS_EDIT_SUCCESS_FLASH = 'orsEditSuccess'
 
 const ADD_INTERIM_SITE_ACTION = 'addInterimSite'
 const DELETE_BASEL_CODE_ACTION_PREFIX = 'deleteBaselCode-'
@@ -222,30 +223,44 @@ export const addOrsCyaPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
 
+    // editingSiteId and promotingSiteId are never both set -- resetAddOrsSession clears the
+    // wizard session before either entry point seeds its own key -- so these are mutually
+    // exclusive.
+    const isEditing = session.editingSiteId != null
     const isPromoting = session.promotingSiteId != null
 
-    let createdSite
+    let savedSite
     try {
-      if (isPromoting) {
-        createdSite = await accreditationApiService.promoteOverseasSite(
+      if (isEditing) {
+        savedSite = await accreditationApiService.updateOverseasSite(
+          organisationId,
+          applicationId,
+          session.editingSiteId,
+          buildSitePayload(session)
+        )
+      } else if (isPromoting) {
+        savedSite = await accreditationApiService.promoteOverseasSite(
           organisationId,
           applicationId,
           session.promotingSiteId,
           buildSitePayload(session)
         )
       } else {
-        // RA-482: orsId is generated server-side now -- createdSite (read from the response
+        // RA-482: orsId is generated server-side now -- savedSite (read from the response
         // below) carries the id the server assigned, so there is nothing to compute here.
-        createdSite = await accreditationApiService.createOverseasSite(
+        savedSite = await accreditationApiService.createOverseasSite(
           organisationId,
           applicationId,
           buildSitePayload(session)
         )
       }
     } catch (err) {
-      request.server.logger.error(
-        `CYA ${isPromoting ? 'promoteOverseasSite' : 'createOverseasSite'} error: ${err.message}`
-      )
+      const action = isEditing
+        ? 'updateOverseasSite'
+        : isPromoting
+          ? 'promoteOverseasSite'
+          : 'createOverseasSite'
+      request.server.logger.error(`CYA ${action} error: ${err.message}`)
       return renderPage(
         h,
         buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))
@@ -255,14 +270,16 @@ export const addOrsCyaPostController = {
     clearAddOrsSession(request)
 
     if (request.payload?.action === ADD_INTERIM_SITE_ACTION) {
-      setAddInterimSiteSession(request, { linkedSiteId: createdSite?.siteId })
+      setAddInterimSiteSession(request, { linkedSiteId: savedSite?.siteId })
       return h.redirect(addInterimSiteCountryUrl(applicationId))
     }
 
-    request.yar.flash(
-      isPromoting ? ORS_PROMOTE_SUCCESS_FLASH : ORS_SUCCESS_FLASH,
-      true
-    )
+    const successFlash = isEditing
+      ? ORS_EDIT_SUCCESS_FLASH
+      : isPromoting
+        ? ORS_PROMOTE_SUCCESS_FLASH
+        : ORS_SUCCESS_FLASH
+    request.yar.flash(successFlash, true)
     return h.redirect(selectOrsUrl(applicationId))
   }
 }

@@ -462,6 +462,7 @@
       "continueButton": "Parhau",
       "removeFromAccreditationButton": "[Welsh] Remove from accreditation",
       "addToAccreditationButton": "[Welsh] Add to accreditation",
+      "changeButton": "[Welsh] Change",
       "sections": {
         "accredited": "[Welsh] Accredited",
         "registered": "[Welsh] Registered",
@@ -766,6 +767,10 @@
       "promoteSuccessBanner": {
         "title": "[Welsh] Success",
         "heading": "[Welsh] Site added to accreditation"
+      },
+      "editSuccessBanner": {
+        "title": "[Welsh] Success",
+        "heading": "[Welsh] Overseas reprocessing site updated"
       },
       "successBanner": {
         "title": "[Welsh] Success",

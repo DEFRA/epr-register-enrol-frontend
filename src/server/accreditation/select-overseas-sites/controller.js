@@ -28,6 +28,10 @@ function promoteUrl(applicationId, siteId) {
   return `/accreditation/select-overseas-sites/${applicationId}/promote/${siteId}`
 }
 
+function editUrl(applicationId, siteId) {
+  return `/accreditation/select-overseas-sites/${applicationId}/edit/${siteId}`
+}
+
 function siteNameUrl(applicationId) {
   return `/accreditation/add-overseas-site/${applicationId}/site-name`
 }
@@ -46,6 +50,21 @@ function addOrsUrl(applicationId) {
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 const INTERIM_SITE_SUCCESS_FLASH = 'interimSiteSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
+const ORS_EDIT_SUCCESS_FLASH = 'orsEditSuccess'
+
+// Mirrors the check the POST handler below already applies to every write
+// action (removeAccredited/deleteNewSite/revertAccreditation/continue):
+// once the application is Queried, this section can only be written to
+// while it's the section under query -- otherwise, even a section that's
+// still viewable read-only (Completed/Submitted) must not accept writes.
+// Shared with the promote/edit wizard entry points, since starting either
+// wizard is itself the first step of a write.
+function isOverseasSitesSectionWriteBlocked(application) {
+  return (
+    application.applicationStatus === 'Queried' &&
+    application.overseasSites?.sectionStatus !== 'Queried'
+  )
+}
 
 // Partitions the flat sites array into the four display sections. Membership is a strict
 // partition given how the flags are set: new sites always start selected:true, promoted
@@ -71,17 +90,27 @@ function partitionSites(rawSites) {
   return sections
 }
 
+function withEditUrl(applicationId, sites) {
+  return sites.map((site) => ({
+    ...site,
+    editUrl: editUrl(applicationId, site.siteId)
+  }))
+}
+
 function buildViewData(t, applicationId, sections, error, banners = {}) {
   return {
     pageTitle: t('pages.selectOverseasSites.title'),
     heading: t('pages.selectOverseasSites.heading'),
-    accreditedSites: sections.accredited,
+    accreditedSites: withEditUrl(applicationId, sections.accredited),
     registeredSites: sections.registered.map((site) => ({
       ...site,
       promoteUrl: promoteUrl(applicationId, site.siteId)
     })),
-    newSites: sections.newSites,
-    registeredSitesAddedSites: sections.registeredSitesAdded,
+    newSites: withEditUrl(applicationId, sections.newSites),
+    registeredSitesAddedSites: withEditUrl(
+      applicationId,
+      sections.registeredSitesAdded
+    ),
     backLink: banners.readOnly
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
@@ -91,6 +120,7 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     queryNote: banners.queryNote ?? null,
     interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
     promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
+    editSuccessBanner: banners.editSuccessBanner ?? false,
     querySummary: banners.querySummary ?? null,
     regulatorQueryFields: banners.regulatorQueryFields ?? null,
     readOnly: banners.readOnly ?? false
@@ -133,6 +163,9 @@ export const selectOverseasSitesGetController = {
     const promoteSuccessBanner = !!(
       request.yar.flash(ORS_PROMOTE_SUCCESS_FLASH) ?? []
     ).length
+    const editSuccessBanner = !!(
+      request.yar.flash(ORS_EDIT_SUCCESS_FLASH) ?? []
+    ).length
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
       application,
@@ -156,6 +189,7 @@ export const selectOverseasSitesGetController = {
           queryNote,
           interimSiteSuccessBanner,
           promoteSuccessBanner,
+          editSuccessBanner,
           querySummary: queryNote
             ? buildRegulatorQuerySummary('overseasSites', t)
             : null,
@@ -174,6 +208,44 @@ export const selectOverseasSitesGetController = {
   }
 }
 
+// Shared by the promote-entry and edit-entry controllers below: fetches the application,
+// applies the entry guard, and looks up the site by id. Returns { redirect } (an
+// already-built h.redirect response) when any of those steps fail, so callers can bail out
+// with a single check; otherwise returns { applicationId, site }.
+async function loadSiteForWizardEntry(request, h) {
+  const organisationId = request.yar.get(
+    ACCREDITATION_SESSION_KEYS.organisationId
+  )
+  const { applicationId, siteId } = request.params
+
+  let application
+  try {
+    application = await accreditationApiService.getApplication(
+      organisationId,
+      applicationId
+    )
+  } catch (err) {
+    request.server.logger.error(
+      `Error fetching application ${applicationId}: ${err.message}`
+    )
+    return { redirect: h.redirect(selectOverseasSitesUrl(applicationId)) }
+  }
+
+  if (isOverseasSitesSectionWriteBlocked(application)) {
+    return { redirect: h.redirect(queryTaskListUrl(applicationId)) }
+  }
+
+  const siteIdInt = Number.parseInt(siteId, 10)
+  const site = application.overseasSites?.sites?.find(
+    (s) => s.siteId === siteIdInt
+  )
+  if (!site) {
+    return { redirect: h.redirect(selectOverseasSitesUrl(applicationId)) }
+  }
+
+  return { applicationId, site }
+}
+
 // Entry point for the Registered section's "Add To Accreditation" button — seeds the
 // add-overseas-site wizard session from an existing registered site's known fields (mirrors
 // the linkedSiteId precedent used to seed the add-interim-site wizard from check-your-answers)
@@ -181,30 +253,12 @@ export const selectOverseasSitesGetController = {
 // the session to call promoteOverseasSite instead of createOverseasSite on submit.
 export const selectOverseasSitesPromoteEntryGetController = {
   async handler(request, h) {
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
+    const { redirect, applicationId, site } = await loadSiteForWizardEntry(
+      request,
+      h
     )
-    const { applicationId, siteId } = request.params
-
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return h.redirect(selectOverseasSitesUrl(applicationId))
-    }
-
-    const siteIdInt = Number.parseInt(siteId, 10)
-    const site = application.overseasSites?.sites?.find(
-      (s) => s.siteId === siteIdInt
-    )
-    if (!site) {
-      return h.redirect(selectOverseasSitesUrl(applicationId))
+    if (redirect) {
+      return redirect
     }
 
     resetAddOrsSession(request)
@@ -223,6 +277,43 @@ export const selectOverseasSitesPromoteEntryGetController = {
       repatriatedLoads: site.repatriatedLoads ?? '',
       conditionsOfExport: site.conditionsOfExport ?? null,
       promotingSiteId: site.siteId
+    })
+
+    return h.redirect(siteNameUrl(applicationId))
+  }
+}
+
+// Entry point for the "Change" link on an already-accredited/new/registered-added site —
+// seeds the add-overseas-site wizard session from that site's existing data and replays the
+// same wizard, keyed by editingSiteId instead of promotingSiteId. check-your-answers reads
+// editingSiteId back off the session to call updateOverseasSite (PATCH) instead of
+// promoteOverseasSite/createOverseasSite on submit.
+export const selectOverseasSitesEditEntryGetController = {
+  async handler(request, h) {
+    const { redirect, applicationId, site } = await loadSiteForWizardEntry(
+      request,
+      h
+    )
+    if (redirect) {
+      return redirect
+    }
+
+    resetAddOrsSession(request)
+    setAddOrsSession(request, {
+      siteName: site.siteName ?? '',
+      addressLine1: site.addressLine1 ?? '',
+      addressLine2: site.addressLine2 ?? '',
+      townOrCity: site.townOrCity ?? '',
+      country: site.country ?? '',
+      coordinates: site.coordinates ?? '',
+      siteContactName: site.contactName ?? '',
+      siteContactEmail: site.contactEmail ?? '',
+      siteContactPhone: site.contactPhone ?? '',
+      recyclingOperationCodes: site.operationCodes ?? [],
+      baselAndOecdCodes: [site.code1, site.code2, site.code3].filter(Boolean),
+      repatriatedLoads: site.repatriatedLoads ?? '',
+      conditionsOfExport: site.conditionsOfExport ?? null,
+      editingSiteId: site.siteId
     })
 
     return h.redirect(siteNameUrl(applicationId))
@@ -259,10 +350,7 @@ export const selectOverseasSitesPostController = {
       ).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.overseasSites?.sectionStatus !== 'Queried'
-    ) {
+    if (isOverseasSitesSectionWriteBlocked(application)) {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 

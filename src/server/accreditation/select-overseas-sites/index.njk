@@ -61,6 +61,22 @@
         </div>
       {% endif %}
 
+      {% if editSuccessBanner %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert"
+             aria-labelledby="govuk-edit-notification-banner-title"
+             data-module="govuk-notification-banner"
+             data-testid="ors-edit-success-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="govuk-edit-notification-banner-title">
+              {{ t('pages.addOverseasSite.editSuccessBanner.title') }}
+            </h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-body">{{ t('pages.addOverseasSite.editSuccessBanner.heading') }}</p>
+          </div>
+        </div>
+      {% endif %}
+
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
       {% if error %}
@@ -102,6 +118,10 @@
                 <dd class="govuk-summary-list__value" data-testid="accredited-site-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
                   <dd class="govuk-summary-list__actions">
+                    <a href="{{ site.editUrl }}" class="govuk-link"
+                       data-testid="edit-button-accredited-{{ site.siteId }}">
+                      {{ t('pages.selectOverseasSites.changeButton') }}
+                    </a>
                     <form method="post" style="display:inline" data-testid="remove-form-accredited-{{ site.siteId }}">
                       <input type="hidden" name="crumb" value="{{ crumb }}">
                       <input type="hidden" name="siteId" value="{{ site.siteId }}">
@@ -153,6 +173,10 @@
                 <dd class="govuk-summary-list__value" data-testid="new-site-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
                   <dd class="govuk-summary-list__actions">
+                    <a href="{{ site.editUrl }}" class="govuk-link"
+                       data-testid="edit-button-new-{{ site.siteId }}">
+                      {{ t('pages.selectOverseasSites.changeButton') }}
+                    </a>
                     <form method="post" style="display:inline" data-testid="remove-form-new-{{ site.siteId }}">
                       <input type="hidden" name="crumb" value="{{ crumb }}">
                       <input type="hidden" name="siteId" value="{{ site.siteId }}">
@@ -180,6 +204,10 @@
                 <dd class="govuk-summary-list__value" data-testid="registered-sites-added-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
                   <dd class="govuk-summary-list__actions">
+                    <a href="{{ site.editUrl }}" class="govuk-link"
+                       data-testid="edit-button-registered-added-{{ site.siteId }}">
+                      {{ t('pages.selectOverseasSites.changeButton') }}
+                    </a>
                     <form method="post" style="display:inline" data-testid="remove-form-registered-added-{{ site.siteId }}">
                       <input type="hidden" name="crumb" value="{{ crumb }}">
                       <input type="hidden" name="siteId" value="{{ site.siteId }}">

@@ -410,6 +410,32 @@ describe('accreditationApiService', () => {
     })
   })
 
+  describe('updateOverseasSite', () => {
+    test('calls PATCH to the site-specific overseas-sites endpoint', async () => {
+      apiClient.patch.mockResolvedValue({ siteId: 900002 })
+      const body = { siteName: 'Updated Site Name' }
+      const result = await accreditationApiService.updateOverseasSite(
+        ORG_ID,
+        APP_ID,
+        900002,
+        body
+      )
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900002`,
+        body
+      )
+      expect(result).toEqual({ siteId: 900002 })
+    })
+
+    test('normalises API error', async () => {
+      const err = Object.assign(new Error('Conflict'), { status: 409 })
+      apiClient.patch.mockRejectedValue(err)
+      await expect(
+        accreditationApiService.updateOverseasSite(ORG_ID, APP_ID, 900002, {})
+      ).rejects.toMatchObject({ status: 409, isApiError: true })
+    })
+  })
+
   describe('addBesEvidenceFile', () => {
     test('calls POST to BES evidence files endpoint for a site', async () => {
       apiClient.post.mockResolvedValue({ FileId: 'bes-file-1' })

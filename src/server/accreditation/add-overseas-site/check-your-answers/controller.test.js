@@ -806,4 +806,129 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
   })
+
+  describe('POST — arriving via the edit (Change) entry point', () => {
+    const EDIT_ENTRY_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
+
+    function cookieHeaderFrom(response, fallback) {
+      const raw = response.headers['set-cookie']
+      if (!raw) {
+        return fallback
+      }
+      return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+    }
+
+    const ACCREDITED_SITE = {
+      siteId: 900001,
+      orsId: '001',
+      siteName: 'Accredited Site',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      country: 'Netherlands',
+      contactName: 'Jane Smith',
+      contactEmail: 'jane@example.com',
+      operationCodes: ['R3'],
+      code1: 'A1181',
+      repatriatedLoads: 'Details',
+      selected: true
+    }
+
+    async function seedEditSession() {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([ACCREDITED_SITE])
+      )
+      const entryResponse = await server.inject({
+        method: 'GET',
+        url: EDIT_ENTRY_URL,
+        headers: operatorHeaders
+      })
+      expect(entryResponse.statusCode).toBe(statusCodes.redirect)
+      expect(entryResponse.headers.location).toBe(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+      )
+      return cookieHeaderFrom(entryResponse, cookie)
+    }
+
+    test('calls updateOverseasSite instead of createOverseasSite/promoteOverseasSite, keyed on the original siteId', async () => {
+      const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'updateOverseasSite').mockResolvedValue(
+        { siteId: 900001 }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.updateOverseasSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        900001,
+        expect.objectContaining({ siteName: 'Accredited Site' })
+      )
+      expect(accreditationApiService.createOverseasSite).not.toHaveBeenCalled()
+      expect(accreditationApiService.promoteOverseasSite).not.toHaveBeenCalled()
+    })
+
+    test('returns 500 with error summary when updateOverseasSite fails', async () => {
+      const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'updateOverseasSite').mockRejectedValue(
+        new Error('update failed')
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('flashes the edit success banner, rendered back on select-overseas-sites', async () => {
+      const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'updateOverseasSite').mockResolvedValue(
+        { siteId: 900001 }
+      )
+
+      const cyaPostResponse = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+      expect(cyaPostResponse.statusCode).toBe(statusCodes.redirect)
+      const selectOrsCookie = cookieHeaderFrom(cyaPostResponse, sessionCookie)
+
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([ACCREDITED_SITE])
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: SELECT_ORS_URL,
+        headers: { ...operatorHeaders, cookie: selectOrsCookie }
+      })
+
+      expect(result).toContain('data-testid="ors-edit-success-banner"')
+    })
+  })
 })

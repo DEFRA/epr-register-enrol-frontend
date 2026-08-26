@@ -304,6 +304,15 @@ export const accreditationApiService = {
     )
   },
 
+  updateOverseasSite(organisationId, applicationId, siteId, body) {
+    return call(() =>
+      apiClient.patch(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}`,
+        body
+      )
+    )
+  },
+
   revertOverseasSite(organisationId, applicationId, siteId) {
     return call(() =>
       apiClient.post(

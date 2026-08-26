@@ -163,6 +163,63 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
+    test('accredited site Change link points to the edit route', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="edit-button-accredited-900001"')
+      expect(result).toContain(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
+      )
+    })
+
+    test('new site and registered-sites-added Change links point to the edit route', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [ACCREDITED_SITE, NEW_SITE, REGISTERED_SITE_ADDED]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="edit-button-new-900003"')
+      expect(result).toContain(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900003`
+      )
+      expect(result).toContain(
+        'data-testid="edit-button-registered-added-900004"'
+      )
+      expect(result).toContain(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900004`
+      )
+    })
+
+    test('registered site (not yet accredited) has no Change link', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain(
+        'data-testid="edit-button-registered-900002"'
+      )
+    })
+
     test('shows no-sites message when overseasSites.sites is empty', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
@@ -273,6 +330,7 @@ describe('#selectOverseasSitesController', () => {
 
       expect(result).not.toContain('data-testid="ors-success-banner"')
       expect(result).not.toContain('data-testid="ors-promote-success-banner"')
+      expect(result).not.toContain('data-testid="ors-edit-success-banner"')
     })
 
     test('does not show interim-site success banner when no flash is set', async () => {
@@ -586,6 +644,131 @@ describe('#selectOverseasSitesController', () => {
 
       expect(result).toMatch(/value="R3"\s+checked/)
       expect(result).toMatch(/value="R12"\s+checked/)
+    })
+
+    // RA-470: the promote-entry controller previously skipped the Queried-section write
+    // guard entirely, unlike the main GET/POST handlers -- so a direct link into this route
+    // could start (and eventually submit) a write against a section the regulator-query flow
+    // should have locked. Fixed by routing through the same guard used everywhere else.
+    test('redirects to query-task-list, without seeding the session, when application is Queried and overseas sites section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: {
+            sectionStatus: 'Completed',
+            sites: [{ ...REGISTERED_SITE }]
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+  })
+
+  describe('GET /accreditation/select-overseas-sites/{applicationId}/edit/{siteId}', () => {
+    test('redirects back to select-overseas-sites when the application fetch fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects back to select-overseas-sites when siteId matches no site', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/999999`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects to site-name and seeds the session (editingSiteId) when the site is found', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+      )
+    })
+
+    test("re-populates the site's existing name on site-name", async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      function cookieHeaderFrom(response, fallback) {
+        const raw = response.headers['set-cookie']
+        if (!raw) {
+          return fallback
+        }
+        return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+      }
+
+      const editResponse = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
+        headers: operatorHeaders
+      })
+      expect(editResponse.statusCode).toBe(statusCodes.redirect)
+      const sessionCookie = cookieHeaderFrom(editResponse, '')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toContain('Site Alpha')
+    })
+
+    test('redirects to query-task-list, without seeding the session, when application is Queried and overseas sites section is not', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: {
+            sectionStatus: 'Completed',
+            sites: [{ ...ACCREDITED_SITE }]
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
     })
   })
 
