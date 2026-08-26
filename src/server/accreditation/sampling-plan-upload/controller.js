@@ -10,7 +10,10 @@ import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
@@ -167,9 +170,14 @@ export const samplingPlanUploadGetController = {
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
       heading: `${t('pages.samplingPlanUpload.heading')} - ${materialDisplay}`,
-      backLink: readOnly
-        ? queryTaskListUrl(applicationId)
-        : taskListUrl(applicationId),
+      // RA-481: only route back to the query task list while the
+      // application itself is mid-query — a locked-but-not-queried
+      // application is read-only for a different reason and belongs back on
+      // the ordinary task list, which renders read-only in that case too.
+      backLink:
+        application.applicationStatus === 'Queried'
+          ? queryTaskListUrl(applicationId)
+          : taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       files,
       viewableFilesCount,
@@ -187,7 +195,8 @@ export const samplingPlanUploadGetController = {
             }
           ]
         : null,
-      readOnly
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
 }
@@ -218,11 +227,15 @@ export const samplingPlanUploadPostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.samplingPlan?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const files = buildFilesViewModel(application.samplingPlan?.files)
@@ -392,9 +405,110 @@ export const samplingPlanResultsGetController = {
       error: uploadFailed
         ? t('pages.samplingPlanUpload.validation.uploadError')
         : null,
-      readOnly
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
+}
+
+// Extracted from samplingPlanResultsPostController (SonarCloud cyclomatic
+// complexity): each `action` branch (deleteFile/saveAndComeLater/
+// saveAndContinue) was an independent try/catch inlined in the handler.
+// baseView is passed through as-is (it closes over the request-scoped
+// `files`/`applicationId`/`t`), so these stay simple wrappers rather than
+// duplicating the view-model literal.
+async function deleteResultsFile({
+  h,
+  request,
+  organisationId,
+  applicationId,
+  fileId,
+  baseView,
+  t
+}) {
+  if (fileId) {
+    try {
+      await accreditationApiService.deleteFile(
+        organisationId,
+        applicationId,
+        fileId
+      )
+    } catch (err) {
+      request.server.logger.error(
+        `Error deleting file ${fileId} for ${applicationId}: ${err.message}`
+      )
+      return renderResultsPage(
+        h,
+        baseView({
+          error: t('pages.samplingPlanUpload.validation.deleteError')
+        })
+      ).code(500)
+    }
+  }
+  return h.redirect(resultsUrl(applicationId))
+}
+
+async function saveSamplingPlanForLater({
+  h,
+  request,
+  organisationId,
+  applicationId,
+  rawFiles,
+  baseView,
+  t
+}) {
+  const sectionStatus = rawFiles.length > 0 ? 'InProgress' : 'NotStarted'
+  try {
+    await accreditationApiService.patchSamplingPlan(
+      organisationId,
+      applicationId,
+      { sectionStatus }
+    )
+  } catch (err) {
+    request.server.logger.error(
+      `Error saving sampling plan for ${applicationId}: ${err.message}`
+    )
+    return renderResultsPage(
+      h,
+      baseView({ error: t('pages.samplingPlanUpload.validation.saveError') })
+    ).code(500)
+  }
+  return h.redirect(taskListUrl(applicationId))
+}
+
+async function completeSamplingPlan({
+  h,
+  request,
+  organisationId,
+  applicationId,
+  rawFiles,
+  baseView,
+  t
+}) {
+  if (!isSamplingPlanComplete(rawFiles)) {
+    return renderResultsPage(
+      h,
+      baseView({ error: t('pages.samplingPlanUpload.validation.noCleanFile') })
+    ).code(400)
+  }
+
+  try {
+    await accreditationApiService.patchSamplingPlan(
+      organisationId,
+      applicationId,
+      { sectionStatus: 'Completed' }
+    )
+  } catch (err) {
+    request.server.logger.error(
+      `Error completing sampling plan for ${applicationId}: ${err.message}`
+    )
+    return renderResultsPage(
+      h,
+      baseView({ error: t('pages.samplingPlanUpload.validation.saveError') })
+    ).code(500)
+  }
+
+  return h.redirect(taskListUrl(applicationId))
 }
 
 export const samplingPlanResultsPostController = {
@@ -427,11 +541,15 @@ export const samplingPlanResultsPostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.samplingPlan?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.samplingPlan?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const rawFiles = application.samplingPlan?.files ?? []
@@ -450,77 +568,39 @@ export const samplingPlanResultsPostController = {
     }
 
     if (action === 'deleteFile') {
-      if (fileId) {
-        try {
-          await accreditationApiService.deleteFile(
-            organisationId,
-            applicationId,
-            fileId
-          )
-        } catch (err) {
-          request.server.logger.error(
-            `Error deleting file ${fileId} for ${applicationId}: ${err.message}`
-          )
-          return renderResultsPage(
-            h,
-            baseView({
-              error: t('pages.samplingPlanUpload.validation.deleteError')
-            })
-          ).code(500)
-        }
-      }
-      return h.redirect(resultsUrl(applicationId))
+      return deleteResultsFile({
+        h,
+        request,
+        organisationId,
+        applicationId,
+        fileId,
+        baseView,
+        t
+      })
     }
 
     if (action === 'saveAndComeLater') {
-      const sectionStatus = rawFiles.length > 0 ? 'InProgress' : 'NotStarted'
-      try {
-        await accreditationApiService.patchSamplingPlan(
-          organisationId,
-          applicationId,
-          { sectionStatus }
-        )
-      } catch (err) {
-        request.server.logger.error(
-          `Error saving sampling plan for ${applicationId}: ${err.message}`
-        )
-        return renderResultsPage(
-          h,
-          baseView({
-            error: t('pages.samplingPlanUpload.validation.saveError')
-          })
-        ).code(500)
-      }
-      return h.redirect(taskListUrl(applicationId))
+      return saveSamplingPlanForLater({
+        h,
+        request,
+        organisationId,
+        applicationId,
+        rawFiles,
+        baseView,
+        t
+      })
     }
 
     // saveAndContinue (default)
-    if (!isSamplingPlanComplete(rawFiles)) {
-      return renderResultsPage(
-        h,
-        baseView({
-          error: t('pages.samplingPlanUpload.validation.noCleanFile')
-        })
-      ).code(400)
-    }
-
-    try {
-      await accreditationApiService.patchSamplingPlan(
-        organisationId,
-        applicationId,
-        { sectionStatus: 'Completed' }
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error completing sampling plan for ${applicationId}: ${err.message}`
-      )
-      return renderResultsPage(
-        h,
-        baseView({ error: t('pages.samplingPlanUpload.validation.saveError') })
-      ).code(500)
-    }
-
-    return h.redirect(taskListUrl(applicationId))
+    return completeSamplingPlan({
+      h,
+      request,
+      organisationId,
+      applicationId,
+      rawFiles,
+      baseView,
+      t
+    })
   }
 }
 

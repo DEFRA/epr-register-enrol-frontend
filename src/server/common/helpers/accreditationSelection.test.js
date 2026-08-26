@@ -12,7 +12,8 @@ import { accreditationApiService } from './accreditationApiService.js'
 import {
   selectApplicationForYear,
   resolveLandingApplication,
-  TERMINAL_STATUSES
+  TERMINAL_STATUSES,
+  LOCKED_STATUSES
 } from './accreditationSelection.js'
 
 describe('#TERMINAL_STATUSES', () => {
@@ -20,6 +21,20 @@ describe('#TERMINAL_STATUSES', () => {
     expect(TERMINAL_STATUSES).toEqual(
       new Set(['Withdrawn', 'Approved', 'Rejected'])
     )
+  })
+})
+
+describe('#LOCKED_STATUSES', () => {
+  test('covers exactly the four statuses that lock section editing (RA-481)', () => {
+    expect(LOCKED_STATUSES).toEqual(
+      new Set(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])
+    )
+  })
+
+  test('does not overlap with TERMINAL_STATUSES', () => {
+    for (const status of LOCKED_STATUSES) {
+      expect(TERMINAL_STATUSES.has(status)).toBe(false)
+    }
   })
 })
 

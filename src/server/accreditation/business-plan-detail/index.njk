@@ -32,6 +32,22 @@
 
       <p class="govuk-body" data-testid="intro-text">{{ intro }}</p>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          {% if isQueriedApplication %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+              {{ t('common.readOnlySection.body') }}
+            </p>
+          {% else %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySubmittedSection.heading') }}</strong><br>
+              {{ t('common.readOnlySubmittedSection.body') }}
+            </p>
+          {% endif %}
+        </div>
+      {% endif %}
+
       <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
@@ -56,17 +72,20 @@
               rows="5"
               maxlength="{{ textarea.maxlength }}"
               aria-describedby="{{ textarea.id }}-hint{% if textarea.errorMessage %} {{ textarea.id }}-error{% endif %}"
+              {% if readOnly %}disabled{% endif %}
               data-testid="textarea-{{ textarea.id }}">{{ textarea.value }}</textarea>
           </div>
         {% endfor %}
 
-        <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
-          {{ t('pages.businessPlanDetail.saveAndContinue') }}
-        </button>
+        {% if not readOnly %}
+          <button type="submit" name="submitAction" value="saveAndContinue" class="govuk-button" data-module="govuk-button" data-testid="continue-button">
+            {{ t('pages.businessPlanDetail.saveAndContinue') }}
+          </button>
 
-        <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
-          {{ t('pages.businessPlanDetail.saveAndComeLater') }}
-        </button>
+          <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">
+            {{ t('pages.businessPlanDetail.saveAndComeLater') }}
+          </button>
+        {% endif %}
 
       </form>
 

@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { addOrsRepatriatedLoadsPostController } from './controller.js'
 
 const APPLICATION_ID = 'app-rl-001'
@@ -118,6 +119,28 @@ describe('#addOrsRepatriatedLoadsController', () => {
       expect(result).toContain(SELECT_ORS_URL)
     })
 
+    // RA-481: this wizard holds its draft in session, not on the
+    // application, so once overseasSites is locked there's nothing
+    // meaningful to render read-only — send the operator back to the
+    // section's list page instead.
+    test('redirects to select-overseas-sites when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
@@ -171,6 +194,25 @@ describe('#addOrsRepatriatedLoadsController', () => {
   })
 
   describe(`POST ${BASE_URL} (HTTP)`, () => {
+    test('redirects to select-overseas-sites without saving when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
+        {
+          applicationStatus: 'Submitted',
+          overseasSites: { sectionStatus: 'Completed' }
+        }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'repatriatedLoads=Some+description+text'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+
     test('returns 400 with error when text is empty', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',

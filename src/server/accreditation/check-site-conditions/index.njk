@@ -23,12 +23,28 @@
 
       <p class="govuk-body" data-testid="placeholder-content">{{ t('pages.checkSiteConditions.content') }}</p>
 
-      <form method="post" novalidate data-testid="confirm-form">
-        <input type="hidden" name="crumb" value="{{ crumb }}">
-        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">
-          {{ t('pages.checkSiteConditions.confirmButton') }}
-        </button>
-      </form>
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          {% if isQueriedApplication %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+              {{ t('common.readOnlySection.body') }}
+            </p>
+          {% else %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySubmittedSection.heading') }}</strong><br>
+              {{ t('common.readOnlySubmittedSection.body') }}
+            </p>
+          {% endif %}
+        </div>
+      {% else %}
+        <form method="post" novalidate data-testid="confirm-form">
+          <input type="hidden" name="crumb" value="{{ crumb }}">
+          <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">
+            {{ t('pages.checkSiteConditions.confirmButton') }}
+          </button>
+        </form>
+      {% endif %}
 
     </div>
   </div>

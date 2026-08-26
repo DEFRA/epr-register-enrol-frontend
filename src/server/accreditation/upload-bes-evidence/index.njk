@@ -17,6 +17,22 @@
 
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
+      {% if readOnly %}
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          {% if isQueriedApplication %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+              {{ t('common.readOnlySection.body') }}
+            </p>
+          {% else %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySubmittedSection.heading') }}</strong><br>
+              {{ t('common.readOnlySubmittedSection.body') }}
+            </p>
+          {% endif %}
+        </div>
+      {% else %}
+
       <p class="govuk-body">{{ t('pages.uploadBesEvidence.requirements.intro') }}</p>
       <ul class="govuk-list govuk-list--bullet">
         <li>{{ t('pages.uploadBesEvidence.requirements.maxSize') }}</li>
@@ -113,6 +129,8 @@
           {{ t('pages.uploadBesEvidence.saveAndComeLater') }}
         </button>
       </form>
+
+      {% endif %}
 
     </div>
   </div>

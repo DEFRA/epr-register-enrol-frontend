@@ -2,12 +2,16 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
   resolveRegulatorQueryNote
 } from '../../common/helpers/regulatorQuery.js'
-import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
@@ -101,17 +105,70 @@ export const tonnageGetController = {
         application.prns?.plannedTonnageBand ?? null,
         t
       ),
-      backLink: readOnly
-        ? queryTaskListUrl(applicationId)
-        : taskListUrl(applicationId),
+      // RA-481: only route back to the query task list while the
+      // application itself is mid-query — a locked-but-not-queried
+      // application (e.g. Submitted) is read-only for a different reason
+      // and belongs back on the ordinary task list, which renders read-only
+      // in that case too.
+      backLink:
+        application.applicationStatus === 'Queried'
+          ? queryTaskListUrl(applicationId)
+          : taskListUrl(applicationId),
       isExporter,
       queryNote,
       querySummary: queryNote
         ? buildRegulatorQuerySummary(sectionKey, t)
         : null,
-      readOnly
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
+}
+
+// Extracted from tonnagePostController (SonarCloud cognitive complexity):
+// the 409/5xx/other three-way error response was inlined in the handler's
+// catch block.
+function handleTonnageSaveError({
+  h,
+  request,
+  t,
+  error,
+  applicationId,
+  isExporter,
+  heading,
+  plannedTonnageBand
+}) {
+  request.server.logger.error(
+    `Error saving tonnage for ${applicationId}: ${error.message}`
+  )
+  // RA-481: a 409 means the application locked between the guard check
+  // above and this write landing — send the operator back to the
+  // section's own page so it re-fetches and renders read-only.
+  if (error.status === statusCodes.conflict) {
+    return h.redirect(request.path)
+  }
+  if (!error.status || error.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderForm(h, {
+    pageTitle: isExporter
+      ? t('pages.tonnage.titleExporter')
+      : t('pages.tonnage.title'),
+    heading,
+    tonnageOptions: buildTonnageOptions(plannedTonnageBand, t),
+    backLink: taskListUrl(applicationId),
+    isExporter,
+    errors: {
+      plannedTonnageBand: {
+        text: t('pages.tonnage.validation.saveError')
+      }
+    }
+  }).code(400)
 }
 
 export const tonnagePostController = {
@@ -147,11 +204,15 @@ export const tonnagePostController = {
       }).code(500)
     }
 
-    if (
-      application.applicationStatus === 'Queried' &&
-      application.prns?.sectionStatus !== 'Queried'
-    ) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.prns?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const isExporter = application.isExporter ?? false
@@ -189,31 +250,16 @@ export const tonnagePostController = {
         }
       )
     } catch (error) {
-      request.server.logger.error(
-        `Error saving tonnage for ${applicationId}: ${error.message}`
-      )
-      if (!error.status || error.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderForm(h, {
-        pageTitle: isExporter
-          ? t('pages.tonnage.titleExporter')
-          : t('pages.tonnage.title'),
-        heading,
-        tonnageOptions: buildTonnageOptions(plannedTonnageBand, t),
-        backLink: taskListUrl(applicationId),
+      return handleTonnageSaveError({
+        h,
+        request,
+        t,
+        error,
+        applicationId,
         isExporter,
-        errors: {
-          plannedTonnageBand: {
-            text: t('pages.tonnage.validation.saveError')
-          }
-        }
-      }).code(400)
+        heading,
+        plannedTonnageBand
+      })
     }
 
     if (isSaveAndComeLater) {

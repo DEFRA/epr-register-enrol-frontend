@@ -15,6 +15,23 @@
         </div>
       {% endif %}
 
+      {% if readOnly %}
+        <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+        <div class="govuk-inset-text" data-testid="read-only-notice">
+          {% if isQueriedApplication %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySection.heading') }}</strong><br>
+              {{ t('common.readOnlySection.body') }}
+            </p>
+          {% else %}
+            <p class="govuk-body">
+              <strong>{{ t('common.readOnlySubmittedSection.heading') }}</strong><br>
+              {{ t('common.readOnlySubmittedSection.body') }}
+            </p>
+          {% endif %}
+        </div>
+      {% else %}
+
       <form method="post" novalidate data-testid="more-evidence-form">
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
@@ -45,6 +62,8 @@
           {{ t('pages.uploadMoreEvidence.continueButton') }}
         </button>
       </form>
+
+      {% endif %}
 
     </div>
   </div>

@@ -967,6 +967,10 @@
       "heading": "You cannot edit this section",
       "body": "This section has already been completed and is not part of the regulator's query. Go back to the query task list to update the queried section.",
       "backToQueryTaskList": "Back to query task list"
+    },
+    "readOnlySubmittedSection": {
+      "heading": "You cannot edit this section",
+      "body": "This application has already been submitted, so this section is now read-only. Go back to the task list to view the rest of your application."
     }
   },
   "languageSwitcher": {

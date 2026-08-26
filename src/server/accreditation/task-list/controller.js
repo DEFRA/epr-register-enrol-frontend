@@ -6,7 +6,10 @@ import {
   queryTaskListUrl,
   landingUrl
 } from '../../common/helpers/accreditationUrls.js'
-import { TERMINAL_STATUSES } from '../../common/helpers/accreditationSelection.js'
+import {
+  TERMINAL_STATUSES,
+  LOCKED_STATUSES
+} from '../../common/helpers/accreditationSelection.js'
 import { operatorHomeUrl } from '../../common/helpers/test-pages-access.js'
 
 const SECTION_STATUS_CONFIG = {
@@ -20,6 +23,36 @@ const SECTION_STATUS_CONFIG = {
 
 function sectionStatus(value) {
   return SECTION_STATUS_CONFIG[value] ?? SECTION_STATUS_CONFIG.NotStarted
+}
+
+// RA-481: once the application is locked (Submitted/DulyMade/Updated/
+// AwaitingDecision), every already-answered section is safe to open
+// read-only, and the one currently Queried stays fully editable — mirrors
+// the viewable/locked logic in query-task-list/controller.js, which decides
+// which tasks get a link for the Queried-application flow. NotStarted/
+// InProgress sections have nothing to show and stay locked (shouldn't
+// normally occur once an application has reached a locked status, since
+// that only happens after a full submission).
+function viewableWhenLocked(status) {
+  return (
+    status === 'Queried' || status === 'Completed' || status === 'Submitted'
+  )
+}
+
+// Applies the locked-application task rendering on top of the ordinary
+// progression-gated task, once the whole application is locked — the
+// section-by-section "must complete the previous one first" gating no
+// longer applies once submitted (every section was already Completed to
+// get there), so this replaces it with the same queried/viewable check
+// query-task-list uses.
+function applyLockedRendering(task) {
+  const viewable = viewableWhenLocked(task.status)
+  return {
+    ...task,
+    url: viewable ? task.canonicalUrl : null,
+    locked: !viewable,
+    readOnly: viewable && task.status !== 'Queried'
+  }
 }
 
 export function buildTaskListViewModel(application, t) {
@@ -52,29 +85,35 @@ export function buildTaskListViewModel(application, t) {
 
   const backLink = landingUrl(application)
 
-  const tasks = [
+  let tasks = [
     {
       label: isExporter
         ? t('pages.taskList.tasks.perns')
         : t('pages.taskList.tasks.prns'),
+      canonicalUrl: `/accreditation/tonnage/${applicationId}`,
       url: `/accreditation/tonnage/${applicationId}`,
       locked: false,
+      status: prns?.sectionStatus,
       statusTagText: tonnageSt.tagText,
       statusTagClass: tonnageSt.tagClass,
       testId: 'task-prns'
     },
     {
       label: t('pages.taskList.tasks.businessPlan'),
+      canonicalUrl: `/accreditation/business-plan/${applicationId}`,
       url: bpLocked ? null : `/accreditation/business-plan/${applicationId}`,
       locked: bpLocked,
+      status: businessPlan?.sectionStatus,
       statusTagText: bpSt.tagText,
       statusTagClass: bpSt.tagClass,
       testId: 'task-business-plan'
     },
     {
       label: t('pages.taskList.tasks.samplingPlan'),
+      canonicalUrl: `/accreditation/sampling-plan/${applicationId}`,
       url: spLocked ? null : `/accreditation/sampling-plan/${applicationId}`,
       locked: spLocked,
+      status: samplingPlan?.sectionStatus,
       statusTagText: spSt.tagText,
       statusTagClass: spSt.tagClass,
       testId: 'task-sampling-plan'
@@ -82,12 +121,7 @@ export function buildTaskListViewModel(application, t) {
   ]
 
   let allComplete = tonnageComplete && bpComplete && spComplete
-  const isSubmitted = [
-    'Submitted',
-    'Updated',
-    'DulyMade',
-    'AwaitingDecision'
-  ].includes(application.applicationStatus)
+  const isSubmitted = LOCKED_STATUSES.has(application.applicationStatus)
 
   if (isExporter) {
     const osComplete =
@@ -103,20 +137,24 @@ export function buildTaskListViewModel(application, t) {
     tasks.push(
       {
         label: t('pages.taskList.tasks.overseasSites'),
+        canonicalUrl: `/accreditation/select-overseas-sites/${applicationId}`,
         url: osLocked
           ? null
           : `/accreditation/select-overseas-sites/${applicationId}`,
         locked: osLocked,
+        status: overseasSites?.sectionStatus,
         statusTagText: osSt.tagText,
         statusTagClass: osSt.tagClass,
         testId: 'task-overseas-sites'
       },
       {
         label: t('pages.taskList.tasks.besEvidence'),
+        canonicalUrl: `/accreditation/upload-evidence-for-overseas-site/${applicationId}`,
         url: besLocked
           ? null
           : `/accreditation/upload-evidence-for-overseas-site/${applicationId}`,
         locked: besLocked,
+        status: besEvidence?.sectionStatus,
         statusTagText: besSt.tagText,
         statusTagClass: besSt.tagClass,
         testId: 'task-bes-evidence'
@@ -125,6 +163,15 @@ export function buildTaskListViewModel(application, t) {
 
     allComplete = allComplete && osComplete && besComplete
   }
+
+  // RA-481: once locked, progression gating (bpLocked/spLocked/osLocked/
+  // besLocked above) no longer applies — replace it with the queried/
+  // viewable check so a locked application's tasks render read-only
+  // (still viewable) except the one section currently Queried.
+  if (isSubmitted) {
+    tasks = tasks.map(applyLockedRendering)
+  }
+
   const exporterIsNotNull = isExporter ?? false
   return {
     heading,

@@ -1,6 +1,8 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
+import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddOrsSession,
   setAddOrsSession,
@@ -179,15 +181,10 @@ function buildSitePayload(session) {
   }
 }
 
-export const addOrsCyaGetController = {
-  handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const { applicationId } = request.params
-    const session = getAddOrsSession(request)
-    return renderPage(h, buildViewData(t, applicationId, session, null))
-  }
-}
-
+// Extracted from addOrsCyaPostController (SonarCloud cognitive complexity):
+// pulls the "delete one Basel/OECD code row" action fully out of the POST
+// handler's own branching, since it's a self-contained session mutation with
+// no dependency on the rest of the handler's flow.
 function handleDeleteBaselCode(request, h, session, action, applicationId) {
   const codeIndex = Number.parseInt(
     action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
@@ -199,6 +196,29 @@ function handleDeleteBaselCode(request, h, session, action, applicationId) {
     setAddOrsSession(request, { baselAndOecdCodes: codes })
   }
   return h.redirect(cyaUrl(applicationId))
+}
+
+export const addOrsCyaGetController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
+    const session = getAddOrsSession(request)
+    return renderPage(h, buildViewData(t, applicationId, session, null))
+  }
 }
 
 // editingSiteId and promotingSiteId are never both set -- resetAddOrsSession clears the wizard
@@ -260,6 +280,20 @@ async function saveSite(mode, session, organisationId, applicationId) {
 export const addOrsCyaPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
+    const organisationId = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.organisationId
+    )
+
+    const guardRedirect = await guardOverseasSiteWizardEntry({
+      h,
+      organisationId,
+      applicationId,
+      fallbackUrl: selectOrsUrl(applicationId)
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const session = getAddOrsSession(request)
     const action = request.payload?.action ?? ''
 
@@ -275,9 +309,6 @@ export const addOrsCyaPostController = {
       )
     }
 
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
     const mode = resolveSiteSaveMode(session)
 
     let savedSite
@@ -287,6 +318,12 @@ export const addOrsCyaPostController = {
       request.server.logger.error(
         `CYA ${SITE_SAVE_MODES[mode].apiMethod} error: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to the
+      // section's own (now read-only) list page rather than a raw error.
+      if (err.status === statusCodes.conflict) {
+        return h.redirect(selectOrsUrl(applicationId))
+      }
       return renderPage(
         h,
         buildViewData(t, applicationId, session, t('common.errorSummaryTitle'))

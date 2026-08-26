@@ -1,6 +1,12 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
+import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  resolveQueriedSectionAccess,
+  guardSectionWrite
+} from '../../common/helpers/queriedSectionAccess.js'
 
 const TONNAGE_LABEL_KEYS = {
   UpTo500: 'pages.tonnage.options.UpTo500',
@@ -69,6 +75,14 @@ export const tonnageCyaGetController = {
       }).code(500)
     }
 
+    const { blocked, readOnly } = resolveQueriedSectionAccess(
+      application,
+      application.prns?.sectionStatus
+    )
+    if (blocked) {
+      return h.redirect(queryTaskListUrl(applicationId))
+    }
+
     const isExporter = application.isExporter ?? false
     const tonnageBand = application.prns?.plannedTonnageBand ?? null
     const authorisers = application.prns?.authorisers ?? []
@@ -84,7 +98,9 @@ export const tonnageCyaGetController = {
       backLink: taskListUrl(applicationId),
       taskListLink: taskListUrl(applicationId),
       isExporter,
-      ...buildCyaLabels(isExporter, t)
+      ...buildCyaLabels(isExporter, t),
+      readOnly,
+      isQueriedApplication: application.applicationStatus === 'Queried'
     })
   }
 }
@@ -120,6 +136,17 @@ export const tonnageCyaPostController = {
       }).code(500)
     }
 
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.prns?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
+    }
+
     const isExporter = application.isExporter ?? false
     const tonnageBand = application.prns?.plannedTonnageBand ?? null
     const authorisers = application.prns?.authorisers ?? []
@@ -139,6 +166,12 @@ export const tonnageCyaPostController = {
       request.server.logger.error(
         `Error confirming tonnage section for ${applicationId}: ${err.message}`
       )
+      // RA-481: a 409 means the application locked between the guard check
+      // above and this write landing — send the operator back to this page
+      // so it re-fetches and renders read-only.
+      if (err.status === statusCodes.conflict) {
+        return h.redirect(request.path)
+      }
       return renderPage(h, {
         pageTitle: t('pages.tonnageCya.title'),
         heading: t('pages.tonnageCya.heading'),
