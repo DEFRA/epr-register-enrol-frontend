@@ -103,6 +103,23 @@ describe('#tonnageController', () => {
       expect(result).toContain('data-testid="page-heading"')
     })
 
+    // RA-506: tonnage uses the fieldset__heading/legend pattern, so the
+    // caption nests INSIDE the h1 (GOV.UK's documented convention for a
+    // fieldset legend heading), not as a sibling span before it.
+    test('renders a page caption nested inside the fieldset legend heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'data-testid="page-heading"><span class="govuk-caption-l" data-testid="page-caption">'
+      )
+    })
+
     test('appends the glass recycling type suffix to the heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({

@@ -49,6 +49,22 @@ describe('#addInterimSiteCountryController', () => {
       expect(result).toContain('What country is the interim site in?')
     })
 
+    // RA-506: caption sits before the govuk-label-wrapper h1, not inside it.
+    test('renders a page caption immediately before the page heading', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<span class="govuk-caption-l" data-testid="page-caption">'
+      )
+      expect(result.indexOf('data-testid="page-caption"')).toBeLessThan(
+        result.indexOf('data-testid="page-heading"')
+      )
+    })
+
     test('renders country input', async () => {
       const { result } = await server.inject({
         method: 'GET',
