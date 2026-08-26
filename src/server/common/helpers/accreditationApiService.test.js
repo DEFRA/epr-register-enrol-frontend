@@ -125,6 +125,33 @@ describe('accreditationApiService', () => {
       expect(result.accreditationReference).toBeNull()
     })
 
+    // RA-503: operatorOrganisationId (mapped here from the backend's raw
+    // organisationId) is ReEx's internal ObjectId, never safe to build a bank
+    // payment reference (buildPaymentReference) from. orgId is the
+    // operator/regulator-safe numeric organisation number.
+    test('organisationId comes from orgId, not the raw ObjectId-shaped organisationId', async () => {
+      apiClient.get.mockResolvedValue({
+        orgId: 500500,
+        organisationId: '6a74a6a12b7c39b0cc15ca55'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.organisationId).toBe(500500)
+    })
+
+    test('organisationId falls back to the raw organisationId when orgId is absent', async () => {
+      apiClient.get.mockResolvedValue({
+        organisationId: '6a74a6a12b7c39b0cc15ca55'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.organisationId).toBe('6a74a6a12b7c39b0cc15ca55')
+    })
+
     test('sitePostcode is extracted from an object-shaped siteAddress', async () => {
       apiClient.get.mockResolvedValue({
         siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' }
