@@ -17,10 +17,6 @@
         </div>
       {% endif %}
 
-      {% if siteName or siteAddress %}
-        <span class="govuk-caption-l" data-testid="site-summary">{{ siteName }}{% if siteAddress %}, {{ siteAddress }}{% endif %}</span>
-      {% endif %}
-
       <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
       <div class="govuk-hint">{{ hint }}</div>

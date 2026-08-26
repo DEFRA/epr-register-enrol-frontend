@@ -5,7 +5,6 @@ import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
-import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 import { BASEL_OECD_CODES } from '../../../common/data/baselOecdCodes.js'
 
 const BASEL_OECD_CODES_SET = new Set(
@@ -34,7 +33,7 @@ function renderPage(h, viewData) {
   )
 }
 
-function buildViewData(t, applicationId, session, values, errors) {
+function buildViewData(t, applicationId, values, errors) {
   const codes = values.map((value, index) => ({
     index,
     value,
@@ -63,8 +62,6 @@ function buildViewData(t, applicationId, session, values, errors) {
     cancelLink: t('pages.addOverseasSite.siteName.cancelLink'),
     backLink: recyclingOperationUrl(applicationId),
     cancelUrl: selectOrsUrl(applicationId),
-    siteName: session.siteName ?? '',
-    siteAddress: formatSiteAddress(session),
     baselOecdCodes: BASEL_OECD_CODES,
     codes,
     visibleCount: values.length,
@@ -101,7 +98,7 @@ export const addOrsBaselCodeGetController = {
     const session = getAddOrsSession(request)
     const codes = session.baselAndOecdCodes ?? []
     const values = codes.length > 0 ? codes : ['']
-    return renderPage(h, buildViewData(t, applicationId, session, values, {}))
+    return renderPage(h, buildViewData(t, applicationId, values, {}))
   }
 }
 
@@ -165,7 +162,6 @@ export const addOrsBaselCodePostController = {
       return guardRedirect
     }
 
-    const session = getAddOrsSession(request)
     const action = request.payload?.action ?? 'continue'
     const rawVisibleCount = Number.parseInt(request.payload?.visibleCount, 10)
     const visibleCount = Math.min(
@@ -179,10 +175,7 @@ export const addOrsBaselCodePostController = {
       if (newValues.length < MAX_CODES) {
         newValues.push('')
       }
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, session, newValues, {})
-      )
+      return renderPage(h, buildViewData(t, applicationId, newValues, {}))
     }
 
     if (action.startsWith('removeCode-')) {
@@ -191,10 +184,7 @@ export const addOrsBaselCodePostController = {
       if (newValues.length === 0) {
         newValues.push('')
       }
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, session, newValues, {})
-      )
+      return renderPage(h, buildViewData(t, applicationId, newValues, {}))
     }
 
     const errors = validateBaselCodes(values, t)
@@ -202,7 +192,7 @@ export const addOrsBaselCodePostController = {
     if (Object.keys(errors).length > 0) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, session, values, errors)
+        buildViewData(t, applicationId, values, errors)
       ).code(400)
     }
 
