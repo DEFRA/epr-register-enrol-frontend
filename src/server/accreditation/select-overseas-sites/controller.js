@@ -101,6 +101,22 @@ function withEditUrl(applicationId, sites) {
   }))
 }
 
+// Extracted from buildViewData (SonarCloud cognitive complexity): the ?? defaulting for
+// each banner/flash flag was pushing buildViewData itself over the complexity threshold.
+function resolveBannerDefaults(banners) {
+  return {
+    successBanner: banners.successBanner ?? false,
+    queryNote: banners.queryNote ?? null,
+    interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
+    promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
+    editSuccessBanner: banners.editSuccessBanner ?? false,
+    querySummary: banners.querySummary ?? null,
+    regulatorQueryFields: banners.regulatorQueryFields ?? null,
+    readOnly: banners.readOnly ?? false,
+    isQueriedApplication: banners.isQueriedApplication ?? false
+  }
+}
+
 function buildViewData(t, applicationId, sections, error, banners = {}) {
   return {
     pageTitle: t('pages.selectOverseasSites.title'),
@@ -115,20 +131,16 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
       applicationId,
       sections.registeredSitesAdded
     ),
-    backLink: banners.readOnly
+    // RA-481: only route back to the query task list while the application
+    // itself is mid-query — a locked-but-not-queried application is
+    // read-only for a different reason and belongs back on the ordinary
+    // task list, which renders read-only in that case too.
+    backLink: banners.isQueriedApplication
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     addOrsUrl: addOrsUrl(applicationId),
-    successBanner: banners.successBanner ?? false,
     error,
-    queryNote: banners.queryNote ?? null,
-    interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
-    promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
-    editSuccessBanner: banners.editSuccessBanner ?? false,
-    querySummary: banners.querySummary ?? null,
-    regulatorQueryFields: banners.regulatorQueryFields ?? null,
-    readOnly: banners.readOnly ?? false,
-    isQueriedApplication: banners.isQueriedApplication ?? false
+    ...resolveBannerDefaults(banners)
   }
 }
 
@@ -483,8 +495,15 @@ export const selectOverseasSitesPostController = {
       ).code(500)
     }
 
-    if (isOverseasSitesSectionWriteBlocked(application)) {
-      return h.redirect(queryTaskListUrl(applicationId))
+    const guardRedirect = guardSectionWrite({
+      h,
+      application,
+      sectionStatus: application.overseasSites?.sectionStatus,
+      applicationId,
+      ownPageUrl: request.path
+    })
+    if (guardRedirect) {
+      return guardRedirect
     }
 
     const rawSites = application.overseasSites?.sites ?? []

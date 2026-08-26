@@ -198,25 +198,6 @@ function handleDeleteBaselCode(request, h, session, action, applicationId) {
   return h.redirect(cyaUrl(applicationId))
 }
 
-// Extracted from addOrsCyaPostController (SonarCloud cognitive complexity):
-// isolates the promote-vs-create branching so the handler's own try/catch
-// only has to decide how to report failure, not which API call to make.
-function submitOrsSite(organisationId, applicationId, session) {
-  if (session.promotingSiteId != null) {
-    return accreditationApiService.promoteOverseasSite(
-      organisationId,
-      applicationId,
-      session.promotingSiteId,
-      buildSitePayload(session)
-    )
-  }
-  return accreditationApiService.createOverseasSite(
-    organisationId,
-    applicationId,
-    buildSitePayload(session)
-  )
-}
-
 export const addOrsCyaGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -238,19 +219,6 @@ export const addOrsCyaGetController = {
     const session = getAddOrsSession(request)
     return renderPage(h, buildViewData(t, applicationId, session, null))
   }
-}
-
-function handleDeleteBaselCode(request, h, session, action, applicationId) {
-  const codeIndex = Number.parseInt(
-    action.replace(DELETE_BASEL_CODE_ACTION_PREFIX, ''),
-    10
-  )
-  const codes = [...(session.baselAndOecdCodes ?? [])]
-  if (!Number.isNaN(codeIndex) && codeIndex >= 0 && codeIndex < codes.length) {
-    codes.splice(codeIndex, 1)
-    setAddOrsSession(request, { baselAndOecdCodes: codes })
-  }
-  return h.redirect(cyaUrl(applicationId))
 }
 
 // editingSiteId and promotingSiteId are never both set -- resetAddOrsSession clears the wizard
@@ -341,9 +309,6 @@ export const addOrsCyaPostController = {
       )
     }
 
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
     const mode = resolveSiteSaveMode(session)
 
     let savedSite
