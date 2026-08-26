@@ -29,7 +29,9 @@ describe('buildApplicationHeaderViewModel', () => {
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteName: '1 Recycling Way, Leeds',
-      year: 2027
+      year: 2027,
+      captionText: 'Delta Green Ltd (2027, Plastic and 1 Recycling Way, Leeds)',
+      showFullHeader: false
     })
   })
 
@@ -50,7 +52,10 @@ describe('buildApplicationHeaderViewModel', () => {
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteName: '4 Glassworks Court, Bristol, BS1 4AA',
-      year: 2027
+      year: 2027,
+      captionText:
+        'Delta Green Ltd (2027, Plastic and 4 Glassworks Court, Bristol, BS1 4AA)',
+      showFullHeader: false
     })
   })
 
@@ -71,7 +76,9 @@ describe('buildApplicationHeaderViewModel', () => {
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteName: 'Not set',
-      year: 2027
+      year: 2027,
+      captionText: 'Delta Green Ltd (2027, Plastic and Not set)',
+      showFullHeader: false
     })
   })
 
@@ -91,7 +98,9 @@ describe('buildApplicationHeaderViewModel', () => {
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteName: 'Not set',
-      year: 2027
+      year: 2027,
+      captionText: 'Delta Green Ltd (2027, Plastic and Not set)',
+      showFullHeader: false
     })
   })
 })

@@ -7,16 +7,28 @@ import { materialDisplayName } from './materialDisplayName.js'
  *   siteAddress, companyRegisteredAddress, year plus whatever
  *   materialDisplayName needs
  * @param {Function} t - translator function from getLocaleAndTranslator
- * @returns {{operatorName: string, materialType: string, siteName: string, year: number}}
+ * @returns {{operatorName: string, materialType: string, siteName: string, year: number, captionText: string, showFullHeader: boolean}}
  */
 export function buildApplicationHeaderViewModel(application, t) {
+  const operatorName = application.organisationName
+  const materialType = materialDisplayName(application, t)
+  const siteName = application.isExporter
+    ? (application.companyRegisteredAddress ?? t('pages.taskList.siteNotSet'))
+    : (application.siteAddress ?? t('pages.taskList.siteNotSet'))
+  const year = application.year
+
   return {
-    operatorName: application.organisationName,
-    materialType: materialDisplayName(application, t),
-    siteName: application.isExporter
-      ? (application.companyRegisteredAddress ?? t('pages.taskList.siteNotSet'))
-      : (application.siteAddress ?? t('pages.taskList.siteNotSet')),
-    year: application.year
+    operatorName,
+    materialType,
+    siteName,
+    year,
+    captionText: composeApplicationCaption({
+      operatorName,
+      year,
+      materialType,
+      siteName
+    }),
+    showFullHeader: false
   }
 }
 

@@ -874,7 +874,9 @@ describe('accreditationSessionGuard plugin registration', () => {
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteName: '1 Recycling Way, Leeds',
-      year: 2027
+      year: 2027,
+      captionText: 'Delta Green Ltd (2027, Plastic and 1 Recycling Way, Leeds)',
+      showFullHeader: false
     })
   })
 
@@ -907,7 +909,9 @@ describe('accreditationSessionGuard plugin registration', () => {
       operatorName: 'Delta Green Ltd',
       materialType: 'Plastic',
       siteName: '1 Recycling Way, Leeds',
-      year: 2027
+      year: 2027,
+      captionText: 'Delta Green Ltd (2027, Plastic and 1 Recycling Way, Leeds)',
+      showFullHeader: false
     })
   })
 
