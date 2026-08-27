@@ -1,10 +1,12 @@
 import {
   selectOverseasSitesGetController,
-  selectOverseasSitesPostController,
+  selectOverseasSitesPostController
+} from './controller.js'
+import {
   selectOverseasSitesPromoteEntryGetController,
   selectOverseasSitesEditEntryGetController,
   selectOverseasSitesInterimSiteEditEntryGetController
-} from './controller.js'
+} from './wizard-entry.controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 
 export const selectOverseasSites = {
