@@ -38,7 +38,7 @@ const makeApp = (overrides = {}) => ({
 })
 
 // RA-415: resolveLandingApplication issues a second GET (getApplication) to
-// refresh the picked application with live caseManagement fields (e.g. dueDate) after
+// refresh the picked application with live Case Management service fields (e.g. dueDate) after
 // listApplications. Both calls go through apiClient.get, so route by URL
 // shape: a request whose last path segment is one of the given apps'
 // applicationId is the single-application fetch, anything else is the list.
