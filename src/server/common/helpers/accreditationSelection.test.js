@@ -178,7 +178,7 @@ describe('#selectApplicationForYear', () => {
   })
 })
 
-// RA-415: listApplications() -> GetList never populates CM-sourced live fields
+// RA-415: listApplications() -> GetList never populates Case Management service-sourced live fields
 // like dueDate, so a record picked straight from the list is stale. The
 // landing page must render the freshly-fetched record instead.
 describe('#resolveLandingApplication', () => {

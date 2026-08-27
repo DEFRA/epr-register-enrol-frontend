@@ -20,7 +20,7 @@ export const REGULATOR_QUERY_SECTION_LABEL_KEYS = {
  * Builds the templated "The regulator has identified an issue with your
  * {section}." summary sentence for the regulator-query banner. The sentence
  * is built entirely from a frontend-owned section-key -> label lookup — it
- * never depends on officer-authored text or a CM/backend field.
+ * never depends on officer-authored text or a Case Management service/backend field.
  * @param {string} sectionKey - key into REGULATOR_QUERY_SECTION_LABEL_KEYS (e.g. 'prns')
  * @param {Function} t - translator function from getLocaleAndTranslator
  * @returns {string|null} the summary sentence, or null if sectionKey is unrecognised

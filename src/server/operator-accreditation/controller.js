@@ -101,11 +101,12 @@ export function buildLandingViewModel(
       `pages.operatorAccreditation.statuses.${application.applicationStatus}`
     ),
     statusTagClass: config.tagClass,
-    // RA-415: sourced from CM's SLA due date (OJ-BE's WorkItemDetailResponseDto
+    // RA-415: sourced from the Case Management service's SLA due date (the
+    // Registration & Accreditation service BE's WorkItemDetailResponseDto
     // -> AccreditationApplicationModel.DueDate), null until the application has
-    // a linked CM work item — see dueDateNotAvailable fallback in the template.
+    // a linked Case Management service work item — see dueDateNotAvailable fallback in the template.
     dueDate: application.dueDate ?? null,
-    // RA-423: once CM has reached a terminal state there is no further SLA to
+    // RA-423: once the Case Management service has reached a terminal state there is no further SLA to
     // count down to, so the due-date cell shows "COMPLETED" regardless of
     // whether a dueDate happens to be set — checked before the dueDate/
     // dueDateNotAvailable fallback in the template.

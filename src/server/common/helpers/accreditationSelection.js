@@ -138,7 +138,7 @@ export async function resolveLandingApplication({
   // withdrawn application must leave it exactly as it is.
   if (hasMatch && (hasLive || !startNewRequested)) {
     // RA-415: listApplications() -> GetList never populates dueDate (or other
-    // CM-sourced live fields), so the list record is stale by construction.
+    // Case Management service-sourced live fields), so the list record is stale by construction.
     // Re-fetch the single application via GetById, which does return the live
     // value, before rendering it.
     try {
