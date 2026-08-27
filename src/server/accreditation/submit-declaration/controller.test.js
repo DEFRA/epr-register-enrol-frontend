@@ -288,7 +288,10 @@ describe('#submitDeclarationController', () => {
         {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
-          email: 'operator@test.example'
+          email: 'operator@test.example',
+          // RA-503: the operator's real bank payment reference, computed from the fetched
+          // application's organisationId/nation/isExporter (buildPaymentReference).
+          paymentReference: 'PR/PK/REP/test-operator-id'
         },
         { timeout: 20000 }
       )
@@ -316,8 +319,43 @@ describe('#submitDeclarationController', () => {
         {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
-          email: 'operator@test.example'
+          email: 'operator@test.example',
+          paymentReference: 'PR/PK/REP/test-operator-id'
         },
+        { timeout: 20000 }
+      )
+    })
+
+    // RA-503: organisationId is ReEx's internal ObjectId on a real submission - orgId is the
+    // operator/regulator-safe numeric organisation number that must actually be quoted on a
+    // bank transfer. Confirms the submitted paymentReference is built from orgId, not
+    // organisationId, when the backend sends both.
+    test('builds the submitted payment reference from orgId, not the raw ObjectId-shaped organisationId', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          orgId: 500500,
+          organisationId: '6a74a6a12b7c39b0cc15ca55'
+        })
+      )
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
+        accreditationReference: 'RA-000000001',
+        applicationStatus: 'Submitted'
+      })
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Director',
+          submitAction: 'submit'
+        }
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ paymentReference: 'PR/PK/REP/500500' }),
         { timeout: 20000 }
       )
     })

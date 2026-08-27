@@ -1,6 +1,10 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import {
+  resolveNation,
+  buildPaymentReference
+} from '../../common/helpers/paymentDetails.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -148,6 +152,18 @@ export const submitDeclarationPostController = {
       }).code(400)
     }
 
+    // RA-503: the operator's real, nation-specific bank payment reference - the exact string
+    // shown to them on the submit-confirmation and view-payment-details pages
+    // (buildPaymentReference, same helper both pages already use). Sent with the submission so
+    // the regulator's duly-making page shows the same reference the operator was told to quote,
+    // instead of a different one management-be generates independently.
+    const nation = resolveNation(application)
+    const paymentReference = buildPaymentReference(
+      nation,
+      application.organisationId,
+      application.isExporter
+    )
+
     let response
     try {
       response = await accreditationApiService.submitApplication(
@@ -156,7 +172,8 @@ export const submitDeclarationPostController = {
         {
           fullName: fullName.trim(),
           jobTitle: jobTitle.trim(),
-          email: request.auth.credentials.email
+          email: request.auth.credentials.email,
+          paymentReference
         },
         // Submission can take substantially longer than the default global
         // API timeout while OJ BE hops through to CM BE, so use a longer
