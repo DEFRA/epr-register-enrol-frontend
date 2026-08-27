@@ -176,16 +176,18 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="accredited-site-orsid-900001"')
-      expect(result).toContain('data-testid="registered-site-orsid-900002"')
-      expect(result).toContain('data-testid="new-site-orsid-900003"')
       expect(result).toContain(
-        'data-testid="registered-sites-added-orsid-900004"'
+        'data-testid="accredited-site-orsid-900001"><span class="govuk-visually-hidden">ORS ID</span> 001'
       )
-      expect(result).toContain('ORS ID 001')
-      expect(result).toContain('ORS ID 002')
-      expect(result).toContain('ORS ID 003')
-      expect(result).toContain('ORS ID 004')
+      expect(result).toContain(
+        'data-testid="registered-site-orsid-900002"><span class="govuk-visually-hidden">ORS ID</span> 002'
+      )
+      expect(result).toContain(
+        'data-testid="new-site-orsid-900003"><span class="govuk-visually-hidden">ORS ID</span> 003'
+      )
+      expect(result).toContain(
+        'data-testid="registered-sites-added-orsid-900004"><span class="govuk-visually-hidden">ORS ID</span> 004'
+      )
     })
 
     test('omits the ORS id row when a site has none', async () => {
