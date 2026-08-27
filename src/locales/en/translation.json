@@ -689,7 +689,6 @@
       "recyclingOperationDetails": {
         "title": "Recycling operation — Add overseas reprocessing site",
         "heading": "What recycling operations are carried out at the site?",
-        "insetText": "Sites can only be approved for accreditation in regard to R3, R4 and R5 recycling operations.",
         "label": "Select all recycling operations that apply",
         "operations": {
           "R3": "R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
@@ -846,7 +845,6 @@
       "recyclingOperationDetails": {
         "title": "Recycling operation — Add interim site",
         "heading": "What recycling operations are carried out at the site?",
-        "insetText": "Sites can only be approved for accreditation in regard to R3, R4 and R5 recycling operations.",
         "label": "Select all recycling operations that apply",
         "operations": {
           "R3": "R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",

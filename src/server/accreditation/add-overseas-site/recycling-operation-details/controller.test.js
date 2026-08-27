@@ -121,19 +121,6 @@ describe('#addOrsRecyclingOperationController', () => {
       expect(result).toContain(BACK_URL)
     })
 
-    test('renders the R3/R4/R5-only inset text', async () => {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
-      })
-
-      expect(result).toContain('data-testid="recycling-operation-inset"')
-      expect(result).toContain(
-        'Sites can only be approved for accreditation in regard to R3, R4 and R5 recycling operations.'
-      )
-    })
-
     test('cancel link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',

@@ -107,21 +107,6 @@ describe('#addInterimSiteRecyclingOperationController', () => {
       )
     })
 
-    test('renders the R3/R4/R5-only inset text', async () => {
-      const cookie = await seedLinkedSiteSession()
-
-      const { result } = await server.inject({
-        method: 'GET',
-        url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
-      })
-
-      expect(result).toContain('data-testid="recycling-operation-inset"')
-      expect(result).toContain(
-        'Sites can only be approved for accreditation in regard to R3, R4 and R5 recycling operations.'
-      )
-    })
-
     test('back link points to site-contact-details', async () => {
       const cookie = await seedLinkedSiteSession()
 
