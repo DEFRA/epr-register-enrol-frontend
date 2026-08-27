@@ -15,6 +15,7 @@ import {
 // materialType-based filtering of the option set on this page).
 const ALL_CODES = ['R3', 'R4', 'R5', 'R12', 'R13']
 const CORE_CODES = new Set(['R12', 'R13'])
+const BAD_REQUEST_STATUS_CODE = 400
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -62,7 +63,14 @@ function buildViewData(t, applicationId, selectedCodes, error) {
 }
 
 function normaliseCodes(raw) {
-  const values = raw == null ? [] : Array.isArray(raw) ? raw : [raw]
+  let values
+  if (raw == null) {
+    values = []
+  } else if (Array.isArray(raw)) {
+    values = raw
+  } else {
+    values = [raw]
+  }
   return values
     .map((v) => (typeof v === 'string' ? v.trim() : ''))
     .filter(Boolean)
@@ -139,7 +147,7 @@ export const addInterimSiteRecyclingOperationPostController = {
       renderPage(
         h,
         buildViewData(t, applicationId, recyclingOperationCodes, message)
-      ).code(400)
+      ).code(BAD_REQUEST_STATUS_CODE)
 
     if (
       recyclingOperationCodes.length === 0 ||

@@ -523,20 +523,31 @@ export const selectOverseasSitesEditEntryGetController = {
 // dedicated update endpoint for an interim site's own fields -- editing goes out the same bulk
 // patchOverseasSites path as removeInterimSite below, just with an edited interimSite object
 // instead of null, keyed on the unchanged interimSite siteId (per backend RA-486 confirmation).
+// Maps each session field to the interim site's source field — most names
+// match, but the contact fields are prefixed `site` in session and the
+// wizard's own operation-codes key differs from the wire's `operationCodes`.
+const INTERIM_SITE_SESSION_FIELDS = {
+  country: 'country',
+  siteName: 'siteName',
+  addressLine1: 'addressLine1',
+  addressLine2: 'addressLine2',
+  townOrCity: 'townOrCity',
+  stateOrRegion: 'stateOrRegion',
+  postcode: 'postcode',
+  siteContactName: 'contactName',
+  siteContactEmail: 'contactEmail',
+  siteContactPhone: 'contactPhone'
+}
+
 function buildInterimSiteSessionSeed(interimSite) {
-  return {
-    country: interimSite.country ?? '',
-    siteName: interimSite.siteName ?? '',
-    addressLine1: interimSite.addressLine1 ?? '',
-    addressLine2: interimSite.addressLine2 ?? '',
-    townOrCity: interimSite.townOrCity ?? '',
-    stateOrRegion: interimSite.stateOrRegion ?? '',
-    postcode: interimSite.postcode ?? '',
-    siteContactName: interimSite.contactName ?? '',
-    siteContactEmail: interimSite.contactEmail ?? '',
-    siteContactPhone: interimSite.contactPhone ?? '',
-    recyclingOperationCodes: interimSite.operationCodes ?? []
+  const seed = {}
+  for (const [sessionKey, sourceKey] of Object.entries(
+    INTERIM_SITE_SESSION_FIELDS
+  )) {
+    seed[sessionKey] = interimSite[sourceKey] ?? ''
   }
+  seed.recyclingOperationCodes = interimSite.operationCodes ?? []
+  return seed
 }
 
 export const selectOverseasSitesInterimSiteEditEntryGetController = {
