@@ -12,15 +12,18 @@ import {
 // common/constants/businessPlanCategories.js
 const BP_CATEGORIES = BUSINESS_PLAN_CATEGORIES
 
+const ORS_ID_DIGITS = 3
+
 // RA-507: mirrors EprRegisterEnrolBackend's OrsIdGenerator -- max(existing numeric
 // ids) + 1, zero-padded to 3 digits -- so the stub's behaviour matches the real
-// backend's when adding an overseas site locally without it running.
-function nextOrsId(sites) {
-  const max = (sites ?? []).reduce((currentMax, site) => {
-    const parsed = Number.parseInt(site?.orsId, 10)
+// backend's when adding an overseas site locally without it running. Exported
+// so it's directly unit-testable, the same way the real OrsIdGenerator is.
+export function nextOrsId(sites) {
+  const max = sites.reduce((currentMax, site) => {
+    const parsed = Number.parseInt(site.orsId, 10)
     return Number.isInteger(parsed) && parsed > currentMax ? parsed : currentMax
   }, 0)
-  return String(max + 1).padStart(3, '0')
+  return String(max + 1).padStart(ORS_ID_DIGITS, '0')
 }
 
 function makeBpItems(percents = {}, details = {}) {
