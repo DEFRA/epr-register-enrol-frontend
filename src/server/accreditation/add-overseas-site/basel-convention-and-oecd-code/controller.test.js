@@ -120,7 +120,11 @@ describe('#addOrsBaselCodeController', () => {
       expect(result).toContain('<option value="Y49"')
     })
 
-    test('shows the site name and address', async () => {
+    // RA102-60ro: this page previously stacked a bespoke site-summary
+    // caption on top of the shared page-caption when a site name/address
+    // was set — every other add-overseas-site wizard page shows only the
+    // one shared caption, so this one must too.
+    test('does not stack a bespoke site-summary caption on top of the page caption', async () => {
       const cookie = await seedSiteNameAndAddress()
       const { result } = await server.inject({
         method: 'GET',
@@ -128,11 +132,10 @@ describe('#addOrsBaselCodeController', () => {
         headers: { ...operatorHeaders, cookie }
       })
 
-      expect(result).toContain('data-testid="site-summary"')
-      expect(result).toContain('Rotterdam Recycling BV')
-      expect(result).toContain('1 Havenweg')
-      expect(result).toContain('Rotterdam')
-      expect(result).toContain('Netherlands')
+      expect(result).toContain(
+        '<span class="govuk-caption-l" data-testid="page-caption">'
+      )
+      expect(result).not.toContain('data-testid="site-summary"')
     })
 
     test('shows a GDS-style guidance link that opens in a new tab', async () => {

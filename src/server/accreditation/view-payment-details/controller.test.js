@@ -65,7 +65,10 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).toContain('data-testid="page-heading"')
     })
 
-    test('renders site name as first segment of siteAddress', async () => {
+    // RA102-jc6p: the bespoke siteName-only caption is replaced by the
+    // shared applicationHeader.captionText composed caption, consistent
+    // with the rest of the journey.
+    test('renders the shared page caption instead of a bespoke site name', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -74,9 +77,12 @@ describe('#viewPaymentDetailsController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="site-name"')
-      expect(result).toContain('North Road')
-      expect(result).not.toContain('Siteville')
+      expect(result).toContain(
+        '<span class="govuk-caption-l" data-testid="page-caption">'
+      )
+      expect(result.indexOf('data-testid="page-caption"')).toBeLessThan(
+        result.indexOf('data-testid="page-heading"')
+      )
     })
 
     test('renders submitter email and name in success banner', async () => {
@@ -444,7 +450,7 @@ describe('#viewPaymentDetailsController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="site-name"')
+      expect(result).toContain('data-testid="page-caption"')
     })
 
     test('returns 500 with error message when API call fails', async () => {

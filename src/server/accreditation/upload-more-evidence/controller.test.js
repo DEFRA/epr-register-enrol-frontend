@@ -93,6 +93,22 @@ describe('#uploadMoreEvidenceController', () => {
       expect(result).toContain('Site Alpha')
     })
 
+    // RA-506: the non-read-only branch uses the fieldset__heading/legend
+    // pattern, so the caption nests INSIDE the h1.
+    test('renders a page caption nested inside the fieldset legend heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        'data-testid="page-heading"><span class="govuk-caption-l" data-testid="page-caption">'
+      )
+    })
+
     test('renders yes and no radio buttons', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -166,6 +182,30 @@ describe('#uploadMoreEvidenceController', () => {
         expect(result).not.toContain('data-testid="more-evidence-form"')
       }
     )
+
+    // RA-506: the read-only branch uses a plain h1, so the caption is a
+    // sibling span immediately before it, not nested inside.
+    test('renders a page caption immediately before the page heading when read-only', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          besEvidence: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<span class="govuk-caption-l" data-testid="page-caption">'
+      )
+      expect(result.indexOf('data-testid="page-caption"')).toBeLessThan(
+        result.indexOf('data-testid="page-heading"')
+      )
+    })
   })
 
   describe('POST /accreditation/upload-more-evidence/{applicationId}/{siteId}', () => {

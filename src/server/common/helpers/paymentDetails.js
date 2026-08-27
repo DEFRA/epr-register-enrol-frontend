@@ -88,13 +88,6 @@ export function buildPaymentReference(nation, organisationId, isExporter) {
   }
 }
 
-export function siteNameFromAddress(siteAddress) {
-  if (!siteAddress) {
-    return ''
-  }
-  return siteAddress.split(',')[0].trim()
-}
-
 export function tonnageFeeCalculator(tonnage) {
   const fee = TONNAGE_FEES[tonnage]
   if (fee === undefined) {

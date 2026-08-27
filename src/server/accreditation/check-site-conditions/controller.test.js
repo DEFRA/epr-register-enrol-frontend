@@ -93,6 +93,26 @@ describe('#checkSiteConditionsController', () => {
       expect(result).toContain('Site Alpha')
     })
 
+    // RA102-jc6p: a govuk-caption-l (applicationHeader.captionText) now
+    // sits immediately before the page's own h1, same as every other
+    // journey page.
+    test('renders a page caption immediately before the page heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<span class="govuk-caption-l" data-testid="page-caption">'
+      )
+      expect(result.indexOf('data-testid="page-caption"')).toBeLessThan(
+        result.indexOf('data-testid="page-heading"')
+      )
+    })
+
     test('renders placeholder content and confirm button', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

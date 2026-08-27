@@ -517,6 +517,25 @@ describe('#taskListGetController', () => {
       expect(result).toContain('Reapply for accreditation')
     })
 
+    // RA-506: a govuk-caption-l sits immediately before the page's own h1
+    // instead of the old multi-line application-header block.
+    test('renders a page caption immediately before the page heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/task-list/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<span class="govuk-caption-l" data-testid="page-caption">'
+      )
+      expect(result.indexOf('data-testid="page-caption"')).toBeLessThan(
+        result.indexOf('data-testid="page-heading"')
+      )
+    })
+
     test('renders three task rows', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

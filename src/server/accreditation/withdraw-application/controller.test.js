@@ -101,6 +101,26 @@ describe('#withdrawApplicationController', () => {
       expect(result).toContain('data-testid="withdraw-form"')
     })
 
+    // RA-506: withdraw-application was missed when the legacy per-page
+    // header was replaced with the shared govuk-caption-l — this page must
+    // show the same application context as every other journey page.
+    test('renders a page caption before the withdraw confirmation form', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<span class="govuk-caption-l" data-testid="page-caption">'
+      )
+      expect(result.indexOf('data-testid="page-caption"')).toBeLessThan(
+        result.indexOf('data-testid="withdraw-form"')
+      )
+    })
+
     test('returns 200 when applicationStatus is Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({ applicationStatus: 'Queried' })

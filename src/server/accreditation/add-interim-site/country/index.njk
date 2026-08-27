@@ -19,6 +19,7 @@
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
         <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
+          <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
           <h1 class="govuk-label-wrapper">
             <label class="govuk-label govuk-label--l" for="country" data-testid="page-heading">
               {{ heading }}
