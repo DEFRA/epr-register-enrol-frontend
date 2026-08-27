@@ -163,7 +163,15 @@ async function saveInterimSiteEdit(
     site.siteId === session.linkedSiteId
       ? {
           ...site,
-          interimSite: { ...sitePayload, siteId: session.editingInterimSiteId }
+          interimSite: {
+            ...sitePayload,
+            siteId: session.editingInterimSiteId,
+            // RA-486: the bulk PATCH takes every interimSite field as-is
+            // from what's sent (only isNewSite is re-derived server-side),
+            // so the backend-generated siteNumber must be carried over
+            // explicitly here or an edit would wipe it out.
+            siteNumber: site.interimSite?.siteNumber ?? null
+          }
         }
       : site
   )

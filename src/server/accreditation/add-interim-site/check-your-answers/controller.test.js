@@ -406,7 +406,10 @@ describe('#addInterimSiteCyaController', () => {
               interimSite: expect.objectContaining({
                 siteId: 42,
                 siteName: 'Interim Depot',
-                country: 'France'
+                country: 'France',
+                // RA-486 regression check: the bulk PATCH takes every field
+                // as-is, so a pre-existing siteNumber must survive an edit.
+                siteNumber: 'SN-042'
               })
             })
           ]
