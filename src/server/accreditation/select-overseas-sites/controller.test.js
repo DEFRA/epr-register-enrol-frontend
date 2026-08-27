@@ -17,6 +17,7 @@ const APPLICATION_ID = 'app-sos-001'
 
 const ACCREDITED_SITE = {
   siteId: 900001,
+  orsId: '001',
   siteName: 'Site Alpha',
   siteAddress: '123 Test St',
   country: 'Germany',
@@ -27,6 +28,7 @@ const ACCREDITED_SITE = {
 
 const REGISTERED_SITE = {
   siteId: 900002,
+  orsId: '002',
   siteName: 'Site Beta',
   siteAddress: '456 Test Ave',
   country: 'Chad',
@@ -38,6 +40,7 @@ const REGISTERED_SITE = {
 
 const NEW_SITE = {
   siteId: 900003,
+  orsId: '003',
   siteName: 'Site Gamma',
   country: 'France',
   selected: true,
@@ -46,6 +49,7 @@ const NEW_SITE = {
 
 const REGISTERED_SITE_ADDED = {
   siteId: 900004,
+  orsId: '004',
   siteName: 'Site Delta',
   country: 'Japan',
   selected: true,
@@ -146,6 +150,62 @@ describe('#selectOverseasSitesController', () => {
       expect(result).not.toContain(
         'data-testid="registered-sites-added-heading"'
       )
+    })
+
+    // RA-507: the ORS id disambiguates sites with similar/identical names on the one page an
+    // operator adds to or removes from their accreditation, across every section a site can
+    // appear in.
+    test('shows the ORS id alongside the site name in every section', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              ACCREDITED_SITE,
+              REGISTERED_SITE,
+              NEW_SITE,
+              REGISTERED_SITE_ADDED
+            ]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="accredited-site-orsid-900001"')
+      expect(result).toContain('data-testid="registered-site-orsid-900002"')
+      expect(result).toContain('data-testid="new-site-orsid-900003"')
+      expect(result).toContain(
+        'data-testid="registered-sites-added-orsid-900004"'
+      )
+      expect(result).toContain('ORS ID 001')
+      expect(result).toContain('ORS ID 002')
+      expect(result).toContain('ORS ID 003')
+      expect(result).toContain('ORS ID 004')
+    })
+
+    test('omits the ORS id row when a site has none', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'NotStarted',
+            sites: [{ ...ACCREDITED_SITE, orsId: null }]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="accredited-site-row-900001"')
+      expect(result).not.toContain('data-testid="accredited-site-orsid-900001"')
     })
 
     test('registered site Add To Accreditation link points to the promote route', async () => {

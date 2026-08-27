@@ -464,6 +464,7 @@
       "removeFromAccreditationButton": "[Welsh] Remove from accreditation",
       "addToAccreditationButton": "[Welsh] Add to accreditation",
       "changeButton": "[Welsh] Change",
+      "orsIdLabel": "[Welsh] ORS ID",
       "sections": {
         "accredited": "[Welsh] Accredited",
         "registered": "[Welsh] Registered",

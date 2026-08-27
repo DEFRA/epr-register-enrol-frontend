@@ -466,6 +466,7 @@
       "removeFromAccreditationButton": "Remove from accreditation",
       "addToAccreditationButton": "Add to accreditation",
       "changeButton": "Change",
+      "orsIdLabel": "ORS ID",
       "sections": {
         "accredited": "Accredited",
         "registered": "Registered",
