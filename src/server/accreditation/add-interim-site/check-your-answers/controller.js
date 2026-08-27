@@ -1,11 +1,7 @@
-import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
-import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import {
-  guardOverseasSiteWizardEntry,
-  guardInterimSiteLinkedSiteId
-} from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
 import {
   getAddInterimSiteSession,
   clearAddInterimSiteSession
@@ -184,17 +180,11 @@ async function saveInterimSiteEdit(
 
 export const addInterimSiteCyaGetController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
+    const { t, guardRedirect } = await enterInterimSiteWizardStep({
+      request,
       h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
+      applicationId
     })
     if (guardRedirect) {
       return guardRedirect
@@ -217,18 +207,9 @@ export const addInterimSiteCyaGetController = {
 
 export const addInterimSiteCyaPostController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
-      h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
-    })
+    const { t, organisationId, guardRedirect } =
+      await enterInterimSiteWizardStep({ request, h, applicationId })
     if (guardRedirect) {
       return guardRedirect
     }
