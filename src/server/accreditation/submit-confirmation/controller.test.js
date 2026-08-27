@@ -256,6 +256,30 @@ describe('#submitConfirmationController', () => {
         }
       )
 
+      // RA-503: organisationId is ReEx's internal ObjectId on a real submission - orgId is the
+      // operator/regulator-safe numeric organisation number that must actually be quoted on a
+      // bank transfer. Confirms the payment reference is built from orgId, not organisationId,
+      // when the backend sends both.
+      test('builds the bank payment reference from orgId, not the raw ObjectId-shaped organisationId', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            orgId: 500500,
+            organisationId: '6a74a6a12b7c39b0cc15ca55'
+          })
+        )
+        const cookie = await getSessionCookieWithReference()
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+          headers: { ...operatorHeaders, Cookie: cookie }
+        })
+
+        expect(result).toContain('data-testid="bank-payment-reference"')
+        expect(result).toContain('PR/PK/REP/500500')
+        expect(result).not.toContain('6a74a6a12b7c39b0cc15ca55')
+      })
+
       test('application-reference is unaffected by the payment reference change', async () => {
         vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
         const cookie = await getSessionCookieWithReference('RA-000000001')

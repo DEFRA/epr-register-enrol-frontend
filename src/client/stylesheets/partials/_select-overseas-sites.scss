@@ -14,19 +14,38 @@
     align-items: center;
   }
 
+  // RA-507: the ORS id reads before the site name (it's always 3 characters,
+  // so a fixed-width column keeps every row's site name starting at the same
+  // point), while the DOM order stays name-then-id so a screen reader still
+  // announces the site name as the row's term. `order` only changes the
+  // visual position, not the reading order.
+  // Chained with .govuk-summary-list__value (not a separate selector) so this
+  // wins over the generic value rule below on specificity rather than
+  // depending on source order.
+  .select-overseas-sites-row
+    .govuk-summary-list__value.select-overseas-sites-orsid {
+    order: 1;
+    display: block;
+    flex: 0 0 auto;
+    min-width: 3ch;
+  }
+
   .select-overseas-sites-row .govuk-summary-list__key {
+    order: 2;
     display: block;
     width: auto;
     flex: 1 1 auto;
   }
 
   .select-overseas-sites-row .govuk-summary-list__value {
+    order: 3;
     display: block;
     width: auto;
     flex: 0 1 auto;
   }
 
   .select-overseas-sites-row .govuk-summary-list__actions {
+    order: 4;
     display: flex;
     align-items: center;
     width: auto;

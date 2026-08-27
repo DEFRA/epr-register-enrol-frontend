@@ -725,6 +725,32 @@ describe('stubApiClient.post — withdraw', () => {
   })
 })
 
+describe('nextOrsId', () => {
+  test('returns 001 for an empty site list', async () => {
+    const mod = await freshStubModule()
+    expect(mod.nextOrsId([])).toBe('001')
+  })
+
+  test('continues past the highest existing numeric orsId', async () => {
+    const mod = await freshStubModule()
+    expect(
+      mod.nextOrsId([{ orsId: '001' }, { orsId: '002' }, { orsId: '003' }])
+    ).toBe('004')
+  })
+
+  test('ignores a non-numeric orsId rather than letting it break the max', async () => {
+    const mod = await freshStubModule()
+    expect(mod.nextOrsId([{ orsId: '002' }, { orsId: 'not-a-number' }])).toBe(
+      '003'
+    )
+  })
+
+  test('ignores an out-of-order lower id, keeping the true max', async () => {
+    const mod = await freshStubModule()
+    expect(mod.nextOrsId([{ orsId: '005' }, { orsId: '001' }])).toBe('006')
+  })
+})
+
 describe('stubApiClient.post — overseas-sites', () => {
   test('adds a new site to an item that already has overseasSites.sites', async () => {
     const stub = await freshStub()
@@ -734,6 +760,9 @@ describe('stubApiClient.post — overseas-sites', () => {
     )
     expect(result.isNewSite).toBe(true)
     expect(result.siteName).toBe('New Depot')
+    // RA-507: existing seeded sites hold orsId 001-003, so the generated id
+    // must continue the sequence rather than leaving orsId unset.
+    expect(result.orsId).toBe('004')
 
     const app = await stub.get(
       '/api/v1/accreditation-applications/50006/app006exp'
@@ -748,6 +777,7 @@ describe('stubApiClient.post — overseas-sites', () => {
       { siteName: 'First Site' }
     )
     expect(result.siteName).toBe('First Site')
+    expect(result.orsId).toBe('001')
 
     const app = await stub.get(
       '/api/v1/accreditation-applications/50001/app001'

@@ -123,6 +123,9 @@
             {% for site in accreditedSites %}
               <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="accredited-site-row-{{ site.siteId }}">
                 <dt class="govuk-summary-list__key" data-testid="accredited-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                {% if site.orsId %}
+                  <dd class="govuk-summary-list__value select-overseas-sites-orsid" data-testid="accredited-site-orsid-{{ site.siteId }}"><span class="govuk-visually-hidden">{{ t('pages.selectOverseasSites.orsIdLabel') }}</span> {{ site.orsId }}</dd>
+                {% endif %}
                 <dd class="govuk-summary-list__value" data-testid="accredited-site-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
                   <dd class="govuk-summary-list__actions">
@@ -177,6 +180,9 @@
             {% for site in registeredSites %}
               <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="registered-site-row-{{ site.siteId }}">
                 <dt class="govuk-summary-list__key" data-testid="registered-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                {% if site.orsId %}
+                  <dd class="govuk-summary-list__value select-overseas-sites-orsid" data-testid="registered-site-orsid-{{ site.siteId }}"><span class="govuk-visually-hidden">{{ t('pages.selectOverseasSites.orsIdLabel') }}</span> {{ site.orsId }}</dd>
+                {% endif %}
                 <dd class="govuk-summary-list__value" data-testid="registered-site-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
                   <dd class="govuk-summary-list__actions">
@@ -224,6 +230,9 @@
             {% for site in newSites %}
               <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="new-site-row-{{ site.siteId }}">
                 <dt class="govuk-summary-list__key" data-testid="new-site-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                {% if site.orsId %}
+                  <dd class="govuk-summary-list__value select-overseas-sites-orsid" data-testid="new-site-orsid-{{ site.siteId }}"><span class="govuk-visually-hidden">{{ t('pages.selectOverseasSites.orsIdLabel') }}</span> {{ site.orsId }}</dd>
+                {% endif %}
                 <dd class="govuk-summary-list__value" data-testid="new-site-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
                   <dd class="govuk-summary-list__actions">
@@ -278,6 +287,9 @@
             {% for site in registeredSitesAddedSites %}
               <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="registered-sites-added-row-{{ site.siteId }}">
                 <dt class="govuk-summary-list__key" data-testid="registered-sites-added-name-{{ site.siteId }}">{{ site.siteName }}</dt>
+                {% if site.orsId %}
+                  <dd class="govuk-summary-list__value select-overseas-sites-orsid" data-testid="registered-sites-added-orsid-{{ site.siteId }}"><span class="govuk-visually-hidden">{{ t('pages.selectOverseasSites.orsIdLabel') }}</span> {{ site.orsId }}</dd>
+                {% endif %}
                 <dd class="govuk-summary-list__value" data-testid="registered-sites-added-country-{{ site.siteId }}">{{ site.country }}</dd>
                 {% if not readOnly %}
                   <dd class="govuk-summary-list__actions">
