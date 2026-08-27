@@ -39,6 +39,8 @@
         attributes: { "data-testid": "warning-text" }
       }) }}
 
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+
       <form method="post" novalidate data-testid="withdraw-form">
         <input type="hidden" name="crumb" value="{{ crumb }}">
 

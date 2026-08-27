@@ -51,7 +51,7 @@
   {% if backLink %}
     <a href="{{ backLink }}" class="govuk-back-link" data-testid="back-link">{{ backLinkText or t('common.back') }}</a>
   {% endif %}
-  {% if applicationHeader %}
+  {% if applicationHeader and applicationHeader.showFullHeader %}
     {{ appApplicationHeader({
       operatorName: applicationHeader.operatorName,
       materialType: applicationHeader.materialType,

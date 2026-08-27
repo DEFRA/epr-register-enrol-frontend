@@ -223,10 +223,13 @@ export const operatorAccreditationController = {
     const notification = request.yar.flash('notification')[0] ?? null
 
     request.app = request.app ?? {}
-    request.app.applicationHeader = buildApplicationHeaderViewModel(
-      application,
-      t
-    )
+    request.app.applicationHeader = {
+      // RA-506: this is the first page in the journey — it keeps the
+      // legacy multi-line header instead of the govuk-caption-l used by
+      // every other journey page.
+      ...buildApplicationHeaderViewModel(application, t),
+      showFullHeader: true
+    }
 
     return h.view('operator-accreditation/index', {
       pageTitle: t('pages.operatorAccreditation.title'),

@@ -6,8 +6,7 @@ import {
   resolveNation,
   buildPaymentDetails,
   buildPaymentReference,
-  resolveRegulatorContact,
-  siteNameFromAddress
+  resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
 
 function confirmationUrl(applicationId) {
@@ -72,7 +71,6 @@ export const viewPaymentDetailsGetController = {
       pageTitle: t('pages.viewPaymentDetails.title'),
       backLink: confirmationUrl(applicationId),
       backLinkText: t('pages.viewPaymentDetails.backLink'),
-      siteName: siteNameFromAddress(application.siteAddress),
       materialDisplay,
       submitterName: submittedBy.name ?? '',
       submitterEmail: submittedBy.email ?? '',

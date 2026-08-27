@@ -60,7 +60,7 @@
         <div class="govuk-form-group {% if errors.plannedTonnageBand %}govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset" {% if errors.plannedTonnageBand %}aria-describedby="plannedTonnageBand-error"{% endif %}>
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-              <h1 class="govuk-fieldset__heading" data-testid="page-heading">{{ heading }}</h1>
+              <h1 class="govuk-fieldset__heading" data-testid="page-heading"><span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span> {{ heading }}</h1>
             </legend>
 
             {% if errors.plannedTonnageBand %}

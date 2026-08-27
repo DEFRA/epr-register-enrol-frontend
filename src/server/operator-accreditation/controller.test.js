@@ -757,6 +757,22 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Not set')
   })
 
+  // RA-506: this is the first page in the journey, so it keeps the legacy
+  // multi-line OperatorName/Year/Material/Site block (unlike every other
+  // journey page, which now gets a govuk-caption-l instead).
+  test('still renders the legacy multi-line application-header block', async () => {
+    mockAccreditationGet([makeApp({ applicationStatus: 'Started' })])
+    vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+    const { result } = await server.inject({
+      method: 'GET',
+      url: baseUrl,
+      headers: operatorHeaders
+    })
+
+    expect(result).toContain('data-testid="application-header-operator-name"')
+  })
+
   test('renders the reapply page heading', async () => {
     mockAccreditationGet([makeApp()])
 

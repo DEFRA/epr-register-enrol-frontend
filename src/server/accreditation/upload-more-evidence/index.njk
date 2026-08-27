@@ -16,6 +16,7 @@
       {% endif %}
 
       {% if readOnly %}
+        <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
         <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
         <div class="govuk-inset-text" data-testid="read-only-notice">
           {% if isQueriedApplication %}
@@ -38,7 +39,7 @@
         <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
           <fieldset class="govuk-fieldset">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--l">
-              <h1 class="govuk-fieldset__heading" data-testid="page-heading">{{ heading }}</h1>
+              <h1 class="govuk-fieldset__heading" data-testid="page-heading"><span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span> {{ heading }}</h1>
             </legend>
 
             <div class="govuk-radios" data-module="govuk-radios">
