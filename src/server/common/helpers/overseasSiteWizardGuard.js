@@ -54,3 +54,27 @@ export async function guardOverseasSiteWizardEntry({
   }
   return null
 }
+
+// RA-486: the add-interim-site wizard is only ever entered via "Save and add
+// interim site" on the ORS check-your-answers page, which stashes the
+// parent site's id as linkedSiteId in the interim-site session before
+// redirecting to the wizard's first step. Without that guard, direct
+// navigation to any wizard step (e.g. typing the URL) would walk the whole
+// wizard and only fail once it tries to submit — this sends the operator
+// back to the section's list page immediately instead.
+/**
+ * @param {object} params
+ * @param {import('@hapi/hapi').ResponseToolkit} params.h
+ * @param {object} params.session - the add-interim-site session (from
+ *   getAddInterimSiteSession)
+ * @param {string} params.fallbackUrl - where to send the operator when
+ *   there's no linked ORS site to attach the interim site to
+ * @returns {object|null} a response to return immediately, or null to let
+ *   the step proceed
+ */
+export function guardInterimSiteLinkedSiteId({ h, session, fallbackUrl }) {
+  if (session.linkedSiteId == null) {
+    return h.redirect(fallbackUrl)
+  }
+  return null
+}

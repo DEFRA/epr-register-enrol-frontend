@@ -1,6 +1,9 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
-import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import {
+  guardOverseasSiteWizardEntry,
+  guardInterimSiteLinkedSiteId
+} from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
@@ -64,6 +67,16 @@ export const addInterimSiteLocationGetController = {
     }
 
     const session = getAddInterimSiteSession(request)
+
+    const linkedSiteGuardRedirect = guardInterimSiteLinkedSiteId({
+      h,
+      session,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (linkedSiteGuardRedirect) {
+      return linkedSiteGuardRedirect
+    }
+
     const fields = {
       addressLine1: session.addressLine1 ?? '',
       addressLine2: session.addressLine2 ?? '',

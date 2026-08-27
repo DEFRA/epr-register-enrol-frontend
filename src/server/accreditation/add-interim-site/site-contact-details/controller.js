@@ -1,6 +1,9 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
-import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import {
+  guardOverseasSiteWizardEntry,
+  guardInterimSiteLinkedSiteId
+} from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
@@ -16,8 +19,8 @@ function siteLocationUrl(applicationId) {
   return `/accreditation/add-interim-site/${applicationId}/site-location`
 }
 
-function checkYourAnswersUrl(applicationId) {
-  return `/accreditation/add-interim-site/${applicationId}/check-your-answers`
+function recyclingOperationDetailsUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/recycling-operation-details`
 }
 
 function renderPage(h, viewData) {
@@ -59,6 +62,16 @@ export const addInterimSiteContactDetailsGetController = {
     }
 
     const session = getAddInterimSiteSession(request)
+
+    const linkedSiteGuardRedirect = guardInterimSiteLinkedSiteId({
+      h,
+      session,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (linkedSiteGuardRedirect) {
+      return linkedSiteGuardRedirect
+    }
+
     const fields = {
       siteContactName: session.siteContactName ?? '',
       siteContactEmail: session.siteContactEmail ?? '',
@@ -121,6 +134,6 @@ export const addInterimSiteContactDetailsPostController = {
     }
 
     setAddInterimSiteSession(request, fields)
-    return h.redirect(checkYourAnswersUrl(applicationId))
+    return h.redirect(recyclingOperationDetailsUrl(applicationId))
   }
 }

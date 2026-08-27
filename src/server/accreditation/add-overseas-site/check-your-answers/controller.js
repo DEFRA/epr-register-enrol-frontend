@@ -134,9 +134,14 @@ function buildRows(t, applicationId, session) {
   return rows
 }
 
-function requiresInterimSite(session) {
-  const codes = session.recyclingOperationCodes ?? []
-  return codes.includes('R12') || codes.includes('R13')
+// RA-486: the last wizard step before this page depends on materialType —
+// Steel/Aluminium sites also visit conditions-of-export, everyone else goes
+// straight from repatriated-loads to here. Mirrors the same conditional
+// used to decide whether the conditionsOfExport row is shown above.
+function cyaBackLink(applicationId, session) {
+  return session.conditionsOfExport != null
+    ? conditionsOfExportUrl(applicationId)
+    : repatriatedLoadsUrl(applicationId)
 }
 
 function buildViewData(t, applicationId, session, error) {
@@ -146,12 +151,12 @@ function buildViewData(t, applicationId, session, error) {
     submitButton: t('pages.addOverseasSite.cya.submitButton'),
     addInterimSiteButton: t('pages.addOverseasSite.cya.addInterimSiteButton'),
     cancelLink: t('pages.addOverseasSite.cya.cancelLink'),
+    backLink: cyaBackLink(applicationId, session),
     cancelUrl: selectOrsUrl(applicationId),
     rows: buildRows(t, applicationId, session),
     changeLabel: t('pages.addOverseasSite.cya.changeLink'),
     removeCodeLabel: t('pages.addOverseasSite.cya.removeCode'),
     noCodesEnteredLabel: t('pages.addOverseasSite.cya.noCodesEntered'),
-    requiresInterimSite: requiresInterimSite(session),
     error
   }
 }
@@ -302,12 +307,6 @@ export const addOrsCyaPostController = {
     }
 
     const { t } = getLocaleAndTranslator(request)
-
-    if (requiresInterimSite(session) && action !== ADD_INTERIM_SITE_ACTION) {
-      return renderPage(h, buildViewData(t, applicationId, session, null)).code(
-        400
-      )
-    }
 
     const mode = resolveSiteSaveMode(session)
 

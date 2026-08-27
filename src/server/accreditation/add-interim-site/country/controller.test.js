@@ -36,12 +36,65 @@ describe('#addInterimSiteCountryController', () => {
     'x-test-user-type': 'operator'
   }
 
+  const postHeaders = {
+    ...operatorHeaders,
+    'content-type': 'application/x-www-form-urlencoded'
+  }
+
+  function cookiesFrom(response) {
+    const raw = response.headers['set-cookie']
+    if (!raw) {
+      return ''
+    }
+    return Array.isArray(raw)
+      ? raw.map((c) => c.split(';')[0]).join('; ')
+      : raw.split(';')[0]
+  }
+
+  // RA-486: every GET on the interim wizard now guards on linkedSiteId, so
+  // GET tests must first walk through the ORS "Save and add interim site"
+  // entry point to seed a real linkedSiteId in session.
+  async function seedLinkedSiteSession() {
+    vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
+      applicationId: APPLICATION_ID,
+      organisationId: 'org-001',
+      overseasSites: { sectionStatus: 'InProgress', sites: [] }
+    })
+    vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue({
+      siteId: 555
+    })
+
+    const cyaResponse = await server.inject({
+      method: 'POST',
+      url: `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`,
+      headers: postHeaders,
+      payload: 'action=addInterimSite'
+    })
+    expect(cyaResponse.statusCode).toBe(statusCodes.redirect)
+    expect(cyaResponse.headers.location).toBe(BASE_URL)
+
+    return cookiesFrom(cyaResponse)
+  }
+
   describe(`GET ${BASE_URL}`, () => {
-    test('returns 200 with page heading', async () => {
-      const { statusCode, result } = await server.inject({
+    test('redirects to select-overseas-sites when there is no linked ORS site (direct navigation)', async () => {
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: BASE_URL,
         headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+
+    test('returns 200 with page heading', async () => {
+      const cookie = await seedLinkedSiteSession()
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -51,10 +104,12 @@ describe('#addInterimSiteCountryController', () => {
 
     // RA-506: caption sits before the govuk-label-wrapper h1, not inside it.
     test('renders a page caption immediately before the page heading', async () => {
+      const cookie = await seedLinkedSiteSession()
+
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: operatorHeaders
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(result).toContain(
@@ -66,20 +121,24 @@ describe('#addInterimSiteCountryController', () => {
     })
 
     test('renders country input', async () => {
+      const cookie = await seedLinkedSiteSession()
+
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: operatorHeaders
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(result).toContain('data-testid="country-input"')
     })
 
     test('renders country as a GDS select populated with the country list, not a text box', async () => {
+      const cookie = await seedLinkedSiteSession()
+
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: operatorHeaders
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(result).toMatch(
@@ -91,10 +150,12 @@ describe('#addInterimSiteCountryController', () => {
     })
 
     test('back link points to select-overseas-sites', async () => {
+      const cookie = await seedLinkedSiteSession()
+
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: operatorHeaders
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -102,10 +163,12 @@ describe('#addInterimSiteCountryController', () => {
     })
 
     test('cancel link points to select-overseas-sites', async () => {
+      const cookie = await seedLinkedSiteSession()
+
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: operatorHeaders
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -117,6 +180,7 @@ describe('#addInterimSiteCountryController', () => {
     // meaningful to render read-only — send the operator back to the
     // section's list page instead.
     test('redirects to select-overseas-sites when the application is locked (Submitted) and overseasSites is not Queried', async () => {
+      const cookie = await seedLinkedSiteSession()
       vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValueOnce(
         {
           applicationStatus: 'Submitted',
@@ -127,7 +191,7 @@ describe('#addInterimSiteCountryController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: operatorHeaders
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -135,27 +199,20 @@ describe('#addInterimSiteCountryController', () => {
     })
 
     test('pre-populates input with value from session when returning via Back', async () => {
+      const cookie = await seedLinkedSiteSession()
       const postResponse = await server.inject({
         method: 'POST',
         url: BASE_URL,
-        headers: {
-          ...operatorHeaders,
-          'content-type': 'application/x-www-form-urlencoded'
-        },
+        headers: { ...postHeaders, cookie },
         payload: 'country=France'
       })
       expect(postResponse.statusCode).toBe(statusCodes.redirect)
-      const sessionCookie = postResponse.headers['set-cookie']
+      const sessionCookie = cookiesFrom(postResponse) || cookie
 
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: {
-          ...operatorHeaders,
-          cookie: Array.isArray(sessionCookie)
-            ? sessionCookie.map((c) => c.split(';')[0]).join('; ')
-            : (sessionCookie?.split(';')[0] ?? '')
-        }
+        headers: { ...operatorHeaders, cookie: sessionCookie }
       })
 
       expect(getResponse.statusCode).toBe(statusCodes.ok)
@@ -163,36 +220,31 @@ describe('#addInterimSiteCountryController', () => {
     })
 
     test('marks the session country as the selected option when returning via Back', async () => {
+      const cookie = await seedLinkedSiteSession()
       const postResponse = await server.inject({
         method: 'POST',
         url: BASE_URL,
-        headers: {
-          ...operatorHeaders,
-          'content-type': 'application/x-www-form-urlencoded'
-        },
+        headers: { ...postHeaders, cookie },
         payload: 'country=France'
       })
-      const sessionCookie = postResponse.headers['set-cookie']
+      const sessionCookie = cookiesFrom(postResponse) || cookie
 
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: {
-          ...operatorHeaders,
-          cookie: Array.isArray(sessionCookie)
-            ? sessionCookie.map((c) => c.split(';')[0]).join('; ')
-            : (sessionCookie?.split(';')[0] ?? '')
-        }
+        headers: { ...operatorHeaders, cookie: sessionCookie }
       })
 
       expect(getResponse.result).toContain('value="France" selected')
     })
 
     test('returns 200 in Welsh locale', async () => {
+      const cookie = await seedLinkedSiteSession()
+
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        headers: { ...operatorHeaders, cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -239,26 +291,19 @@ describe('#addInterimSiteCountryController', () => {
     })
 
     test('saves country to session on valid POST', async () => {
+      const cookie = await seedLinkedSiteSession()
       const postResponse = await server.inject({
         method: 'POST',
         url: BASE_URL,
-        headers: {
-          ...operatorHeaders,
-          'content-type': 'application/x-www-form-urlencoded'
-        },
+        headers: { ...postHeaders, cookie },
         payload: 'country=Spain'
       })
-      const sessionCookie = postResponse.headers['set-cookie']
+      const sessionCookie = cookiesFrom(postResponse) || cookie
 
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: {
-          ...operatorHeaders,
-          cookie: Array.isArray(sessionCookie)
-            ? sessionCookie.map((c) => c.split(';')[0]).join('; ')
-            : (sessionCookie?.split(';')[0] ?? '')
-        }
+        headers: { ...operatorHeaders, cookie: sessionCookie }
       })
 
       expect(getResponse.result).toContain('Spain')

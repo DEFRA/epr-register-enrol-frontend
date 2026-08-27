@@ -189,6 +189,48 @@ describe('#confirmOverseasSitesController', () => {
       expect(result).toContain('data-testid="error-summary"')
     })
 
+    // RA-486: gap fix -- an interim site attached to a selected ORS must be
+    // visible on this pre-confirm summary too, not just select-overseas-sites.
+    test('renders the nested interim-site row when a site has one', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'NotStarted',
+            sites: [
+              {
+                ...SITE_ONE,
+                interimSite: { siteId: 42, siteName: 'Interim Depot' }
+              },
+              SITE_TWO
+            ]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="interim-site-row-900001"')
+      expect(result).toContain('data-testid="interim-site-name-900001"')
+      expect(result).toContain('Interim Depot')
+      expect(result).toContain('data-testid="change-interim-site-900001"')
+    })
+
+    test('does not render an interim-site row when there is none', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="interim-site-row-900001"')
+    })
+
     test('returns 200 in Welsh locale', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

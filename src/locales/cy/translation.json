@@ -470,6 +470,10 @@
         "newSites": "[Welsh] New sites",
         "registeredSitesAdded": "[Welsh] Registered sites added"
       },
+      "interimSite": {
+        "label": "[Welsh] Interim site",
+        "removeButton": "[Welsh] Remove interim site"
+      },
       "validation": {
         "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",
         "saveError": "[Welsh] Sorry, we were unable to save your site selection. Please try again."
@@ -482,7 +486,10 @@
       "saveError": "[Welsh] Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "changeLink": "[Welsh] Change",
-      "confirmButton": "[Welsh] Confirm and continue"
+      "confirmButton": "[Welsh] Confirm and continue",
+      "interimSite": {
+        "label": "[Welsh] Interim site"
+      }
     },
     "fileUpload": {
       "details": {
@@ -680,6 +687,7 @@
       "recyclingOperationDetails": {
         "title": "[Welsh] Recycling operation — Add overseas reprocessing site",
         "heading": "[Welsh] What recycling operations are carried out at the site?",
+        "insetText": "Gellir cymeradwyo safleoedd ar gyfer achrediad dim ond o ran gweithrediadau ailgylchu R3, R4 ac R5.",
         "label": "[Welsh] Select all recycling operations that apply",
         "operations": {
           "R3": "[Welsh] R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
@@ -690,7 +698,7 @@
         },
         "validation": {
           "required": "[Welsh] Select at least one recycling operation",
-          "accompanyingCodeRequired": "[Welsh] R12 and R13 cannot be selected on their own — select at least one other applicable recycling operation as well"
+          "coreCodeRequired": "Dewiswch R3, R4 neu R5"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
@@ -833,6 +841,25 @@
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
       },
+      "recyclingOperationDetails": {
+        "title": "[Welsh] Recycling operation — Add interim site",
+        "heading": "[Welsh] What recycling operations are carried out at the site?",
+        "insetText": "Gellir cymeradwyo safleoedd ar gyfer achrediad dim ond o ran gweithrediadau ailgylchu R3, R4 ac R5.",
+        "label": "[Welsh] Select all recycling operations that apply",
+        "operations": {
+          "R3": "[Welsh] R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
+          "R4": "[Welsh] R4 — Recycling/reclamation of metals and metal compounds (Scrap metal recycling, metal recovery)",
+          "R5": "[Welsh] R5 — Recycling/reclamation of other inorganic materials (Glass, bricks, concrete, soil, aggregates, ceramics)",
+          "R12": "[Welsh] R12 — Exchange of waste for submission (sorting, baling, aggregation)",
+          "R13": "[Welsh] R13 — Interim storage of wastes"
+        },
+        "validation": {
+          "required": "[Welsh] Select at least one recycling operation",
+          "coreCodeRequired": "Dewiswch R12 neu R13"
+        },
+        "continueButton": "Parhau",
+        "cancelLink": "[Welsh] Cancel"
+      },
       "cya": {
         "title": "[Welsh] Check your answers — Add interim site",
         "heading": "[Welsh] Check your answers",
@@ -843,6 +870,7 @@
           "contactName": "[Welsh] Contact name",
           "contactEmail": "[Welsh] Contact email",
           "contactPhone": "[Welsh] Contact phone number",
+          "recyclingOperation": "[Welsh] Recycling operation",
           "siteNumber": "[Welsh] Site number"
         },
         "changeLink": "[Welsh] Change",

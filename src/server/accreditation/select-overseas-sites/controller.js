@@ -15,6 +15,10 @@ import {
   resetAddOrsSession,
   setAddOrsSession
 } from '../../common/helpers/addOverseasSiteSession.js'
+import {
+  resetAddInterimSiteSession,
+  setAddInterimSiteSession
+} from '../../common/helpers/addInterimSiteSession.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -38,6 +42,10 @@ function editUrl(applicationId, siteId) {
 
 function siteNameUrl(applicationId) {
   return `/accreditation/add-overseas-site/${applicationId}/site-name`
+}
+
+function interimSiteCountryUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/country`
 }
 
 function renderPage(h, viewData) {
@@ -94,10 +102,15 @@ function partitionSites(rawSites) {
   return sections
 }
 
+function interimSiteEditUrl(applicationId, siteId) {
+  return `/accreditation/select-overseas-sites/${applicationId}/interim-site/edit/${siteId}`
+}
+
 function withEditUrl(applicationId, sites) {
   return sites.map((site) => ({
     ...site,
-    editUrl: editUrl(applicationId, site.siteId)
+    editUrl: editUrl(applicationId, site.siteId),
+    interimSiteEditUrl: interimSiteEditUrl(applicationId, site.siteId)
   }))
 }
 
@@ -124,7 +137,8 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     accreditedSites: withEditUrl(applicationId, sections.accredited),
     registeredSites: sections.registered.map((site) => ({
       ...site,
-      promoteUrl: promoteUrl(applicationId, site.siteId)
+      promoteUrl: promoteUrl(applicationId, site.siteId),
+      interimSiteEditUrl: interimSiteEditUrl(applicationId, site.siteId)
     })),
     newSites: withEditUrl(applicationId, sections.newSites),
     registeredSitesAddedSites: withEditUrl(
@@ -191,6 +205,44 @@ async function removeOrDeleteSite(
   } catch (err) {
     logger.error(
       `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
+    )
+    // RA-481: a 409 means the application locked between the guard check
+    // in the handler and this write landing — send the operator back to
+    // the same page so it re-fetches and renders the section read-only.
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
+    return renderSaveError(h, t, applicationId, rawSites)
+  }
+  return h.redirect(selectOverseasSitesUrl(applicationId))
+}
+
+// RA-486: clears an interim site from its parent ORS. Reuses the same bulk
+// patchOverseasSites endpoint as removeOrDeleteSite above — the backend
+// merges a null `interimSite` on the targeted site as a clean detach, with
+// no other field side effects (confirmed against OverseasSiteMerge.cs).
+async function removeInterimSite(
+  ctx,
+  organisationId,
+  applicationId,
+  rawSites,
+  siteId
+) {
+  const { h, t, logger, request } = ctx
+  const siteIdInt = Number.parseInt(siteId, 10)
+  const updatedSites = rawSites.map((s) =>
+    s.siteId === siteIdInt ? { ...s, interimSite: null } : s
+  )
+
+  try {
+    await accreditationApiService.patchOverseasSites(
+      organisationId,
+      applicationId,
+      { sites: updatedSites }
+    )
+  } catch (err) {
+    logger.error(
+      `Error removing interim site from overseas site ${siteId} on ${applicationId}: ${err.message}`
     )
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
@@ -465,6 +517,53 @@ export const selectOverseasSitesEditEntryGetController = {
   }
 }
 
+// RA-486: "Change" entry point for an interim site already attached to an ORS. Reuses the
+// add-interim-site wizard (keyed by editingInterimSiteId instead of the create-flow's absent
+// id) so the same steps and validation apply to an edit as to a fresh add. The backend has no
+// dedicated update endpoint for an interim site's own fields -- editing goes out the same bulk
+// patchOverseasSites path as removeInterimSite below, just with an edited interimSite object
+// instead of null, keyed on the unchanged interimSite siteId (per backend RA-486 confirmation).
+function buildInterimSiteSessionSeed(interimSite) {
+  return {
+    country: interimSite.country ?? '',
+    siteName: interimSite.siteName ?? '',
+    addressLine1: interimSite.addressLine1 ?? '',
+    addressLine2: interimSite.addressLine2 ?? '',
+    townOrCity: interimSite.townOrCity ?? '',
+    stateOrRegion: interimSite.stateOrRegion ?? '',
+    postcode: interimSite.postcode ?? '',
+    siteContactName: interimSite.contactName ?? '',
+    siteContactEmail: interimSite.contactEmail ?? '',
+    siteContactPhone: interimSite.contactPhone ?? '',
+    recyclingOperationCodes: interimSite.operationCodes ?? []
+  }
+}
+
+export const selectOverseasSitesInterimSiteEditEntryGetController = {
+  async handler(request, h) {
+    const { redirect, applicationId, site } = await loadSiteForWizardEntry(
+      request,
+      h
+    )
+    if (redirect) {
+      return redirect
+    }
+
+    if (!site.interimSite) {
+      return h.redirect(selectOverseasSitesUrl(applicationId))
+    }
+
+    resetAddInterimSiteSession(request)
+    setAddInterimSiteSession(request, {
+      ...buildInterimSiteSessionSeed(site.interimSite),
+      linkedSiteId: site.siteId,
+      editingInterimSiteId: site.interimSite.siteId
+    })
+
+    return h.redirect(interimSiteCountryUrl(applicationId))
+  }
+}
+
 export const selectOverseasSitesPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -520,6 +619,16 @@ export const selectOverseasSitesPostController = {
         applicationId,
         rawSites,
         submitAction,
+        siteId
+      )
+    }
+
+    if (submitAction === 'removeInterimSite') {
+      return removeInterimSite(
+        ctx,
+        organisationId,
+        applicationId,
+        rawSites,
         siteId
       )
     }

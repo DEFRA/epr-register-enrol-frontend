@@ -17,7 +17,11 @@ const CODES_BY_MATERIAL_TYPE = {
 }
 
 const ALL_CODES = ['R3', 'R4', 'R5', 'R12', 'R13']
-const CODES_REQUIRING_ACCOMPANIMENT = new Set(['R12', 'R13'])
+// RA-486: R3/R4/R5 are the mandatory "material" codes on the ORS recycling
+// operations question — at least one must be selected. R12/R13 are optional
+// here (they no longer force an interim site; adding one is now an
+// independent action on the CYA page).
+const CORE_CODES = new Set(['R3', 'R4', 'R5'])
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -83,10 +87,8 @@ function normaliseCodes(raw) {
     .filter(Boolean)
 }
 
-function requiresAccompanyingCode(codes) {
-  const hasR12OrR13 = codes.some((c) => CODES_REQUIRING_ACCOMPANIMENT.has(c))
-  const hasOtherCode = codes.some((c) => !CODES_REQUIRING_ACCOMPANIMENT.has(c))
-  return hasR12OrR13 && !hasOtherCode
+function hasCoreCode(codes) {
+  return codes.some((c) => CORE_CODES.has(c))
 }
 
 export const addOrsRecyclingOperationGetController = {
@@ -171,10 +173,10 @@ export const addOrsRecyclingOperationPostController = {
       )
     }
 
-    if (requiresAccompanyingCode(recyclingOperationCodes)) {
+    if (!hasCoreCode(recyclingOperationCodes)) {
       return renderError(
         t(
-          'pages.addOverseasSite.recyclingOperationDetails.validation.accompanyingCodeRequired'
+          'pages.addOverseasSite.recyclingOperationDetails.validation.coreCodeRequired'
         )
       )
     }
