@@ -734,6 +734,9 @@ describe('stubApiClient.post — overseas-sites', () => {
     )
     expect(result.isNewSite).toBe(true)
     expect(result.siteName).toBe('New Depot')
+    // RA-507: existing seeded sites hold orsId 001-003, so the generated id
+    // must continue the sequence rather than leaving orsId unset.
+    expect(result.orsId).toBe('004')
 
     const app = await stub.get(
       '/api/v1/accreditation-applications/50006/app006exp'
@@ -748,6 +751,7 @@ describe('stubApiClient.post — overseas-sites', () => {
       { siteName: 'First Site' }
     )
     expect(result.siteName).toBe('First Site')
+    expect(result.orsId).toBe('001')
 
     const app = await stub.get(
       '/api/v1/accreditation-applications/50001/app001'

@@ -12,6 +12,17 @@ import {
 // common/constants/businessPlanCategories.js
 const BP_CATEGORIES = BUSINESS_PLAN_CATEGORIES
 
+// RA-507: mirrors EprRegisterEnrolBackend's OrsIdGenerator -- max(existing numeric
+// ids) + 1, zero-padded to 3 digits -- so the stub's behaviour matches the real
+// backend's when adding an overseas site locally without it running.
+function nextOrsId(sites) {
+  const max = (sites ?? []).reduce((currentMax, site) => {
+    const parsed = Number.parseInt(site?.orsId, 10)
+    return Number.isInteger(parsed) && parsed > currentMax ? parsed : currentMax
+  }, 0)
+  return String(max + 1).padStart(3, '0')
+}
+
 function makeBpItems(percents = {}, details = {}) {
   return BP_CATEGORIES.map((category) => ({
     category,
@@ -1115,6 +1126,11 @@ export const stubApiClient = {
         }
         const newSite = {
           siteId: Date.now(),
+          // RA-507: mirrors the real backend's OrsIdGenerator (max existing
+          // numeric orsId + 1, zero-padded to 3 digits) -- the stub was never
+          // setting this at all, so a site added through the wizard while
+          // running against the stub showed no ORS id.
+          orsId: nextOrsId(item.overseasSites.sites),
           isNewSite: true,
           ...body
         }
