@@ -18,15 +18,20 @@
 // RA-512: 200 perftest orgs (60001-60100 reprocessors, 61001-61100 exporters),
 // generated rather than hand-written — mirrors the fixtures generated in
 // FakeOrganisationPersistence.cs's AddPerfTestReprocessors/AddPerfTestExporters.
+const PERF_TEST_ORG_COUNT = 100
+const PERF_TEST_REPROCESSOR_BASE_ORG_ID = 60001
+const PERF_TEST_EXPORTER_BASE_ORG_ID = 61001
+const PERF_TEST_NAME_PAD_WIDTH = 3
+
 const PERF_TEST_STUB_ORGS = [
-  ...Array.from({ length: 100 }, (_, i) => {
-    const orgId = 60001 + i
-    const name = `PerfTest Reprocessor ${String(i + 1).padStart(3, '0')}`
+  ...Array.from({ length: PERF_TEST_ORG_COUNT }, (_, i) => {
+    const orgId = PERF_TEST_REPROCESSOR_BASE_ORG_ID + i
+    const name = `PerfTest Reprocessor ${String(i + 1).padStart(PERF_TEST_NAME_PAD_WIDTH, '0')}`
     return { reExOrgId: `${orgId}`, defraOrgId: `${orgId}`, name }
   }),
-  ...Array.from({ length: 100 }, (_, i) => {
-    const orgId = 61001 + i
-    const name = `PerfTest Exporter ${String(i + 1).padStart(3, '0')}`
+  ...Array.from({ length: PERF_TEST_ORG_COUNT }, (_, i) => {
+    const orgId = PERF_TEST_EXPORTER_BASE_ORG_ID + i
+    const name = `PerfTest Exporter ${String(i + 1).padStart(PERF_TEST_NAME_PAD_WIDTH, '0')}`
     return { reExOrgId: `${orgId}`, defraOrgId: `${orgId}`, name }
   })
 ]
