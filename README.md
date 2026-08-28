@@ -10,6 +10,7 @@ Core delivery platform Node.js Frontend Template.
   - [Node.js](#nodejs)
 - [Server-side Caching](#server-side-caching)
 - [Redis](#redis)
+- [Configuration](#configuration)
 - [Local Development](#local-development)
   - [Setup](#setup)
   - [Development](#development)
@@ -67,6 +68,101 @@ matches the service name. e.g. `my-service` will have access to everything in Re
 
 If your service does not require a session cache to be shared between instances or if you don't require Redis, you can
 disable setting `SESSION_CACHE_ENGINE=false` or changing the default value in `src/config/index.js`.
+
+## Configuration
+
+Config is managed via [`convict`](https://github.com/mozilla/node-convict) —
+see [`src/config/config.js`](src/config/config.js) for the full schema, and
+[`.env.example`](.env.example) for a ready-to-copy local file (`cp
+.env.example .env` — see [Setup](#setup) below). The tables below cover the
+vars from the CDP secrets tab plus their closely-related config; platform/
+infra boilerplate (`PORT`, `HOST`, `LOG_LEVEL`, proxy vars, etc.) is left to
+`.env.example`, which already documents it.
+
+### Defra ID (end-user sign-in)
+
+| Variable                 | Secret? | Description                                |
+| ------------------------ | ------- | ------------------------------------------ |
+| `DEFRA_ID_CLIENT_ID`     | Yes     | OAuth2 client ID for Defra ID sign-in      |
+| `DEFRA_ID_CLIENT_SECRET` | Yes     | Paired client secret                       |
+| `DEFRA_ID_DISCOVERY_URL` | No      | OIDC discovery/metadata URL                |
+| `DEFRA_ID_SERVICE_ID`    | No      | Defra ID service ID assigned at onboarding |
+
+Required in production whenever `AUTH_STUB_ENABLED=false`; boot fails loudly
+if `AUTH_STUB_ENABLED=true` while `ENVIRONMENT=prod`. Leave blank for a local
+run under stub auth.
+
+### Entra ID (internal/regulator sign-in)
+
+| Variable                        | Secret? | Description                                                                                         |
+| ------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
+| `ENTRA_CLIENT_ID`               | Yes     | Azure Entra ID client ID                                                                            |
+| `ENTRA_CLIENT_SECRET`           | Yes     | Paired client secret                                                                                |
+| `ENTRA_TENANT_ID`               | No      | Azure AD tenant ID                                                                                  |
+| `ENTRA_REGULATOR_ROLE_VALUE`    | No      | Entra app-role name mapped to "regulator, standard" (default `Waste.Regulator.Standard`)            |
+| `ENTRA_SUPPORT_USER_ROLE_VALUE` | No      | Entra app-role name mapped to "regulator, read-only support" (default `Waste.SupportUser.ReadOnly`) |
+
+### Service-to-service auth
+
+| Variable                      | Secret? | Description                                                                                                                            |
+| ----------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `AUTH_SHARED_SECRET__BACKEND` | Yes     | Bearer token sent on every outbound call to `epr-register-enrol-backend` — must match backend's `AUTH_SHARED_SECRET__FRONTEND` exactly |
+| `AUTH_CALLBACK_BASE_URL`      | No      | Base URL used to build both Defra ID and Entra ID OAuth callback URLs. Default `http://localhost:3000`                                 |
+| `AUTH_STUB_ENABLED`           | No      | Bypasses real OAuth, auto-authenticates every request as a fixed stub user. Boot fails loudly if `true` while `ENVIRONMENT=prod`       |
+
+### Session and cache
+
+| Variable                                                         | Secret?                      | Description                                                                                                                                                                   |
+| ---------------------------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SESSION_COOKIE_PASSWORD`                                        | Yes                          | Yar/Hapi session-cookie encryption key, ≥32 chars. Boot fails loudly if the shipped local placeholder is still set once `NODE_ENV=production` or `SESSION_COOKIE_SECURE=true` |
+| `SESSION_CACHE_ENGINE`                                           | No                           | `memory` or `redis`                                                                                                                                                           |
+| `REDIS_HOST` / `REDIS_USERNAME` / `REDIS_PASSWORD` / `REDIS_TLS` | `REDIS_PASSWORD` is a secret | Redis connection, only relevant when `SESSION_CACHE_ENGINE=redis`. Boot fails loudly in production/TLS if the host is still localhost or username/password is blank           |
+
+### File upload
+
+| Variable                | Secret? | Description                                                                                                                                           |
+| ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FILE_UPLOAD_S3_BUCKET` | No      | S3 bucket the CDP Uploader stores sampling-plan/BES-evidence uploads in — must match `epr-register-enrol-management-fe`'s own `FILE_UPLOAD_S3_BUCKET` |
+
+> The [File Upload and Download](#file-upload-and-download) section further
+> down this README documents an older `src/server/file-upload/*` plugin and
+> `FILE_UPLOAD_S3_ENDPOINT`. That plugin has since been removed — current
+> uploads go through `src/server/accreditation/sampling-plan-upload/` and
+> `.../upload-bes-evidence/`, and `FILE_UPLOAD_S3_ENDPOINT` isn't read
+> anywhere in `src/` today. That section is out of date and due a refresh.
+
+### HTTP Basic Auth (preview-environment gate)
+
+| Variable             | Secret? | Description                                                                                   |
+| -------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| `AUTH_BASIC_ENABLED` | No      | Gates the whole app behind HTTP Basic Auth (e.g. for a preview environment). Defaults `false` |
+| `BASIC_USER`         | No      | Basic-auth username, required when the flag above is enabled                                  |
+| `BASIC_PASSWD`       | Yes     | Basic-auth password, required when the flag above is enabled                                  |
+
+### Backend API client
+
+| Variable           | Secret? | Description                                                                                                                                                                            |
+| ------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `API_BASE_URL`     | No      | Base URL of `epr-register-enrol-backend`                                                                                                                                               |
+| `API_TIMEOUT`      | No      | Backend request timeout (ms)                                                                                                                                                           |
+| `API_STUB_ENABLED` | No      | Replaces all backend API calls with in-memory fixture data — see [Development without a backend](#development-without-a-backend). Boot fails loudly if `true` while `ENVIRONMENT=prod` |
+
+### Example local/testing values
+
+```bash
+DEFRA_ID_CLIENT_ID=local-dev-defra-id-client-id
+DEFRA_ID_CLIENT_SECRET=local-dev-fake-secret-value
+ENTRA_CLIENT_ID=local-dev-entra-client-id
+ENTRA_CLIENT_SECRET=local-dev-fake-entra-secret
+ENTRA_TENANT_ID=00000000-0000-0000-0000-000000000000
+AUTH_SHARED_SECRET__BACKEND=local-dev-shared-secret-not-real
+SESSION_COOKIE_PASSWORD=the-password-must-be-at-least-32-characters-long
+FILE_UPLOAD_S3_BUCKET=epr-register-enrol-file-uploads
+```
+
+`AUTH_STUB_ENABLED=true` (the local default) makes the Defra ID/Entra ID
+values above irrelevant for a plain local run — see
+[`.env.example`](.env.example) for every var's actual default.
 
 ## Proxy
 
