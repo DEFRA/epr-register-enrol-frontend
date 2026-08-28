@@ -15,6 +15,27 @@
  * Numeric orgs link to themselves (ReEx id == Defra id); the ObjectId-shaped
  * test org links to a distinct UUID, mirroring the real ReEx-vs-Defra id split.
  */
+// RA-512: 200 perftest orgs (60001-60100 reprocessors, 61001-61100 exporters),
+// generated rather than hand-written — mirrors the fixtures generated in
+// FakeOrganisationPersistence.cs's AddPerfTestReprocessors/AddPerfTestExporters.
+const PERF_TEST_ORG_COUNT = 100
+const PERF_TEST_REPROCESSOR_BASE_ORG_ID = 60001
+const PERF_TEST_EXPORTER_BASE_ORG_ID = 61001
+const PERF_TEST_NAME_PAD_WIDTH = 3
+
+const PERF_TEST_STUB_ORGS = [
+  ...Array.from({ length: PERF_TEST_ORG_COUNT }, (_, i) => {
+    const orgId = PERF_TEST_REPROCESSOR_BASE_ORG_ID + i
+    const name = `PerfTest Reprocessor ${String(i + 1).padStart(PERF_TEST_NAME_PAD_WIDTH, '0')}`
+    return { reExOrgId: `${orgId}`, defraOrgId: `${orgId}`, name }
+  }),
+  ...Array.from({ length: PERF_TEST_ORG_COUNT }, (_, i) => {
+    const orgId = PERF_TEST_EXPORTER_BASE_ORG_ID + i
+    const name = `PerfTest Exporter ${String(i + 1).padStart(PERF_TEST_NAME_PAD_WIDTH, '0')}`
+    return { reExOrgId: `${orgId}`, defraOrgId: `${orgId}`, name }
+  })
+]
+
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).
 // The numeric-looking ids below are kept readable for the pure-stub orgs; the
 // ObjectId-shaped org uses a real-shaped UUID to exercise the ReEx-id != Defra-id
@@ -67,7 +88,9 @@ export const STUB_OPERATOR_ORGS = [
     reExOrgId: '6a69d66bd38ef6a70dbbd4da',
     defraOrgId: '0e3eab83-7dcc-4496-81dd-d758de221aab',
     name: 'Prosacco, Goodwin-Effertz and Huel-Gutmann Limited sxURMuxt'
-  }
+  },
+  // RA-512: perftest stub orgs, generated (not hand-written).
+  ...PERF_TEST_STUB_ORGS
 ]
 
 // ReEx org id -> linked Defra org id.
