@@ -1,6 +1,6 @@
-import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
-import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
@@ -36,23 +36,27 @@ function buildViewData(t, applicationId, country, error) {
 
 export const addInterimSiteCountryGetController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
+    const { t, guardRedirect } = await enterInterimSiteWizardStep({
+      request,
       h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
+      applicationId
     })
     if (guardRedirect) {
       return guardRedirect
     }
 
     const session = getAddInterimSiteSession(request)
+
+    const linkedSiteGuardRedirect = guardInterimSiteLinkedSiteId({
+      h,
+      session,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (linkedSiteGuardRedirect) {
+      return linkedSiteGuardRedirect
+    }
+
     return renderPage(
       h,
       buildViewData(t, applicationId, session.country ?? '', null)
@@ -62,17 +66,11 @@ export const addInterimSiteCountryGetController = {
 
 export const addInterimSiteCountryPostController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
+    const { t, guardRedirect } = await enterInterimSiteWizardStep({
+      request,
       h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
+      applicationId
     })
     if (guardRedirect) {
       return guardRedirect

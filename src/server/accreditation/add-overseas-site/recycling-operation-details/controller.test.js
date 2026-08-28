@@ -275,9 +275,9 @@ describe('#addOrsRecyclingOperationController', () => {
       expect(result).toContain('Select at least one recycling operation')
     })
 
-    describe('AC07 — R12/R13 require an accompanying code', () => {
+    describe('RA-486 — R3/R4/R5 is mandatory, R12/R13 is optional', () => {
       test.each([['R12'], ['R13'], ['R12,R13']])(
-        'returns 400 when only %s is selected',
+        'returns 400 when only %s is selected (no R3/R4/R5 present)',
         async (codesCsv) => {
           const payload = codesCsv
             .split(',')
@@ -292,21 +292,34 @@ describe('#addOrsRecyclingOperationController', () => {
           })
 
           expect(statusCode).toBe(statusCodes.badRequest)
-          expect(result).toContain(
-            'R12 and R13 cannot be selected on their own'
-          )
+          expect(result).toContain('Select R3, R4 or R5')
         }
       )
 
       test.each([
         ['R3', 'R12'],
         ['R4', 'R13']
-      ])('allows %s + %s (accompanied)', async (codeA, codeB) => {
+      ])(
+        '%s alone, and %s alone with R12/R13 attached, are both allowed',
+        async (codeA, codeB) => {
+          const { statusCode, headers } = await server.inject({
+            method: 'POST',
+            url: BASE_URL,
+            headers: postHeaders,
+            payload: `recyclingOperationCodes=${codeA}&recyclingOperationCodes=${codeB}`
+          })
+
+          expect(statusCode).toBe(statusCodes.redirect)
+          expect(headers.location).toBe(NEXT_URL)
+        }
+      )
+
+      test('allows R3 alone with no R12/R13 present (R12/R13 are optional now)', async () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: BASE_URL,
           headers: postHeaders,
-          payload: `recyclingOperationCodes=${codeA}&recyclingOperationCodes=${codeB}`
+          payload: 'recyclingOperationCodes=R3'
         })
 
         expect(statusCode).toBe(statusCodes.redirect)

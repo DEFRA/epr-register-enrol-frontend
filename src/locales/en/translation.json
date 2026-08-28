@@ -473,6 +473,10 @@
         "newSites": "New sites",
         "registeredSitesAdded": "Registered sites added"
       },
+      "interimSite": {
+        "label": "Interim site",
+        "removeButton": "Remove interim site"
+      },
       "validation": {
         "noSitesAccredited": "Add at least one overseas reprocessing site to accreditation",
         "saveError": "Sorry, we were unable to save your site selection. Please try again."
@@ -485,7 +489,10 @@
       "saveError": "Sorry, we were unable to update your overseas reprocessing sites. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "changeLink": "Change",
-      "confirmButton": "Confirm and continue"
+      "confirmButton": "Confirm and continue",
+      "interimSite": {
+        "label": "Interim site"
+      }
     },
     "fileUpload": {
       "details": {
@@ -693,7 +700,7 @@
         },
         "validation": {
           "required": "Select at least one recycling operation",
-          "accompanyingCodeRequired": "R12 and R13 cannot be selected on their own — select at least one other applicable recycling operation as well"
+          "coreCodeRequired": "Select R3, R4 or R5"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"
@@ -836,6 +843,24 @@
         "continueButton": "Continue",
         "cancelLink": "Cancel"
       },
+      "recyclingOperationDetails": {
+        "title": "Recycling operation — Add interim site",
+        "heading": "What recycling operations are carried out at the site?",
+        "label": "Select all recycling operations that apply",
+        "operations": {
+          "R3": "R3 — Recycling/reclamation of organic substances not used as solvents (Includes paper, cardboard, wood, plastics, textiles, composting, anaerobic digestion, and other biological processes)",
+          "R4": "R4 — Recycling/reclamation of metals and metal compounds (Scrap metal recycling, metal recovery)",
+          "R5": "R5 — Recycling/reclamation of other inorganic materials (Glass, bricks, concrete, soil, aggregates, ceramics)",
+          "R12": "R12 — Exchange of waste for submission (sorting, baling, aggregation)",
+          "R13": "R13 — Interim storage of wastes"
+        },
+        "validation": {
+          "required": "Select at least one recycling operation",
+          "coreCodeRequired": "Select R12 or R13"
+        },
+        "continueButton": "Continue",
+        "cancelLink": "Cancel"
+      },
       "cya": {
         "title": "Check your answers — Add interim site",
         "heading": "Check your answers",
@@ -846,6 +871,7 @@
           "contactName": "Contact name",
           "contactEmail": "Contact email",
           "contactPhone": "Contact phone number",
+          "recyclingOperation": "Recycling operation",
           "siteNumber": "Site number"
         },
         "changeLink": "Change",

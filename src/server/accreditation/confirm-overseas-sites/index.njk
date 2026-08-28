@@ -50,6 +50,12 @@
                 </dd>
               {% endif %}
             </div>
+            {% if site.interimSite %}
+              <div class="govuk-summary-list__row" data-testid="interim-site-row-{{ site.siteId }}">
+                <dt class="govuk-summary-list__key">{{ t('pages.confirmOverseasSites.interimSite.label') }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="interim-site-name-{{ site.siteId }}">{{ site.interimSite.siteName }}</dd>
+              </div>
+            {% endif %}
           {% endfor %}
         </dl>
       {% endif %}

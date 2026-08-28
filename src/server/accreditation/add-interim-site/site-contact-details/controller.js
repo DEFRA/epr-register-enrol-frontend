@@ -1,6 +1,5 @@
-import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
-import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
-import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
@@ -16,8 +15,8 @@ function siteLocationUrl(applicationId) {
   return `/accreditation/add-interim-site/${applicationId}/site-location`
 }
 
-function checkYourAnswersUrl(applicationId) {
-  return `/accreditation/add-interim-site/${applicationId}/check-your-answers`
+function recyclingOperationDetailsUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/recycling-operation-details`
 }
 
 function renderPage(h, viewData) {
@@ -42,23 +41,27 @@ function buildViewData(t, applicationId, fields, errors) {
 
 export const addInterimSiteContactDetailsGetController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
+    const { t, guardRedirect } = await enterInterimSiteWizardStep({
+      request,
       h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
+      applicationId
     })
     if (guardRedirect) {
       return guardRedirect
     }
 
     const session = getAddInterimSiteSession(request)
+
+    const linkedSiteGuardRedirect = guardInterimSiteLinkedSiteId({
+      h,
+      session,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (linkedSiteGuardRedirect) {
+      return linkedSiteGuardRedirect
+    }
+
     const fields = {
       siteContactName: session.siteContactName ?? '',
       siteContactEmail: session.siteContactEmail ?? '',
@@ -70,17 +73,11 @@ export const addInterimSiteContactDetailsGetController = {
 
 export const addInterimSiteContactDetailsPostController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
+    const { t, guardRedirect } = await enterInterimSiteWizardStep({
+      request,
       h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
+      applicationId
     })
     if (guardRedirect) {
       return guardRedirect
@@ -121,6 +118,6 @@ export const addInterimSiteContactDetailsPostController = {
     }
 
     setAddInterimSiteSession(request, fields)
-    return h.redirect(checkYourAnswersUrl(applicationId))
+    return h.redirect(recyclingOperationDetailsUrl(applicationId))
   }
 }

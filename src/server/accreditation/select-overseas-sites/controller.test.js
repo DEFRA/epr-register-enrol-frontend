@@ -1191,5 +1191,225 @@ describe('#selectOverseasSitesController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
+
+    // RA-486: clearing an interim site reuses the same bulk patchOverseasSites
+    // endpoint as removeAccredited/deleteNewSite above, just with the
+    // targeted site's interimSite field set to null.
+    test('removeInterimSite patches the site with interimSite: null and redirects back', async () => {
+      const accreditedWithInterim = {
+        ...ACCREDITED_SITE,
+        interimSite: { siteId: 42, siteName: 'Interim Depot' }
+      }
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [accreditedWithInterim, REGISTERED_SITE]
+          }
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining('overseas-sites'),
+        expect.objectContaining({
+          sites: expect.arrayContaining([
+            expect.objectContaining({ siteId: 900001, interimSite: null })
+          ])
+        })
+      )
+    })
+
+    test('removeInterimSite returns 500 when PATCH fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('patch failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test('removeInterimSite redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+  })
+
+  describe('RA-486 — interim site visibility on select-overseas-sites', () => {
+    test('renders the nested interim-site row with Change and Remove actions when present', async () => {
+      const accreditedWithInterim = {
+        ...ACCREDITED_SITE,
+        interimSite: { siteId: 42, siteName: 'Interim Depot' }
+      }
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [accreditedWithInterim, REGISTERED_SITE]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="interim-site-row-900001"')
+      expect(result).toContain('data-testid="interim-site-name-900001"')
+      expect(result).toContain('Interim Depot')
+      expect(result).toContain('data-testid="change-interim-site-900001"')
+      expect(result).toContain(
+        'data-testid="remove-button-interim-site-900001"'
+      )
+      expect(result).toContain(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`
+      )
+    })
+
+    test('does not render an interim-site row when there is none', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="interim-site-row-900001"')
+    })
+  })
+
+  describe('GET /accreditation/select-overseas-sites/{applicationId}/interim-site/edit/{siteId}', () => {
+    test('redirects back to select-overseas-sites when the site has no interim site', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('redirects to the interim wizard country step and seeds the session when the interim site is found', async () => {
+      const accreditedWithInterim = {
+        ...ACCREDITED_SITE,
+        interimSite: {
+          siteId: 42,
+          siteName: 'Interim Depot',
+          country: 'France',
+          addressLine1: 'Unit 1',
+          townOrCity: 'Rotterdam',
+          contactName: 'Jane Smith',
+          contactEmail: 'jane@example.com',
+          contactPhone: '+441234567890',
+          operationCodes: ['R12']
+        }
+      }
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [accreditedWithInterim, REGISTERED_SITE]
+          }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/add-interim-site/${APPLICATION_ID}/country`
+      )
+    })
+
+    test("re-populates the interim site's existing name on the interim wizard's site-name step", async () => {
+      const accreditedWithInterim = {
+        ...ACCREDITED_SITE,
+        interimSite: {
+          siteId: 42,
+          siteName: 'Interim Depot',
+          country: 'France',
+          addressLine1: 'Unit 1',
+          townOrCity: 'Rotterdam',
+          contactName: 'Jane Smith',
+          contactEmail: 'jane@example.com',
+          contactPhone: '+441234567890',
+          operationCodes: ['R12']
+        }
+      }
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [accreditedWithInterim, REGISTERED_SITE]
+          }
+        })
+      )
+
+      function cookieHeaderFrom(response, fallback) {
+        const raw = response.headers['set-cookie']
+        if (!raw) {
+          return fallback
+        }
+        return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+      }
+
+      const editResponse = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        headers: operatorHeaders
+      })
+      expect(editResponse.statusCode).toBe(statusCodes.redirect)
+      const sessionCookie = cookieHeaderFrom(editResponse, '')
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toContain('Interim Depot')
+    })
   })
 })

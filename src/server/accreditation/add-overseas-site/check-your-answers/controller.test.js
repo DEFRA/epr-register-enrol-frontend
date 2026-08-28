@@ -119,6 +119,19 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="change-site-name"')
     })
 
+    test('renders a back link to repatriated-loads (last step for materials without conditions-of-export)', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="back-link"')
+      expect(result).toContain(
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/repatriated-loads`
+      )
+    })
+
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
@@ -463,7 +476,7 @@ describe('#addOrsCyaController', () => {
     })
   })
 
-  describe('AC08 — R12/R13 require an interim site', () => {
+  describe('RA-486 — Add this site and Add an interim site are independent of R12/R13', () => {
     async function seedCodesSession(...codes) {
       const payload = codes.map((c) => `recyclingOperationCodes=${c}`).join('&')
       const response = await server.inject({
@@ -483,7 +496,7 @@ describe('#addOrsCyaController', () => {
       return (Array.isArray(raw) ? raw[0] : raw).split(';')[0]
     }
 
-    test('GET renders only Add Interim Site when R12 is selected', async () => {
+    test('GET always renders both buttons when R12 is selected', async () => {
       const sessionCookie = await seedCodesSession('R3', 'R12')
 
       const { result } = await server.inject({
@@ -492,11 +505,11 @@ describe('#addOrsCyaController', () => {
         headers: { ...operatorHeaders, cookie: sessionCookie }
       })
 
-      expect(result).not.toContain('data-testid="submit-button"')
+      expect(result).toContain('data-testid="submit-button"')
       expect(result).toContain('data-testid="save-and-add-interim-site-button"')
     })
 
-    test('GET renders only Add Interim Site when R13 is selected', async () => {
+    test('GET always renders both buttons when R13 is selected', async () => {
       const sessionCookie = await seedCodesSession('R4', 'R13')
 
       const { result } = await server.inject({
@@ -505,7 +518,8 @@ describe('#addOrsCyaController', () => {
         headers: { ...operatorHeaders, cookie: sessionCookie }
       })
 
-      expect(result).not.toContain('data-testid="submit-button"')
+      expect(result).toContain('data-testid="submit-button"')
+      expect(result).toContain('data-testid="save-and-add-interim-site-button"')
     })
 
     test('GET renders both buttons when neither R12 nor R13 is selected', async () => {
@@ -521,11 +535,16 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="save-and-add-interim-site-button"')
     })
 
-    test('POST action=confirm with R12 present does not create the site', async () => {
+    test('POST action=confirm with R12 present still creates the site (no longer forced into the interim path)', async () => {
       const sessionCookie = await seedCodesSession('R3', 'R12')
-      vi.spyOn(accreditationApiService, 'createOverseasSite')
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
 
-      const { statusCode } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: {
@@ -536,15 +555,21 @@ describe('#addOrsCyaController', () => {
         payload: 'action=confirm'
       })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(accreditationApiService.createOverseasSite).not.toHaveBeenCalled()
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalled()
     })
 
-    test('POST with no action (default) and R13 present does not create the site', async () => {
+    test('POST with no action (default) and R13 present still creates the site', async () => {
       const sessionCookie = await seedCodesSession('R4', 'R13')
-      vi.spyOn(accreditationApiService, 'createOverseasSite')
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
 
-      const { statusCode } = await server.inject({
+      const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: BASE_URL,
         headers: {
@@ -555,8 +580,36 @@ describe('#addOrsCyaController', () => {
         payload: ''
       })
 
-      expect(statusCode).toBe(statusCodes.badRequest)
-      expect(accreditationApiService.createOverseasSite).not.toHaveBeenCalled()
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalled()
+    })
+
+    test('POST action=addInterimSite with no R12/R13 present still proceeds (interim site is independent now)', async () => {
+      const sessionCookie = await seedCodesSession('R3')
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([])
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockResolvedValue(
+        { siteId: 2 }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'action=addInterimSite'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/add-interim-site/${APPLICATION_ID}/country`
+      )
+      expect(accreditationApiService.createOverseasSite).toHaveBeenCalled()
     })
 
     test('POST action=addInterimSite with R12 present still proceeds', async () => {

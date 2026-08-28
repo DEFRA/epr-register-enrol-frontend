@@ -1,9 +1,12 @@
 import {
   selectOverseasSitesGetController,
-  selectOverseasSitesPostController,
-  selectOverseasSitesPromoteEntryGetController,
-  selectOverseasSitesEditEntryGetController
+  selectOverseasSitesPostController
 } from './controller.js'
+import {
+  selectOverseasSitesPromoteEntryGetController,
+  selectOverseasSitesEditEntryGetController,
+  selectOverseasSitesInterimSiteEditEntryGetController
+} from './wizard-entry.controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 
 export const selectOverseasSites = {
@@ -46,6 +49,18 @@ export const selectOverseasSites = {
           path: '/{language}/accreditation/select-overseas-sites/{applicationId}/edit/{siteId}',
           options: requireOperator,
           ...selectOverseasSitesEditEntryGetController
+        },
+        {
+          method: 'GET',
+          path: '/accreditation/select-overseas-sites/{applicationId}/interim-site/edit/{siteId}',
+          options: requireOperator,
+          ...selectOverseasSitesInterimSiteEditEntryGetController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/select-overseas-sites/{applicationId}/interim-site/edit/{siteId}',
+          options: requireOperator,
+          ...selectOverseasSitesInterimSiteEditEntryGetController
         },
         {
           method: 'POST',

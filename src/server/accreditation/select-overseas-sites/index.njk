@@ -145,6 +145,29 @@
                   </dd>
                 {% endif %}
               </div>
+              {% if site.interimSite %}
+                <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="interim-site-row-{{ site.siteId }}">
+                  <dt class="govuk-summary-list__key">{{ t('pages.selectOverseasSites.interimSite.label') }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-name-{{ site.siteId }}">{{ site.interimSite.siteName }}</dd>
+                  {% if not readOnly %}
+                    <dd class="govuk-summary-list__actions">
+                      <a href="{{ site.interimSiteEditUrl }}" class="govuk-link"
+                         data-testid="change-interim-site-{{ site.siteId }}">
+                        {{ t('pages.selectOverseasSites.changeButton') }}
+                      </a>
+                      <form method="post" style="display:inline" data-testid="remove-form-interim-site-{{ site.siteId }}">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                        <button type="submit" name="submitAction" value="removeInterimSite"
+                                class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                                data-testid="remove-button-interim-site-{{ site.siteId }}">
+                          {{ t('pages.selectOverseasSites.interimSite.removeButton') }}
+                        </button>
+                      </form>
+                    </dd>
+                  {% endif %}
+                </div>
+              {% endif %}
             {% endfor %}
           </dl>
         {% endif %}
@@ -172,6 +195,29 @@
                   </dd>
                 {% endif %}
               </div>
+              {% if site.interimSite %}
+                <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="interim-site-row-{{ site.siteId }}">
+                  <dt class="govuk-summary-list__key">{{ t('pages.selectOverseasSites.interimSite.label') }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-name-{{ site.siteId }}">{{ site.interimSite.siteName }}</dd>
+                  {% if not readOnly %}
+                    <dd class="govuk-summary-list__actions">
+                      <a href="{{ site.interimSiteEditUrl }}" class="govuk-link"
+                         data-testid="change-interim-site-{{ site.siteId }}">
+                        {{ t('pages.selectOverseasSites.changeButton') }}
+                      </a>
+                      <form method="post" style="display:inline" data-testid="remove-form-interim-site-{{ site.siteId }}">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                        <button type="submit" name="submitAction" value="removeInterimSite"
+                                class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                                data-testid="remove-button-interim-site-{{ site.siteId }}">
+                          {{ t('pages.selectOverseasSites.interimSite.removeButton') }}
+                        </button>
+                      </form>
+                    </dd>
+                  {% endif %}
+                </div>
+              {% endif %}
             {% endfor %}
           </dl>
         {% endif %}
@@ -206,6 +252,29 @@
                   </dd>
                 {% endif %}
               </div>
+              {% if site.interimSite %}
+                <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="interim-site-row-{{ site.siteId }}">
+                  <dt class="govuk-summary-list__key">{{ t('pages.selectOverseasSites.interimSite.label') }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-name-{{ site.siteId }}">{{ site.interimSite.siteName }}</dd>
+                  {% if not readOnly %}
+                    <dd class="govuk-summary-list__actions">
+                      <a href="{{ site.interimSiteEditUrl }}" class="govuk-link"
+                         data-testid="change-interim-site-{{ site.siteId }}">
+                        {{ t('pages.selectOverseasSites.changeButton') }}
+                      </a>
+                      <form method="post" style="display:inline" data-testid="remove-form-interim-site-{{ site.siteId }}">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                        <button type="submit" name="submitAction" value="removeInterimSite"
+                                class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                                data-testid="remove-button-interim-site-{{ site.siteId }}">
+                          {{ t('pages.selectOverseasSites.interimSite.removeButton') }}
+                        </button>
+                      </form>
+                    </dd>
+                  {% endif %}
+                </div>
+              {% endif %}
             {% endfor %}
           </dl>
         {% endif %}
@@ -240,6 +309,29 @@
                   </dd>
                 {% endif %}
               </div>
+              {% if site.interimSite %}
+                <div class="govuk-summary-list__row select-overseas-sites-row" data-testid="interim-site-row-{{ site.siteId }}">
+                  <dt class="govuk-summary-list__key">{{ t('pages.selectOverseasSites.interimSite.label') }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-name-{{ site.siteId }}">{{ site.interimSite.siteName }}</dd>
+                  {% if not readOnly %}
+                    <dd class="govuk-summary-list__actions">
+                      <a href="{{ site.interimSiteEditUrl }}" class="govuk-link"
+                         data-testid="change-interim-site-{{ site.siteId }}">
+                        {{ t('pages.selectOverseasSites.changeButton') }}
+                      </a>
+                      <form method="post" style="display:inline" data-testid="remove-form-interim-site-{{ site.siteId }}">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                        <button type="submit" name="submitAction" value="removeInterimSite"
+                                class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                                data-testid="remove-button-interim-site-{{ site.siteId }}">
+                          {{ t('pages.selectOverseasSites.interimSite.removeButton') }}
+                        </button>
+                      </form>
+                    </dd>
+                  {% endif %}
+                </div>
+              {% endif %}
             {% endfor %}
           </dl>
         {% endif %}

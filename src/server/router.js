@@ -44,6 +44,7 @@ import { addInterimSiteCountry } from './accreditation/add-interim-site/country/
 import { addInterimSiteSiteName } from './accreditation/add-interim-site/site-name/index.js'
 import { addInterimSiteSiteLocation } from './accreditation/add-interim-site/site-location/index.js'
 import { addInterimSiteSiteContactDetails } from './accreditation/add-interim-site/site-contact-details/index.js'
+import { addInterimSiteRecyclingOperationDetails } from './accreditation/add-interim-site/recycling-operation-details/index.js'
 import { addInterimSiteCya } from './accreditation/add-interim-site/check-your-answers/index.js'
 
 export const router = {
@@ -127,6 +128,7 @@ export const router = {
         addInterimSiteSiteName,
         addInterimSiteSiteLocation,
         addInterimSiteSiteContactDetails,
+        addInterimSiteRecyclingOperationDetails,
         addInterimSiteCya
       ])
 

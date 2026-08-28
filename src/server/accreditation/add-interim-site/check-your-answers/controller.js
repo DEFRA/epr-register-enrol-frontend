@@ -1,8 +1,7 @@
-import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
-import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
 import {
   getAddInterimSiteSession,
   clearAddInterimSiteSession
@@ -28,6 +27,10 @@ function siteLocationUrl(applicationId) {
 
 function siteContactDetailsUrl(applicationId) {
   return `/accreditation/add-interim-site/${applicationId}/site-contact-details`
+}
+
+function recyclingOperationDetailsUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/recycling-operation-details`
 }
 
 function renderPage(h, viewData) {
@@ -82,6 +85,12 @@ function buildRows(t, applicationId, session) {
       value: session.siteContactPhone ?? '',
       changeUrl: siteContactDetailsUrl(applicationId),
       testId: 'contact-phone'
+    },
+    {
+      key: t('pages.addInterimSite.cya.rows.recyclingOperation'),
+      value: (session.recyclingOperationCodes ?? []).join(', '),
+      changeUrl: recyclingOperationDetailsUrl(applicationId),
+      testId: 'recycling-operation'
     }
   ]
 
@@ -106,6 +115,7 @@ function buildViewData(t, applicationId, session, error) {
     heading: t('pages.addInterimSite.cya.heading'),
     submitButton: t('pages.addInterimSite.cya.submitButton'),
     cancelLink: t('pages.addInterimSite.cya.cancelLink'),
+    backLink: recyclingOperationDetailsUrl(applicationId),
     cancelUrl: selectOverseasSitesUrl(applicationId),
     rows: buildRows(t, applicationId, session),
     changeLabel: t('pages.addInterimSite.cya.changeLink'),
@@ -124,47 +134,98 @@ function buildSitePayload(session) {
     postcode: session.postcode ?? null,
     contactName: session.siteContactName,
     contactEmail: session.siteContactEmail,
-    contactPhone: session.siteContactPhone
+    contactPhone: session.siteContactPhone,
+    operationCodes: session.recyclingOperationCodes ?? []
   }
+}
+
+// RA-486: the backend has no dedicated update endpoint for an existing
+// interim site's own fields -- editing goes out the same bulk
+// patchOverseasSites path used to remove one, just with an edited
+// interimSite object (same siteId, so the backend's merge treats it as an
+// edit rather than a new interim site) instead of null.
+async function saveInterimSiteEdit(
+  organisationId,
+  applicationId,
+  session,
+  sitePayload
+) {
+  const application = await accreditationApiService.getApplication(
+    organisationId,
+    applicationId
+  )
+  const sites = application.overseasSites?.sites ?? []
+  const targetSite = sites.find((site) => site.siteId === session.linkedSiteId)
+
+  // RA-486: editingInterimSiteId can point at a site that no longer carries
+  // that interim site (e.g. a stale session left over from an abandoned
+  // Change on a different ORS) -- fall back to creating fresh via the
+  // backend's own SiteId/SiteNumber allocation rather than PATCHing an
+  // interimSite object onto a site that doesn't have one.
+  if (!targetSite?.interimSite) {
+    return accreditationApiService.createInterimSite(
+      organisationId,
+      applicationId,
+      session.linkedSiteId,
+      sitePayload
+    )
+  }
+
+  const updatedSites = sites.map((site) =>
+    site.siteId === session.linkedSiteId
+      ? {
+          ...site,
+          interimSite: {
+            ...sitePayload,
+            siteId: session.editingInterimSiteId,
+            // RA-486: the bulk PATCH takes every interimSite field as-is
+            // from what's sent (only isNewSite is re-derived server-side),
+            // so the backend-generated siteNumber must be carried over
+            // explicitly here or an edit would wipe it out.
+            siteNumber: site.interimSite?.siteNumber ?? null
+          }
+        }
+      : site
+  )
+  return accreditationApiService.patchOverseasSites(
+    organisationId,
+    applicationId,
+    { sites: updatedSites }
+  )
 }
 
 export const addInterimSiteCyaGetController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
+    const { t, guardRedirect } = await enterInterimSiteWizardStep({
+      request,
       h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
+      applicationId
     })
     if (guardRedirect) {
       return guardRedirect
     }
 
     const session = getAddInterimSiteSession(request)
+
+    const linkedSiteGuardRedirect = guardInterimSiteLinkedSiteId({
+      h,
+      session,
+      fallbackUrl: selectOverseasSitesUrl(applicationId)
+    })
+    if (linkedSiteGuardRedirect) {
+      return linkedSiteGuardRedirect
+    }
+
     return renderPage(h, buildViewData(t, applicationId, session, null))
   }
 }
 
 export const addInterimSiteCyaPostController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-
-    const guardRedirect = await guardOverseasSiteWizardEntry({
-      h,
-      organisationId,
-      applicationId,
-      fallbackUrl: selectOverseasSitesUrl(applicationId)
-    })
+    const { t, organisationId, guardRedirect } =
+      await enterInterimSiteWizardStep({ request, h, applicationId })
     if (guardRedirect) {
       return guardRedirect
     }
@@ -173,12 +234,21 @@ export const addInterimSiteCyaPostController = {
     const sitePayload = buildSitePayload(session)
 
     try {
-      await accreditationApiService.createInterimSite(
-        organisationId,
-        applicationId,
-        session.linkedSiteId,
-        sitePayload
-      )
+      if (session.editingInterimSiteId != null) {
+        await saveInterimSiteEdit(
+          organisationId,
+          applicationId,
+          session,
+          sitePayload
+        )
+      } else {
+        await accreditationApiService.createInterimSite(
+          organisationId,
+          applicationId,
+          session.linkedSiteId,
+          sitePayload
+        )
+      }
     } catch (err) {
       request.server.logger.error(
         `Interim site CYA createInterimSite error: ${err.message}`
