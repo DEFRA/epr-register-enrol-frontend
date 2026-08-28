@@ -155,6 +155,22 @@ async function saveInterimSiteEdit(
     applicationId
   )
   const sites = application.overseasSites?.sites ?? []
+  const targetSite = sites.find((site) => site.siteId === session.linkedSiteId)
+
+  // RA-486: editingInterimSiteId can point at a site that no longer carries
+  // that interim site (e.g. a stale session left over from an abandoned
+  // Change on a different ORS) -- fall back to creating fresh via the
+  // backend's own SiteId/SiteNumber allocation rather than PATCHing an
+  // interimSite object onto a site that doesn't have one.
+  if (!targetSite?.interimSite) {
+    return accreditationApiService.createInterimSite(
+      organisationId,
+      applicationId,
+      session.linkedSiteId,
+      sitePayload
+    )
+  }
+
   const updatedSites = sites.map((site) =>
     site.siteId === session.linkedSiteId
       ? {

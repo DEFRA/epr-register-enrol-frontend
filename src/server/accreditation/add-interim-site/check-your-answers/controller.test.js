@@ -416,5 +416,44 @@ describe('#addInterimSiteCyaController', () => {
         }
       )
     })
+
+    // RA-486 regression: a stale editingInterimSiteId (e.g. an abandoned
+    // Change carried into a create against a different ORS) must not PATCH
+    // an interimSite onto a site that doesn't have one -- that would forge
+    // a duplicate SiteId and a null SiteNumber. Falls back to the normal
+    // create path, which is where the backend allocates both.
+    test('falls back to createInterimSite when the linked site has no existing interim site', async () => {
+      const sessionCookie = await seedEditSession()
+
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
+        applicationId: APPLICATION_ID,
+        organisationId: 'org-001',
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [{ ...EXISTING_SITE, interimSite: null }]
+        }
+      })
+      vi.spyOn(accreditationApiService, 'patchOverseasSites')
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue(
+        {}
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: { ...postHeaders, cookie: sessionCookie },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.patchOverseasSites).not.toHaveBeenCalled()
+      expect(accreditationApiService.createInterimSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        555,
+        expect.objectContaining({ siteName: 'Interim Depot' })
+      )
+    })
   })
 })

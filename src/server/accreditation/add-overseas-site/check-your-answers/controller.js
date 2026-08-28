@@ -8,7 +8,10 @@ import {
   setAddOrsSession,
   clearAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
-import { setAddInterimSiteSession } from '../../../common/helpers/addInterimSiteSession.js'
+import {
+  resetAddInterimSiteSession,
+  setAddInterimSiteSession
+} from '../../../common/helpers/addInterimSiteSession.js'
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
@@ -332,6 +335,7 @@ export const addOrsCyaPostController = {
     clearAddOrsSession(request)
 
     if (action === ADD_INTERIM_SITE_ACTION) {
+      resetAddInterimSiteSession(request)
       setAddInterimSiteSession(request, { linkedSiteId: savedSite?.siteId })
       return h.redirect(addInterimSiteCountryUrl(applicationId))
     }

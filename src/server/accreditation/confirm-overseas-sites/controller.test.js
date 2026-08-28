@@ -216,7 +216,7 @@ describe('#confirmOverseasSitesController', () => {
       expect(result).toContain('data-testid="interim-site-row-900001"')
       expect(result).toContain('data-testid="interim-site-name-900001"')
       expect(result).toContain('Interim Depot')
-      expect(result).toContain('data-testid="change-interim-site-900001"')
+      expect(result).not.toContain('data-testid="change-interim-site-900001"')
     })
 
     test('does not render an interim-site row when there is none', async () => {

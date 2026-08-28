@@ -54,13 +54,6 @@
               <div class="govuk-summary-list__row" data-testid="interim-site-row-{{ site.siteId }}">
                 <dt class="govuk-summary-list__key">{{ t('pages.confirmOverseasSites.interimSite.label') }}</dt>
                 <dd class="govuk-summary-list__value" data-testid="interim-site-name-{{ site.siteId }}">{{ site.interimSite.siteName }}</dd>
-                {% if not readOnly %}
-                  <dd class="govuk-summary-list__actions">
-                    <a class="govuk-link" href="{{ backLink }}" data-testid="change-interim-site-{{ site.siteId }}">
-                      {{ t('pages.confirmOverseasSites.changeLink') }}<span class="govuk-visually-hidden"> {{ site.interimSite.siteName }}</span>
-                    </a>
-                  </dd>
-                {% endif %}
               </div>
             {% endif %}
           {% endfor %}
