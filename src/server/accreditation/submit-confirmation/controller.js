@@ -4,7 +4,8 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import {
   resolveNation,
   buildPaymentDetails,
-  buildPaymentReference
+  buildPaymentReference,
+  resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
@@ -36,6 +37,7 @@ export const submitConfirmationGetController = {
     let paymentDetails = null
     let paymentReference = accreditationReference
     let returnHomeUrl = FALLBACK_HOME_HREF
+    let regulatorContact = null
     try {
       const application = await accreditationApiService.getApplication(
         organisationId,
@@ -49,6 +51,7 @@ export const submitConfirmationGetController = {
         application.organisationId,
         application.isExporter
       )
+      regulatorContact = resolveRegulatorContact(nation)
       returnHomeUrl = landingUrl(application)
     } catch (err) {
       request.server.logger.error(
@@ -68,6 +71,7 @@ export const submitConfirmationGetController = {
       applicationId,
       paymentDetails,
       paymentReference,
+      regulatorContact,
       returnHomeUrl
     })
   }

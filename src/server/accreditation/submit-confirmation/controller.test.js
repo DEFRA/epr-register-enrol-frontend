@@ -295,6 +295,78 @@ describe('#submitConfirmationController', () => {
       })
     })
 
+    describe('contact your regulator section (RA-426)', () => {
+      test.each([
+        [
+          'England',
+          'Environment Agency',
+          'packagingnotifications@environment-agency.gov.uk'
+        ],
+        [
+          'Scotland',
+          'Scottish Environment Protection Agency',
+          'producer.responsibility@sepa.org.uk'
+        ],
+        [
+          'Wales',
+          'Natural Resources Wales',
+          'packaging@naturalresourceswales.gov.uk'
+        ],
+        [
+          'NorthernIreland',
+          'Northern Ireland Environment Agency',
+          'repandexp@daera-ni.gov.uk'
+        ]
+      ])(
+        'shows the %s regulator name and email between the payment reference and the return home link',
+        async (nation, regulatorName, regulatorEmail) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({ nation })
+          )
+          const cookie = await getSessionCookieWithReference()
+
+          const { result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+            headers: { ...operatorHeaders, Cookie: cookie }
+          })
+
+          expect(result).toContain('data-testid="contact-regulator-heading"')
+          expect(result).toContain('data-testid="contact-regulator-details"')
+          expect(result).toContain(regulatorName)
+          expect(result).toContain(regulatorEmail)
+
+          const referenceIndex = result.indexOf(
+            'data-testid="bank-payment-reference"'
+          )
+          const contactIndex = result.indexOf(
+            'data-testid="contact-regulator-heading"'
+          )
+          const returnHomeIndex = result.indexOf(
+            'data-testid="return-home-link"'
+          )
+          expect(referenceIndex).toBeLessThan(contactIndex)
+          expect(contactIndex).toBeLessThan(returnHomeIndex)
+        }
+      )
+
+      test('omits the section when payment details cannot be calculated', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({ prns: { plannedTonnageBand: null } })
+        )
+        const cookie = await getSessionCookieWithReference()
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+          headers: { ...operatorHeaders, Cookie: cookie }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).not.toContain('data-testid="contact-regulator-heading"')
+      })
+    })
+
     test('exporter (no siteAddress) resolves Scotland from companyRegisterAddressPostcode', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
