@@ -34,6 +34,17 @@
         t: t
       }) }}
 
+      {% if regulatorContact %}
+      <h3 class="govuk-heading-s" data-testid="contact-regulator-heading">
+        {{ t('pages.viewPaymentDetails.contactYourRegulator') }}
+      </h3>
+      <p data-testid="contact-regulator-details">
+        {{ regulatorContact.name }}
+        <br/>
+        Email: {{ regulatorContact.email }}
+      </p>
+      {% endif %}
+
       <p class="govuk-body">
         <a href="{{ returnHomeUrl }}" class="govuk-link" data-testid="return-home-link">{{ returnHome }}</a>
       </p>
