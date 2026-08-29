@@ -15,7 +15,7 @@ export function queryDeclarationUrl(applicationId) {
 // specific application — built from the application record itself rather
 // than session, since a query-response journey can outlive the session
 // values set when the landing page was first visited (RA-339, see also
-// fix-01-oj-resubmit-duplicate-document.md).
+// the Registration & Accreditation service resubmit duplicate-document fix notes).
 //
 // There is a single route for both reprocessor and exporter journeys —
 // isExporter is a property of the application record, not the URL (RA-374).

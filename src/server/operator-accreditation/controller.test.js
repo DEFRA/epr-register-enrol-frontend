@@ -38,7 +38,7 @@ const makeApp = (overrides = {}) => ({
 })
 
 // RA-415: resolveLandingApplication issues a second GET (getApplication) to
-// refresh the picked application with live CM fields (e.g. dueDate) after
+// refresh the picked application with live Case Management service fields (e.g. dueDate) after
 // listApplications. Both calls go through apiClient.get, so route by URL
 // shape: a request whose last path segment is one of the given apps'
 // applicationId is the single-application fetch, anything else is the list.
@@ -362,7 +362,7 @@ describe('#buildLandingViewModel', () => {
     expect(vm.pageHeading).toBe('reapplyHeading')
   })
 
-  test('dueDate is sourced from application.dueDate (CM SLA due date)', () => {
+  test('dueDate is sourced from application.dueDate (Case Management service SLA due date)', () => {
     const vm = buildLandingViewModel(
       makeApp({ dueDate: '2026-09-30T00:00:00.000Z' }),
       'Org Name',
@@ -373,7 +373,7 @@ describe('#buildLandingViewModel', () => {
     expect(vm.dueDate).toBe('2026-09-30T00:00:00.000Z')
   })
 
-  test('dueDate is null when the application has no linked CM work item', () => {
+  test('dueDate is null when the application has no linked Case Management service work item', () => {
     const vm = buildLandingViewModel(makeApp(), 'Org Name', 'siteAddr', 2027, t)
     expect(vm.dueDate).toBeNull()
   })
@@ -386,7 +386,7 @@ describe('#buildLandingViewModel', () => {
     ['Rejected', true],
     ['Withdrawn', true]
   ])(
-    'isDueDateComplete for status %s is %s (RA-423: due date shows COMPLETED once CM is terminal)',
+    'isDueDateComplete for status %s is %s (RA-423: due date shows COMPLETED once Case Management service is terminal)',
     (applicationStatus, expected) => {
       const vm = buildLandingViewModel(
         makeApp({ applicationStatus }),
@@ -808,7 +808,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('/accreditation/task-list/app-id-001')
   })
 
-  test('renders a fallback due date when the application has no linked CM work item', async () => {
+  test('renders a fallback due date when the application has no linked Case Management service work item', async () => {
     mockAccreditationGet([
       makeApp({ applicationStatus: 'Started', dueDate: null })
     ])
@@ -823,7 +823,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Not yet available')
   })
 
-  // RA-423: once CM has reached a terminal state, the due-date cell shows
+  // RA-423: once the Case Management service has reached a terminal state, the due-date cell shows
   // COMPLETED ahead of both the formatted-date and "Not yet available"
   // fallbacks — whether or not a dueDate happens to be set.
   test('renders COMPLETED for the due date once the application status is terminal, even with a dueDate set', async () => {
@@ -845,7 +845,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).not.toContain('30th September 2026')
   })
 
-  test('renders COMPLETED for the due date once the application status is terminal, even with no linked CM work item', async () => {
+  test('renders COMPLETED for the due date once the application status is terminal, even with no linked Case Management service work item', async () => {
     mockAccreditationGet([
       makeApp({ applicationStatus: 'Withdrawn', dueDate: null })
     ])
@@ -990,7 +990,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('IN PROGRESS')
   })
 
-  // RA-423: OJ's own label for the Rejected status must read REFUSED (CM
+  // RA-423: the Registration & Accreditation service's own label for the Rejected status must read REFUSED (the Case Management service
   // already calls this outcome "Refused") — the applicationStatus value
   // itself is unchanged, only this display label.
   test('renders status tag with REFUSED (not REJECTED) for Rejected', async () => {

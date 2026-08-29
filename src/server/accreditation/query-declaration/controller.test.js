@@ -286,7 +286,7 @@ describe('#queryDeclarationController', () => {
     })
 
     test('redirect never contains "undefined", even with no session set for this journey', async () => {
-      // Regression guard for the OJ resubmit duplicate-document bug: the
+      // Regression guard for the Registration & Accreditation service resubmit duplicate-document bug: the
       // post-resubmit redirect must be built from the fetched application,
       // not request.yar, since a query-response journey (e.g. via an
       // emailed link on another device) can outlive the session values
