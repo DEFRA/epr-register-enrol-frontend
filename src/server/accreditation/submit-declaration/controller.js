@@ -160,7 +160,7 @@ export const submitDeclarationPostController = {
     const nation = resolveNation(application)
     const paymentReference = buildPaymentReference(
       nation,
-      application.organisationId,
+      application.organisationNumber,
       application.isExporter
     )
 

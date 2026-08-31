@@ -76,7 +76,7 @@ export const viewPaymentDetailsGetController = {
       submitterEmail: submittedBy.email ?? '',
       paymentReference: buildPaymentReference(
         nation,
-        application.organisationId,
+        application.organisationNumber,
         application.isExporter
       ),
       regulatorName,

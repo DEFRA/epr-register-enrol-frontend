@@ -21,6 +21,7 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    orgId: 500500,
     organisationName: ORGANISATION_NAME,
     applicationStatus: 'InProgress',
     ...overrides
@@ -291,7 +292,7 @@ describe('#submitDeclarationController', () => {
           email: 'operator@test.example',
           // RA-503: the operator's real bank payment reference, computed from the fetched
           // application's organisationId/nation/isExporter (buildPaymentReference).
-          paymentReference: 'PR/PK/REP/test-operator-id'
+          paymentReference: 'PR/PK/REP/500500'
         },
         { timeout: 20000 }
       )
@@ -320,7 +321,7 @@ describe('#submitDeclarationController', () => {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
           email: 'operator@test.example',
-          paymentReference: 'PR/PK/REP/test-operator-id'
+          paymentReference: 'PR/PK/REP/500500'
         },
         { timeout: 20000 }
       )

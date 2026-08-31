@@ -124,7 +124,11 @@ function normalizeApplication(item) {
     // legacy/stub data: item.accreditationReference holds it instead.
     accreditationReference:
       item.applicationReference ?? item.accreditationReference ?? null,
-    organisationId: item.orgId ?? item.organisationId,
+    organisationId: item.organisationId,
+    // RA-503: item.orgId is the operator/regulator-safe numeric organisation
+    // number - distinct from organisationId (ReEx's internal ObjectId) and
+    // never safe to build URLs from. Used for the bank payment reference.
+    organisationNumber: item.orgId ?? null,
     organisationName: item.companyName ?? item.organisationName ?? '',
     materialType: item.material
       ? item.material.charAt(0).toUpperCase() + item.material.slice(1)

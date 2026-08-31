@@ -125,11 +125,12 @@ describe('accreditationApiService', () => {
       expect(result.accreditationReference).toBeNull()
     })
 
-    // RA-503: operatorOrganisationId (mapped here from the backend's raw
-    // organisationId) is ReEx's internal ObjectId, never safe to build a bank
-    // payment reference (buildPaymentReference) from. orgId is the
-    // operator/regulator-safe numeric organisation number.
-    test('organisationId comes from orgId, not the raw ObjectId-shaped organisationId', async () => {
+    // RA-519: organisationId is ReEx's internal ObjectId, used to build
+    // resubmit/redirect URLs (landingUrl) - never safe to substitute the
+    // numeric orgId for it. orgId is the operator/regulator-safe numeric
+    // organisation number, surfaced separately as organisationNumber for the
+    // bank payment reference.
+    test('organisationId comes from the raw organisationId, not orgId', async () => {
       apiClient.get.mockResolvedValue({
         orgId: 500500,
         organisationId: '6a74a6a12b7c39b0cc15ca55'
@@ -138,10 +139,33 @@ describe('accreditationApiService', () => {
         ORG_ID,
         APP_ID
       )
-      expect(result.organisationId).toBe(500500)
+      expect(result.organisationId).toBe('6a74a6a12b7c39b0cc15ca55')
     })
 
-    test('organisationId falls back to the raw organisationId when orgId is absent', async () => {
+    test('organisationId is undefined when the backend omits it', async () => {
+      apiClient.get.mockResolvedValue({
+        orgId: 500500
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.organisationId).toBeUndefined()
+    })
+
+    test('organisationNumber comes from orgId', async () => {
+      apiClient.get.mockResolvedValue({
+        orgId: 500500,
+        organisationId: '6a74a6a12b7c39b0cc15ca55'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.organisationNumber).toBe(500500)
+    })
+
+    test('organisationNumber is null when orgId is absent', async () => {
       apiClient.get.mockResolvedValue({
         organisationId: '6a74a6a12b7c39b0cc15ca55'
       })
@@ -149,7 +173,7 @@ describe('accreditationApiService', () => {
         ORG_ID,
         APP_ID
       )
-      expect(result.organisationId).toBe('6a74a6a12b7c39b0cc15ca55')
+      expect(result.organisationNumber).toBeNull()
     })
 
     test('sitePostcode is extracted from an object-shaped siteAddress', async () => {
