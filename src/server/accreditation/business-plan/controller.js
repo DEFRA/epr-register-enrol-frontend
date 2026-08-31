@@ -185,6 +185,15 @@ function payloadFromApplication(application) {
   return payload
 }
 
+// Shared by both controllers below (SonarCloud duplication): the fetch-failure page is
+// identical apart from which field values (if any) survive from a failed POST payload.
+function renderFetchErrorPage(h, t, applicationId, fieldPayload = {}) {
+  return renderPage(h, {
+    ...buildViewData(t, applicationId, fieldPayload, {}),
+    error: t('pages.businessPlan.validation.fetchError')
+  }).code(500)
+}
+
 export const businessPlanGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -197,11 +206,7 @@ export const businessPlanGetController = {
       request,
       organisationId,
       applicationId,
-      renderErrorResponse: () =>
-        renderPage(h, {
-          ...buildViewData(t, applicationId, {}, {}),
-          error: t('pages.businessPlan.validation.fetchError')
-        }).code(500)
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
     })
     if (errorResponse) {
       return errorResponse
@@ -298,10 +303,7 @@ export const businessPlanPostController = {
       organisationId,
       applicationId,
       renderErrorResponse: () =>
-        renderPage(h, {
-          ...buildViewData(t, applicationId, fieldPayload, {}),
-          error: t('pages.businessPlan.validation.fetchError')
-        }).code(500)
+        renderFetchErrorPage(h, t, applicationId, fieldPayload)
     })
     if (errorResponse) {
       return errorResponse

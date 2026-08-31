@@ -1,5 +1,6 @@
 import { accreditationApiService } from './accreditationApiService.js'
 import { logStructuredError } from './logging/log-structured-error.js'
+import { statusCodes } from '../constants/status-codes.js'
 
 /**
  * Fetches the accreditation application, or logs the failure and builds an
@@ -54,6 +55,8 @@ export async function fetchApplicationOrRenderSimpleErrorPage({
     organisationId,
     applicationId,
     renderErrorResponse: () =>
-      h.view(template, { pageTitle, error, backLink }).code(500)
+      h
+        .view(template, { pageTitle, error, backLink })
+        .code(statusCodes.internalServerError)
   })
 }

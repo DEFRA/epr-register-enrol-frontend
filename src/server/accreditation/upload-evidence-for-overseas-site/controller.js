@@ -105,6 +105,15 @@ function buildViewData(
   }
 }
 
+// Shared by both controllers below (SonarCloud duplication): the fetch-failure page is
+// identical whether the request was a GET or a POST.
+function renderFetchErrorPage(h, t, applicationId) {
+  return renderPage(
+    h,
+    buildViewData(t, applicationId, [], t('pages.uploadEvidenceList.loadError'))
+  ).code(500)
+}
+
 export const uploadEvidenceListGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -117,16 +126,7 @@ export const uploadEvidenceListGetController = {
       request,
       organisationId,
       applicationId,
-      renderErrorResponse: () =>
-        renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            [],
-            t('pages.uploadEvidenceList.loadError')
-          )
-        ).code(500)
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
     })
     if (errorResponse) {
       return errorResponse
@@ -218,16 +218,7 @@ export const uploadEvidenceListPostController = {
       request,
       organisationId,
       applicationId,
-      renderErrorResponse: () =>
-        renderPage(
-          h,
-          buildViewData(
-            t,
-            applicationId,
-            [],
-            t('pages.uploadEvidenceList.loadError')
-          )
-        ).code(500)
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
     })
     if (errorResponse) {
       return errorResponse
