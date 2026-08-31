@@ -399,9 +399,10 @@ describe('#submitDeclarationController', () => {
       })
 
       expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'response: {"message":"upstream case management failure"}'
-        )
+        expect.objectContaining({
+          responseBody: '{"message":"upstream case management failure"}'
+        }),
+        'Error submitting application'
       )
     })
   })

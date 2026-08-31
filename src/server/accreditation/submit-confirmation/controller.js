@@ -55,7 +55,8 @@ export const submitConfirmationGetController = {
       returnHomeUrl = landingUrl(application)
     } catch (err) {
       request.server.logger.error(
-        `Error fetching payment details for ${applicationId} on confirmation: ${err.message}`
+        { applicationId, err },
+        'Error fetching payment details'
       )
     }
 

@@ -49,7 +49,8 @@ export const checkSiteConditionsGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(
         h,

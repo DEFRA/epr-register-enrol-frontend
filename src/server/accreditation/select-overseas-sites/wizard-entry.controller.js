@@ -61,7 +61,8 @@ async function loadSiteForWizardEntry(request, h) {
     )
   } catch (err) {
     request.server.logger.error(
-      `Error fetching application ${applicationId}: ${err.message}`
+      { applicationId, err },
+      'Error fetching application'
     )
     return { redirect: h.redirect(selectOverseasSitesUrl(applicationId)) }
   }

@@ -141,7 +141,8 @@ export const businessPlanDetailGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...buildViewData(t, applicationId, {}, {}),
@@ -185,7 +186,8 @@ function handleBusinessPlanDetailSaveError({
   application
 }) {
   request.server.logger.error(
-    `Error saving business plan detail for ${applicationId}: ${err.message}`
+    { applicationId, err },
+    'Error saving business plan detail'
   )
   // RA-481: a 409 means the application locked between the guard check
   // above and this write landing — send the operator back to this page

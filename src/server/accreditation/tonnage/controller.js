@@ -73,7 +73,8 @@ export const tonnageGetController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
+        { applicationId, err: error },
+        'Error fetching application'
       )
       return renderForm(h, {
         pageTitle: t('pages.tonnage.title'),
@@ -139,7 +140,8 @@ function handleTonnageSaveError({
   plannedTonnageBand
 }) {
   request.server.logger.error(
-    `Error saving tonnage for ${applicationId}: ${error.message}`
+    { applicationId, err: error },
+    'Error saving tonnage'
   )
   // RA-481: a 409 means the application locked between the guard check
   // above and this write landing — send the operator back to the
@@ -189,7 +191,8 @@ export const tonnagePostController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
+        { applicationId, err: error },
+        'Error fetching application'
       )
       return renderForm(h, {
         pageTitle: t('pages.tonnage.title'),

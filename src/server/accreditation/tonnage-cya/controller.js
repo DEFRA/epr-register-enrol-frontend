@@ -65,7 +65,8 @@ export const tonnageCyaGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         pageTitle: t('pages.tonnageCya.title'),
@@ -126,7 +127,8 @@ export const tonnageCyaPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         pageTitle: t('pages.tonnageCya.title'),
@@ -164,7 +166,8 @@ export const tonnageCyaPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error confirming tonnage section for ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error confirming tonnage section'
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to this page

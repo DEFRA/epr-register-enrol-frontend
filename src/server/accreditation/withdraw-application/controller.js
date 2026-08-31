@@ -71,7 +71,8 @@ export const withdrawApplicationGetController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
+        { applicationId, err: error },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...baseViewData(t, applicationId),
@@ -104,7 +105,8 @@ export const withdrawApplicationPostController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
+        { applicationId, err: error },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...baseViewData(t, applicationId, confirmWithdraw, reason),
@@ -137,7 +139,8 @@ export const withdrawApplicationPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error withdrawing application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error withdrawing application'
       )
       if (err.status === 409) {
         return renderPage(h, {

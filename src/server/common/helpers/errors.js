@@ -25,7 +25,7 @@ export function catchAll(request, h) {
   const statusCode = response.output.statusCode
 
   if (statusCode >= statusCodes.internalServerError) {
-    request.logger.error(response?.stack)
+    request.logger.error({ err: response }, 'Unhandled request error')
   }
 
   // A 503 means a dependency (e.g. the ReEx organisation lookup) is temporarily

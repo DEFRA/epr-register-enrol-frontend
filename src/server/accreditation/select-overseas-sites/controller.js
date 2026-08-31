@@ -173,9 +173,7 @@ async function removeOrDeleteSite(
       { sites: updatedSites }
     )
   } catch (err) {
-    logger.error(
-      `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
-    )
+    logger.error({ siteId, applicationId, err }, 'Error updating overseas site')
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
     // the same page so it re-fetches and renders the section read-only.
@@ -212,7 +210,8 @@ async function removeInterimSite(
     )
   } catch (err) {
     logger.error(
-      `Error removing interim site from overseas site ${siteId} on ${applicationId}: ${err.message}`
+      { siteId, applicationId, err },
+      'Error removing interim site from overseas site'
     )
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
@@ -239,9 +238,7 @@ async function saveOverseasSitesForLater(
       { sectionStatus: 'InProgress' }
     )
   } catch (err) {
-    logger.error(
-      `Error saving overseas sites for ${applicationId}: ${err.message}`
-    )
+    logger.error({ applicationId, err }, 'Error saving overseas sites')
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
     // the same page so it re-fetches and renders the section read-only.
@@ -269,7 +266,8 @@ async function revertSiteAccreditation(
     )
   } catch (err) {
     logger.error(
-      `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
+      { siteId, applicationId, err },
+      'Error reverting overseas site'
     )
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
@@ -298,7 +296,8 @@ export const selectOverseasSitesGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(
         h,
@@ -381,7 +380,8 @@ export const selectOverseasSitesPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(
         h,

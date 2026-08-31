@@ -124,7 +124,7 @@ export async function resolveLandingApplication({
     applications =
       await accreditationApiService.listApplications(organisationId)
   } catch (error) {
-    logger.error(`Error fetching accreditation applications: ${error.message}`)
+    logger.error({ err: error }, 'Error fetching accreditation applications')
     return { application: null, failed: true }
   }
 
@@ -151,7 +151,8 @@ export async function resolveLandingApplication({
       }
     } catch (error) {
       logger.error(
-        `Error refreshing accreditation application id=${application.applicationId}: ${error.message}`
+        { applicationId: application.applicationId, err: error },
+        'Error refreshing accreditation application'
       )
       return { application, failed: false }
     }
@@ -170,7 +171,17 @@ export async function resolveLandingApplication({
     }
   } catch (error) {
     logger.error(
-      `Error seeding ${descriptor}accreditation application for org=${organisationId} registration=${registrationId} material=${materialType} year=${yearInt}: ${error.message} status=${error.status} response=${error.response}`
+      {
+        descriptor,
+        organisationId,
+        registrationId,
+        materialType,
+        yearInt,
+        status: error.status,
+        responseBody: error.response,
+        err: error
+      },
+      'Error seeding accreditation application'
     )
     return { application: null, failed: true }
   }

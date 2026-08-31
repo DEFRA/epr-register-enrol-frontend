@@ -251,7 +251,8 @@ export const addInterimSiteCyaPostController = {
       }
     } catch (err) {
       request.server.logger.error(
-        `Interim site CYA createInterimSite error: ${err.message}`
+        { err },
+        'Interim site CYA createInterimSite error'
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the

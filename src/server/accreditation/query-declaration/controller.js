@@ -98,7 +98,8 @@ export const queryDeclarationGetController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
+        { applicationId, err: error },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...baseViewData(t, applicationId),
@@ -141,7 +142,8 @@ export const queryDeclarationPostController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
+        { applicationId, err: error },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...baseViewData(t, applicationId, fullName, email, role),
@@ -180,7 +182,8 @@ export const queryDeclarationPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error resubmitting application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error resubmitting application'
       )
       if (err.status === 409) {
         return renderPage(h, {

@@ -208,7 +208,8 @@ export const taskListGetController = {
       )
     } catch (error) {
       request.server.logger.error(
-        `Error fetching accreditation application ${applicationId}: ${error.message}`
+        { applicationId, err: error },
+        'Error fetching accreditation application'
       )
       return h
         .view('accreditation/task-list/index', {

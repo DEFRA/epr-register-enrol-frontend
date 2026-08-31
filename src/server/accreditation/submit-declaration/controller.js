@@ -76,7 +76,8 @@ export const submitDeclarationGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...buildViewData(t, applicationId, ''),
@@ -128,7 +129,8 @@ export const submitDeclarationPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...buildViewData(t, applicationId, '', fullName, jobTitle),
@@ -182,7 +184,12 @@ export const submitDeclarationPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error submitting application ${applicationId}: ${err.message}${err.response ? ` - response: ${err.response}` : ''}`
+        {
+          applicationId,
+          err,
+          ...(err.response ? { responseBody: err.response } : {})
+        },
+        'Error submitting application'
       )
       if (!err.status || err.status >= 500) {
         return h

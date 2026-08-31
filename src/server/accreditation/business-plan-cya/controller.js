@@ -104,7 +104,8 @@ export const businessPlanCyaGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...headingViewData(t, application),
@@ -174,7 +175,8 @@ async function confirmBusinessPlan(
     return null
   } catch (err) {
     request.server.logger.error(
-      `Error confirming business plan for ${applicationId}: ${err.message}`
+      { applicationId, err },
+      'Error confirming business plan'
     )
     // RA-481: a 409 means the application locked between the guard check
     // above and this write landing — send the operator back to this page
@@ -219,7 +221,8 @@ export const businessPlanCyaPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         ...headingViewData(t, application),

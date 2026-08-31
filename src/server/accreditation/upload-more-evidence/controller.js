@@ -58,7 +58,8 @@ export const uploadMoreEvidenceGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(
         h,
@@ -115,7 +116,8 @@ async function submitNoMoreEvidenceAnswer(
     return null
   } catch (err) {
     request.server.logger.error(
-      `Error patching BES evidence for site ${siteId} on ${applicationId}: ${err.message}`
+      { siteId, applicationId, err },
+      'Error patching BES evidence for site'
     )
     // RA-481: a 409 means the application locked between the guard check
     // above and this write landing — send the operator back to this page
@@ -155,7 +157,8 @@ export const uploadMoreEvidencePostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(
         h,

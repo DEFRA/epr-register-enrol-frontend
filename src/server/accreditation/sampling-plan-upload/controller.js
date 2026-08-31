@@ -137,7 +137,8 @@ export const samplingPlanUploadGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         pageTitle: t('pages.samplingPlanUpload.title'),
@@ -214,7 +215,8 @@ export const samplingPlanUploadPostController = {
       application = await apiClient.get(appUrl(organisationId, applicationId))
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderPage(h, {
         pageTitle: t('pages.samplingPlanUpload.title'),
@@ -300,7 +302,8 @@ export const samplingPlanUploadPostController = {
       })
     } catch (err) {
       request.server.logger.error(
-        `Error initiating upload for ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error initiating upload'
       )
       return renderPage(
         h,
@@ -318,9 +321,7 @@ export const samplingPlanUploadPostController = {
         contentType
       })
     } catch (err) {
-      request.server.logger.error(
-        `Error proxying file for ${applicationId}: ${err.message}`
-      )
+      request.server.logger.error({ applicationId, err }, 'Error proxying file')
       return renderPage(
         h,
         baseView({
@@ -367,7 +368,8 @@ export const samplingPlanResultsGetController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderResultsPage(h, {
         pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
@@ -435,7 +437,8 @@ async function deleteResultsFile({
       )
     } catch (err) {
       request.server.logger.error(
-        `Error deleting file ${fileId} for ${applicationId}: ${err.message}`
+        { fileId, applicationId, err },
+        'Error deleting file'
       )
       return renderResultsPage(
         h,
@@ -466,7 +469,8 @@ async function saveSamplingPlanForLater({
     )
   } catch (err) {
     request.server.logger.error(
-      `Error saving sampling plan for ${applicationId}: ${err.message}`
+      { applicationId, err },
+      'Error saving sampling plan'
     )
     return renderResultsPage(
       h,
@@ -500,7 +504,8 @@ async function completeSamplingPlan({
     )
   } catch (err) {
     request.server.logger.error(
-      `Error completing sampling plan for ${applicationId}: ${err.message}`
+      { applicationId, err },
+      'Error completing sampling plan'
     )
     return renderResultsPage(
       h,
@@ -528,7 +533,8 @@ export const samplingPlanResultsPostController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error fetching application'
       )
       return renderResultsPage(h, {
         pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
@@ -643,7 +649,8 @@ export const samplingPlanCdpStatusController = {
       )
     } catch (err) {
       request.server.logger.error(
-        `Error saving uploaded file for ${applicationId}: ${err.message}`
+        { applicationId, err },
+        'Error saving uploaded file'
       )
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
     }
