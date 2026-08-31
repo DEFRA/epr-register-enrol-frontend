@@ -31,7 +31,7 @@ export const viewPaymentDetailsGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return h
         .view('accreditation/view-payment-details/index', {
@@ -51,7 +51,7 @@ export const viewPaymentDetailsGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error calculating payment details'
+        `Error calculating payment details ${applicationId}`
       )
       return h
         .view('accreditation/view-payment-details/index', {

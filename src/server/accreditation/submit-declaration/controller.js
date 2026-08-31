@@ -77,7 +77,7 @@ export const submitDeclarationGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
         ...buildViewData(t, applicationId, ''),
@@ -130,7 +130,7 @@ export const submitDeclarationPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
         ...buildViewData(t, applicationId, '', fullName, jobTitle),

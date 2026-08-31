@@ -319,7 +319,7 @@ export const addOrsCyaPostController = {
     } catch (err) {
       request.server.logger.error(
         { apiMethod: SITE_SAVE_MODES[mode].apiMethod, err },
-        'CYA'
+        `CYA site save error (${SITE_SAVE_MODES[mode].apiMethod}) for application ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the

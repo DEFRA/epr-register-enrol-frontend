@@ -7,8 +7,7 @@ async function startServer() {
 
   server.logger.info('Server started successfully')
   server.logger.info(
-    { port: config.get('port') },
-    'Access your frontend on http://localhost'
+    `Access your frontend on http://localhost:${config.get('port')}`
   )
 
   return server

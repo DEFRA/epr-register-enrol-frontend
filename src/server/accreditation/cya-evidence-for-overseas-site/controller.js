@@ -67,7 +67,7 @@ export const cyaEvidenceForSiteGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(
         h,

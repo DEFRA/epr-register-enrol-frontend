@@ -56,7 +56,7 @@ export const submitConfirmationGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching payment details'
+        `Error fetching payment details ${applicationId}`
       )
     }
 

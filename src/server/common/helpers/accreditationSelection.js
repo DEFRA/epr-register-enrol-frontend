@@ -152,7 +152,7 @@ export async function resolveLandingApplication({
     } catch (error) {
       logger.error(
         { applicationId: application.applicationId, err: error },
-        'Error refreshing accreditation application'
+        `Error refreshing accreditation application ${application.applicationId}`
       )
       return { application, failed: false }
     }
@@ -181,7 +181,7 @@ export async function resolveLandingApplication({
         responseBody: error.response,
         err: error
       },
-      'Error seeding accreditation application'
+      `Error seeding ${descriptor}accreditation application for org ${organisationId}, registration ${registrationId}, material ${materialType}, year ${yearInt} (status ${error.status})`
     )
     return { application: null, failed: true }
   }

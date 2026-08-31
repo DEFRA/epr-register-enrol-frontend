@@ -120,7 +120,7 @@ export const uploadEvidenceListGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(
         h,
@@ -189,7 +189,7 @@ export const uploadEvidenceListPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(
         h,
@@ -246,7 +246,7 @@ export const uploadEvidenceListPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error completing BES evidence section'
+        `Error completing BES evidence section ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the

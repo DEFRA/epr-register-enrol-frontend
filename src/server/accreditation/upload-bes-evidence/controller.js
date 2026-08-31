@@ -160,7 +160,7 @@ export const uploadBesEvidenceGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(
         h,
@@ -225,7 +225,7 @@ export const uploadBesEvidencePostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(
         h,
@@ -336,7 +336,7 @@ export const uploadBesEvidencePostController = {
     } catch (err) {
       request.server.logger.error(
         { siteId, applicationId, err },
-        'Error initiating BES evidence upload for site'
+        `Error initiating BES evidence upload for site ${siteId}, application ${applicationId}`
       )
       return renderPage(
         h,
@@ -356,7 +356,7 @@ export const uploadBesEvidencePostController = {
     } catch (err) {
       request.server.logger.error(
         { siteId, applicationId, err },
-        'Error proxying BES evidence file for site'
+        `Error proxying BES evidence file for site ${siteId}, application ${applicationId}`
       )
       return renderPage(
         h,
@@ -420,7 +420,7 @@ export const besEvidenceCdpStatusController = {
     } catch (err) {
       request.server.logger.error(
         { siteId, applicationId, err },
-        'Error saving BES evidence file for site'
+        `Error saving BES evidence file for site ${siteId}, application ${applicationId}`
       )
     }
 

@@ -122,7 +122,7 @@ export const queryTaskListGetController = {
     } catch (error) {
       request.server.logger.error(
         { applicationId, err: error },
-        'Error fetching accreditation application'
+        `Error fetching accreditation application ${applicationId}`
       )
       return h
         .view('accreditation/query-task-list/index', {

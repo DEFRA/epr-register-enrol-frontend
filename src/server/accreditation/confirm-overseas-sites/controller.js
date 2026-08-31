@@ -56,7 +56,7 @@ export const confirmOverseasSitesGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(
         h,
@@ -112,7 +112,7 @@ export const confirmOverseasSitesPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(
         h,
@@ -149,7 +149,7 @@ export const confirmOverseasSitesPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error confirming overseas sites'
+        `Error confirming overseas sites ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to this page

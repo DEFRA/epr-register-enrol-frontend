@@ -138,7 +138,7 @@ export const samplingPlanUploadGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
         pageTitle: t('pages.samplingPlanUpload.title'),
@@ -216,7 +216,7 @@ export const samplingPlanUploadPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
         pageTitle: t('pages.samplingPlanUpload.title'),
@@ -303,7 +303,7 @@ export const samplingPlanUploadPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error initiating upload'
+        `Error initiating upload ${applicationId}`
       )
       return renderPage(
         h,
@@ -321,7 +321,10 @@ export const samplingPlanUploadPostController = {
         contentType
       })
     } catch (err) {
-      request.server.logger.error({ applicationId, err }, 'Error proxying file')
+      request.server.logger.error(
+        { applicationId, err },
+        `Error proxying file for application ${applicationId}`
+      )
       return renderPage(
         h,
         baseView({
@@ -369,7 +372,7 @@ export const samplingPlanResultsGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderResultsPage(h, {
         pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
@@ -438,7 +441,7 @@ async function deleteResultsFile({
     } catch (err) {
       request.server.logger.error(
         { fileId, applicationId, err },
-        'Error deleting file'
+        `Error deleting file ${fileId} for application ${applicationId}`
       )
       return renderResultsPage(
         h,
@@ -470,7 +473,7 @@ async function saveSamplingPlanForLater({
   } catch (err) {
     request.server.logger.error(
       { applicationId, err },
-      'Error saving sampling plan'
+      `Error saving sampling plan ${applicationId}`
     )
     return renderResultsPage(
       h,
@@ -505,7 +508,7 @@ async function completeSamplingPlan({
   } catch (err) {
     request.server.logger.error(
       { applicationId, err },
-      'Error completing sampling plan'
+      `Error completing sampling plan ${applicationId}`
     )
     return renderResultsPage(
       h,
@@ -534,7 +537,7 @@ export const samplingPlanResultsPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderResultsPage(h, {
         pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
@@ -650,7 +653,7 @@ export const samplingPlanCdpStatusController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error saving uploaded file'
+        `Error saving uploaded file for application ${applicationId}`
       )
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
     }

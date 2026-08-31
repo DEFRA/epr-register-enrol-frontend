@@ -200,7 +200,7 @@ export const businessPlanGetController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
         ...buildViewData(t, applicationId, {}, {}),
@@ -258,7 +258,7 @@ function handleBusinessPlanSaveError({
 }) {
   request.server.logger.error(
     { applicationId, err },
-    'Error saving business plan'
+    `Error saving business plan ${applicationId}`
   )
   // RA-481: the guard above already checked read/write access before this
   // patch was sent, but a 409 here means the application locked (e.g. was
@@ -301,7 +301,7 @@ export const businessPlanPostController = {
     } catch (err) {
       request.server.logger.error(
         { applicationId, err },
-        'Error fetching application'
+        `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
         ...buildViewData(t, applicationId, fieldPayload, {}),
