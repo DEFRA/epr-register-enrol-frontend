@@ -71,6 +71,22 @@ function buildViewData(application, t, applicationId, opts = {}) {
   }
 }
 
+// Shared by both controllers below (SonarCloud duplication): the fetch-failure page is
+// identical whether the request was a GET or a POST.
+function renderFetchErrorPage(h, t, applicationId) {
+  return renderPage(h, {
+    pageTitle: t('pages.tonnageAuthority.title'),
+    heading: buildHeading(false, t),
+    authoriserRows: [],
+    backLink: tonnageUrl(applicationId),
+    taskListLink: taskListUrl(applicationId),
+    isExporter: false,
+    intro: t('pages.tonnageAuthority.intro'),
+    selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
+    error: t('pages.tonnageAuthority.validation.fetchError')
+  }).code(500)
+}
+
 export const tonnageAuthorityGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -83,18 +99,7 @@ export const tonnageAuthorityGetController = {
       request,
       organisationId,
       applicationId,
-      renderErrorResponse: () =>
-        renderPage(h, {
-          pageTitle: t('pages.tonnageAuthority.title'),
-          heading: buildHeading(false, t),
-          authoriserRows: [],
-          backLink: tonnageUrl(applicationId),
-          taskListLink: taskListUrl(applicationId),
-          isExporter: false,
-          intro: t('pages.tonnageAuthority.intro'),
-          selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
-          error: t('pages.tonnageAuthority.validation.fetchError')
-        }).code(500)
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
     })
     if (errorResponse) {
       return errorResponse
@@ -156,18 +161,7 @@ export const tonnageAuthorityPostController = {
       request,
       organisationId,
       applicationId,
-      renderErrorResponse: () =>
-        renderPage(h, {
-          pageTitle: t('pages.tonnageAuthority.title'),
-          heading: buildHeading(false, t),
-          authoriserRows: [],
-          backLink: tonnageUrl(applicationId),
-          taskListLink: taskListUrl(applicationId),
-          isExporter: false,
-          intro: t('pages.tonnageAuthority.intro'),
-          selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
-          error: t('pages.tonnageAuthority.validation.fetchError')
-        }).code(500)
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
     })
     if (errorResponse) {
       return errorResponse
