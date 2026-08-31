@@ -87,6 +87,18 @@ function withEditUrl(applicationId, sites) {
 
 // Extracted from buildViewData (SonarCloud cognitive complexity): the ?? defaulting for
 // each banner/flash flag was pushing buildViewData itself over the complexity threshold.
+// Extracted from selectOverseasSitesGetController's handler (SonarCloud function-length):
+// reads the four independent post-redirect flash flags this page can show.
+function resolveFlashBanners(yar) {
+  return {
+    successBanner: !!(yar.flash(ORS_SUCCESS_FLASH) ?? []).length,
+    interimSiteSuccessBanner: !!(yar.flash(INTERIM_SITE_SUCCESS_FLASH) ?? [])
+      .length,
+    promoteSuccessBanner: !!(yar.flash(ORS_PROMOTE_SUCCESS_FLASH) ?? []).length,
+    editSuccessBanner: !!(yar.flash(ORS_EDIT_SUCCESS_FLASH) ?? []).length
+  }
+}
+
 function resolveBannerDefaults(banners) {
   return {
     successBanner: banners.successBanner ?? false,
@@ -327,16 +339,12 @@ export const selectOverseasSitesGetController = {
       ).code(500)
     }
 
-    const successBanner = !!(request.yar.flash(ORS_SUCCESS_FLASH) ?? []).length
-    const interimSiteSuccessBanner = !!(
-      request.yar.flash(INTERIM_SITE_SUCCESS_FLASH) ?? []
-    ).length
-    const promoteSuccessBanner = !!(
-      request.yar.flash(ORS_PROMOTE_SUCCESS_FLASH) ?? []
-    ).length
-    const editSuccessBanner = !!(
-      request.yar.flash(ORS_EDIT_SUCCESS_FLASH) ?? []
-    ).length
+    const {
+      successBanner,
+      interimSiteSuccessBanner,
+      promoteSuccessBanner,
+      editSuccessBanner
+    } = resolveFlashBanners(request.yar)
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
       application,
