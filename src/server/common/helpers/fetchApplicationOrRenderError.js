@@ -32,3 +32,28 @@ export async function fetchApplicationOrRenderError({
     return { errorResponse: renderErrorResponse() }
   }
 }
+
+/**
+ * Thin wrapper for pages whose fetch-failure view is nothing but
+ * { pageTitle, error, backLink } on their own template (SonarCloud
+ * duplication: this exact shape was repeated verbatim across several
+ * simple GET pages, e.g. task-list, query-task-list).
+ */
+export async function fetchApplicationOrRenderSimpleErrorPage({
+  request,
+  h,
+  organisationId,
+  applicationId,
+  template,
+  pageTitle,
+  error,
+  backLink
+}) {
+  return fetchApplicationOrRenderError({
+    request,
+    organisationId,
+    applicationId,
+    renderErrorResponse: () =>
+      h.view(template, { pageTitle, error, backLink }).code(500)
+  })
+}

@@ -10,7 +10,7 @@ import {
   LOCKED_STATUSES
 } from '../../common/helpers/accreditationSelection.js'
 import { operatorHomeUrl } from '../../common/helpers/test-pages-access.js'
-import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { fetchApplicationOrRenderSimpleErrorPage } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -200,20 +200,17 @@ export const taskListGetController = {
 
     const { applicationId } = request.params
 
-    const { application, errorResponse } = await fetchApplicationOrRenderError({
-      request,
-      organisationId,
-      applicationId,
-      errorMessage: `Error fetching accreditation application ${applicationId}`,
-      renderErrorResponse: () =>
-        h
-          .view('accreditation/task-list/index', {
-            pageTitle: t('pages.taskList.title'),
-            error: t('pages.taskList.loadError'),
-            backLink: '/operator-accreditation'
-          })
-          .code(500)
-    })
+    const { application, errorResponse } =
+      await fetchApplicationOrRenderSimpleErrorPage({
+        request,
+        h,
+        organisationId,
+        applicationId,
+        template: 'accreditation/task-list/index',
+        pageTitle: t('pages.taskList.title'),
+        error: t('pages.taskList.loadError'),
+        backLink: '/operator-accreditation'
+      })
     if (errorResponse) {
       return errorResponse
     }

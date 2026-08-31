@@ -5,7 +5,7 @@ import {
   queryDeclarationUrl
 } from '../../common/helpers/accreditationUrls.js'
 import { resolveRegulatorQueryNote } from '../../common/helpers/regulatorQuery.js'
-import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { fetchApplicationOrRenderSimpleErrorPage } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -113,20 +113,17 @@ export const queryTaskListGetController = {
     )
     const { applicationId } = request.params
 
-    const { application, errorResponse } = await fetchApplicationOrRenderError({
-      request,
-      organisationId,
-      applicationId,
-      errorMessage: `Error fetching accreditation application ${applicationId}`,
-      renderErrorResponse: () =>
-        h
-          .view('accreditation/query-task-list/index', {
-            pageTitle: t('pages.queryTaskList.title'),
-            error: t('pages.queryTaskList.loadError'),
-            backLink: '/operator-accreditation'
-          })
-          .code(500)
-    })
+    const { application, errorResponse } =
+      await fetchApplicationOrRenderSimpleErrorPage({
+        request,
+        h,
+        organisationId,
+        applicationId,
+        template: 'accreditation/query-task-list/index',
+        pageTitle: t('pages.queryTaskList.title'),
+        error: t('pages.queryTaskList.loadError'),
+        backLink: '/operator-accreditation'
+      })
     if (errorResponse) {
       return errorResponse
     }
