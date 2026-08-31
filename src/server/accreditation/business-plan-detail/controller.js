@@ -13,6 +13,7 @@ import {
 } from '../business-plan/helpers.js'
 import { BUSINESS_PLAN_DETAIL_FIELDS } from '../../common/constants/businessPlanCategories.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -134,23 +135,18 @@ export const businessPlanDetailGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, {}, {}),
-        error: t('pages.businessPlanDetail.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, {}, {}),
+          error: t('pages.businessPlanDetail.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(

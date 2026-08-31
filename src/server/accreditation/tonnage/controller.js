@@ -14,6 +14,7 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
 
@@ -66,26 +67,21 @@ export const tonnageGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (error) {
-      logControllerError(
-        request.server.logger,
-        error,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderForm(h, {
-        pageTitle: t('pages.tonnage.title'),
-        heading: buildHeading(null, false, t),
-        tonnageOptions: buildTonnageOptions(null, t),
-        backLink: taskListUrl(applicationId),
-        error: t('pages.tonnage.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderForm(h, {
+          pageTitle: t('pages.tonnage.title'),
+          heading: buildHeading(null, false, t),
+          tonnageOptions: buildTonnageOptions(null, t),
+          backLink: taskListUrl(applicationId),
+          error: t('pages.tonnage.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -188,30 +184,25 @@ export const tonnagePostController = {
     const { plannedTonnageBand, submitAction = 'saveAndContinue' } =
       request.payload
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (error) {
-      logControllerError(
-        request.server.logger,
-        error,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderForm(h, {
-        pageTitle: t('pages.tonnage.title'),
-        heading: buildHeading(null, false, t),
-        tonnageOptions: buildTonnageOptions(null, t),
-        backLink: taskListUrl(applicationId),
-        errors: {
-          plannedTonnageBand: {
-            text: t('pages.tonnage.validation.fetchError')
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderForm(h, {
+          pageTitle: t('pages.tonnage.title'),
+          heading: buildHeading(null, false, t),
+          tonnageOptions: buildTonnageOptions(null, t),
+          backLink: taskListUrl(applicationId),
+          errors: {
+            plannedTonnageBand: {
+              text: t('pages.tonnage.validation.fetchError')
+            }
           }
-        }
-      }).code(500)
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

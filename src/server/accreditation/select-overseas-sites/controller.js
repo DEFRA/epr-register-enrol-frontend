@@ -12,6 +12,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -315,28 +316,23 @@ export const selectOverseasSitesGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          partitionSites([]),
-          t('pages.selectOverseasSites.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            partitionSites([]),
+            t('pages.selectOverseasSites.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const {
@@ -397,28 +393,23 @@ export const selectOverseasSitesPostController = {
     const { applicationId } = request.params
     const { submitAction, siteId } = request.payload ?? {}
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          partitionSites([]),
-          t('pages.selectOverseasSites.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            partitionSites([]),
+            t('pages.selectOverseasSites.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

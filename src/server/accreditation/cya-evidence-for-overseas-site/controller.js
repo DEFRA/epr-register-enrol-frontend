@@ -1,9 +1,8 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function evidenceListUrl(applicationId) {
   return `/accreditation/upload-evidence-for-overseas-site/${applicationId}`
@@ -59,30 +58,25 @@ export const cyaEvidenceForSiteGetController = {
     const { applicationId, siteId } = request.params
     const siteIdInt = parseInt(siteId, 10)
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteId,
-          '',
-          [],
-          t('pages.cyaEvidenceForSite.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            siteId,
+            '',
+            [],
+            t('pages.cyaEvidenceForSite.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(

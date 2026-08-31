@@ -17,6 +17,7 @@ import {
   BUSINESS_PLAN_DETAIL_FIELDS
 } from '../../common/constants/businessPlanCategories.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -97,24 +98,19 @@ export const businessPlanCyaGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...headingViewData(t, application),
-        backLink: taskListUrl(applicationId),
-        error: t('pages.businessPlanCya.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...headingViewData(t, undefined),
+          backLink: taskListUrl(applicationId),
+          error: t('pages.businessPlanCya.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -218,24 +214,19 @@ export const businessPlanCyaPostController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...headingViewData(t, application),
-        backLink: taskListUrl(applicationId),
-        error: t('pages.businessPlanCya.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...headingViewData(t, undefined),
+          backLink: taskListUrl(applicationId),
+          error: t('pages.businessPlanCya.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

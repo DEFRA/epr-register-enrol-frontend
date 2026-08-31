@@ -1,6 +1,5 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 //import { getUser } from '../../common/helpers/auth/get-user.js'
-import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
   queryTaskListUrl,
@@ -11,7 +10,7 @@ import {
   LOCKED_STATUSES
 } from '../../common/helpers/accreditationSelection.js'
 import { operatorHomeUrl } from '../../common/helpers/test-pages-access.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -201,26 +200,22 @@ export const taskListGetController = {
 
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (error) {
-      logControllerError(
-        request.server.logger,
-        error,
-        { applicationId },
-        `Error fetching accreditation application ${applicationId}`
-      )
-      return h
-        .view('accreditation/task-list/index', {
-          pageTitle: t('pages.taskList.title'),
-          error: t('pages.taskList.loadError'),
-          backLink: '/operator-accreditation'
-        })
-        .code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      errorMessage: `Error fetching accreditation application ${applicationId}`,
+      renderErrorResponse: () =>
+        h
+          .view('accreditation/task-list/index', {
+            pageTitle: t('pages.taskList.title'),
+            error: t('pages.taskList.loadError'),
+            backLink: '/operator-accreditation'
+          })
+          .code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     if (application.applicationStatus === 'Queried') {

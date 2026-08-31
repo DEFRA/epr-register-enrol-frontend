@@ -15,6 +15,7 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { BUSINESS_PLAN_PERCENT_FIELDS } from '../../common/constants/businessPlanCategories.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -192,23 +193,18 @@ export const businessPlanGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, {}, {}),
-        error: t('pages.businessPlan.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, {}, {}),
+          error: t('pages.businessPlan.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -297,23 +293,18 @@ export const businessPlanPostController = {
     const { submitAction = 'saveAndContinue', ...fieldPayload } =
       request.payload
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, {}),
-        error: t('pages.businessPlan.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, fieldPayload, {}),
+          error: t('pages.businessPlan.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

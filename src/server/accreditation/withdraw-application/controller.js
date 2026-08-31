@@ -5,6 +5,7 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
 import { NON_WITHDRAWABLE_STATUSES } from '../../common/helpers/accreditationSelection.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const MAX_REASON_WORDS = 200
 
@@ -64,23 +65,18 @@ export const withdrawApplicationGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (error) {
-      logControllerError(
-        request.server.logger,
-        error,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...baseViewData(t, applicationId),
-        error: t('pages.withdrawApplication.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...baseViewData(t, applicationId),
+          error: t('pages.withdrawApplication.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     if (NON_WITHDRAWABLE_STATUSES.has(application.applicationStatus)) {
@@ -100,23 +96,18 @@ export const withdrawApplicationPostController = {
     const { applicationId } = request.params
     const { confirmWithdraw, reason } = request.payload ?? {}
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (error) {
-      logControllerError(
-        request.server.logger,
-        error,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...baseViewData(t, applicationId, confirmWithdraw, reason),
-        error: t('pages.withdrawApplication.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...baseViewData(t, applicationId, confirmWithdraw, reason),
+          error: t('pages.withdrawApplication.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     if (NON_WITHDRAWABLE_STATUSES.has(application.applicationStatus)) {

@@ -1,5 +1,4 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
@@ -9,6 +8,7 @@ import {
   resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function confirmationUrl(applicationId) {
   return `/accreditation/submit-confirmation/${applicationId}`
@@ -23,27 +23,22 @@ export const viewPaymentDetailsGetController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return h
-        .view('accreditation/view-payment-details/index', {
-          pageTitle: t('pages.viewPaymentDetails.title'),
-          backLink: confirmationUrl(applicationId),
-          backLinkText: t('pages.viewPaymentDetails.backLink'),
-          error: t('pages.viewPaymentDetails.loadError')
-        })
-        .code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        h
+          .view('accreditation/view-payment-details/index', {
+            pageTitle: t('pages.viewPaymentDetails.title'),
+            backLink: confirmationUrl(applicationId),
+            backLinkText: t('pages.viewPaymentDetails.backLink'),
+            error: t('pages.viewPaymentDetails.loadError')
+          })
+          .code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const nation = resolveNation(application)

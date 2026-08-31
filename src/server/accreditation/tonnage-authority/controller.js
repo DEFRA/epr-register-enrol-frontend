@@ -12,6 +12,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
@@ -78,30 +79,25 @@ export const tonnageAuthorityGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(false, t),
-        authoriserRows: [],
-        backLink: tonnageUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        isExporter: false,
-        intro: t('pages.tonnageAuthority.intro'),
-        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
-        error: t('pages.tonnageAuthority.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          pageTitle: t('pages.tonnageAuthority.title'),
+          heading: buildHeading(false, t),
+          authoriserRows: [],
+          backLink: tonnageUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          isExporter: false,
+          intro: t('pages.tonnageAuthority.intro'),
+          selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
+          error: t('pages.tonnageAuthority.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -156,30 +152,25 @@ export const tonnageAuthorityPostController = {
       newEmail
     } = request.payload
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(false, t),
-        authoriserRows: [],
-        backLink: tonnageUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        isExporter: false,
-        intro: t('pages.tonnageAuthority.intro'),
-        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
-        error: t('pages.tonnageAuthority.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          pageTitle: t('pages.tonnageAuthority.title'),
+          heading: buildHeading(false, t),
+          authoriserRows: [],
+          backLink: tonnageUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          isExporter: false,
+          intro: t('pages.tonnageAuthority.intro'),
+          selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
+          error: t('pages.tonnageAuthority.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

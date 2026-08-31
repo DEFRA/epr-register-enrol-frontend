@@ -5,7 +5,7 @@ import {
   resolveNation,
   buildPaymentReference
 } from '../../common/helpers/paymentDetails.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -69,23 +69,18 @@ export const submitDeclarationGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, ''),
-        error: t('pages.submitDeclaration.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, ''),
+          error: t('pages.submitDeclaration.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const saved = request.yar.get(ACCREDITATION_SESSION_KEYS.declaration) ?? {}
@@ -124,23 +119,18 @@ export const submitDeclarationPostController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, '', fullName, jobTitle),
-        error: t('pages.submitDeclaration.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, '', fullName, jobTitle),
+          error: t('pages.submitDeclaration.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const organisationName = application.organisationName ?? ''

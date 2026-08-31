@@ -8,6 +8,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const TONNAGE_LABEL_KEYS = {
   UpTo500: 'pages.tonnage.options.UpTo500',
@@ -58,25 +59,20 @@ export const tonnageCyaGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        pageTitle: t('pages.tonnageCya.title'),
-        heading: t('pages.tonnageCya.heading'),
-        backLink: taskListUrl(applicationId),
-        error: t('pages.tonnageCya.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          pageTitle: t('pages.tonnageCya.title'),
+          heading: t('pages.tonnageCya.heading'),
+          backLink: taskListUrl(applicationId),
+          error: t('pages.tonnageCya.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(

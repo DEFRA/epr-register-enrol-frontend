@@ -16,6 +16,7 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -130,28 +131,23 @@ export const samplingPlanUploadGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.title'),
-        heading: t('pages.samplingPlanUpload.heading'),
-        backLink: taskListUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        files: [],
-        documentTypeOptions: documentTypeOptions(t),
-        error: t('pages.samplingPlanUpload.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          pageTitle: t('pages.samplingPlanUpload.title'),
+          heading: t('pages.samplingPlanUpload.heading'),
+          backLink: taskListUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          files: [],
+          documentTypeOptions: documentTypeOptions(t),
+          error: t('pages.samplingPlanUpload.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -372,28 +368,23 @@ export const samplingPlanResultsGetController = {
     const { applicationId } = request.params
     const uploadFailed = request.query?.upload === 'failed'
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
-        backLink: samplingPlanUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        uploadAnotherLink: samplingPlanUrl(applicationId),
-        files: [],
-        error: t('pages.samplingPlanUpload.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderResultsPage(h, {
+          pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
+          heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+          backLink: samplingPlanUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          uploadAnotherLink: samplingPlanUrl(applicationId),
+          files: [],
+          error: t('pages.samplingPlanUpload.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -545,28 +536,23 @@ export const samplingPlanResultsPostController = {
     const { applicationId } = request.params
     const { action = 'saveAndContinue', fileId } = request.payload ?? {}
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error fetching application ${applicationId}`
-      )
-      return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
-        backLink: samplingPlanUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        uploadAnotherLink: samplingPlanUrl(applicationId),
-        files: [],
-        error: t('pages.samplingPlanUpload.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderResultsPage(h, {
+          pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
+          heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+          backLink: samplingPlanUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          uploadAnotherLink: samplingPlanUrl(applicationId),
+          files: [],
+          error: t('pages.samplingPlanUpload.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({
