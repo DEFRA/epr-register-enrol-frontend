@@ -16,7 +16,7 @@ import {
   BUSINESS_PLAN_PERCENT_FIELDS,
   BUSINESS_PLAN_DETAIL_FIELDS
 } from '../../common/constants/businessPlanCategories.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
@@ -173,7 +173,7 @@ async function confirmBusinessPlan(
     )
     return null
   } catch (err) {
-    logControllerError(
+    logStructuredError(
       request.server.logger,
       err,
       { applicationId },

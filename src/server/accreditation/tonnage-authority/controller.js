@@ -11,7 +11,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
@@ -278,7 +278,7 @@ export const tonnageAuthorityPostController = {
           { authorisers: updatedAuthorisers }
         )
       } catch (err) {
-        logControllerError(
+        logStructuredError(
           request.server.logger,
           err,
           { applicationId },
@@ -348,7 +348,7 @@ export const tonnageAuthorityPostController = {
         }
       )
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },

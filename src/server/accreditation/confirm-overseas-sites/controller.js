@@ -7,7 +7,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
@@ -143,7 +143,7 @@ export const confirmOverseasSitesPostController = {
         { sectionStatus: 'Completed' }
       )
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },

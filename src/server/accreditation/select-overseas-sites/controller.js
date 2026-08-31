@@ -11,7 +11,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
@@ -187,7 +187,7 @@ async function removeOrDeleteSite(
       { sites: updatedSites }
     )
   } catch (err) {
-    logControllerError(
+    logStructuredError(
       logger,
       err,
       { siteId, applicationId },
@@ -228,7 +228,7 @@ async function removeInterimSite(
       { sites: updatedSites }
     )
   } catch (err) {
-    logControllerError(
+    logStructuredError(
       logger,
       err,
       { siteId, applicationId },
@@ -259,7 +259,7 @@ async function saveOverseasSitesForLater(
       { sectionStatus: 'InProgress' }
     )
   } catch (err) {
-    logControllerError(
+    logStructuredError(
       logger,
       err,
       { applicationId },
@@ -291,7 +291,7 @@ async function revertSiteAccreditation(
       Number.parseInt(siteId, 10)
     )
   } catch (err) {
-    logControllerError(
+    logStructuredError(
       logger,
       err,
       { siteId, applicationId },
@@ -384,6 +384,44 @@ export const selectOverseasSitesGetController = {
   }
 }
 
+// Extracted from selectOverseasSitesPostController's handler (SonarCloud cyclomatic
+// complexity): collapses the five submitAction branches into a single lookup instead of a
+// chain of ifs. Each entry has the same (ctx, organisationId, applicationId, rawSites,
+// siteId) shape as its target function, even where siteId is unused, so they're
+// interchangeable through this table.
+const OVERSEAS_SITES_ACTION_HANDLERS = {
+  removeAccredited: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    removeOrDeleteSite(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      'removeAccredited',
+      siteId
+    ),
+  deleteNewSite: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    removeOrDeleteSite(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      'deleteNewSite',
+      siteId
+    ),
+  removeInterimSite: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    removeInterimSite(ctx, organisationId, applicationId, rawSites, siteId),
+  saveAndComeLater: (ctx, organisationId, applicationId, rawSites) =>
+    saveOverseasSitesForLater(ctx, organisationId, applicationId, rawSites),
+  revertAccreditation: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    revertSiteAccreditation(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      siteId
+    )
+}
+
 export const selectOverseasSitesPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -427,47 +465,9 @@ export const selectOverseasSitesPostController = {
 
     const ctx = { h, t, request, logger: request.server.logger }
 
-    if (
-      submitAction === 'removeAccredited' ||
-      submitAction === 'deleteNewSite'
-    ) {
-      return removeOrDeleteSite(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites,
-        submitAction,
-        siteId
-      )
-    }
-
-    if (submitAction === 'removeInterimSite') {
-      return removeInterimSite(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites,
-        siteId
-      )
-    }
-
-    if (submitAction === 'saveAndComeLater') {
-      return saveOverseasSitesForLater(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites
-      )
-    }
-
-    if (submitAction === 'revertAccreditation') {
-      return revertSiteAccreditation(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites,
-        siteId
-      )
+    const actionHandler = OVERSEAS_SITES_ACTION_HANDLERS[submitAction]
+    if (actionHandler) {
+      return actionHandler(ctx, organisationId, applicationId, rawSites, siteId)
     }
 
     const sections = partitionSites(rawSites)

@@ -12,7 +12,7 @@ import {
   DETAIL_FIELD_TO_CATEGORY
 } from '../business-plan/helpers.js'
 import { BUSINESS_PLAN_DETAIL_FIELDS } from '../../common/constants/businessPlanCategories.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
@@ -184,7 +184,7 @@ function handleBusinessPlanDetailSaveError({
   fieldPayload,
   application
 }) {
-  logControllerError(
+  logStructuredError(
     request.server.logger,
     err,
     { applicationId },

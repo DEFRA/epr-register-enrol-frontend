@@ -12,7 +12,7 @@ import {
   landingUrl,
   FALLBACK_HOME_HREF
 } from '../../common/helpers/accreditationUrls.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -55,7 +55,7 @@ export const submitConfirmationGetController = {
       regulatorContact = resolveRegulatorContact(nation)
       returnHomeUrl = landingUrl(application)
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },

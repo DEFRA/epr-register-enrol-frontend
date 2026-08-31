@@ -6,7 +6,7 @@ import {
   getAddInterimSiteSession,
   clearAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
-import { logControllerError } from '../../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 
 export const INTERIM_SITE_SUCCESS_FLASH = 'interimSiteSuccess'
 
@@ -251,7 +251,7 @@ export const addInterimSiteCyaPostController = {
         )
       }
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         {},

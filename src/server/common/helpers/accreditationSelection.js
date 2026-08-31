@@ -1,5 +1,5 @@
 import { accreditationApiService } from './accreditationApiService.js'
-import { logControllerError } from './logging/log-controller-error.js'
+import { logStructuredError } from './logging/log-structured-error.js'
 
 export const WITHDRAWN_STATUS = 'Withdrawn'
 
@@ -125,7 +125,7 @@ export async function resolveLandingApplication({
     applications =
       await accreditationApiService.listApplications(organisationId)
   } catch (error) {
-    logControllerError(
+    logStructuredError(
       logger,
       error,
       {},
@@ -156,7 +156,7 @@ export async function resolveLandingApplication({
         failed: false
       }
     } catch (error) {
-      logControllerError(
+      logStructuredError(
         logger,
         error,
         { applicationId: application.applicationId },

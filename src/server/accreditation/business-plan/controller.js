@@ -14,7 +14,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { BUSINESS_PLAN_PERCENT_FIELDS } from '../../common/constants/businessPlanCategories.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
@@ -255,7 +255,7 @@ function handleBusinessPlanSaveError({
   fieldPayload,
   isExporter
 }) {
-  logControllerError(
+  logStructuredError(
     request.server.logger,
     err,
     { applicationId },

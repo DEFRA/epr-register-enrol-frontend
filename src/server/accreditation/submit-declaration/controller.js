@@ -98,6 +98,37 @@ export const submitDeclarationGetController = {
   }
 }
 
+// Extracted from submitDeclarationPostController's handler (SonarCloud cyclomatic
+// complexity): the submit-failure branching (transient 5xx vs a re-rendered validation-style
+// 4xx) doesn't need to live inline in the handler.
+function handleSubmitError(
+  h,
+  t,
+  err,
+  { applicationId, organisationName, fullName, jobTitle, request }
+) {
+  request.server.logger.error(
+    {
+      applicationId,
+      err,
+      ...(err.response ? { responseBody: err.response } : {})
+    },
+    'Error submitting application'
+  )
+  if (!err.status || err.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderPage(h, {
+    ...buildViewData(t, applicationId, organisationName, fullName, jobTitle),
+    error: t('pages.submitDeclaration.validation.submitError')
+  }).code(400)
+}
+
 export const submitDeclarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -178,32 +209,13 @@ export const submitDeclarationPostController = {
         { timeout: 20000 }
       )
     } catch (err) {
-      request.server.logger.error(
-        {
-          applicationId,
-          err,
-          ...(err.response ? { responseBody: err.response } : {})
-        },
-        'Error submitting application'
-      )
-      if (!err.status || err.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderPage(h, {
-        ...buildViewData(
-          t,
-          applicationId,
-          organisationName,
-          fullName,
-          jobTitle
-        ),
-        error: t('pages.submitDeclaration.validation.submitError')
-      }).code(400)
+      return handleSubmitError(h, t, err, {
+        applicationId,
+        organisationName,
+        fullName,
+        jobTitle,
+        request
+      })
     }
 
     request.yar.set(

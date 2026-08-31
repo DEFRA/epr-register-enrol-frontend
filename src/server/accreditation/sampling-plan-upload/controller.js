@@ -15,7 +15,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
@@ -213,7 +213,7 @@ export const samplingPlanUploadPostController = {
     try {
       application = await apiClient.get(appUrl(organisationId, applicationId))
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },
@@ -302,7 +302,7 @@ export const samplingPlanUploadPostController = {
         maxFileSize: MAX_FILE_BYTES
       })
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },
@@ -324,7 +324,7 @@ export const samplingPlanUploadPostController = {
         contentType
       })
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },
@@ -441,7 +441,7 @@ async function deleteResultsFile({
         fileId
       )
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { fileId, applicationId },
@@ -475,7 +475,7 @@ async function saveSamplingPlanForLater({
       { sectionStatus }
     )
   } catch (err) {
-    logControllerError(
+    logStructuredError(
       request.server.logger,
       err,
       { applicationId },
@@ -512,7 +512,7 @@ async function completeSamplingPlan({
       { sectionStatus: 'Completed' }
     )
   } catch (err) {
-    logControllerError(
+    logStructuredError(
       request.server.logger,
       err,
       { applicationId },
@@ -656,7 +656,7 @@ export const samplingPlanCdpStatusController = {
         }
       )
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },

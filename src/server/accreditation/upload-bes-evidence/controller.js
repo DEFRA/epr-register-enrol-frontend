@@ -9,7 +9,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
@@ -330,7 +330,7 @@ export const uploadBesEvidencePostController = {
         maxFileSize: MAX_FILE_BYTES
       })
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { siteId, applicationId },
@@ -352,7 +352,7 @@ export const uploadBesEvidencePostController = {
         contentType
       })
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { siteId, applicationId },
@@ -418,7 +418,7 @@ export const besEvidenceCdpStatusController = {
         }
       )
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { siteId, applicationId },

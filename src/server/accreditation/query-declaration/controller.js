@@ -3,7 +3,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function renderPage(h, viewData) {
@@ -177,7 +177,7 @@ export const queryDeclarationPostController = {
         }
       )
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },

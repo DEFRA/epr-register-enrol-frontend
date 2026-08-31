@@ -7,7 +7,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const TONNAGE_LABEL_KEYS = {
@@ -109,7 +109,7 @@ export const tonnageCyaGetController = {
 // function-length limit (javascript:S138) — pulls the fetch-failure
 // error-handling branch out rather than inlining it in the handler.
 function handleFetchApplicationError(h, t, applicationId, err, logger) {
-  logControllerError(
+  logStructuredError(
     logger,
     err,
     { applicationId },
@@ -128,7 +128,7 @@ function handleFetchApplicationError(h, t, applicationId, err, logger) {
 function handleConfirmTonnageError(request, h, t, err, confirmContext) {
   const { applicationId, tonnageBand, authorisers, isExporter, fromCYA } =
     confirmContext
-  logControllerError(
+  logStructuredError(
     request.server.logger,
     err,
     { applicationId },

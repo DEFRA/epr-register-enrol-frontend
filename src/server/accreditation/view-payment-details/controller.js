@@ -7,7 +7,7 @@ import {
   buildPaymentReference,
   resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function confirmationUrl(applicationId) {
@@ -47,7 +47,7 @@ export const viewPaymentDetailsGetController = {
     try {
       paymentDetails = buildPaymentDetails(application, t, nation)
     } catch (err) {
-      logControllerError(
+      logStructuredError(
         request.server.logger,
         err,
         { applicationId },

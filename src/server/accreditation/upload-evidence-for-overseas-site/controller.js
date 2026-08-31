@@ -11,7 +11,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
-import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
@@ -169,6 +169,41 @@ export const uploadEvidenceListGetController = {
   }
 }
 
+// Extracted from uploadEvidenceListPostController's handler (SonarCloud cyclomatic
+// complexity): the patch-failure branching (409 lock race, transient 5xx, or a
+// re-rendered validation-style 4xx) doesn't need to live inline in the handler.
+function handleSectionPatchError(h, t, err, { applicationId, sites, request }) {
+  logStructuredError(
+    request.server.logger,
+    err,
+    { applicationId },
+    `Error completing BES evidence section ${applicationId}`
+  )
+  // RA-481: a 409 means the application locked between the guard check
+  // above and this write landing — send the operator back to the
+  // section's own page so it re-fetches and renders read-only.
+  if (err.status === statusCodes.conflict) {
+    return h.redirect(request.path)
+  }
+  if (!err.status || err.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderPage(
+    h,
+    buildViewData(
+      t,
+      applicationId,
+      sites,
+      t('pages.uploadEvidenceList.saveError')
+    )
+  ).code(400)
+}
+
 export const uploadEvidenceListPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -240,35 +275,11 @@ export const uploadEvidenceListPostController = {
         { sectionStatus: isSaveAndComeLater ? 'InProgress' : 'Completed' }
       )
     } catch (err) {
-      logControllerError(
-        request.server.logger,
-        err,
-        { applicationId },
-        `Error completing BES evidence section ${applicationId}`
-      )
-      // RA-481: a 409 means the application locked between the guard check
-      // above and this write landing — send the operator back to the
-      // section's own page so it re-fetches and renders read-only.
-      if (err.status === statusCodes.conflict) {
-        return h.redirect(request.path)
-      }
-      if (!err.status || err.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          sites,
-          t('pages.uploadEvidenceList.saveError')
-        )
-      ).code(400)
+      return handleSectionPatchError(h, t, err, {
+        applicationId,
+        sites,
+        request
+      })
     }
 
     return h.redirect(taskListUrl(applicationId))

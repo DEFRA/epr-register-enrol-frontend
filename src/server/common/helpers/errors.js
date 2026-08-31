@@ -1,5 +1,5 @@
 import { statusCodes } from '../constants/status-codes.js'
-import { logControllerError } from './logging/log-controller-error.js'
+import { logStructuredError } from './logging/log-structured-error.js'
 
 function statusCodeMessage(statusCode) {
   switch (statusCode) {
@@ -26,7 +26,7 @@ export function catchAll(request, h) {
   const statusCode = response.output.statusCode
 
   if (statusCode >= statusCodes.internalServerError) {
-    logControllerError(request.logger, response, {}, 'Unhandled request error')
+    logStructuredError(request.logger, response, {}, 'Unhandled request error')
   }
 
   // A 503 means a dependency (e.g. the ReEx organisation lookup) is temporarily
