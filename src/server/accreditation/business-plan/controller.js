@@ -14,6 +14,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { BUSINESS_PLAN_PERCENT_FIELDS } from '../../common/constants/businessPlanCategories.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -198,8 +199,10 @@ export const businessPlanGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -256,8 +259,10 @@ function handleBusinessPlanSaveError({
   fieldPayload,
   isExporter
 }) {
-  request.server.logger.error(
-    { applicationId, err },
+  logControllerError(
+    request.server.logger,
+    err,
+    { applicationId },
     `Error saving business plan ${applicationId}`
   )
   // RA-481: the guard above already checked read/write access before this
@@ -299,8 +304,10 @@ export const businessPlanPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {

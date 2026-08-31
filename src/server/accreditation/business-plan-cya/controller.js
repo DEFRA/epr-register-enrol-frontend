@@ -16,6 +16,7 @@ import {
   BUSINESS_PLAN_PERCENT_FIELDS,
   BUSINESS_PLAN_DETAIL_FIELDS
 } from '../../common/constants/businessPlanCategories.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -103,8 +104,10 @@ export const businessPlanCyaGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -174,8 +177,10 @@ async function confirmBusinessPlan(
     )
     return null
   } catch (err) {
-    request.server.logger.error(
-      { applicationId, err },
+    logControllerError(
+      request.server.logger,
+      err,
+      { applicationId },
       `Error confirming business plan ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
@@ -220,8 +225,10 @@ export const businessPlanCyaPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {

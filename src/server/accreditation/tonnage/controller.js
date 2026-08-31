@@ -13,6 +13,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
 
@@ -72,8 +73,10 @@ export const tonnageGetController = {
         applicationId
       )
     } catch (error) {
-      request.server.logger.error(
-        { applicationId, err: error },
+      logControllerError(
+        request.server.logger,
+        error,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderForm(h, {
@@ -139,8 +142,10 @@ function handleTonnageSaveError({
   heading,
   plannedTonnageBand
 }) {
-  request.server.logger.error(
-    { applicationId, err: error },
+  logControllerError(
+    request.server.logger,
+    error,
+    { applicationId },
     `Error saving tonnage ${applicationId}`
   )
   // RA-481: a 409 means the application locked between the guard check
@@ -190,8 +195,10 @@ export const tonnagePostController = {
         applicationId
       )
     } catch (error) {
-      request.server.logger.error(
-        { applicationId, err: error },
+      logControllerError(
+        request.server.logger,
+        error,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderForm(h, {

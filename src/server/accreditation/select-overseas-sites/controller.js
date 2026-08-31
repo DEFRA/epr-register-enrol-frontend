@@ -11,6 +11,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -173,8 +174,10 @@ async function removeOrDeleteSite(
       { sites: updatedSites }
     )
   } catch (err) {
-    logger.error(
-      { siteId, applicationId, err },
+    logControllerError(
+      logger,
+      err,
+      { siteId, applicationId },
       `Error updating overseas site ${siteId} for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
@@ -212,8 +215,10 @@ async function removeInterimSite(
       { sites: updatedSites }
     )
   } catch (err) {
-    logger.error(
-      { siteId, applicationId, err },
+    logControllerError(
+      logger,
+      err,
+      { siteId, applicationId },
       `Error removing interim site from overseas site ${siteId} for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
@@ -241,8 +246,10 @@ async function saveOverseasSitesForLater(
       { sectionStatus: 'InProgress' }
     )
   } catch (err) {
-    logger.error(
-      { applicationId, err },
+    logControllerError(
+      logger,
+      err,
+      { applicationId },
       `Error saving overseas sites for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
@@ -271,8 +278,10 @@ async function revertSiteAccreditation(
       Number.parseInt(siteId, 10)
     )
   } catch (err) {
-    logger.error(
-      { siteId, applicationId, err },
+    logControllerError(
+      logger,
+      err,
+      { siteId, applicationId },
       `Error reverting overseas site ${siteId} for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
@@ -301,8 +310,10 @@ export const selectOverseasSitesGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(
@@ -385,8 +396,10 @@ export const selectOverseasSitesPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(

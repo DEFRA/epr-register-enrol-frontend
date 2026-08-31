@@ -7,6 +7,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -54,8 +55,10 @@ export const confirmOverseasSitesGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(
@@ -110,8 +113,10 @@ export const confirmOverseasSitesPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(
@@ -147,8 +152,10 @@ export const confirmOverseasSitesPostController = {
         { sectionStatus: 'Completed' }
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error confirming overseas sites ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check

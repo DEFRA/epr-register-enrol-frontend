@@ -6,6 +6,7 @@ import {
   getAddInterimSiteSession,
   clearAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
+import { logControllerError } from '../../../common/helpers/logging/log-controller-error.js'
 
 export const INTERIM_SITE_SUCCESS_FLASH = 'interimSiteSuccess'
 
@@ -250,8 +251,10 @@ export const addInterimSiteCyaPostController = {
         )
       }
     } catch (err) {
-      request.server.logger.error(
-        { err },
+      logControllerError(
+        request.server.logger,
+        err,
+        {},
         'Interim site CYA createInterimSite error'
       )
       // RA-481: a 409 means the application locked between the guard check

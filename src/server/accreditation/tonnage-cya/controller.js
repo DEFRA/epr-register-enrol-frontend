@@ -7,6 +7,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 const TONNAGE_LABEL_KEYS = {
   UpTo500: 'pages.tonnage.options.UpTo500',
@@ -64,8 +65,10 @@ export const tonnageCyaGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -106,6 +109,56 @@ export const tonnageCyaGetController = {
   }
 }
 
+// Extracted so tonnageCyaPostController.handler stays under Sonar's 75-line
+// function-length limit (javascript:S138) — pulls the fetch-failure
+// error-handling branch out rather than inlining it in the handler.
+function handleFetchApplicationError(h, t, applicationId, err, logger) {
+  logControllerError(
+    logger,
+    err,
+    { applicationId },
+    `Error fetching application ${applicationId}`
+  )
+  return renderPage(h, {
+    pageTitle: t('pages.tonnageCya.title'),
+    heading: t('pages.tonnageCya.heading'),
+    backLink: taskListUrl(applicationId),
+    error: t('pages.tonnageCya.validation.fetchError')
+  }).code(500)
+}
+
+// Extracted for the same reason as handleFetchApplicationError above — the
+// confirm-failure branch, including the RA-481 conflict redirect.
+function handleConfirmTonnageError(request, h, t, err, confirmContext) {
+  const { applicationId, tonnageBand, authorisers, isExporter, fromCYA } =
+    confirmContext
+  logControllerError(
+    request.server.logger,
+    err,
+    { applicationId },
+    `Error confirming tonnage section ${applicationId}`
+  )
+  // RA-481: a 409 means the application locked between the guard check
+  // above and this write landing — send the operator back to this page
+  // so it re-fetches and renders read-only.
+  if (err.status === statusCodes.conflict) {
+    return h.redirect(request.path)
+  }
+  return renderPage(h, {
+    pageTitle: t('pages.tonnageCya.title'),
+    heading: t('pages.tonnageCya.heading'),
+    tonnageLabel: buildTonnageLabel(tonnageBand, t),
+    authorisersSummary: buildAuthorisersSummary(authorisers, t),
+    changeTonnageLink: `/accreditation/tonnage/${applicationId}${fromCYA}`,
+    changeAuthorityLink: `/accreditation/tonnage-authority/${applicationId}${fromCYA}`,
+    backLink: taskListUrl(applicationId),
+    taskListLink: taskListUrl(applicationId),
+    isExporter,
+    ...buildCyaLabels(isExporter, t),
+    error: t('pages.tonnageCya.validation.confirmError')
+  }).code(500)
+}
+
 export const tonnageCyaPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -126,16 +179,13 @@ export const tonnageCyaPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
-        `Error fetching application ${applicationId}`
+      return handleFetchApplicationError(
+        h,
+        t,
+        applicationId,
+        err,
+        request.server.logger
       )
-      return renderPage(h, {
-        pageTitle: t('pages.tonnageCya.title'),
-        heading: t('pages.tonnageCya.heading'),
-        backLink: taskListUrl(applicationId),
-        error: t('pages.tonnageCya.validation.fetchError')
-      }).code(500)
     }
 
     const guardRedirect = guardSectionWrite({
@@ -165,29 +215,13 @@ export const tonnageCyaPostController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
-        `Error confirming tonnage section ${applicationId}`
-      )
-      // RA-481: a 409 means the application locked between the guard check
-      // above and this write landing — send the operator back to this page
-      // so it re-fetches and renders read-only.
-      if (err.status === statusCodes.conflict) {
-        return h.redirect(request.path)
-      }
-      return renderPage(h, {
-        pageTitle: t('pages.tonnageCya.title'),
-        heading: t('pages.tonnageCya.heading'),
-        tonnageLabel: buildTonnageLabel(tonnageBand, t),
-        authorisersSummary: buildAuthorisersSummary(authorisers, t),
-        changeTonnageLink: `/accreditation/tonnage/${applicationId}${fromCYA}`,
-        changeAuthorityLink: `/accreditation/tonnage-authority/${applicationId}${fromCYA}`,
-        backLink: taskListUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
+      return handleConfirmTonnageError(request, h, t, err, {
+        applicationId,
+        tonnageBand,
+        authorisers,
         isExporter,
-        ...buildCyaLabels(isExporter, t),
-        error: t('pages.tonnageCya.validation.confirmError')
-      }).code(500)
+        fromCYA
+      })
     }
 
     return h.redirect(taskListUrl(applicationId))

@@ -9,6 +9,7 @@ import {
   resetAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../common/helpers/addInterimSiteSession.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 // Split out of controller.js (RA-486 self-review, SonarCloud S104: that file
 // had grown past the 500-line limit) — these three "Change"/"Add To
@@ -60,8 +61,10 @@ async function loadSiteForWizardEntry(request, h) {
       applicationId
     )
   } catch (err) {
-    request.server.logger.error(
-      { applicationId, err },
+    logControllerError(
+      request.server.logger,
+      err,
+      { applicationId },
       `Error fetching application ${applicationId}`
     )
     return { redirect: h.redirect(selectOverseasSitesUrl(applicationId)) }

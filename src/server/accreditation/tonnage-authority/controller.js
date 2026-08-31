@@ -11,6 +11,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
@@ -84,8 +85,10 @@ export const tonnageAuthorityGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -160,8 +163,10 @@ export const tonnageAuthorityPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -282,8 +287,10 @@ export const tonnageAuthorityPostController = {
           { authorisers: updatedAuthorisers }
         )
       } catch (err) {
-        request.server.logger.error(
-          { applicationId, err },
+        logControllerError(
+          request.server.logger,
+          err,
+          { applicationId },
           `Error adding authoriser for application ${applicationId}`
         )
         return renderPage(h, {
@@ -350,8 +357,10 @@ export const tonnageAuthorityPostController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error saving authorisers for application ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check

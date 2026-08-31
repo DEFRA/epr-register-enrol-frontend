@@ -15,6 +15,7 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -136,8 +137,10 @@ export const samplingPlanUploadGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -214,8 +217,10 @@ export const samplingPlanUploadPostController = {
     try {
       application = await apiClient.get(appUrl(organisationId, applicationId))
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -301,8 +306,10 @@ export const samplingPlanUploadPostController = {
         maxFileSize: MAX_FILE_BYTES
       })
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error initiating upload ${applicationId}`
       )
       return renderPage(
@@ -321,8 +328,10 @@ export const samplingPlanUploadPostController = {
         contentType
       })
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error proxying file for application ${applicationId}`
       )
       return renderPage(
@@ -370,8 +379,10 @@ export const samplingPlanResultsGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderResultsPage(h, {
@@ -439,8 +450,10 @@ async function deleteResultsFile({
         fileId
       )
     } catch (err) {
-      request.server.logger.error(
-        { fileId, applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { fileId, applicationId },
         `Error deleting file ${fileId} for application ${applicationId}`
       )
       return renderResultsPage(
@@ -471,8 +484,10 @@ async function saveSamplingPlanForLater({
       { sectionStatus }
     )
   } catch (err) {
-    request.server.logger.error(
-      { applicationId, err },
+    logControllerError(
+      request.server.logger,
+      err,
+      { applicationId },
       `Error saving sampling plan ${applicationId}`
     )
     return renderResultsPage(
@@ -506,8 +521,10 @@ async function completeSamplingPlan({
       { sectionStatus: 'Completed' }
     )
   } catch (err) {
-    request.server.logger.error(
-      { applicationId, err },
+    logControllerError(
+      request.server.logger,
+      err,
+      { applicationId },
       `Error completing sampling plan ${applicationId}`
     )
     return renderResultsPage(
@@ -535,8 +552,10 @@ export const samplingPlanResultsPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderResultsPage(h, {
@@ -651,8 +670,10 @@ export const samplingPlanCdpStatusController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error saving uploaded file for application ${applicationId}`
       )
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)

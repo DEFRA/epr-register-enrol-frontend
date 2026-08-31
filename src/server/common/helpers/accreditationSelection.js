@@ -1,4 +1,5 @@
 import { accreditationApiService } from './accreditationApiService.js'
+import { logControllerError } from './logging/log-controller-error.js'
 
 export const WITHDRAWN_STATUS = 'Withdrawn'
 
@@ -124,7 +125,12 @@ export async function resolveLandingApplication({
     applications =
       await accreditationApiService.listApplications(organisationId)
   } catch (error) {
-    logger.error({ err: error }, 'Error fetching accreditation applications')
+    logControllerError(
+      logger,
+      error,
+      {},
+      'Error fetching accreditation applications'
+    )
     return { application: null, failed: true }
   }
 
@@ -150,8 +156,10 @@ export async function resolveLandingApplication({
         failed: false
       }
     } catch (error) {
-      logger.error(
-        { applicationId: application.applicationId, err: error },
+      logControllerError(
+        logger,
+        error,
+        { applicationId: application.applicationId },
         `Error refreshing accreditation application ${application.applicationId}`
       )
       return { application, failed: false }

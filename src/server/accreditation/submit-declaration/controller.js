@@ -5,6 +5,7 @@ import {
   resolveNation,
   buildPaymentReference
 } from '../../common/helpers/paymentDetails.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -75,8 +76,10 @@ export const submitDeclarationGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -128,8 +131,10 @@ export const submitDeclarationPostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {

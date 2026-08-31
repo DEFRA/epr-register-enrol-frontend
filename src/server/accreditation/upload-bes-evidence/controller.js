@@ -9,6 +9,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -158,8 +159,10 @@ export const uploadBesEvidenceGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(
@@ -223,8 +226,10 @@ export const uploadBesEvidencePostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(
@@ -334,8 +339,10 @@ export const uploadBesEvidencePostController = {
         maxFileSize: MAX_FILE_BYTES
       })
     } catch (err) {
-      request.server.logger.error(
-        { siteId, applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { siteId, applicationId },
         `Error initiating BES evidence upload for site ${siteId}, application ${applicationId}`
       )
       return renderPage(
@@ -354,8 +361,10 @@ export const uploadBesEvidencePostController = {
         contentType
       })
     } catch (err) {
-      request.server.logger.error(
-        { siteId, applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { siteId, applicationId },
         `Error proxying BES evidence file for site ${siteId}, application ${applicationId}`
       )
       return renderPage(
@@ -418,8 +427,10 @@ export const besEvidenceCdpStatusController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        { siteId, applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { siteId, applicationId },
         `Error saving BES evidence file for site ${siteId}, application ${applicationId}`
       )
     }

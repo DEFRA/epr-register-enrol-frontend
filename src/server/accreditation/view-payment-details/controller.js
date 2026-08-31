@@ -8,6 +8,7 @@ import {
   buildPaymentReference,
   resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function confirmationUrl(applicationId) {
   return `/accreditation/submit-confirmation/${applicationId}`
@@ -29,8 +30,10 @@ export const viewPaymentDetailsGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return h
@@ -49,8 +52,10 @@ export const viewPaymentDetailsGetController = {
     try {
       paymentDetails = buildPaymentDetails(application, t, nation)
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error calculating payment details ${applicationId}`
       )
       return h

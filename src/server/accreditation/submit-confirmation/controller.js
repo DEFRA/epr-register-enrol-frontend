@@ -12,6 +12,7 @@ import {
   landingUrl,
   FALLBACK_HOME_HREF
 } from '../../common/helpers/accreditationUrls.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -54,8 +55,10 @@ export const submitConfirmationGetController = {
       regulatorContact = resolveRegulatorContact(nation)
       returnHomeUrl = landingUrl(application)
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching payment details ${applicationId}`
       )
     }

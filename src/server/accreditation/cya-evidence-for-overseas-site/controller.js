@@ -3,6 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function evidenceListUrl(applicationId) {
   return `/accreditation/upload-evidence-for-overseas-site/${applicationId}`
@@ -65,8 +66,10 @@ export const cyaEvidenceForSiteGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(

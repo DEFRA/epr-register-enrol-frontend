@@ -7,6 +7,7 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function uploadBesEvidenceUrl(applicationId, siteId) {
   return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
@@ -57,8 +58,10 @@ export const uploadMoreEvidenceGetController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(
@@ -115,8 +118,10 @@ async function submitNoMoreEvidenceAnswer(
     )
     return null
   } catch (err) {
-    request.server.logger.error(
-      { siteId, applicationId, err },
+    logControllerError(
+      request.server.logger,
+      err,
+      { siteId, applicationId },
       `Error patching BES evidence for site ${siteId}, application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
@@ -156,8 +161,10 @@ export const uploadMoreEvidencePostController = {
         applicationId
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(

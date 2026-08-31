@@ -6,6 +6,7 @@ import {
   queryDeclarationUrl
 } from '../../common/helpers/accreditationUrls.js'
 import { resolveRegulatorQueryNote } from '../../common/helpers/regulatorQuery.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -120,8 +121,10 @@ export const queryTaskListGetController = {
         applicationId
       )
     } catch (error) {
-      request.server.logger.error(
-        { applicationId, err: error },
+      logControllerError(
+        request.server.logger,
+        error,
+        { applicationId },
         `Error fetching accreditation application ${applicationId}`
       )
       return h

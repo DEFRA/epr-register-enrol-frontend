@@ -13,6 +13,7 @@ import {
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
+import { logControllerError } from '../../../common/helpers/logging/log-controller-error.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
@@ -317,8 +318,10 @@ export const addOrsCyaPostController = {
     try {
       savedSite = await saveSite(mode, session, organisationId, applicationId)
     } catch (err) {
-      request.server.logger.error(
-        { apiMethod: SITE_SAVE_MODES[mode].apiMethod, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { apiMethod: SITE_SAVE_MODES[mode].apiMethod },
         `CYA site save error (${SITE_SAVE_MODES[mode].apiMethod}) for application ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check

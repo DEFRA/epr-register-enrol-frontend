@@ -3,6 +3,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
+import { logControllerError } from '../../common/helpers/logging/log-controller-error.js'
 
 function renderPage(h, viewData) {
   return h.view('accreditation/query-declaration/index', viewData)
@@ -97,8 +98,10 @@ export const queryDeclarationGetController = {
         applicationId
       )
     } catch (error) {
-      request.server.logger.error(
-        { applicationId, err: error },
+      logControllerError(
+        request.server.logger,
+        error,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -141,8 +144,10 @@ export const queryDeclarationPostController = {
         applicationId
       )
     } catch (error) {
-      request.server.logger.error(
-        { applicationId, err: error },
+      logControllerError(
+        request.server.logger,
+        error,
+        { applicationId },
         `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
@@ -181,8 +186,10 @@ export const queryDeclarationPostController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        { applicationId, err },
+      logControllerError(
+        request.server.logger,
+        err,
+        { applicationId },
         `Error resubmitting application ${applicationId}`
       )
       if (err.status === 409) {
