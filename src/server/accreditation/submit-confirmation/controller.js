@@ -48,7 +48,7 @@ export const submitConfirmationGetController = {
       paymentDetails = buildPaymentDetails(application, t, nation)
       paymentReference = buildPaymentReference(
         nation,
-        application.organisationId,
+        application.organisationNumber,
         application.isExporter
       )
       regulatorContact = resolveRegulatorContact(nation)

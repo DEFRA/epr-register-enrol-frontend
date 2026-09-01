@@ -285,6 +285,35 @@ describe('#queryDeclarationController', () => {
       )
     })
 
+    // RA-519: since RA-503, the backend also sends the numeric orgId on every
+    // read. The post-resubmit redirect must still be built from the internal
+    // organisationId, not orgId, or it 404s against the accreditation API
+    // (orgId is not a valid organisation id).
+    test('redirect uses organisationId, not orgId, when the backend sends both', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ orgId: 500504 })
+      )
+      vi.spyOn(apiClient, 'post').mockResolvedValue(
+        makeApplication({ orgId: 500504, applicationStatus: 'Updated' })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
+      )
+    })
+
     test('redirect never contains "undefined", even with no session set for this journey', async () => {
       // Regression guard for the OJ resubmit duplicate-document bug: the
       // post-resubmit redirect must be built from the fetched application,

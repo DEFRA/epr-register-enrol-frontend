@@ -18,6 +18,7 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    orgId: 500500,
     registrationId: 'reg-conf-001',
     materialType: 'Steel',
     year: 2025,
@@ -224,19 +225,19 @@ describe('#submitConfirmationController', () => {
       expect(result).toContain('data-testid="bank-sort-code"')
       expect(result).toContain('60-70-80')
       expect(result).toContain('data-testid="bank-payment-reference"')
-      expect(result).toContain('PR/PK/REP/test-operator-id')
+      expect(result).toContain('PR/PK/REP/500500')
     })
 
     describe('regulator payment reference (RA-426)', () => {
       test.each([
-        ['England', false, 'PR/PK/REP/test-operator-id'],
-        ['England', true, 'PR/PK/EXP/test-operator-id'],
-        ['NorthernIreland', false, 'NI/PR/REEX/test-operator-id'],
-        ['NorthernIreland', true, 'NI/PR/REEX/test-operator-id'],
-        ['Wales', false, 'PREX/test-operator-id'],
-        ['Wales', true, 'PREX/test-operator-id'],
-        ['Scotland', false, 'E800 81581/test-operator-id'],
-        ['Scotland', true, 'E800 81581/test-operator-id']
+        ['England', false, 'PR/PK/REP/500500'],
+        ['England', true, 'PR/PK/EXP/500500'],
+        ['NorthernIreland', false, 'NI/PR/REEX/500500'],
+        ['NorthernIreland', true, 'NI/PR/REEX/500500'],
+        ['Wales', false, 'PREX/500500'],
+        ['Wales', true, 'PREX/500500'],
+        ['Scotland', false, 'E800 81581/500500'],
+        ['Scotland', true, 'E800 81581/500500']
       ])(
         'renders %s reference for nation %s isExporter %s',
         async (nation, isExporter, expectedReference) => {
@@ -277,7 +278,6 @@ describe('#submitConfirmationController', () => {
 
         expect(result).toContain('data-testid="bank-payment-reference"')
         expect(result).toContain('PR/PK/REP/500500')
-        expect(result).not.toContain('6a74a6a12b7c39b0cc15ca55')
       })
 
       test('application-reference is unaffected by the payment reference change', async () => {

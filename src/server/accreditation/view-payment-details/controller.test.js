@@ -17,6 +17,7 @@ function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
+    orgId: 500500,
     materialType: 'Glass',
     siteAddress: 'North Road, Siteville, SI1 1AA',
     accreditationReference: 'APP2027ER5000390GL',
@@ -109,7 +110,7 @@ describe('#viewPaymentDetailsController', () => {
       })
 
       expect(result).toContain('data-testid="bank-payment-reference"')
-      expect(result).toContain('PR/PK/REP/test-operator-id')
+      expect(result).toContain('PR/PK/REP/500500')
       expect(result).not.toContain('APP2027ER5000390GL')
     })
 
@@ -728,14 +729,14 @@ describe('#viewPaymentDetailsController', () => {
 
     describe('regulator payment reference (RA-426)', () => {
       test.each([
-        ['England', false, 'PR/PK/REP/test-operator-id'],
-        ['England', true, 'PR/PK/EXP/test-operator-id'],
-        ['NorthernIreland', false, 'NI/PR/REEX/test-operator-id'],
-        ['NorthernIreland', true, 'NI/PR/REEX/test-operator-id'],
-        ['Wales', false, 'PREX/test-operator-id'],
-        ['Wales', true, 'PREX/test-operator-id'],
-        ['Scotland', false, 'E800 81581/test-operator-id'],
-        ['Scotland', true, 'E800 81581/test-operator-id']
+        ['England', false, 'PR/PK/REP/500500'],
+        ['England', true, 'PR/PK/EXP/500500'],
+        ['NorthernIreland', false, 'NI/PR/REEX/500500'],
+        ['NorthernIreland', true, 'NI/PR/REEX/500500'],
+        ['Wales', false, 'PREX/500500'],
+        ['Wales', true, 'PREX/500500'],
+        ['Scotland', false, 'E800 81581/500500'],
+        ['Scotland', true, 'E800 81581/500500']
       ])(
         'renders %s reference for nation %s isExporter %s',
         async (nation, isExporter, expectedReference) => {
