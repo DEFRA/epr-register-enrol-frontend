@@ -2,7 +2,8 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
   landingUrl,
-  queryDeclarationUrl
+  queryDeclarationUrl,
+  reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
 import { resolveRegulatorQueryNote } from '../../common/helpers/regulatorQuery.js'
 import { fetchApplicationOrRenderSimpleErrorPage } from '../../common/helpers/fetchApplicationOrRenderError.js'
@@ -122,7 +123,7 @@ export const queryTaskListGetController = {
         template: 'accreditation/query-task-list/index',
         pageTitle: t('pages.queryTaskList.title'),
         error: t('pages.queryTaskList.loadError'),
-        backLink: '/operator-accreditation'
+        backLink: reExBackLinkFromSession(request.yar)
       })
     if (errorResponse) {
       return errorResponse

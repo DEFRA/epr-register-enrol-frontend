@@ -1,7 +1,28 @@
-// Fallback used wherever the operator has no application context to
-// deep-link to (nav bar, submit-confirmation) — the bare operator
-// accreditation listing.
-export const FALLBACK_HOME_HREF = '/operator-accreditation/'
+import { config } from '../../../config/config.js'
+import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
+
+// RA-459: /operator is a test-only page, so wherever the app would send an
+// operator "back" or "home" it lands them on the real Re-Ex frontend instead.
+// With an organisation + registration id (from the URL or the accreditation
+// session) this deep-links to Re-Ex's own registration page — the same shape
+// as an operator-accreditation URL — otherwise it falls back to the bare
+// Re-Ex base URL.
+export function reExBackLinkUrl(organisationId, registrationId) {
+  const base = config.get('reex.frontendBaseUrl')
+  if (organisationId && registrationId) {
+    return `${base}/organisations/${organisationId}/registrations/${registrationId}`
+  }
+  return base
+}
+
+// Same as reExBackLinkUrl, resolving the ids from the accreditation session —
+// used by the journey's error pages, which have no application record to hand.
+export function reExBackLinkFromSession(yar) {
+  return reExBackLinkUrl(
+    yar.get(ACCREDITATION_SESSION_KEYS.organisationId),
+    yar.get(ACCREDITATION_SESSION_KEYS.registrationId)
+  )
+}
 
 export function queryTaskListUrl(applicationId) {
   return `/accreditation/query-task-list/${applicationId}`

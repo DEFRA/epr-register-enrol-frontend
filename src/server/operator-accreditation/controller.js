@@ -1,13 +1,13 @@
 import Boom from '@hapi/boom'
 
-import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSessionKeys.js'
 import {
   queryTaskListUrl,
-  landingUrl
+  landingUrl,
+  reExBackLinkUrl
 } from '../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
@@ -143,15 +143,6 @@ export function buildLandingViewModel(
   }
 }
 
-// RA-459: /operator is a test-only page (see test-pages-access.js), so this
-// always lands the operator back on the real Re-Ex frontend's registration
-// page — same organisationId/registrationId as this accreditation URL, just
-// under Re-Ex's own /organisations/<id>/registrations/<id> path shape —
-// rather than /operator, regardless of stub/local.
-function reExBackLinkUrl(organisationId, registrationId) {
-  return `${config.get('reex.frontendBaseUrl')}/organisations/${organisationId}/registrations/${registrationId}`
-}
-
 export const operatorAccreditationController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -179,7 +170,7 @@ export const operatorAccreditationController = {
           pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
           heading: t('pages.operatorAccreditation.seedErrorHeading'),
           userName,
-          backLink: '#',
+          backLink: reExBackLink,
           error: message
         })
         .code(500)
@@ -282,7 +273,7 @@ async function handleStartNew(request, h, { isExporter, kind }) {
         pageTitle: t('pages.operatorAccreditation.seedErrorHeading'),
         heading: t('pages.operatorAccreditation.seedErrorHeading'),
         userName: user?.name,
-        backLink: '#',
+        backLink: reExBackLinkUrl(organisationId, registrationId),
         error: t('pages.operatorAccreditation.seedError')
       })
       .code(500)

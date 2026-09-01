@@ -1,9 +1,11 @@
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, vi, afterEach } from 'vitest'
 import {
   queryTaskListUrl,
   queryDeclarationUrl,
-  landingUrl
+  landingUrl,
+  reExBackLinkUrl
 } from './accreditationUrls.js'
+import { config } from '../../../config/config.js'
 
 describe('#queryTaskListUrl', () => {
   test('builds the query task list path for an applicationId', () => {
@@ -52,5 +54,35 @@ describe('#landingUrl', () => {
     const url = landingUrl(application)
     expect(url).not.toContain('undefined')
     expect(url).toBe('/operator-accreditation/org-42/reg-42/Steel/2027')
+  })
+})
+
+describe('#reExBackLinkUrl', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  function stubBaseUrl(value) {
+    const realGet = config.get.bind(config)
+    vi.spyOn(config, 'get').mockImplementation((key) =>
+      key === 'reex.frontendBaseUrl' ? value : realGet(key)
+    )
+  }
+
+  test('deep-links to the Re-Ex registration page when both ids are present', () => {
+    stubBaseUrl('https://reex.example')
+    expect(reExBackLinkUrl('org-1', 'reg-1')).toBe(
+      'https://reex.example/organisations/org-1/registrations/reg-1'
+    )
+  })
+
+  test('falls back to the bare base URL when the registration id is missing', () => {
+    stubBaseUrl('https://reex.example')
+    expect(reExBackLinkUrl('org-1', undefined)).toBe('https://reex.example')
+  })
+
+  test('falls back to the bare base URL when the organisation id is missing', () => {
+    stubBaseUrl('https://reex.example')
+    expect(reExBackLinkUrl(undefined, 'reg-1')).toBe('https://reex.example')
   })
 })
