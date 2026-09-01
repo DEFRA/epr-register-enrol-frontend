@@ -10,7 +10,7 @@ import {
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
   landingUrl,
-  FALLBACK_HOME_HREF
+  reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 
@@ -37,7 +37,7 @@ export const submitConfirmationGetController = {
     let materialDisplay = ''
     let paymentDetails = null
     let paymentReference = accreditationReference
-    let returnHomeUrl = FALLBACK_HOME_HREF
+    let returnHomeUrl = reExBackLinkFromSession(request.yar)
     let regulatorContact = null
     try {
       const application = await accreditationApiService.getApplication(

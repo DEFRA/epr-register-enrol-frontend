@@ -3,7 +3,8 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
   queryTaskListUrl,
-  landingUrl
+  landingUrl,
+  reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
 import {
   TERMINAL_STATUSES,
@@ -209,7 +210,7 @@ export const taskListGetController = {
         template: 'accreditation/task-list/index',
         pageTitle: t('pages.taskList.title'),
         error: t('pages.taskList.loadError'),
-        backLink: '/operator-accreditation'
+        backLink: reExBackLinkFromSession(request.yar)
       })
     if (errorResponse) {
       return errorResponse

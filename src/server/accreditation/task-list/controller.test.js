@@ -801,7 +801,15 @@ describe('#taskListGetController', () => {
       )
     })
 
-    test('error response still renders back-link to /operator-accreditation', async () => {
+    test('error response renders back-link to the Re-Ex frontend', async () => {
+      const realConfigGet = config.get.bind(config)
+      const spy = vi.spyOn(config, 'get').mockImplementation((key) => {
+        if (key === 'reex.frontendBaseUrl') {
+          return 'https://reex.example'
+        }
+        return realConfigGet(key)
+      })
+
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
 
       const { result } = await server.inject({
@@ -811,7 +819,9 @@ describe('#taskListGetController', () => {
       })
 
       expect(result).toContain('data-testid="back-link"')
-      expect(result).toContain('href="/operator-accreditation"')
+      expect(result).toContain('href="https://reex.example"')
+
+      spy.mockRestore()
     })
 
     test('exporter: renders 5 task rows', async () => {

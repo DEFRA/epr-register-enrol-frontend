@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { config } from '../../../config/config.js'
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
 
 const APPLICATION_ID = 'app-conf-001'
@@ -189,7 +190,15 @@ describe('#submitConfirmationController', () => {
       )
     })
 
-    test('return home link falls back to /operator-accreditation/ when the application fetch fails (RA-453)', async () => {
+    test('return home link falls back to the Re-Ex frontend when the application fetch fails (RA-453)', async () => {
+      const realConfigGet = config.get.bind(config)
+      const spy = vi.spyOn(config, 'get').mockImplementation((key) => {
+        if (key === 'reex.frontendBaseUrl') {
+          return 'https://reex.example'
+        }
+        return realConfigGet(key)
+      })
+
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API error'))
       const cookie = await getSessionCookieWithReference()
 
@@ -201,8 +210,10 @@ describe('#submitConfirmationController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        'href="/operator-accreditation/" class="govuk-link" data-testid="return-home-link"'
+        'href="https://reex.example" class="govuk-link" data-testid="return-home-link"'
       )
+
+      spy.mockRestore()
     })
 
     test('shows payment details inline, including amount, bank details, and the payment reference', async () => {
