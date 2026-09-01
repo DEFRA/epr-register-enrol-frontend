@@ -15,6 +15,8 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -129,25 +131,23 @@ export const samplingPlanUploadGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.title'),
-        heading: t('pages.samplingPlanUpload.heading'),
-        backLink: taskListUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        files: [],
-        documentTypeOptions: documentTypeOptions(t),
-        error: t('pages.samplingPlanUpload.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          pageTitle: t('pages.samplingPlanUpload.title'),
+          heading: t('pages.samplingPlanUpload.heading'),
+          backLink: taskListUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          files: [],
+          documentTypeOptions: documentTypeOptions(t),
+          error: t('pages.samplingPlanUpload.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -213,8 +213,11 @@ export const samplingPlanUploadPostController = {
     try {
       application = await apiClient.get(appUrl(organisationId, applicationId))
     } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error fetching application ${applicationId}`
       )
       return renderPage(h, {
         pageTitle: t('pages.samplingPlanUpload.title'),
@@ -299,8 +302,11 @@ export const samplingPlanUploadPostController = {
         maxFileSize: MAX_FILE_BYTES
       })
     } catch (err) {
-      request.server.logger.error(
-        `Error initiating upload for ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error initiating upload ${applicationId}`
       )
       return renderPage(
         h,
@@ -318,8 +324,11 @@ export const samplingPlanUploadPostController = {
         contentType
       })
     } catch (err) {
-      request.server.logger.error(
-        `Error proxying file for ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error proxying file for application ${applicationId}`
       )
       return renderPage(
         h,
@@ -359,25 +368,23 @@ export const samplingPlanResultsGetController = {
     const { applicationId } = request.params
     const uploadFailed = request.query?.upload === 'failed'
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
-        backLink: samplingPlanUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        uploadAnotherLink: samplingPlanUrl(applicationId),
-        files: [],
-        error: t('pages.samplingPlanUpload.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderResultsPage(h, {
+          pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
+          heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+          backLink: samplingPlanUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          uploadAnotherLink: samplingPlanUrl(applicationId),
+          files: [],
+          error: t('pages.samplingPlanUpload.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -434,8 +441,11 @@ async function deleteResultsFile({
         fileId
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error deleting file ${fileId} for ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { fileId, applicationId },
+        `Error deleting file ${fileId} for application ${applicationId}`
       )
       return renderResultsPage(
         h,
@@ -465,8 +475,11 @@ async function saveSamplingPlanForLater({
       { sectionStatus }
     )
   } catch (err) {
-    request.server.logger.error(
-      `Error saving sampling plan for ${applicationId}: ${err.message}`
+    logStructuredError(
+      request.server.logger,
+      err,
+      { applicationId },
+      `Error saving sampling plan ${applicationId}`
     )
     return renderResultsPage(
       h,
@@ -499,8 +512,11 @@ async function completeSamplingPlan({
       { sectionStatus: 'Completed' }
     )
   } catch (err) {
-    request.server.logger.error(
-      `Error completing sampling plan for ${applicationId}: ${err.message}`
+    logStructuredError(
+      request.server.logger,
+      err,
+      { applicationId },
+      `Error completing sampling plan ${applicationId}`
     )
     return renderResultsPage(
       h,
@@ -520,25 +536,23 @@ export const samplingPlanResultsPostController = {
     const { applicationId } = request.params
     const { action = 'saveAndContinue', fileId } = request.payload ?? {}
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderResultsPage(h, {
-        pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
-        heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
-        backLink: samplingPlanUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        uploadAnotherLink: samplingPlanUrl(applicationId),
-        files: [],
-        error: t('pages.samplingPlanUpload.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderResultsPage(h, {
+          pageTitle: t('pages.samplingPlanUpload.resultsTitle'),
+          heading: t('pages.samplingPlanUpload.uploadedFilesHeading'),
+          backLink: samplingPlanUrl(applicationId),
+          taskListLink: taskListUrl(applicationId),
+          uploadAnotherLink: samplingPlanUrl(applicationId),
+          files: [],
+          error: t('pages.samplingPlanUpload.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({
@@ -642,8 +656,11 @@ export const samplingPlanCdpStatusController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error saving uploaded file for ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error saving uploaded file for application ${applicationId}`
       )
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
     }

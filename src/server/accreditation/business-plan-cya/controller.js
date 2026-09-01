@@ -16,6 +16,8 @@ import {
   BUSINESS_PLAN_PERCENT_FIELDS,
   BUSINESS_PLAN_DETAIL_FIELDS
 } from '../../common/constants/businessPlanCategories.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -96,21 +98,19 @@ export const businessPlanCyaGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        ...headingViewData(t, application),
-        backLink: taskListUrl(applicationId),
-        error: t('pages.businessPlanCya.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...headingViewData(t, undefined),
+          backLink: taskListUrl(applicationId),
+          error: t('pages.businessPlanCya.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -173,8 +173,11 @@ async function confirmBusinessPlan(
     )
     return null
   } catch (err) {
-    request.server.logger.error(
-      `Error confirming business plan for ${applicationId}: ${err.message}`
+    logStructuredError(
+      request.server.logger,
+      err,
+      { applicationId },
+      `Error confirming business plan ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
     // above and this write landing — send the operator back to this page
@@ -211,21 +214,19 @@ export const businessPlanCyaPostController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        ...headingViewData(t, application),
-        backLink: taskListUrl(applicationId),
-        error: t('pages.businessPlanCya.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...headingViewData(t, undefined),
+          backLink: taskListUrl(applicationId),
+          error: t('pages.businessPlanCya.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

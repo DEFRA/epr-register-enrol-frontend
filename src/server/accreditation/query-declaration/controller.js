@@ -3,6 +3,8 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function renderPage(h, viewData) {
   return h.view('accreditation/query-declaration/index', viewData)
@@ -90,20 +92,18 @@ export const queryDeclarationGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (error) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
-      )
-      return renderPage(h, {
-        ...baseViewData(t, applicationId),
-        error: t('pages.queryDeclaration.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...baseViewData(t, applicationId),
+          error: t('pages.queryDeclaration.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     if (application.applicationStatus !== 'Queried') {
@@ -133,20 +133,18 @@ export const queryDeclarationPostController = {
     const { applicationId } = request.params
     const { fullName, email, role } = request.payload ?? {}
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (error) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${error.message}`
-      )
-      return renderPage(h, {
-        ...baseViewData(t, applicationId, fullName, email, role),
-        error: t('pages.queryDeclaration.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...baseViewData(t, applicationId, fullName, email, role),
+          error: t('pages.queryDeclaration.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     if (application.applicationStatus !== 'Queried') {
@@ -179,8 +177,11 @@ export const queryDeclarationPostController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error resubmitting application ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error resubmitting application ${applicationId}`
       )
       if (err.status === 409) {
         return renderPage(h, {

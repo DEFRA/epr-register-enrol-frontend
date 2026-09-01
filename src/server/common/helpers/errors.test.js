@@ -101,7 +101,7 @@ describe('#catchAll', () => {
   test('Should provide expected default page', () => {
     catchAll(mockRequest(statusCodes.imATeapot), mockToolkit)
 
-    expect(mockErrorLogger).not.toHaveBeenCalledWith(mockStack)
+    expect(mockErrorLogger).not.toHaveBeenCalled()
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.imATeapot,
@@ -113,7 +113,10 @@ describe('#catchAll', () => {
   test('Should provide expected "Something went wrong" page and log error for internalServerError', () => {
     catchAll(mockRequest(statusCodes.internalServerError), mockToolkit)
 
-    expect(mockErrorLogger).toHaveBeenCalledWith(mockStack)
+    expect(mockErrorLogger).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ stack: mockStack }) },
+      'Unhandled request error'
+    )
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Something went wrong',
       heading: statusCodes.internalServerError,
@@ -127,7 +130,10 @@ describe('#catchAll', () => {
   test('Should provide distinct "service unavailable" page and log for 503', () => {
     catchAll(mockRequest(statusCodes.serviceUnavailable), mockToolkit)
 
-    expect(mockErrorLogger).toHaveBeenCalledWith(mockStack)
+    expect(mockErrorLogger).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ stack: mockStack }) },
+      'Unhandled request error'
+    )
     expect(mockToolkitView).toHaveBeenCalledWith(errorPage, {
       pageTitle: 'Sorry, the service is unavailable',
       heading: 'Sorry, the service is unavailable',

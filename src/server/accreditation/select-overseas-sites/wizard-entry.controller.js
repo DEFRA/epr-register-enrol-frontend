@@ -1,4 +1,3 @@
-import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
@@ -9,6 +8,7 @@ import {
   resetAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../common/helpers/addInterimSiteSession.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // Split out of controller.js (RA-486 self-review, SonarCloud S104: that file
 // had grown past the 500-line limit) — these three "Change"/"Add To
@@ -53,17 +53,16 @@ async function loadSiteForWizardEntry(request, h) {
   )
   const { applicationId, siteId } = request.params
 
-  let application
-  try {
-    application = await accreditationApiService.getApplication(
-      organisationId,
-      applicationId
-    )
-  } catch (err) {
-    request.server.logger.error(
-      `Error fetching application ${applicationId}: ${err.message}`
-    )
-    return { redirect: h.redirect(selectOverseasSitesUrl(applicationId)) }
+  const { application, errorResponse } = await fetchApplicationOrRenderError({
+    request,
+    organisationId,
+    applicationId,
+    renderErrorResponse: () => ({
+      redirect: h.redirect(selectOverseasSitesUrl(applicationId))
+    })
+  })
+  if (errorResponse) {
+    return errorResponse
   }
 
   if (isOverseasSitesSectionWriteBlocked(application)) {

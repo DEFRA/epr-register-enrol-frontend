@@ -13,6 +13,7 @@ import {
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
+import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
@@ -317,8 +318,11 @@ export const addOrsCyaPostController = {
     try {
       savedSite = await saveSite(mode, session, organisationId, applicationId)
     } catch (err) {
-      request.server.logger.error(
-        `CYA ${SITE_SAVE_MODES[mode].apiMethod} error: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { apiMethod: SITE_SAVE_MODES[mode].apiMethod },
+        `CYA site save error (${SITE_SAVE_MODES[mode].apiMethod}) for application ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the

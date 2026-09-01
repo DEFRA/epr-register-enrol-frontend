@@ -1,4 +1,5 @@
 import { accreditationApiService } from './accreditationApiService.js'
+import { logStructuredError } from './logging/log-structured-error.js'
 
 export const WITHDRAWN_STATUS = 'Withdrawn'
 
@@ -124,7 +125,12 @@ export async function resolveLandingApplication({
     applications =
       await accreditationApiService.listApplications(organisationId)
   } catch (error) {
-    logger.error(`Error fetching accreditation applications: ${error.message}`)
+    logStructuredError(
+      logger,
+      error,
+      {},
+      'Error fetching accreditation applications'
+    )
     return { application: null, failed: true }
   }
 
@@ -150,8 +156,11 @@ export async function resolveLandingApplication({
         failed: false
       }
     } catch (error) {
-      logger.error(
-        `Error refreshing accreditation application id=${application.applicationId}: ${error.message}`
+      logStructuredError(
+        logger,
+        error,
+        { applicationId: application.applicationId },
+        `Error refreshing accreditation application ${application.applicationId}`
       )
       return { application, failed: false }
     }
@@ -170,7 +179,17 @@ export async function resolveLandingApplication({
     }
   } catch (error) {
     logger.error(
-      `Error seeding ${descriptor}accreditation application for org=${organisationId} registration=${registrationId} material=${materialType} year=${yearInt}: ${error.message} status=${error.status} response=${error.response}`
+      {
+        descriptor,
+        organisationId,
+        registrationId,
+        materialType,
+        yearInt,
+        status: error.status,
+        responseBody: error.response,
+        err: error
+      },
+      `Error seeding ${descriptor}accreditation application for org ${organisationId}, registration ${registrationId}, material ${materialType}, year ${yearInt} (status ${error.status})`
     )
     return { application: null, failed: true }
   }

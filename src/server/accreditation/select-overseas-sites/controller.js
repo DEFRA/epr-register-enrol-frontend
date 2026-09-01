@@ -11,6 +11,8 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -86,6 +88,18 @@ function withEditUrl(applicationId, sites) {
 
 // Extracted from buildViewData (SonarCloud cognitive complexity): the ?? defaulting for
 // each banner/flash flag was pushing buildViewData itself over the complexity threshold.
+// Extracted from selectOverseasSitesGetController's handler (SonarCloud function-length):
+// reads the four independent post-redirect flash flags this page can show.
+function resolveFlashBanners(yar) {
+  return {
+    successBanner: !!(yar.flash(ORS_SUCCESS_FLASH) ?? []).length,
+    interimSiteSuccessBanner: !!(yar.flash(INTERIM_SITE_SUCCESS_FLASH) ?? [])
+      .length,
+    promoteSuccessBanner: !!(yar.flash(ORS_PROMOTE_SUCCESS_FLASH) ?? []).length,
+    editSuccessBanner: !!(yar.flash(ORS_EDIT_SUCCESS_FLASH) ?? []).length
+  }
+}
+
 function resolveBannerDefaults(banners) {
   return {
     successBanner: banners.successBanner ?? false,
@@ -173,8 +187,11 @@ async function removeOrDeleteSite(
       { sites: updatedSites }
     )
   } catch (err) {
-    logger.error(
-      `Error updating overseas site ${siteId} on ${applicationId}: ${err.message}`
+    logStructuredError(
+      logger,
+      err,
+      { siteId, applicationId },
+      `Error updating overseas site ${siteId} for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
@@ -211,8 +228,11 @@ async function removeInterimSite(
       { sites: updatedSites }
     )
   } catch (err) {
-    logger.error(
-      `Error removing interim site from overseas site ${siteId} on ${applicationId}: ${err.message}`
+    logStructuredError(
+      logger,
+      err,
+      { siteId, applicationId },
+      `Error removing interim site from overseas site ${siteId} for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
@@ -239,8 +259,11 @@ async function saveOverseasSitesForLater(
       { sectionStatus: 'InProgress' }
     )
   } catch (err) {
-    logger.error(
-      `Error saving overseas sites for ${applicationId}: ${err.message}`
+    logStructuredError(
+      logger,
+      err,
+      { applicationId },
+      `Error saving overseas sites for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
@@ -268,8 +291,11 @@ async function revertSiteAccreditation(
       Number.parseInt(siteId, 10)
     )
   } catch (err) {
-    logger.error(
-      `Error reverting overseas site ${siteId} on ${applicationId}: ${err.message}`
+    logStructuredError(
+      logger,
+      err,
+      { siteId, applicationId },
+      `Error reverting overseas site ${siteId} for application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
@@ -290,37 +316,31 @@ export const selectOverseasSitesGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          partitionSites([]),
-          t('pages.selectOverseasSites.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            partitionSites([]),
+            t('pages.selectOverseasSites.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
-    const successBanner = !!(request.yar.flash(ORS_SUCCESS_FLASH) ?? []).length
-    const interimSiteSuccessBanner = !!(
-      request.yar.flash(INTERIM_SITE_SUCCESS_FLASH) ?? []
-    ).length
-    const promoteSuccessBanner = !!(
-      request.yar.flash(ORS_PROMOTE_SUCCESS_FLASH) ?? []
-    ).length
-    const editSuccessBanner = !!(
-      request.yar.flash(ORS_EDIT_SUCCESS_FLASH) ?? []
-    ).length
+    const {
+      successBanner,
+      interimSiteSuccessBanner,
+      promoteSuccessBanner,
+      editSuccessBanner
+    } = resolveFlashBanners(request.yar)
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
       application,
@@ -364,6 +384,44 @@ export const selectOverseasSitesGetController = {
   }
 }
 
+// Extracted from selectOverseasSitesPostController's handler (SonarCloud cyclomatic
+// complexity): collapses the five submitAction branches into a single lookup instead of a
+// chain of ifs. Each entry has the same (ctx, organisationId, applicationId, rawSites,
+// siteId) shape as its target function, even where siteId is unused, so they're
+// interchangeable through this table.
+const OVERSEAS_SITES_ACTION_HANDLERS = {
+  removeAccredited: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    removeOrDeleteSite(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      'removeAccredited',
+      siteId
+    ),
+  deleteNewSite: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    removeOrDeleteSite(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      'deleteNewSite',
+      siteId
+    ),
+  removeInterimSite: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    removeInterimSite(ctx, organisationId, applicationId, rawSites, siteId),
+  saveAndComeLater: (ctx, organisationId, applicationId, rawSites) =>
+    saveOverseasSitesForLater(ctx, organisationId, applicationId, rawSites),
+  revertAccreditation: (ctx, organisationId, applicationId, rawSites, siteId) =>
+    revertSiteAccreditation(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      siteId
+    )
+}
+
 export const selectOverseasSitesPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -373,25 +431,23 @@ export const selectOverseasSitesPostController = {
     const { applicationId } = request.params
     const { submitAction, siteId } = request.payload ?? {}
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          partitionSites([]),
-          t('pages.selectOverseasSites.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            partitionSites([]),
+            t('pages.selectOverseasSites.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({
@@ -409,47 +465,9 @@ export const selectOverseasSitesPostController = {
 
     const ctx = { h, t, request, logger: request.server.logger }
 
-    if (
-      submitAction === 'removeAccredited' ||
-      submitAction === 'deleteNewSite'
-    ) {
-      return removeOrDeleteSite(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites,
-        submitAction,
-        siteId
-      )
-    }
-
-    if (submitAction === 'removeInterimSite') {
-      return removeInterimSite(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites,
-        siteId
-      )
-    }
-
-    if (submitAction === 'saveAndComeLater') {
-      return saveOverseasSitesForLater(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites
-      )
-    }
-
-    if (submitAction === 'revertAccreditation') {
-      return revertSiteAccreditation(
-        ctx,
-        organisationId,
-        applicationId,
-        rawSites,
-        siteId
-      )
+    const actionHandler = OVERSEAS_SITES_ACTION_HANDLERS[submitAction]
+    if (actionHandler) {
+      return actionHandler(ctx, organisationId, applicationId, rawSites, siteId)
     }
 
     const sections = partitionSites(rawSites)

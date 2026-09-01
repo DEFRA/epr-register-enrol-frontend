@@ -7,6 +7,8 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -39,6 +41,20 @@ function buildViewData(
   }
 }
 
+// Shared by both controllers below (SonarCloud duplication): the fetch-failure page is
+// identical whether the request was a GET or a POST.
+function renderFetchErrorPage(h, t, applicationId) {
+  return renderPage(
+    h,
+    buildViewData(
+      t,
+      applicationId,
+      [],
+      t('pages.confirmOverseasSites.loadError')
+    )
+  ).code(500)
+}
+
 export const confirmOverseasSitesGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -47,25 +63,14 @@ export const confirmOverseasSitesGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          [],
-          t('pages.confirmOverseasSites.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -102,25 +107,14 @@ export const confirmOverseasSitesPostController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          [],
-          t('pages.confirmOverseasSites.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({
@@ -145,8 +139,11 @@ export const confirmOverseasSitesPostController = {
         { sectionStatus: 'Completed' }
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error confirming overseas sites for ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error confirming overseas sites ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to this page

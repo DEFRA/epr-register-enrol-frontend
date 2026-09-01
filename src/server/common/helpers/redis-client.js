@@ -1,6 +1,7 @@
 import { Cluster, Redis } from 'ioredis'
 
 import { createLogger } from './logging/logger.js'
+import { logStructuredError } from './logging/log-structured-error.js'
 
 /**
  * Setup Redis and provide a redis client
@@ -60,7 +61,7 @@ export function buildRedisClient(redisConfig) {
   })
 
   redisClient.on('error', (error) => {
-    logger.error(`Redis connection error ${error}`)
+    logStructuredError(logger, error, {}, 'Redis connection error')
   })
 
   return redisClient

@@ -1,8 +1,8 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { resolveQueriedSectionAccess } from '../../common/helpers/queriedSectionAccess.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -41,26 +41,24 @@ export const checkSiteConditionsGetController = {
     const { applicationId, siteId } = request.params
     const siteIdInt = parseInt(siteId, 10)
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteId,
-          '',
-          t('pages.checkSiteConditions.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            siteId,
+            '',
+            t('pages.checkSiteConditions.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(

@@ -1,11 +1,11 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
   landingUrl,
   queryDeclarationUrl
 } from '../../common/helpers/accreditationUrls.js'
 import { resolveRegulatorQueryNote } from '../../common/helpers/regulatorQuery.js'
+import { fetchApplicationOrRenderSimpleErrorPage } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -113,23 +113,19 @@ export const queryTaskListGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
+    const { application, errorResponse } =
+      await fetchApplicationOrRenderSimpleErrorPage({
+        request,
+        h,
         organisationId,
-        applicationId
-      )
-    } catch (error) {
-      request.server.logger.error(
-        `Error fetching accreditation application ${applicationId}: ${error.message}`
-      )
-      return h
-        .view('accreditation/query-task-list/index', {
-          pageTitle: t('pages.queryTaskList.title'),
-          error: t('pages.queryTaskList.loadError'),
-          backLink: '/operator-accreditation'
-        })
-        .code(500)
+        applicationId,
+        template: 'accreditation/query-task-list/index',
+        pageTitle: t('pages.queryTaskList.title'),
+        error: t('pages.queryTaskList.loadError'),
+        backLink: '/operator-accreditation'
+      })
+    if (errorResponse) {
+      return errorResponse
     }
 
     if (application.applicationStatus !== 'Queried') {

@@ -14,6 +14,8 @@ import {
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { BUSINESS_PLAN_PERCENT_FIELDS } from '../../common/constants/businessPlanCategories.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -183,6 +185,15 @@ function payloadFromApplication(application) {
   return payload
 }
 
+// Shared by both controllers below (SonarCloud duplication): the fetch-failure page is
+// identical apart from which field values (if any) survive from a failed POST payload.
+function renderFetchErrorPage(h, t, applicationId, fieldPayload = {}) {
+  return renderPage(h, {
+    ...buildViewData(t, applicationId, fieldPayload, {}),
+    error: t('pages.businessPlan.validation.fetchError')
+  }).code(500)
+}
+
 export const businessPlanGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -191,20 +202,14 @@ export const businessPlanGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, {}, {}),
-        error: t('pages.businessPlan.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -255,8 +260,11 @@ function handleBusinessPlanSaveError({
   fieldPayload,
   isExporter
 }) {
-  request.server.logger.error(
-    `Error saving business plan for ${applicationId}: ${err.message}`
+  logStructuredError(
+    request.server.logger,
+    err,
+    { applicationId },
+    `Error saving business plan ${applicationId}`
   )
   // RA-481: the guard above already checked read/write access before this
   // patch was sent, but a 409 here means the application locked (e.g. was
@@ -290,20 +298,15 @@ export const businessPlanPostController = {
     const { submitAction = 'saveAndContinue', ...fieldPayload } =
       request.payload
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, fieldPayload, {}),
-        error: t('pages.businessPlan.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderFetchErrorPage(h, t, applicationId, fieldPayload)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

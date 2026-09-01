@@ -7,6 +7,8 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function uploadBesEvidenceUrl(applicationId, siteId) {
   return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
@@ -50,27 +52,25 @@ export const uploadMoreEvidenceGetController = {
     const { applicationId, siteId } = request.params
     const siteIdInt = parseInt(siteId, 10)
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteId,
-          '',
-          null,
-          t('pages.uploadMoreEvidence.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            siteId,
+            '',
+            null,
+            t('pages.uploadMoreEvidence.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -114,8 +114,11 @@ async function submitNoMoreEvidenceAnswer(
     )
     return null
   } catch (err) {
-    request.server.logger.error(
-      `Error patching BES evidence for site ${siteId} on ${applicationId}: ${err.message}`
+    logStructuredError(
+      request.server.logger,
+      err,
+      { siteId, applicationId },
+      `Error patching BES evidence for site ${siteId}, application ${applicationId}`
     )
     // RA-481: a 409 means the application locked between the guard check
     // above and this write landing — send the operator back to this page
@@ -147,27 +150,25 @@ export const uploadMoreEvidencePostController = {
     const siteIdInt = Number.parseInt(siteId, 10)
     const { answer } = request.payload ?? {}
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteId,
-          '',
-          answer,
-          t('pages.uploadMoreEvidence.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(
+          h,
+          buildViewData(
+            t,
+            applicationId,
+            siteId,
+            '',
+            answer,
+            t('pages.uploadMoreEvidence.loadError')
+          )
+        ).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({

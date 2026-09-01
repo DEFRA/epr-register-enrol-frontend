@@ -5,6 +5,7 @@ import {
   resolveNation,
   buildPaymentReference
 } from '../../common/helpers/paymentDetails.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -68,20 +69,18 @@ export const submitDeclarationGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, ''),
-        error: t('pages.submitDeclaration.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, ''),
+          error: t('pages.submitDeclaration.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const saved = request.yar.get(ACCREDITATION_SESSION_KEYS.declaration) ?? {}
@@ -97,6 +96,37 @@ export const submitDeclarationGetController = {
       )
     )
   }
+}
+
+// Extracted from submitDeclarationPostController's handler (SonarCloud cyclomatic
+// complexity): the submit-failure branching (transient 5xx vs a re-rendered validation-style
+// 4xx) doesn't need to live inline in the handler.
+function handleSubmitError(
+  h,
+  t,
+  err,
+  { applicationId, organisationName, fullName, jobTitle, request }
+) {
+  request.server.logger.error(
+    {
+      applicationId,
+      err,
+      ...(err.response ? { responseBody: err.response } : {})
+    },
+    'Error submitting application'
+  )
+  if (!err.status || err.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderPage(h, {
+    ...buildViewData(t, applicationId, organisationName, fullName, jobTitle),
+    error: t('pages.submitDeclaration.validation.submitError')
+  }).code(400)
 }
 
 export const submitDeclarationPostController = {
@@ -120,20 +150,18 @@ export const submitDeclarationPostController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, '', fullName, jobTitle),
-        error: t('pages.submitDeclaration.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, '', fullName, jobTitle),
+          error: t('pages.submitDeclaration.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const organisationName = application.organisationName ?? ''
@@ -181,27 +209,13 @@ export const submitDeclarationPostController = {
         { timeout: 20000 }
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error submitting application ${applicationId}: ${err.message}${err.response ? ` - response: ${err.response}` : ''}`
-      )
-      if (!err.status || err.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderPage(h, {
-        ...buildViewData(
-          t,
-          applicationId,
-          organisationName,
-          fullName,
-          jobTitle
-        ),
-        error: t('pages.submitDeclaration.validation.submitError')
-      }).code(400)
+      return handleSubmitError(h, t, err, {
+        applicationId,
+        organisationName,
+        fullName,
+        jobTitle,
+        request
+      })
     }
 
     request.yar.set(

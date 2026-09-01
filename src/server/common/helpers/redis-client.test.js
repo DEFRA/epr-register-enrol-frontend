@@ -4,18 +4,41 @@ import { Cluster, Redis } from 'ioredis'
 
 import { config } from '../../../config/config.js'
 import { buildRedisClient } from './redis-client.js'
+import { createLogger } from './logging/logger.js'
 
+const mockLogger = { info: vi.fn(), error: vi.fn() }
+vi.mock('./logging/logger.js', () => ({
+  createLogger: vi.fn()
+}))
+
+const redisEventHandlers = {}
 vi.mock('ioredis', () => ({
   ...vi.importActual('ioredis'),
   Cluster: vi.fn(function () {
-    return { on: () => ({}) }
+    return {
+      on: (event, handler) => {
+        redisEventHandlers[event] = handler
+      }
+    }
   }),
   Redis: vi.fn(function () {
-    return { on: () => ({}) }
+    return {
+      on: (event, handler) => {
+        redisEventHandlers[event] = handler
+      }
+    }
   })
 }))
 
 describe('#buildRedisClient', () => {
+  beforeEach(() => {
+    mockLogger.info.mockClear()
+    mockLogger.error.mockClear()
+    createLogger.mockReturnValue(mockLogger)
+    delete redisEventHandlers.connect
+    delete redisEventHandlers.error
+  })
+
   describe('When Redis Single InstanceCache is requested', () => {
     beforeEach(() => {
       buildRedisClient(config.get('redis'))
@@ -51,6 +74,20 @@ describe('#buildRedisClient', () => {
           redisOptions: { db: 0, password: 'pass', tls: {}, username: 'user' },
           slotsRefreshTimeout: 10000
         }
+      )
+    })
+  })
+
+  describe('When the Redis client emits an error event', () => {
+    test('Should log it via the shared structured error helper', () => {
+      buildRedisClient(config.get('redis'))
+      const error = new Error('connection refused')
+
+      redisEventHandlers.error(error)
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        { err: error },
+        'Redis connection error'
       )
     })
   })

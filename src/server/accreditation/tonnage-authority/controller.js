@@ -11,6 +11,8 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
@@ -69,6 +71,22 @@ function buildViewData(application, t, applicationId, opts = {}) {
   }
 }
 
+// Shared by both controllers below (SonarCloud duplication): the fetch-failure page is
+// identical whether the request was a GET or a POST.
+function renderFetchErrorPage(h, t, applicationId) {
+  return renderPage(h, {
+    pageTitle: t('pages.tonnageAuthority.title'),
+    heading: buildHeading(false, t),
+    authoriserRows: [],
+    backLink: tonnageUrl(applicationId),
+    taskListLink: taskListUrl(applicationId),
+    isExporter: false,
+    intro: t('pages.tonnageAuthority.intro'),
+    selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
+    error: t('pages.tonnageAuthority.validation.fetchError')
+  }).code(500)
+}
+
 export const tonnageAuthorityGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -77,27 +95,14 @@ export const tonnageAuthorityGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(false, t),
-        authoriserRows: [],
-        backLink: tonnageUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        isExporter: false,
-        intro: t('pages.tonnageAuthority.intro'),
-        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
-        error: t('pages.tonnageAuthority.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -152,27 +157,14 @@ export const tonnageAuthorityPostController = {
       newEmail
     } = request.payload
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        pageTitle: t('pages.tonnageAuthority.title'),
-        heading: buildHeading(false, t),
-        authoriserRows: [],
-        backLink: tonnageUrl(applicationId),
-        taskListLink: taskListUrl(applicationId),
-        isExporter: false,
-        intro: t('pages.tonnageAuthority.intro'),
-        selectSubHeading: t('pages.tonnageAuthority.selectSubHeading'),
-        error: t('pages.tonnageAuthority.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({
@@ -280,8 +272,11 @@ export const tonnageAuthorityPostController = {
           { authorisers: updatedAuthorisers }
         )
       } catch (err) {
-        request.server.logger.error(
-          `Error adding authoriser for ${applicationId}: ${err.message}`
+        logStructuredError(
+          request.server.logger,
+          err,
+          { applicationId },
+          `Error adding authoriser for application ${applicationId}`
         )
         return renderPage(h, {
           pageTitle: isExporter
@@ -347,8 +342,11 @@ export const tonnageAuthorityPostController = {
         }
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error saving authorisers for ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error saving authorisers for application ${applicationId}`
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the

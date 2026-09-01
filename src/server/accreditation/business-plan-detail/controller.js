@@ -12,6 +12,8 @@ import {
   DETAIL_FIELD_TO_CATEGORY
 } from '../business-plan/helpers.js'
 import { BUSINESS_PLAN_DETAIL_FIELDS } from '../../common/constants/businessPlanCategories.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -133,20 +135,18 @@ export const businessPlanDetailGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(h, {
-        ...buildViewData(t, applicationId, {}, {}),
-        error: t('pages.businessPlanDetail.validation.fetchError')
-      }).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        renderPage(h, {
+          ...buildViewData(t, applicationId, {}, {}),
+          error: t('pages.businessPlanDetail.validation.fetchError')
+        }).code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -184,8 +184,11 @@ function handleBusinessPlanDetailSaveError({
   fieldPayload,
   application
 }) {
-  request.server.logger.error(
-    `Error saving business plan detail for ${applicationId}: ${err.message}`
+  logStructuredError(
+    request.server.logger,
+    err,
+    { applicationId },
+    `Error saving business plan detail ${applicationId}`
   )
   // RA-481: a 409 means the application locked between the guard check
   // above and this write landing — send the operator back to this page

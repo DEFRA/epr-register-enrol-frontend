@@ -12,6 +12,7 @@ import {
   landingUrl,
   FALLBACK_HOME_HREF
 } from '../../common/helpers/accreditationUrls.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -54,8 +55,11 @@ export const submitConfirmationGetController = {
       regulatorContact = resolveRegulatorContact(nation)
       returnHomeUrl = landingUrl(application)
     } catch (err) {
-      request.server.logger.error(
-        `Error fetching payment details for ${applicationId} on confirmation: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error fetching payment details ${applicationId}`
       )
     }
 

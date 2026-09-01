@@ -1,5 +1,4 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
@@ -8,6 +7,8 @@ import {
   buildPaymentReference,
   resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function confirmationUrl(applicationId) {
   return `/accreditation/submit-confirmation/${applicationId}`
@@ -22,24 +23,22 @@ export const viewPaymentDetailsGetController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId} for payment details: ${err.message}`
-      )
-      return h
-        .view('accreditation/view-payment-details/index', {
-          pageTitle: t('pages.viewPaymentDetails.title'),
-          backLink: confirmationUrl(applicationId),
-          backLinkText: t('pages.viewPaymentDetails.backLink'),
-          error: t('pages.viewPaymentDetails.loadError')
-        })
-        .code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () =>
+        h
+          .view('accreditation/view-payment-details/index', {
+            pageTitle: t('pages.viewPaymentDetails.title'),
+            backLink: confirmationUrl(applicationId),
+            backLinkText: t('pages.viewPaymentDetails.backLink'),
+            error: t('pages.viewPaymentDetails.loadError')
+          })
+          .code(500)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const nation = resolveNation(application)
@@ -48,8 +47,11 @@ export const viewPaymentDetailsGetController = {
     try {
       paymentDetails = buildPaymentDetails(application, t, nation)
     } catch (err) {
-      request.server.logger.error(
-        `Error calculating payment details for ${applicationId}: ${err.message}`
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId },
+        `Error calculating payment details ${applicationId}`
       )
       return h
         .view('accreditation/view-payment-details/index', {

@@ -11,6 +11,8 @@ import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -103,6 +105,15 @@ function buildViewData(
   }
 }
 
+// Shared by both controllers below (SonarCloud duplication): the fetch-failure page is
+// identical whether the request was a GET or a POST.
+function renderFetchErrorPage(h, t, applicationId) {
+  return renderPage(
+    h,
+    buildViewData(t, applicationId, [], t('pages.uploadEvidenceList.loadError'))
+  ).code(500)
+}
+
 export const uploadEvidenceListGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -111,25 +122,14 @@ export const uploadEvidenceListGetController = {
     )
     const { applicationId } = request.params
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          [],
-          t('pages.uploadEvidenceList.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -169,6 +169,41 @@ export const uploadEvidenceListGetController = {
   }
 }
 
+// Extracted from uploadEvidenceListPostController's handler (SonarCloud cyclomatic
+// complexity): the patch-failure branching (409 lock race, transient 5xx, or a
+// re-rendered validation-style 4xx) doesn't need to live inline in the handler.
+function handleSectionPatchError(h, t, err, { applicationId, sites, request }) {
+  logStructuredError(
+    request.server.logger,
+    err,
+    { applicationId },
+    `Error completing BES evidence section ${applicationId}`
+  )
+  // RA-481: a 409 means the application locked between the guard check
+  // above and this write landing — send the operator back to the
+  // section's own page so it re-fetches and renders read-only.
+  if (err.status === statusCodes.conflict) {
+    return h.redirect(request.path)
+  }
+  if (!err.status || err.status >= 500) {
+    return h
+      .view('errors/service-problem', {
+        pageTitle: t('common.errors.serviceTitle'),
+        retryUrl: request.path
+      })
+      .code(500)
+  }
+  return renderPage(
+    h,
+    buildViewData(
+      t,
+      applicationId,
+      sites,
+      t('pages.uploadEvidenceList.saveError')
+    )
+  ).code(400)
+}
+
 export const uploadEvidenceListPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -179,25 +214,14 @@ export const uploadEvidenceListPostController = {
     const { submitAction = 'saveAndContinue' } = request.payload ?? {}
     const isSaveAndComeLater = submitAction === 'saveAndComeLater'
 
-    let application
-    try {
-      application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
-      )
-    } catch (err) {
-      request.server.logger.error(
-        `Error fetching application ${applicationId}: ${err.message}`
-      )
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          [],
-          t('pages.uploadEvidenceList.loadError')
-        )
-      ).code(500)
+    const { application, errorResponse } = await fetchApplicationOrRenderError({
+      request,
+      organisationId,
+      applicationId,
+      renderErrorResponse: () => renderFetchErrorPage(h, t, applicationId)
+    })
+    if (errorResponse) {
+      return errorResponse
     }
 
     const guardRedirect = guardSectionWrite({
@@ -242,32 +266,11 @@ export const uploadEvidenceListPostController = {
         { sectionStatus: isSaveAndComeLater ? 'InProgress' : 'Completed' }
       )
     } catch (err) {
-      request.server.logger.error(
-        `Error completing BES evidence section for ${applicationId}: ${err.message}`
-      )
-      // RA-481: a 409 means the application locked between the guard check
-      // above and this write landing — send the operator back to the
-      // section's own page so it re-fetches and renders read-only.
-      if (err.status === statusCodes.conflict) {
-        return h.redirect(request.path)
-      }
-      if (!err.status || err.status >= 500) {
-        return h
-          .view('errors/service-problem', {
-            pageTitle: t('common.errors.serviceTitle'),
-            retryUrl: request.path
-          })
-          .code(500)
-      }
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          sites,
-          t('pages.uploadEvidenceList.saveError')
-        )
-      ).code(400)
+      return handleSectionPatchError(h, t, err, {
+        applicationId,
+        sites,
+        request
+      })
     }
 
     return h.redirect(taskListUrl(applicationId))
