@@ -380,10 +380,13 @@ describe('#submitConfirmationController', () => {
       })
     })
 
-    test('exporter (no siteAddress) resolves Scotland from companyRegisterAddressPostcode', async () => {
+    // RA-526: nation resolution no longer touches postcode - application.nation
+    // (or the England default) is the only source now.
+    test('exporter (no siteAddress) shows Scotland bank details when application.nation is Scotland', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
-          companyRegisterAddressPostcode: 'KW2 7LZ'
+          companyRegisterAddressPostcode: 'KW2 7LZ',
+          nation: 'Scotland'
         })
       )
       const cookie = await getSessionCookieWithReference()

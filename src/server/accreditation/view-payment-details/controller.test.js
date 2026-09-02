@@ -517,15 +517,14 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).toContain('[Welsh] View payment details')
     })
 
+    // RA-526: nation resolution now comes solely from application.nation
+    // (backend-derived from the registration's regulator) or defaults to
+    // England - postcode is never consulted, so every case below sets
+    // `nation` explicitly rather than relying on a postcode to imply it.
     describe('nation-specific bank details', () => {
       const cases = [
         {
           nation: 'Scotland',
-          siteAddress: {
-            line1: '1 High St',
-            town: 'Edinburgh',
-            postcode: 'EH1 1AA'
-          },
           expectPresent: {
             'bank-sort-code': '83 – 34 – 00',
             'bank-account-number': '00137187',
@@ -537,11 +536,6 @@ describe('#viewPaymentDetailsController', () => {
         },
         {
           nation: 'Wales',
-          siteAddress: {
-            line1: '1 Bay Rd',
-            town: 'Cardiff',
-            postcode: 'CF10 1AA'
-          },
           expectPresent: {
             'bank-sort-code': '60-70-80',
             'bank-account-number': '10014438',
@@ -554,12 +548,7 @@ describe('#viewPaymentDetailsController', () => {
           expectAbsentTestIds: ['bank-account-name']
         },
         {
-          nation: 'Northern Ireland',
-          siteAddress: {
-            line1: '1 High St',
-            town: 'Belfast',
-            postcode: 'BT1 1AA'
-          },
+          nation: 'NorthernIreland',
           expectPresent: {
             'bank-sort-code': '95-01-21',
             'bank-account-number': '61253506',
@@ -570,8 +559,7 @@ describe('#viewPaymentDetailsController', () => {
           expectAbsentTestIds: ['bank-company-name', 'bank-company-address']
         },
         {
-          nation: 'England (explicit postcode)',
-          siteAddress: { line1: 'UNIT 5', town: 'Bolton', postcode: 'BL4 7AQ' },
+          nation: 'England',
           expectPresent: {
             'bank-sort-code': '60-70-80',
             'bank-account-number': '10014411',
@@ -584,9 +572,9 @@ describe('#viewPaymentDetailsController', () => {
 
       test.each(cases)(
         'shows correct bank fields for $nation',
-        async ({ siteAddress, expectPresent, expectAbsentTestIds }) => {
+        async ({ nation, expectPresent, expectAbsentTestIds }) => {
           vi.spyOn(apiClient, 'get').mockResolvedValue(
-            makeApplication({ siteAddress })
+            makeApplication({ nation })
           )
 
           const { result } = await server.inject({
@@ -608,7 +596,6 @@ describe('#viewPaymentDetailsController', () => {
       test.each([
         {
           nation: 'Scotland',
-          companyRegisterAddressPostcode: 'KW2 7LZ',
           expectPresent: {
             'bank-sort-code': '83 – 34 – 00',
             'bank-account-number': '00137187',
@@ -617,7 +604,6 @@ describe('#viewPaymentDetailsController', () => {
         },
         {
           nation: 'Wales',
-          companyRegisterAddressPostcode: 'CF10 1AA',
           expectPresent: {
             'bank-sort-code': '60-70-80',
             'bank-account-number': '10014438',
@@ -625,8 +611,7 @@ describe('#viewPaymentDetailsController', () => {
           }
         },
         {
-          nation: 'Northern Ireland',
-          companyRegisterAddressPostcode: 'BT1 1AA',
+          nation: 'NorthernIreland',
           expectPresent: {
             'bank-sort-code': '95-01-21',
             'bank-account-number': '61253506',
@@ -634,12 +619,13 @@ describe('#viewPaymentDetailsController', () => {
           }
         }
       ])(
-        'exporter (no siteAddress) resolves $nation from companyRegisterAddressPostcode',
-        async ({ companyRegisterAddressPostcode, expectPresent }) => {
+        'exporter (no siteAddress) shows correct bank fields for $nation',
+        async ({ nation, expectPresent }) => {
           vi.spyOn(apiClient, 'get').mockResolvedValue(
             makeApplication({
               siteAddress: null,
-              companyRegisterAddressPostcode
+              companyRegisterAddressPostcode: 'AB1 2CD',
+              nation
             })
           )
 
@@ -659,16 +645,8 @@ describe('#viewPaymentDetailsController', () => {
         }
       )
 
-      test('falls back to England when postcode is unrecognised', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue(
-          makeApplication({
-            siteAddress: {
-              line1: '1 Fake St',
-              town: 'Nowhere',
-              postcode: 'ZZ99 9ZZ'
-            }
-          })
-        )
+      test('falls back to England when application.nation is absent', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
         const { result } = await server.inject({
           method: 'GET',
@@ -680,37 +658,9 @@ describe('#viewPaymentDetailsController', () => {
         expect(result).toContain('10014411')
       })
 
-      test('application.nation takes precedence over postcode derivation', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue(
-          makeApplication({
-            nation: 'Scotland',
-            siteAddress: {
-              line1: 'UNIT 5',
-              town: 'Bolton',
-              postcode: 'BL4 7AQ'
-            }
-          })
-        )
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-          headers: operatorHeaders
-        })
-
-        expect(result).toContain('Scottish Environment Protection Agency')
-        expect(result).not.toContain('data-testid="bank-company-name"')
-      })
-
       test('banner and overseas-payments text use the resolved regulator name per nation', async () => {
         vi.spyOn(apiClient, 'get').mockResolvedValue(
-          makeApplication({
-            siteAddress: {
-              line1: '1 Bay Rd',
-              town: 'Cardiff',
-              postcode: 'CF10 1AA'
-            }
-          })
+          makeApplication({ nation: 'Wales' })
         )
 
         const { result } = await server.inject({
