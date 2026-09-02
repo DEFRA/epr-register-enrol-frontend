@@ -249,6 +249,37 @@ describe('#submitDeclarationController', () => {
       )
       expect(postSpy).not.toHaveBeenCalled()
     })
+
+    // RA-481: a back-buttoned "save and come back later" on an already
+    // actioned application must not write stale declaration values into the
+    // session (which could later pre-fill a different application's
+    // declaration form) — it must be gated exactly like a real submit.
+    test('redirects to the landing page instead of saving when the application is already submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          registrationId: 'reg-001',
+          materialType: 'plastic',
+          year: 2026
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Director',
+          submitAction: 'saveAndComeLater'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/operator-accreditation/test-operator-id/reg-001/plastic/2026`
+      )
+    })
   })
 
   describe('POST /accreditation/submit-declaration/{applicationId} - already submitted', () => {
