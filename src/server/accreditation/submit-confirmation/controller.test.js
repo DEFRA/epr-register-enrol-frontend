@@ -60,7 +60,9 @@ describe('#submitConfirmationController', () => {
     // Queue one successful response for that internal call so it doesn't
     // consume/clash with whatever apiClient.get mock the calling test has
     // set up for the confirmation page itself.
-    vi.spyOn(apiClient, 'get').mockResolvedValueOnce(makeApplication())
+    vi.spyOn(apiClient, 'get').mockResolvedValueOnce(
+      makeApplication({ applicationStatus: 'Started' })
+    )
     vi.spyOn(apiClient, 'post').mockResolvedValueOnce({
       accreditationReference: reference,
       applicationStatus: 'Submitted'

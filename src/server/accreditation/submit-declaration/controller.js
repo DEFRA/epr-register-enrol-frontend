@@ -6,6 +6,7 @@ import {
   buildPaymentReference
 } from '../../common/helpers/paymentDetails.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { redirectIfStatusNot } from '../../common/helpers/accreditationUrls.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -83,6 +84,11 @@ export const submitDeclarationGetController = {
       return errorResponse
     }
 
+    const statusRedirect = redirectIfStatusNot(h, application, 'Started')
+    if (statusRedirect) {
+      return statusRedirect
+    }
+
     const saved = request.yar.get(ACCREDITATION_SESSION_KEYS.declaration) ?? {}
 
     return renderPage(
@@ -142,14 +148,6 @@ export const submitDeclarationPostController = {
       submitAction = 'submit'
     } = request.payload ?? {}
 
-    if (submitAction === 'saveAndComeLater') {
-      request.yar.set(ACCREDITATION_SESSION_KEYS.declaration, {
-        fullName: fullName ?? '',
-        jobTitle: jobTitle ?? ''
-      })
-      return h.redirect(taskListUrl(applicationId))
-    }
-
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
       organisationId,
@@ -162,6 +160,19 @@ export const submitDeclarationPostController = {
     })
     if (errorResponse) {
       return errorResponse
+    }
+
+    const statusRedirect = redirectIfStatusNot(h, application, 'Started')
+    if (statusRedirect) {
+      return statusRedirect
+    }
+
+    if (submitAction === 'saveAndComeLater') {
+      request.yar.set(ACCREDITATION_SESSION_KEYS.declaration, {
+        fullName: fullName ?? '',
+        jobTitle: jobTitle ?? ''
+      })
+      return h.redirect(taskListUrl(applicationId))
     }
 
     const organisationName = application.organisationName ?? ''

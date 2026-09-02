@@ -2,7 +2,10 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
-import { landingUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  landingUrl,
+  redirectIfStatusNot
+} from '../../common/helpers/accreditationUrls.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
@@ -106,8 +109,9 @@ export const queryDeclarationGetController = {
       return errorResponse
     }
 
-    if (application.applicationStatus !== 'Queried') {
-      return h.redirect(landingUrl(application))
+    const statusRedirect = redirectIfStatusNot(h, application, 'Queried')
+    if (statusRedirect) {
+      return statusRedirect
     }
 
     return renderPage(
@@ -147,8 +151,9 @@ export const queryDeclarationPostController = {
       return errorResponse
     }
 
-    if (application.applicationStatus !== 'Queried') {
-      return h.redirect(landingUrl(application))
+    const statusRedirect = redirectIfStatusNot(h, application, 'Queried')
+    if (statusRedirect) {
+      return statusRedirect
     }
 
     const errors = validateQueryDeclaration(fullName, email, role, t)
