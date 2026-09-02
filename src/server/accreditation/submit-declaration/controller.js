@@ -6,6 +6,7 @@ import {
   buildPaymentReference
 } from '../../common/helpers/paymentDetails.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { landingUrl } from '../../common/helpers/accreditationUrls.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -81,6 +82,10 @@ export const submitDeclarationGetController = {
     })
     if (errorResponse) {
       return errorResponse
+    }
+
+    if (application.applicationStatus !== 'Started') {
+      return h.redirect(landingUrl(application))
     }
 
     const saved = request.yar.get(ACCREDITATION_SESSION_KEYS.declaration) ?? {}
@@ -162,6 +167,10 @@ export const submitDeclarationPostController = {
     })
     if (errorResponse) {
       return errorResponse
+    }
+
+    if (application.applicationStatus !== 'Started') {
+      return h.redirect(landingUrl(application))
     }
 
     const organisationName = application.organisationName ?? ''

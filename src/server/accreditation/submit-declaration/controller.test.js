@@ -23,7 +23,7 @@ function makeApplication(overrides = {}) {
     organisationId: 'test-operator-id',
     orgId: 500500,
     organisationName: ORGANISATION_NAME,
-    applicationStatus: 'InProgress',
+    applicationStatus: 'Started',
     ...overrides
   }
 }
@@ -203,6 +203,30 @@ describe('#submitDeclarationController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
+
+    // RA-481: back-navigating to submit-declaration after the application has
+    // already been submitted must not re-show the actionable form.
+    test('redirects to the landing page instead of re-rendering the form when the application is already submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          registrationId: 'reg-001',
+          materialType: 'plastic',
+          year: 2026
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/operator-accreditation/test-operator-id/reg-001/plastic/2026`
+      )
+    })
   })
 
   describe('POST /accreditation/submit-declaration/{applicationId} - saveAndComeLater', () => {
@@ -222,6 +246,39 @@ describe('#submitDeclarationController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toContain(
         `/accreditation/task-list/${APPLICATION_ID}`
+      )
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('POST /accreditation/submit-declaration/{applicationId} - already submitted', () => {
+    // RA-481: back-navigating and re-posting the declaration form after
+    // submission must not resubmit the application.
+    test('redirects to the landing page instead of submitting again', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          registrationId: 'reg-001',
+          materialType: 'plastic',
+          year: 2026
+        })
+      )
+      const postSpy = vi.spyOn(apiClient, 'post')
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Director',
+          submitAction: 'submit'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/operator-accreditation/test-operator-id/reg-001/plastic/2026`
       )
       expect(postSpy).not.toHaveBeenCalled()
     })
