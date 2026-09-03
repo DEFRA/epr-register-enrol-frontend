@@ -44,3 +44,16 @@ export function landingUrl(application) {
   const { organisationId, registrationId, materialType, year } = application
   return `/operator-accreditation/${organisationId}/${registrationId}/${materialType}/${year}`
 }
+
+// Shared editable-status gate: several accreditation journey pages (the
+// declaration pages, task lists) are only actionable while the application
+// sits in one specific status, and must otherwise bounce the operator back
+// to their landing page rather than let them act on stale/already-actioned
+// data (RA-481). Returns the redirect response to return from the handler,
+// or null when the status matches and the caller should proceed.
+export function redirectIfStatusNot(h, application, status) {
+  if (application.applicationStatus !== status) {
+    return h.redirect(landingUrl(application))
+  }
+  return null
+}

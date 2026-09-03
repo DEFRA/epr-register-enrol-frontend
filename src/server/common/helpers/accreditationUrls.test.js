@@ -3,7 +3,8 @@ import {
   queryTaskListUrl,
   queryDeclarationUrl,
   landingUrl,
-  reExBackLinkUrl
+  reExBackLinkUrl,
+  redirectIfStatusNot
 } from './accreditationUrls.js'
 import { config } from '../../../config/config.js'
 
@@ -54,6 +55,42 @@ describe('#landingUrl', () => {
     const url = landingUrl(application)
     expect(url).not.toContain('undefined')
     expect(url).toBe('/operator-accreditation/org-42/reg-42/Steel/2027')
+  })
+})
+
+describe('#redirectIfStatusNot', () => {
+  function makeApplication(overrides = {}) {
+    return {
+      organisationId: 'org-1',
+      registrationId: 'reg-1',
+      materialType: 'Steel',
+      year: 2027,
+      applicationStatus: 'Started',
+      ...overrides
+    }
+  }
+
+  function makeH() {
+    return { redirect: vi.fn((url) => ({ redirectedTo: url })) }
+  }
+
+  test('returns null and does not redirect when the status matches', () => {
+    const h = makeH()
+    const result = redirectIfStatusNot(
+      h,
+      makeApplication({ applicationStatus: 'Started' }),
+      'Started'
+    )
+    expect(result).toBeNull()
+    expect(h.redirect).not.toHaveBeenCalled()
+  })
+
+  test('redirects to the landing URL when the status does not match', () => {
+    const h = makeH()
+    const application = makeApplication({ applicationStatus: 'Submitted' })
+    const result = redirectIfStatusNot(h, application, 'Started')
+    expect(h.redirect).toHaveBeenCalledWith(landingUrl(application))
+    expect(result).toEqual({ redirectedTo: landingUrl(application) })
   })
 })
 

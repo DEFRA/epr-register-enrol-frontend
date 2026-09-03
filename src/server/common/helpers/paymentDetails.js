@@ -1,4 +1,4 @@
-import { resolveNationFromPostcode, NATIONS } from './nation-from-postcode.js'
+import { NATIONS } from './nation-from-postcode.js'
 import { materialDisplayName } from './materialDisplayName.js'
 
 export const BANK_DETAILS_BY_NATION = {
@@ -65,11 +65,16 @@ export const TONNAGE_FEES = {
   Over10000: 3965
 }
 
+// RA-526: postcode-derived nation guessing was unreliable (missing/invalid
+// postcodes, and postcodes that genuinely straddle a nation border - see
+// nation-from-postcode.js's CH/SY prefixes). The backend now derives Nation
+// from the registration's own regulator and returns it as application.nation
+// for newly-seeded applications; when it's absent (e.g. an application seeded
+// before that backend change), default to England rather than guess from
+// postcode, matching the default-to-England convention used everywhere else
+// in this ecosystem when regulator data is missing.
 export function resolveNation(application) {
-  if (application.nation) {
-    return application.nation
-  }
-  return resolveNationFromPostcode(application.sitePostcode)
+  return application.nation || NATIONS.ENGLAND
 }
 
 export function buildPaymentReference(nation, organisationId, isExporter) {
