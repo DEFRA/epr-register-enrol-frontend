@@ -41,7 +41,10 @@ describe('dismissSessionNoticeController', () => {
 
   test('redirects back to the referrer for a no-JS form post', async () => {
     const h = makeH()
-    const request = { headers: {}, info: { referrer: '/accreditation/task-list' } }
+    const request = {
+      headers: {},
+      info: { referrer: '/accreditation/task-list' }
+    }
     await dismissSessionNoticeController(request, h)
     expect(h.redirect).toHaveBeenCalledWith('/accreditation/task-list')
   })
