@@ -18,6 +18,10 @@ import {
   popPostLoginRedirect
 } from '../common/helpers/auth/auth-redirect.js'
 import { isRegulatorAccessDisabled } from '../common/helpers/auth/regulator-access.js'
+import {
+  markLoginAndNotifyPrevious,
+  clearLogin
+} from '../common/helpers/auth/concurrent-login.js'
 
 function randomToken(bytes = 32) {
   return randomBytes(bytes)
@@ -221,6 +225,9 @@ export async function regulatorCallbackController(request, h) {
   // federated logout from Entra ID.
   request.yar.set('idToken', idToken)
   request.yar.set('user', user)
+  // RA-462: stamp this session and, if the identity already had one, arm the
+  // "you were already signed in elsewhere" note on this new session.
+  await markLoginAndNotifyPrevious(request, user.id)
   return h.redirect(redirectTo)
 }
 
@@ -327,6 +334,8 @@ export async function operatorCallbackController(request, h) {
   // Store the raw id_token so it can be passed as id_token_hint during logout.
   request.yar.set('idToken', idToken)
   request.yar.set('user', user)
+  // RA-462: see regulatorCallbackController.
+  await markLoginAndNotifyPrevious(request, user.id)
   return h.redirect(redirectTo)
 }
 
@@ -335,6 +344,13 @@ export async function operatorCallbackController(request, h) {
 export async function logoutController(request, h) {
   const user = request.yar.get('user')
   const idToken = request.yar.get('idToken')
+
+  // RA-462: drop this identity's registry entry so a later request from a
+  // still-live parallel session doesn't raise a "new sign-in" alert about a
+  // login that has since been signed out.
+  if (user?.id) {
+    await clearLogin(request, user.id)
+  }
 
   // Federated logout round-trips through this same route (Entra/Defra ID
   // redirect back to post_logout_redirect_uri below) — by then the session,
