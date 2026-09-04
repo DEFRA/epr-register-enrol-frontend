@@ -1003,5 +1003,16 @@
   "languageSwitcher": {
     "english": "English",
     "welsh": "Cymraeg"
+  },
+  "components": {
+    "sessionNotice": {
+      "title": "Important",
+      "alertHeading": "A new sign-in to your account was detected",
+      "alertBody": "Someone signed in to your account at %TIME%. If this was not you, sign out and contact support.",
+      "infoHeading": "You are signed in on another device",
+      "infoBody": "You were already signed in on another browser or device at %TIME%. Both sessions will stay signed in.",
+      "signOut": "Sign out",
+      "hide": "Hide"
+    }
   }
 }
