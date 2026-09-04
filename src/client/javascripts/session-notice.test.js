@@ -82,7 +82,7 @@ describe('initSessionNotice', () => {
   it('falls back to a full form submit if the fetch fails', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('offline'))
     const submitSpy = vi
-      .spyOn(HTMLFormElement.prototype, 'submit')
+      .spyOn(window.HTMLFormElement.prototype, 'submit')
       .mockImplementation(() => {})
 
     renderNotice('alert')
@@ -99,7 +99,9 @@ describe('initSessionNotice', () => {
     renderNotice('alert')
     initSessionNotice(document)
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    document.dispatchEvent(
+      new window.KeyboardEvent('keydown', { key: 'Escape' })
+    )
     await vi.waitFor(() =>
       expect(
         document.querySelector('[data-module="app-session-notice"]')
