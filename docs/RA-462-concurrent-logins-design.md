@@ -103,11 +103,19 @@ if (previous && previous.lastLoginSessionId !== request.yar.id) {
 
 ### 3.4 On every authenticated request — compute the notice
 
-New `onPostAuth` server extension, registered by the auth plugins
-(`auth-plugin.js` real-OAuth + `stub-auth-plugin.js` dev branch — the
-`test-bypass` scheme is intentionally excluded). Keeps
-`yarSessionAuthenticate` focused on auth; mirrors how `applicationHeader` is
-attached to `request.app` elsewhere.
+**As shipped:** a single global `onPostAuth` extension, registered by
+`concurrentLoginPlugin` in `server.js` (not per auth scheme — the plan below
+described per-plugin registration; that was consolidated). It runs for every
+request and returns early unless the feature flag is on, the request is
+authenticated, and `request.auth.credentials.id` is set. `NODE_ENV=test`
+(`test-bypass`) requests therefore reach it but no-op — nothing primes a yar
+session or the registry, so both `computeInfoNotice` and `computeAlertNotice`
+return `null`. Keeps `yarSessionAuthenticate` focused on auth; mirrors how
+`applicationHeader` is attached to `request.app` elsewhere.
+
+Precedence: **alert is computed before info** — a newer sign-in elsewhere is
+the security-relevant message and a session can hold both signals (it signed
+in while another session existed, then a third sign-in followed).
 
 ```js
 // onPostAuth

@@ -22,7 +22,10 @@ beforeEach(() => {
 
 describe('dismissSessionNoticeController', () => {
   test('always records the dismissal', async () => {
-    const request = { headers: {}, info: { referrer: '/task-list' } }
+    const request = {
+      headers: {},
+      info: { referrer: 'https://app.example/task-list', host: 'app.example' }
+    }
     await dismissSessionNoticeController(request, makeH())
     expect(dismissNotice).toHaveBeenCalledWith(request)
   })
@@ -39,19 +42,45 @@ describe('dismissSessionNoticeController', () => {
     expect(h.redirect).not.toHaveBeenCalled()
   })
 
-  test('redirects back to the referrer for a no-JS form post', async () => {
+  test('redirects back to the same-host referrer path for a no-JS form post', async () => {
     const h = makeH()
     const request = {
       headers: {},
-      info: { referrer: '/accreditation/task-list' }
+      info: {
+        referrer: 'https://app.example/accreditation/task-list?foo=1',
+        host: 'app.example'
+      }
     }
     await dismissSessionNoticeController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/accreditation/task-list')
+    expect(h.redirect).toHaveBeenCalledWith('/accreditation/task-list?foo=1')
+  })
+
+  test('ignores a cross-host referrer (no open redirect) and falls back to /', async () => {
+    const h = makeH()
+    const request = {
+      headers: {},
+      info: { referrer: 'https://evil.example/phish', host: 'app.example' }
+    }
+    await dismissSessionNoticeController(request, h)
+    expect(h.redirect).toHaveBeenCalledWith('/')
+  })
+
+  test('ignores a non-URL referrer and falls back to /', async () => {
+    const h = makeH()
+    const request = {
+      headers: {},
+      info: { referrer: 'not a url', host: 'app.example' }
+    }
+    await dismissSessionNoticeController(request, h)
+    expect(h.redirect).toHaveBeenCalledWith('/')
   })
 
   test('redirects to / when there is no referrer', async () => {
     const h = makeH()
-    await dismissSessionNoticeController({ headers: {}, info: {} }, h)
+    await dismissSessionNoticeController(
+      { headers: {}, info: { host: 'app.example' } },
+      h
+    )
     expect(h.redirect).toHaveBeenCalledWith('/')
   })
 })
