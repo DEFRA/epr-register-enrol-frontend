@@ -10,7 +10,7 @@ function renderNotice(variant = 'alert') {
            data-testid="session-notice"
            data-variant="${variant}"
            data-dismiss-url="/auth/session-notice/dismiss">
-        <div class="govuk-notification-banner"></div>
+        <div class="app-session-notice__banner"></div>
         <form class="app-session-notice__dismiss" method="post"
               action="/auth/session-notice/dismiss">
           <input type="hidden" name="crumb" value="crumb-123">
