@@ -14,7 +14,7 @@ function renderNotice(variant = 'alert') {
         <form class="app-session-notice__dismiss" method="post"
               action="/auth/session-notice/dismiss">
           <input type="hidden" name="crumb" value="crumb-123">
-          <button type="submit" data-testid="session-notice-dismiss">Hide</button>
+          <button data-testid="session-notice-dismiss">Hide</button>
         </form>
       </div>
     </div>
