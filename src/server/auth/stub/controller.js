@@ -11,6 +11,7 @@ import {
 } from '../../common/helpers/auth/auth-redirect.js'
 import { ROLE_REGULATOR_STANDARD } from '../../common/helpers/auth/auth-scopes.js'
 import { isRegulatorAccessDisabled as regulatorAccessDisabled } from '../../common/helpers/auth/regulator-access.js'
+import { markLoginAndNotifyPrevious } from '../../common/helpers/auth/concurrent-login.js'
 
 export const STUB_USERS = {
   regulator: [
@@ -132,5 +133,8 @@ export async function stubLoginPostController(request, h) {
   // reused post-login.
   request.yar.reset()
   request.yar.set('user', user)
+  // RA-462: mirror the real callbacks so the concurrent-login notice works
+  // under stub auth too (local dev + e2e).
+  await markLoginAndNotifyPrevious(request, user.id)
   return h.redirect(redirectTo)
 }

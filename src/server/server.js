@@ -14,6 +14,7 @@ import { requestTracing } from './common/helpers/request-tracing.js'
 import { requestLogger } from './common/helpers/logging/request-logger.js'
 import { sessionCache } from './common/helpers/session-cache/session-cache.js'
 import { getCacheEngine } from './common/helpers/session-cache/cache-engine.js'
+import { concurrentLoginPlugin } from './common/helpers/auth/concurrent-login.js'
 import { secureContext } from '@defra/hapi-secure-context'
 import { contentSecurityPolicy } from './common/helpers/content-security-policy.js'
 import { metrics } from '@defra/cdp-metrics'
@@ -87,6 +88,10 @@ export async function createServer() {
     // registered first.
     authToRegister,
     sessionCache,
+    // RA-462: needs the named session cache (provisioned above) and the auth
+    // scheme registered; its onPostAuth runs after authentication regardless
+    // of registration order.
+    concurrentLoginPlugin,
     basicAuthPlugin,
     i18nPlugin,
     nunjucksConfig,

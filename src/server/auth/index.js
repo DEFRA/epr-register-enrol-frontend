@@ -7,6 +7,7 @@ import {
   operatorCallbackController,
   logoutController
 } from './controller.js'
+import { dismissSessionNoticeController } from './session-notice/controller.js'
 import { stubAuthRoutes } from './stub/index.js'
 
 export const authRoutes = {
@@ -26,6 +27,14 @@ export const authRoutes = {
         path: '/auth/logout',
         options: { auth: false },
         handler: logoutController
+      })
+
+      // RA-462: dismiss the concurrent-login notice. Auth required (it acts on
+      // the caller's own session) and CSRF-protected like any other POST.
+      server.route({
+        method: 'POST',
+        path: '/auth/session-notice/dismiss',
+        handler: dismissSessionNoticeController
       })
 
       if (stubEnabled) {

@@ -10,6 +10,7 @@
 {% from "language-switcher/macro.njk" import languageSwitcher %}
 {% from "regulator-query-banner/macro.njk" import regulatorQueryBanner %}
 {% from "payment-details/macro.njk" import paymentDetailsSummary %}
+{% from "session-notice/macro.njk" import sessionNotice %}
 
 {% set mainClasses = "app-main-wrapper" %}
 
@@ -43,6 +44,7 @@
 {% endblock %}
 
 {% block beforeContent %}
+  {{ sessionNotice(concurrentLoginNotice, t, crumb) }}
   {% if breadcrumbs.length > 1 %}
     {{ govukBreadcrumbs({
       items: breadcrumbs

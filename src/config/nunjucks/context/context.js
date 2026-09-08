@@ -48,6 +48,9 @@ export function context(request) {
     t,
     user,
     userType: user?.userType ?? null,
-    applicationHeader: request.app?.applicationHeader ?? null
+    applicationHeader: request.app?.applicationHeader ?? null,
+    // RA-462: set by the concurrent-login onPostAuth extension when another
+    // sign-in for this identity has been detected.
+    concurrentLoginNotice: request.app?.concurrentLoginNotice ?? null
   }
 }

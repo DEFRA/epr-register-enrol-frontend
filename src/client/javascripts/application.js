@@ -9,6 +9,8 @@ import {
 } from 'govuk-frontend'
 import accessibleAutocomplete from 'accessible-autocomplete'
 
+import './session-notice.js'
+
 // Shared across the client-side validation below (Basel/OECD codes and the
 // sampling-plan file upload both build their own inline GDS error markup).
 const GOVUK_FORM_GROUP_SELECTOR = '.govuk-form-group'
