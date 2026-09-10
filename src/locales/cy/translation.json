@@ -587,7 +587,7 @@
         "fileTypes": "[Welsh] be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG file"
       },
       "validFrom": "[Welsh] Start date of evidence",
-      "validTo": "[Welsh] End date of evidence (optional)",
+      "validTo": "[Welsh] End date of evidence (where applicable)",
       "dateHint": "[Welsh] For example, 1 11 2026",
       "status": {
         "title": "[Welsh] Uploading file",
