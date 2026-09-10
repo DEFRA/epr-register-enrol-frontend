@@ -973,7 +973,7 @@ describe('#operatorAccreditationController', () => {
 
     expect(result).toContain('data-testid="page-heading"')
     expect(result).toContain('Reapply for accreditation')
-    expect(result).toContain('data-testid="application-header-site-name"')
+    expect(result).toContain('data-testid="application-header-operator-name"')
     expect(result).toContain('2 North Road, Addingrove, AA3 1AB')
   })
 
@@ -1233,8 +1233,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('data-testid="application-header"')
     expect(result).toContain('data-testid="application-header-operator-name"')
     expect(result).toContain('Delta Green Ltd')
-    expect(result).toContain('data-testid="application-header-material-type"')
-    expect(result).toContain('data-testid="application-header-site-name"')
+    expect(result).toContain(MATERIAL)
     expect(result).toContain('2 North Road, Addingrove, AA3 1AB')
   })
 
@@ -1706,7 +1705,7 @@ describe('#operatorAccreditationController', () => {
 
       expect(result).toContain('data-testid="page-heading"')
       expect(result).toContain('Reapply for accreditation')
-      expect(result).toContain('data-testid="application-header-site-name"')
+      expect(result).toContain('data-testid="application-header-operator-name"')
       expect(result).toContain('Exporter')
     })
 
@@ -1733,7 +1732,7 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="application-header-site-name"')
+      expect(result).toContain('data-testid="application-header-operator-name"')
       expect(result).toContain('Exporter')
       expect(result).not.toContain(
         'data-testid="current-accreditation-site-address"'
