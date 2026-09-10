@@ -589,7 +589,7 @@
         "fileTypes": "be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG file"
       },
       "validFrom": "Start date of evidence",
-      "validTo": "End date of evidence (optional)",
+      "validTo": "End date of evidence (where applicable)",
       "dateHint": "For example, 1 11 2026",
       "status": {
         "title": "Uploading file",
