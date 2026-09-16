@@ -8,6 +8,16 @@ import {
 } from '../../../common/helpers/addOverseasSiteSession.js'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
+// RA-468: the contact is a person's name, not a reference/account number —
+// reject any digit rather than allow-listing characters, so accented
+// letters, apostrophes (O'Brien) and hyphens (Anne-Marie) keep working.
+const NAME_CONTAINS_DIGIT_REGEX = /\d/
+// RA-468: digits, a leading/embedded "+" and the spacing/grouping
+// punctuation real international numbers are written with (this field asks
+// for one via autocomplete="tel", e.g. "+49 40 12345678") — no letters or
+// other text. The field itself stays optional; this only fires once
+// something has been entered.
+const PHONE_REGEX = /^[0-9+()\-\s]*$/
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a
@@ -109,6 +119,10 @@ export const addOrsSiteContactDetailsPostController = {
       errors.siteContactName = t(
         'pages.addOverseasSite.siteContactDetails.validation.nameRequired'
       )
+    } else if (NAME_CONTAINS_DIGIT_REGEX.test(fields.siteContactName)) {
+      errors.siteContactName = t(
+        'pages.addOverseasSite.siteContactDetails.validation.nameInvalid'
+      )
     }
     if (!fields.siteContactEmail) {
       errors.siteContactEmail = t(
@@ -117,6 +131,11 @@ export const addOrsSiteContactDetailsPostController = {
     } else if (!EMAIL_REGEX.test(fields.siteContactEmail)) {
       errors.siteContactEmail = t(
         'pages.addOverseasSite.siteContactDetails.validation.emailInvalid'
+      )
+    }
+    if (fields.siteContactPhone && !PHONE_REGEX.test(fields.siteContactPhone)) {
+      errors.siteContactPhone = t(
+        'pages.addOverseasSite.siteContactDetails.validation.phoneInvalid'
       )
     }
 

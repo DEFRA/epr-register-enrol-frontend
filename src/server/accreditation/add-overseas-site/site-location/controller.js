@@ -13,6 +13,10 @@ const MIN_LONGITUDE = -180
 const MAX_LONGITUDE = 180
 const MIN_COORDINATE_DECIMAL_PLACES = 4
 const COORDINATE_NUMBER_PATTERN = /^-?\d+(\.\d+)?$/
+// RA-468: a place name, not a free-text address line — letters plus the
+// punctuation real town/city names use (spaces, hyphens, apostrophes), e.g.
+// "Stratford-upon-Avon", "King's Lynn". No digits or other symbols.
+const TOWN_OR_CITY_REGEX = /^[\p{L}\s'-]+$/u
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -134,6 +138,10 @@ function validateRequiredFields(t, fields) {
   if (!fields.townOrCity) {
     errors.townOrCity = t(
       'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
+    )
+  } else if (!TOWN_OR_CITY_REGEX.test(fields.townOrCity)) {
+    errors.townOrCity = t(
+      'pages.addOverseasSite.siteLocation.validation.townOrCityInvalid'
     )
   }
   if (!fields.country) {

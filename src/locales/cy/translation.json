@@ -661,6 +661,7 @@
         "validation": {
           "addressLine1Required": "[Welsh] Enter address line 1",
           "townOrCityRequired": "[Welsh] Enter the town or city",
+          "townOrCityInvalid": "[Welsh] Town or city must only contain letters",
           "countryRequired": "[Welsh] Select a country",
           "coordinatesRequired": "[Welsh] Enter the coordinates",
           "coordinatesInvalid": "[Welsh] Enter coordinates in the correct format, for example 51.5034, -0.1275",
@@ -679,8 +680,10 @@
         "phoneLabel": "[Welsh] Phone number (optional)",
         "validation": {
           "nameRequired": "[Welsh] Enter the contact name",
+          "nameInvalid": "[Welsh] Contact name must not contain numbers",
           "emailRequired": "[Welsh] Enter the email address",
-          "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com"
+          "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
+          "phoneInvalid": "[Welsh] Enter a phone number without letters, like +44 20 7946 0958"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
