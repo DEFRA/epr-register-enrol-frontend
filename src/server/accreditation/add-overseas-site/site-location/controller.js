@@ -128,6 +128,19 @@ const COORDINATES_ERROR_KEYS = {
   invalid: 'coordinatesInvalid'
 }
 
+// RA-468: mirrors validateCoordinates below — sequential early returns
+// rather than if/else-if, so a third rule (after "required") slots in
+// without the branch nesting Sonar's complexity/S126 rules flag.
+function validateTownOrCity(t, townOrCity) {
+  if (!townOrCity) {
+    return t('pages.addOverseasSite.siteLocation.validation.townOrCityRequired')
+  }
+  if (!TOWN_OR_CITY_REGEX.test(townOrCity)) {
+    return t('pages.addOverseasSite.siteLocation.validation.townOrCityInvalid')
+  }
+  return null
+}
+
 function validateRequiredFields(t, fields) {
   const errors = {}
   if (!fields.addressLine1) {
@@ -135,14 +148,9 @@ function validateRequiredFields(t, fields) {
       'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
     )
   }
-  if (!fields.townOrCity) {
-    errors.townOrCity = t(
-      'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
-    )
-  } else if (!TOWN_OR_CITY_REGEX.test(fields.townOrCity)) {
-    errors.townOrCity = t(
-      'pages.addOverseasSite.siteLocation.validation.townOrCityInvalid'
-    )
+  const townOrCityError = validateTownOrCity(t, fields.townOrCity)
+  if (townOrCityError) {
+    errors.townOrCity = townOrCityError
   }
   if (!fields.country) {
     errors.country = t(
