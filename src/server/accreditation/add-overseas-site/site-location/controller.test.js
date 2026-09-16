@@ -343,8 +343,36 @@ describe('#addOverseasSiteSiteLocationController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain(
-        'Enter the latitude and longitude to at least 4 decimal places'
+        'Enter the latitude and longitude to between 4 and 10 decimal places'
       )
+    })
+
+    test('returns 400 when coordinates have more than 10 decimal places', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates=52.50339999999%2C+13.40339999999'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'Enter the latitude and longitude to between 4 and 10 decimal places'
+      )
+    })
+
+    test('accepts coordinates with exactly 10 decimal places and redirects', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=1+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates=52.5200000000%2C+13.4050000000'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(NEXT_URL)
     })
   })
 })
