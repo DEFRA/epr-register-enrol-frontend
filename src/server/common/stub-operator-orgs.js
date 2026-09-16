@@ -36,6 +36,23 @@ const PERF_TEST_STUB_ORGS = [
   })
 ]
 
+// RA-580-2: the regression-guard test orgs (each dedicated to one spec, per
+// its own comment in operator.page.js/FakeOrganisationPersistence.cs) all
+// share the same reExOrgId === defraOrgId shape. Table-driven rather than
+// one object literal per org, both to avoid SonarCloud's new-code
+// duplication check (adding org 50017 the long-hand way pushed eight
+// near-identical blocks over the threshold) and because it's the same
+// pattern PERF_TEST_STUB_ORGS below already uses for the same reason.
+const NUMBERED_TEST_ORGS = [
+  ['50011', 'APPROVED RECYCLING LIMITED'],
+  ['50012', 'Withdrawn Application Test Co'],
+  ['50013', 'Interim Site Test Exports Ltd'],
+  ['50014', 'ORS Fee Test Exports Ltd'],
+  ['50015', 'Exporter Accreditation Test Exports Ltd'],
+  ['50016', 'Section Lock Test Recycling Ltd'],
+  ['50017', 'Coordinate Precision Test Exports Ltd']
+].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
+
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).
 // The numeric-looking ids below are kept readable for the pure-stub orgs; the
 // ObjectId-shaped org uses a real-shaped UUID to exercise the ReEx-id != Defra-id
@@ -49,41 +66,7 @@ export const STUB_OPERATOR_ORGS = [
   { reExOrgId: '50006', defraOrgId: '50006', name: 'Stub Org 50006' },
   { reExOrgId: '50007', defraOrgId: '50007', name: 'Stub Org 50007' },
   { reExOrgId: '50008', defraOrgId: '50009', name: 'Stub Org 50008' },
-  {
-    reExOrgId: '50011',
-    defraOrgId: '50011',
-    name: 'APPROVED RECYCLING LIMITED'
-  },
-  {
-    reExOrgId: '50012',
-    defraOrgId: '50012',
-    name: 'Withdrawn Application Test Co'
-  },
-  {
-    reExOrgId: '50013',
-    defraOrgId: '50013',
-    name: 'Interim Site Test Exports Ltd'
-  },
-  {
-    reExOrgId: '50014',
-    defraOrgId: '50014',
-    name: 'ORS Fee Test Exports Ltd'
-  },
-  {
-    reExOrgId: '50015',
-    defraOrgId: '50015',
-    name: 'Exporter Accreditation Test Exports Ltd'
-  },
-  {
-    reExOrgId: '50016',
-    defraOrgId: '50016',
-    name: 'Section Lock Test Recycling Ltd'
-  },
-  {
-    reExOrgId: '50017',
-    defraOrgId: '50017',
-    name: 'Coordinate Precision Test Exports Ltd'
-  },
+  ...NUMBERED_TEST_ORGS,
   {
     reExOrgId: '6a2fcd74e16883c137d01188',
     defraOrgId: '67b9e8fc-2235-431a-a7b9-80663c81b6ff',
