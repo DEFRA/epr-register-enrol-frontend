@@ -1,6 +1,7 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
@@ -148,7 +149,7 @@ async function deleteEvidenceFile({
         uploads,
         t('pages.cyaEvidenceForSite.validation.cannotDeleteLastFile')
       )
-    ).code(400)
+    ).code(statusCodes.badRequest)
   }
 
   try {
@@ -174,7 +175,7 @@ async function deleteEvidenceFile({
         uploads,
         t('pages.cyaEvidenceForSite.validation.deleteError')
       )
-    ).code(500)
+    ).code(statusCodes.internalServerError)
   }
 
   return h.redirect(request.path)
@@ -205,7 +206,7 @@ export const cyaEvidenceForSitePostController = {
             [],
             t('pages.cyaEvidenceForSite.loadError')
           )
-        ).code(500)
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse

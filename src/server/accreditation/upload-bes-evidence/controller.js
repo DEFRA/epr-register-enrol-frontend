@@ -41,6 +41,8 @@ export const ALLOWED_MIME_TYPES = [
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
+const FETCH_ERROR_KEY = 'pages.uploadBesEvidence.validation.fetchError'
+
 export function validateFileExtension(filename) {
   if (!filename) {
     return false
@@ -200,10 +202,10 @@ export const uploadBesEvidenceGetController = {
             '',
             {},
             {
-              error: t('pages.uploadBesEvidence.validation.fetchError')
+              error: t(FETCH_ERROR_KEY)
             }
           )
-        ).code(500)
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
@@ -257,9 +259,9 @@ export const uploadBesEvidencePostController = {
         renderPage(
           h,
           buildViewData(t, applicationId, '', payload, {
-            error: t('pages.uploadBesEvidence.validation.fetchError')
+            error: t(FETCH_ERROR_KEY)
           })
-        ).code(500)
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
@@ -468,7 +470,7 @@ export const besEvidenceCdpStatusController = {
 // stays a separate action on the review screen (cya-evidence-for-overseas-
 // site) — this route only ever changes dates, reusing the same
 // parseDate/resolveBesEvidenceValidTo validation as a fresh upload.
-function buildAmendViewData(
+function buildAmendViewData({
   t,
   applicationId,
   siteId,
@@ -477,7 +479,7 @@ function buildAmendViewData(
   filename,
   payload,
   errors
-) {
+}) {
   return {
     pageTitle: t('pages.uploadBesEvidence.amend.title'),
     heading: `${t('pages.uploadBesEvidence.amend.heading')} ${siteName}`,
@@ -494,6 +496,41 @@ function buildAmendViewData(
     validToMonth: payload?.validToMonth ?? '',
     validToYear: payload?.validToYear ?? '',
     ...errors
+  }
+}
+
+// Extracted from besEvidenceAmendPostController (SonarCloud cognitive
+// complexity): validates both amend-form dates in one place and returns
+// either the resolved ISO dates or the render-ready field error, so the
+// handler doesn't nest two separate validation branches itself.
+function resolveAmendDates(payload, t) {
+  const validFrom = parseDate(
+    payload.validFromDay,
+    payload.validFromMonth,
+    payload.validFromYear
+  )
+  if (!validFrom) {
+    return {
+      errors: {
+        validFromError: t(
+          'pages.uploadBesEvidence.validation.validFromRequired'
+        )
+      }
+    }
+  }
+
+  const { validTo, error: validToError } = resolveBesEvidenceValidTo(
+    payload,
+    validFrom,
+    t
+  )
+  if (validToError) {
+    return { errors: { validToError } }
+  }
+
+  return {
+    besEvidenceValidFromDate: validFrom.toISOString(),
+    besEvidenceExpiryDate: validTo ? validTo.toISOString() : null
   }
 }
 
@@ -529,19 +566,19 @@ export const besEvidenceAmendGetController = {
       renderErrorResponse: () =>
         renderAmendPage(
           h,
-          buildAmendViewData(
+          buildAmendViewData({
             t,
             applicationId,
             siteId,
-            '',
+            siteName: '',
             fileId,
-            '',
-            {},
-            {
-              error: t('pages.uploadBesEvidence.validation.fetchError')
+            filename: '',
+            payload: {},
+            errors: {
+              error: t(FETCH_ERROR_KEY)
             }
-          )
-        ).code(500)
+          })
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
@@ -567,16 +604,16 @@ export const besEvidenceAmendGetController = {
 
     return renderAmendPage(
       h,
-      buildAmendViewData(
+      buildAmendViewData({
         t,
         applicationId,
         siteId,
         siteName,
         fileId,
-        upload.filename ?? '',
-        amendFormPayloadFromUpload(upload),
-        {}
-      )
+        filename: upload.filename ?? '',
+        payload: amendFormPayloadFromUpload(upload),
+        errors: {}
+      })
     )
   }
 }
@@ -598,19 +635,19 @@ export const besEvidenceAmendPostController = {
       renderErrorResponse: () =>
         renderAmendPage(
           h,
-          buildAmendViewData(
+          buildAmendViewData({
             t,
             applicationId,
             siteId,
-            '',
+            siteName: '',
             fileId,
-            '',
+            filename: '',
             payload,
-            {
-              error: t('pages.uploadBesEvidence.validation.fetchError')
+            errors: {
+              error: t(FETCH_ERROR_KEY)
             }
-          )
-        ).code(500)
+          })
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
@@ -632,51 +669,23 @@ export const besEvidenceAmendPostController = {
       return h.redirect(cyaEvidenceUrl(applicationId, siteId))
     }
     const siteName = site?.siteName ?? ''
+    const filename = upload.filename ?? ''
 
-    const validFrom = parseDate(
-      payload.validFromDay,
-      payload.validFromMonth,
-      payload.validFromYear
-    )
-    if (!validFrom) {
+    const dates = resolveAmendDates(payload, t)
+    if (dates.errors) {
       return renderAmendPage(
         h,
-        buildAmendViewData(
+        buildAmendViewData({
           t,
           applicationId,
           siteId,
           siteName,
           fileId,
-          upload.filename ?? '',
+          filename,
           payload,
-          {
-            validFromError: t(
-              'pages.uploadBesEvidence.validation.validFromRequired'
-            )
-          }
-        )
-      ).code(400)
-    }
-
-    const { validTo, error: validToError } = resolveBesEvidenceValidTo(
-      payload,
-      validFrom,
-      t
-    )
-    if (validToError) {
-      return renderAmendPage(
-        h,
-        buildAmendViewData(
-          t,
-          applicationId,
-          siteId,
-          siteName,
-          fileId,
-          upload.filename ?? '',
-          payload,
-          { validToError }
-        )
-      ).code(400)
+          errors: dates.errors
+        })
+      ).code(statusCodes.badRequest)
     }
 
     try {
@@ -686,8 +695,8 @@ export const besEvidenceAmendPostController = {
         siteIdInt,
         fileId,
         {
-          besEvidenceValidFromDate: validFrom.toISOString(),
-          besEvidenceExpiryDate: validTo ? validTo.toISOString() : null
+          besEvidenceValidFromDate: dates.besEvidenceValidFromDate,
+          besEvidenceExpiryDate: dates.besEvidenceExpiryDate
         }
       )
     } catch (err) {
@@ -702,17 +711,17 @@ export const besEvidenceAmendPostController = {
       }
       return renderAmendPage(
         h,
-        buildAmendViewData(
+        buildAmendViewData({
           t,
           applicationId,
           siteId,
           siteName,
           fileId,
-          upload.filename ?? '',
+          filename,
           payload,
-          { error: t('pages.uploadBesEvidence.validation.amendError') }
-        )
-      ).code(500)
+          errors: { error: t('pages.uploadBesEvidence.validation.amendError') }
+        })
+      ).code(statusCodes.internalServerError)
     }
 
     return h.redirect(cyaEvidenceUrl(applicationId, siteId))
