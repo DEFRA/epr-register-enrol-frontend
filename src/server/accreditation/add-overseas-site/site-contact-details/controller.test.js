@@ -317,5 +317,22 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
     })
+
+    // RA-468 review (masante): punctuation-only input matched the
+    // character allow-list with nothing to actually reject it.
+    test('returns 400 when phone number is only punctuation', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=----'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'Enter a phone number without letters, like +44 20 7946 0958'
+      )
+    })
   })
 })

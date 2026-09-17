@@ -270,6 +270,21 @@ describe('#addOverseasSiteSiteLocationController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
     })
 
+    // RA-468 review (masante): punctuation-only input matched the
+    // character allow-list with nothing to actually reject it.
+    test('returns 400 when townOrCity is only punctuation', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          "addressLine1=123+Main+St&addressLine2=&townOrCity=-'-&stateOrRegion=&postcode=&country=Germany&coordinates="
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Town or city must only contain letters')
+    })
+
     test('returns 400 with error when country is empty', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
