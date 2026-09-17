@@ -11,6 +11,7 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -116,6 +117,26 @@ function uploadMoreUrl(applicationId, siteId) {
 
 function renderPage(h, viewData) {
   return h.view('accreditation/upload-bes-evidence/index', viewData)
+}
+
+// RA-571: sequential early returns rather than three separate inline
+// if-blocks each rendering the page — the duplicate-filename rule
+// (AC01-AC04) is a fourth check on the same file, and one function keeps
+// the handler itself a plain sequence of guards.
+function validateBesEvidenceFile(t, { filename, fileSize, application }) {
+  if (!filename) {
+    return t('pages.uploadBesEvidence.validation.noFile')
+  }
+  if (!validateFileExtension(filename)) {
+    return t('pages.uploadBesEvidence.validation.invalidType')
+  }
+  if (fileSize > MAX_FILE_BYTES) {
+    return t('pages.uploadBesEvidence.validation.fileTooLarge')
+  }
+  if (isDuplicateFilename(filename, application)) {
+    return t('pages.uploadBesEvidence.validation.duplicateFilename')
+  }
+  return null
 }
 
 function buildViewData(
@@ -258,30 +279,15 @@ export const uploadBesEvidencePostController = {
       uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
     const fileSize = uploadedFile?.payload?.length ?? 0
 
-    if (!filename) {
+    const fileError = validateBesEvidenceFile(t, {
+      filename,
+      fileSize,
+      application
+    })
+    if (fileError) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteName, payload, {
-          fileError: t('pages.uploadBesEvidence.validation.noFile')
-        })
-      ).code(400)
-    }
-
-    if (!validateFileExtension(filename)) {
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, siteName, payload, {
-          fileError: t('pages.uploadBesEvidence.validation.invalidType')
-        })
-      ).code(400)
-    }
-
-    if (fileSize > MAX_FILE_BYTES) {
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, siteName, payload, {
-          fileError: t('pages.uploadBesEvidence.validation.fileTooLarge')
-        })
+        buildViewData(t, applicationId, siteName, payload, { fileError })
       ).code(400)
     }
 
