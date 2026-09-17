@@ -12,6 +12,8 @@ const MAX_LATITUDE = 90
 const MIN_LONGITUDE = -180
 const MAX_LONGITUDE = 180
 const MIN_COORDINATE_DECIMAL_PLACES = 4
+// RA-580-2: new ceiling — 4 dp remains the required minimum accuracy, 10 dp is the max.
+const MAX_COORDINATE_DECIMAL_PLACES = 10
 const COORDINATE_NUMBER_PATTERN = /^-?\d+(\.\d+)?$/
 // RA-468: a place name, not a free-text address line — letters plus the
 // punctuation real town/city names use (spaces, hyphens, apostrophes), e.g.
@@ -74,11 +76,18 @@ function coordinateRangeError(lat, lng) {
   return null
 }
 
+function isWithinAllowedPrecision(value) {
+  const places = decimalPlaces(value)
+  return (
+    places >= MIN_COORDINATE_DECIMAL_PLACES &&
+    places <= MAX_COORDINATE_DECIMAL_PLACES
+  )
+}
+
 function coordinatePrecisionError(latRaw, lngRaw) {
-  const hasSufficientPrecision =
-    decimalPlaces(latRaw) >= MIN_COORDINATE_DECIMAL_PLACES &&
-    decimalPlaces(lngRaw) >= MIN_COORDINATE_DECIMAL_PLACES
-  return hasSufficientPrecision ? null : 'precision'
+  const hasAllowedPrecision =
+    isWithinAllowedPrecision(latRaw) && isWithinAllowedPrecision(lngRaw)
+  return hasAllowedPrecision ? null : 'precision'
 }
 
 function parseCoordinates(raw) {
