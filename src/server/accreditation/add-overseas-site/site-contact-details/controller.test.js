@@ -242,5 +242,97 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('Enter an email address in the correct format')
     })
+
+    // RA-468
+    test('returns 400 when contact name contains a number', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'siteContactName=Jane2Smith&siteContactEmail=jane%40example.com&siteContactPhone='
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Contact name must not contain numbers')
+    })
+
+    // RA-468: apostrophes and hyphens are real names, not "text" the field
+    // should reject — only digits do.
+    test('accepts a contact name with an apostrophe and a hyphen', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          "siteContactName=Anne-Marie+O'Brien&siteContactEmail=jane%40example.com&siteContactPhone="
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    // RA-468
+    test('returns 400 when phone number contains letters', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=call+me'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain(
+        'Enter a phone number without letters, like +44 20 7946 0958'
+      )
+    })
+
+    // RA-468: the field asks for an international number via
+    // autocomplete="tel" — the leading "+" must keep working.
+    test('accepts a phone number with a leading +', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=%2B441234567890'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    // RA-468: real international numbers are grouped with spaces (e.g.
+    // "+49 40 12345678", the shape journey fixtures already submit here) —
+    // "no text" must not mean "no spaces".
+    test('accepts a phone number grouped with spaces', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=%2B49+40+12345678'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    // RA-468 review (masante): punctuation-only input matched the
+    // character allow-list with nothing to actually reject it.
+    test('returns 400 when phone number is only punctuation', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=----'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'Enter a phone number without letters, like +44 20 7946 0958'
+      )
+    })
   })
 })

@@ -4,13 +4,14 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      {% if errors and (errors.siteContactName or errors.siteContactEmail) %}
+      {% if errors and (errors.siteContactName or errors.siteContactEmail or errors.siteContactPhone) %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
           <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
           <div class="govuk-error-summary__body">
             <ul class="govuk-list govuk-error-summary__list">
               {% if errors.siteContactName %}<li><a href="#contact-name">{{ errors.siteContactName }}</a></li>{% endif %}
               {% if errors.siteContactEmail %}<li><a href="#contact-email">{{ errors.siteContactEmail }}</a></li>{% endif %}
+              {% if errors.siteContactPhone %}<li><a href="#contact-phone">{{ errors.siteContactPhone }}</a></li>{% endif %}
             </ul>
           </div>
         </div>
@@ -46,9 +47,12 @@
                  data-testid="contact-email-input">
         </div>
 
-        <div class="govuk-form-group">
+        <div class="govuk-form-group{% if errors.siteContactPhone %} govuk-form-group--error{% endif %}">
           <label class="govuk-label" for="contact-phone">{{ t('pages.addOverseasSite.siteContactDetails.phoneLabel') }}</label>
-          <input class="govuk-input govuk-input--width-20"
+          {% if errors.siteContactPhone %}
+            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ errors.siteContactPhone }}</p>
+          {% endif %}
+          <input class="govuk-input govuk-input--width-20{% if errors.siteContactPhone %} govuk-input--error{% endif %}"
                  id="contact-phone" name="siteContactPhone" type="tel"
                  value="{{ fields.siteContactPhone }}"
                  autocomplete="tel"
