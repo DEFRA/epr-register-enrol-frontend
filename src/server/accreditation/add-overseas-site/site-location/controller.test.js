@@ -242,6 +242,49 @@ describe('#addOverseasSiteSiteLocationController', () => {
       expect(result).toContain('Enter the town or city')
     })
 
+    // RA-468
+    test('returns 400 when townOrCity contains a number', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin2&stateOrRegion=&postcode=&country=Germany&coordinates='
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Town or city must only contain letters')
+    })
+
+    // RA-468: real town/city names use spaces and hyphens — "should only
+    // allow text" rejects digits and symbols, not those.
+    test('accepts a townOrCity with a space and a hyphen', async () => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=123+Main+St&addressLine2=&townOrCity=Stratford-upon-Avon&stateOrRegion=&postcode=&country=Germany&coordinates=52.5200%2C+13.4050'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    // RA-468 review (masante): punctuation-only input matched the
+    // character allow-list with nothing to actually reject it.
+    test('returns 400 when townOrCity is only punctuation', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          "addressLine1=123+Main+St&addressLine2=&townOrCity=-'-&stateOrRegion=&postcode=&country=Germany&coordinates="
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Town or city must only contain letters')
+    })
+
     test('returns 400 with error when country is empty', async () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -343,8 +386,36 @@ describe('#addOverseasSiteSiteLocationController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain(
-        'Enter the latitude and longitude to at least 4 decimal places'
+        'Enter the latitude and longitude to between 4 and 10 decimal places'
       )
+    })
+
+    test('returns 400 when coordinates have more than 10 decimal places', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=123+Main+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates=52.50339999999%2C+13.40339999999'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'Enter the latitude and longitude to between 4 and 10 decimal places'
+      )
+    })
+
+    test('accepts coordinates with exactly 10 decimal places and redirects', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload:
+          'addressLine1=1+St&addressLine2=&townOrCity=Berlin&stateOrRegion=&postcode=&country=Germany&coordinates=52.5200000000%2C+13.4050000000'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(NEXT_URL)
     })
   })
 })

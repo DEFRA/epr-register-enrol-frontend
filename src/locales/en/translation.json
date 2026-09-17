@@ -665,12 +665,13 @@
         "validation": {
           "addressLine1Required": "Enter address line 1",
           "townOrCityRequired": "Enter the town or city",
+          "townOrCityInvalid": "Town or city must only contain letters",
           "countryRequired": "Select a country",
           "coordinatesRequired": "Enter the coordinates",
           "coordinatesInvalid": "Enter coordinates in the correct format, for example 51.5034, -0.1275",
           "coordinatesLatRange": "Latitude must be between -90 and 90",
           "coordinatesLngRange": "Longitude must be between -180 and 180",
-          "coordinatesPrecision": "Enter the latitude and longitude to at least 4 decimal places, for example 51.5034, -0.1275"
+          "coordinatesPrecision": "Enter the latitude and longitude to between 4 and 10 decimal places, for example 51.5034, -0.1275"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"
@@ -683,8 +684,10 @@
         "phoneLabel": "Phone number (optional)",
         "validation": {
           "nameRequired": "Enter the contact name",
+          "nameInvalid": "Contact name must not contain numbers",
           "emailRequired": "Enter the email address",
-          "emailInvalid": "Enter an email address in the correct format, like name@example.com"
+          "emailInvalid": "Enter an email address in the correct format, like name@example.com",
+          "phoneInvalid": "Enter a phone number without letters, like +44 20 7946 0958"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"
