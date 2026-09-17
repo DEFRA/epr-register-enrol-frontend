@@ -2,6 +2,8 @@ import {
   uploadBesEvidenceGetController,
   uploadBesEvidencePostController,
   besEvidenceCdpStatusController,
+  besEvidenceAmendGetController,
+  besEvidenceAmendPostController,
   BES_EVIDENCE_UPLOAD_SESSION_KEY
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
@@ -62,6 +64,30 @@ export const uploadBesEvidence = {
           path: '/{language}/accreditation/upload-bes-evidence/{applicationId}/{siteId}/status',
           options: statusOptions,
           ...besEvidenceCdpStatusController
+        },
+        {
+          method: 'GET',
+          path: '/accreditation/upload-bes-evidence/{applicationId}/{siteId}/amend/{fileId}',
+          options: requireOperator,
+          ...besEvidenceAmendGetController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/upload-bes-evidence/{applicationId}/{siteId}/amend/{fileId}',
+          options: requireOperator,
+          ...besEvidenceAmendGetController
+        },
+        {
+          method: 'POST',
+          path: '/accreditation/upload-bes-evidence/{applicationId}/{siteId}/amend/{fileId}',
+          options: requireOperator,
+          ...besEvidenceAmendPostController
+        },
+        {
+          method: 'POST',
+          path: '/{language}/accreditation/upload-bes-evidence/{applicationId}/{siteId}/amend/{fileId}',
+          options: requireOperator,
+          ...besEvidenceAmendPostController
         }
       ])
     }

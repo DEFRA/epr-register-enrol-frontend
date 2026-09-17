@@ -4,6 +4,7 @@ import {
   expect,
   beforeAll,
   afterAll,
+  afterEach,
   vi,
   beforeEach
 } from 'vitest'
@@ -218,6 +219,42 @@ describe('#cyaEvidenceForSiteController', () => {
       expect(result).toContain('data-testid="no-files-message"')
     })
 
+    test('renders amend link and delete button for each file when not read-only', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="amend-file-file-bes-001"')
+      expect(result).toContain(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`
+      )
+      expect(result).toContain('data-testid="delete-file-button-file-bes-001"')
+    })
+
+    test('does not render amend link or delete button when read-only', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          besEvidence: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="amend-file-file-bes-001"')
+      expect(result).not.toContain(
+        'data-testid="delete-file-button-file-bes-001"'
+      )
+    })
+
     test('renders confirm button', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -281,6 +318,8 @@ describe('#cyaEvidenceForSiteController', () => {
 
   describe('POST /accreditation/cya-evidence-for-overseas-site/{applicationId}/{siteId}', () => {
     test('confirm redirects to upload-evidence-for-overseas-site list', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
@@ -291,6 +330,159 @@ describe('#cyaEvidenceForSiteController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toContain(
         `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
+      )
+    })
+
+    test('returns 500 when API fetch fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders,
+        payload: {}
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page without confirming when application is locked (%s) and BES evidence section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders,
+          payload: {}
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
+        )
+      }
+    )
+
+    describe('action=deleteFile', () => {
+      afterEach(() => {
+        vi.useRealTimers()
+      })
+
+      function makeApplicationWithFiles(fileIds) {
+        return makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                country: 'Germany',
+                besEvidence: {
+                  besEvidenceUploads: fileIds.map((fileId) => ({
+                    fileId,
+                    filename: `${fileId}.pdf`,
+                    besEvidenceValidFromDate: '2026-01-01T00:00:00Z',
+                    besEvidenceExpiryDate: null
+                  }))
+                }
+              }
+            ]
+          }
+        })
+      }
+
+      test('deletes the file and redirects back to this page when more than one file remains', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplicationWithFiles(['file-1', 'file-2'])
+        )
+        const deleteSpy = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders,
+          payload: { action: 'deleteFile', fileId: 'file-1' }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
+        )
+        expect(deleteSpy).toHaveBeenCalledWith(
+          expect.stringContaining(`/files/file-1`)
+        )
+      })
+
+      test('blocks deleting the only remaining file', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplicationWithFiles(['file-1'])
+        )
+        const deleteSpy = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+
+        const { result, statusCode } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders,
+          payload: { action: 'deleteFile', fileId: 'file-1' }
+        })
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(result).toContain('data-testid="error-summary"')
+        expect(result).toContain('At least one BES evidence file is required')
+        expect(deleteSpy).not.toHaveBeenCalled()
+      })
+
+      test('returns 500 when delete API fails on every retry', async () => {
+        vi.useFakeTimers()
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplicationWithFiles(['file-1', 'file-2'])
+        )
+        vi.spyOn(apiClient, 'delete').mockRejectedValue(new Error('API down'))
+
+        const injectPromise = server.inject({
+          method: 'POST',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders,
+          payload: { action: 'deleteFile', fileId: 'file-1' }
+        })
+        await vi.advanceTimersByTimeAsync(15000)
+        const { result, statusCode } = await injectPromise
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(result).toContain('data-testid="error-summary"')
+      })
+
+      test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+        'redirects back to this page without deleting when application is locked (%s) and BES evidence section is not Queried',
+        async (applicationStatus) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue({
+            ...makeApplicationWithFiles(['file-1', 'file-2']),
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+          const deleteSpy = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+
+          const { statusCode, headers } = await server.inject({
+            method: 'POST',
+            url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+            headers: operatorHeaders,
+            payload: { action: 'deleteFile', fileId: 'file-1' }
+          })
+
+          expect(statusCode).toBe(statusCodes.redirect)
+          expect(headers.location).toBe(
+            `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
+          )
+          expect(deleteSpy).not.toHaveBeenCalled()
+        }
       )
     })
   })

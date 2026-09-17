@@ -597,6 +597,12 @@
         "message": "Your file is being scanned for viruses. This may take a few seconds.",
         "doNotClose": "Do not close this page."
       },
+      "amend": {
+        "title": "Amend evidence dates",
+        "heading": "Amend evidence dates for",
+        "saveButton": "Save changes",
+        "cancelLink": "Cancel"
+      },
       "validation": {
         "noFile": "Select a file to upload",
         "invalidType": "The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",
@@ -605,7 +611,8 @@
         "validToBeforeFrom": "The end date must be after the start date",
         "invalidDate": "Enter a valid date",
         "fetchError": "Sorry, we were unable to load the site details. Please try again.",
-        "uploadError": "Sorry, we were unable to upload the file. Please try again."
+        "uploadError": "Sorry, we were unable to upload the file. Please try again.",
+        "amendError": "Sorry, we were unable to save the changes. Please try again."
       }
     },
     "uploadMoreEvidence": {
@@ -627,8 +634,14 @@
       "startDate": "Start date of evidence",
       "endDate": "End date of evidence",
       "confirmButton": "Confirm",
+      "amend": "Amend",
+      "deleteFile": "Delete",
       "noFiles": "No BES evidence files have been uploaded for this site.",
-      "loadError": "Sorry, we were unable to load the site details. Please try again."
+      "loadError": "Sorry, we were unable to load the site details. Please try again.",
+      "validation": {
+        "cannotDeleteLastFile": "You cannot delete this file. At least one BES evidence file is required for this site.",
+        "deleteError": "Sorry, there was a problem deleting the file. Please try again."
+      }
     },
     "checkSiteConditions": {
       "title": "Check the site fulfils the conditions",

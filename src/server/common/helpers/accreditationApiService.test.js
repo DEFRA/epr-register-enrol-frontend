@@ -539,6 +539,27 @@ describe('accreditationApiService', () => {
     })
   })
 
+  describe('updateBesEvidenceFile', () => {
+    test('calls PATCH BES evidence file endpoint for a site', async () => {
+      apiClient.patch.mockResolvedValue({})
+      const body = {
+        besEvidenceValidFromDate: '2026-01-01T00:00:00Z',
+        besEvidenceExpiryDate: null
+      }
+      await accreditationApiService.updateBesEvidenceFile(
+        ORG_ID,
+        APP_ID,
+        900001,
+        'bes-file-1',
+        body
+      )
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/bes-evidence/files/bes-file-1`,
+        body
+      )
+    })
+  })
+
   describe('patchBesEvidenceSection', () => {
     test('calls PATCH bes-evidence endpoint for section status', async () => {
       apiClient.patch.mockResolvedValue({})
