@@ -17,6 +17,7 @@ import {
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -121,6 +122,25 @@ function renderPage(h, viewData) {
 
 function renderResultsPage(h, viewData) {
   return h.view('accreditation/sampling-plan-upload/results', viewData)
+}
+
+// RA-571: sequential early returns rather than a nested ternary, so the
+// duplicate-filename rule (AC01-AC04) slots in without the branch nesting
+// Sonar's complexity/S3358 rules flag.
+function validateUploadedFile(t, { filename, fileSize, application }) {
+  if (!filename) {
+    return t('pages.samplingPlanUpload.validation.noFile')
+  }
+  if (!validateFileExtension(filename)) {
+    return t('pages.samplingPlanUpload.validation.invalidType')
+  }
+  if (fileSize > MAX_FILE_BYTES) {
+    return t('pages.samplingPlanUpload.validation.fileTooLarge')
+  }
+  if (isDuplicateFilename(filename, application)) {
+    return t('pages.samplingPlanUpload.validation.duplicateFilename')
+  }
+  return null
 }
 
 export const samplingPlanUploadGetController = {
@@ -272,13 +292,11 @@ export const samplingPlanUploadPostController = {
       ? t('pages.samplingPlanUpload.validation.noDocumentType')
       : null
 
-    const fileError = !filename
-      ? t('pages.samplingPlanUpload.validation.noFile')
-      : !validateFileExtension(filename)
-        ? t('pages.samplingPlanUpload.validation.invalidType')
-        : fileSize > MAX_FILE_BYTES
-          ? t('pages.samplingPlanUpload.validation.fileTooLarge')
-          : null
+    const fileError = validateUploadedFile(t, {
+      filename,
+      fileSize,
+      application
+    })
 
     if (documentTypeError || fileError) {
       return renderPage(
