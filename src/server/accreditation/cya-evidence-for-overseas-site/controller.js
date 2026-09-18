@@ -14,6 +14,14 @@ function evidenceListUrl(applicationId) {
   return `/accreditation/upload-evidence-for-overseas-site/${applicationId}`
 }
 
+// RA-570: lets the operator add a further file from the review screen
+// itself, rather than only being able to amend/delete what's already
+// there - the raw upload form already supports uploading onto a site
+// that has existing evidence.
+function addFileUrl(applicationId, siteId) {
+  return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
+}
+
 function renderPage(h, viewData) {
   return h.view('accreditation/cya-evidence-for-overseas-site/index', viewData)
 }
@@ -59,7 +67,8 @@ function buildViewData(
     siteName,
     error,
     readOnly,
-    isQueriedApplication
+    isQueriedApplication,
+    addFileUrl: addFileUrl(applicationId, siteId)
   }
 }
 

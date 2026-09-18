@@ -68,7 +68,17 @@ export function createApiClient() {
         throw error
       }
 
-      return await response.json()
+      try {
+        return await response.json()
+      } catch (parseError) {
+        // A successful DELETE (and some other endpoints) can return 200/204
+        // with no body at all - response.json() throws SyntaxError on an
+        // empty body, which isn't a real failure. Anything else re-throws.
+        if (parseError instanceof SyntaxError) {
+          return undefined
+        }
+        throw parseError
+      }
     } catch (error) {
       if (error.name === 'AbortError' || error.name === 'TimeoutError') {
         throw new Error(`API request timeout after ${effectiveTimeout}ms`)

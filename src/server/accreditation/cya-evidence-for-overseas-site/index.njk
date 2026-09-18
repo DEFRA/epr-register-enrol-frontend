@@ -78,6 +78,12 @@
       {% endif %}
 
       {% if not readOnly %}
+        <p class="govuk-body">
+          <a class="govuk-link" href="{{ addFileUrl }}" data-testid="add-file-link">
+            {{ t('pages.cyaEvidenceForSite.addFile') }}
+          </a>
+        </p>
+
         <form method="post" novalidate data-testid="confirm-form">
           <input type="hidden" name="crumb" value="{{ crumb }}">
           <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">

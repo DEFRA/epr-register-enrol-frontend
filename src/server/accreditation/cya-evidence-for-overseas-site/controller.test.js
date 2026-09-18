@@ -255,6 +255,38 @@ describe('#cyaEvidenceForSiteController', () => {
       )
     })
 
+    test('renders a link to add another file when not read-only', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-testid="add-file-link"')
+      expect(result).toContain(
+        `href="/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}"`
+      )
+    })
+
+    test('does not render the add-file link when read-only', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Submitted',
+          besEvidence: { sectionStatus: 'Completed' }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain('data-testid="add-file-link"')
+    })
+
     test('renders confirm button', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
