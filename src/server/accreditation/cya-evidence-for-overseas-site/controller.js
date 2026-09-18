@@ -153,9 +153,10 @@ async function deleteEvidenceFile({
   }
 
   try {
-    await accreditationApiService.deleteFile(
+    await accreditationApiService.deleteBesEvidenceFile(
       organisationId,
       applicationId,
+      siteId,
       fileId
     )
   } catch (err) {

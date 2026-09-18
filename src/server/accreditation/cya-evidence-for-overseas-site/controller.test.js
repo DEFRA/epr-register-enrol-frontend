@@ -417,7 +417,9 @@ describe('#cyaEvidenceForSiteController', () => {
           `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
         )
         expect(deleteSpy).toHaveBeenCalledWith(
-          expect.stringContaining(`/files/file-1`)
+          expect.stringContaining(
+            `/overseas-sites/${SITE_ID}/bes-evidence/files/file-1`
+          )
         )
       })
 
