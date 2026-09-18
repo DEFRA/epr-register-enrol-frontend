@@ -260,7 +260,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain(
         `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/900001`
       )
-      expect(result).toContain('View or amend evidence')
+      expect(result).toContain('Amend evidence')
     })
 
     test('non-EU non-OECD site without evidence has an upload link', async () => {
