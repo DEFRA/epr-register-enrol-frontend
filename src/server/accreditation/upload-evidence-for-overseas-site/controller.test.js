@@ -247,7 +247,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain('Not uploaded')
     })
 
-    test('EU site still has an upload link, since evidence is optional but allowed', async () => {
+    test('site with existing evidence links to the review page to view/amend/delete it', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -258,11 +258,12 @@ describe('#uploadEvidenceListController', () => {
 
       expect(result).toContain('data-testid="upload-link-900001"')
       expect(result).toContain(
-        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/900001`
+        `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/900001`
       )
+      expect(result).toContain('View or amend evidence')
     })
 
-    test('non-EU non-OECD site has upload link', async () => {
+    test('non-EU non-OECD site without evidence has an upload link', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -275,6 +276,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).toContain(
         `/accreditation/upload-bes-evidence/${APPLICATION_ID}/900002`
       )
+      expect(result).toContain('Upload evidence')
     })
 
     test('shows no-sites message when overseasSites.sites is empty', async () => {

@@ -563,6 +563,7 @@
       "saveError": "Sorry, we were unable to complete the BES evidence section. Please try again.",
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "uploadLink": "Upload evidence",
+      "viewLink": "View or amend evidence",
       "evidenceUploaded": "Uploaded",
       "evidenceNotUploaded": "Not uploaded",
       "notRequiredEu": "Not required for application",
