@@ -2,10 +2,12 @@ import {
   uploadBesEvidenceGetController,
   uploadBesEvidencePostController,
   besEvidenceCdpStatusController,
-  besEvidenceAmendGetController,
-  besEvidenceAmendPostController,
   BES_EVIDENCE_UPLOAD_SESSION_KEY
 } from './controller.js'
+import {
+  besEvidenceAmendGetController,
+  besEvidenceAmendPostController
+} from './amend-controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
 

@@ -41,7 +41,7 @@ export const ALLOWED_MIME_TYPES = [
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
-const FETCH_ERROR_KEY = 'pages.uploadBesEvidence.validation.fetchError'
+export const FETCH_ERROR_KEY = 'pages.uploadBesEvidence.validation.fetchError'
 
 export function validateFileExtension(filename) {
   if (!filename) {
@@ -78,7 +78,7 @@ export function isDateBlank(day, month, year) {
 // block nested inside an `if (!validToBlank)`, which is exactly the kind of
 // nesting cognitive complexity penalises hardest. Flattened into its own
 // function so the handler gets back a plain { validTo, error } result.
-function resolveBesEvidenceValidTo(payload, validFrom, t) {
+export function resolveBesEvidenceValidTo(payload, validFrom, t) {
   const validToBlank = isDateBlank(
     payload.validToDay,
     payload.validToMonth,
@@ -109,7 +109,7 @@ function resolveBesEvidenceValidTo(payload, validFrom, t) {
   return { validTo, error: null }
 }
 
-function taskListUrl(applicationId) {
+export function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
@@ -117,41 +117,12 @@ function uploadMoreUrl(applicationId, siteId) {
   return `/accreditation/upload-more-evidence/${applicationId}/${siteId}`
 }
 
-function cyaEvidenceUrl(applicationId, siteId) {
+export function cyaEvidenceUrl(applicationId, siteId) {
   return `/accreditation/cya-evidence-for-overseas-site/${applicationId}/${siteId}`
 }
 
 function renderPage(h, viewData) {
   return h.view('accreditation/upload-bes-evidence/index', viewData)
-}
-
-function renderAmendPage(h, viewData) {
-  return h.view('accreditation/upload-bes-evidence/amend', viewData)
-}
-
-// RA-570: splits an ISO date string back into the day/month/year fields the
-// amend form (and parseDate/isDateBlank above) expect, so an existing file's
-// dates can be pre-filled for editing.
-function isoToDateParts(isoString) {
-  if (!isoString) {
-    return { day: '', month: '', year: '' }
-  }
-  const date = new Date(isoString)
-  return {
-    day: String(date.getDate()),
-    month: String(date.getMonth() + 1),
-    year: String(date.getFullYear())
-  }
-}
-
-function findBesEvidenceFile(application, siteIdInt, fileId) {
-  const site = application.overseasSites?.sites?.find(
-    (s) => s.siteId === siteIdInt
-  )
-  const upload = site?.besEvidence?.besEvidenceUploads?.find(
-    (u) => u.fileId === fileId
-  )
-  return { site, upload }
 }
 
 function buildViewData(
@@ -187,7 +158,7 @@ export const uploadBesEvidenceGetController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId, siteId } = request.params
-    const siteIdInt = parseInt(siteId, 10)
+    const siteIdInt = Number.parseInt(siteId, 10)
 
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
@@ -463,267 +434,5 @@ export const besEvidenceCdpStatusController = {
     }
 
     return h.redirect(uploadMoreUrl(applicationId, siteId))
-  }
-}
-
-// RA-570: amend the dates on an already-uploaded BES evidence file. Deletion
-// stays a separate action on the review screen (cya-evidence-for-overseas-
-// site) — this route only ever changes dates, reusing the same
-// parseDate/resolveBesEvidenceValidTo validation as a fresh upload.
-function buildAmendViewData({
-  t,
-  applicationId,
-  siteId,
-  siteName,
-  fileId,
-  filename,
-  payload,
-  errors
-}) {
-  return {
-    pageTitle: t('pages.uploadBesEvidence.amend.title'),
-    heading: `${t('pages.uploadBesEvidence.amend.heading')} ${siteName}`,
-    backLink: cyaEvidenceUrl(applicationId, siteId),
-    taskListLink: taskListUrl(applicationId),
-    cancelLink: cyaEvidenceUrl(applicationId, siteId),
-    siteName,
-    fileId,
-    filename,
-    validFromDay: payload?.validFromDay ?? '',
-    validFromMonth: payload?.validFromMonth ?? '',
-    validFromYear: payload?.validFromYear ?? '',
-    validToDay: payload?.validToDay ?? '',
-    validToMonth: payload?.validToMonth ?? '',
-    validToYear: payload?.validToYear ?? '',
-    ...errors
-  }
-}
-
-// Extracted from besEvidenceAmendPostController (SonarCloud cognitive
-// complexity): validates both amend-form dates in one place and returns
-// either the resolved ISO dates or the render-ready field error, so the
-// handler doesn't nest two separate validation branches itself.
-function resolveAmendDates(payload, t) {
-  const validFrom = parseDate(
-    payload.validFromDay,
-    payload.validFromMonth,
-    payload.validFromYear
-  )
-  if (!validFrom) {
-    return {
-      errors: {
-        validFromError: t(
-          'pages.uploadBesEvidence.validation.validFromRequired'
-        )
-      }
-    }
-  }
-
-  const { validTo, error: validToError } = resolveBesEvidenceValidTo(
-    payload,
-    validFrom,
-    t
-  )
-  if (validToError) {
-    return { errors: { validToError } }
-  }
-
-  return {
-    besEvidenceValidFromDate: validFrom.toISOString(),
-    besEvidenceExpiryDate: validTo ? validTo.toISOString() : null
-  }
-}
-
-// Maps an existing upload's ISO dates to the day/month/year payload shape
-// buildAmendViewData/parseDate expect, so the GET and POST handlers below
-// pre-fill and re-render the form the same way.
-function amendFormPayloadFromUpload(upload) {
-  const from = isoToDateParts(upload.besEvidenceValidFromDate)
-  const to = isoToDateParts(upload.besEvidenceExpiryDate)
-  return {
-    validFromDay: from.day,
-    validFromMonth: from.month,
-    validFromYear: from.year,
-    validToDay: to.day,
-    validToMonth: to.month,
-    validToYear: to.year
-  }
-}
-
-export const besEvidenceAmendGetController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-    const { applicationId, siteId, fileId } = request.params
-    const siteIdInt = parseInt(siteId, 10)
-
-    const { application, errorResponse } = await fetchApplicationOrRenderError({
-      request,
-      organisationId,
-      applicationId,
-      renderErrorResponse: () =>
-        renderAmendPage(
-          h,
-          buildAmendViewData({
-            t,
-            applicationId,
-            siteId,
-            siteName: '',
-            fileId,
-            filename: '',
-            payload: {},
-            errors: {
-              error: t(FETCH_ERROR_KEY)
-            }
-          })
-        ).code(statusCodes.internalServerError)
-    })
-    if (errorResponse) {
-      return errorResponse
-    }
-
-    const { blocked, readOnly } = resolveQueriedSectionAccess(
-      application,
-      application.besEvidence?.sectionStatus
-    )
-    if (blocked || readOnly) {
-      return h.redirect(
-        blocked
-          ? queryTaskListUrl(applicationId)
-          : cyaEvidenceUrl(applicationId, siteId)
-      )
-    }
-
-    const { site, upload } = findBesEvidenceFile(application, siteIdInt, fileId)
-    if (!upload) {
-      return h.redirect(cyaEvidenceUrl(applicationId, siteId))
-    }
-    const siteName = site?.siteName ?? ''
-
-    return renderAmendPage(
-      h,
-      buildAmendViewData({
-        t,
-        applicationId,
-        siteId,
-        siteName,
-        fileId,
-        filename: upload.filename ?? '',
-        payload: amendFormPayloadFromUpload(upload),
-        errors: {}
-      })
-    )
-  }
-}
-
-export const besEvidenceAmendPostController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const organisationId = request.yar.get(
-      ACCREDITATION_SESSION_KEYS.organisationId
-    )
-    const { applicationId, siteId, fileId } = request.params
-    const siteIdInt = Number.parseInt(siteId, 10)
-    const payload = request.payload ?? {}
-
-    const { application, errorResponse } = await fetchApplicationOrRenderError({
-      request,
-      organisationId,
-      applicationId,
-      renderErrorResponse: () =>
-        renderAmendPage(
-          h,
-          buildAmendViewData({
-            t,
-            applicationId,
-            siteId,
-            siteName: '',
-            fileId,
-            filename: '',
-            payload,
-            errors: {
-              error: t(FETCH_ERROR_KEY)
-            }
-          })
-        ).code(statusCodes.internalServerError)
-    })
-    if (errorResponse) {
-      return errorResponse
-    }
-
-    const guardRedirect = guardSectionWrite({
-      h,
-      application,
-      sectionStatus: application.besEvidence?.sectionStatus,
-      applicationId,
-      ownPageUrl: request.path
-    })
-    if (guardRedirect) {
-      return guardRedirect
-    }
-
-    const { site, upload } = findBesEvidenceFile(application, siteIdInt, fileId)
-    if (!upload) {
-      return h.redirect(cyaEvidenceUrl(applicationId, siteId))
-    }
-    const siteName = site?.siteName ?? ''
-    const filename = upload.filename ?? ''
-
-    const dates = resolveAmendDates(payload, t)
-    if (dates.errors) {
-      return renderAmendPage(
-        h,
-        buildAmendViewData({
-          t,
-          applicationId,
-          siteId,
-          siteName,
-          fileId,
-          filename,
-          payload,
-          errors: dates.errors
-        })
-      ).code(statusCodes.badRequest)
-    }
-
-    try {
-      await accreditationApiService.updateBesEvidenceFile(
-        organisationId,
-        applicationId,
-        siteIdInt,
-        fileId,
-        {
-          besEvidenceValidFromDate: dates.besEvidenceValidFromDate,
-          besEvidenceExpiryDate: dates.besEvidenceExpiryDate
-        }
-      )
-    } catch (err) {
-      logStructuredError(
-        request.server.logger,
-        err,
-        { siteId, applicationId, fileId },
-        `Error amending BES evidence file ${fileId} for site ${siteId}, application ${applicationId}`
-      )
-      if (err.status === statusCodes.conflict) {
-        return h.redirect(request.path)
-      }
-      return renderAmendPage(
-        h,
-        buildAmendViewData({
-          t,
-          applicationId,
-          siteId,
-          siteName,
-          fileId,
-          filename,
-          payload,
-          errors: { error: t('pages.uploadBesEvidence.validation.amendError') }
-        })
-      ).code(statusCodes.internalServerError)
-    }
-
-    return h.redirect(cyaEvidenceUrl(applicationId, siteId))
   }
 }
