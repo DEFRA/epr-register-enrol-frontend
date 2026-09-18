@@ -637,7 +637,7 @@
       "confirmButton": "Confirm",
       "amend": "Amend",
       "deleteFile": "Delete",
-      "addFile": "Add another file",
+      "addFile": "Add another evidence",
       "noFiles": "No BES evidence files have been uploaded for this site.",
       "loadError": "Sorry, we were unable to load the site details. Please try again.",
       "validation": {
