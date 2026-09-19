@@ -52,6 +52,35 @@ function makeApplication(overrides = {}) {
   }
 }
 
+function makeApplicationWithUpload(overrides = {}) {
+  return makeApplication({
+    overseasSites: {
+      sectionStatus: 'InProgress',
+      sites: [
+        {
+          siteId: 900001,
+          siteName: 'Site Alpha',
+          siteAddress: '123 Test St',
+          country: 'Germany',
+          isEu: true,
+          isOecd: true,
+          besEvidence: {
+            besEvidenceUploads: [
+              {
+                fileId: 'file-bes-001',
+                filename: 'evidence.pdf',
+                besEvidenceValidFromDate: '2026-01-01T00:00:00Z',
+                besEvidenceExpiryDate: '2027-01-01T00:00:00Z'
+              }
+            ]
+          }
+        }
+      ]
+    },
+    ...overrides
+  })
+}
+
 describe('#validateFileExtension', () => {
   test('returns true for all allowed extensions', () => {
     ALLOWED_EXTENSIONS.forEach((ext) => {
@@ -830,5 +859,240 @@ describe('#uploadBesEvidenceController', () => {
         `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       )
     })
+  })
+
+  describe('GET /accreditation/upload-bes-evidence/{applicationId}/{siteId}/amend/{fileId}', () => {
+    test('returns 200 with the existing file dates pre-filled', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplicationWithUpload())
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="amend-form"')
+      expect(result).toContain('evidence.pdf')
+      expect(result).toContain('value="1"')
+      expect(result).toContain('value="2026"')
+    })
+
+    test('redirects to the review page when the file does not exist', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplicationWithUpload())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/does-not-exist`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
+      )
+    })
+
+    test('redirects to query-task-list when application is Queried and BES evidence section has not been started', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplicationWithUpload({
+          applicationStatus: 'Queried',
+          besEvidence: { sectionStatus: 'NotStarted' }
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/query-task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects to the review page when application is locked (%s) and BES evidence section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplicationWithUpload({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+
+        const { statusCode, headers } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
+        )
+      }
+    )
+
+    test('returns 500 when API fetch fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+  })
+
+  describe('POST /accreditation/upload-bes-evidence/{applicationId}/{siteId}/amend/{fileId}', () => {
+    test('returns 400 when valid-from is invalid', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplicationWithUpload())
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+        headers: operatorHeaders,
+        payload: {
+          validFromDay: '',
+          validFromMonth: '',
+          validFromYear: '',
+          validToDay: '',
+          validToMonth: '',
+          validToYear: ''
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="valid-from-error"')
+    })
+
+    test('returns 400 when valid-to is before valid-from', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplicationWithUpload())
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+        headers: operatorHeaders,
+        payload: {
+          validFromDay: '1',
+          validFromMonth: '11',
+          validFromYear: '2027',
+          validToDay: '1',
+          validToMonth: '1',
+          validToYear: '2026'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="valid-to-error"')
+    })
+
+    test('valid dates update the file and redirect to the review page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplicationWithUpload())
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+        headers: operatorHeaders,
+        payload: {
+          validFromDay: '2',
+          validFromMonth: '11',
+          validFromYear: '2026',
+          validToDay: '',
+          validToMonth: '',
+          validToYear: ''
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '/overseas-sites/900001/bes-evidence/files/file-bes-001'
+        ),
+        expect.objectContaining({
+          besEvidenceValidFromDate: expect.any(String),
+          besEvidenceExpiryDate: null
+        })
+      )
+    })
+
+    test('redirects to the review page when the file does not exist', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplicationWithUpload())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/does-not-exist`,
+        headers: operatorHeaders,
+        payload: {
+          validFromDay: '2',
+          validFromMonth: '11',
+          validFromYear: '2026'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
+      )
+    })
+
+    test('returns 500 when the update fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplicationWithUpload())
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('API down'))
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+        headers: operatorHeaders,
+        payload: {
+          validFromDay: '2',
+          validFromMonth: '11',
+          validFromYear: '2026'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
+    })
+
+    test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+      'redirects back to this page without updating when application is locked (%s) and BES evidence section is not Queried',
+      async (applicationStatus) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplicationWithUpload({
+            applicationStatus,
+            besEvidence: { sectionStatus: 'Completed' }
+          })
+        )
+        const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
+          headers: operatorHeaders,
+          payload: {
+            validFromDay: '2',
+            validFromMonth: '11',
+            validFromYear: '2026'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`
+        )
+        expect(patchSpy).not.toHaveBeenCalled()
+      }
+    )
   })
 })

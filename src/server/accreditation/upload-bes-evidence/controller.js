@@ -4,6 +4,7 @@ import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
@@ -40,6 +41,8 @@ export const ALLOWED_MIME_TYPES = [
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
+export const FETCH_ERROR_KEY = 'pages.uploadBesEvidence.validation.fetchError'
+
 export function validateFileExtension(filename) {
   if (!filename) {
     return false
@@ -75,7 +78,7 @@ export function isDateBlank(day, month, year) {
 // block nested inside an `if (!validToBlank)`, which is exactly the kind of
 // nesting cognitive complexity penalises hardest. Flattened into its own
 // function so the handler gets back a plain { validTo, error } result.
-function resolveBesEvidenceValidTo(payload, validFrom, t) {
+export function resolveBesEvidenceValidTo(payload, validFrom, t) {
   const validToBlank = isDateBlank(
     payload.validToDay,
     payload.validToMonth,
@@ -106,12 +109,16 @@ function resolveBesEvidenceValidTo(payload, validFrom, t) {
   return { validTo, error: null }
 }
 
-function taskListUrl(applicationId) {
+export function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
 function uploadMoreUrl(applicationId, siteId) {
   return `/accreditation/upload-more-evidence/${applicationId}/${siteId}`
+}
+
+export function cyaEvidenceUrl(applicationId, siteId) {
+  return `/accreditation/cya-evidence-for-overseas-site/${applicationId}/${siteId}`
 }
 
 function renderPage(h, viewData) {
@@ -151,7 +158,7 @@ export const uploadBesEvidenceGetController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId, siteId } = request.params
-    const siteIdInt = parseInt(siteId, 10)
+    const siteIdInt = Number.parseInt(siteId, 10)
 
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
@@ -166,10 +173,10 @@ export const uploadBesEvidenceGetController = {
             '',
             {},
             {
-              error: t('pages.uploadBesEvidence.validation.fetchError')
+              error: t(FETCH_ERROR_KEY)
             }
           )
-        ).code(500)
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
@@ -223,9 +230,9 @@ export const uploadBesEvidencePostController = {
         renderPage(
           h,
           buildViewData(t, applicationId, '', payload, {
-            error: t('pages.uploadBesEvidence.validation.fetchError')
+            error: t(FETCH_ERROR_KEY)
           })
-        ).code(500)
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
