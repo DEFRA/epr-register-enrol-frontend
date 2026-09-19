@@ -132,6 +132,26 @@ function amendFormPayloadFromUpload(upload) {
   }
 }
 
+function renderAmendFetchError(
+  h,
+  t,
+  { applicationId, siteId, fileId, payload }
+) {
+  return renderAmendPage(
+    h,
+    buildAmendViewData({
+      t,
+      applicationId,
+      siteId,
+      siteName: '',
+      fileId,
+      filename: '',
+      payload,
+      errors: { error: t(FETCH_ERROR_KEY) }
+    })
+  ).code(statusCodes.internalServerError)
+}
+
 export const besEvidenceAmendGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -146,21 +166,12 @@ export const besEvidenceAmendGetController = {
       organisationId,
       applicationId,
       renderErrorResponse: () =>
-        renderAmendPage(
-          h,
-          buildAmendViewData({
-            t,
-            applicationId,
-            siteId,
-            siteName: '',
-            fileId,
-            filename: '',
-            payload: {},
-            errors: {
-              error: t(FETCH_ERROR_KEY)
-            }
-          })
-        ).code(statusCodes.internalServerError)
+        renderAmendFetchError(h, t, {
+          applicationId,
+          siteId,
+          fileId,
+          payload: {}
+        })
     })
     if (errorResponse) {
       return errorResponse
@@ -203,12 +214,8 @@ export const besEvidenceAmendGetController = {
 // Extracted from besEvidenceAmendPostController's handler (SonarCloud
 // function-length): the updateBesEvidenceFile failure branching (409 lock
 // race vs. a re-rendered service-error) doesn't need to live inline.
-function handleAmendPatchError(
-  h,
-  t,
-  err,
-  { request, applicationId, siteId, siteName, fileId, filename, payload }
-) {
+function handleAmendPatchError(h, request, err, viewContext) {
+  const { t, applicationId, siteId, fileId } = viewContext
   logStructuredError(
     request.server.logger,
     err,
@@ -221,13 +228,7 @@ function handleAmendPatchError(
   return renderAmendPage(
     h,
     buildAmendViewData({
-      t,
-      applicationId,
-      siteId,
-      siteName,
-      fileId,
-      filename,
-      payload,
+      ...viewContext,
       errors: { error: t('pages.uploadBesEvidence.validation.amendError') }
     })
   ).code(statusCodes.internalServerError)
@@ -248,21 +249,7 @@ export const besEvidenceAmendPostController = {
       organisationId,
       applicationId,
       renderErrorResponse: () =>
-        renderAmendPage(
-          h,
-          buildAmendViewData({
-            t,
-            applicationId,
-            siteId,
-            siteName: '',
-            fileId,
-            filename: '',
-            payload,
-            errors: {
-              error: t(FETCH_ERROR_KEY)
-            }
-          })
-        ).code(statusCodes.internalServerError)
+        renderAmendFetchError(h, t, { applicationId, siteId, fileId, payload })
     })
     if (errorResponse) {
       return errorResponse
@@ -284,22 +271,21 @@ export const besEvidenceAmendPostController = {
       return h.redirect(cyaEvidenceUrl(applicationId, siteId))
     }
     const siteName = site?.siteName ?? ''
-    const filename = upload.filename ?? ''
+    const viewContext = {
+      t,
+      applicationId,
+      siteId,
+      siteName,
+      fileId,
+      filename: upload.filename ?? '',
+      payload
+    }
 
     const dates = resolveAmendDates(payload, t)
     if (dates.errors) {
       return renderAmendPage(
         h,
-        buildAmendViewData({
-          t,
-          applicationId,
-          siteId,
-          siteName,
-          fileId,
-          filename,
-          payload,
-          errors: dates.errors
-        })
+        buildAmendViewData({ ...viewContext, errors: dates.errors })
       ).code(statusCodes.badRequest)
     }
 
@@ -315,15 +301,7 @@ export const besEvidenceAmendPostController = {
         }
       )
     } catch (err) {
-      return handleAmendPatchError(h, t, err, {
-        request,
-        applicationId,
-        siteId,
-        siteName,
-        fileId,
-        filename,
-        payload
-      })
+      return handleAmendPatchError(h, request, err, viewContext)
     }
 
     return h.redirect(cyaEvidenceUrl(applicationId, siteId))

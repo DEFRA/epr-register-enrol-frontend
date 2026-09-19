@@ -275,7 +275,7 @@ export const accreditationApiService = {
   deleteBesEvidenceFile(organisationId, applicationId, siteId, fileId) {
     return call(() =>
       apiClient.delete(
-        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${fileId}`
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${encodeURIComponent(fileId)}`
       )
     )
   },
@@ -285,7 +285,7 @@ export const accreditationApiService = {
   updateBesEvidenceFile(organisationId, applicationId, siteId, fileId, body) {
     return call(() =>
       apiClient.patch(
-        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${fileId}`,
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${encodeURIComponent(fileId)}`,
         body
       )
     )

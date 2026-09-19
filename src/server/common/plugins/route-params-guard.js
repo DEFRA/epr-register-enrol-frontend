@@ -36,6 +36,7 @@ const PARAM_SCHEMAS = {
   registrationId: SAFE_ID,
   companiesHouseNo: SAFE_ID,
   siteId: Joi.number().integer().positive(),
+  fileId: SAFE_ID,
   // Not a calendar-year range check on purpose: E2E/test tooling seeds
   // disposable accreditation years thousands of years in the future
   // (year + a large offset band) specifically to dodge collisions with
