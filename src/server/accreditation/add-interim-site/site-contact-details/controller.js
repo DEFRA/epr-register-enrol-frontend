@@ -1,12 +1,13 @@
 import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
-import { isValidPhoneNumber } from '../../../common/helpers/phoneNumber.js'
+import {
+  extractSiteContactFields,
+  validateSiteContactDetails
+} from '../../../common/helpers/siteContactDetails.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -27,54 +28,12 @@ function renderPage(h, viewData) {
   )
 }
 
-const VALIDATION_KEY_PREFIX =
-  'pages.addInterimSite.siteContactDetails.validation'
-
-// Sequential early returns rather than if/else-if, matching the ORS contact
-// page, so each field's rule count can grow without tripping Sonar's
-// complexity (S1541) / missing-else (S126) rules on the POST handler.
-function validateName(t, name) {
-  if (!name) {
-    return t(`${VALIDATION_KEY_PREFIX}.nameRequired`)
-  }
-  return null
-}
-
-function validateEmail(t, email) {
-  if (!email) {
-    return t(`${VALIDATION_KEY_PREFIX}.emailRequired`)
-  }
-  if (!EMAIL_REGEX.test(email)) {
-    return t(`${VALIDATION_KEY_PREFIX}.emailInvalid`)
-  }
-  return null
-}
-
-function validatePhone(t, phone) {
-  if (!phone) {
-    return t(`${VALIDATION_KEY_PREFIX}.phoneRequired`)
-  }
-  if (!isValidPhoneNumber(phone)) {
-    return t(`${VALIDATION_KEY_PREFIX}.phoneInvalid`)
-  }
-  return null
-}
-
-function validateContactDetailsFields(t, fields) {
-  const errors = {}
-  const nameError = validateName(t, fields.siteContactName)
-  if (nameError) {
-    errors.siteContactName = nameError
-  }
-  const emailError = validateEmail(t, fields.siteContactEmail)
-  if (emailError) {
-    errors.siteContactEmail = emailError
-  }
-  const phoneError = validatePhone(t, fields.siteContactPhone)
-  if (phoneError) {
-    errors.siteContactPhone = phoneError
-  }
-  return errors
+// Unlike the ORS page, the phone is required here and the name isn't checked
+// for digits.
+const CONTACT_VALIDATION_OPTIONS = {
+  keyPrefix: 'pages.addInterimSite.siteContactDetails.validation',
+  phoneRequired: true,
+  nameRejectsDigits: false
 }
 
 function buildViewData(t, applicationId, fields, errors) {
@@ -134,12 +93,12 @@ export const addInterimSiteContactDetailsPostController = {
       return guardRedirect
     }
 
-    const fields = {
-      siteContactName: (request.payload?.siteContactName ?? '').trim(),
-      siteContactEmail: (request.payload?.siteContactEmail ?? '').trim(),
-      siteContactPhone: (request.payload?.siteContactPhone ?? '').trim()
-    }
-    const errors = validateContactDetailsFields(t, fields)
+    const fields = extractSiteContactFields(request.payload)
+    const errors = validateSiteContactDetails(
+      t,
+      fields,
+      CONTACT_VALIDATION_OPTIONS
+    )
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

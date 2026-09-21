@@ -2,17 +2,14 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
-import { isValidPhoneNumber } from '../../../common/helpers/phoneNumber.js'
+import {
+  extractSiteContactFields,
+  validateSiteContactDetails
+} from '../../../common/helpers/siteContactDetails.js'
 import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
-// RA-468: the contact is a person's name, not a reference/account number —
-// reject any digit rather than allow-listing characters, so accented
-// letters, apostrophes (O'Brien) and hyphens (Anne-Marie) keep working.
-const NAME_CONTAINS_DIGIT_REGEX = /\d/
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a
@@ -44,56 +41,12 @@ function renderPage(h, viewData) {
   )
 }
 
-// RA-468: sequential early returns rather than if/else-if, matching
-// site-location's validateCoordinates — keeps each field's rule count
-// growable without the branch nesting Sonar's complexity/S126 rules flag,
-// and keeps the POST handler itself a plain sequence of field checks.
-function validateName(t, name) {
-  if (!name) {
-    return t('pages.addOverseasSite.siteContactDetails.validation.nameRequired')
-  }
-  if (NAME_CONTAINS_DIGIT_REGEX.test(name)) {
-    return t('pages.addOverseasSite.siteContactDetails.validation.nameInvalid')
-  }
-  return null
-}
-
-function validateEmail(t, email) {
-  if (!email) {
-    return t(
-      'pages.addOverseasSite.siteContactDetails.validation.emailRequired'
-    )
-  }
-  if (!EMAIL_REGEX.test(email)) {
-    return t('pages.addOverseasSite.siteContactDetails.validation.emailInvalid')
-  }
-  return null
-}
-
-function validatePhone(t, phone) {
-  // The field itself stays optional; this only fires once something has been
-  // entered.
-  if (phone && !isValidPhoneNumber(phone)) {
-    return t('pages.addOverseasSite.siteContactDetails.validation.phoneInvalid')
-  }
-  return null
-}
-
-function validateContactDetailsFields(t, fields) {
-  const errors = {}
-  const nameError = validateName(t, fields.siteContactName)
-  if (nameError) {
-    errors.siteContactName = nameError
-  }
-  const emailError = validateEmail(t, fields.siteContactEmail)
-  if (emailError) {
-    errors.siteContactEmail = emailError
-  }
-  const phoneError = validatePhone(t, fields.siteContactPhone)
-  if (phoneError) {
-    errors.siteContactPhone = phoneError
-  }
-  return errors
+// RA-468: the phone is optional here (only validated once entered) and the
+// contact name must not contain digits.
+const CONTACT_VALIDATION_OPTIONS = {
+  keyPrefix: 'pages.addOverseasSite.siteContactDetails.validation',
+  phoneRequired: false,
+  nameRejectsDigits: true
 }
 
 function buildViewData(t, applicationId, fields, errors) {
@@ -155,12 +108,12 @@ export const addOrsSiteContactDetailsPostController = {
       return guardRedirect
     }
 
-    const fields = {
-      siteContactName: (request.payload?.siteContactName ?? '').trim(),
-      siteContactEmail: (request.payload?.siteContactEmail ?? '').trim(),
-      siteContactPhone: (request.payload?.siteContactPhone ?? '').trim()
-    }
-    const errors = validateContactDetailsFields(t, fields)
+    const fields = extractSiteContactFields(request.payload)
+    const errors = validateSiteContactDetails(
+      t,
+      fields,
+      CONTACT_VALIDATION_OPTIONS
+    )
 
     if (Object.keys(errors).length > 0) {
       return renderPage(
