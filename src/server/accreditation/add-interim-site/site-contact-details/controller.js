@@ -27,6 +27,56 @@ function renderPage(h, viewData) {
   )
 }
 
+const VALIDATION_KEY_PREFIX =
+  'pages.addInterimSite.siteContactDetails.validation'
+
+// Sequential early returns rather than if/else-if, matching the ORS contact
+// page, so each field's rule count can grow without tripping Sonar's
+// complexity (S1541) / missing-else (S126) rules on the POST handler.
+function validateName(t, name) {
+  if (!name) {
+    return t(`${VALIDATION_KEY_PREFIX}.nameRequired`)
+  }
+  return null
+}
+
+function validateEmail(t, email) {
+  if (!email) {
+    return t(`${VALIDATION_KEY_PREFIX}.emailRequired`)
+  }
+  if (!EMAIL_REGEX.test(email)) {
+    return t(`${VALIDATION_KEY_PREFIX}.emailInvalid`)
+  }
+  return null
+}
+
+function validatePhone(t, phone) {
+  if (!phone) {
+    return t(`${VALIDATION_KEY_PREFIX}.phoneRequired`)
+  }
+  if (!isValidPhoneNumber(phone)) {
+    return t(`${VALIDATION_KEY_PREFIX}.phoneInvalid`)
+  }
+  return null
+}
+
+function validateContactDetailsFields(t, fields) {
+  const errors = {}
+  const nameError = validateName(t, fields.siteContactName)
+  if (nameError) {
+    errors.siteContactName = nameError
+  }
+  const emailError = validateEmail(t, fields.siteContactEmail)
+  if (emailError) {
+    errors.siteContactEmail = emailError
+  }
+  const phoneError = validatePhone(t, fields.siteContactPhone)
+  if (phoneError) {
+    errors.siteContactPhone = phoneError
+  }
+  return errors
+}
+
 function buildViewData(t, applicationId, fields, errors) {
   return {
     pageTitle: t('pages.addInterimSite.siteContactDetails.title'),
@@ -89,31 +139,7 @@ export const addInterimSiteContactDetailsPostController = {
       siteContactEmail: (request.payload?.siteContactEmail ?? '').trim(),
       siteContactPhone: (request.payload?.siteContactPhone ?? '').trim()
     }
-    const errors = {}
-
-    if (!fields.siteContactName) {
-      errors.siteContactName = t(
-        'pages.addInterimSite.siteContactDetails.validation.nameRequired'
-      )
-    }
-    if (!fields.siteContactEmail) {
-      errors.siteContactEmail = t(
-        'pages.addInterimSite.siteContactDetails.validation.emailRequired'
-      )
-    } else if (!EMAIL_REGEX.test(fields.siteContactEmail)) {
-      errors.siteContactEmail = t(
-        'pages.addInterimSite.siteContactDetails.validation.emailInvalid'
-      )
-    }
-    if (!fields.siteContactPhone) {
-      errors.siteContactPhone = t(
-        'pages.addInterimSite.siteContactDetails.validation.phoneRequired'
-      )
-    } else if (!isValidPhoneNumber(fields.siteContactPhone)) {
-      errors.siteContactPhone = t(
-        'pages.addInterimSite.siteContactDetails.validation.phoneInvalid'
-      )
-    }
+    const errors = validateContactDetailsFields(t, fields)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(
