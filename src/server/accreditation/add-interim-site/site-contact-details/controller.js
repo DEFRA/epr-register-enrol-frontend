@@ -1,5 +1,6 @@
 import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
+import { isValidPhoneNumber } from '../../../common/helpers/phoneNumber.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
@@ -107,6 +108,10 @@ export const addInterimSiteContactDetailsPostController = {
     if (!fields.siteContactPhone) {
       errors.siteContactPhone = t(
         'pages.addInterimSite.siteContactDetails.validation.phoneRequired'
+      )
+    } else if (!isValidPhoneNumber(fields.siteContactPhone)) {
+      errors.siteContactPhone = t(
+        'pages.addInterimSite.siteContactDetails.validation.phoneInvalid'
       )
     }
 

@@ -2,6 +2,7 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
+import { isValidPhoneNumber } from '../../../common/helpers/phoneNumber.js'
 import {
   getAddOrsSession,
   setAddOrsSession
@@ -12,14 +13,6 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 // reject any digit rather than allow-listing characters, so accented
 // letters, apostrophes (O'Brien) and hyphens (Anne-Marie) keep working.
 const NAME_CONTAINS_DIGIT_REGEX = /\d/
-// RA-468: digits, a leading/embedded "+" and the spacing/grouping
-// punctuation real international numbers are written with (this field asks
-// for one via autocomplete="tel", e.g. "+49 40 12345678") — no letters or
-// other text. The lookahead requires at least one digit, so a value made
-// up of only punctuation (e.g. "----" or "()") isn't waved through as a
-// "valid" phone number (review: masante). The field itself stays optional;
-// this only fires once something has been entered.
-const PHONE_REGEX = /^(?=.*\d)[0-9+()\-\s]*$/
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a
@@ -78,7 +71,9 @@ function validateEmail(t, email) {
 }
 
 function validatePhone(t, phone) {
-  if (phone && !PHONE_REGEX.test(phone)) {
+  // The field itself stays optional; this only fires once something has been
+  // entered.
+  if (phone && !isValidPhoneNumber(phone)) {
     return t('pages.addOverseasSite.siteContactDetails.validation.phoneInvalid')
   }
   return null
