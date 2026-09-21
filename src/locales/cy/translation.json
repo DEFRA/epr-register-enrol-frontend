@@ -854,7 +854,8 @@
           "nameRequired": "[Welsh] Enter the contact name",
           "emailRequired": "[Welsh] Enter the email address",
           "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
-          "phoneRequired": "[Welsh] Enter the phone number"
+          "phoneRequired": "[Welsh] Enter the phone number",
+          "phoneInvalid": "[Welsh] Enter a phone number without letters, like +44 20 7946 0958"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"

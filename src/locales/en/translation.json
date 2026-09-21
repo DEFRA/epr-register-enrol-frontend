@@ -856,7 +856,8 @@
           "nameRequired": "Enter the contact name",
           "emailRequired": "Enter the email address",
           "emailInvalid": "Enter an email address in the correct format, like name@example.com",
-          "phoneRequired": "Enter the phone number"
+          "phoneRequired": "Enter the phone number",
+          "phoneInvalid": "Enter a phone number without letters, like +44 20 7946 0958"
         },
         "continueButton": "Continue",
         "cancelLink": "Cancel"
