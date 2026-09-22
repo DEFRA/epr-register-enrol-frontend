@@ -855,6 +855,55 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('PDF')
     })
 
+    // RA-571 AC01/AC03
+    test('filename already uploaded returns 400 with duplicateFilename error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ filename: 'sampling-plan.pdf' })]
+          }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({ filename: 'sampling-plan.pdf' })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('already been uploaded')
+    })
+
+    // RA-571 AC02: same base name, different extension — still a duplicate.
+    test('filename matching an existing upload by base name only is still a duplicate', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          samplingPlan: {
+            sectionStatus: 'InProgress',
+            files: [makeFile({ filename: 'Evidence Rafa.pdf' })]
+          }
+        })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'Evidence Rafa.docx',
+          contentType:
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('already been uploaded')
+    })
+
     test('missing document type returns 400 with noDocumentType error', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

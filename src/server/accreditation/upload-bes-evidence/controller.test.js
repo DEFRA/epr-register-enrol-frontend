@@ -450,6 +450,82 @@ describe('#uploadBesEvidenceController', () => {
       expect(result).toContain('data-testid="file-error"')
     })
 
+    // RA-571 AC01/AC03
+    test('returns 400 when the filename has already been uploaded to this site', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                besEvidence: {
+                  besEvidenceUploads: [
+                    { fileId: 'existing', filename: 'evidence.pdf' }
+                  ]
+                }
+              }
+            ]
+          }
+        })
+      )
+
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({ filename: 'evidence.pdf' })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('already been uploaded')
+    })
+
+    // RA-571: "within a single application submission" spans every overseas
+    // site, not just the one being uploaded to.
+    test('returns 400 when the filename has already been uploaded to a different site', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                besEvidence: { besEvidenceUploads: [] }
+              },
+              {
+                siteId: 900002,
+                siteName: 'Site Beta',
+                besEvidence: {
+                  besEvidenceUploads: [
+                    { fileId: 'existing', filename: 'Evidence Rafa.pdf' }
+                  ]
+                }
+              }
+            ]
+          }
+        })
+      )
+
+      // RA-571 AC02: same base name, different extension — still a duplicate.
+      const { result, statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        payload: buildMultipartPayload({
+          filename: 'Evidence Rafa.docx',
+          contentType:
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        })
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('already been uploaded')
+    })
+
     test('returns 400 for missing valid-from date', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
