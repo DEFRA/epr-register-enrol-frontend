@@ -1,11 +1,13 @@
 import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
 import {
+  extractSiteContactFields,
+  validateSiteContactDetails
+} from '../../../common/helpers/siteContactDetails.js'
+import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -24,6 +26,14 @@ function renderPage(h, viewData) {
     'accreditation/add-interim-site/site-contact-details/index',
     viewData
   )
+}
+
+// Unlike the ORS page, the phone is required here and the name isn't checked
+// for digits.
+const CONTACT_VALIDATION_OPTIONS = {
+  keyPrefix: 'pages.addInterimSite.siteContactDetails.validation',
+  phoneRequired: true,
+  nameRejectsDigits: false
 }
 
 function buildViewData(t, applicationId, fields, errors) {
@@ -83,32 +93,12 @@ export const addInterimSiteContactDetailsPostController = {
       return guardRedirect
     }
 
-    const fields = {
-      siteContactName: (request.payload?.siteContactName ?? '').trim(),
-      siteContactEmail: (request.payload?.siteContactEmail ?? '').trim(),
-      siteContactPhone: (request.payload?.siteContactPhone ?? '').trim()
-    }
-    const errors = {}
-
-    if (!fields.siteContactName) {
-      errors.siteContactName = t(
-        'pages.addInterimSite.siteContactDetails.validation.nameRequired'
-      )
-    }
-    if (!fields.siteContactEmail) {
-      errors.siteContactEmail = t(
-        'pages.addInterimSite.siteContactDetails.validation.emailRequired'
-      )
-    } else if (!EMAIL_REGEX.test(fields.siteContactEmail)) {
-      errors.siteContactEmail = t(
-        'pages.addInterimSite.siteContactDetails.validation.emailInvalid'
-      )
-    }
-    if (!fields.siteContactPhone) {
-      errors.siteContactPhone = t(
-        'pages.addInterimSite.siteContactDetails.validation.phoneRequired'
-      )
-    }
+    const fields = extractSiteContactFields(request.payload)
+    const errors = validateSiteContactDetails(
+      t,
+      fields,
+      CONTACT_VALIDATION_OPTIONS
+    )
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

@@ -275,7 +275,18 @@ export const accreditationApiService = {
   deleteBesEvidenceFile(organisationId, applicationId, siteId, fileId) {
     return call(() =>
       apiClient.delete(
-        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${fileId}`
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${encodeURIComponent(fileId)}`
+      )
+    )
+  },
+
+  // RA-570: date-only amend of an existing BES evidence file (site-scoped,
+  // same resource family as addBesEvidenceFile/deleteBesEvidenceFile above).
+  updateBesEvidenceFile(organisationId, applicationId, siteId, fileId, body) {
+    return call(() =>
+      apiClient.patch(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/bes-evidence/files/${encodeURIComponent(fileId)}`,
+        body
       )
     )
   },

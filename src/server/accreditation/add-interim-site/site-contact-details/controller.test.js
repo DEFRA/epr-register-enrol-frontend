@@ -290,5 +290,39 @@ describe('#addInterimSiteContactDetailsController', () => {
       expect(result).toContain('data-testid="error-summary"')
       expect(result).toContain('Enter the phone number')
     })
+
+    const PHONE_ERROR =
+      'Enter a phone number without letters, like +44 20 7946 0958'
+
+    test.each([
+      ['letters', 'call+me'],
+      ['digits mixed with letters', '07911abc123'],
+      ['punctuation only', '----']
+    ])('returns 400 when phone number is %s', async (_label, phone) => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: `siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=${phone}`
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain(PHONE_ERROR)
+    })
+
+    test.each([
+      ['a leading +', '%2B441234567890'],
+      ['spaces', '%2B49+40+12345678']
+    ])('accepts a phone number with %s', async (_label, phone) => {
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: `siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=${phone}`
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
   })
 })

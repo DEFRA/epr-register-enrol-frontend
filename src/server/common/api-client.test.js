@@ -116,6 +116,29 @@ describe('api-client', () => {
     await expect(client.get('/things')).rejects.toThrow('network down')
   })
 
+  test('resolves an ok response with an empty body (e.g. a bare 200 from DELETE) instead of throwing', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => {
+        throw new SyntaxError('Unexpected end of JSON input')
+      }
+    })
+
+    await expect(client.delete('/things/1')).resolves.toBeUndefined()
+  })
+
+  test('still rejects when an ok response is truly malformed JSON, not just empty', async () => {
+    const genuineParseFailure = new Error('boom')
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => {
+        throw genuineParseFailure
+      }
+    })
+
+    await expect(client.get('/things')).rejects.toThrow('boom')
+  })
+
   test('throws an error with status and response body when the response is not ok', async () => {
     fetchMock.mockResolvedValue({
       ok: false,

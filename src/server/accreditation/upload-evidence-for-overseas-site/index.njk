@@ -67,7 +67,7 @@
                   <td class="govuk-table__cell" data-testid="action-{{ site.siteId }}">
                     {% if site.uploadUrl %}
                       <a href="{{ site.uploadUrl }}" class="govuk-link" data-testid="upload-link-{{ site.siteId }}">
-                        {{ t('pages.uploadEvidenceList.uploadLink') }}
+                        {{ site.uploadLinkText }}
                         <span class="govuk-visually-hidden"> for {{ site.siteName }}</span>
                       </a>
                     {% endif %}

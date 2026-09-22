@@ -22,6 +22,8 @@ describe('findInvalidParam', () => {
     ['registrationId', 'REG-2026-001'],
     ['companiesHouseNo', '12345678'],
     ['siteId', '900001'],
+    ['fileId', 'bes-file-001'],
+    ['fileId', '3f2b8c1e-9d4a-4b7e-8a51-0c6d2e9f7a13'],
     ['year', '2026'],
     // E2E/test tooling seeds disposable accreditation years thousands of
     // years in the future to dodge Mongo-persisted-between-runs collisions.
@@ -41,6 +43,8 @@ describe('findInvalidParam', () => {
     ['applicationId', 'a'.repeat(200)],
     ['siteId', 'not-a-number'],
     ['siteId', '-1'],
+    ['fileId', '../../etc/passwd'],
+    ['fileId', 'a/b'],
     ['year', 'abc'],
     ['language', 'fr'],
     ['materialType', 'Uranium']

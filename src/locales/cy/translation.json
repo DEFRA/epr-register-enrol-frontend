@@ -562,6 +562,7 @@
       "saveError": "[Welsh] Sorry, we were unable to complete the BES evidence section. Please try again.",
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "uploadLink": "[Welsh] Upload evidence",
+      "viewLink": "[Welsh] Amend evidence",
       "evidenceUploaded": "[Welsh] Uploaded",
       "evidenceNotUploaded": "[Welsh] Not uploaded",
       "notRequiredEu": "[Welsh] Not required for application",
@@ -596,6 +597,12 @@
         "message": "[Welsh] Your file is being scanned for viruses. This may take a few seconds.",
         "doNotClose": "[Welsh] Do not close this page."
       },
+      "amend": {
+        "title": "[Welsh] Amend evidence dates",
+        "heading": "[Welsh] Amend evidence dates for",
+        "saveButton": "[Welsh] Save changes",
+        "cancelLink": "[Welsh] Cancel"
+      },
       "validation": {
         "noFile": "[Welsh] Select a file to upload",
         "invalidType": "[Welsh] The selected file must be a PDF, Word document, Excel spreadsheet, CSV, PNG, TIFF, JPG or MSG",
@@ -605,7 +612,8 @@
         "validToBeforeFrom": "[Welsh] The end date must be after the start date",
         "invalidDate": "[Welsh] Enter a valid date",
         "fetchError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
-        "uploadError": "[Welsh] Sorry, we were unable to upload the file. Please try again."
+        "uploadError": "[Welsh] Sorry, we were unable to upload the file. Please try again.",
+        "amendError": "[Welsh] Sorry, we were unable to save the changes. Please try again."
       }
     },
     "uploadMoreEvidence": {
@@ -627,8 +635,15 @@
       "startDate": "[Welsh] Start date of evidence",
       "endDate": "[Welsh] End date of evidence",
       "confirmButton": "[Welsh] Confirm",
+      "amend": "[Welsh] Amend",
+      "deleteFile": "[Welsh] Delete",
+      "addFile": "[Welsh] Add another evidence",
       "noFiles": "[Welsh] No BES evidence files have been uploaded for this site.",
-      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again."
+      "loadError": "[Welsh] Sorry, we were unable to load the site details. Please try again.",
+      "validation": {
+        "cannotDeleteLastFile": "[Welsh] You cannot delete this file. At least one BES evidence file is required for this site.",
+        "deleteError": "[Welsh] Sorry, there was a problem deleting the file. Please try again."
+      }
     },
     "checkSiteConditions": {
       "title": "[Welsh] Check the site fulfils the conditions",
@@ -841,7 +856,8 @@
           "nameRequired": "[Welsh] Enter the contact name",
           "emailRequired": "[Welsh] Enter the email address",
           "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
-          "phoneRequired": "[Welsh] Enter the phone number"
+          "phoneRequired": "[Welsh] Enter the phone number",
+          "phoneInvalid": "[Welsh] Enter a phone number without letters, like +44 20 7946 0958"
         },
         "continueButton": "Parhau",
         "cancelLink": "[Welsh] Cancel"
