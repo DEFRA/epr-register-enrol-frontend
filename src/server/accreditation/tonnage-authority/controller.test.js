@@ -57,14 +57,46 @@ describe('#buildAuthoriserRows', () => {
     expect(buildAuthoriserRows([])).toEqual([])
   })
 
-  test('maps authorisers to rows with checked=true', () => {
-    const rows = buildAuthoriserRows([
-      { fullName: 'Jane Smith', email: 'jane@example.com' }
-    ])
+  test('maps authorisers to rows, checking those in the selection', () => {
+    const rows = buildAuthoriserRows(
+      [{ fullName: 'Jane Smith', email: 'jane@example.com' }],
+      ['jane@example.com']
+    )
     expect(rows).toHaveLength(1)
     expect(rows[0].fullName).toBe('Jane Smith')
     expect(rows[0].email).toBe('jane@example.com')
     expect(rows[0].checked).toBe(true)
+  })
+
+  // RA-555: the whole point of the fix - an authoriser absent from the
+  // selection renders unchecked, where this function used to hardcode true.
+  test('leaves an authoriser unchecked when it is not in the selection', () => {
+    const rows = buildAuthoriserRows(
+      [
+        { fullName: 'Alice', email: 'alice@example.com' },
+        { fullName: 'Bob', email: 'bob@example.com' }
+      ],
+      ['alice@example.com']
+    )
+    expect(rows[0].checked).toBe(true)
+    expect(rows[1].checked).toBe(false)
+  })
+
+  // RA-555: an empty selection is a real operator choice (everything
+  // unticked), not a missing argument, and must not fall back to all-checked.
+  test('checks nothing when the selection is empty', () => {
+    const rows = buildAuthoriserRows(
+      [{ fullName: 'Alice', email: 'alice@example.com' }],
+      []
+    )
+    expect(rows[0].checked).toBe(false)
+  })
+
+  test('treats an omitted selection as nothing selected', () => {
+    const rows = buildAuthoriserRows([
+      { fullName: 'Alice', email: 'alice@example.com' }
+    ])
+    expect(rows[0].checked).toBe(false)
   })
 
   test('maps multiple authorisers with sequential indices', () => {
@@ -79,15 +111,27 @@ describe('#buildAuthoriserRows', () => {
 
   // RA-290 AC01: existing (seeded) authorisers default opted-in, and per
   // clarification newly added authorisers (flagged by AC03) do too.
-  test('defaults both existing and newly-added authorisers to checked=true', () => {
-    const rows = buildAuthoriserRows([
-      { fullName: 'Alice', email: 'alice@example.com' },
-      {
-        fullName: 'Bob',
-        email: 'bob@example.com',
-        addedForAuthorityToIssue: true
-      }
-    ])
+  //
+  // RA-555 moved WHERE that default lives. It used to be a hardcoded
+  // `checked: true` in this function; it is now the GET handler seeding the
+  // selection from every saved authoriser when the session holds none. So the
+  // AC is unchanged but is asserted against the rendered page rather than here
+  // - see 'renders every saved authoriser checked when no selection is held'
+  // in the GET describe block below. This test now only pins that a selection
+  // containing both kinds of authoriser checks both, with no special-casing of
+  // the addedForAuthorityToIssue flag.
+  test('does not treat a newly-added authoriser differently from a seeded one', () => {
+    const rows = buildAuthoriserRows(
+      [
+        { fullName: 'Alice', email: 'alice@example.com' },
+        {
+          fullName: 'Bob',
+          email: 'bob@example.com',
+          addedForAuthorityToIssue: true
+        }
+      ],
+      ['alice@example.com', 'bob@example.com']
+    )
     expect(rows.every((r) => r.checked === true)).toBe(true)
   })
 })
@@ -1190,6 +1234,259 @@ describe('#tonnageAuthorityController', () => {
         { fullName: 'Jane Smith', email: 'jane@example.com', isNew: true }
       ])
       expect(rows[0]).not.toHaveProperty('isNew')
+    })
+  })
+})
+
+// RA-555: an operator who unticks an authoriser and then adds a new one used
+// to find their untick silently reverted. `checked` was hardcoded true, so no
+// selection state existed and any re-render re-ticked everything. These tests
+// cover the reported path plus the three others that were reachable, and pin
+// that unticking is not a deletion until the operator saves.
+describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
+  let server
+
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const operatorHeaders = { 'x-test-user-type': 'operator' }
+
+  const ALICE = { fullName: 'Alice', email: 'alice@example.com' }
+  const BOB = { fullName: 'Bob', email: 'bob@example.com' }
+  const CHARLIE_EMAIL = 'charlie@example.com'
+
+  function applicationWith(authorisers) {
+    return makeApplication({
+      prns: {
+        plannedTonnageBand: 'UpTo5000',
+        authorisers,
+        sectionStatus: 'InProgress'
+      }
+    })
+  }
+
+  // The POST redirects, and a redirect discards the payload - so the session
+  // cookie is the only thing carrying the selection to the following GET.
+  // Replaying it is what makes this a real round trip rather than two
+  // unrelated requests.
+  function sessionCookie(response) {
+    const raw = response.headers['set-cookie']
+    if (!raw) {
+      return null
+    }
+    return (Array.isArray(raw) ? raw : [raw])
+      .map((c) => c.split(';')[0])
+      .join('; ')
+  }
+
+  // Reads the rendered checkbox for one authoriser and reports whether it
+  // carries the checked attribute. Returns null when the row is absent, so a
+  // missing row can never be mistaken for an unchecked one.
+  function isCheckedFor(html, email) {
+    const match = html.match(new RegExp('value="' + email + '"[^>]*>'))
+    return match ? match[0].includes('checked') : null
+  }
+
+  describe('GET', () => {
+    // RA-290 AC01 still holds, but it is now the GET handler's seeding that
+    // provides it rather than a hardcoded flag in buildAuthoriserRows.
+    test('renders every saved authoriser checked when no selection is held', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB])
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(isCheckedFor(result, ALICE.email)).toBe(true)
+      expect(isCheckedFor(result, BOB.email)).toBe(true)
+    })
+  })
+
+  describe('addAuthoriser round trip', () => {
+    test('keeps an unticked authoriser unticked, and the new one ticked', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB])
+      )
+      vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      // Alice is unticked, so only Bob comes back in the payload.
+      const post = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          selectedEmails: BOB.email,
+          newFullName: 'Charlie',
+          newEmail: CHARLIE_EMAIL
+        }
+      })
+      expect(post.statusCode).toBe(statusCodes.redirect)
+
+      const cookie = sessionCookie(post)
+      expect(cookie).toBeTruthy()
+
+      // The add has landed, so the list now includes Charlie.
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([
+          ALICE,
+          BOB,
+          { fullName: 'Charlie', email: CHARLIE_EMAIL }
+        ])
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      // the reported bug
+      expect(isCheckedFor(result, ALICE.email)).toBe(false)
+      // the fix must not invert the bug
+      expect(isCheckedFor(result, BOB.email)).toBe(true)
+      expect(isCheckedFor(result, CHARLIE_EMAIL)).toBe(true)
+    })
+
+    // The add path writes the authoriser LIST, but must not apply the
+    // selection to it - unticking is not a deletion until the operator saves.
+    test('does not drop the unticked authoriser from the backend on add', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          selectedEmails: BOB.email,
+          newFullName: 'Charlie',
+          newEmail: CHARLIE_EMAIL
+        }
+      })
+
+      const emails = patchSpy.mock.calls[0][1].authorisers.map((a) => a.email)
+      expect(emails).toContain(ALICE.email)
+      expect(emails).toContain(BOB.email)
+      expect(emails).toContain(CHARLIE_EMAIL)
+    })
+  })
+
+  // The three add-path re-renders keep the payload, so they must render from
+  // the submitted selection. Before RA-555 all three re-ticked everything.
+  describe('add-path error re-renders preserve the selection', () => {
+    test.each([
+      ['a missing name', { newFullName: '', newEmail: CHARLIE_EMAIL }],
+      ['a duplicate email', { newFullName: 'Dup', newEmail: ALICE.email }]
+    ])('survives %s', async (_label, addFields) => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB])
+      )
+      vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          selectedEmails: BOB.email,
+          ...addFields
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(isCheckedFor(result, ALICE.email)).toBe(false)
+      expect(isCheckedFor(result, BOB.email)).toBe(true)
+    })
+
+    test('survives a failed patch', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB])
+      )
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('boom'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'addAuthoriser',
+          selectedEmails: BOB.email,
+          newFullName: 'Charlie',
+          newEmail: CHARLIE_EMAIL
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(isCheckedFor(result, ALICE.email)).toBe(false)
+      expect(isCheckedFor(result, BOB.email)).toBe(true)
+    })
+  })
+
+  describe('save', () => {
+    test('writes exactly the selection the operator was last shown', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB])
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'saveAndContinue', selectedEmails: BOB.email }
+      })
+
+      const emails = patchSpy.mock.calls[0][1].authorisers.map((a) => a.email)
+      expect(emails).toEqual([BOB.email])
+    })
+
+    // Once the selection is in the backend the saved list IS the selection, so
+    // a later visit must re-seed from it rather than replay a stale session
+    // value. Asserted through behaviour rather than by inspecting the session.
+    test('does not replay a stale selection after saving', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB])
+      )
+      vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const post = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'saveAndContinue', selectedEmails: BOB.email }
+      })
+      const cookie = sessionCookie(post)
+
+      // the save dropped Alice, so the saved list is Bob alone
+      vi.spyOn(apiClient, 'get').mockResolvedValue(applicationWith([BOB]))
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: cookie ? { ...operatorHeaders, cookie } : operatorHeaders
+      })
+
+      expect(isCheckedFor(result, BOB.email)).toBe(true)
     })
   })
 })
