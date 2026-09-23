@@ -1,0 +1,93 @@
+{% extends "layouts/page.njk" %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+
+      {% if error %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <p>{{ error }}</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <p class="govuk-body" data-testid="amend-filename">{{ filename }}</p>
+
+      <form method="post" novalidate data-testid="amend-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        <div class="govuk-form-group{% if validFromError %} govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" role="group">
+            <legend class="govuk-fieldset__legend">
+              <label class="govuk-label">{{ t('pages.uploadBesEvidence.validFrom') }}</label>
+            </legend>
+            <div class="govuk-hint">{{ t('pages.uploadBesEvidence.dateHint') }}</div>
+            {% if validFromError %}
+              <p class="govuk-error-message" data-testid="valid-from-error">
+                <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ validFromError }}
+              </p>
+            {% endif %}
+            <div class="govuk-date-input" data-testid="valid-from-date">
+              <div class="govuk-date-input__item">
+                <label class="govuk-label govuk-date-input__label" for="validFromDay">Day</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="validFromDay" name="validFromDay" type="text" inputmode="numeric" value="{{ validFromDay }}" data-testid="valid-from-day">
+              </div>
+              <div class="govuk-date-input__item">
+                <label class="govuk-label govuk-date-input__label" for="validFromMonth">Month</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="validFromMonth" name="validFromMonth" type="text" inputmode="numeric" value="{{ validFromMonth }}" data-testid="valid-from-month">
+              </div>
+              <div class="govuk-date-input__item">
+                <label class="govuk-label govuk-date-input__label" for="validFromYear">Year</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="validFromYear" name="validFromYear" type="text" inputmode="numeric" value="{{ validFromYear }}" data-testid="valid-from-year">
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="govuk-form-group{% if validToError %} govuk-form-group--error{% endif %}">
+          <fieldset class="govuk-fieldset" role="group">
+            <legend class="govuk-fieldset__legend">
+              <label class="govuk-label">{{ t('pages.uploadBesEvidence.validTo') }}</label>
+            </legend>
+            <div class="govuk-hint">{{ t('pages.uploadBesEvidence.dateHint') }}</div>
+            {% if validToError %}
+              <p class="govuk-error-message" data-testid="valid-to-error">
+                <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ validToError }}
+              </p>
+            {% endif %}
+            <div class="govuk-date-input" data-testid="valid-to-date">
+              <div class="govuk-date-input__item">
+                <label class="govuk-label govuk-date-input__label" for="validToDay">Day</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="validToDay" name="validToDay" type="text" inputmode="numeric" value="{{ validToDay }}" data-testid="valid-to-day">
+              </div>
+              <div class="govuk-date-input__item">
+                <label class="govuk-label govuk-date-input__label" for="validToMonth">Month</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="validToMonth" name="validToMonth" type="text" inputmode="numeric" value="{{ validToMonth }}" data-testid="valid-to-month">
+              </div>
+              <div class="govuk-date-input__item">
+                <label class="govuk-label govuk-date-input__label" for="validToYear">Year</label>
+                <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="validToYear" name="validToYear" type="text" inputmode="numeric" value="{{ validToYear }}" data-testid="valid-to-year">
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="save-amend-button">
+          {{ t('pages.uploadBesEvidence.amend.saveButton') }}
+        </button>
+
+        <a class="govuk-button govuk-button--secondary" href="{{ cancelLink }}" data-testid="cancel-amend-link">
+          {{ t('pages.uploadBesEvidence.amend.cancelLink') }}
+        </a>
+      </form>
+
+    </div>
+  </div>
+{% endblock %}

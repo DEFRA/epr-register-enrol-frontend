@@ -22,6 +22,13 @@ function uploadUrl(applicationId, siteId) {
   return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
 }
 
+// A site with existing uploads should route to the review screen (view/
+// amend/delete existing files, added in RA-570) rather than back to the
+// raw upload form, which only supports adding a new file.
+function reviewUrl(applicationId, siteId) {
+  return `/accreditation/cya-evidence-for-overseas-site/${applicationId}/${siteId}`
+}
+
 function renderPage(h, viewData) {
   return h.view(
     'accreditation/upload-evidence-for-overseas-site/index',
@@ -62,6 +69,7 @@ function mapSites(t, applicationId, rawSites) {
   return (rawSites ?? []).map((s) => {
     const required = besEvidenceRequired(s)
     const status = evidenceStatus(s, t)
+    const hasUploads = (s.besEvidence?.besEvidenceUploads?.length ?? 0) > 0
     return {
       siteId: s.siteId,
       siteName: s.siteName ?? '',
@@ -69,7 +77,12 @@ function mapSites(t, applicationId, rawSites) {
       evidenceRequired: required,
       evidenceStatusText: status.text,
       evidenceStatusClass: status.tagClass,
-      uploadUrl: uploadUrl(applicationId, s.siteId)
+      uploadUrl: hasUploads
+        ? reviewUrl(applicationId, s.siteId)
+        : uploadUrl(applicationId, s.siteId),
+      uploadLinkText: hasUploads
+        ? t('pages.uploadEvidenceList.viewLink')
+        : t('pages.uploadEvidenceList.uploadLink')
     }
   })
 }

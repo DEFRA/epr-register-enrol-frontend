@@ -3,11 +3,13 @@ import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-trans
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import {
+  extractSiteContactFields,
+  validateSiteContactDetails
+} from '../../../common/helpers/siteContactDetails.js'
+import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a
@@ -37,6 +39,14 @@ function renderPage(h, viewData) {
     'accreditation/add-overseas-site/site-contact-details/index',
     viewData
   )
+}
+
+// RA-468: the phone is optional here (only validated once entered) and the
+// contact name must not contain digits.
+const CONTACT_VALIDATION_OPTIONS = {
+  keyPrefix: 'pages.addOverseasSite.siteContactDetails.validation',
+  phoneRequired: false,
+  nameRejectsDigits: true
 }
 
 function buildViewData(t, applicationId, fields, errors) {
@@ -98,27 +108,12 @@ export const addOrsSiteContactDetailsPostController = {
       return guardRedirect
     }
 
-    const fields = {
-      siteContactName: (request.payload?.siteContactName ?? '').trim(),
-      siteContactEmail: (request.payload?.siteContactEmail ?? '').trim(),
-      siteContactPhone: (request.payload?.siteContactPhone ?? '').trim()
-    }
-    const errors = {}
-
-    if (!fields.siteContactName) {
-      errors.siteContactName = t(
-        'pages.addOverseasSite.siteContactDetails.validation.nameRequired'
-      )
-    }
-    if (!fields.siteContactEmail) {
-      errors.siteContactEmail = t(
-        'pages.addOverseasSite.siteContactDetails.validation.emailRequired'
-      )
-    } else if (!EMAIL_REGEX.test(fields.siteContactEmail)) {
-      errors.siteContactEmail = t(
-        'pages.addOverseasSite.siteContactDetails.validation.emailInvalid'
-      )
-    }
+    const fields = extractSiteContactFields(request.payload)
+    const errors = validateSiteContactDetails(
+      t,
+      fields,
+      CONTACT_VALIDATION_OPTIONS
+    )
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

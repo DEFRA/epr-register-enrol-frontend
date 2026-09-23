@@ -40,14 +40,36 @@
             <div class="govuk-summary-list__row" data-testid="evidence-row-{{ upload.fileId }}">
               <dt class="govuk-summary-list__key">{{ t('pages.cyaEvidenceForSite.fileUploaded') }}</dt>
               <dd class="govuk-summary-list__value" data-testid="filename-{{ upload.fileId }}">{{ upload.filename }}</dd>
+              {% if not readOnly %}
+                <dd class="govuk-summary-list__actions">
+                  <a class="govuk-link" href="{{ upload.amendLink }}" data-testid="amend-file-{{ upload.fileId }}">
+                    {{ t('pages.cyaEvidenceForSite.amend') }}<span class="govuk-visually-hidden"> {{ upload.filename }}</span>
+                  </a>
+                </dd>
+              {% endif %}
             </div>
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">{{ t('pages.cyaEvidenceForSite.startDate') }}</dt>
               <dd class="govuk-summary-list__value" data-testid="start-date-{{ upload.fileId }}">{{ upload.startDate }}</dd>
+              {% if not readOnly %}
+                <dd class="govuk-summary-list__actions"></dd>
+              {% endif %}
             </div>
             <div class="govuk-summary-list__row">
               <dt class="govuk-summary-list__key">{{ t('pages.cyaEvidenceForSite.endDate') }}</dt>
               <dd class="govuk-summary-list__value" data-testid="end-date-{{ upload.fileId }}">{{ upload.endDate }}</dd>
+              {% if not readOnly %}
+                <dd class="govuk-summary-list__actions">
+                  <form method="post" novalidate data-testid="delete-file-form-{{ upload.fileId }}">
+                    <input type="hidden" name="crumb" value="{{ crumb }}">
+                    <input type="hidden" name="action" value="deleteFile">
+                    <input type="hidden" name="fileId" value="{{ upload.fileId }}">
+                    <button type="submit" class="govuk-button govuk-button--warning govuk-!-margin-bottom-0" data-module="govuk-button" data-testid="delete-file-button-{{ upload.fileId }}">
+                      {{ t('pages.cyaEvidenceForSite.deleteFile') }}<span class="govuk-visually-hidden"> {{ upload.filename }}</span>
+                    </button>
+                  </form>
+                </dd>
+              {% endif %}
             </div>
           {% endfor %}
         </dl>
@@ -56,6 +78,12 @@
       {% endif %}
 
       {% if not readOnly %}
+        <p class="govuk-body">
+          <a class="govuk-link" href="{{ addFileUrl }}" data-testid="add-file-link">
+            {{ t('pages.cyaEvidenceForSite.addFile') }}
+          </a>
+        </p>
+
         <form method="post" novalidate data-testid="confirm-form">
           <input type="hidden" name="crumb" value="{{ crumb }}">
           <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="confirm-button">

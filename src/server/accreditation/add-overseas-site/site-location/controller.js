@@ -12,7 +12,16 @@ const MAX_LATITUDE = 90
 const MIN_LONGITUDE = -180
 const MAX_LONGITUDE = 180
 const MIN_COORDINATE_DECIMAL_PLACES = 4
+// RA-580-2: new ceiling — 4 dp remains the required minimum accuracy, 10 dp is the max.
+const MAX_COORDINATE_DECIMAL_PLACES = 10
 const COORDINATE_NUMBER_PATTERN = /^-?\d+(\.\d+)?$/
+// RA-468: a place name, not a free-text address line — letters plus the
+// punctuation real town/city names use (spaces, hyphens, apostrophes), e.g.
+// "Stratford-upon-Avon", "King's Lynn". No digits or other symbols. The
+// lookahead requires at least one letter, so a value made up of only
+// punctuation (e.g. "-'-") isn't waved through as a "valid" town/city
+// (review: masante).
+const TOWN_OR_CITY_REGEX = /^(?=.*\p{L})[\p{L}\s'-]+$/u
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -67,11 +76,18 @@ function coordinateRangeError(lat, lng) {
   return null
 }
 
+function isWithinAllowedPrecision(value) {
+  const places = decimalPlaces(value)
+  return (
+    places >= MIN_COORDINATE_DECIMAL_PLACES &&
+    places <= MAX_COORDINATE_DECIMAL_PLACES
+  )
+}
+
 function coordinatePrecisionError(latRaw, lngRaw) {
-  const hasSufficientPrecision =
-    decimalPlaces(latRaw) >= MIN_COORDINATE_DECIMAL_PLACES &&
-    decimalPlaces(lngRaw) >= MIN_COORDINATE_DECIMAL_PLACES
-  return hasSufficientPrecision ? null : 'precision'
+  const hasAllowedPrecision =
+    isWithinAllowedPrecision(latRaw) && isWithinAllowedPrecision(lngRaw)
+  return hasAllowedPrecision ? null : 'precision'
 }
 
 function parseCoordinates(raw) {
@@ -124,6 +140,19 @@ const COORDINATES_ERROR_KEYS = {
   invalid: 'coordinatesInvalid'
 }
 
+// RA-468: mirrors validateCoordinates below — sequential early returns
+// rather than if/else-if, so a third rule (after "required") slots in
+// without the branch nesting Sonar's complexity/S126 rules flag.
+function validateTownOrCity(t, townOrCity) {
+  if (!townOrCity) {
+    return t('pages.addOverseasSite.siteLocation.validation.townOrCityRequired')
+  }
+  if (!TOWN_OR_CITY_REGEX.test(townOrCity)) {
+    return t('pages.addOverseasSite.siteLocation.validation.townOrCityInvalid')
+  }
+  return null
+}
+
 function validateRequiredFields(t, fields) {
   const errors = {}
   if (!fields.addressLine1) {
@@ -131,10 +160,9 @@ function validateRequiredFields(t, fields) {
       'pages.addOverseasSite.siteLocation.validation.addressLine1Required'
     )
   }
-  if (!fields.townOrCity) {
-    errors.townOrCity = t(
-      'pages.addOverseasSite.siteLocation.validation.townOrCityRequired'
-    )
+  const townOrCityError = validateTownOrCity(t, fields.townOrCity)
+  if (townOrCityError) {
+    errors.townOrCity = townOrCityError
   }
   if (!fields.country) {
     errors.country = t(

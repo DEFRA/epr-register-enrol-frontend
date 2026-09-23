@@ -4,6 +4,7 @@ import { config } from '../../../config/config.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
@@ -11,6 +12,7 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -39,6 +41,8 @@ export const ALLOWED_MIME_TYPES = [
 ]
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
+
+export const FETCH_ERROR_KEY = 'pages.uploadBesEvidence.validation.fetchError'
 
 export function validateFileExtension(filename) {
   if (!filename) {
@@ -75,7 +79,7 @@ export function isDateBlank(day, month, year) {
 // block nested inside an `if (!validToBlank)`, which is exactly the kind of
 // nesting cognitive complexity penalises hardest. Flattened into its own
 // function so the handler gets back a plain { validTo, error } result.
-function resolveBesEvidenceValidTo(payload, validFrom, t) {
+export function resolveBesEvidenceValidTo(payload, validFrom, t) {
   const validToBlank = isDateBlank(
     payload.validToDay,
     payload.validToMonth,
@@ -106,7 +110,7 @@ function resolveBesEvidenceValidTo(payload, validFrom, t) {
   return { validTo, error: null }
 }
 
-function taskListUrl(applicationId) {
+export function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
@@ -114,8 +118,32 @@ function uploadMoreUrl(applicationId, siteId) {
   return `/accreditation/upload-more-evidence/${applicationId}/${siteId}`
 }
 
+export function cyaEvidenceUrl(applicationId, siteId) {
+  return `/accreditation/cya-evidence-for-overseas-site/${applicationId}/${siteId}`
+}
+
 function renderPage(h, viewData) {
   return h.view('accreditation/upload-bes-evidence/index', viewData)
+}
+
+// RA-571: sequential early returns rather than three separate inline
+// if-blocks each rendering the page — the duplicate-filename rule
+// (AC01-AC04) is a fourth check on the same file, and one function keeps
+// the handler itself a plain sequence of guards.
+function validateBesEvidenceFile(t, { filename, fileSize, application }) {
+  if (!filename) {
+    return t('pages.uploadBesEvidence.validation.noFile')
+  }
+  if (!validateFileExtension(filename)) {
+    return t('pages.uploadBesEvidence.validation.invalidType')
+  }
+  if (fileSize > MAX_FILE_BYTES) {
+    return t('pages.uploadBesEvidence.validation.fileTooLarge')
+  }
+  if (isDuplicateFilename(filename, application)) {
+    return t('pages.uploadBesEvidence.validation.duplicateFilename')
+  }
+  return null
 }
 
 function buildViewData(
@@ -151,7 +179,7 @@ export const uploadBesEvidenceGetController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId, siteId } = request.params
-    const siteIdInt = parseInt(siteId, 10)
+    const siteIdInt = Number.parseInt(siteId, 10)
 
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
@@ -166,10 +194,10 @@ export const uploadBesEvidenceGetController = {
             '',
             {},
             {
-              error: t('pages.uploadBesEvidence.validation.fetchError')
+              error: t(FETCH_ERROR_KEY)
             }
           )
-        ).code(500)
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
@@ -223,9 +251,9 @@ export const uploadBesEvidencePostController = {
         renderPage(
           h,
           buildViewData(t, applicationId, '', payload, {
-            error: t('pages.uploadBesEvidence.validation.fetchError')
+            error: t(FETCH_ERROR_KEY)
           })
-        ).code(500)
+        ).code(statusCodes.internalServerError)
     })
     if (errorResponse) {
       return errorResponse
@@ -258,30 +286,15 @@ export const uploadBesEvidencePostController = {
       uploadedFile?.headers?.['content-type'] ?? 'application/octet-stream'
     const fileSize = uploadedFile?.payload?.length ?? 0
 
-    if (!filename) {
+    const fileError = validateBesEvidenceFile(t, {
+      filename,
+      fileSize,
+      application
+    })
+    if (fileError) {
       return renderPage(
         h,
-        buildViewData(t, applicationId, siteName, payload, {
-          fileError: t('pages.uploadBesEvidence.validation.noFile')
-        })
-      ).code(400)
-    }
-
-    if (!validateFileExtension(filename)) {
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, siteName, payload, {
-          fileError: t('pages.uploadBesEvidence.validation.invalidType')
-        })
-      ).code(400)
-    }
-
-    if (fileSize > MAX_FILE_BYTES) {
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, siteName, payload, {
-          fileError: t('pages.uploadBesEvidence.validation.fileTooLarge')
-        })
+        buildViewData(t, applicationId, siteName, payload, { fileError })
       ).code(400)
     }
 
