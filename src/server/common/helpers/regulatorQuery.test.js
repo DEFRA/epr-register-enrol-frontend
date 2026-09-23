@@ -3,7 +3,7 @@ import { config } from '../../../config/config.js'
 import {
   REGULATOR_QUERY_SECTION_LABEL_KEYS,
   buildRegulatorQuerySummary,
-  resolveRegulatorQueryNote
+  isRegulatorQueryBannerVisible
 } from './regulatorQuery.js'
 
 const t = (key) => {
@@ -49,7 +49,7 @@ describe('buildRegulatorQuerySummary', () => {
   })
 })
 
-describe('resolveRegulatorQueryNote', () => {
+describe('isRegulatorQueryBannerVisible', () => {
   function makeApplication(overrides = {}) {
     return {
       applicationStatus: 'Queried',
@@ -69,12 +69,10 @@ describe('resolveRegulatorQueryNote', () => {
       )
   }
 
-  test('returns the queryNote when Queried, not read-only, and the flag is off', () => {
+  test('returns true when Queried, not read-only, and the flag is off', () => {
     const spy = mockFlag(false)
     try {
-      expect(resolveRegulatorQueryNote(makeApplication())).toBe(
-        'Please confirm the planned tonnage band.'
-      )
+      expect(isRegulatorQueryBannerVisible(makeApplication())).toBe(true)
     } finally {
       spy.mockRestore()
     }
@@ -83,53 +81,53 @@ describe('resolveRegulatorQueryNote', () => {
   test('defaults readOnly to false when no options are passed', () => {
     const spy = mockFlag(false)
     try {
-      expect(resolveRegulatorQueryNote(makeApplication())).toBe(
-        'Please confirm the planned tonnage band.'
-      )
+      expect(isRegulatorQueryBannerVisible(makeApplication())).toBe(true)
     } finally {
       spy.mockRestore()
     }
   })
 
-  test('returns null when the section is read-only', () => {
+  test('returns false when the section is read-only', () => {
     const spy = mockFlag(false)
     try {
       expect(
-        resolveRegulatorQueryNote(makeApplication(), { readOnly: true })
-      ).toBeNull()
+        isRegulatorQueryBannerVisible(makeApplication(), { readOnly: true })
+      ).toBe(false)
     } finally {
       spy.mockRestore()
     }
   })
 
-  test('returns null when applicationStatus is not Queried', () => {
+  test('returns false when applicationStatus is not Queried', () => {
     const spy = mockFlag(false)
     try {
       expect(
-        resolveRegulatorQueryNote(
+        isRegulatorQueryBannerVisible(
           makeApplication({ applicationStatus: 'Submitted' })
         )
-      ).toBeNull()
+      ).toBe(false)
     } finally {
       spy.mockRestore()
     }
   })
 
-  test('returns null when application.query is absent', () => {
+  // RA-590 removed the officer note from the view, so visibility no longer
+  // depends on application.query being populated at all.
+  test('returns true for a Queried, editable section with no query payload', () => {
     const spy = mockFlag(false)
     try {
       expect(
-        resolveRegulatorQueryNote(makeApplication({ query: null }))
-      ).toBeNull()
+        isRegulatorQueryBannerVisible(makeApplication({ query: null }))
+      ).toBe(true)
     } finally {
       spy.mockRestore()
     }
   })
 
-  test('returns null when REGULATOR_QUERY_TEXT_DISABLED is true, even for a Queried, editable section', () => {
+  test('returns false when REGULATOR_QUERY_TEXT_DISABLED is true, even for a Queried, editable section', () => {
     const spy = mockFlag(true)
     try {
-      expect(resolveRegulatorQueryNote(makeApplication())).toBeNull()
+      expect(isRegulatorQueryBannerVisible(makeApplication())).toBe(false)
     } finally {
       spy.mockRestore()
     }

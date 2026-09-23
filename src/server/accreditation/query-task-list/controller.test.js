@@ -98,32 +98,15 @@ describe('#buildQueryTaskListViewModel', () => {
     ])
   })
 
-  test('exposes queryNote from application.query', () => {
+  // RA-590. The officer's free-text note is internal-only, so this page's view
+  // model must not carry it at all - the per-task QUERIED tags already tell the
+  // operator which sections are under query.
+  test('does not expose the officer query note in the view model', () => {
     const vm = buildQueryTaskListViewModel(makeApplication(), t)
-    expect(vm.queryNote).toBe(
+    expect(vm.queryNote).toBeUndefined()
+    expect(JSON.stringify(vm)).not.toContain(
       'Please provide more detail on your business plan.'
     )
-  })
-
-  test('queryNote is null when application.query is absent', () => {
-    const vm = buildQueryTaskListViewModel(makeApplication({ query: null }), t)
-    expect(vm.queryNote).toBeNull()
-  })
-
-  test('queryNote is null when REGULATOR_QUERY_TEXT_DISABLED is true', () => {
-    const originalConfigGet = config.get.bind(config)
-    const configSpy = vi
-      .spyOn(config, 'get')
-      .mockImplementation((key) =>
-        key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
-      )
-
-    try {
-      const vm = buildQueryTaskListViewModel(makeApplication(), t)
-      expect(vm.queryNote).toBeNull()
-    } finally {
-      configSpy.mockRestore()
-    }
   })
 
   test('continueUrl points directly to query-declaration', () => {
@@ -184,7 +167,7 @@ describe('#queryTaskListGetController', () => {
     'x-test-user-type': 'operator'
   }
 
-  test('returns 200 and renders the queried section and query note', async () => {
+  test('returns 200 and renders the queried section without the officer note', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
     const { result, statusCode } = await server.inject({
@@ -194,37 +177,55 @@ describe('#queryTaskListGetController', () => {
     })
 
     expect(statusCode).toBe(statusCodes.ok)
+    // the operator can still see which section is queried, and act on it
     expect(result).toContain('data-testid="task-business-plan"')
-    expect(result).toContain('data-testid="regulator-query-banner"')
-    expect(result).toContain(
+    expect(result).toContain('data-testid="query-task-list"')
+    // RA-590: no banner on this page, and the note must not reach the browser
+    // anywhere in the markup - the record still carries it, so assert on the
+    // whole response rather than on one element.
+    expect(result).not.toContain('data-testid="regulator-query-banner"')
+    expect(result).not.toContain('data-testid="query-note"')
+    expect(result).not.toContain(
       'Please provide more detail on your business plan.'
     )
   })
 
-  test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {
-    vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-    const originalConfigGet = config.get.bind(config)
-    const configSpy = vi
-      .spyOn(config, 'get')
-      .mockImplementation((key) =>
-        key === 'regulatorQuery.textDisabled' ? true : originalConfigGet(key)
-      )
+  // RA-590 removed the banner from this page entirely, so the RA-439
+  // REGULATOR_QUERY_TEXT_DISABLED switch has nothing left to toggle here.
+  // Asserted both ways so this stays a real check rather than one that passes
+  // because the flag happens to be off.
+  test.each([true, false])(
+    'never renders the regulator-query banner on this page, with REGULATOR_QUERY_TEXT_DISABLED=%s',
+    async (disabled) => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const originalConfigGet = config.get.bind(config)
+      const configSpy = vi
+        .spyOn(config, 'get')
+        .mockImplementation((key) =>
+          key === 'regulatorQuery.textDisabled'
+            ? disabled
+            : originalConfigGet(key)
+        )
 
-    try {
-      const { result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
-      })
+      try {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/query-task-list/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
 
-      expect(result).not.toContain('data-testid="regulator-query-banner"')
-      expect(result).not.toContain(
-        'Please provide more detail on your business plan.'
-      )
-    } finally {
-      configSpy.mockRestore()
+        expect(result).not.toContain('data-testid="regulator-query-banner"')
+        expect(result).not.toContain('data-testid="query-note"')
+        expect(result).not.toContain(
+          'Please provide more detail on your business plan.'
+        )
+        // the task list itself must still render either way
+        expect(result).toContain('data-testid="query-task-list"')
+      } finally {
+        configSpy.mockRestore()
+      }
     }
-  })
+  )
 
   test('continue button links directly to query-declaration', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())

@@ -5,7 +5,7 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
-  resolveRegulatorQueryNote
+  isRegulatorQueryBannerVisible
 } from '../../common/helpers/regulatorQuery.js'
 import {
   resolveQueriedSectionAccess,
@@ -92,7 +92,7 @@ function buildViewData(
   applicationId,
   sites,
   error,
-  queryNote = null,
+  queried = false,
   querySummary = null,
   regulatorQueryFields = null,
   readOnly = false,
@@ -110,7 +110,7 @@ function buildViewData(
       ? queryTaskListUrl(applicationId)
       : taskListUrl(applicationId),
     error,
-    queryNote,
+    queried,
     querySummary,
     regulatorQueryFields,
     readOnly,
@@ -157,7 +157,7 @@ export const uploadEvidenceListGetController = {
       (s) => s.selected !== false
     )
     const sites = mapSites(t, applicationId, selectedSites)
-    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
+    const queried = isRegulatorQueryBannerVisible(application, { readOnly })
     return renderPage(
       h,
       buildViewData(
@@ -165,9 +165,9 @@ export const uploadEvidenceListGetController = {
         applicationId,
         sites,
         null,
-        queryNote,
-        queryNote ? buildRegulatorQuerySummary('besEvidence', t) : null,
-        queryNote
+        queried,
+        queried ? buildRegulatorQuerySummary('besEvidence', t) : null,
+        queried
           ? [
               {
                 label: t('pages.taskList.tasks.besEvidence'),

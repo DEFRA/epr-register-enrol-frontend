@@ -535,7 +535,7 @@ describe('#samplingPlanUploadController', () => {
       expect(result).not.toContain('Please break down the price support spend.')
     })
 
-    test('renders the form and query note when sampling plan section itself is Queried', async () => {
+    test('renders the form and the query banner, without the officer note, when the sampling plan section itself is Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
@@ -551,7 +551,13 @@ describe('#samplingPlanUploadController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Please resubmit the sampling schedule.')
+      // RA-590: the banner still tells the operator the section is
+      // queried, but must not carry the officer's free-text note.
+      expect(result).toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain('data-testid="query-note"')
+      // the record still carries the note, so assert on the whole
+      // response rather than on the removed element alone.
+      expect(result).not.toContain('Please resubmit the sampling schedule.')
     })
 
     test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {

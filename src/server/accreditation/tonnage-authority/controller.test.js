@@ -383,7 +383,7 @@ describe('#tonnageAuthorityController', () => {
       expect(result).not.toContain('Please break down the price support spend.')
     })
 
-    test('renders the form and query note when PRNs section itself is Queried', async () => {
+    test('renders the form and the query banner, without the officer note, when the PRNs section itself is Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
@@ -403,12 +403,17 @@ describe('#tonnageAuthorityController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="query-note"')
-      expect(result).toContain('Please confirm the authorised issuers.')
+      // RA-590: the banner still tells the operator the section is queried,
+      // and still carries the frontend-owned summary sentence, but must not
+      // carry the officer's free-text note.
       expect(result).toContain('data-testid="regulator-query-banner"')
       expect(result).toContain(
         'The regulator has identified an issue with your tonnage and authority to issue PRNs.'
       )
+      expect(result).not.toContain('data-testid="query-note"')
+      // the record still carries the note, so assert on the whole response
+      // rather than on the removed element alone.
+      expect(result).not.toContain('Please confirm the authorised issuers.')
     })
 
     test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {

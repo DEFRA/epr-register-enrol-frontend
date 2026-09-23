@@ -6,7 +6,7 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
-  resolveRegulatorQueryNote
+  isRegulatorQueryBannerVisible
 } from '../../common/helpers/regulatorQuery.js'
 import {
   resolveQueriedSectionAccess,
@@ -94,7 +94,7 @@ export const tonnageGetController = {
 
     const isExporter = application.isExporter ?? false
     const sectionKey = isExporter ? 'perns' : 'prns'
-    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
+    const queried = isRegulatorQueryBannerVisible(application, { readOnly })
 
     return renderForm(h, {
       pageTitle: isExporter
@@ -115,10 +115,8 @@ export const tonnageGetController = {
           ? queryTaskListUrl(applicationId)
           : taskListUrl(applicationId),
       isExporter,
-      queryNote,
-      querySummary: queryNote
-        ? buildRegulatorQuerySummary(sectionKey, t)
-        : null,
+      queried,
+      querySummary: queried ? buildRegulatorQuerySummary(sectionKey, t) : null,
       readOnly,
       isQueriedApplication: application.applicationStatus === 'Queried'
     })

@@ -417,7 +417,7 @@ export const config = convict({
   },
   regulatorQuery: {
     textDisabled: {
-      doc: 'RA-439. Kill switch that hides the regulator-query banner (heading, summary, officer free-text queryNote, fields-to-update list) on queried section pages. Display-only — has no effect on applicationStatus/sectionStatus, read-only/blocked access, or CM/backend data.',
+      doc: 'RA-439. Kill switch that hides the regulator-query banner (heading, summary, fields-to-update list) on queried section pages. RA-590 removed the officer free-text note from this banner, so the switch no longer governs any officer-authored text. Display-only — has no effect on applicationStatus/sectionStatus, read-only/blocked access, or CM/backend data.',
       format: Boolean,
       default: false,
       env: 'REGULATOR_QUERY_TEXT_DISABLED'

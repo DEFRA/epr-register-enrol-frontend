@@ -8,7 +8,7 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
-  resolveRegulatorQueryNote
+  isRegulatorQueryBannerVisible
 } from '../../common/helpers/regulatorQuery.js'
 import {
   resolveQueriedSectionAccess,
@@ -185,7 +185,7 @@ export const samplingPlanUploadGetController = {
     ).length
 
     const materialDisplay = materialDisplayName(application, t)
-    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
+    const queried = isRegulatorQueryBannerVisible(application, { readOnly })
 
     return renderPage(h, {
       pageTitle: t('pages.samplingPlanUpload.title'),
@@ -203,11 +203,11 @@ export const samplingPlanUploadGetController = {
       viewableFilesCount,
       resultsLink: resultsUrl(applicationId),
       documentTypeOptions: documentTypeOptions(t),
-      queryNote,
-      querySummary: queryNote
+      queried,
+      querySummary: queried
         ? buildRegulatorQuerySummary('samplingPlan', t)
         : null,
-      regulatorQueryFields: queryNote
+      regulatorQueryFields: queried
         ? [
             {
               label: t('pages.taskList.tasks.samplingPlan'),
