@@ -600,7 +600,7 @@ describe('#selectOverseasSitesController', () => {
       expect(result).not.toContain('Please break down the price support spend.')
     })
 
-    test('renders the page (no redirect) when overseas sites section itself is Queried', async () => {
+    test('renders the page (no redirect) without the officer note when the overseas sites section itself is Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
@@ -620,7 +620,15 @@ describe('#selectOverseasSitesController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="continue-form"')
-      expect(result).toContain('Please confirm the overseas site selection.')
+      // RA-590: the banner still tells the operator the section is
+      // queried, but must not carry the officer's free-text note.
+      expect(result).toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain('data-testid="query-note"')
+      // the record still carries the note, so assert on the whole
+      // response rather than on the removed element alone.
+      expect(result).not.toContain(
+        'Please confirm the overseas site selection.'
+      )
     })
 
     test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {

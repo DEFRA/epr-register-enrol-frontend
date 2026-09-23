@@ -5,7 +5,6 @@ import {
   queryDeclarationUrl,
   reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
-import { resolveRegulatorQueryNote } from '../../common/helpers/regulatorQuery.js'
 import { fetchApplicationOrRenderSimpleErrorPage } from '../../common/helpers/fetchApplicationOrRenderError.js'
 
 const SECTION_STATUS_CONFIG = {
@@ -100,7 +99,6 @@ export function buildQueryTaskListViewModel(application, t) {
   return {
     heading,
     isExporter: isExporter ?? false,
-    queryNote: resolveRegulatorQueryNote(application),
     tasks,
     continueUrl: queryDeclarationUrl(applicationId)
   }

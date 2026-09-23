@@ -34,26 +34,31 @@ export function buildRegulatorQuerySummary(sectionKey, t) {
 }
 
 /**
- * Central gate for the regulator-query banner's queryNote. Returns null
- * (hiding the banner) when the REGULATOR_QUERY_TEXT_DISABLED kill switch is
- * on, or when the section isn't in a queried, editable state; otherwise
- * returns the officer's free-text note. Display-only — callers still run
- * their own applicationStatus/sectionStatus and read-only/blocked checks for
- * everything else (redirects, access control, patch guards).
+ * Central gate for whether the regulator-query banner renders at all. Returns
+ * false when the REGULATOR_QUERY_TEXT_DISABLED kill switch is on, or when the
+ * section isn't in a queried, editable state.
+ *
+ * RA-590: the officer's free-text note is internal-only and is communicated to
+ * the operator outside the application, so this deliberately returns a boolean
+ * rather than the note it replaced — the banner still tells the operator the
+ * section is queried and still offers the fields-to-update links, it just
+ * carries no officer text. It does not read application.query at all.
+ *
+ * Display-only — callers still run their own applicationStatus/sectionStatus
+ * and read-only/blocked checks for everything else (redirects, access control,
+ * patch guards).
  * @param {object} application - the fetched application record
  * @param {object} [options]
  * @param {boolean} [options.readOnly] - true when the current section is
  *   viewable but not the one under query (see resolveQueriedSectionAccess)
- * @returns {string|null}
+ * @returns {boolean}
  */
-export function resolveRegulatorQueryNote(
+export function isRegulatorQueryBannerVisible(
   application,
   { readOnly = false } = {}
 ) {
   if (config.get('regulatorQuery.textDisabled')) {
-    return null
+    return false
   }
   return application.applicationStatus === 'Queried' && !readOnly
-    ? (application.query?.queryNote ?? null)
-    : null
 }

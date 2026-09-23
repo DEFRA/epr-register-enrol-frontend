@@ -18,11 +18,6 @@
         <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
         <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
-        {{ regulatorQueryBanner({
-          queryNote: queryNote,
-          heading: t('common.regulatorQuery.heading')
-        }) }}
-
         <ul class="govuk-task-list" data-testid="query-task-list">
           {% for task in tasks %}
             <li class="govuk-task-list__item govuk-task-list__item--with-link" data-testid="{{ task.testId }}">

@@ -5,7 +5,7 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
-  resolveRegulatorQueryNote
+  isRegulatorQueryBannerVisible
 } from '../../common/helpers/regulatorQuery.js'
 import {
   resolveQueriedSectionAccess,
@@ -119,13 +119,13 @@ export const tonnageAuthorityGetController = {
 
     const isExporter = application.isExporter ?? false
     const sectionKey = isExporter ? 'perns' : 'prns'
-    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
+    const queried = isRegulatorQueryBannerVisible(application, { readOnly })
 
     return renderPage(
       h,
       buildViewData(application, t, applicationId, {
-        queryNote,
-        querySummary: queryNote
+        queried,
+        querySummary: queried
           ? buildRegulatorQuerySummary(sectionKey, t)
           : null,
         readOnly,

@@ -445,7 +445,7 @@ describe('#uploadEvidenceListController', () => {
       expect(result).not.toContain('Please break down the price support spend.')
     })
 
-    test('renders the sites table and query note when BES evidence section itself is Queried', async () => {
+    test('renders the sites table and the query banner, without the officer note, when the BES evidence section itself is Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           applicationStatus: 'Queried',
@@ -462,7 +462,13 @@ describe('#uploadEvidenceListController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="sites-table"')
-      expect(result).toContain('Please provide updated BES evidence.')
+      // RA-590: the banner still tells the operator the section is
+      // queried, but must not carry the officer's free-text note.
+      expect(result).toContain('data-testid="regulator-query-banner"')
+      expect(result).not.toContain('data-testid="query-note"')
+      // the record still carries the note, so assert on the whole
+      // response rather than on the removed element alone.
+      expect(result).not.toContain('Please provide updated BES evidence.')
     })
 
     test('hides the regulator-query banner when REGULATOR_QUERY_TEXT_DISABLED is true', async () => {

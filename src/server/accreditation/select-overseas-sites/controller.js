@@ -5,7 +5,7 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
-  resolveRegulatorQueryNote
+  isRegulatorQueryBannerVisible
 } from '../../common/helpers/regulatorQuery.js'
 import {
   resolveQueriedSectionAccess,
@@ -103,7 +103,7 @@ function resolveFlashBanners(yar) {
 function resolveBannerDefaults(banners) {
   return {
     successBanner: banners.successBanner ?? false,
-    queryNote: banners.queryNote ?? null,
+    queried: banners.queried ?? false,
     interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
     promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
     editSuccessBanner: banners.editSuccessBanner ?? false,
@@ -350,7 +350,7 @@ export const selectOverseasSitesGetController = {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
-    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
+    const queried = isRegulatorQueryBannerVisible(application, { readOnly })
 
     return renderPage(
       h,
@@ -361,14 +361,14 @@ export const selectOverseasSitesGetController = {
         null,
         {
           successBanner,
-          queryNote,
+          queried,
           interimSiteSuccessBanner,
           promoteSuccessBanner,
           editSuccessBanner,
-          querySummary: queryNote
+          querySummary: queried
             ? buildRegulatorQuerySummary('overseasSites', t)
             : null,
-          regulatorQueryFields: queryNote
+          regulatorQueryFields: queried
             ? [
                 {
                   label: t('pages.taskList.tasks.overseasSites'),

@@ -7,7 +7,7 @@ import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import { findBpItem, PERCENT_FIELD_TO_CATEGORY } from './helpers.js'
 import {
   buildRegulatorQuerySummary,
-  resolveRegulatorQueryNote
+  isRegulatorQueryBannerVisible
 } from '../../common/helpers/regulatorQuery.js'
 import {
   resolveQueriedSectionAccess,
@@ -128,7 +128,7 @@ function buildViewData(
   payload,
   errors,
   isExporter = false,
-  queryNote = null,
+  queried = false,
   querySummary = null,
   regulatorQueryFields = null,
   readOnly = false,
@@ -151,7 +151,7 @@ function buildViewData(
     fieldInputs: buildFieldInputs(payload, errors, t),
     errors,
     sumError: errors._sum,
-    queryNote,
+    queried,
     querySummary,
     regulatorQueryFields,
     readOnly,
@@ -221,7 +221,7 @@ export const businessPlanGetController = {
     }
 
     const isExporter = application.isExporter ?? false
-    const queryNote = resolveRegulatorQueryNote(application, { readOnly })
+    const queried = isRegulatorQueryBannerVisible(application, { readOnly })
 
     return renderPage(
       h,
@@ -231,9 +231,9 @@ export const businessPlanGetController = {
         payloadFromApplication(application),
         {},
         isExporter,
-        queryNote,
-        queryNote ? buildRegulatorQuerySummary('businessPlan', t) : null,
-        queryNote
+        queried,
+        queried ? buildRegulatorQuerySummary('businessPlan', t) : null,
+        queried
           ? [
               {
                 label: t('pages.taskList.tasks.businessPlan'),
