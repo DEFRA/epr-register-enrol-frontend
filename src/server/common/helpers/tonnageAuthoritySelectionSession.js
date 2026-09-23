@@ -27,9 +27,8 @@ export function getSelection(request, applicationId) {
     ACCREDITATION_SESSION_KEYS.tonnageAuthoritySelection
   )
   if (
-    !stored ||
-    stored.applicationId !== applicationId ||
-    !Array.isArray(stored.emails)
+    stored?.applicationId !== applicationId ||
+    !Array.isArray(stored?.emails)
   ) {
     return null
   }
