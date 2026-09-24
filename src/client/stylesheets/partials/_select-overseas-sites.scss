@@ -1,6 +1,6 @@
 @use 'govuk-frontend' as *;
 
-// Each row here pairs a "Change" link with a "Remove from accreditation"
+// Each row here pairs a "Change" link with a "Withdraw from application"
 // button in one actions cell (unlike the single-action cells elsewhere in
 // the app). The default govuk-summary-list table-cell layout gives that
 // cell a fixed 20% width and lets the link and button wrap onto separate
@@ -57,4 +57,55 @@
     margin-right: govuk-spacing(4);
     white-space: nowrap;
   }
+
+  // RA-603 AC10: the interim-site accordion sits beneath its parent ORS row,
+  // indented to start where the ORS site name starts rather than at the ORS id
+  // column, so the two read as a parent and its children. Mirrors the 3ch id
+  // column above plus the summary list's own cell padding.
+  .select-overseas-sites-interim-accordion {
+    margin-left: calc(3ch + #{govuk-spacing(4)});
+  }
+}
+
+// RA-603 AC: the ORS row and its interim sites are one unit, so the rule that
+// govuk-summary-list draws under every row must not appear between them - only
+// after the last interim site. Outside the tablet media query above because the
+// border exists at every breakpoint.
+.select-overseas-sites-row--has-interim {
+  border-bottom: 0;
+}
+
+// RA-603 AC: tighten the vertical rhythm of these rows. The default summary-list
+// row padding is govuk-spacing(3) top and bottom, which leaves an ORS and its
+// interim sites looking like unrelated blocks.
+.select-overseas-sites-row {
+  padding-top: govuk-spacing(2);
+  padding-bottom: govuk-spacing(2);
+}
+
+.select-overseas-sites-interim-accordion {
+  margin-bottom: govuk-spacing(2);
+
+  // The accordion's own section padding is sized for page-level sections and is
+  // far too generous nested inside a list of sites.
+  .govuk-accordion__section-button {
+    padding-top: govuk-spacing(2);
+    padding-bottom: govuk-spacing(2);
+  }
+
+  .govuk-accordion__section-content {
+    padding-top: govuk-spacing(1);
+    padding-bottom: govuk-spacing(3);
+  }
+}
+
+// The interim detail rows sit inside the accordion body, where the summary
+// list's own dividing rules add noise rather than structure.
+.select-overseas-sites-interim-details .govuk-summary-list__row {
+  padding-top: govuk-spacing(1);
+  padding-bottom: govuk-spacing(1);
+}
+
+.select-overseas-sites-interim-actions .govuk-link {
+  margin-right: govuk-spacing(4);
 }

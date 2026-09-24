@@ -1420,4 +1420,147 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('Interim Depot')
     })
   })
+
+  // RA-603 phase 1. The page renders interim sites by looping a list and shows
+  // each one in a GOV.UK accordion, so the markup is already correct for many
+  // interim sites before the backend can store more than one.
+  describe('RA-603 — interim sites render as a list in an accordion', () => {
+    const INTERIM_SITE = {
+      siteId: 42,
+      siteName: 'Interim Depot',
+      country: 'France',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      contactName: 'Jane Smith',
+      contactEmail: 'jane@example.com',
+      contactPhone: '+441234567890',
+      operationCodes: ['R12', 'R13']
+    }
+
+    async function renderWithSites(sites) {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: { sectionStatus: 'InProgress', sites }
+        })
+      )
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+      return result
+    }
+
+    test('renders the accordion for a site carrying the legacy singular interimSite', async () => {
+      const result = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+
+      expect(result).toContain('data-testid="interim-sites-accordion-900001"')
+      expect(result).toContain('data-module="govuk-accordion"')
+      expect(result).toContain('Interim Depot')
+    })
+
+    // The forward-compatible half: the moment the backend starts sending a
+    // list, the page must use it rather than the singular mirror.
+    test('prefers an already-list-shaped interimSites over the singular field', async () => {
+      const result = await renderWithSites([
+        {
+          ...ACCREDITED_SITE,
+          interimSite: { ...INTERIM_SITE, siteName: 'Stale Mirror' },
+          interimSites: [
+            { ...INTERIM_SITE, siteId: 51, siteName: 'Authoritative Depot' }
+          ]
+        }
+      ])
+
+      expect(result).toContain('Authoritative Depot')
+      expect(result).not.toContain('Stale Mirror')
+    })
+
+    test('renders one accordion section per interim site when several are present', async () => {
+      const result = await renderWithSites([
+        {
+          ...ACCREDITED_SITE,
+          interimSites: [
+            { ...INTERIM_SITE, siteId: 42, siteName: 'First Depot' },
+            { ...INTERIM_SITE, siteId: 43, siteName: 'Second Depot' }
+          ]
+        }
+      ])
+
+      expect(result).toContain('data-testid="interim-site-row-900001"')
+      expect(result).toContain('data-testid="interim-site-row-is43"')
+      expect(result).toContain('First Depot')
+      expect(result).toContain('Second Depot')
+    })
+
+    test("flattens the interim site's address into a single line, skipping empty parts", async () => {
+      const result = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+
+      expect(result).toContain('Unit 1, Rotterdam')
+    })
+
+    test("shows the interim site's R codes", async () => {
+      const result = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+
+      expect(result).toContain(
+        'data-testid="interim-site-operation-codes-900001"'
+      )
+      expect(result).toContain('R12, R13')
+    })
+
+    test('renders no accordion for a site with no interim site', async () => {
+      const result = await renderWithSites([ACCREDITED_SITE])
+
+      expect(result).not.toContain(
+        'data-testid="interim-sites-accordion-900001"'
+      )
+    })
+
+    // AC: an ORS and its interim sites read as one unit, so the summary-list
+    // rule between them is suppressed - and only then.
+    test('drops the dividing rule under an ORS row that has interim sites', async () => {
+      const withInterim = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+      expect(withInterim).toContain('select-overseas-sites-row--has-interim')
+
+      const withoutInterim = await renderWithSites([ACCREDITED_SITE])
+      expect(withoutInterim).not.toContain(
+        'select-overseas-sites-row--has-interim'
+      )
+    })
+  })
+
+  // AC11. The ticket claims the current wording is "Remove from Application";
+  // it was actually "Remove from accreditation"/"Add to accreditation". Either
+  // way, neither phrasing may survive this change.
+  describe('RA-603 AC11 — application action wording', () => {
+    test('uses "Withdraw from application" and "Add to application"', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [ACCREDITED_SITE, REGISTERED_SITE]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Withdraw from application')
+      expect(result).toContain('Add to application')
+      expect(result).not.toContain('Remove from accreditation')
+      expect(result).not.toContain('Add to accreditation')
+    })
+  })
 })

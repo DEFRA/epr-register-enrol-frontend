@@ -462,8 +462,8 @@
       "noSites": "[Welsh] No overseas reprocessing sites are associated with this application.",
       "continueButton": "Parhau",
       "saveAndComeLater": "[Welsh] Save and come back later",
-      "removeFromAccreditationButton": "[Welsh] Remove from accreditation",
-      "addToAccreditationButton": "[Welsh] Add to accreditation",
+      "withdrawFromApplicationButton": "[Welsh] Withdraw from application",
+      "addToApplicationButton": "[Welsh] Add to application",
       "changeButton": "[Welsh] Change",
       "orsIdLabel": "[Welsh] ORS ID",
       "sections": {
@@ -474,7 +474,15 @@
       },
       "interimSite": {
         "label": "[Welsh] Interim site",
-        "removeButton": "[Welsh] Remove interim site"
+        "removeButton": "[Welsh] Withdraw from application",
+        "rows": {
+          "country": "[Welsh] Country",
+          "address": "[Welsh] Address",
+          "contactName": "[Welsh] Contact name",
+          "contactEmail": "[Welsh] Contact email",
+          "contactPhone": "[Welsh] Contact phone",
+          "recyclingOperation": "[Welsh] Recycling operation codes"
+        }
       },
       "validation": {
         "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",
