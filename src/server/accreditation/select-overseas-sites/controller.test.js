@@ -176,21 +176,21 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
+      // RA-603: the page is a govuk-table now, so the ORS id lives in a column
+      // named by its own <th scope="col">. The visually-hidden "ORS ID" label
+      // that the summary-list version put inside every cell has gone with it -
+      // keeping both made a screen reader announce the label twice per row.
+      expect(result).toContain('data-testid="accredited-site-orsid-900001">001')
+      expect(result).toContain('data-testid="registered-site-orsid-900002">002')
+      expect(result).toContain('data-testid="new-site-orsid-900003">003')
       expect(result).toContain(
-        'data-testid="accredited-site-orsid-900001"><span class="govuk-visually-hidden">ORS ID</span> 001'
-      )
-      expect(result).toContain(
-        'data-testid="registered-site-orsid-900002"><span class="govuk-visually-hidden">ORS ID</span> 002'
-      )
-      expect(result).toContain(
-        'data-testid="new-site-orsid-900003"><span class="govuk-visually-hidden">ORS ID</span> 003'
-      )
-      expect(result).toContain(
-        'data-testid="registered-sites-added-orsid-900004"><span class="govuk-visually-hidden">ORS ID</span> 004'
+        'data-testid="registered-sites-added-orsid-900004">004'
       )
     })
 
-    test('omits the ORS id row when a site has none', async () => {
+    // RA-603: a table column has to exist in every row or every column below it
+    // shifts, so the cell is now always emitted - empty rather than absent.
+    test('emits an empty ORS id cell when a site has none', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           overseasSites: {
@@ -207,7 +207,9 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('data-testid="accredited-site-row-900001"')
-      expect(result).not.toContain('data-testid="accredited-site-orsid-900001"')
+      expect(result).toContain(
+        'data-testid="accredited-site-orsid-900001"></td>'
+      )
     })
 
     test('registered site Add To Accreditation link points to the promote route', async () => {
@@ -1418,6 +1420,194 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('Interim Depot')
+    })
+  })
+
+  // RA-603 phase 1. The page renders interim sites by looping a list and shows
+  // each one in a GOV.UK accordion, so the markup is already correct for many
+  // interim sites before the backend can store more than one.
+  describe('RA-603 — interim sites render as a list in an accordion', () => {
+    const INTERIM_SITE = {
+      siteId: 42,
+      siteName: 'Interim Depot',
+      country: 'France',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      contactName: 'Jane Smith',
+      contactEmail: 'jane@example.com',
+      contactPhone: '+441234567890',
+      operationCodes: ['R12', 'R13']
+    }
+
+    async function renderWithSites(sites) {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: { sectionStatus: 'InProgress', sites }
+        })
+      )
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+      return result
+    }
+
+    test('renders the disclosure for a site carrying the legacy singular interimSite', async () => {
+      const result = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+
+      expect(result).toContain('data-testid="interim-sites-disclosure-900001"')
+      expect(result).toContain('Show interim sites (1)')
+      expect(result).toContain('Interim Depot')
+    })
+
+    // The forward-compatible half: the moment the backend starts sending a
+    // list, the page must use it rather than the singular mirror.
+    test('prefers an already-list-shaped interimSites over the singular field', async () => {
+      const result = await renderWithSites([
+        {
+          ...ACCREDITED_SITE,
+          interimSite: { ...INTERIM_SITE, siteName: 'Stale Mirror' },
+          interimSites: [
+            { ...INTERIM_SITE, siteId: 51, siteName: 'Authoritative Depot' }
+          ]
+        }
+      ])
+
+      expect(result).toContain('Authoritative Depot')
+      expect(result).not.toContain('Stale Mirror')
+    })
+
+    test('renders one list entry per interim site, behind a single disclosure', async () => {
+      const result = await renderWithSites([
+        {
+          ...ACCREDITED_SITE,
+          interimSites: [
+            { ...INTERIM_SITE, siteId: 42, siteName: 'First Depot' },
+            { ...INTERIM_SITE, siteId: 43, siteName: 'Second Depot' }
+          ]
+        }
+      ])
+
+      expect(result).toContain('data-testid="interim-site-row-900001"')
+      expect(result).toContain('data-testid="interim-site-row-is43"')
+      expect(result).toContain('First Depot')
+      expect(result).toContain('Second Depot')
+      expect(result).toContain('Show interim sites (2)')
+    })
+
+    // The disclosure line is a summary, not a record: name, country and R
+    // codes only. Address and contact details are deliberately not shown.
+    test('summarises an interim site as name, country and R codes only', async () => {
+      const result = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+
+      expect(result).toContain('Interim Depot')
+      expect(result).toContain('R12, R13')
+      expect(result).not.toContain('Unit 1, Rotterdam')
+      expect(result).not.toContain('jane@example.com')
+    })
+
+    test("shows the interim site's R codes", async () => {
+      const result = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+
+      expect(result).toContain(
+        'data-testid="interim-site-operation-codes-900001"'
+      )
+      expect(result).toContain('R12, R13')
+    })
+
+    test('renders no disclosure at all for a site with no interim sites', async () => {
+      const result = await renderWithSites([ACCREDITED_SITE])
+
+      expect(result).not.toContain('Show interim sites')
+    })
+
+    test('renders no disclosure for a site with no interim site', async () => {
+      const result = await renderWithSites([ACCREDITED_SITE])
+
+      expect(result).not.toContain(
+        'data-testid="interim-sites-disclosure-900001"'
+      )
+    })
+
+    // AC: an ORS and its interim sites read as one unit, so the summary-list
+    // rule between them is suppressed - and only then.
+    test('drops the dividing rule under an ORS row that has interim sites', async () => {
+      const withInterim = await renderWithSites([
+        { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+      ])
+      expect(withInterim).toContain('select-overseas-sites-row--has-interim')
+
+      const withoutInterim = await renderWithSites([ACCREDITED_SITE])
+      expect(withoutInterim).not.toContain(
+        'select-overseas-sites-row--has-interim'
+      )
+    })
+  })
+
+  describe('RA-603 — table layout', () => {
+    test('hides the column headings visually but keeps them for screen readers', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<thead class="govuk-table__head govuk-visually-hidden">'
+      )
+      expect(result).toContain('Site name')
+      expect(result).not.toContain('<thead class="govuk-table__head">')
+    })
+
+    test('renders each section as a table rather than a summary list', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<table class="govuk-table select-overseas-sites-table" data-testid="accredited-sites-list">'
+      )
+      expect(result).toContain('data-testid="registered-sites-list"')
+    })
+  })
+
+  // AC11. The ticket claims the current wording is "Remove from Application";
+  // it was actually "Remove from accreditation"/"Add to accreditation". Either
+  // way, neither phrasing may survive this change.
+  describe('RA-603 AC11 — application action wording', () => {
+    test('uses "Withdraw from application" and "Add to application"', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [ACCREDITED_SITE, REGISTERED_SITE]
+          }
+        })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('Withdraw from application')
+      expect(result).toContain('Add to application')
+      expect(result).not.toContain('Remove from accreditation')
+      expect(result).not.toContain('Add to accreditation')
     })
   })
 })
