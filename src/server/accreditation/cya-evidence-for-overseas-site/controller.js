@@ -62,7 +62,12 @@ function buildViewData(
   return {
     pageTitle: t('pages.cyaEvidenceForSite.title'),
     heading: `${t('pages.cyaEvidenceForSite.heading')} ${siteName}`,
-    backLink: `/accreditation/upload-more-evidence/${applicationId}/${siteId}`,
+    // RA-588: this screen is reached by "Amend evidence" from the evidence
+    // list (and from upload-more-evidence answering "no"), so back belongs
+    // on that list - the same page the POST below redirects to. It used to
+    // point at upload-more-evidence, a screen an amending operator never
+    // saw, whose own back link then dropped them on the raw upload form.
+    backLink: evidenceListUrl(applicationId),
     uploads,
     siteName,
     error,

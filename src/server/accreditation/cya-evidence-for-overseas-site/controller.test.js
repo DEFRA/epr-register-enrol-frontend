@@ -346,6 +346,112 @@ describe('#cyaEvidenceForSiteController', () => {
         expect(result).not.toContain('data-testid="confirm-button"')
       }
     )
+
+    // RA-588: the amend journey enters this screen from the evidence list
+    // ("Amend evidence"), so back must return there. It used to point at
+    // upload-more-evidence - a screen an amending operator never saw - whose
+    // own back link then dropped them on the raw upload-file form.
+    describe('back link (RA-588)', () => {
+      const EVIDENCE_LIST_URL = `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
+
+      function backLinkHref(html) {
+        const match = /<a href="([^"]*)" class="govuk-back-link"/.exec(html)
+        return match?.[1] ?? null
+      }
+
+      test('points at the overseas-site evidence list', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).toContain('data-testid="back-link"')
+        expect(backLinkHref(result)).toBe(EVIDENCE_LIST_URL)
+      })
+
+      test('never points at upload-more-evidence or the raw upload form', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders
+        })
+
+        const href = backLinkHref(result)
+        expect(href).not.toContain('/accreditation/upload-more-evidence/')
+        expect(href).not.toContain('/accreditation/upload-bes-evidence/')
+      })
+
+      test('points at the evidence list while the BES evidence section is Queried and still editable', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            applicationStatus: 'Queried',
+            besEvidence: { sectionStatus: 'Queried' }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="confirm-button"')
+        expect(backLinkHref(result)).toBe(EVIDENCE_LIST_URL)
+      })
+
+      test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
+        'points at the evidence list on the read-only view (%s)',
+        async (applicationStatus) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication({
+              applicationStatus,
+              besEvidence: { sectionStatus: 'Completed' }
+            })
+          )
+
+          const { statusCode, result } = await server.inject({
+            method: 'GET',
+            url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+            headers: operatorHeaders
+          })
+
+          expect(statusCode).toBe(statusCodes.ok)
+          expect(result).toContain('data-testid="read-only-notice"')
+          expect(backLinkHref(result)).toBe(EVIDENCE_LIST_URL)
+        }
+      )
+
+      test('points at the evidence list on the Welsh route', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/cy/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(backLinkHref(result)).toBe(EVIDENCE_LIST_URL)
+      })
+
+      test('points at the evidence list on the fetch-error page', async () => {
+        vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(backLinkHref(result)).toBe(EVIDENCE_LIST_URL)
+      })
+    })
   })
 
   describe('POST /accreditation/cya-evidence-for-overseas-site/{applicationId}/{siteId}', () => {
