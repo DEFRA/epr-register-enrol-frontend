@@ -18,17 +18,8 @@ const LABELS = {
   change: 'Change',
   withdraw: 'Withdraw from application',
   add: 'Add to application',
-  orsIdLabel: 'ORS ID',
-  interimSiteLabel: 'Interim site',
   interimRemove: 'Withdraw from application',
-  interimRows: {
-    country: 'Country',
-    address: 'Address',
-    contactName: 'Contact name',
-    contactEmail: 'Contact email',
-    contactPhone: 'Contact phone',
-    recyclingOperation: 'Recycling operation codes'
-  }
+  interimDisclosure: 'Show interim sites'
 }
 
 function interimSite(overrides = {}) {
@@ -188,74 +179,105 @@ describe('overseasSiteRows component', () => {
     })
   })
 
-  describe('the interim-site accordion', () => {
-    test('renders no accordion when the site has no interim sites', () => {
+  describe('the interim-site disclosure', () => {
+    test('renders no disclosure when the site has no interim sites', () => {
       const $ = render(accreditedParams())
 
-      expect($('[data-testid="interim-sites-accordion-900001"]')).toHaveLength(
+      expect($('[data-testid="interim-sites-disclosure-900001"]')).toHaveLength(
         0
       )
+      expect($('details')).toHaveLength(0)
+    })
+
+    // Deliberately govuk-details and not govuk-accordion: the accordion always
+    // injects a "Show all sections" control and a header per section, which is
+    // exactly what this must not look like.
+    test('renders a single govuk-details disclosure, not an accordion', () => {
+      const $ = render(
+        accreditedParams({ site: site({ interimSites: [interimSite()] }) })
+      )
+
+      const disclosure = $('[data-testid="interim-sites-disclosure-900001"]')
+      expect(disclosure).toHaveLength(1)
+      expect(disclosure.is('details')).toBe(true)
+      expect(disclosure.hasClass('govuk-details')).toBe(true)
       expect($('.govuk-accordion')).toHaveLength(0)
     })
 
-    // AC10: the accordion is the component the ticket asks for, and it only
-    // becomes interactive if the GOV.UK JS can find it by module name.
-    test('renders a govuk accordion wired to the govuk-accordion module', () => {
+    test('is collapsed by default, so an ORS shows only the disclosure link', () => {
       const $ = render(
         accreditedParams({ site: site({ interimSites: [interimSite()] }) })
       )
 
-      const accordion = $('[data-testid="interim-sites-accordion-900001"]')
-      expect(accordion).toHaveLength(1)
-      expect(accordion.hasClass('govuk-accordion')).toBe(true)
-      expect(accordion.attr('data-module')).toBe('govuk-accordion')
-      expect(accordion.attr('id')).toBe('interim-sites-900001')
-    })
-
-    test("shows the interim site's name in the accordion heading", () => {
-      const $ = render(
-        accreditedParams({ site: site({ interimSites: [interimSite()] }) })
-      )
-
-      expect($('[data-testid="interim-site-name-900001"]').text()).toContain(
-        'Interim Depot'
-      )
-    })
-
-    // AC02/AC10: the R codes must be visible per interim site, not just stored.
-    test("lists the interim site's details and its R codes", () => {
-      const $ = render(
-        accreditedParams({ site: site({ interimSites: [interimSite()] }) })
-      )
-
-      expect($('[data-testid="interim-site-country-900001"]').text()).toBe(
-        'France'
-      )
-      expect($('[data-testid="interim-site-address-900001"]').text()).toBe(
-        'Unit 1, Rotterdam'
-      )
-      expect($('[data-testid="interim-site-contact-name-900001"]').text()).toBe(
-        'Jane Smith'
-      )
       expect(
-        $('[data-testid="interim-site-operation-codes-900001"]').text()
-      ).toBe('R12, R13')
+        $('[data-testid="interim-sites-disclosure-900001"]').attr('open')
+      ).toBeUndefined()
     })
 
-    test('omits a detail row whose value is absent', () => {
+    test('labels the disclosure with the number of interim sites', () => {
       const $ = render(
         accreditedParams({
           site: site({
-            interimSites: [interimSite({ addressLine: '', operationCodes: [] })]
+            interimSites: [
+              interimSite({ siteId: 42 }),
+              interimSite({ siteId: 43 })
+            ]
           })
         })
       )
 
+      expect(
+        $('[data-testid="interim-sites-disclosure-summary-900001"]')
+          .text()
+          .trim()
+      ).toBe('Show interim sites (2)')
+    })
+
+    // The whole entry is one line: name, country and R codes read as a single
+    // sentence, with the actions beside them.
+    test('summarises each interim site on one line as name, country, R codes', () => {
+      const $ = render(
+        accreditedParams({ site: site({ interimSites: [interimSite()] }) })
+      )
+
+      const item = $('[data-testid="interim-site-row-900001"]')
+      expect(item).toHaveLength(1)
+      expect(
+        item.find('.select-overseas-sites-interim-summary').text().trim()
+      ).toBe('Interim Depot, France, R12, R13')
+    })
+
+    test('omits the country and R codes from the line when absent', () => {
+      const $ = render(
+        accreditedParams({
+          site: site({
+            interimSites: [interimSite({ country: '', operationCodes: [] })]
+          })
+        })
+      )
+
+      expect(
+        $('[data-testid="interim-site-row-900001"]')
+          .find('.select-overseas-sites-interim-summary')
+          .text()
+          .trim()
+      ).toBe('Interim Depot')
+    })
+
+    // The detail rows the first cut rendered - address, contact name, email,
+    // phone - are gone. The line is a summary, not a record.
+    test('does not render interim address or contact detail rows', () => {
+      const $ = render(
+        accreditedParams({ site: site({ interimSites: [interimSite()] }) })
+      )
+
       expect($('[data-testid="interim-site-address-900001"]')).toHaveLength(0)
       expect(
-        $('[data-testid="interim-site-operation-codes-900001"]')
+        $('[data-testid="interim-site-contact-name-900001"]')
       ).toHaveLength(0)
-      expect($('[data-testid="interim-site-country-900001"]')).toHaveLength(1)
+      expect(
+        $('[data-testid="interim-site-contact-email-900001"]')
+      ).toHaveLength(0)
     })
 
     test('renders Change and Withdraw from application actions per interim site', () => {
@@ -283,7 +305,7 @@ describe('overseasSiteRows component', () => {
       expect(
         $('[data-testid="remove-button-interim-site-900001"]')
       ).toHaveLength(0)
-      expect($('[data-testid="interim-site-name-900001"]')).toHaveLength(1)
+      expect($('[data-testid="interim-site-row-900001"]')).toHaveLength(1)
     })
   })
 
@@ -303,13 +325,13 @@ describe('overseasSiteRows component', () => {
       ]
     })
 
-    test('renders one accordion section per interim site', () => {
+    test('renders one list entry per interim site', () => {
       const $ = render(accreditedParams({ site: twoInterimSites }))
 
-      expect($('.govuk-accordion__section')).toHaveLength(2)
+      expect($('.select-overseas-sites-interim-item')).toHaveLength(2)
     })
 
-    test('keys the first section on the parent ORS id and the rest on their own id', () => {
+    test('keys the first entry on the parent ORS id and the rest on their own id', () => {
       const $ = render(accreditedParams({ site: twoInterimSites }))
 
       expect($('[data-testid="interim-site-row-900001"]')).toHaveLength(1)
@@ -319,17 +341,15 @@ describe('overseasSiteRows component', () => {
       )
     })
 
-    test('gives every section a unique heading and content id, as the accordion requires', () => {
+    test('puts every interim site behind the one disclosure for that ORS', () => {
       const $ = render(accreditedParams({ site: twoInterimSites }))
 
-      const ids = $('.govuk-accordion__section-content')
-        .map((_, el) => $(el).attr('id'))
-        .get()
-      expect(ids).toEqual([
-        'interim-sites-900001-content-1',
-        'interim-sites-900001-content-2'
-      ])
-      expect(new Set(ids).size).toBe(ids.length)
+      expect($('details')).toHaveLength(1)
+      expect(
+        $('[data-testid="interim-sites-disclosure-summary-900001"]')
+          .text()
+          .trim()
+      ).toBe('Show interim sites (2)')
     })
 
     test('keeps each interim site R codes and actions independent', () => {

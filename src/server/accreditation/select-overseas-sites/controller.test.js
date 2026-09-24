@@ -1453,13 +1453,13 @@ describe('#selectOverseasSitesController', () => {
       return result
     }
 
-    test('renders the accordion for a site carrying the legacy singular interimSite', async () => {
+    test('renders the disclosure for a site carrying the legacy singular interimSite', async () => {
       const result = await renderWithSites([
         { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
       ])
 
-      expect(result).toContain('data-testid="interim-sites-accordion-900001"')
-      expect(result).toContain('data-module="govuk-accordion"')
+      expect(result).toContain('data-testid="interim-sites-disclosure-900001"')
+      expect(result).toContain('Show interim sites (1)')
       expect(result).toContain('Interim Depot')
     })
 
@@ -1480,7 +1480,7 @@ describe('#selectOverseasSitesController', () => {
       expect(result).not.toContain('Stale Mirror')
     })
 
-    test('renders one accordion section per interim site when several are present', async () => {
+    test('renders one list entry per interim site, behind a single disclosure', async () => {
       const result = await renderWithSites([
         {
           ...ACCREDITED_SITE,
@@ -1495,14 +1495,20 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('data-testid="interim-site-row-is43"')
       expect(result).toContain('First Depot')
       expect(result).toContain('Second Depot')
+      expect(result).toContain('Show interim sites (2)')
     })
 
-    test("flattens the interim site's address into a single line, skipping empty parts", async () => {
+    // The disclosure line is a summary, not a record: name, country and R
+    // codes only. Address and contact details are deliberately not shown.
+    test('summarises an interim site as name, country and R codes only', async () => {
       const result = await renderWithSites([
         { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
       ])
 
-      expect(result).toContain('Unit 1, Rotterdam')
+      expect(result).toContain('Interim Depot')
+      expect(result).toContain('R12, R13')
+      expect(result).not.toContain('Unit 1, Rotterdam')
+      expect(result).not.toContain('jane@example.com')
     })
 
     test("shows the interim site's R codes", async () => {
@@ -1516,11 +1522,17 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('R12, R13')
     })
 
-    test('renders no accordion for a site with no interim site', async () => {
+    test('renders no disclosure at all for a site with no interim sites', async () => {
+      const result = await renderWithSites([ACCREDITED_SITE])
+
+      expect(result).not.toContain('Show interim sites')
+    })
+
+    test('renders no disclosure for a site with no interim site', async () => {
       const result = await renderWithSites([ACCREDITED_SITE])
 
       expect(result).not.toContain(
-        'data-testid="interim-sites-accordion-900001"'
+        'data-testid="interim-sites-disclosure-900001"'
       )
     })
 

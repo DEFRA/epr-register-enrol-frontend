@@ -59,7 +59,7 @@
 }
 
 // The interim sites live in a full-width colspan row beneath their ORS. Drop
-// the cell's own padding so the accordion sits tight under the row it belongs
+// the cell's own padding so the disclosure sits tight under the row it belongs
 // to, and indent it so it reads as a child of that row.
 .select-overseas-sites-interim-cell {
   padding-top: 0;
@@ -67,27 +67,37 @@
   padding-left: govuk-spacing(4);
 }
 
-.select-overseas-sites-interim-accordion {
-  // The accordion's own section padding is sized for page-level sections and is
-  // far too generous nested inside a list of sites.
-  .govuk-accordion__section-button {
-    padding-top: govuk-spacing(2);
-    padding-bottom: govuk-spacing(2);
-  }
+.select-overseas-sites-interim-disclosure {
+  margin-bottom: 0;
 
-  .govuk-accordion__section-content {
-    padding-top: govuk-spacing(1);
-    padding-bottom: govuk-spacing(3);
+  // govuk-details indents its body with a left border, which here just adds a
+  // second vertical line inside a table cell that is already indented.
+  .govuk-details__text {
+    padding-left: 0;
+    border-left: 0;
   }
 }
 
-// The interim detail rows sit inside the accordion body, where the summary
-// list's own dividing rules add noise rather than structure.
-.select-overseas-sites-interim-details .govuk-summary-list__row {
-  padding-top: govuk-spacing(1);
-  padding-bottom: govuk-spacing(1);
+// One interim site per line: summary text on the left, its actions on the
+// right, never wrapping onto a second row.
+.select-overseas-sites-interim-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: govuk-spacing(4);
+  padding: govuk-spacing(1) 0;
 }
 
-.select-overseas-sites-interim-actions .govuk-link {
-  margin-right: govuk-spacing(4);
+.select-overseas-sites-interim-actions {
+  display: flex;
+  align-items: center;
+  gap: govuk-spacing(4);
+  white-space: nowrap;
+
+  // Same reason as the ORS row's action cell: GOV.UK buttons are width: 100%
+  // by default, which would push the button onto its own line.
+  .govuk-button {
+    width: auto;
+    margin-bottom: 0;
+  }
 }

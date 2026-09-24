@@ -1,6 +1,5 @@
 import {
   createAll,
-  Accordion,
   Button,
   CharacterCount,
   Checkboxes,
@@ -23,11 +22,6 @@ const ERROR_MESSAGE_PREFIX =
 const GOVUK_ERROR_SUMMARY_CLASS = 'govuk-error-summary'
 const INSERT_BEFOREBEGIN = 'beforebegin'
 
-// RA-603 AC10: the interim sites nested under each overseas reprocessing site
-// on select-overseas-sites render as an accordion. This page is the only user
-// of the component so far; without this the sections render permanently open
-// (the component's no-JS state) and cannot be collapsed.
-createAll(Accordion)
 createAll(Button)
 createAll(CharacterCount)
 createAll(Checkboxes)

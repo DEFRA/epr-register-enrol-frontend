@@ -479,16 +479,8 @@
         "registeredSitesAdded": "[Welsh] Registered sites added"
       },
       "interimSite": {
-        "label": "[Welsh] Interim site",
         "removeButton": "[Welsh] Withdraw from application",
-        "rows": {
-          "country": "[Welsh] Country",
-          "address": "[Welsh] Address",
-          "contactName": "[Welsh] Contact name",
-          "contactEmail": "[Welsh] Contact email",
-          "contactPhone": "[Welsh] Contact phone",
-          "recyclingOperation": "[Welsh] Recycling operation codes"
-        }
+        "disclosure": "[Welsh] Show interim sites"
       },
       "validation": {
         "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",
