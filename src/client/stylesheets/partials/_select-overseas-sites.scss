@@ -30,8 +30,14 @@
   // breakpoint. Pinning the width back to its content is what keeps them
   // side by side; the inline-block form is what stops the form element itself
   // forcing a break.
+  //
+  // Right-aligned so every section's actions finish on the same edge. The
+  // column is shrink-to-fit, so a narrow action - the registered section's
+  // lone "Add to application" - would otherwise sit at the left of a wide
+  // cell, stranded in the middle of the page.
   .select-overseas-sites-actions-cell {
     white-space: nowrap;
+    text-align: right;
 
     .govuk-link {
       margin-right: govuk-spacing(4);
