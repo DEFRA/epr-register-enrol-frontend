@@ -1,9 +1,9 @@
 {% extends "layouts/page.njk" %}
-{% from "overseas-site-row/macro.njk" import overseasSiteBlock %}
+{% from "overseas-site-row/macro.njk" import overseasSiteRows %}
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
+    <div class="govuk-grid-column-full">
 
       {{ regulatorQueryBanner({
         queried: queried,
@@ -137,82 +137,146 @@
           <h2 class="govuk-heading-m" id="accredited-sites" data-testid="accredited-heading">
             {{ t('pages.selectOverseasSites.sections.accredited') }}
           </h2>
-          <div data-testid="accredited-sites-list">
-            {% for site in accreditedSites %}
-              {{ overseasSiteBlock({
-                site: site,
-                readOnly: readOnly,
-                crumb: crumb,
-                labels: labels,
-                testIdPrefix: 'accredited-site',
-                editTestId: 'edit-button-accredited',
-                removeFormTestId: 'remove-form-accredited',
-                removeTestId: 'remove-button-accredited',
-                removeAction: 'removeAccredited'
-              }) }}
-            {% endfor %}
-          </div>
+          <table class="govuk-table select-overseas-sites-table" data-testid="accredited-sites-list">
+            {# The column headings are not wanted on screen, but a data table
+               without them is unusable with a screen reader - every cell loses
+               the thing that names it. Hidden visually, kept in the
+               accessible tree. #}
+            <thead class="govuk-table__head govuk-visually-hidden">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.orsId') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.siteName') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.country') }}</th>
+                {% if not readOnly %}
+                  <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.action') }}</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for site in accreditedSites %}
+                {{ overseasSiteRows({
+                  site: site,
+                  readOnly: readOnly,
+                  crumb: crumb,
+                  labels: labels,
+                  testIdPrefix: 'accredited-site',
+                  editTestId: 'edit-button-accredited',
+                  removeFormTestId: 'remove-form-accredited',
+                  removeTestId: 'remove-button-accredited',
+                  removeAction: 'removeAccredited'
+                }) }}
+              {% endfor %}
+            </tbody>
+          </table>
         {% endif %}
 
         {% if registeredSites.length %}
           <h2 class="govuk-heading-m" data-testid="registered-heading">
             {{ t('pages.selectOverseasSites.sections.registered') }}
           </h2>
-          <div data-testid="registered-sites-list">
-            {% for site in registeredSites %}
-              {{ overseasSiteBlock({
-                site: site,
-                readOnly: readOnly,
-                crumb: crumb,
-                labels: labels,
-                testIdPrefix: 'registered-site',
-                promote: true,
-                promoteTestId: 'add-button-registered'
-              }) }}
-            {% endfor %}
-          </div>
+          <table class="govuk-table select-overseas-sites-table" data-testid="registered-sites-list">
+            {# The column headings are not wanted on screen, but a data table
+               without them is unusable with a screen reader - every cell loses
+               the thing that names it. Hidden visually, kept in the
+               accessible tree. #}
+            <thead class="govuk-table__head govuk-visually-hidden">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.orsId') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.siteName') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.country') }}</th>
+                {% if not readOnly %}
+                  <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.action') }}</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for site in registeredSites %}
+                {{ overseasSiteRows({
+                  site: site,
+                  readOnly: readOnly,
+                  crumb: crumb,
+                  labels: labels,
+                  testIdPrefix: 'registered-site',
+                  promote: true,
+                  promoteTestId: 'add-button-registered'
+                }) }}
+              {% endfor %}
+            </tbody>
+          </table>
         {% endif %}
 
         {% if newSites.length %}
           <h2 class="govuk-heading-m" data-testid="new-sites-heading">
             {{ t('pages.selectOverseasSites.sections.newSites') }}
           </h2>
-          <div data-testid="new-sites-list">
-            {% for site in newSites %}
-              {{ overseasSiteBlock({
-                site: site,
-                readOnly: readOnly,
-                crumb: crumb,
-                labels: labels,
-                testIdPrefix: 'new-site',
-                editTestId: 'edit-button-new',
-                removeFormTestId: 'remove-form-new',
-                removeTestId: 'remove-button-new',
-                removeAction: 'deleteNewSite'
-              }) }}
-            {% endfor %}
-          </div>
+          <table class="govuk-table select-overseas-sites-table" data-testid="new-sites-list">
+            {# The column headings are not wanted on screen, but a data table
+               without them is unusable with a screen reader - every cell loses
+               the thing that names it. Hidden visually, kept in the
+               accessible tree. #}
+            <thead class="govuk-table__head govuk-visually-hidden">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.orsId') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.siteName') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.country') }}</th>
+                {% if not readOnly %}
+                  <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.action') }}</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for site in newSites %}
+                {{ overseasSiteRows({
+                  site: site,
+                  readOnly: readOnly,
+                  crumb: crumb,
+                  labels: labels,
+                  testIdPrefix: 'new-site',
+                  editTestId: 'edit-button-new',
+                  removeFormTestId: 'remove-form-new',
+                  removeTestId: 'remove-button-new',
+                  removeAction: 'deleteNewSite'
+                }) }}
+              {% endfor %}
+            </tbody>
+          </table>
         {% endif %}
 
         {% if registeredSitesAddedSites.length %}
           <h2 class="govuk-heading-m" data-testid="registered-sites-added-heading">
             {{ t('pages.selectOverseasSites.sections.registeredSitesAdded') }}
           </h2>
-          <div data-testid="registered-sites-added-list">
-            {% for site in registeredSitesAddedSites %}
-              {{ overseasSiteBlock({
-                site: site,
-                readOnly: readOnly,
-                crumb: crumb,
-                labels: labels,
-                testIdPrefix: 'registered-sites-added',
-                editTestId: 'edit-button-registered-added',
-                removeFormTestId: 'remove-form-registered-added',
-                removeTestId: 'remove-button-registered-added',
-                removeAction: 'revertAccreditation'
-              }) }}
-            {% endfor %}
-          </div>
+          <table class="govuk-table select-overseas-sites-table" data-testid="registered-sites-added-list">
+            {# The column headings are not wanted on screen, but a data table
+               without them is unusable with a screen reader - every cell loses
+               the thing that names it. Hidden visually, kept in the
+               accessible tree. #}
+            <thead class="govuk-table__head govuk-visually-hidden">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.orsId') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.siteName') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.country') }}</th>
+                {% if not readOnly %}
+                  <th scope="col" class="govuk-table__header">{{ t('pages.selectOverseasSites.table.action') }}</th>
+                {% endif %}
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for site in registeredSitesAddedSites %}
+                {{ overseasSiteRows({
+                  site: site,
+                  readOnly: readOnly,
+                  crumb: crumb,
+                  labels: labels,
+                  testIdPrefix: 'registered-sites-added',
+                  editTestId: 'edit-button-registered-added',
+                  removeFormTestId: 'remove-form-registered-added',
+                  removeTestId: 'remove-button-registered-added',
+                  removeAction: 'revertAccreditation'
+                }) }}
+              {% endfor %}
+            </tbody>
+          </table>
         {% endif %}
 
         {% if not readOnly %}

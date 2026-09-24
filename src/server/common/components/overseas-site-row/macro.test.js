@@ -77,14 +77,14 @@ function accreditedParams(overrides = {}) {
 function render(params) {
   return load(
     env.renderString(
-      `{%- from "overseas-site-row/macro.njk" import overseasSiteBlock -%}` +
-        `{{- overseasSiteBlock(params) -}}`,
+      `{%- from "overseas-site-row/macro.njk" import overseasSiteRows -%}` +
+        `<table><tbody>{{- overseasSiteRows(params) -}}</tbody></table>`,
       { params }
     )
   )
 }
 
-describe('overseasSiteBlock component', () => {
+describe('overseasSiteRows component', () => {
   describe('the overseas reprocessing site row', () => {
     test('renders the site name, ORS id and country against the given testid prefix', () => {
       const $ = render(accreditedParams())
@@ -94,17 +94,52 @@ describe('overseasSiteBlock component', () => {
         'Site Alpha'
       )
       expect(
-        $('[data-testid="accredited-site-orsid-900001"]').text()
-      ).toContain('001')
+        $('[data-testid="accredited-site-orsid-900001"]').text().trim()
+      ).toBe('001')
       expect($('[data-testid="accredited-site-country-900001"]').text()).toBe(
         'Germany'
       )
     })
 
-    test('omits the ORS id cell entirely when the site has no ORS id', () => {
+    // The ORS id reads before the site name. In the summary-list version this
+    // was a CSS `order` trick with the DOM left in the other order; here the
+    // cells are simply emitted in the order they are read.
+    test('emits the cells in ORS id, site name, country, actions order', () => {
+      const $ = render(accreditedParams())
+
+      const cells = $('tr').first().children()
+      const testIds = cells.map((_, el) => $(el).attr('data-testid')).get()
+
+      // Four cells, the last being the actions cell, which carries no testid
+      // of its own (its link and button carry their own).
+      expect(cells).toHaveLength(4)
+      expect(testIds).toEqual([
+        'accredited-site-orsid-900001',
+        'accredited-site-name-900001',
+        'accredited-site-country-900001'
+      ])
+      expect(cells.last().hasClass('select-overseas-sites-actions-cell')).toBe(
+        true
+      )
+    })
+
+    // The site name, not the id, is what identifies the row to a screen reader.
+    test('keeps the site name as the row header even though the id precedes it', () => {
+      const $ = render(accreditedParams())
+
+      const header = $('th[scope="row"]')
+      expect(header).toHaveLength(1)
+      expect(header.attr('data-testid')).toBe('accredited-site-name-900001')
+    })
+
+    // A table column has to exist in every row or every column below it
+    // shifts, so an ORS id cell is always emitted - empty, not absent.
+    test('still emits an empty ORS id cell when the site has no ORS id', () => {
       const $ = render(accreditedParams({ site: site({ orsId: null }) }))
 
-      expect($('[data-testid="accredited-site-orsid-900001"]')).toHaveLength(0)
+      const cell = $('[data-testid="accredited-site-orsid-900001"]')
+      expect(cell).toHaveLength(1)
+      expect(cell.text().trim()).toBe('')
     })
 
     // AC11: the action wording is the point of the change, not an incidental.
@@ -148,7 +183,7 @@ describe('overseasSiteBlock component', () => {
     test('renders no actions at all when the section is read-only', () => {
       const $ = render(accreditedParams({ readOnly: true }))
 
-      expect($('.govuk-summary-list__actions')).toHaveLength(0)
+      expect($('.select-overseas-sites-actions-cell')).toHaveLength(0)
       expect($('[data-testid="accredited-site-row-900001"]')).toHaveLength(1)
     })
   })

@@ -176,21 +176,21 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
+      // RA-603: the page is a govuk-table now, so the ORS id lives in a column
+      // named by its own <th scope="col">. The visually-hidden "ORS ID" label
+      // that the summary-list version put inside every cell has gone with it -
+      // keeping both made a screen reader announce the label twice per row.
+      expect(result).toContain('data-testid="accredited-site-orsid-900001">001')
+      expect(result).toContain('data-testid="registered-site-orsid-900002">002')
+      expect(result).toContain('data-testid="new-site-orsid-900003">003')
       expect(result).toContain(
-        'data-testid="accredited-site-orsid-900001"><span class="govuk-visually-hidden">ORS ID</span> 001'
-      )
-      expect(result).toContain(
-        'data-testid="registered-site-orsid-900002"><span class="govuk-visually-hidden">ORS ID</span> 002'
-      )
-      expect(result).toContain(
-        'data-testid="new-site-orsid-900003"><span class="govuk-visually-hidden">ORS ID</span> 003'
-      )
-      expect(result).toContain(
-        'data-testid="registered-sites-added-orsid-900004"><span class="govuk-visually-hidden">ORS ID</span> 004'
+        'data-testid="registered-sites-added-orsid-900004">004'
       )
     })
 
-    test('omits the ORS id row when a site has none', async () => {
+    // RA-603: a table column has to exist in every row or every column below it
+    // shifts, so the cell is now always emitted - empty rather than absent.
+    test('emits an empty ORS id cell when a site has none', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           overseasSites: {
@@ -207,7 +207,9 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('data-testid="accredited-site-row-900001"')
-      expect(result).not.toContain('data-testid="accredited-site-orsid-900001"')
+      expect(result).toContain(
+        'data-testid="accredited-site-orsid-900001"></td>'
+      )
     })
 
     test('registered site Add To Accreditation link points to the promote route', async () => {
@@ -1534,6 +1536,39 @@ describe('#selectOverseasSitesController', () => {
       expect(withoutInterim).not.toContain(
         'select-overseas-sites-row--has-interim'
       )
+    })
+  })
+
+  describe('RA-603 — table layout', () => {
+    test('hides the column headings visually but keeps them for screen readers', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<thead class="govuk-table__head govuk-visually-hidden">'
+      )
+      expect(result).toContain('Site name')
+      expect(result).not.toContain('<thead class="govuk-table__head">')
+    })
+
+    test('renders each section as a table rather than a summary list', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain(
+        '<table class="govuk-table select-overseas-sites-table" data-testid="accredited-sites-list">'
+      )
+      expect(result).toContain('data-testid="registered-sites-list"')
     })
   })
 

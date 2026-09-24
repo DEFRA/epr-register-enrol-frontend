@@ -1,5 +1,5 @@
 {#
-  Shared overseas-reprocessing-site (ORS) block for the select-overseas-sites
+  Shared overseas-reprocessing-site (ORS) rows for the select-overseas-sites
   page.
 
   RA-603 T03: this page shows the same ORS row in four sections (accredited,
@@ -8,8 +8,19 @@
   the same ~30 lines of markup existed four times over and every change had to
   be made four times. One macro, four call sites, one place to change.
 
-  RA-603 T05/AC10: an ORS's interim sites render beneath the ORS row as a
-  GOV.UK accordion, one section per interim site. The ORS row itself is NOT an
+  Why a table and not govuk-summary-list. A summary list has no real columns:
+  each row sizes itself, so a site name in one row cannot line up with the site
+  name in the next. The previous markup faked columns with flexbox - `order`,
+  a `min-width: 3ch` ORS-id shim and `margin-left: auto` on the actions - and
+  still did not align, because `align-items: center` drags a short "Change"
+  link out of line with the taller warning button beside it. A table gives the
+  browser real columns it sizes consistently across every row, top-aligns cells
+  by default, and needs none of that CSS. It also gives the interim accordion a
+  valid home: a full-width colspan row directly beneath its parent ORS, which a
+  <dl> could never legally contain.
+
+  RA-603 T05/AC10: an ORS's interim sites render in that colspan row as a GOV.UK
+  accordion, one section per interim site. The ORS row itself is NOT an
   accordion - "nested" here means nested under the ORS, not an accordion inside
   an accordion, which the design system does not support.
 
@@ -21,11 +32,14 @@
   node_modules/govuk-frontend/dist/govuk/components/accordion/template.njk
   (govuk-frontend 6.4.0); re-check it on a major upgrade.
 
+  Emits one or two <tr>, so it must be called from inside a <tbody>.
+
   Params:
     site           (object, required) - the view-model site. Carries
                    `interimSites` (always an array, see the controller's
                    normaliseInterimSites), plus editUrl/promoteUrl.
-    readOnly       (boolean) - hides every action when true
+    readOnly       (boolean) - hides every action when true, and drops the
+                   action column
     crumb          (string) - CSRF token for the POST forms
     testIdPrefix   (string) - e.g. 'accredited-site'; drives the row/name/
                    orsid/country testids
@@ -38,152 +52,156 @@
     promoteTestId  (string) - e.g. 'add-button-registered'
     labels         (object) - pre-translated strings, matching how every other
                    component here takes copy. Keys: change, withdraw, add,
-                   orsIdLabel, interimSiteLabel, interimRemove, interimRows
-                   ({ country, address, contactName, contactEmail,
-                   contactPhone, recyclingOperation })
+                   interimSiteLabel, interimRemove, interimRows ({ country,
+                   address, contactName, contactEmail, contactPhone,
+                   recyclingOperation })
 #}
 
 {% macro interimSiteAccordion(params) %}
   {% set site = params.site %}
-  {% if site.interimSites.length %}
-    <div class="govuk-accordion select-overseas-sites-interim-accordion"
-         data-module="govuk-accordion"
-         id="interim-sites-{{ site.siteId }}"
-         data-testid="interim-sites-accordion-{{ site.siteId }}">
-      {% for interimSite in site.interimSites %}
-        {#
-          While an ORS can hold only one interim site, the first section keeps
-          the parent-ORS-keyed testids the existing e2e suite already targets.
-          Any additional section is keyed by the interim site's own id, which is
-          unique application-wide. That keeps this markup correct for many
-          interim sites without breaking the suite before it has been updated.
-        #}
-        {% set suffix = site.siteId if loop.first else 'is' ~ interimSite.siteId %}
-        {#
-          Sections start expanded so the operator sees their interim sites
-          without a click, and so the actions inside stay reachable. Without
-          JavaScript the accordion renders open regardless, so this only affects
-          the enhanced view.
-        #}
-        <div class="govuk-accordion__section govuk-accordion__section--expanded"
-             data-testid="interim-site-row-{{ suffix }}">
-          <div class="govuk-accordion__section-header">
-            <h3 class="govuk-accordion__section-heading">
-              <span class="govuk-accordion__section-button"
-                    id="interim-sites-{{ site.siteId }}-heading-{{ loop.index }}"
-                    data-testid="interim-site-name-{{ suffix }}">
-                {{ params.labels.interimSiteLabel }}: {{ interimSite.siteName }}
-              </span>
-            </h3>
-          </div>
-          <div id="interim-sites-{{ site.siteId }}-content-{{ loop.index }}"
-               class="govuk-accordion__section-content">
-            <dl class="govuk-summary-list govuk-summary-list--no-border select-overseas-sites-interim-details">
-              {% if interimSite.country %}
-                <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">{{ params.labels.interimRows.country }}</dt>
-                  <dd class="govuk-summary-list__value" data-testid="interim-site-country-{{ suffix }}">{{ interimSite.country }}</dd>
-                </div>
-              {% endif %}
-              {% if interimSite.addressLine %}
-                <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">{{ params.labels.interimRows.address }}</dt>
-                  <dd class="govuk-summary-list__value" data-testid="interim-site-address-{{ suffix }}">{{ interimSite.addressLine }}</dd>
-                </div>
-              {% endif %}
-              {% if interimSite.contactName %}
-                <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">{{ params.labels.interimRows.contactName }}</dt>
-                  <dd class="govuk-summary-list__value" data-testid="interim-site-contact-name-{{ suffix }}">{{ interimSite.contactName }}</dd>
-                </div>
-              {% endif %}
-              {% if interimSite.contactEmail %}
-                <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">{{ params.labels.interimRows.contactEmail }}</dt>
-                  <dd class="govuk-summary-list__value" data-testid="interim-site-contact-email-{{ suffix }}">{{ interimSite.contactEmail }}</dd>
-                </div>
-              {% endif %}
-              {% if interimSite.contactPhone %}
-                <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">{{ params.labels.interimRows.contactPhone }}</dt>
-                  <dd class="govuk-summary-list__value" data-testid="interim-site-contact-phone-{{ suffix }}">{{ interimSite.contactPhone }}</dd>
-                </div>
-              {% endif %}
-              {% if interimSite.operationCodes.length %}
-                <div class="govuk-summary-list__row">
-                  <dt class="govuk-summary-list__key">{{ params.labels.interimRows.recyclingOperation }}</dt>
-                  <dd class="govuk-summary-list__value" data-testid="interim-site-operation-codes-{{ suffix }}">{{ interimSite.operationCodes | join(', ') }}</dd>
-                </div>
-              {% endif %}
-            </dl>
-            {% if not params.readOnly %}
-              <div class="select-overseas-sites-interim-actions">
-                <a href="{{ interimSite.editUrl }}" class="govuk-link"
-                   data-testid="change-interim-site-{{ suffix }}">
-                  {{ params.labels.change }}
-                </a>
-                <form method="post" style="display:inline" data-testid="remove-form-interim-site-{{ suffix }}">
-                  <input type="hidden" name="crumb" value="{{ params.crumb }}">
-                  <input type="hidden" name="siteId" value="{{ site.siteId }}">
-                  <button type="submit" name="submitAction" value="removeInterimSite"
-                          class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
-                          data-testid="remove-button-interim-site-{{ suffix }}">
-                    {{ params.labels.interimRemove }}
-                  </button>
-                </form>
+  <div class="govuk-accordion select-overseas-sites-interim-accordion"
+       data-module="govuk-accordion"
+       id="interim-sites-{{ site.siteId }}"
+       data-testid="interim-sites-accordion-{{ site.siteId }}">
+    {% for interimSite in site.interimSites %}
+      {#
+        While an ORS can hold only one interim site, the first section keeps
+        the parent-ORS-keyed testids the existing e2e suite already targets.
+        Any additional section is keyed by the interim site's own id, which is
+        unique application-wide. That keeps this markup correct for many
+        interim sites without breaking the suite before it has been updated.
+      #}
+      {% set suffix = site.siteId if loop.first else 'is' ~ interimSite.siteId %}
+      {#
+        Sections start expanded so the operator sees their interim sites
+        without a click, and so the actions inside stay reachable. Without
+        JavaScript the accordion renders open regardless, so this only affects
+        the enhanced view.
+      #}
+      <div class="govuk-accordion__section govuk-accordion__section--expanded"
+           data-testid="interim-site-row-{{ suffix }}">
+        <div class="govuk-accordion__section-header">
+          <h3 class="govuk-accordion__section-heading">
+            <span class="govuk-accordion__section-button"
+                  id="interim-sites-{{ site.siteId }}-heading-{{ loop.index }}"
+                  data-testid="interim-site-name-{{ suffix }}">
+              {{ params.labels.interimSiteLabel }}: {{ interimSite.siteName }}
+            </span>
+          </h3>
+        </div>
+        <div id="interim-sites-{{ site.siteId }}-content-{{ loop.index }}"
+             class="govuk-accordion__section-content">
+          <dl class="govuk-summary-list govuk-summary-list--no-border select-overseas-sites-interim-details">
+            {% if interimSite.country %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ params.labels.interimRows.country }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="interim-site-country-{{ suffix }}">{{ interimSite.country }}</dd>
               </div>
             {% endif %}
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endmacro %}
-
-{% macro overseasSiteBlock(params) %}
-  {% set site = params.site %}
-  <div class="select-overseas-sites-site">
-    {#
-      One summary list per site rather than one per section: an accordion is not
-      valid content inside a <dl>, and the accordion has to sit between this
-      site's row and the next site's row.
-    #}
-    <dl class="govuk-summary-list govuk-!-margin-bottom-0">
-      <div class="govuk-summary-list__row select-overseas-sites-row{% if site.interimSites.length %} select-overseas-sites-row--has-interim{% endif %}"
-           data-testid="{{ params.testIdPrefix }}-row-{{ site.siteId }}">
-        <dt class="govuk-summary-list__key" data-testid="{{ params.testIdPrefix }}-name-{{ site.siteId }}">{{ site.siteName }}</dt>
-        {% if site.orsId %}
-          <dd class="govuk-summary-list__value select-overseas-sites-orsid" data-testid="{{ params.testIdPrefix }}-orsid-{{ site.siteId }}"><span class="govuk-visually-hidden">{{ params.labels.orsIdLabel }}</span> {{ site.orsId }}</dd>
-        {% endif %}
-        <dd class="govuk-summary-list__value" data-testid="{{ params.testIdPrefix }}-country-{{ site.siteId }}">{{ site.country }}</dd>
-        {% if not params.readOnly %}
-          <dd class="govuk-summary-list__actions">
-            {% if params.promote %}
-              <a href="{{ site.promoteUrl }}" role="button" draggable="false"
-                 class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-                 data-module="govuk-button"
-                 data-testid="{{ params.promoteTestId }}-{{ site.siteId }}">
-                {{ params.labels.add }}
-              </a>
-            {% else %}
-              <a href="{{ site.editUrl }}" class="govuk-link"
-                 data-testid="{{ params.editTestId }}-{{ site.siteId }}">
+            {% if interimSite.addressLine %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ params.labels.interimRows.address }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="interim-site-address-{{ suffix }}">{{ interimSite.addressLine }}</dd>
+              </div>
+            {% endif %}
+            {% if interimSite.contactName %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ params.labels.interimRows.contactName }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="interim-site-contact-name-{{ suffix }}">{{ interimSite.contactName }}</dd>
+              </div>
+            {% endif %}
+            {% if interimSite.contactEmail %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ params.labels.interimRows.contactEmail }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="interim-site-contact-email-{{ suffix }}">{{ interimSite.contactEmail }}</dd>
+              </div>
+            {% endif %}
+            {% if interimSite.contactPhone %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ params.labels.interimRows.contactPhone }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="interim-site-contact-phone-{{ suffix }}">{{ interimSite.contactPhone }}</dd>
+              </div>
+            {% endif %}
+            {% if interimSite.operationCodes.length %}
+              <div class="govuk-summary-list__row">
+                <dt class="govuk-summary-list__key">{{ params.labels.interimRows.recyclingOperation }}</dt>
+                <dd class="govuk-summary-list__value" data-testid="interim-site-operation-codes-{{ suffix }}">{{ interimSite.operationCodes | join(', ') }}</dd>
+              </div>
+            {% endif %}
+          </dl>
+          {% if not params.readOnly %}
+            <div class="select-overseas-sites-interim-actions">
+              <a href="{{ interimSite.editUrl }}" class="govuk-link"
+                 data-testid="change-interim-site-{{ suffix }}">
                 {{ params.labels.change }}
               </a>
-              <form method="post" style="display:inline" data-testid="{{ params.removeFormTestId }}-{{ site.siteId }}">
+              <form method="post" style="display:inline" data-testid="remove-form-interim-site-{{ suffix }}">
                 <input type="hidden" name="crumb" value="{{ params.crumb }}">
                 <input type="hidden" name="siteId" value="{{ site.siteId }}">
-                <button type="submit" name="submitAction" value="{{ params.removeAction }}"
+                <button type="submit" name="submitAction" value="removeInterimSite"
                         class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
-                        data-testid="{{ params.removeTestId }}-{{ site.siteId }}">
-                  {{ params.labels.withdraw }}
+                        data-testid="remove-button-interim-site-{{ suffix }}">
+                  {{ params.labels.interimRemove }}
                 </button>
               </form>
-            {% endif %}
-          </dd>
-        {% endif %}
+            </div>
+          {% endif %}
+        </div>
       </div>
-    </dl>
-    {{ interimSiteAccordion(params) }}
+    {% endfor %}
   </div>
+{% endmacro %}
+
+{% macro overseasSiteRows(params) %}
+  {% set site = params.site %}
+  {#
+    The ORS id cell is always emitted, empty when the site has none - a table
+    column has to exist in every row or the columns below it shift. The
+    visually-hidden "ORS ID" label the summary-list version carried is gone:
+    the column's own <th scope="col"> names it now, and keeping both made a
+    screen reader announce it twice.
+
+    The site name keeps `scope="row"` even though the ORS id now precedes it.
+    The id is a reference, the name is what identifies the row to someone
+    listening to it, and scope="row" does not require the first column.
+  #}
+  <tr class="govuk-table__row select-overseas-sites-row{% if site.interimSites.length %} select-overseas-sites-row--has-interim{% endif %}"
+      data-testid="{{ params.testIdPrefix }}-row-{{ site.siteId }}">
+    <td class="govuk-table__cell select-overseas-sites-orsid" data-testid="{{ params.testIdPrefix }}-orsid-{{ site.siteId }}">{{ site.orsId }}</td>
+    <th scope="row" class="govuk-table__header select-overseas-sites-name-cell" data-testid="{{ params.testIdPrefix }}-name-{{ site.siteId }}">{{ site.siteName }}</th>
+    <td class="govuk-table__cell" data-testid="{{ params.testIdPrefix }}-country-{{ site.siteId }}">{{ site.country }}</td>
+    {% if not params.readOnly %}
+      <td class="govuk-table__cell select-overseas-sites-actions-cell">
+        {% if params.promote %}
+          <a href="{{ site.promoteUrl }}" role="button" draggable="false"
+             class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+             data-module="govuk-button"
+             data-testid="{{ params.promoteTestId }}-{{ site.siteId }}">
+            {{ params.labels.add }}
+          </a>
+        {% else %}
+          <a href="{{ site.editUrl }}" class="govuk-link"
+             data-testid="{{ params.editTestId }}-{{ site.siteId }}">
+            {{ params.labels.change }}
+          </a>
+          <form method="post" style="display:inline" data-testid="{{ params.removeFormTestId }}-{{ site.siteId }}">
+            <input type="hidden" name="crumb" value="{{ params.crumb }}">
+            <input type="hidden" name="siteId" value="{{ site.siteId }}">
+            <button type="submit" name="submitAction" value="{{ params.removeAction }}"
+                    class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                    data-testid="{{ params.removeTestId }}-{{ site.siteId }}">
+              {{ params.labels.withdraw }}
+            </button>
+          </form>
+        {% endif %}
+      </td>
+    {% endif %}
+  </tr>
+  {% if site.interimSites.length %}
+    <tr class="govuk-table__row select-overseas-sites-interim-tr">
+      <td class="govuk-table__cell select-overseas-sites-interim-cell" colspan="{{ 3 if params.readOnly else 4 }}">
+        {{ interimSiteAccordion(params) }}
+      </td>
+    </tr>
+  {% endif %}
 {% endmacro %}

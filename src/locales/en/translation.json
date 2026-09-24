@@ -468,6 +468,12 @@
       "addToApplicationButton": "Add to application",
       "changeButton": "Change",
       "orsIdLabel": "ORS ID",
+      "table": {
+        "siteName": "Site name",
+        "orsId": "ORS ID",
+        "country": "Country",
+        "action": "Action"
+      },
       "sections": {
         "accredited": "Accredited",
         "registered": "Registered",

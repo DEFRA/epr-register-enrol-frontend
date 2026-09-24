@@ -466,6 +466,12 @@
       "addToApplicationButton": "[Welsh] Add to application",
       "changeButton": "[Welsh] Change",
       "orsIdLabel": "[Welsh] ORS ID",
+      "table": {
+        "siteName": "[Welsh] Site name",
+        "orsId": "[Welsh] ORS ID",
+        "country": "[Welsh] Country",
+        "action": "[Welsh] Action"
+      },
       "sections": {
         "accredited": "[Welsh] Accredited",
         "registered": "[Welsh] Registered",

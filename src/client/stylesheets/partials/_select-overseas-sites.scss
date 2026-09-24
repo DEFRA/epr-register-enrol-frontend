@@ -1,91 +1,73 @@
 @use 'govuk-frontend' as *;
 
-// Each row here pairs a "Change" link with a "Withdraw from application"
-// button in one actions cell (unlike the single-action cells elsewhere in
-// the app). The default govuk-summary-list table-cell layout gives that
-// cell a fixed 20% width and lets the link and button wrap onto separate
-// lines; below we flex the row instead so both actions - and the country
-// value beside them - sit on one line. Scoped to tablet+ to match the
-// breakpoint at which govuk-frontend itself switches the summary list from
-// a stacked mobile layout to the table layout we're overriding.
-@include govuk-media-query($from: tablet) {
-  .select-overseas-sites-row {
-    display: flex;
-    align-items: center;
+// RA-603: this page used to render its sites as a govuk-summary-list, with a
+// block of flexbox overrides (`order`, a `min-width: 3ch` ORS-id shim,
+// `margin-left: auto` on the actions) trying to fake columns out of it. It
+// could not work: a summary list sizes each row independently, so a site name
+// in one row never lines up with the site name in the next, and
+// `align-items: center` pushed a short "Change" link out of line with the
+// taller warning button beside it - which then needed per-element padding
+// patches to look straight. It is a govuk-table now. The browser sizes real
+// columns consistently across every row and top-aligns cells, so almost all of
+// that CSS is gone rather than rewritten.
+
+.select-overseas-sites-table {
+  // The ORS id is always three characters and the country is short, so let the
+  // site name take the slack instead of the browser distributing it evenly.
+  .select-overseas-sites-name-cell {
+    width: 45%;
   }
 
-  // RA-507: the ORS id reads before the site name (it's always 3 characters,
-  // so a fixed-width column keeps every row's site name starting at the same
-  // point), while the DOM order stays name-then-id so a screen reader still
-  // announces the site name as the row's term. `order` only changes the
-  // visual position, not the reading order.
-  // Chained with .govuk-summary-list__value (not a separate selector) so this
-  // wins over the generic value rule below on specificity rather than
-  // depending on source order.
-  .select-overseas-sites-row
-    .govuk-summary-list__value.select-overseas-sites-orsid {
-    order: 1;
-    display: block;
-    flex: 0 0 auto;
-    min-width: 3ch;
-  }
-
-  .select-overseas-sites-row .govuk-summary-list__key {
-    order: 2;
-    display: block;
-    width: auto;
-    flex: 1 1 auto;
-  }
-
-  .select-overseas-sites-row .govuk-summary-list__value {
-    order: 3;
-    display: block;
-    width: auto;
-    flex: 0 1 auto;
-  }
-
-  .select-overseas-sites-row .govuk-summary-list__actions {
-    order: 4;
-    display: flex;
-    align-items: center;
-    width: auto;
-    flex: 0 0 auto;
-    margin-left: auto;
-  }
-
-  .select-overseas-sites-row .govuk-summary-list__actions .govuk-link {
-    margin-right: govuk-spacing(4);
+  .select-overseas-sites-orsid {
+    width: 10%;
     white-space: nowrap;
   }
 
-  // RA-603 AC10: the interim-site accordion sits beneath its parent ORS row,
-  // indented to start where the ORS site name starts rather than at the ORS id
-  // column, so the two read as a parent and its children. Mirrors the 3ch id
-  // column above plus the summary list's own cell padding.
-  .select-overseas-sites-interim-accordion {
-    margin-left: calc(3ch + #{govuk-spacing(4)});
+  // "Change" and the withdraw button belong on one line. GOV.UK's base button
+  // rule is `display: inline-block; width: 100%` - full width is the intended
+  // mobile behaviour, but inside a table cell the containing block is the cell,
+  // so the button fills it and shunts the link onto its own line at every
+  // breakpoint. Pinning the width back to its content is what keeps them
+  // side by side; the inline-block form is what stops the form element itself
+  // forcing a break.
+  .select-overseas-sites-actions-cell {
+    white-space: nowrap;
+
+    .govuk-link {
+      margin-right: govuk-spacing(4);
+      vertical-align: middle;
+    }
+
+    form {
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .govuk-button {
+      width: auto;
+      margin-bottom: 0;
+      vertical-align: middle;
+    }
   }
 }
 
-// RA-603 AC: the ORS row and its interim sites are one unit, so the rule that
-// govuk-summary-list draws under every row must not appear between them - only
-// after the last interim site. Outside the tablet media query above because the
-// border exists at every breakpoint.
-.select-overseas-sites-row--has-interim {
+// An ORS and its interim sites are one unit, so the rule the table draws under
+// every row must not appear between them - only after the last interim site.
+.select-overseas-sites-row--has-interim > .govuk-table__cell,
+.select-overseas-sites-row--has-interim > .govuk-table__header {
   border-bottom: 0;
 }
 
-// RA-603 AC: tighten the vertical rhythm of these rows. The default summary-list
-// row padding is govuk-spacing(3) top and bottom, which leaves an ORS and its
-// interim sites looking like unrelated blocks.
-.select-overseas-sites-row {
-  padding-top: govuk-spacing(2);
+// The interim sites live in a full-width colspan row beneath their ORS. Drop
+// the cell's own padding so the accordion sits tight under the row it belongs
+// to, and indent it so it reads as a child of that row.
+.select-overseas-sites-interim-cell {
+  padding-top: 0;
   padding-bottom: govuk-spacing(2);
+  padding-left: govuk-spacing(4);
 }
 
 .select-overseas-sites-interim-accordion {
-  margin-bottom: govuk-spacing(2);
-
   // The accordion's own section padding is sized for page-level sections and is
   // far too generous nested inside a list of sites.
   .govuk-accordion__section-button {
