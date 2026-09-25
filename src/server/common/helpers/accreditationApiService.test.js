@@ -626,7 +626,10 @@ describe('accreditationApiService', () => {
   })
 
   describe('createInterimSite', () => {
-    test('calls POST to the nested interim-site endpoint for the given siteId', async () => {
+    // RA-603: the plural collection route. The singular one still works on the
+    // backend for callers that have not moved, but an ORS can hold many interim
+    // sites now and this is the route that says so.
+    test('calls POST to the interim-sites collection for the given siteId', async () => {
       apiClient.post.mockResolvedValue({ siteId: 123, siteNumber: 'SN-001' })
       const body = { country: 'France', siteName: 'Interim Depot' }
       const result = await accreditationApiService.createInterimSite(
@@ -636,7 +639,7 @@ describe('accreditationApiService', () => {
         body
       )
       expect(apiClient.post).toHaveBeenCalledWith(
-        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/interim-site`,
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/interim-sites`,
         body
       )
       expect(result).toEqual({ siteId: 123, siteNumber: 'SN-001' })
@@ -696,6 +699,101 @@ describe('accreditationApiService', () => {
         accreditationApiService.deleteFile(ORG_ID, APP_ID, 'file-1')
       ).rejects.toThrow('section not editable')
       expect(apiClient.delete).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  // RA-603. One write per interim site, so amending or withdrawing one cannot
+  // disturb the others. Each of these addresses the interim site by its OWN id,
+  // which is unique application-wide (the backend allocates ORS and interim ids
+  // from one sequence), so no composite key is needed.
+  describe('updateInterimSite', () => {
+    test('calls PATCH against the single interim site', async () => {
+      apiClient.patch.mockResolvedValue({ siteId: 42, siteName: 'Renamed' })
+      const body = { country: 'France', siteName: 'Renamed' }
+
+      const result = await accreditationApiService.updateInterimSite(
+        ORG_ID,
+        APP_ID,
+        900001,
+        42,
+        body
+      )
+
+      expect(apiClient.patch).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/interim-sites/42`,
+        body
+      )
+      expect(result).toEqual({ siteId: 42, siteName: 'Renamed' })
+    })
+
+    test('normalises API error', async () => {
+      const err = Object.assign(new Error('Conflict'), { status: 409 })
+      apiClient.patch.mockRejectedValue(err)
+
+      await expect(
+        accreditationApiService.updateInterimSite(
+          ORG_ID,
+          APP_ID,
+          900001,
+          42,
+          {}
+        )
+      ).rejects.toMatchObject({ status: 409 })
+    })
+  })
+
+  describe('withdrawInterimSite', () => {
+    test('calls DELETE against the single interim site', async () => {
+      apiClient.delete.mockResolvedValue(undefined)
+
+      await accreditationApiService.withdrawInterimSite(
+        ORG_ID,
+        APP_ID,
+        900001,
+        42
+      )
+
+      expect(apiClient.delete).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/interim-sites/42`
+      )
+    })
+
+    test('normalises API error', async () => {
+      const err = Object.assign(new Error('Conflict'), { status: 409 })
+      apiClient.delete.mockRejectedValue(err)
+
+      await expect(
+        accreditationApiService.withdrawInterimSite(ORG_ID, APP_ID, 900001, 42)
+      ).rejects.toMatchObject({ status: 409 })
+    })
+  })
+
+  describe('restoreInterimSite', () => {
+    test('calls POST against the interim site restore route', async () => {
+      apiClient.post.mockResolvedValue({ siteId: 42, siteNumber: 'SN-0042' })
+
+      const result = await accreditationApiService.restoreInterimSite(
+        ORG_ID,
+        APP_ID,
+        900001,
+        42
+      )
+
+      expect(apiClient.post).toHaveBeenCalledWith(
+        `${BASE}/${ORG_ID}/${APP_ID}/overseas-sites/900001/interim-sites/42/restore`
+      )
+      // The same record returning, not a lookalike: the site number it had
+      // before it was withdrawn is the point of restoring in place.
+      expect(result).toEqual({ siteId: 42, siteNumber: 'SN-0042' })
+    })
+
+    test('normalises API error', async () => {
+      const err = Object.assign(new Error('Not found'), { status: 404 })
+      apiClient.post.mockRejectedValue(err)
+
+      await expect(
+        accreditationApiService.restoreInterimSite(ORG_ID, APP_ID, 900001, 42)
+      ).rejects.toMatchObject({ status: 404 })
     })
   })
 })
