@@ -562,7 +562,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'NotStarted',
-          items: makeBpItems(DEFAULT_BP_PERCENTS)
+          items: makeBpItems(DEFAULT_BP_PERCENTS, GLASS_BP_DETAILS)
         },
         samplingPlan: {
           sectionStatus: 'NotStarted',
