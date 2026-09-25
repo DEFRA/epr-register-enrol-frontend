@@ -244,7 +244,7 @@ describe('overseasSiteRows component', () => {
         accreditedParams({ site: site({ interimSites: [interimSite()] }) })
       )
 
-      const item = $('[data-testid="interim-site-row-900001"]')
+      const item = $('[data-testid="interim-site-row-42"]')
       expect(item).toHaveLength(1)
       expect(
         item.find('.select-overseas-sites-interim-summary').text().trim()
@@ -261,7 +261,7 @@ describe('overseasSiteRows component', () => {
       )
 
       expect(
-        $('[data-testid="interim-site-row-900001"]')
+        $('[data-testid="interim-site-row-42"]')
           .find('.select-overseas-sites-interim-summary')
           .text()
           .trim()
@@ -289,10 +289,10 @@ describe('overseasSiteRows component', () => {
         accreditedParams({ site: site({ interimSites: [interimSite()] }) })
       )
 
-      expect($('[data-testid="change-interim-site-900001"]').attr('href')).toBe(
+      expect($('[data-testid="change-interim-site-42"]').attr('href')).toBe(
         '/interim/edit/900001'
       )
-      const button = $('[data-testid="remove-button-interim-site-900001"]')
+      const button = $('[data-testid="remove-button-interim-site-42"]')
       expect(button.text().trim()).toBe('Withdraw from application')
       expect(button.attr('value')).toBe('removeInterimSite')
     })
@@ -305,11 +305,9 @@ describe('overseasSiteRows component', () => {
         })
       )
 
-      expect($('[data-testid="change-interim-site-900001"]')).toHaveLength(0)
-      expect(
-        $('[data-testid="remove-button-interim-site-900001"]')
-      ).toHaveLength(0)
-      expect($('[data-testid="interim-site-row-900001"]')).toHaveLength(1)
+      expect($('[data-testid="change-interim-site-42"]')).toHaveLength(0)
+      expect($('[data-testid="remove-button-interim-site-42"]')).toHaveLength(0)
+      expect($('[data-testid="interim-site-row-42"]')).toHaveLength(1)
     })
   })
 
@@ -335,14 +333,20 @@ describe('overseasSiteRows component', () => {
       expect($('.select-overseas-sites-interim-item')).toHaveLength(2)
     })
 
-    test('keys the first entry on the parent ORS id and the rest on their own id', () => {
+    // Every entry is named by its own id, the same way the edit, withdraw and
+    // restore routes name it. Phase 1 keyed the first one on its parent ORS so
+    // the e2e suite kept resolving while it still assumed one per ORS; that
+    // special case is gone now the suite addresses them individually.
+    test('keys every entry on the interim site own id', () => {
       const $ = render(accreditedParams({ site: twoInterimSites }))
 
-      expect($('[data-testid="interim-site-row-900001"]')).toHaveLength(1)
-      expect($('[data-testid="interim-site-row-is43"]')).toHaveLength(1)
-      expect($('[data-testid="interim-site-name-is43"]').text()).toContain(
+      expect($('[data-testid="interim-site-row-42"]')).toHaveLength(1)
+      expect($('[data-testid="interim-site-row-43"]')).toHaveLength(1)
+      expect($('[data-testid="interim-site-name-43"]').text()).toContain(
         'Second Depot'
       )
+      // The parent ORS id names the ORS row, and nothing inside it.
+      expect($('[data-testid="interim-site-row-900001"]')).toHaveLength(0)
     })
 
     test('puts every interim site behind the one disclosure for that ORS', () => {
@@ -359,15 +363,13 @@ describe('overseasSiteRows component', () => {
     test('keeps each interim site R codes and actions independent', () => {
       const $ = render(accreditedParams({ site: twoInterimSites }))
 
-      expect(
-        $('[data-testid="interim-site-operation-codes-900001"]').text()
-      ).toBe('R12, R13')
-      expect(
-        $('[data-testid="interim-site-operation-codes-is43"]').text()
-      ).toBe('R13')
-      expect($('[data-testid="remove-button-interim-site-is43"]')).toHaveLength(
-        1
+      expect($('[data-testid="interim-site-operation-codes-42"]').text()).toBe(
+        'R12, R13'
       )
+      expect($('[data-testid="interim-site-operation-codes-43"]').text()).toBe(
+        'R13'
+      )
+      expect($('[data-testid="remove-button-interim-site-43"]')).toHaveLength(1)
     })
   })
 

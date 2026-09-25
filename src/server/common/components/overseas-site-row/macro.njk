@@ -70,13 +70,15 @@
       <ul class="govuk-list select-overseas-sites-interim-list">
         {% for interimSite in site.interimSites %}
           {#
-            While an ORS can hold only one interim site, the first entry keeps
-            the parent-ORS-keyed testids the existing e2e suite already targets.
-            Any additional entry is keyed by the interim site's own id, which is
-            unique application-wide. That keeps this markup correct for many
-            interim sites without breaking the suite before it has been updated.
+            Keyed on the interim site's own id, which is unique
+            application-wide. Phase 1 keyed the FIRST entry on its parent ORS
+            instead, purely so the e2e suite kept resolving while it was still
+            written for one interim site per ORS. That suite now addresses them
+            individually, so the special case is gone - every entry is named
+            the same way, and the same way the edit, withdraw and restore
+            routes name it.
           #}
-          {% set suffix = site.siteId if loop.first else 'is' ~ interimSite.siteId %}
+          {% set suffix = interimSite.siteId %}
           <li class="select-overseas-sites-interim-item" data-testid="interim-site-row-{{ suffix }}">
             <span class="select-overseas-sites-interim-summary">
               <span data-testid="interim-site-name-{{ suffix }}">{{ interimSite.siteName }}</span>{% if interimSite.country %}, <span data-testid="interim-site-country-{{ suffix }}">{{ interimSite.country }}</span>{% endif %}{% if interimSite.operationCodes.length %}, <span data-testid="interim-site-operation-codes-{{ suffix }}">{{ interimSite.operationCodes | join(', ') }}</span>{% endif %}

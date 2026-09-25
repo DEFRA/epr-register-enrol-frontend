@@ -1336,13 +1336,11 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="interim-site-row-900001"')
-      expect(result).toContain('data-testid="interim-site-name-900001"')
+      expect(result).toContain('data-testid="interim-site-row-42"')
+      expect(result).toContain('data-testid="interim-site-name-42"')
       expect(result).toContain('Interim Depot')
-      expect(result).toContain('data-testid="change-interim-site-900001"')
-      expect(result).toContain(
-        'data-testid="remove-button-interim-site-900001"'
-      )
+      expect(result).toContain('data-testid="change-interim-site-42"')
+      expect(result).toContain('data-testid="remove-button-interim-site-42"')
       // RA-603: keyed on the interim site's own id (42), not its parent ORS's
       // (900001). An ORS can hold several, so the parent no longer identifies
       // which one to edit.
@@ -1360,7 +1358,7 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).not.toContain('data-testid="interim-site-row-900001"')
+      expect(result).not.toContain('data-testid="interim-site-row-42"')
     })
   })
 
@@ -1534,8 +1532,8 @@ describe('#selectOverseasSitesController', () => {
         }
       ])
 
-      expect(result).toContain('data-testid="interim-site-row-900001"')
-      expect(result).toContain('data-testid="interim-site-row-is43"')
+      expect(result).toContain('data-testid="interim-site-row-42"')
+      expect(result).toContain('data-testid="interim-site-row-43"')
       expect(result).toContain('First Depot')
       expect(result).toContain('Second Depot')
       expect(result).toContain('Show interim sites (2)')
@@ -1559,9 +1557,7 @@ describe('#selectOverseasSitesController', () => {
         { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
       ])
 
-      expect(result).toContain(
-        'data-testid="interim-site-operation-codes-900001"'
-      )
+      expect(result).toContain('data-testid="interim-site-operation-codes-42"')
       expect(result).toContain('R12, R13')
     })
 
