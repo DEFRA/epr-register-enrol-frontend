@@ -1206,9 +1206,17 @@ export const stubApiClient = {
       )
       const siteId = Number.parseInt(newInterimSiteMatch[3], 10)
       const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+      // RA-603: siteNumber is a 3-digit 001-999 value scoped across the whole
+      // registration, not SN-plus-a-timestamp. The stub holds one application,
+      // so counting that application's interim sites is as close as it can get
+      // to the real scope - close enough that what stub mode shows is a shape
+      // production can actually produce.
+      const existingInterimCount = (item?.overseasSites?.sites ?? []).filter(
+        (s) => s.interimSite
+      ).length
       const newInterimSite = {
         siteId: Date.now(),
-        siteNumber: `SN-${Date.now()}`,
+        siteNumber: String(existingInterimCount + 1).padStart(3, '0'),
         isNewSite: true,
         ...body
       }
