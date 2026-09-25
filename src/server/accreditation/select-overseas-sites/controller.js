@@ -54,6 +54,11 @@ const ORS_SUCCESS_FLASH = 'orsSuccess'
 const INTERIM_SITE_SUCCESS_FLASH = 'interimSiteSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
 const ORS_EDIT_SUCCESS_FLASH = 'orsEditSuccess'
+// RA-603 C4: unlike the other four this flash carries DATA, not just a boolean.
+// Undoing a withdrawal needs to know which interim site was withdrawn, and
+// naming it in the banner is what makes the offer meaningful rather than a bare
+// "undo something".
+const INTERIM_SITE_WITHDRAWN_FLASH = 'interimSiteWithdrawn'
 
 // Partitions the flat sites array into the four display sections. Membership is a strict
 // partition given how the flags are set: new sites always start selected:true, promoted
@@ -153,7 +158,9 @@ function resolveFlashBanners(yar) {
     interimSiteSuccessBanner: !!(yar.flash(INTERIM_SITE_SUCCESS_FLASH) ?? [])
       .length,
     promoteSuccessBanner: !!(yar.flash(ORS_PROMOTE_SUCCESS_FLASH) ?? []).length,
-    editSuccessBanner: !!(yar.flash(ORS_EDIT_SUCCESS_FLASH) ?? []).length
+    editSuccessBanner: !!(yar.flash(ORS_EDIT_SUCCESS_FLASH) ?? []).length,
+    withdrawnInterimSite:
+      (yar.flash(INTERIM_SITE_WITHDRAWN_FLASH) ?? [])[0] ?? null
   }
 }
 
@@ -164,6 +171,7 @@ function resolveBannerDefaults(banners) {
     interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
     promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
     editSuccessBanner: banners.editSuccessBanner ?? false,
+    withdrawnInterimSite: banners.withdrawnInterimSite ?? null,
     querySummary: banners.querySummary ?? null,
     regulatorQueryFields: banners.regulatorQueryFields ?? null,
     readOnly: banners.readOnly ?? false,
@@ -308,6 +316,54 @@ async function removeInterimSite(
     }
     return renderSaveError(h, t, applicationId, rawSites)
   }
+  // RA-603 C4: name the site so the banner can offer it back specifically, and
+  // carry its id so the Undo needs no lookup. A withdrawal is reversible right
+  // up until the operator navigates away, and after that the withdrawn-sites
+  // disclosure is the way back.
+  request.yar.flash(INTERIM_SITE_WITHDRAWN_FLASH, {
+    interimSiteId: found.interimSite.siteId,
+    siteName: found.interimSite.siteName
+  })
+  return h.redirect(selectOverseasSitesUrl(applicationId))
+}
+
+// RA-603 C4: puts a withdrawn interim site back. The backend clears removedAt
+// and nothing else, so the site returns with the siteId, siteNumber and
+// createdAt it always had - it is the same record resuming, not a replacement,
+// which is the whole reason withdrawal was made soft in the first place.
+async function restoreInterimSite(
+  ctx,
+  organisationId,
+  applicationId,
+  rawSites,
+  siteId,
+  interimSiteId
+) {
+  const { h, t, logger, request } = ctx
+  const found = findInterimSite(rawSites, Number.parseInt(interimSiteId, 10))
+  if (!found) {
+    return h.redirect(selectOverseasSitesUrl(applicationId))
+  }
+
+  try {
+    await accreditationApiService.restoreInterimSite(
+      organisationId,
+      applicationId,
+      found.site.siteId,
+      found.interimSite.siteId
+    )
+  } catch (err) {
+    logStructuredError(
+      logger,
+      err,
+      { interimSiteId, applicationId },
+      `Error restoring interim site ${interimSiteId} for application ${applicationId}`
+    )
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(request.path)
+    }
+    return renderSaveError(h, t, applicationId, rawSites)
+  }
   return h.redirect(selectOverseasSitesUrl(applicationId))
 }
 
@@ -405,7 +461,8 @@ export const selectOverseasSitesGetController = {
       successBanner,
       interimSiteSuccessBanner,
       promoteSuccessBanner,
-      editSuccessBanner
+      editSuccessBanner,
+      withdrawnInterimSite
     } = resolveFlashBanners(request.yar)
 
     const { blocked, readOnly } = resolveQueriedSectionAccess(
@@ -431,6 +488,7 @@ export const selectOverseasSitesGetController = {
           interimSiteSuccessBanner,
           promoteSuccessBanner,
           editSuccessBanner,
+          withdrawnInterimSite,
           querySummary: queried
             ? buildRegulatorQuerySummary('overseasSites', t)
             : null,
@@ -480,6 +538,15 @@ const OVERSEAS_SITES_ACTION_HANDLERS = {
     ),
   removeInterimSite: (ctx, organisationId, applicationId, rawSites, ids) =>
     removeInterimSite(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      ids.siteId,
+      ids.interimSiteId
+    ),
+  restoreInterimSite: (ctx, organisationId, applicationId, rawSites, ids) =>
+    restoreInterimSite(
       ctx,
       organisationId,
       applicationId,

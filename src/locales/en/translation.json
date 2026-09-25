@@ -483,7 +483,14 @@
       "interimSite": {
         "removeButton": "Withdraw from application",
         "disclosure": "Show interim sites",
-        "addAnother": "Add another interim site"
+        "addAnother": "Add another interim site",
+        "withdrawnDisclosure": "Show withdrawn interim sites",
+        "restoreButton": "Add back to application",
+        "withdrawnBanner": {
+          "title": "Interim site withdrawn",
+          "body": "You withdrew",
+          "undo": "Undo"
+        }
       },
       "validation": {
         "noSitesAccredited": "Add at least one overseas reprocessing site to accreditation",

@@ -481,7 +481,14 @@
       "interimSite": {
         "removeButton": "[Welsh] Withdraw from application",
         "disclosure": "[Welsh] Show interim sites",
-        "addAnother": "[Welsh] Add another interim site"
+        "addAnother": "[Welsh] Add another interim site",
+        "withdrawnDisclosure": "[Welsh] Show withdrawn interim sites",
+        "restoreButton": "[Welsh] Add back to application",
+        "withdrawnBanner": {
+          "title": "[Welsh] Interim site withdrawn",
+          "body": "[Welsh] You withdrew",
+          "undo": "[Welsh] Undo"
+        }
       },
       "validation": {
         "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",

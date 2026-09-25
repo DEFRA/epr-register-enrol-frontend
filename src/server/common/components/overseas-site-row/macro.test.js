@@ -19,7 +19,10 @@ const LABELS = {
   withdraw: 'Withdraw from application',
   add: 'Add to application',
   interimRemove: 'Withdraw from application',
-  interimDisclosure: 'Show interim sites'
+  interimDisclosure: 'Show interim sites',
+  addAnotherInterimSite: 'Add another interim site',
+  withdrawnDisclosure: 'Show withdrawn interim sites',
+  restore: 'Add back to application'
 }
 
 function interimSite(overrides = {}) {
@@ -44,6 +47,7 @@ function site(overrides = {}) {
     siteName: 'Site Alpha',
     country: 'Germany',
     interimSites: [],
+    withdrawnInterimSites: [],
     editUrl: '/edit/900001',
     promoteUrl: '/promote/900001',
     ...overrides
@@ -362,6 +366,118 @@ describe('overseasSiteRows component', () => {
         $('[data-testid="interim-site-operation-codes-is43"]').text()
       ).toBe('R13')
       expect($('[data-testid="remove-button-interim-site-is43"]')).toHaveLength(
+        1
+      )
+    })
+  })
+
+  // RA-603 C4. Withdrawing is soft, so it is reversible. This is the way back
+  // once the undo banner has gone: a second disclosure that renders only when
+  // that ORS actually has something withdrawn.
+  describe('the withdrawn interim sites disclosure', () => {
+    const withdrawn = (siteId, siteName) => ({
+      ...interimSite({ siteId, siteName }),
+      removedAt: '2026-08-14T09:30:00.000Z'
+    })
+
+    test('renders nothing when nothing has been withdrawn', () => {
+      const $ = render(
+        accreditedParams({ site: site({ interimSites: [interimSite()] }) })
+      )
+
+      expect(
+        $('[data-testid="withdrawn-interim-sites-disclosure-900001"]')
+      ).toHaveLength(0)
+    })
+
+    test('lists each withdrawn interim site with a way to put it back', () => {
+      const $ = render(
+        accreditedParams({
+          site: site({
+            interimSites: [interimSite()],
+            withdrawnInterimSites: [withdrawn(51, 'Old Depot')]
+          })
+        })
+      )
+
+      expect(
+        $('[data-testid="withdrawn-interim-sites-disclosure-900001"]')
+      ).toHaveLength(1)
+      expect(
+        $('[data-testid="withdrawn-interim-site-name-51"]').text()
+      ).toContain('Old Depot')
+      const button = $('[data-testid="restore-button-interim-site-51"]')
+      expect(button.attr('value')).toBe('restoreInterimSite')
+    })
+
+    test('counts the withdrawn sites separately from the active ones', () => {
+      const $ = render(
+        accreditedParams({
+          site: site({
+            interimSites: [interimSite({ siteId: 42 })],
+            withdrawnInterimSites: [withdrawn(51, 'One'), withdrawn(52, 'Two')]
+          })
+        })
+      )
+
+      expect(
+        $('[data-testid="interim-sites-disclosure-summary-900001"]')
+          .text()
+          .trim()
+      ).toBe('Show interim sites (1)')
+      expect(
+        $('[data-testid="withdrawn-interim-sites-disclosure-summary-900001"]')
+          .text()
+          .trim()
+      ).toBe('Show withdrawn interim sites (2)')
+    })
+
+    // The restore form has to name the interim site, not just its parent: the
+    // parent may hold several withdrawn sites.
+    test('sends the interim site own id with the restore', () => {
+      const $ = render(
+        accreditedParams({
+          site: site({ withdrawnInterimSites: [withdrawn(51, 'Old Depot')] })
+        })
+      )
+
+      const form = $('[data-testid="restore-form-interim-site-51"]')
+      expect(form.find('input[name="interimSiteId"]').attr('value')).toBe('51')
+      expect(form.find('input[name="siteId"]').attr('value')).toBe('900001')
+    })
+
+    // An ORS whose only interim sites are all withdrawn still needs its row
+    // rendered, or there is nowhere to put them back from.
+    test('renders the row for an ORS whose interim sites are all withdrawn', () => {
+      const $ = render(
+        accreditedParams({
+          site: site({
+            interimSites: [],
+            withdrawnInterimSites: [withdrawn(51, 'Old Depot')]
+          })
+        })
+      )
+
+      expect(
+        $('[data-testid="withdrawn-interim-sites-disclosure-900001"]')
+      ).toHaveLength(1)
+      expect($('[data-testid="interim-sites-accordion-900001"]')).toHaveLength(
+        0
+      )
+    })
+
+    test('offers no way back when the section is read-only', () => {
+      const $ = render(
+        accreditedParams({
+          readOnly: true,
+          site: site({ withdrawnInterimSites: [withdrawn(51, 'Old Depot')] })
+        })
+      )
+
+      expect($('[data-testid="restore-button-interim-site-51"]')).toHaveLength(
+        0
+      )
+      expect($('[data-testid="withdrawn-interim-site-name-51"]')).toHaveLength(
         1
       )
     })

@@ -119,6 +119,61 @@
   </details>
 {% endmacro %}
 
+{#
+  RA-603 C4. Withdrawn interim sites, and the way to put one back.
+
+  A second disclosure rather than a "withdrawn" group inside the first: it
+  renders nothing at all when nothing has been withdrawn, which is the normal
+  case, and it keeps the main list showing only what is actually on the
+  application. An ORS that has churned through several interim sites does not
+  turn its own list into a log.
+
+  Restoring is in place - the backend clears removedAt and touches nothing else -
+  so the site comes back with the site number it always had rather than as a new
+  record. That identity link is the thing AC05 exists to protect, and it is why
+  re-adding by hand is not an acceptable substitute for this.
+#}
+{% macro withdrawnInterimSiteDisclosure(params) %}
+  {% set site = params.site %}
+  {% if site.withdrawnInterimSites.length %}
+    <details class="govuk-details select-overseas-sites-interim-disclosure"
+             data-testid="withdrawn-interim-sites-disclosure-{{ site.siteId }}">
+      <summary class="govuk-details__summary">
+        <span class="govuk-details__summary-text"
+              data-testid="withdrawn-interim-sites-disclosure-summary-{{ site.siteId }}">
+          {{ params.labels.withdrawnDisclosure }} ({{ site.withdrawnInterimSites.length }})
+        </span>
+      </summary>
+      <div class="govuk-details__text">
+        <ul class="govuk-list select-overseas-sites-interim-list">
+          {% for interimSite in site.withdrawnInterimSites %}
+            <li class="select-overseas-sites-interim-item"
+                data-testid="withdrawn-interim-site-row-{{ interimSite.siteId }}">
+              <span class="select-overseas-sites-interim-summary">
+                <span data-testid="withdrawn-interim-site-name-{{ interimSite.siteId }}">{{ interimSite.siteName }}</span>{% if interimSite.country %}, <span>{{ interimSite.country }}</span>{% endif %}
+              </span>
+              {% if not params.readOnly %}
+                <span class="select-overseas-sites-interim-actions">
+                  <form method="post" data-testid="restore-form-interim-site-{{ interimSite.siteId }}">
+                    <input type="hidden" name="crumb" value="{{ params.crumb }}">
+                    <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                    <input type="hidden" name="interimSiteId" value="{{ interimSite.siteId }}">
+                    <button type="submit" name="submitAction" value="restoreInterimSite"
+                            class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                            data-testid="restore-button-interim-site-{{ interimSite.siteId }}">
+                      {{ params.labels.restore }}
+                    </button>
+                  </form>
+                </span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </details>
+  {% endif %}
+{% endmacro %}
+
 {% macro overseasSiteRows(params) %}
   {% set site = params.site %}
   {#
@@ -132,7 +187,7 @@
     The id is a reference, the name is what identifies the row to someone
     listening to it, and scope="row" does not require the first column.
   #}
-  <tr class="govuk-table__row select-overseas-sites-row{% if site.interimSites.length %} select-overseas-sites-row--has-interim{% endif %}"
+  <tr class="govuk-table__row select-overseas-sites-row{% if site.interimSites.length or site.withdrawnInterimSites.length %} select-overseas-sites-row--has-interim{% endif %}"
       data-testid="{{ params.testIdPrefix }}-row-{{ site.siteId }}">
     <td class="govuk-table__cell select-overseas-sites-orsid" data-testid="{{ params.testIdPrefix }}-orsid-{{ site.siteId }}">{{ site.orsId }}</td>
     <th scope="row" class="govuk-table__header select-overseas-sites-name-cell" data-testid="{{ params.testIdPrefix }}-name-{{ site.siteId }}">{{ site.siteName }}</th>
@@ -164,10 +219,11 @@
       </td>
     {% endif %}
   </tr>
-  {% if site.interimSites.length %}
+  {% if site.interimSites.length or site.withdrawnInterimSites.length %}
     <tr class="govuk-table__row select-overseas-sites-interim-tr">
       <td class="govuk-table__cell select-overseas-sites-interim-cell" colspan="{{ 3 if params.readOnly else 4 }}">
         {{ interimSiteDisclosure(params) }}
+        {{ withdrawnInterimSiteDisclosure(params) }}
       </td>
     </tr>
   {% endif %}
