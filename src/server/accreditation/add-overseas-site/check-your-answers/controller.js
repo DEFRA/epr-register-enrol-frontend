@@ -84,6 +84,12 @@ function buildRows(t, applicationId, session) {
       testId: 'location'
     },
     {
+      key: t('pages.addOverseasSite.cya.rows.coordinates'),
+      value: session.coordinates ?? '',
+      changeUrl: siteLocationUrl(applicationId),
+      testId: 'coordinates'
+    },
+    {
       key: t('pages.addOverseasSite.cya.rows.contactName'),
       value: session.siteContactName ?? '',
       changeUrl: contactDetailsUrl(applicationId),

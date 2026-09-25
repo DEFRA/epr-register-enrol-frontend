@@ -175,6 +175,37 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="delete-code-1"')
     })
 
+    test('renders coordinates row with the value entered on site-location', async () => {
+      const siteLocationPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/site-location`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload:
+          'addressLine1=Unit+1&townOrCity=Rotterdam&country=Netherlands&coordinates=51.9225%2C+4.4792'
+      })
+      const sessionCookie = siteLocationPostResponse.headers['set-cookie']
+        ? (Array.isArray(siteLocationPostResponse.headers['set-cookie'])
+            ? siteLocationPostResponse.headers['set-cookie'][0]
+            : siteLocationPostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toContain('data-testid="row-coordinates"')
+      expect(result).toContain('Coordinates')
+      expect(result).toContain('51.9225, 4.4792')
+      expect(result).toContain('data-testid="change-coordinates"')
+    })
+
     test('shows "None entered" when no codes were added', async () => {
       const { result } = await server.inject({
         method: 'GET',
