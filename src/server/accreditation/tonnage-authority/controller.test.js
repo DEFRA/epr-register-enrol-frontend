@@ -1463,30 +1463,71 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
     // Once the selection is in the backend the saved list IS the selection, so
     // a later visit must re-seed from it rather than replay a stale session
     // value. Asserted through behaviour rather than by inspecting the session.
+    //
+    // The stale selection has to be driven in through a real `addAuthoriser`
+    // POST, because that is the only branch that writes one: a save on a fresh
+    // session leaves nothing behind to replay, so the following GET re-seeds
+    // from the saved list either way and the test passes whether or not
+    // `clearSelection` ran. Here the session deliberately disagrees with what
+    // the operator goes on to save - it holds [Bob, Charlie] while the save
+    // writes all three - so a selection that survives the save renders Alice
+    // unticked and turns this red.
     test('does not replay a stale selection after saving', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         applicationWith([ALICE, BOB])
       )
       vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
-      const post = await server.inject({
+      // Alice unticked while adding Charlie, so the session now holds
+      // [Bob, Charlie].
+      const add = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { submitAction: 'saveAndContinue', selectedEmails: BOB.email }
+        payload: {
+          submitAction: 'addAuthoriser',
+          selectedEmails: BOB.email,
+          newFullName: 'Charlie',
+          newEmail: CHARLIE_EMAIL
+        }
       })
-      const cookie = sessionCookie(post)
+      expect(add.statusCode).toBe(statusCodes.redirect)
+      const addCookie = sessionCookie(add)
+      expect(addCookie).toBeTruthy()
 
-      // the save dropped Alice, so the saved list is Bob alone
-      vi.spyOn(apiClient, 'get').mockResolvedValue(applicationWith([BOB]))
+      // The add has landed, so the saved list now includes Charlie.
+      const CHARLIE = { fullName: 'Charlie', email: CHARLIE_EMAIL }
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith([ALICE, BOB, CHARLIE])
+      )
+
+      // The operator re-ticks Alice before saving, so the saved list is all
+      // three - the opposite of what the session is still holding.
+      const save = await server.inject({
+        method: 'POST',
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, cookie: addCookie },
+        payload: {
+          submitAction: 'saveAndContinue',
+          selectedEmails: [ALICE.email, BOB.email, CHARLIE_EMAIL]
+        }
+      })
+      expect(save.statusCode).toBe(statusCodes.redirect)
 
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: cookie ? { ...operatorHeaders, cookie } : operatorHeaders
+        headers: {
+          ...operatorHeaders,
+          cookie: sessionCookie(save) ?? addCookie
+        }
       })
 
+      // Seeded from the saved list. Without `clearSelection` the stale
+      // [Bob, Charlie] wins and Alice comes back unticked.
+      expect(isCheckedFor(result, ALICE.email)).toBe(true)
       expect(isCheckedFor(result, BOB.email)).toBe(true)
+      expect(isCheckedFor(result, CHARLIE_EMAIL)).toBe(true)
     })
   })
 })
