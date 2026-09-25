@@ -464,10 +464,16 @@
       "noSites": "No overseas reprocessing sites are associated with this application.",
       "continueButton": "Continue",
       "saveAndComeLater": "Save and come back later",
-      "removeFromAccreditationButton": "Remove from accreditation",
-      "addToAccreditationButton": "Add to accreditation",
+      "withdrawFromApplicationButton": "Withdraw from application",
+      "addToApplicationButton": "Add to application",
       "changeButton": "Change",
       "orsIdLabel": "ORS ID",
+      "table": {
+        "siteName": "Site name",
+        "orsId": "ORS ID",
+        "country": "Country",
+        "action": "Action"
+      },
       "sections": {
         "accredited": "Accredited",
         "registered": "Registered",
@@ -475,8 +481,8 @@
         "registeredSitesAdded": "Registered sites added"
       },
       "interimSite": {
-        "label": "Interim site",
-        "removeButton": "Remove interim site"
+        "removeButton": "Withdraw from application",
+        "disclosure": "Show interim sites"
       },
       "validation": {
         "noSitesAccredited": "Add at least one overseas reprocessing site to accreditation",

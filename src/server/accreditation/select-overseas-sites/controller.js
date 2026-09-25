@@ -78,11 +78,60 @@ function interimSiteEditUrl(applicationId, siteId) {
   return `/accreditation/select-overseas-sites/${applicationId}/interim-site/edit/${siteId}`
 }
 
+// RA-603 AC10: the view renders interim sites by looping a list, so the
+// accordion markup never has to be rewritten once the backend can hold more
+// than one per ORS. The backend still sends the singular `interimSite` today
+// (AddInterimSite 409s on a second one), so this is a 0-or-1-element list built
+// from it — but an already-list-shaped `interimSites` is preferred the moment
+// the backend starts sending one, which is what makes this forward-compatible
+// rather than a throwaway shim.
+function normaliseInterimSites(site) {
+  if (Array.isArray(site.interimSites)) {
+    return site.interimSites
+  }
+  return site.interimSite ? [site.interimSite] : []
+}
+
+// Flattened one-line address for the accordion's detail rows. Built here rather
+// than in the template so the "drop the empty parts" rule is unit-testable and
+// lives beside the other view-model shaping, matching how the add-interim-site
+// check-your-answers page already composes its location row.
+function interimSiteAddressLine(interimSite) {
+  return [
+    interimSite.addressLine1,
+    interimSite.addressLine2,
+    interimSite.townOrCity,
+    interimSite.stateOrRegion,
+    interimSite.postcode
+  ]
+    .filter(Boolean)
+    .join(', ')
+}
+
+// Each interim site carries its own edit URL rather than the view deriving one,
+// so re-keying that route from the parent ORS id to the interim site's own id
+// (a later phase, once an ORS can hold more than one) is a change here and
+// nowhere else. While an ORS holds at most one, keying on the parent ORS id is
+// unambiguous and leaves the existing route untouched.
+function withInterimSites(applicationId, site) {
+  return normaliseInterimSites(site).map((interimSite) => ({
+    ...interimSite,
+    addressLine: interimSiteAddressLine(interimSite),
+    editUrl: interimSiteEditUrl(applicationId, site.siteId)
+  }))
+}
+
+function decorateSite(applicationId, site) {
+  return {
+    ...site,
+    interimSites: withInterimSites(applicationId, site)
+  }
+}
+
 function withEditUrl(applicationId, sites) {
   return sites.map((site) => ({
-    ...site,
-    editUrl: editUrl(applicationId, site.siteId),
-    interimSiteEditUrl: interimSiteEditUrl(applicationId, site.siteId)
+    ...decorateSite(applicationId, site),
+    editUrl: editUrl(applicationId, site.siteId)
   }))
 }
 
@@ -120,9 +169,8 @@ function buildViewData(t, applicationId, sections, error, banners = {}) {
     heading: t('pages.selectOverseasSites.heading'),
     accreditedSites: withEditUrl(applicationId, sections.accredited),
     registeredSites: sections.registered.map((site) => ({
-      ...site,
-      promoteUrl: promoteUrl(applicationId, site.siteId),
-      interimSiteEditUrl: interimSiteEditUrl(applicationId, site.siteId)
+      ...decorateSite(applicationId, site),
+      promoteUrl: promoteUrl(applicationId, site.siteId)
     })),
     newSites: withEditUrl(applicationId, sections.newSites),
     registeredSitesAddedSites: withEditUrl(
