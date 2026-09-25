@@ -90,6 +90,9 @@
                 <form method="post" data-testid="remove-form-interim-site-{{ suffix }}">
                   <input type="hidden" name="crumb" value="{{ params.crumb }}">
                   <input type="hidden" name="siteId" value="{{ site.siteId }}">
+                  {# RA-603: the interim site's OWN id. Its parent alone no    #}
+                  {# longer identifies which one to withdraw.                  #}
+                  <input type="hidden" name="interimSiteId" value="{{ interimSite.siteId }}">
                   <button type="submit" name="submitAction" value="removeInterimSite"
                           class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
                           data-testid="remove-button-interim-site-{{ suffix }}">
@@ -101,6 +104,17 @@
           </li>
         {% endfor %}
       </ul>
+      {% if not params.readOnly %}
+        {# RA-603 AC01: the way an operator adds a second one. Inside the      #}
+        {# disclosure, under the list it extends, rather than beside the ORS   #}
+        {# row where it would compete with the ORS's own actions.             #}
+        <p class="govuk-body govuk-!-margin-bottom-0">
+          <a href="{{ site.addInterimSiteUrl }}" class="govuk-link"
+             data-testid="add-interim-site-{{ site.siteId }}">
+            {{ params.labels.addAnotherInterimSite }}
+          </a>
+        </p>
+      {% endif %}
     </div>
   </details>
 {% endmacro %}

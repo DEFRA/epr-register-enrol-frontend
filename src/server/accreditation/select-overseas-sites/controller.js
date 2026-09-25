@@ -13,6 +13,11 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import {
+  activeInterimSites,
+  withdrawnInterimSites,
+  findInterimSite
+} from '../../common/helpers/interimSites.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -74,22 +79,18 @@ function partitionSites(rawSites) {
   return sections
 }
 
-function interimSiteEditUrl(applicationId, siteId) {
-  return `/accreditation/select-overseas-sites/${applicationId}/interim-site/edit/${siteId}`
+// RA-603: keyed on the interim site's OWN id, not its parent ORS's. Interim ids
+// are unique application-wide (the backend allocates ORS and interim ids from
+// one sequence), so an interim site can be addressed on its own — which is the
+// only way this works once an ORS can hold more than one.
+function interimSiteEditUrl(applicationId, interimSiteId) {
+  return `/accreditation/select-overseas-sites/${applicationId}/interim-site/edit/${interimSiteId}`
 }
 
-// RA-603 AC10: the view renders interim sites by looping a list, so the
-// accordion markup never has to be rewritten once the backend can hold more
-// than one per ORS. The backend still sends the singular `interimSite` today
-// (AddInterimSite 409s on a second one), so this is a 0-or-1-element list built
-// from it — but an already-list-shaped `interimSites` is preferred the moment
-// the backend starts sending one, which is what makes this forward-compatible
-// rather than a throwaway shim.
-function normaliseInterimSites(site) {
-  if (Array.isArray(site.interimSites)) {
-    return site.interimSites
-  }
-  return site.interimSite ? [site.interimSite] : []
+// Entry point for "Add another interim site". Takes the PARENT ORS id, since
+// that is what the new interim site will be attached to.
+function addInterimSiteUrl(applicationId, siteId) {
+  return `/accreditation/select-overseas-sites/${applicationId}/interim-site/add/${siteId}`
 }
 
 // Flattened one-line address for the accordion's detail rows. Built here rather
@@ -108,23 +109,30 @@ function interimSiteAddressLine(interimSite) {
     .join(', ')
 }
 
-// Each interim site carries its own edit URL rather than the view deriving one,
-// so re-keying that route from the parent ORS id to the interim site's own id
-// (a later phase, once an ORS can hold more than one) is a change here and
-// nowhere else. While an ORS holds at most one, keying on the parent ORS id is
-// unambiguous and leaves the existing route untouched.
-function withInterimSites(applicationId, site) {
-  return normaliseInterimSites(site).map((interimSite) => ({
+// Each interim site carries its own URLs rather than the view deriving them, so
+// the routes stay defined in one place.
+function decorateInterimSites(applicationId, interimSites) {
+  return interimSites.map((interimSite) => ({
     ...interimSite,
     addressLine: interimSiteAddressLine(interimSite),
-    editUrl: interimSiteEditUrl(applicationId, site.siteId)
+    editUrl: interimSiteEditUrl(applicationId, interimSite.siteId)
   }))
 }
 
+// RA-603 AC05: `interimSites` is what the operator has; `withdrawnInterimSites`
+// is what they have taken off and can put back. Withdrawn sites are kept out of
+// the main list entirely rather than greyed out in it — AC05 keeps them for
+// reporting, not for display — which is also why the "Show interim sites (n)"
+// count is taken from the active list alone.
 function decorateSite(applicationId, site) {
   return {
     ...site,
-    interimSites: withInterimSites(applicationId, site)
+    interimSites: decorateInterimSites(applicationId, activeInterimSites(site)),
+    withdrawnInterimSites: decorateInterimSites(
+      applicationId,
+      withdrawnInterimSites(site)
+    ),
+    addInterimSiteUrl: addInterimSiteUrl(applicationId, site.siteId)
   }
 }
 
@@ -252,28 +260,38 @@ async function removeOrDeleteSite(
   return h.redirect(selectOverseasSitesUrl(applicationId))
 }
 
-// RA-486: clears an interim site from its parent ORS. Reuses the same bulk
-// patchOverseasSites endpoint as removeOrDeleteSite above — the backend
-// merges a null `interimSite` on the targeted site as a clean detach, with
-// no other field side effects (confirmed against OverseasSiteMerge.cs).
+// RA-603: withdraws one interim site through its own endpoint.
+//
+// This used to rebuild the whole site list and send it back through the bulk
+// patchOverseasSites, setting `interimSite: null` on the targeted ORS. That
+// cannot survive an ORS holding several interim sites: it is a read-modify-write
+// over everything, so a concurrent change to any other site is silently
+// overwritten, and it is the most likely way to break "withdrawing one must not
+// affect the others". One request, one interim site, decided by the server.
+//
+// The withdrawal is soft — the backend stamps removedAt and keeps the record for
+// reporting (AC05) — so this is reversible, and restoreInterimSite below is what
+// reverses it.
 async function removeInterimSite(
   ctx,
   organisationId,
   applicationId,
   rawSites,
-  siteId
+  siteId,
+  interimSiteId
 ) {
   const { h, t, logger, request } = ctx
-  const siteIdInt = Number.parseInt(siteId, 10)
-  const updatedSites = rawSites.map((s) =>
-    s.siteId === siteIdInt ? { ...s, interimSite: null } : s
-  )
+  const found = findInterimSite(rawSites, Number.parseInt(interimSiteId, 10))
+  if (!found) {
+    return h.redirect(selectOverseasSitesUrl(applicationId))
+  }
 
   try {
-    await accreditationApiService.patchOverseasSites(
+    await accreditationApiService.withdrawInterimSite(
       organisationId,
       applicationId,
-      { sites: updatedSites }
+      found.site.siteId,
+      found.interimSite.siteId
     )
   } catch (err) {
     logStructuredError(
@@ -437,36 +455,47 @@ export const selectOverseasSitesGetController = {
 // chain of ifs. Each entry has the same (ctx, organisationId, applicationId, rawSites,
 // siteId) shape as its target function, even where siteId is unused, so they're
 // interchangeable through this table.
+// RA-603: `ids` carries both the ORS id and, for the interim actions, the
+// interim site's own id. They are different things - an interim site is
+// addressed by its own application-wide unique id, not by its parent's - so
+// passing one `siteId` to everything stopped being enough.
 const OVERSEAS_SITES_ACTION_HANDLERS = {
-  removeAccredited: (ctx, organisationId, applicationId, rawSites, siteId) =>
+  removeAccredited: (ctx, organisationId, applicationId, rawSites, ids) =>
     removeOrDeleteSite(
       ctx,
       organisationId,
       applicationId,
       rawSites,
       'removeAccredited',
-      siteId
+      ids.siteId
     ),
-  deleteNewSite: (ctx, organisationId, applicationId, rawSites, siteId) =>
+  deleteNewSite: (ctx, organisationId, applicationId, rawSites, ids) =>
     removeOrDeleteSite(
       ctx,
       organisationId,
       applicationId,
       rawSites,
       'deleteNewSite',
-      siteId
+      ids.siteId
     ),
-  removeInterimSite: (ctx, organisationId, applicationId, rawSites, siteId) =>
-    removeInterimSite(ctx, organisationId, applicationId, rawSites, siteId),
+  removeInterimSite: (ctx, organisationId, applicationId, rawSites, ids) =>
+    removeInterimSite(
+      ctx,
+      organisationId,
+      applicationId,
+      rawSites,
+      ids.siteId,
+      ids.interimSiteId
+    ),
   saveAndComeLater: (ctx, organisationId, applicationId, rawSites) =>
     saveOverseasSitesForLater(ctx, organisationId, applicationId, rawSites),
-  revertAccreditation: (ctx, organisationId, applicationId, rawSites, siteId) =>
+  revertAccreditation: (ctx, organisationId, applicationId, rawSites, ids) =>
     revertSiteAccreditation(
       ctx,
       organisationId,
       applicationId,
       rawSites,
-      siteId
+      ids.siteId
     )
 }
 
@@ -477,7 +506,7 @@ export const selectOverseasSitesPostController = {
       ACCREDITATION_SESSION_KEYS.organisationId
     )
     const { applicationId } = request.params
-    const { submitAction, siteId } = request.payload ?? {}
+    const { submitAction, siteId, interimSiteId } = request.payload ?? {}
 
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
@@ -515,7 +544,10 @@ export const selectOverseasSitesPostController = {
 
     const actionHandler = OVERSEAS_SITES_ACTION_HANDLERS[submitAction]
     if (actionHandler) {
-      return actionHandler(ctx, organisationId, applicationId, rawSites, siteId)
+      return actionHandler(ctx, organisationId, applicationId, rawSites, {
+        siteId,
+        interimSiteId
+      })
     }
 
     const sections = partitionSites(rawSites)

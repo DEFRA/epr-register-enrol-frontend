@@ -480,7 +480,8 @@
       },
       "interimSite": {
         "removeButton": "[Welsh] Withdraw from application",
-        "disclosure": "[Welsh] Show interim sites"
+        "disclosure": "[Welsh] Show interim sites",
+        "addAnother": "[Welsh] Add another interim site"
       },
       "validation": {
         "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",

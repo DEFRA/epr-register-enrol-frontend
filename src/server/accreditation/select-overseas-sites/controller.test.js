@@ -1205,7 +1205,11 @@ describe('#selectOverseasSitesController', () => {
     // RA-486: clearing an interim site reuses the same bulk patchOverseasSites
     // endpoint as removeAccredited/deleteNewSite above, just with the
     // targeted site's interimSite field set to null.
-    test('removeInterimSite patches the site with interimSite: null and redirects back', async () => {
+    // RA-603: withdrawing goes through the interim site's own endpoint. It used
+    // to rebuild the whole site list and send it back through the bulk PATCH,
+    // which cannot survive an ORS holding several interim sites - a concurrent
+    // change to any other site would be silently overwritten.
+    test('removeInterimSite calls DELETE on the interim site and redirects back', async () => {
       const accreditedWithInterim = {
         ...ACCREDITED_SITE,
         interimSite: { siteId: 42, siteName: 'Interim Depot' }
@@ -1218,54 +1222,90 @@ describe('#selectOverseasSitesController', () => {
           }
         })
       )
+      const deleteSpy = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       )
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('overseas-sites'),
-        expect.objectContaining({
-          sites: expect.arrayContaining([
-            expect.objectContaining({ siteId: 900001, interimSite: null })
-          ])
-        })
+      expect(deleteSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/overseas-sites/900001/interim-sites/42')
       )
+      // The whole site list is no longer rewritten to remove one interim site.
+      expect(patchSpy).not.toHaveBeenCalled()
     })
 
-    test('removeInterimSite returns 500 when PATCH fails', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('patch failed'))
+    test('removeInterimSite returns 500 when the withdraw fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                ...ACCREDITED_SITE,
+                interimSite: { siteId: 42, siteName: 'Interim Depot' }
+              }
+            ]
+          }
+        })
+      )
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(
+        new Error('delete failed')
+      )
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('removeInterimSite redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+    test('removeInterimSite redirects back to this page (not a raw error) when the withdraw fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                ...ACCREDITED_SITE,
+                interimSite: { siteId: 42, siteName: 'Interim Depot' }
+              }
+            ]
+          }
+        })
+      )
       const err = Object.assign(new Error('conflict'), { status: 409 })
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(err)
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1303,8 +1343,11 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain(
         'data-testid="remove-button-interim-site-900001"'
       )
+      // RA-603: keyed on the interim site's own id (42), not its parent ORS's
+      // (900001). An ORS can hold several, so the parent no longer identifies
+      // which one to edit.
       expect(result).toContain(
-        `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`
       )
     })
 
@@ -1327,7 +1370,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
         headers: operatorHeaders
       })
 
@@ -1363,7 +1406,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
         headers: operatorHeaders
       })
 
@@ -1407,7 +1450,7 @@ describe('#selectOverseasSitesController', () => {
 
       const editResponse = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
         headers: operatorHeaders
       })
       expect(editResponse.statusCode).toBe(statusCodes.redirect)

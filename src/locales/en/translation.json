@@ -482,7 +482,8 @@
       },
       "interimSite": {
         "removeButton": "Withdraw from application",
-        "disclosure": "Show interim sites"
+        "disclosure": "Show interim sites",
+        "addAnother": "Add another interim site"
       },
       "validation": {
         "noSitesAccredited": "Add at least one overseas reprocessing site to accreditation",

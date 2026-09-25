@@ -5,7 +5,8 @@ import {
 import {
   selectOverseasSitesPromoteEntryGetController,
   selectOverseasSitesEditEntryGetController,
-  selectOverseasSitesInterimSiteEditEntryGetController
+  selectOverseasSitesInterimSiteEditEntryGetController,
+  selectOverseasSitesInterimSiteAddEntryGetController
 } from './wizard-entry.controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 
@@ -52,15 +53,27 @@ export const selectOverseasSites = {
         },
         {
           method: 'GET',
-          path: '/accreditation/select-overseas-sites/{applicationId}/interim-site/edit/{siteId}',
+          path: '/accreditation/select-overseas-sites/{applicationId}/interim-site/edit/{interimSiteId}',
           options: requireOperator,
           ...selectOverseasSitesInterimSiteEditEntryGetController
         },
         {
           method: 'GET',
-          path: '/{language}/accreditation/select-overseas-sites/{applicationId}/interim-site/edit/{siteId}',
+          path: '/{language}/accreditation/select-overseas-sites/{applicationId}/interim-site/edit/{interimSiteId}',
           options: requireOperator,
           ...selectOverseasSitesInterimSiteEditEntryGetController
+        },
+        {
+          method: 'GET',
+          path: '/accreditation/select-overseas-sites/{applicationId}/interim-site/add/{siteId}',
+          options: requireOperator,
+          ...selectOverseasSitesInterimSiteAddEntryGetController
+        },
+        {
+          method: 'GET',
+          path: '/{language}/accreditation/select-overseas-sites/{applicationId}/interim-site/add/{siteId}',
+          options: requireOperator,
+          ...selectOverseasSitesInterimSiteAddEntryGetController
         },
         {
           method: 'POST',
