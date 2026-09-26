@@ -1432,9 +1432,13 @@ export const stubApiClient = {
     // and ignored from the body, matching the backend.
     const interimPatchMatch = endpoint.match(INTERIM_SITE_ITEM_RE)
     if (interimPatchMatch) {
-      const [, orgId, appId, orsSiteId, interimId] = interimPatchMatch
+      // Named apart from the `orgId` this function destructures from `parsed`
+      // further down. Same concept, different route, and shadowing it reads as
+      // though the two are the same value.
+      const [, interimOrgId, interimAppId, orsSiteId, interimId] =
+        interimPatchMatch
       const { site, interimSite } = findStubInterimSite(
-        findAccreditation(orgId, appId),
+        findAccreditation(interimOrgId, interimAppId),
         Number.parseInt(orsSiteId, 10),
         Number.parseInt(interimId, 10)
       )
