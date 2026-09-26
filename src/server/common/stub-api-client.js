@@ -1320,16 +1320,16 @@ export const stubApiClient = {
     // site. This is the route the app actually uses now; an ORS may hold many.
     const interimCollectionMatch = endpoint.match(INTERIM_SITES_COLLECTION_RE)
     if (interimCollectionMatch) {
-      const item = findAccreditation(
-        interimCollectionMatch[1],
-        interimCollectionMatch[2]
+      const [, orgId, appId, orsSiteId] = interimCollectionMatch
+      const accreditation = findAccreditation(orgId, appId)
+      const siteId = Number.parseInt(orsSiteId, 10)
+      const site = accreditation?.overseasSites?.sites?.find(
+        (s) => s.siteId === siteId
       )
-      const siteId = Number.parseInt(interimCollectionMatch[3], 10)
-      const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
       if (!site) {
         return Promise.resolve(undefined)
       }
-      return Promise.resolve(addStubInterimSite(item, site, body))
+      return Promise.resolve(addStubInterimSite(accreditation, site, body))
     }
 
     // RA-603: POST /overseas-sites/{siteId}/interim-sites/{id}/restore — clears
@@ -1338,14 +1338,11 @@ export const stubApiClient = {
     // lookalike. That identity link is the point of AC05's soft delete.
     const interimRestoreMatch = endpoint.match(INTERIM_SITE_RESTORE_RE)
     if (interimRestoreMatch) {
-      const item = findAccreditation(
-        interimRestoreMatch[1],
-        interimRestoreMatch[2]
-      )
+      const [, orgId, appId, orsSiteId, interimId] = interimRestoreMatch
       const { site, interimSite } = findStubInterimSite(
-        item,
-        Number.parseInt(interimRestoreMatch[3], 10),
-        Number.parseInt(interimRestoreMatch[4], 10)
+        findAccreditation(orgId, appId),
+        Number.parseInt(orsSiteId, 10),
+        Number.parseInt(interimId, 10)
       )
       if (!interimSite) {
         return Promise.resolve(undefined)
@@ -1363,16 +1360,16 @@ export const stubApiClient = {
       /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/interim-site$/
     )
     if (newInterimSiteMatch) {
-      const item = findAccreditation(
-        newInterimSiteMatch[1],
-        newInterimSiteMatch[2]
+      const [, orgId, appId, orsSiteId] = newInterimSiteMatch
+      const accreditation = findAccreditation(orgId, appId)
+      const siteId = Number.parseInt(orsSiteId, 10)
+      const site = accreditation?.overseasSites?.sites?.find(
+        (s) => s.siteId === siteId
       )
-      const siteId = Number.parseInt(newInterimSiteMatch[3], 10)
-      const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
       if (!site) {
         return Promise.resolve(undefined)
       }
-      return Promise.resolve(addStubInterimSite(item, site, body))
+      return Promise.resolve(addStubInterimSite(accreditation, site, body))
     }
 
     if (/\/overseas-sites\/\d+\/bes-evidence\/files$/.test(endpoint)) {
@@ -1435,11 +1432,11 @@ export const stubApiClient = {
     // and ignored from the body, matching the backend.
     const interimPatchMatch = endpoint.match(INTERIM_SITE_ITEM_RE)
     if (interimPatchMatch) {
-      const item = findAccreditation(interimPatchMatch[1], interimPatchMatch[2])
+      const [, orgId, appId, orsSiteId, interimId] = interimPatchMatch
       const { site, interimSite } = findStubInterimSite(
-        item,
-        Number.parseInt(interimPatchMatch[3], 10),
-        Number.parseInt(interimPatchMatch[4], 10)
+        findAccreditation(orgId, appId),
+        Number.parseInt(orsSiteId, 10),
+        Number.parseInt(interimId, 10)
       )
       if (!interimSite) {
         return Promise.resolve(undefined)
@@ -1557,14 +1554,11 @@ export const stubApiClient = {
     // page-level assertions while breaking the one thing AC05 asks for.
     const interimDeleteMatch = endpoint.match(INTERIM_SITE_ITEM_RE)
     if (interimDeleteMatch) {
-      const item = findAccreditation(
-        interimDeleteMatch[1],
-        interimDeleteMatch[2]
-      )
+      const [, orgId, appId, orsSiteId, interimId] = interimDeleteMatch
       const { site, interimSite } = findStubInterimSite(
-        item,
-        Number.parseInt(interimDeleteMatch[3], 10),
-        Number.parseInt(interimDeleteMatch[4], 10)
+        findAccreditation(orgId, appId),
+        Number.parseInt(orsSiteId, 10),
+        Number.parseInt(interimId, 10)
       )
       if (interimSite) {
         interimSite.removedAt = new Date().toISOString()

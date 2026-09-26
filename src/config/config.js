@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
+import { featureFlagsSchema } from './feature-flags.js'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -113,14 +114,7 @@ export const config = convict({
     default: null,
     env: 'HTTP_PROXY'
   },
-  featureFlags: {
-    multipleInterimSitesEnabled: {
-      doc: 'RA-603. Allow an overseas reprocessing site to carry more than one interim site: shows every one it has, and offers "Add another interim site". Off by default. The same flag name and default exist in epr-register-enrol-management-fe and the two are meant to be flipped together - with this on and that off, a regulator would see fewer interim sites than the operator entered.',
-      format: Boolean,
-      default: false,
-      env: 'MULTIPLE_INTERIM_SITES_ENABLED'
-    }
-  },
+  featureFlags: featureFlagsSchema,
   isSecureContextEnabled: {
     doc: 'Enable Secure Context',
     format: Boolean,

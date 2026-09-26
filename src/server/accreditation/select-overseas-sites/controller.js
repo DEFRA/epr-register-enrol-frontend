@@ -15,9 +15,13 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import {
   activeInterimSites,
-  withdrawnInterimSites,
-  findInterimSite
+  withdrawnInterimSites
 } from '../../common/helpers/interimSites.js'
+import {
+  removeInterimSite,
+  restoreInterimSite,
+  INTERIM_SITE_WITHDRAWN_FLASH
+} from './interim-site-actions.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -58,7 +62,6 @@ const ORS_EDIT_SUCCESS_FLASH = 'orsEditSuccess'
 // Undoing a withdrawal needs to know which interim site was withdrawn, and
 // naming it in the banner is what makes the offer meaningful rather than a bare
 // "undo something".
-const INTERIM_SITE_WITHDRAWN_FLASH = 'interimSiteWithdrawn'
 
 // Partitions the flat sites array into the four display sections. Membership is a strict
 // partition given how the flags are set: new sites always start selected:true, promoted
@@ -164,19 +167,29 @@ function resolveFlashBanners(yar) {
   }
 }
 
+// Every banner the view expects, with the value it takes when the caller says
+// nothing. Held as data rather than ten `??` expressions: the branch-per-field
+// version read as ten decisions when it is really one rule applied ten times.
+const BANNER_DEFAULTS = {
+  successBanner: false,
+  queried: false,
+  interimSiteSuccessBanner: false,
+  promoteSuccessBanner: false,
+  editSuccessBanner: false,
+  withdrawnInterimSite: null,
+  querySummary: null,
+  regulatorQueryFields: null,
+  readOnly: false,
+  isQueriedApplication: false
+}
+
 function resolveBannerDefaults(banners) {
-  return {
-    successBanner: banners.successBanner ?? false,
-    queried: banners.queried ?? false,
-    interimSiteSuccessBanner: banners.interimSiteSuccessBanner ?? false,
-    promoteSuccessBanner: banners.promoteSuccessBanner ?? false,
-    editSuccessBanner: banners.editSuccessBanner ?? false,
-    withdrawnInterimSite: banners.withdrawnInterimSite ?? null,
-    querySummary: banners.querySummary ?? null,
-    regulatorQueryFields: banners.regulatorQueryFields ?? null,
-    readOnly: banners.readOnly ?? false,
-    isQueriedApplication: banners.isQueriedApplication ?? false
-  }
+  return Object.fromEntries(
+    Object.entries(BANNER_DEFAULTS).map(([key, fallback]) => [
+      key,
+      banners[key] ?? fallback
+    ])
+  )
 }
 
 function buildViewData(t, applicationId, sections, error, banners = {}) {
@@ -260,105 +273,6 @@ async function removeOrDeleteSite(
     // RA-481: a 409 means the application locked between the guard check
     // in the handler and this write landing — send the operator back to
     // the same page so it re-fetches and renders the section read-only.
-    if (err.status === statusCodes.conflict) {
-      return h.redirect(request.path)
-    }
-    return renderSaveError(h, t, applicationId, rawSites)
-  }
-  return h.redirect(selectOverseasSitesUrl(applicationId))
-}
-
-// RA-603: withdraws one interim site through its own endpoint.
-//
-// This used to rebuild the whole site list and send it back through the bulk
-// patchOverseasSites, setting `interimSite: null` on the targeted ORS. That
-// cannot survive an ORS holding several interim sites: it is a read-modify-write
-// over everything, so a concurrent change to any other site is silently
-// overwritten, and it is the most likely way to break "withdrawing one must not
-// affect the others". One request, one interim site, decided by the server.
-//
-// The withdrawal is soft — the backend stamps removedAt and keeps the record for
-// reporting (AC05) — so this is reversible, and restoreInterimSite below is what
-// reverses it.
-async function removeInterimSite(
-  ctx,
-  organisationId,
-  applicationId,
-  rawSites,
-  siteId,
-  interimSiteId
-) {
-  const { h, t, logger, request } = ctx
-  const found = findInterimSite(rawSites, Number.parseInt(interimSiteId, 10))
-  if (!found) {
-    return h.redirect(selectOverseasSitesUrl(applicationId))
-  }
-
-  try {
-    await accreditationApiService.withdrawInterimSite(
-      organisationId,
-      applicationId,
-      found.site.siteId,
-      found.interimSite.siteId
-    )
-  } catch (err) {
-    logStructuredError(
-      logger,
-      err,
-      { siteId, applicationId },
-      `Error removing interim site from overseas site ${siteId} for application ${applicationId}`
-    )
-    // RA-481: a 409 means the application locked between the guard check
-    // in the handler and this write landing — send the operator back to
-    // the same page so it re-fetches and renders the section read-only.
-    if (err.status === statusCodes.conflict) {
-      return h.redirect(request.path)
-    }
-    return renderSaveError(h, t, applicationId, rawSites)
-  }
-  // RA-603 C4: name the site so the banner can offer it back specifically, and
-  // carry its id so the Undo needs no lookup. A withdrawal is reversible right
-  // up until the operator navigates away, and after that the withdrawn-sites
-  // disclosure is the way back.
-  request.yar.flash(INTERIM_SITE_WITHDRAWN_FLASH, {
-    interimSiteId: found.interimSite.siteId,
-    siteName: found.interimSite.siteName
-  })
-  return h.redirect(selectOverseasSitesUrl(applicationId))
-}
-
-// RA-603 C4: puts a withdrawn interim site back. The backend clears removedAt
-// and nothing else, so the site returns with the siteId, siteNumber and
-// createdAt it always had - it is the same record resuming, not a replacement,
-// which is the whole reason withdrawal was made soft in the first place.
-async function restoreInterimSite(
-  ctx,
-  organisationId,
-  applicationId,
-  rawSites,
-  siteId,
-  interimSiteId
-) {
-  const { h, t, logger, request } = ctx
-  const found = findInterimSite(rawSites, Number.parseInt(interimSiteId, 10))
-  if (!found) {
-    return h.redirect(selectOverseasSitesUrl(applicationId))
-  }
-
-  try {
-    await accreditationApiService.restoreInterimSite(
-      organisationId,
-      applicationId,
-      found.site.siteId,
-      found.interimSite.siteId
-    )
-  } catch (err) {
-    logStructuredError(
-      logger,
-      err,
-      { interimSiteId, applicationId },
-      `Error restoring interim site ${interimSiteId} for application ${applicationId}`
-    )
     if (err.status === statusCodes.conflict) {
       return h.redirect(request.path)
     }
@@ -539,19 +453,19 @@ const OVERSEAS_SITES_ACTION_HANDLERS = {
   removeInterimSite: (ctx, organisationId, applicationId, rawSites, ids) =>
     removeInterimSite(
       ctx,
+      { selectOverseasSitesUrl, renderSaveError },
       organisationId,
       applicationId,
       rawSites,
-      ids.siteId,
       ids.interimSiteId
     ),
   restoreInterimSite: (ctx, organisationId, applicationId, rawSites, ids) =>
     restoreInterimSite(
       ctx,
+      { selectOverseasSitesUrl, renderSaveError },
       organisationId,
       applicationId,
       rawSites,
-      ids.siteId,
       ids.interimSiteId
     ),
   saveAndComeLater: (ctx, organisationId, applicationId, rawSites) =>
