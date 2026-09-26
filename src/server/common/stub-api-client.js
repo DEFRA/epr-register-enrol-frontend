@@ -7,6 +7,7 @@ import {
   PERCENT_FIELD_TO_CATEGORY,
   DETAIL_FIELD_TO_CATEGORY
 } from './constants/businessPlanCategories.js'
+import { allInterimSites } from './helpers/interimSites.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -24,6 +25,127 @@ export function nextOrsId(sites) {
     return Number.isInteger(parsed) && parsed > currentMax ? parsed : currentMax
   }, 0)
   return String(max + 1).padStart(ORS_ID_DIGITS, '0')
+}
+
+/**
+ * RA-603: mirrors the backend's NextSiteId — ONE sequence shared by overseas
+ * sites and every interim site nested under them.
+ *
+ * It has to be shared. The interim routes address a site by its own id without
+ * naming its parent, so an interim site colliding with an ORS id would make
+ * `/interim-sites/{id}` ambiguous. Withdrawn sites still count: their ids stay
+ * claimed for as long as the record does, which under AC05 is permanently.
+ *
+ * Exported for the same reason nextOrsId is — so it can be tested directly.
+ */
+export function nextSiteId(sites) {
+  const max = (sites ?? []).reduce((currentMax, site) => {
+    const withInterim = [
+      site.siteId,
+      ...allInterimSites(site).map((i) => i.siteId)
+    ]
+    return withInterim.reduce(
+      (acc, id) => (Number.isInteger(id) && id > acc ? id : acc),
+      currentMax
+    )
+  }, 0)
+  return max + 1
+}
+
+/**
+ * RA-603: mirrors OrsIdGenerator over interim site NUMBERS — max numeric + 1,
+ * zero-padded to 3 — which is a different set from the ORS ids above.
+ *
+ * Counted across every ORS on the application, not restarted per ORS, and
+ * withdrawn sites keep their numbers reserved. The real backend scopes this by
+ * RegistrationId across every year's application; the stub holds one
+ * application, so this is as close as it can get.
+ *
+ * Non-numeric values are skipped, which is what makes the legacy `SN-000N`
+ * numbers already in real data harmless here too.
+ */
+export function nextInterimSiteNumber(sites) {
+  const max = (sites ?? []).reduce((currentMax, site) => {
+    return allInterimSites(site).reduce((acc, interimSite) => {
+      const parsed = Number.parseInt(interimSite?.siteNumber, 10)
+      return Number.isInteger(parsed) && parsed > acc ? parsed : acc
+    }, currentMax)
+  }, 0)
+  return String(max + 1).padStart(ORS_ID_DIGITS, '0')
+}
+
+/**
+ * RA-603: gives an ORS an `interimSites` list, folding in a legacy singular
+ * `interimSite` if that is all it has.
+ *
+ * This is the one function that makes both shapes work. Stub data written
+ * before RA-603 — or by the legacy singular POST route, which is still
+ * here — carries `interimSite` and no list; everything downstream wants the
+ * list. Mirrors the backend's InterimSiteSync.Normalise.
+ */
+function normaliseInterimSites(site) {
+  site.interimSites = allInterimSites(site).map((interimSite) => interimSite)
+  return site.interimSites
+}
+
+/**
+ * RA-603: re-points the legacy singular field at the first ACTIVE interim site,
+ * mirroring InterimSiteSync.SyncMirror.
+ *
+ * Reads the raw list, deliberately, not a helper that falls back to the mirror —
+ * otherwise emptying the list could never clear the mirror, which was a real bug
+ * in the backend version of this.
+ *
+ * Deliberately the first active one rather than `interimSites[0]`: a withdrawn
+ * site must never be what a pre-RA-603 consumer displays.
+ */
+function syncInterimMirror(site) {
+  site.interimSite =
+    (site.interimSites ?? []).find(
+      (interimSite) => interimSite?.removedAt == null
+    ) ?? null
+}
+
+/** RA-603: the ORS carrying a given interim site, plus that interim site. */
+function findStubInterimSite(item, siteId, interimSiteId) {
+  const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
+  if (!site) {
+    return {}
+  }
+  normaliseInterimSites(site)
+  const interimSite = site.interimSites.find(
+    (candidate) => candidate?.siteId === interimSiteId
+  )
+  return { site, interimSite }
+}
+
+const INTERIM_SITES_COLLECTION_RE =
+  /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/interim-sites$/
+
+const INTERIM_SITE_ITEM_RE =
+  /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/interim-sites\/(\d+)$/
+
+const INTERIM_SITE_RESTORE_RE =
+  /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/interim-sites\/(\d+)\/restore$/
+
+/**
+ * RA-603: builds and appends one interim site, shared by the plural route and
+ * the legacy singular one so the two cannot drift apart on numbering.
+ */
+function addStubInterimSite(item, site, body) {
+  const sites = item?.overseasSites?.sites ?? []
+  normaliseInterimSites(site)
+  const newInterimSite = {
+    siteId: nextSiteId(sites),
+    siteNumber: nextInterimSiteNumber(sites),
+    isNewSite: true,
+    ...body,
+    createdAt: new Date().toISOString(),
+    removedAt: null
+  }
+  site.interimSites.push(newInterimSite)
+  syncInterimMirror(site)
+  return newInterimSite
 }
 
 function makeBpItems(percents = {}, details = {}) {
@@ -562,7 +684,7 @@ export const STUB_ORG_DOCS = [
         },
         businessPlan: {
           sectionStatus: 'NotStarted',
-          items: makeBpItems(DEFAULT_BP_PERCENTS)
+          items: makeBpItems(DEFAULT_BP_PERCENTS, GLASS_BP_DETAILS)
         },
         samplingPlan: {
           sectionStatus: 'NotStarted',
@@ -1194,29 +1316,60 @@ export const stubApiClient = {
       return Promise.resolve(site ?? body)
     }
 
-    // POST /overseas-sites/{siteId}/interim-site — nest a new interim site onto
-    // the matched ORS site (1:1 — mirrors the backend's InterimSiteModel nesting)
+    // RA-603: POST /overseas-sites/{siteId}/interim-sites — append one interim
+    // site. This is the route the app actually uses now; an ORS may hold many.
+    const interimCollectionMatch = endpoint.match(INTERIM_SITES_COLLECTION_RE)
+    if (interimCollectionMatch) {
+      const [, orgId, appId, orsSiteId] = interimCollectionMatch
+      const accreditation = findAccreditation(orgId, appId)
+      const siteId = Number.parseInt(orsSiteId, 10)
+      const site = accreditation?.overseasSites?.sites?.find(
+        (s) => s.siteId === siteId
+      )
+      if (!site) {
+        return Promise.resolve(undefined)
+      }
+      return Promise.resolve(addStubInterimSite(accreditation, site, body))
+    }
+
+    // RA-603: POST /overseas-sites/{siteId}/interim-sites/{id}/restore — clears
+    // removedAt and nothing else, so the same record resumes with the siteId,
+    // siteNumber and createdAt it always had rather than coming back as a
+    // lookalike. That identity link is the point of AC05's soft delete.
+    const interimRestoreMatch = endpoint.match(INTERIM_SITE_RESTORE_RE)
+    if (interimRestoreMatch) {
+      const [, orgId, appId, orsSiteId, interimId] = interimRestoreMatch
+      const { site, interimSite } = findStubInterimSite(
+        findAccreditation(orgId, appId),
+        Number.parseInt(orsSiteId, 10),
+        Number.parseInt(interimId, 10)
+      )
+      if (!interimSite) {
+        return Promise.resolve(undefined)
+      }
+      interimSite.removedAt = null
+      syncInterimMirror(site)
+      return Promise.resolve(interimSite)
+    }
+
+    // POST /overseas-sites/{siteId}/interim-site — the pre-RA-603 singular
+    // route. Still here for callers that have not moved over, and it now goes
+    // through the same allocator and the same list as the plural one, so the two
+    // cannot drift apart on numbering or leave a document in only one shape.
     const newInterimSiteMatch = endpoint.match(
       /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/interim-site$/
     )
     if (newInterimSiteMatch) {
-      const item = findAccreditation(
-        newInterimSiteMatch[1],
-        newInterimSiteMatch[2]
+      const [, orgId, appId, orsSiteId] = newInterimSiteMatch
+      const accreditation = findAccreditation(orgId, appId)
+      const siteId = Number.parseInt(orsSiteId, 10)
+      const site = accreditation?.overseasSites?.sites?.find(
+        (s) => s.siteId === siteId
       )
-      const siteId = Number.parseInt(newInterimSiteMatch[3], 10)
-      const site = item?.overseasSites?.sites?.find((s) => s.siteId === siteId)
-      const newInterimSite = {
-        siteId: Date.now(),
-        siteNumber: `SN-${Date.now()}`,
-        isNewSite: true,
-        ...body
+      if (!site) {
+        return Promise.resolve(undefined)
       }
-      if (site) {
-        site.interimSite = newInterimSite
-        return Promise.resolve(newInterimSite)
-      }
-      return Promise.resolve(newInterimSite)
+      return Promise.resolve(addStubInterimSite(accreditation, site, body))
     }
 
     if (/\/overseas-sites\/\d+\/bes-evidence\/files$/.test(endpoint)) {
@@ -1272,6 +1425,33 @@ export const stubApiClient = {
   },
 
   patch(endpoint, body) {
+    // RA-603: PATCH /overseas-sites/{siteId}/interim-sites/{id} — one write
+    // touches one interim site, which is what makes "amending one must not
+    // affect the others" (AC04) a property of the API rather than something the
+    // caller has to get right. siteId, siteNumber and createdAt are server-owned
+    // and ignored from the body, matching the backend.
+    const interimPatchMatch = endpoint.match(INTERIM_SITE_ITEM_RE)
+    if (interimPatchMatch) {
+      // Named apart from the `orgId` this function destructures from `parsed`
+      // further down. Same concept, different route, and shadowing it reads as
+      // though the two are the same value.
+      const [, interimOrgId, interimAppId, orsSiteId, interimId] =
+        interimPatchMatch
+      const { site, interimSite } = findStubInterimSite(
+        findAccreditation(interimOrgId, interimAppId),
+        Number.parseInt(orsSiteId, 10),
+        Number.parseInt(interimId, 10)
+      )
+      if (!interimSite) {
+        return Promise.resolve(undefined)
+      }
+      const { siteId, siteNumber, createdAt, removedAt, ...editable } =
+        body ?? {}
+      Object.assign(interimSite, editable)
+      syncInterimMirror(site)
+      return Promise.resolve(interimSite)
+    }
+
     if (/\/overseas-sites\/\d+\/bes-evidence$/.test(endpoint)) {
       const appMatch = endpoint.match(
         /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/bes-evidence/
@@ -1371,6 +1551,26 @@ export const stubApiClient = {
   },
 
   delete(endpoint) {
+    // RA-603: DELETE /overseas-sites/{siteId}/interim-sites/{id} — a SOFT
+    // delete. The record stays in the list with a removedAt stamp so it survives
+    // for reporting (AC05) and can be put back; only the pages that list active
+    // sites stop showing it. Destroying it here would make the stub pass the
+    // page-level assertions while breaking the one thing AC05 asks for.
+    const interimDeleteMatch = endpoint.match(INTERIM_SITE_ITEM_RE)
+    if (interimDeleteMatch) {
+      const [, orgId, appId, orsSiteId, interimId] = interimDeleteMatch
+      const { site, interimSite } = findStubInterimSite(
+        findAccreditation(orgId, appId),
+        Number.parseInt(orsSiteId, 10),
+        Number.parseInt(interimId, 10)
+      )
+      if (interimSite) {
+        interimSite.removedAt = new Date().toISOString()
+        syncInterimMirror(site)
+      }
+      return Promise.resolve(undefined)
+    }
+
     const besMatch = endpoint.match(
       /\/api\/v1\/accreditation-applications\/([^/]+)\/([^/]+)\/overseas-sites\/(\d+)\/bes-evidence\/files\/([^/]+)$/
     )

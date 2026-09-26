@@ -3,6 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import convictFormatWithValidator from 'convict-format-with-validator'
+import { featureFlagsSchema } from './feature-flags.js'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -113,6 +114,7 @@ export const config = convict({
     default: null,
     env: 'HTTP_PROXY'
   },
+  featureFlags: featureFlagsSchema,
   isSecureContextEnabled: {
     doc: 'Enable Secure Context',
     format: Boolean,

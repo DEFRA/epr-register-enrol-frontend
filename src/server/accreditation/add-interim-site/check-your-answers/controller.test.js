@@ -368,7 +368,10 @@ describe('#addInterimSiteCyaController', () => {
 
       const entryResponse = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/555`,
+        // RA-603: the edit route names the INTERIM site (42), not its parent
+        // ORS (555). An ORS can hold several, so the parent no longer says
+        // which one.
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
         headers: operatorHeaders
       })
       expect(entryResponse.statusCode).toBe(statusCodes.redirect)
@@ -379,11 +382,16 @@ describe('#addInterimSiteCyaController', () => {
       return cookiesFrom(entryResponse)
     }
 
-    test('calls patchOverseasSites (not createInterimSite) keeping the existing interim site id', async () => {
+    // RA-603: an edit now goes through the interim site's own endpoint. It used
+    // to rebuild the whole site list and send it back through the bulk PATCH,
+    // which was a read-modify-write over every site and could not express
+    // "change this one interim site" once an ORS could hold several.
+    test('calls updateInterimSite (not createInterimSite or the bulk PATCH)', async () => {
       const sessionCookie = await seedEditSession()
-      vi.spyOn(accreditationApiService, 'patchOverseasSites').mockResolvedValue(
+      vi.spyOn(accreditationApiService, 'updateInterimSite').mockResolvedValue(
         {}
       )
+      vi.spyOn(accreditationApiService, 'patchOverseasSites')
       vi.spyOn(accreditationApiService, 'createInterimSite')
 
       const { statusCode, headers } = await server.inject({
@@ -396,25 +404,40 @@ describe('#addInterimSiteCyaController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(SELECT_ORS_URL)
       expect(accreditationApiService.createInterimSite).not.toHaveBeenCalled()
-      expect(accreditationApiService.patchOverseasSites).toHaveBeenCalledWith(
+      expect(accreditationApiService.patchOverseasSites).not.toHaveBeenCalled()
+      expect(accreditationApiService.updateInterimSite).toHaveBeenCalledWith(
         null,
         APPLICATION_ID,
-        {
-          sites: [
-            expect.objectContaining({
-              siteId: 555,
-              interimSite: expect.objectContaining({
-                siteId: 42,
-                siteName: 'Interim Depot',
-                country: 'France',
-                // RA-486 regression check: the bulk PATCH takes every field
-                // as-is, so a pre-existing siteNumber must survive an edit.
-                siteNumber: 'SN-042'
-              })
-            })
-          ]
-        }
+        555,
+        42,
+        expect.objectContaining({
+          siteName: 'Interim Depot',
+          country: 'France'
+        })
       )
+    })
+
+    // siteNumber used to have to be echoed back by hand or the bulk PATCH would
+    // wipe it. The backend owns it now and ignores it from the body, so the
+    // request does not carry it at all - which is the point.
+    test('does not send the server-owned identity fields', async () => {
+      const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'updateInterimSite').mockResolvedValue(
+        {}
+      )
+
+      await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: { ...postHeaders, cookie: sessionCookie },
+        payload: ''
+      })
+
+      const body =
+        accreditationApiService.updateInterimSite.mock.calls[0]?.[4] ?? {}
+      expect(body).not.toHaveProperty('siteId')
+      expect(body).not.toHaveProperty('siteNumber')
+      expect(body).not.toHaveProperty('removedAt')
     })
 
     // RA-486 regression: a stale editingInterimSiteId (e.g. an abandoned
@@ -422,18 +445,17 @@ describe('#addInterimSiteCyaController', () => {
     // an interimSite onto a site that doesn't have one -- that would forge
     // a duplicate SiteId and a null SiteNumber. Falls back to the normal
     // create path, which is where the backend allocates both.
-    test('falls back to createInterimSite when the linked site has no existing interim site', async () => {
+    test('falls back to createInterimSite when the interim site being edited is gone', async () => {
       const sessionCookie = await seedEditSession()
 
-      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
-        applicationId: APPLICATION_ID,
-        organisationId: 'org-001',
-        overseasSites: {
-          sectionStatus: 'InProgress',
-          sites: [{ ...EXISTING_SITE, interimSite: null }]
-        }
-      })
-      vi.spyOn(accreditationApiService, 'patchOverseasSites')
+      // A stale editingInterimSiteId - an abandoned Change carried into a
+      // create against a different ORS, or a site withdrawn in another tab.
+      // The server says 404; surfacing that to the operator would be an error
+      // they cannot act on, so it becomes a create instead.
+      const notFound = Object.assign(new Error('not found'), { status: 404 })
+      vi.spyOn(accreditationApiService, 'updateInterimSite').mockRejectedValue(
+        notFound
+      )
       vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue(
         {}
       )
@@ -447,13 +469,33 @@ describe('#addInterimSiteCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(SELECT_ORS_URL)
-      expect(accreditationApiService.patchOverseasSites).not.toHaveBeenCalled()
       expect(accreditationApiService.createInterimSite).toHaveBeenCalledWith(
         null,
         APPLICATION_ID,
         555,
         expect.objectContaining({ siteName: 'Interim Depot' })
       )
+    })
+
+    // Only a 404 means "it is not there any more". Anything else is a real
+    // failure and must not be quietly turned into a second interim site.
+    test('does not create a duplicate when the update fails for any other reason', async () => {
+      const sessionCookie = await seedEditSession()
+
+      const conflict = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(accreditationApiService, 'updateInterimSite').mockRejectedValue(
+        conflict
+      )
+      vi.spyOn(accreditationApiService, 'createInterimSite')
+
+      await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: { ...postHeaders, cookie: sessionCookie },
+        payload: ''
+      })
+
+      expect(accreditationApiService.createInterimSite).not.toHaveBeenCalled()
     })
   })
 })

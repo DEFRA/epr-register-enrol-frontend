@@ -1,4 +1,5 @@
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { findInterimSite } from '../../common/helpers/interimSites.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   resetAddOrsSession,
@@ -47,6 +48,33 @@ function isOverseasSitesSectionWriteBlocked(application) {
 // applies the entry guard, and looks up the site by id. Returns { redirect } (an
 // already-built h.redirect response) when any of those steps fail, so callers can bail out
 // with a single check; otherwise returns { applicationId, site }.
+// RA-603: the interim-site edit route names an interim site, not an ORS, so it
+// needs the application without a {siteId} param to resolve against.
+async function loadApplicationForWizardEntry(request, h) {
+  const organisationId = request.yar.get(
+    ACCREDITATION_SESSION_KEYS.organisationId
+  )
+  const { applicationId } = request.params
+
+  const { application, errorResponse } = await fetchApplicationOrRenderError({
+    request,
+    organisationId,
+    applicationId,
+    renderErrorResponse: () => ({
+      redirect: h.redirect(selectOverseasSitesUrl(applicationId))
+    })
+  })
+  if (errorResponse) {
+    return errorResponse
+  }
+
+  if (isOverseasSitesSectionWriteBlocked(application)) {
+    return { redirect: h.redirect(queryTaskListUrl(applicationId)) }
+  }
+
+  return { applicationId, application }
+}
+
 async function loadSiteForWizardEntry(request, h) {
   const organisationId = request.yar.get(
     ACCREDITATION_SESSION_KEYS.organisationId
@@ -77,7 +105,7 @@ async function loadSiteForWizardEntry(request, h) {
     return { redirect: h.redirect(selectOverseasSitesUrl(applicationId)) }
   }
 
-  return { applicationId, site }
+  return { applicationId, site, application }
 }
 
 // Shared by the promote-entry and edit-entry controllers below: the wizard-session fields
@@ -199,7 +227,58 @@ function buildInterimSiteSessionSeed(interimSite) {
   return seed
 }
 
+/**
+ * RA-603: edits ONE interim site, addressed by its own id.
+ *
+ * This route used to take the parent ORS id and edit whatever single interim
+ * site hung off it. That stops being a question with an answer once an ORS can
+ * hold several, so the route now names the interim site directly. Interim ids
+ * are unique application-wide — the backend allocates ORS and interim ids from
+ * one sequence — so the parent is derived rather than passed, and a URL cannot
+ * name a valid interim site against the wrong ORS.
+ *
+ * A withdrawn interim site is not editable: restoring it is a separate,
+ * deliberate action, and the backend refuses the edit anyway.
+ */
 export const selectOverseasSitesInterimSiteEditEntryGetController = {
+  async handler(request, h) {
+    const { redirect, applicationId, application } =
+      await loadApplicationForWizardEntry(request, h)
+    if (redirect) {
+      return redirect
+    }
+
+    const interimSiteId = Number.parseInt(request.params.interimSiteId, 10)
+    const found = findInterimSite(
+      application.overseasSites?.sites,
+      interimSiteId
+    )
+    if (!found || found.interimSite.removedAt != null) {
+      return h.redirect(selectOverseasSitesUrl(applicationId))
+    }
+
+    resetAddInterimSiteSession(request)
+    setAddInterimSiteSession(request, {
+      ...buildInterimSiteSessionSeed(found.interimSite),
+      linkedSiteId: found.site.siteId,
+      editingInterimSiteId: found.interimSite.siteId
+    })
+
+    return h.redirect(interimSiteCountryUrl(applicationId))
+  }
+}
+
+/**
+ * RA-603 AC01: starts a NEW interim site against an existing ORS.
+ *
+ * Until now the only way into the interim wizard was "Save and add interim
+ * site" on the ORS check-your-answers page, which is reachable only while
+ * adding or editing the ORS itself. Adding a second interim site later needs
+ * its own entry point, and it has to clear `editingInterimSiteId` — a leftover
+ * from an abandoned edit would otherwise turn this into an overwrite of that
+ * site rather than a new one.
+ */
+export const selectOverseasSitesInterimSiteAddEntryGetController = {
   async handler(request, h) {
     const { redirect, applicationId, site } = await loadSiteForWizardEntry(
       request,
@@ -209,16 +288,8 @@ export const selectOverseasSitesInterimSiteEditEntryGetController = {
       return redirect
     }
 
-    if (!site.interimSite) {
-      return h.redirect(selectOverseasSitesUrl(applicationId))
-    }
-
     resetAddInterimSiteSession(request)
-    setAddInterimSiteSession(request, {
-      ...buildInterimSiteSessionSeed(site.interimSite),
-      linkedSiteId: site.siteId,
-      editingInterimSiteId: site.interimSite.siteId
-    })
+    setAddInterimSiteSession(request, { linkedSiteId: site.siteId })
 
     return h.redirect(interimSiteCountryUrl(applicationId))
   }

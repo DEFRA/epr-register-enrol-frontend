@@ -339,8 +339,52 @@ export const accreditationApiService = {
   createInterimSite(organisationId, applicationId, siteId, body) {
     return call(() =>
       apiClient.post(
-        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/interim-site`,
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/interim-sites`,
         body
+      )
+    )
+  },
+
+  // RA-603: one write per interim site. The bulk patchOverseasSites is still
+  // there for ORS-level work, but routing interim edits through it meant
+  // reading the whole site list, rewriting one nested field and sending it all
+  // back - a read-modify-write race that grows with every interim site added,
+  // and the single most likely way to break "amending one must not affect the
+  // others".
+  updateInterimSite(
+    organisationId,
+    applicationId,
+    siteId,
+    interimSiteId,
+    body
+  ) {
+    return call(() =>
+      apiClient.patch(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/interim-sites/${interimSiteId}`,
+        body
+      )
+    )
+  },
+
+  // A soft delete: the backend stamps removedAt and keeps the record, so the
+  // site stops appearing wherever active sites are listed but survives for
+  // reporting (AC05).
+  withdrawInterimSite(organisationId, applicationId, siteId, interimSiteId) {
+    return call(() =>
+      apiClient.delete(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/interim-sites/${interimSiteId}`
+      )
+    )
+  },
+
+  // Clears removedAt and nothing else, so the site returns with the siteId,
+  // siteNumber and createdAt it always had rather than as a lookalike. Named
+  // restore, not revert: the ORS already has a /revert route that un-promotes
+  // a registered site, which is a different thing entirely.
+  restoreInterimSite(organisationId, applicationId, siteId, interimSiteId) {
+    return call(() =>
+      apiClient.post(
+        `${appBase(organisationId, applicationId)}/overseas-sites/${siteId}/interim-sites/${interimSiteId}/restore`
       )
     )
   },

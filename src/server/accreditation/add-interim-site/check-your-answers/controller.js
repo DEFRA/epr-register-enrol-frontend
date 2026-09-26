@@ -140,59 +140,50 @@ function buildSitePayload(session) {
   }
 }
 
-// RA-486: the backend has no dedicated update endpoint for an existing
-// interim site's own fields -- editing goes out the same bulk
-// patchOverseasSites path used to remove one, just with an edited
-// interimSite object (same siteId, so the backend's merge treats it as an
-// edit rather than a new interim site) instead of null.
+// RA-603: edits one interim site through its own endpoint.
+//
+// This used to read the whole site list, rewrite the targeted ORS's nested
+// interimSite and send the entire list back through the bulk patchOverseasSites,
+// because there was no dedicated update route. There is now, and it matters
+// beyond tidiness: the old shape was a read-modify-write over every site, so a
+// concurrent change anywhere else in the list was silently overwritten, and it
+// could not express "change this one interim site" once an ORS could hold
+// several.
+//
+// It also means siteNumber no longer has to be carried by hand. The backend
+// owns siteId, siteNumber, createdAt and removedAt and ignores them from the
+// request body, so an edit can no longer wipe the generated site number by
+// forgetting to echo it.
+//
+// editingInterimSiteId can still point at something that is no longer there - a
+// stale session left over from an abandoned Change, or a site withdrawn in
+// another tab - so a 404 falls back to creating fresh rather than surfacing an
+// error the operator cannot act on.
 async function saveInterimSiteEdit(
   organisationId,
   applicationId,
   session,
   sitePayload
 ) {
-  const application = await accreditationApiService.getApplication(
-    organisationId,
-    applicationId
-  )
-  const sites = application.overseasSites?.sites ?? []
-  const targetSite = sites.find((site) => site.siteId === session.linkedSiteId)
-
-  // RA-486: editingInterimSiteId can point at a site that no longer carries
-  // that interim site (e.g. a stale session left over from an abandoned
-  // Change on a different ORS) -- fall back to creating fresh via the
-  // backend's own SiteId/SiteNumber allocation rather than PATCHing an
-  // interimSite object onto a site that doesn't have one.
-  if (!targetSite?.interimSite) {
-    return accreditationApiService.createInterimSite(
+  try {
+    return await accreditationApiService.updateInterimSite(
       organisationId,
       applicationId,
       session.linkedSiteId,
+      session.editingInterimSiteId,
       sitePayload
     )
+  } catch (err) {
+    if (err.status === statusCodes.notFound) {
+      return accreditationApiService.createInterimSite(
+        organisationId,
+        applicationId,
+        session.linkedSiteId,
+        sitePayload
+      )
+    }
+    throw err
   }
-
-  const updatedSites = sites.map((site) =>
-    site.siteId === session.linkedSiteId
-      ? {
-          ...site,
-          interimSite: {
-            ...sitePayload,
-            siteId: session.editingInterimSiteId,
-            // RA-486: the bulk PATCH takes every interimSite field as-is
-            // from what's sent (only isNewSite is re-derived server-side),
-            // so the backend-generated siteNumber must be carried over
-            // explicitly here or an edit would wipe it out.
-            siteNumber: site.interimSite?.siteNumber ?? null
-          }
-        }
-      : site
-  )
-  return accreditationApiService.patchOverseasSites(
-    organisationId,
-    applicationId,
-    { sites: updatedSites }
-  )
 }
 
 export const addInterimSiteCyaGetController = {
