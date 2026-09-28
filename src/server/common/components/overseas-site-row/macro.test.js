@@ -50,6 +50,10 @@ function site(overrides = {}) {
     withdrawnInterimSites: [],
     editUrl: '/edit/900001',
     promoteUrl: '/promote/900001',
+    // What the controller sets when the ORS may take another interim site
+    // (always, with multiple interim sites on).
+    addInterimSiteUrl: '/interim/add/900001',
+    canRestoreInterimSite: true,
     ...overrides
   }
 }
@@ -434,6 +438,28 @@ describe('overseasSiteRows component', () => {
       ).toBe('Show withdrawn interim sites (2)')
     })
 
+    // Multiple interim sites off and the ORS already has an active one: a
+    // restore would make it two, so the controller withholds it. The withdrawn
+    // site is still listed.
+    test('lists a withdrawn site without a restore button when the ORS may not take another', () => {
+      const $ = render(
+        accreditedParams({
+          site: site({
+            interimSites: [interimSite()],
+            withdrawnInterimSites: [withdrawn(51, 'Old Depot')],
+            canRestoreInterimSite: false
+          })
+        })
+      )
+
+      expect(
+        $('[data-testid="withdrawn-interim-site-name-51"]').text()
+      ).toContain('Old Depot')
+      expect($('[data-testid="restore-button-interim-site-51"]')).toHaveLength(
+        0
+      )
+    })
+
     // The restore form has to name the interim site, not just its parent: the
     // parent may hold several withdrawn sites.
     test('sends the interim site own id with the restore', () => {
@@ -482,6 +508,31 @@ describe('overseasSiteRows component', () => {
       expect($('[data-testid="withdrawn-interim-site-name-51"]')).toHaveLength(
         1
       )
+    })
+  })
+  describe('the add interim site link', () => {
+    test('is shown when the ORS may take another interim site', () => {
+      const $ = render(
+        accreditedParams({ site: site({ interimSites: [interimSite()] }) })
+      )
+
+      expect($('[data-testid="add-interim-site-900001"]').attr('href')).toBe(
+        '/interim/add/900001'
+      )
+    })
+
+    // Multiple interim sites off and the ORS already has one: no URL, no link.
+    test('is not shown when the ORS may not take another', () => {
+      const $ = render(
+        accreditedParams({
+          site: site({
+            interimSites: [interimSite()],
+            addInterimSiteUrl: null
+          })
+        })
+      )
+
+      expect($('[data-testid="add-interim-site-900001"]')).toHaveLength(0)
     })
   })
 })

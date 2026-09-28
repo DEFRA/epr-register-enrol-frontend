@@ -106,10 +106,11 @@
           </li>
         {% endfor %}
       </ul>
-      {% if not params.readOnly %}
+      {% if not params.readOnly and site.addInterimSiteUrl %}
         {# RA-603 AC01: the way an operator adds a second one. Inside the      #}
         {# disclosure, under the list it extends, rather than beside the ORS   #}
-        {# row where it would compete with the ORS's own actions.             #}
+        {# row where it would compete with the ORS's own actions. No URL means #}
+        {# the ORS may not take another (multiple interim sites off).          #}
         <p class="govuk-body govuk-!-margin-bottom-0">
           <a href="{{ site.addInterimSiteUrl }}" class="govuk-link"
              data-testid="add-interim-site-{{ site.siteId }}">
@@ -154,7 +155,7 @@
               <span class="select-overseas-sites-interim-summary">
                 <span data-testid="withdrawn-interim-site-name-{{ interimSite.siteId }}">{{ interimSite.siteName }}</span>{% if interimSite.country %}, <span>{{ interimSite.country }}</span>{% endif %}
               </span>
-              {% if not params.readOnly %}
+              {% if not params.readOnly and site.canRestoreInterimSite %}
                 <span class="select-overseas-sites-interim-actions">
                   <form method="post" data-testid="restore-form-interim-site-{{ interimSite.siteId }}">
                     <input type="hidden" name="crumb" value="{{ params.crumb }}">

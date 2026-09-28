@@ -18,6 +18,10 @@ import {
   withdrawnInterimSites
 } from '../../common/helpers/interimSites.js'
 import {
+  canAddInterimSite,
+  isMultipleInterimSitesEnabled
+} from '../../common/helpers/interimSiteLimit.js'
+import {
   removeInterimSite,
   restoreInterimSite,
   INTERIM_SITE_WITHDRAWN_FLASH
@@ -132,15 +136,29 @@ function decorateInterimSites(applicationId, interimSites) {
 // the main list entirely rather than greyed out in it — AC05 keeps them for
 // reporting, not for display — which is also why the "Show interim sites (n)"
 // count is taken from the active list alone.
+//
+// With multiple interim sites off, the list shows only the first active one -
+// the same one the backend mirrors into `interimSite` and the regulator's page
+// shows - and `addInterimSiteUrl` is null once that one exists, which is what
+// hides "Add another interim site". Restoring a withdrawn one would add one
+// too, so `canRestoreInterimSite` follows the same rule.
 function decorateSite(applicationId, site) {
+  const active = activeInterimSites(site)
+  const canAdd = canAddInterimSite(site)
   return {
     ...site,
-    interimSites: decorateInterimSites(applicationId, activeInterimSites(site)),
+    interimSites: decorateInterimSites(
+      applicationId,
+      isMultipleInterimSitesEnabled() ? active : active.slice(0, 1)
+    ),
     withdrawnInterimSites: decorateInterimSites(
       applicationId,
       withdrawnInterimSites(site)
     ),
-    addInterimSiteUrl: addInterimSiteUrl(applicationId, site.siteId)
+    addInterimSiteUrl: canAdd
+      ? addInterimSiteUrl(applicationId, site.siteId)
+      : null,
+    canRestoreInterimSite: canAdd
   }
 }
 

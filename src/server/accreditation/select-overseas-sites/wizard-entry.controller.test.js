@@ -2,6 +2,7 @@ import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { setMultipleInterimSitesEnabled } from '../../common/test-helpers/feature-flags.js'
 
 /**
  * RA-603: the wizard entry points that sit between the overseas-sites page and
@@ -71,6 +72,7 @@ describe('select-overseas-sites wizard entry points', () => {
     // AC01: the route behind "Add another interim site". It exists so the wizard
     // starts clean and linked to the right overseas site.
     test('redirects into the wizard at the country step', async () => {
+      const flag = setMultipleInterimSitesEnabled(true)
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { statusCode, headers } = await server.inject({
@@ -78,6 +80,45 @@ describe('select-overseas-sites wizard entry points', () => {
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`,
         headers: operatorHeaders
       })
+      flag.mockRestore()
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain('/add-interim-site')
+      expect(headers.location).toContain('/country')
+    })
+
+    // Multiple interim sites off: the list hides the link once the ORS has
+    // one, and this is the same rule for someone arriving by URL.
+    test('with multiple interim sites off, sends an ORS that already has one back to the page', async () => {
+      const flag = setMultipleInterimSitesEnabled(false)
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`,
+        headers: operatorHeaders
+      })
+      flag.mockRestore()
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('with multiple interim sites off, still lets an ORS with none get its first', async () => {
+      const flag = setMultipleInterimSitesEnabled(false)
+      const application = makeApplication()
+      application.overseasSites.sites[0].interimSites[0].removedAt =
+        '2026-09-01T00:00:00Z'
+      vi.spyOn(apiClient, 'get').mockResolvedValue(application)
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`,
+        headers: operatorHeaders
+      })
+      flag.mockRestore()
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toContain('/add-interim-site')
