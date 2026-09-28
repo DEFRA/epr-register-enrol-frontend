@@ -13,6 +13,11 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import {
+  getSelection,
+  setSelection,
+  clearSelection
+} from '../../common/helpers/tonnageAuthoritySelectionSession.js'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
 
@@ -25,12 +30,19 @@ export function buildHeading(isExporter, t) {
     : t('pages.tonnageAuthority.headingPrefix')
 }
 
-export function buildAuthoriserRows(authorisers) {
+// RA-555: `checked` used to be a hardcoded `true`, so every render re-ticked
+// every authoriser and an operator's untick survived nothing - not a redirect,
+// not a validation error, not a failed save. Callers now pass the selection
+// they want rendered: the submitted checkboxes on a re-render, or the
+// session-held selection (seeded from the saved authorisers on a first visit)
+// on a fresh GET.
+export function buildAuthoriserRows(authorisers, selectedEmails) {
+  const selected = selectedEmails ?? []
   return (authorisers ?? []).map((a, i) => ({
     index: i,
     fullName: a.fullName,
     email: a.email,
-    checked: true
+    checked: selected.includes(a.email)
   }))
 }
 
@@ -52,12 +64,16 @@ function renderPage(h, viewData) {
 
 function buildViewData(application, t, applicationId, opts = {}) {
   const isExporter = application.isExporter ?? false
+  const { selectedEmails, ...rest } = opts
   return {
     pageTitle: isExporter
       ? t('pages.tonnageAuthority.titleExporter')
       : t('pages.tonnageAuthority.title'),
     heading: buildHeading(isExporter, t),
-    authoriserRows: buildAuthoriserRows(application.prns?.authorisers),
+    authoriserRows: buildAuthoriserRows(
+      application.prns?.authorisers,
+      selectedEmails
+    ),
     backLink: tonnageUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
     isExporter,
@@ -67,7 +83,7 @@ function buildViewData(application, t, applicationId, opts = {}) {
     selectSubHeading: isExporter
       ? t('pages.tonnageAuthority.selectSubHeadingExporter')
       : t('pages.tonnageAuthority.selectSubHeading'),
-    ...opts
+    ...rest
   }
 }
 
@@ -121,9 +137,17 @@ export const tonnageAuthorityGetController = {
     const sectionKey = isExporter ? 'perns' : 'prns'
     const queried = isRegulatorQueryBannerVisible(application, { readOnly })
 
+    // RA-555: render the operator's in-progress selection if they have one.
+    // With none stored, default to every saved authoriser selected, which is
+    // what this page did unconditionally before.
+    const selectedEmails =
+      getSelection(request, applicationId) ??
+      (application.prns?.authorisers ?? []).map((a) => a.email)
+
     return renderPage(
       h,
       buildViewData(application, t, applicationId, {
+        selectedEmails,
         queried,
         querySummary: queried
           ? buildRegulatorQuerySummary(sectionKey, t)
@@ -192,6 +216,15 @@ export const tonnageAuthorityPostController = {
       : t('pages.tonnageAuthority.selectSubHeading')
     const currentAuthorisers = application.prns?.authorisers ?? []
 
+    // RA-555: normalised up here rather than inside the save branch, because
+    // the add branch needs the operator's tick state too - both to re-render
+    // it on a validation error and to carry it across the redirect.
+    const checkedEmails = selectedEmails
+      ? Array.isArray(selectedEmails)
+        ? selectedEmails
+        : [selectedEmails]
+      : []
+
     if (submitAction === 'addAuthoriser') {
       const addErrors = {}
       if (!newFullName?.trim()) {
@@ -215,7 +248,10 @@ export const tonnageAuthorityPostController = {
             ? t('pages.tonnageAuthority.titleExporter')
             : t('pages.tonnageAuthority.title'),
           heading,
-          authoriserRows: buildAuthoriserRows(currentAuthorisers),
+          authoriserRows: buildAuthoriserRows(
+            currentAuthorisers,
+            checkedEmails
+          ),
           backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
           isExporter,
@@ -244,7 +280,10 @@ export const tonnageAuthorityPostController = {
             ? t('pages.tonnageAuthority.titleExporter')
             : t('pages.tonnageAuthority.title'),
           heading,
-          authoriserRows: buildAuthoriserRows(currentAuthorisers),
+          authoriserRows: buildAuthoriserRows(
+            currentAuthorisers,
+            checkedEmails
+          ),
           backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
           isExporter,
@@ -265,6 +304,14 @@ export const tonnageAuthorityPostController = {
           addedForAuthorityToIssue: true
         }
       ]
+
+      // RA-555: this is the fix for the reported bug. The redirect below drops
+      // the payload, so without this the next GET re-seeded from the saved
+      // authorisers and every untick came back ticked. The newly added
+      // authoriser joins the selection, matching the previous behaviour where
+      // a new row always arrived ticked.
+      setSelection(request, applicationId, [...checkedEmails, trimmedEmail])
+
       try {
         await accreditationApiService.patchTonnage(
           organisationId,
@@ -283,7 +330,10 @@ export const tonnageAuthorityPostController = {
             ? t('pages.tonnageAuthority.titleExporter')
             : t('pages.tonnageAuthority.title'),
           heading,
-          authoriserRows: buildAuthoriserRows(currentAuthorisers),
+          authoriserRows: buildAuthoriserRows(
+            currentAuthorisers,
+            checkedEmails
+          ),
           backLink: tonnageUrl(applicationId),
           taskListLink: taskListUrl(applicationId),
           isExporter,
@@ -298,22 +348,13 @@ export const tonnageAuthorityPostController = {
       return h.redirect(`/accreditation/tonnage-authority/${applicationId}`)
     }
 
-    const checkedEmails = selectedEmails
-      ? Array.isArray(selectedEmails)
-        ? selectedEmails
-        : [selectedEmails]
-      : []
-
     if (submitAction !== 'saveAndComeLater' && checkedEmails.length === 0) {
       return renderPage(h, {
         pageTitle: isExporter
           ? t('pages.tonnageAuthority.titleExporter')
           : t('pages.tonnageAuthority.title'),
         heading,
-        authoriserRows: buildAuthoriserRows(currentAuthorisers).map((r) => ({
-          ...r,
-          checked: checkedEmails.includes(r.email)
-        })),
+        authoriserRows: buildAuthoriserRows(currentAuthorisers, checkedEmails),
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         isExporter,
@@ -359,10 +400,7 @@ export const tonnageAuthorityPostController = {
           ? t('pages.tonnageAuthority.titleExporter')
           : t('pages.tonnageAuthority.title'),
         heading,
-        authoriserRows: buildAuthoriserRows(currentAuthorisers).map((r) => ({
-          ...r,
-          checked: checkedEmails.includes(r.email)
-        })),
+        authoriserRows: buildAuthoriserRows(currentAuthorisers, checkedEmails),
         backLink: tonnageUrl(applicationId),
         taskListLink: taskListUrl(applicationId),
         isExporter,
@@ -375,6 +413,12 @@ export const tonnageAuthorityPostController = {
         }
       }).code(500)
     }
+
+    // RA-555: the selection has landed in the backend, and because saving
+    // drops unticked authorisers the saved list now *is* the selection - so a
+    // later visit re-seeds to exactly what the operator last saw. Clearing
+    // also bounds how long a stale selection can sit in the session.
+    clearSelection(request)
 
     if (submitAction === 'saveAndComeLater') {
       return h.redirect(taskListUrl(applicationId))
