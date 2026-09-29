@@ -69,79 +69,116 @@ function renderPage(h, viewData) {
   )
 }
 
-function buildRows(t, applicationId, session) {
-  const rows = [
-    {
-      key: t('pages.addOverseasSite.cya.rows.siteName'),
-      value: session.siteName ?? '',
-      changeUrl: siteNameUrl(applicationId),
-      testId: 'site-name'
-    },
-    {
-      key: t('pages.addOverseasSite.cya.rows.location'),
-      value: formatSiteAddress(session),
-      changeUrl: siteLocationUrl(applicationId),
-      testId: 'location'
-    },
-    {
-      key: t('pages.addOverseasSite.cya.rows.coordinates'),
-      value: session.coordinates ?? '',
-      changeUrl: siteLocationUrl(applicationId),
-      testId: 'coordinates'
-    },
-    {
-      key: t('pages.addOverseasSite.cya.rows.contactName'),
-      value: session.siteContactName ?? '',
-      changeUrl: contactDetailsUrl(applicationId),
-      testId: 'contact-name'
-    },
-    {
-      key: t('pages.addOverseasSite.cya.rows.contactEmail'),
-      value: session.siteContactEmail ?? '',
-      changeUrl: contactDetailsUrl(applicationId),
-      testId: 'contact-email'
-    },
-    {
-      key: t('pages.addOverseasSite.cya.rows.contactPhone'),
-      value: session.siteContactPhone ?? '',
-      changeUrl: contactDetailsUrl(applicationId),
-      testId: 'contact-phone'
-    },
-    {
-      key: t('pages.addOverseasSite.cya.rows.recyclingOperation'),
-      value: (session.recyclingOperationCodes ?? []).join(', '),
-      changeUrl: recyclingOperationUrl(applicationId),
-      testId: 'recycling-operation'
-    },
-    {
-      key: t('pages.addOverseasSite.cya.rows.baselCodes'),
-      type: 'codeList',
-      codes: (session.baselAndOecdCodes ?? []).map((value, index) => ({
-        value,
-        index
-      })),
-      changeUrl: baselCodeUrl(applicationId),
-      testId: 'basel-codes'
-    }
-  ]
+function buildSiteNameRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.siteName'),
+    value: session.siteName ?? '',
+    changeUrl: siteNameUrl(applicationId),
+    testId: 'site-name'
+  }
+}
 
-  rows.push({
+function buildLocationRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.location'),
+    value: formatSiteAddress(session),
+    changeUrl: siteLocationUrl(applicationId),
+    testId: 'location'
+  }
+}
+
+function buildCoordinatesRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.coordinates'),
+    value: session.coordinates ?? '',
+    changeUrl: siteLocationUrl(applicationId),
+    testId: 'coordinates'
+  }
+}
+
+function buildContactNameRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.contactName'),
+    value: session.siteContactName ?? '',
+    changeUrl: contactDetailsUrl(applicationId),
+    testId: 'contact-name'
+  }
+}
+
+function buildContactEmailRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.contactEmail'),
+    value: session.siteContactEmail ?? '',
+    changeUrl: contactDetailsUrl(applicationId),
+    testId: 'contact-email'
+  }
+}
+
+function buildContactPhoneRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.contactPhone'),
+    value: session.siteContactPhone ?? '',
+    changeUrl: contactDetailsUrl(applicationId),
+    testId: 'contact-phone'
+  }
+}
+
+function buildRecyclingOperationRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.recyclingOperation'),
+    value: (session.recyclingOperationCodes ?? []).join(', '),
+    changeUrl: recyclingOperationUrl(applicationId),
+    testId: 'recycling-operation'
+  }
+}
+
+function buildBaselCodesRow(t, applicationId, session) {
+  return {
+    key: t('pages.addOverseasSite.cya.rows.baselCodes'),
+    type: 'codeList',
+    codes: (session.baselAndOecdCodes ?? []).map((value, index) => ({
+      value,
+      index
+    })),
+    changeUrl: baselCodeUrl(applicationId),
+    testId: 'basel-codes'
+  }
+}
+
+function buildRepatriatedLoadsRow(t, applicationId, session) {
+  return {
     key: t('pages.addOverseasSite.cya.rows.repatriatedLoads'),
     value: session.repatriatedLoads ?? '',
     changeUrl: repatriatedLoadsUrl(applicationId),
     testId: 'repatriated-loads'
-  })
-
-  if (session.conditionsOfExport != null) {
-    rows.push({
-      key: t('pages.addOverseasSite.cya.rows.conditionsOfExport'),
-      value: session.conditionsOfExport ? t('common.yes') : t('common.no'),
-      changeUrl: conditionsOfExportUrl(applicationId),
-      testId: 'conditions-of-export'
-    })
   }
+}
 
-  return rows
+function buildConditionsOfExportRow(t, applicationId, session) {
+  if (session.conditionsOfExport == null) {
+    return null
+  }
+  return {
+    key: t('pages.addOverseasSite.cya.rows.conditionsOfExport'),
+    value: session.conditionsOfExport ? t('common.yes') : t('common.no'),
+    changeUrl: conditionsOfExportUrl(applicationId),
+    testId: 'conditions-of-export'
+  }
+}
+
+function buildRows(t, applicationId, session) {
+  return [
+    buildSiteNameRow(t, applicationId, session),
+    buildLocationRow(t, applicationId, session),
+    buildCoordinatesRow(t, applicationId, session),
+    buildContactNameRow(t, applicationId, session),
+    buildContactEmailRow(t, applicationId, session),
+    buildContactPhoneRow(t, applicationId, session),
+    buildRecyclingOperationRow(t, applicationId, session),
+    buildBaselCodesRow(t, applicationId, session),
+    buildRepatriatedLoadsRow(t, applicationId, session),
+    buildConditionsOfExportRow(t, applicationId, session)
+  ].filter(Boolean)
 }
 
 // RA-486: the last wizard step before this page depends on materialType —
