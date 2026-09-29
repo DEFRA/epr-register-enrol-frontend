@@ -11,17 +11,12 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { TEST_OPERATOR } from '../../common/helpers/auth/stub-auth-plugin.js'
 import { validateQueryDeclaration } from './controller.js'
 
 const APPLICATION_ID = 'app-query-002'
 
-const t = (key) => {
-  const last = key.split('.').pop()
-  if (last === 'emailInvalid') {
-    return 'Enter an email address in the correct format, like name@example.com'
-  }
-  return last
-}
+const t = (key) => key.split('.').pop()
 
 function makeApplication(overrides = {}) {
   return {
@@ -42,47 +37,17 @@ function makeApplication(overrides = {}) {
 
 describe('#validateQueryDeclaration', () => {
   test('returns no errors for valid input', () => {
-    const errors = validateQueryDeclaration(
-      'Jane Doe',
-      'jane@example.com',
-      'Manager',
-      t
-    )
+    const errors = validateQueryDeclaration('Jane Doe', 'Manager', t)
     expect(Object.keys(errors)).toHaveLength(0)
   })
 
   test('requires fullName', () => {
-    const errors = validateQueryDeclaration(
-      '',
-      'jane@example.com',
-      'Manager',
-      t
-    )
+    const errors = validateQueryDeclaration('', 'Manager', t)
     expect(errors.fullName).toBeDefined()
   })
 
-  test('requires email', () => {
-    const errors = validateQueryDeclaration('Jane Doe', '', 'Manager', t)
-    expect(errors.email).toBeDefined()
-  })
-
-  test('rejects malformed email', () => {
-    const errors = validateQueryDeclaration(
-      'Jane Doe',
-      'not-an-email',
-      'Manager',
-      t
-    )
-    expect(errors.email.text).toContain('name@example.com')
-  })
-
   test('requires role', () => {
-    const errors = validateQueryDeclaration(
-      'Jane Doe',
-      'jane@example.com',
-      '',
-      t
-    )
+    const errors = validateQueryDeclaration('Jane Doe', '', t)
     expect(errors.role).toBeDefined()
   })
 })
@@ -193,7 +158,7 @@ describe('#queryDeclarationController', () => {
       expect(result).toContain('data-testid="declaration-form"')
     })
 
-    test('keeps the full name, email and job title fields, and the resubmit button label', async () => {
+    test('keeps the full name and job title fields, and the resubmit button label', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result } = await server.inject({
@@ -203,7 +168,7 @@ describe('#queryDeclarationController', () => {
       })
 
       expect(result).toContain('data-testid="full-name-input"')
-      expect(result).toContain('data-testid="email-input"')
+      expect(result).not.toContain('data-testid="email-input"')
       expect(result).toContain('data-testid="role-input"')
       expect(result).toContain('data-testid="resubmit-button"')
       expect(result).toContain('Resubmit application')
@@ -218,7 +183,7 @@ describe('#queryDeclarationController', () => {
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { fullName: '', email: '', role: '' }
+        payload: { fullName: '', role: '' }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
@@ -247,7 +212,7 @@ describe('#queryDeclarationController', () => {
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { fullName: '', email: '', role: '' }
+        payload: { fullName: '', role: '' }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
@@ -266,7 +231,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -275,13 +239,36 @@ describe('#queryDeclarationController', () => {
         expect.stringContaining('/resubmit'),
         expect.objectContaining({
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
+          email: TEST_OPERATOR.email,
           role: 'Manager'
         })
       )
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
+      )
+    })
+
+    test('ignores an email in the payload and uses the signed-in operator email', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(makeApplication({ applicationStatus: 'Updated' }))
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'attacker@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/resubmit'),
+        expect.objectContaining({ email: TEST_OPERATOR.email })
       )
     })
 
@@ -303,7 +290,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -331,7 +317,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -351,7 +336,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -374,7 +358,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -395,7 +378,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -418,7 +400,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -436,7 +417,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -459,7 +439,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -479,7 +458,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -500,7 +478,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -526,7 +503,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })
@@ -546,7 +522,6 @@ describe('#queryDeclarationController', () => {
         headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
-          email: 'jane@example.com',
           role: 'Manager'
         }
       })

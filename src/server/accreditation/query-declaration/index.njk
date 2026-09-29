@@ -16,9 +16,6 @@
                   {% if errors.fullName %}
                     <li><a href="#fullName">{{ errors.fullName.text }}</a></li>
                   {% endif %}
-                  {% if errors.email %}
-                    <li><a href="#email">{{ errors.email.text }}</a></li>
-                  {% endif %}
                   {% if errors.role %}
                     <li><a href="#role">{{ errors.role.text }}</a></li>
                   {% endif %}
@@ -69,25 +66,6 @@
                  value="{{ fullName }}"
                  {% if errors.fullName %}aria-describedby="fullName-error"{% endif %}
                  data-testid="full-name-input">
-        </div>
-
-        <div class="govuk-form-group{% if errors.email %} govuk-form-group--error{% endif %}">
-          <label class="govuk-label govuk-label--s" for="email">
-            {{ emailLabel }}
-          </label>
-          {% if errors.email %}
-            <p id="email-error" class="govuk-error-message" data-testid="email-error">
-              <span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.email.text }}
-            </p>
-          {% endif %}
-          <input class="govuk-input{% if errors.email %} govuk-input--error{% endif %}"
-                 id="email"
-                 name="email"
-                 type="email"
-                 autocomplete="email"
-                 value="{{ email }}"
-                 {% if errors.email %}aria-describedby="email-error"{% endif %}
-                 data-testid="email-input">
         </div>
 
         <div class="govuk-form-group{% if errors.role %} govuk-form-group--error{% endif %}">

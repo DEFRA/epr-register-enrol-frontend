@@ -424,14 +424,11 @@
         "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Enter your full name",
-      "emailLabel": "Enter your email address",
       "roleLabel": "Enter your job title",
       "resubmitButton": "Resubmit application",
       "successMessage": "Your application has been resubmitted to the regulator.",
       "validation": {
         "fullNameRequired": "Enter your full name",
-        "emailRequired": "Enter your email address",
-        "emailInvalid": "Enter an email address in the correct format, like name@example.com",
         "roleRequired": "Enter your job title",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "notQueriedError": "This application is no longer awaiting a response to a query.",

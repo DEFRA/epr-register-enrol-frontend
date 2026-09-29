@@ -422,14 +422,11 @@
         "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Rhowch eich enw llawn",
-      "emailLabel": "[Welsh] Enter your email address",
       "roleLabel": "[Welsh] Enter your job title",
       "resubmitButton": "[Welsh] Resubmit application",
       "successMessage": "[Welsh] Your application has been resubmitted to the regulator.",
       "validation": {
         "fullNameRequired": "Rhowch eich enw llawn",
-        "emailRequired": "[Welsh] Enter your email address",
-        "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
         "roleRequired": "[Welsh] Enter your job title",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "notQueriedError": "[Welsh] This application is no longer awaiting a response to a query.",
