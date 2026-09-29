@@ -584,14 +584,33 @@ function initCharacterCountLiveErrorClearing() {
         : textarea.value.length
     }
 
-    function clearOnceWithinLimit() {
-      if (currentCount() > max) {
+    let errorMessageRemoved = false
+
+    // CharacterCount reads the server-rendered error message once, in its
+    // own constructor, purely to decide whether IT will ever toggle
+    // govuk-textarea--error itself — and having found one here, it defers
+    // to it permanently and never touches that class again, even after this
+    // code below removes the element. So the class has to be kept in sync
+    // here too, on every keystroke, in both directions: not just cleared
+    // once when the operator first gets back under the limit, but re-applied
+    // if they later type back over it again, since nothing else will.
+    function syncErrorStyling() {
+      const overLimit = currentCount() > max
+      formGroup?.classList.toggle(GOVUK_FORM_GROUP_ERROR_CLASS, overLimit)
+      textarea.classList.toggle('govuk-textarea--error', overLimit)
+
+      if (overLimit || errorMessageRemoved) {
         return
       }
+
+      // The error message paragraph itself, unlike the class above, is only
+      // ever removed once — there is no server-rendered text to restore if
+      // the operator goes back over the limit again, and the live count
+      // message next to it (govuk-frontend's own, never touched here)
+      // already says so.
       const errorId = errorMessage.id
       errorMessage.remove()
-      formGroup?.classList.remove(GOVUK_FORM_GROUP_ERROR_CLASS)
-      textarea.classList.remove('govuk-textarea--error')
+      errorMessageRemoved = true
       // Strips only the removed error's own id out of aria-describedby,
       // leaving the hint/count-message ids CharacterCount itself manages
       // untouched — never a blanket removeAttribute, which would silently
@@ -607,10 +626,9 @@ function initCharacterCountLiveErrorClearing() {
           textarea.removeAttribute(ARIA_DESCRIBEDBY)
         }
       }
-      textarea.removeEventListener('input', clearOnceWithinLimit)
     }
 
-    textarea.addEventListener('input', clearOnceWithinLimit)
+    textarea.addEventListener('input', syncErrorStyling)
   })
 }
 

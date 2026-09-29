@@ -226,7 +226,6 @@
       "heading": "[Welsh] Add more details about how you\u0027ll spend the the PRN income",
       "headingExporter": "[Welsh] Add more details about how you\u0027ll spend the PERN income",
       "intro": "[Welsh] The details will help the regulator to better understand your plans.",
-      "characterCountHint": "[Welsh] You can enter up to 500 characters",
       "saveAndContinue": "Cadw a pharhau",
       "saveAndComeLater": "Cadw a chwblhau wedyn",
       "hint": "[Welsh] Enter a whole percentage",
@@ -752,7 +751,6 @@
         "heading": "[Welsh] What are the arrangements for loads rejected or returned to the UK?",
         "label": "[Welsh] Describe the arrangements",
         "hint": "[Welsh] Do not include personal or financial information.",
-        "maxWords": "[Welsh] You can enter up to 500 words",
         "validation": {
           "required": "[Welsh] Describe the arrangements for loads that are rejected or returned to the UK",
           "tooManyWords": "[Welsh] Description must be 500 words or fewer"

@@ -29,9 +29,6 @@ const t = (key) => {
   if (last === 'optional') {
     return '(optional)'
   }
-  if (last === 'characterCountHint') {
-    return 'You can enter up to 500 characters'
-  }
   return last
 }
 
@@ -281,13 +278,18 @@ describe('#buildTextareaInputs', () => {
 
   test('is not disabled by default', () => {
     const inputs = buildTextareaInputs({}, {}, t, makeApplication())
-    inputs.forEach((i) => expect(i.disabled).toBeUndefined())
+    inputs.forEach((i) => expect(i.attributes.disabled).toBeUndefined())
   })
 
+  // `disabled` must be under `attributes`, not a top-level macro param:
+  // character-count/template.njk builds its own govukTextarea({...}) call
+  // and doesn't forward a top-level `disabled` key, so a regression here
+  // wouldn't show up in the view model alone — see the rendered-HTML
+  // assertion in the GET locked-application tests below for that.
   test('is disabled for every field when the section is read-only', () => {
     const inputs = buildTextareaInputs({}, {}, t, makeApplication(), true)
     expect(inputs.length).toBeGreaterThan(0)
-    inputs.forEach((i) => expect(i.disabled).toBe(true))
+    inputs.forEach((i) => expect(i.attributes.disabled).toBe(true))
   })
 })
 
@@ -513,6 +515,17 @@ describe('#businessPlanDetailController', () => {
         expect(statusCode).toBe(statusCodes.ok)
         expect(result).toContain('data-testid="read-only-notice"')
         expect(result).not.toContain('data-testid="continue-button"')
+        // Rendered-HTML assertion, not just the view model: catches the
+        // govukCharacterCount macro silently dropping a top-level `disabled`
+        // key (it only forwards `attributes`), which previously left every
+        // detail textarea editable on a locked application.
+        DETAIL_FIELDS.forEach((field) => {
+          expect(result).toMatch(
+            new RegExp(
+              `<textarea[^>]*data-testid="textarea-${field}"[^>]*disabled`
+            )
+          )
+        })
       }
     )
   })

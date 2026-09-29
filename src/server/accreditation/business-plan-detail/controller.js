@@ -77,12 +77,14 @@ export function validateDetailFields(payload, t, application) {
 // RA-268: each field is handed to GOV.UK Frontend's own govukCharacterCount
 // macro (already used the same way on withdraw-application's reason field),
 // so the keys here are macro parameter names, not free-form view data. The
-// macro's JS progressively enhances the plain maxlength-capped textarea into
-// a live "characters remaining"/"characters too many" counter that updates on
-// every keystroke, entirely client-side and before any submit. That is on
-// top of, never instead of, the server-side check in validateDetailFields:
-// without JS (or if the two ever disagreed) the textarea's native maxlength
-// and the check above are still the real gate.
+// macro's JS progressively enhances the textarea into a live "characters
+// remaining"/"characters too many" counter that updates on every keystroke,
+// entirely client-side and before any submit. That is on top of, never
+// instead of, the server-side check in validateDetailFields: the macro puts
+// `maxlength` on the wrapper as a `data-maxlength` attribute for its own JS
+// to read, never as a `maxlength` attribute on the textarea itself, so
+// without JS there is no client-side cap at all — validateDetailFields is
+// the only real gate.
 //
 // The live counter updating is NOT the same as the error going away, though —
 // govuk-frontend's CharacterCount deliberately never removes a server-
@@ -98,6 +100,11 @@ export function validateDetailFields(payload, t, application) {
 // lets application.js's initCharacterCountLiveErrorClearing find and clear
 // it once the operator is back within the limit — finishing what the
 // component's own JS deliberately leaves undone.
+//
+// `disabled` has to live under `attributes`, not as a top-level macro param:
+// character-count/template.njk builds its own govukTextarea({...}) call and
+// doesn't forward a top-level `disabled` key, so one set there is silently
+// dropped and the field stays editable on a locked application.
 export function buildTextareaInputs(payload, errors, t, application, readOnly) {
   const fields = application
     ? DETAIL_FIELDS.filter((field) => {
@@ -112,9 +119,7 @@ export function buildTextareaInputs(payload, errors, t, application, readOnly) {
     name: field,
     value: normaliseNewlines(payload[field]),
     label: { text: t(`pages.businessPlanDetail.fields.${field}`) },
-    hint: { text: t('pages.businessPlanDetail.characterCountHint') },
     maxlength: MAX_CHARS,
-    disabled: readOnly || undefined,
     errorMessage: errors[field]
       ? {
           text: errors[field].text,
@@ -124,7 +129,10 @@ export function buildTextareaInputs(payload, errors, t, application, readOnly) {
           }
         }
       : undefined,
-    attributes: { 'data-testid': `textarea-${field}` },
+    attributes: {
+      'data-testid': `textarea-${field}`,
+      ...(readOnly ? { disabled: true } : {})
+    },
     formGroup: { attributes: { 'data-testid': `field-group-${field}` } }
   }))
 }

@@ -813,6 +813,38 @@ describe('character-count live error clearing', () => {
     )
   })
 
+  // CharacterCount's own JS decides once, in its constructor, whether it
+  // will ever toggle govuk-textarea--error, based on whether a server error
+  // element existed at that point — having found one, it defers permanently
+  // and never revisits that decision, even after this code removes the
+  // element. So re-applying the class on the way back over the limit can't
+  // be left to it; this has to keep doing it itself for the lifetime of the
+  // field, not just the one time the error first clears.
+  it('re-applies the error styling if the value goes back over the limit after clearing', async () => {
+    renderCharacterCountField({
+      id: 'field',
+      limitAttr: 'data-maxlength="10"',
+      errorType: 'length'
+    })
+    await loadApplication()
+    const textarea = document.getElementById('field')
+    const formGroup = textarea.closest('.govuk-form-group')
+
+    typeInto(textarea, 'still too long')
+    typeInto(textarea, 'short')
+    expect(textarea.classList.contains('govuk-textarea--error')).toBe(false)
+    expect(formGroup.classList.contains('govuk-form-group--error')).toBe(false)
+
+    typeInto(textarea, 'too long again')
+
+    expect(textarea.classList.contains('govuk-textarea--error')).toBe(true)
+    expect(formGroup.classList.contains('govuk-form-group--error')).toBe(true)
+    // The removed error message paragraph itself is gone for good — there's
+    // no server text to restore, and the live count next to it already
+    // says the field is over the limit again.
+    expect(document.getElementById('field-error')).toBeNull()
+  })
+
   it('leaves the error alone while the value is still over the limit', async () => {
     renderCharacterCountField({
       id: 'field',
