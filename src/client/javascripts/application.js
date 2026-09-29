@@ -11,8 +11,9 @@ import accessibleAutocomplete from 'accessible-autocomplete'
 
 import './session-notice.js'
 
-// Shared across the client-side validation below (Basel/OECD codes and the
-// sampling-plan file upload both build their own inline GDS error markup).
+// Shared across the client-side validation below (Basel/OECD codes, the
+// sampling-plan file upload and the govuk-character-count error clearing
+// all build or manage their own inline GDS error markup).
 const GOVUK_FORM_GROUP_SELECTOR = '.govuk-form-group'
 const GOVUK_FORM_GROUP_ERROR_CLASS = 'govuk-form-group--error'
 const GOVUK_ERROR_MESSAGE_CLASS = 'govuk-error-message'
@@ -527,3 +528,90 @@ function initSamplingPlanUpload(
     clearError()
   })
 }
+
+// RA-268/RA-361: govuk-frontend's own CharacterCount module (createAll
+// (CharacterCount) above) keeps its live "characters/words remaining"
+// message in step with every keystroke, but it deliberately never touches a
+// server-rendered .govuk-error-message it finds already on the page — it
+// reads that element once, in its own constructor, purely to decide whether
+// to ALSO toggle error styling onto the textarea itself, and never removes
+// or re-reads it after that (see govuk-frontend's character-count.mjs:
+// `this.$errorMessage` is set once and never reassigned). So a "too
+// long"/"too many words" error from the last server round trip stayed on
+// screen even once the operator had reduced back under the limit — the
+// live counter already said "0 characters remaining" right next to a
+// paragraph still insisting the field was too long. This finishes what
+// CharacterCount deliberately leaves undone, the same way showRowError/
+// clearRowError above finish it for the Basel/OECD rows.
+//
+// Scoped to error messages carrying data-error-type="length" — set
+// server-side (business-plan-detail, add-overseas-site/repatriated-loads)
+// only for the length-violation error, never for an unrelated rule like
+// "this field is required" that happens to share the same errorMessage
+// slot — so this can never clear an error it has no business clearing.
+function initCharacterCountLiveErrorClearing() {
+  const errorMessages = Array.from(
+    document.querySelectorAll(
+      '.govuk-character-count [data-error-type="length"]'
+    )
+  )
+
+  errorMessages.forEach((errorMessage) => {
+    const root = errorMessage.closest('.govuk-character-count')
+    const textarea = root?.querySelector('.govuk-textarea')
+    const formGroup = root?.closest(GOVUK_FORM_GROUP_SELECTOR)
+    if (!root || !textarea) {
+      return
+    }
+
+    // Mirrors how CharacterCount itself decides what it's counting
+    // (config.maxwords takes precedence over config.maxlength) and how it
+    // counts it (word tokens split on whitespace vs textarea.value.length),
+    // via the same data-maxlength/data-maxwords attributes the macro's own
+    // JS reads — so this can never disagree with the live counter next to
+    // it about whether the field is currently over the limit.
+    const maxWords = Number(root.dataset.maxwords)
+    const maxLength = Number(root.dataset.maxlength)
+    const countingWords = Number.isFinite(maxWords)
+    const max = countingWords ? maxWords : maxLength
+    if (!Number.isFinite(max)) {
+      return
+    }
+
+    function currentCount() {
+      return countingWords
+        ? (textarea.value.match(/\S+/g) || []).length
+        : textarea.value.length
+    }
+
+    function clearOnceWithinLimit() {
+      if (currentCount() > max) {
+        return
+      }
+      const errorId = errorMessage.id
+      errorMessage.remove()
+      formGroup?.classList.remove(GOVUK_FORM_GROUP_ERROR_CLASS)
+      textarea.classList.remove('govuk-textarea--error')
+      // Strips only the removed error's own id out of aria-describedby,
+      // leaving the hint/count-message ids CharacterCount itself manages
+      // untouched — never a blanket removeAttribute, which would silently
+      // disconnect those too.
+      if (errorId) {
+        const describedBy = (textarea.getAttribute(ARIA_DESCRIBEDBY) || '')
+          .split(' ')
+          .filter((id) => id && id !== errorId)
+          .join(' ')
+        if (describedBy) {
+          textarea.setAttribute(ARIA_DESCRIBEDBY, describedBy)
+        } else {
+          textarea.removeAttribute(ARIA_DESCRIBEDBY)
+        }
+      }
+      textarea.removeEventListener('input', clearOnceWithinLimit)
+    }
+
+    textarea.addEventListener('input', clearOnceWithinLimit)
+  })
+}
+
+initCharacterCountLiveErrorClearing()

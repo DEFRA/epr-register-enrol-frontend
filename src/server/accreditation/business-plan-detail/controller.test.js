@@ -147,6 +147,43 @@ describe('#validateDetailFields', () => {
     expect(errors.otherDetail).toBeDefined()
     expect(errors.otherDetail.text).toContain('500 characters')
   })
+
+  // RA-268. A native <textarea maxlength="500"> counts a line break as one
+  // "\n" character — that's what stopped the operator typing any further —
+  // but HTML forms normalise every line break in a textarea's value to CRLF
+  // ("\r\n") when the browser builds the submitted request body. A value
+  // that was exactly 500 characters as the operator typed it therefore
+  // arrives here longer by one extra character per line break, so a raw
+  // `.length` check rejected text the operator was never able to exceed.
+  test('does not inflate the count from CRLF line breaks a browser submits', () => {
+    const line = 'x'.repeat(30) + '\n' // 31 chars as the browser (and its maxlength) counts it
+    let value = ''
+    while (value.length + line.length <= 500) {
+      value += line
+    }
+    value += 'x'.repeat(500 - value.length)
+    expect(value).toHaveLength(500)
+
+    // What the server actually receives once the browser CRLF-normalises
+    // those line breaks for submission.
+    const submitted = value.replace(/\n/g, '\r\n')
+    expect(submitted.length).toBeGreaterThan(500)
+
+    const errors = validateDetailFields(
+      { newInfrastructureDetail: submitted },
+      t
+    )
+    expect(errors.newInfrastructureDetail).toBeUndefined()
+  })
+
+  test('a genuinely too-long value is still rejected once CRLF is normalised away', () => {
+    const submitted = ('x'.repeat(30) + '\r\n').repeat(20) // well over 500 either way
+    const errors = validateDetailFields(
+      { newInfrastructureDetail: submitted },
+      t
+    )
+    expect(errors.newInfrastructureDetail).toBeDefined()
+  })
 })
 
 describe('#buildTextareaInputs', () => {
@@ -202,13 +239,20 @@ describe('#buildTextareaInputs', () => {
     expect(field.value).toBe('some detail')
   })
 
+  // RA-268: buildTextareaInputs now hands each field straight to GOV.UK
+  // Frontend's govukCharacterCount macro, so errorMessage carries a testid
+  // in `attributes` alongside its text — that's what field-error-{id} in the
+  // rendered page comes from.
   test('sets errorMessage when error present', () => {
     const errors = {
       communicationsDetail: { text: 'too long error' }
     }
     const inputs = buildTextareaInputs({}, errors, t, makeApplication())
     const field = inputs.find((i) => i.id === 'communicationsDetail')
-    expect(field.errorMessage).toEqual({ text: 'too long error' })
+    expect(field.errorMessage).toEqual({
+      text: 'too long error',
+      attributes: { 'data-testid': 'field-error-communicationsDetail' }
+    })
   })
 
   test('errorMessage is undefined when no error for field', () => {
@@ -219,6 +263,31 @@ describe('#buildTextareaInputs', () => {
   test('maxlength is 500', () => {
     const inputs = buildTextareaInputs({}, {}, t, makeApplication())
     inputs.forEach((i) => expect(i.maxlength).toBe(500))
+  })
+
+  // RA-268. The value handed to the macro is normalised the same way
+  // validateDetailFields counts it, so a re-render after a failed submit
+  // never shows (or persists) the browser's CRLF-doubled line breaks.
+  test('normalises CRLF line breaks in the value', () => {
+    const inputs = buildTextareaInputs(
+      { newInfrastructureDetail: 'Line one.\r\nLine two.' },
+      {},
+      t,
+      makeApplication()
+    )
+    const field = inputs.find((i) => i.id === 'newInfrastructureDetail')
+    expect(field.value).toBe('Line one.\nLine two.')
+  })
+
+  test('is not disabled by default', () => {
+    const inputs = buildTextareaInputs({}, {}, t, makeApplication())
+    inputs.forEach((i) => expect(i.disabled).toBeUndefined())
+  })
+
+  test('is disabled for every field when the section is read-only', () => {
+    const inputs = buildTextareaInputs({}, {}, t, makeApplication(), true)
+    expect(inputs.length).toBeGreaterThan(0)
+    inputs.forEach((i) => expect(i.disabled).toBe(true))
   })
 })
 
@@ -292,6 +361,26 @@ describe('#businessPlanDetailController', () => {
       DETAIL_FIELDS.forEach((field) => {
         expect(result).toContain(`data-testid="textarea-${field}"`)
       })
+    })
+
+    // RA-268: govuk-frontend's own CharacterCount module (already loaded
+    // globally in application.js) progressively enhances each field into a
+    // live "characters remaining"/"characters too many" counter that
+    // updates — and clears itself — on every keystroke, before any submit.
+    test('wires every textarea up as a govuk-character-count component', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      DETAIL_FIELDS.forEach((field) => {
+        expect(result).toContain(`data-testid="field-group-${field}"`)
+      })
+      expect(result).toContain('data-module="govuk-character-count"')
+      expect(result).toContain('data-maxlength="500"')
     })
 
     test('hides the textarea for a category with no percentage entered', async () => {
@@ -546,6 +635,86 @@ describe('#businessPlanDetailController', () => {
       )
     })
 
+    // RA-268: this is what the whole live-clearing fix actually depends on —
+    // application.js's initCharacterCountLiveErrorClearing only ever
+    // touches an error carrying data-error-type="length" (see the comment
+    // above buildTextareaInputs for why). A server render that stopped
+    // emitting this attribute would silently break the fix while every
+    // other assertion here kept passing, which is exactly what happened
+    // once already — the attribute was correct, but the rebuilt bundle
+    // that reads it hadn't shipped. This is the regression guard for the
+    // half of the fix that lives in this repo.
+    test('tags the too-long error with data-error-type="length" so the client can clear it live', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: 'a'.repeat(501),
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      const errorTag = result.match(
+        /<p[^>]*id="newInfrastructureDetail-error"[^>]*>/
+      )
+      expect(errorTag).not.toBeNull()
+      expect(errorTag[0]).toContain('data-error-type="length"')
+    })
+
+    // RA-268 (the bug): a browser CRLF-normalises a textarea's line breaks
+    // on submit, so a value the operator typed at exactly the 500-character
+    // limit (all its maxlength ever let them enter) used to arrive here
+    // longer and be rejected as "too long" through no fault of the
+    // operator's. Reproduces the fix end to end through the real route.
+    test('accepts a value that is exactly 500 characters once its CRLF line breaks are normalised', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const line = 'x'.repeat(30) + '\n'
+      let browserCountedValue = ''
+      while (browserCountedValue.length + line.length <= 500) {
+        browserCountedValue += line
+      }
+      browserCountedValue += 'x'.repeat(500 - browserCountedValue.length)
+      expect(browserCountedValue).toHaveLength(500)
+      // What actually reaches the server once the browser CRLF-normalises
+      // those line breaks to build the submitted request body.
+      const submittedValue = browserCountedValue.replace(/\n/g, '\r\n')
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: submittedValue,
+          priceSupportDetail: 'Details',
+          businessCollectionsDetail: 'Details',
+          communicationsDetail: 'Details',
+          newMarketsDetail: 'Details',
+          newUsesDetail: 'Details',
+          otherDetail: 'Details',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      // Persisted with the browser's line breaks, not the wire-format CRLF
+      // doubling — so re-editing the field later counts it the same way.
+      expect(patchSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`${APPLICATION_ID}/business-plan`),
+        expect.objectContaining({
+          newInfrastructureDetail: browserCountedValue
+        })
+      )
+    })
+
     test('shows PERN wording on the 400 re-render for an exporter application', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({ isExporter: true })
@@ -624,6 +793,38 @@ describe('#businessPlanDetailController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('data-testid="error-summary"')
+    })
+
+    // RA-268: the "required" error shares buildTextareaInputs' errorMessage
+    // slot with "too long" but is a different rule the character-count
+    // component knows nothing about. Confirms the client marker is scoped
+    // correctly at the source, not just that initCharacterCountLiveErrorClearing
+    // happens to ignore it — see the application.js test asserting the
+    // client side of the same scoping.
+    test('does not tag the required-field error as a length error', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/business-plan-detail/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          newInfrastructureDetail: '',
+          priceSupportDetail: '',
+          businessCollectionsDetail: '',
+          communicationsDetail: '',
+          newMarketsDetail: '',
+          newUsesDetail: '',
+          submitAction: 'saveAndContinue'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      const errorTag = result.match(
+        /<p[^>]*id="newInfrastructureDetail-error"[^>]*>/
+      )
+      expect(errorTag).not.toBeNull()
+      expect(errorTag[0]).not.toContain('data-error-type')
     })
 
     test('returns 500 service-problem page when PATCH fails with server error', async () => {
