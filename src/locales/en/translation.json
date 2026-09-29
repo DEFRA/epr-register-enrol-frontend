@@ -787,6 +787,7 @@
         "rows": {
           "siteName": "Site name",
           "location": "Location",
+          "coordinates": "Coordinates",
           "contactName": "Contact name",
           "contactEmail": "Contact email",
           "contactPhone": "Contact phone number",

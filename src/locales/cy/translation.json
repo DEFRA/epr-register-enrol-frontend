@@ -785,6 +785,7 @@
         "rows": {
           "siteName": "[Welsh] Site name",
           "location": "[Welsh] Location",
+          "coordinates": "[Welsh] Coordinates",
           "contactName": "[Welsh] Contact name",
           "contactEmail": "[Welsh] Contact email",
           "contactPhone": "[Welsh] Contact phone number",
