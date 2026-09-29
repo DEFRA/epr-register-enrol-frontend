@@ -23,6 +23,16 @@ function makeApplication(sites = []) {
   }
 }
 
+// Scopes an assertion to a single summary-list row, since several rows share
+// the same "empty" markup (`<dd class="govuk-summary-list__value"></dd>`)
+// and a plain `result.toContain(...)` check can't tell them apart.
+function extractRowHtml(html, testId) {
+  const match = html.match(
+    new RegExp(`data-testid="row-${testId}"[\\s\\S]*?</div>`)
+  )
+  return match ? match[0] : ''
+}
+
 describe('#addOrsCyaController', () => {
   let server
   let cookie
@@ -175,6 +185,37 @@ describe('#addOrsCyaController', () => {
       expect(result).toContain('data-testid="delete-code-1"')
     })
 
+    test('renders coordinates row with the value entered on site-location', async () => {
+      const siteLocationPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/site-location`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload:
+          'addressLine1=Unit+1&townOrCity=Rotterdam&country=Netherlands&coordinates=51.9225%2C+4.4792'
+      })
+      const sessionCookie = siteLocationPostResponse.headers['set-cookie']
+        ? (Array.isArray(siteLocationPostResponse.headers['set-cookie'])
+            ? siteLocationPostResponse.headers['set-cookie'][0]
+            : siteLocationPostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toContain('data-testid="row-coordinates"')
+      expect(result).toContain('Coordinates')
+      expect(result).toContain('51.9225, 4.4792')
+      expect(result).toContain('data-testid="change-coordinates"')
+    })
+
     test('shows "None entered" when no codes were added', async () => {
       const { result } = await server.inject({
         method: 'GET',
@@ -184,6 +225,68 @@ describe('#addOrsCyaController', () => {
 
       expect(result).toContain('data-testid="row-basel-codes"')
       expect(result).toContain('None entered')
+    })
+
+    test.each([
+      'site-name',
+      'location',
+      'coordinates',
+      'contact-name',
+      'contact-email',
+      'contact-phone',
+      'recycling-operation',
+      'repatriated-loads'
+    ])(
+      'renders an empty value for the %s row when nothing has been entered',
+      async (testId) => {
+        const { result } = await server.inject({
+          method: 'GET',
+          url: BASE_URL,
+          headers: { ...operatorHeaders, cookie }
+        })
+
+        expect(extractRowHtml(result, testId)).toContain(
+          '<dd class="govuk-summary-list__value"></dd>'
+        )
+      }
+    )
+
+    test('omits the conditions-of-export row entirely when it is unset', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      expect(result).not.toContain('data-testid="row-conditions-of-export"')
+    })
+
+    test('renders the conditions-of-export row once it has been answered', async () => {
+      const conditionsOfExportPostResponse = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/conditions-of-export`,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie
+        },
+        payload: 'conditionsOfExport=yes'
+      })
+      const sessionCookie = conditionsOfExportPostResponse.headers['set-cookie']
+        ? (Array.isArray(conditionsOfExportPostResponse.headers['set-cookie'])
+            ? conditionsOfExportPostResponse.headers['set-cookie'][0]
+            : conditionsOfExportPostResponse.headers['set-cookie']
+          ).split(';')[0]
+        : cookie
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(extractRowHtml(result, 'conditions-of-export')).toContain('Yes')
+      expect(result).toContain('data-testid="change-conditions-of-export"')
     })
 
     test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
