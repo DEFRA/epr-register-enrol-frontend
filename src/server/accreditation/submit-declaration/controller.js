@@ -35,23 +35,20 @@ export function validateDeclaration(fullName, jobTitle, t) {
   return errors
 }
 
-function buildBullets(organisationName, t) {
+function buildBullets(t) {
   return [
-    t('pages.submitDeclaration.bullets.eligiblePerson').replace(
-      '{organisationName}',
-      organisationName
-    ),
+    t('pages.submitDeclaration.bullets.eligiblePerson'),
     t('pages.submitDeclaration.bullets.accurateInformation'),
     t('pages.submitDeclaration.bullets.enforcementAction')
   ]
 }
 
-function buildViewData(t, applicationId, organisationName, fullName, jobTitle) {
+function buildViewData(t, applicationId, fullName, jobTitle) {
   return {
     pageTitle: t('pages.submitDeclaration.title'),
     heading: t('pages.submitDeclaration.heading'),
     declarationIntro: t('pages.submitDeclaration.declarationIntro'),
-    bullets: buildBullets(organisationName, t),
+    bullets: buildBullets(t),
     fullNameLabel: t('pages.submitDeclaration.fullNameLabel'),
     fullNameHint: t('pages.submitDeclaration.fullNameHint'),
     jobTitleLabel: t('pages.submitDeclaration.jobTitleLabel'),
@@ -76,7 +73,7 @@ export const submitDeclarationGetController = {
       applicationId,
       renderErrorResponse: () =>
         renderPage(h, {
-          ...buildViewData(t, applicationId, ''),
+          ...buildViewData(t, applicationId),
           error: t('pages.submitDeclaration.validation.fetchError')
         }).code(500)
     })
@@ -93,13 +90,7 @@ export const submitDeclarationGetController = {
 
     return renderPage(
       h,
-      buildViewData(
-        t,
-        applicationId,
-        application.organisationName ?? '',
-        saved.fullName,
-        saved.jobTitle
-      )
+      buildViewData(t, applicationId, saved.fullName, saved.jobTitle)
     )
   }
 }
@@ -111,7 +102,7 @@ function handleSubmitError(
   h,
   t,
   err,
-  { applicationId, organisationName, fullName, jobTitle, request }
+  { applicationId, fullName, jobTitle, request }
 ) {
   request.server.logger.error(
     {
@@ -130,7 +121,7 @@ function handleSubmitError(
       .code(500)
   }
   return renderPage(h, {
-    ...buildViewData(t, applicationId, organisationName, fullName, jobTitle),
+    ...buildViewData(t, applicationId, fullName, jobTitle),
     error: t('pages.submitDeclaration.validation.submitError')
   }).code(400)
 }
@@ -154,7 +145,7 @@ export const submitDeclarationPostController = {
       applicationId,
       renderErrorResponse: () =>
         renderPage(h, {
-          ...buildViewData(t, applicationId, '', fullName, jobTitle),
+          ...buildViewData(t, applicationId, fullName, jobTitle),
           error: t('pages.submitDeclaration.validation.fetchError')
         }).code(500)
     })
@@ -175,18 +166,11 @@ export const submitDeclarationPostController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    const organisationName = application.organisationName ?? ''
     const errors = validateDeclaration(fullName, jobTitle, t)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(h, {
-        ...buildViewData(
-          t,
-          applicationId,
-          organisationName,
-          fullName,
-          jobTitle
-        ),
+        ...buildViewData(t, applicationId, fullName, jobTitle),
         errors
       }).code(400)
     }
@@ -222,7 +206,6 @@ export const submitDeclarationPostController = {
     } catch (err) {
       return handleSubmitError(h, t, err, {
         applicationId,
-        organisationName,
         fullName,
         jobTitle,
         request
