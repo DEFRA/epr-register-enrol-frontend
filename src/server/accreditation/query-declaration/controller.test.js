@@ -12,6 +12,7 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { validateQueryDeclaration } from './controller.js'
+import { TEST_OPERATOR } from '../../common/helpers/auth/stub-auth-plugin.js'
 
 const APPLICATION_ID = 'app-query-002'
 
@@ -240,13 +241,36 @@ describe('#queryDeclarationController', () => {
         expect.stringContaining('/resubmit'),
         expect.objectContaining({
           fullName: 'Jane Doe',
-          email: 'operator@test.example',
+          email: TEST_OPERATOR.email,
           role: 'Manager'
         })
       )
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         '/operator-accreditation/test-operator-id/test-registration-id/Steel/2027'
+      )
+    })
+
+    test('ignores an email in the payload and uses the signed-in operator email', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const postSpy = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue(makeApplication({ applicationStatus: 'Updated' }))
+
+      await server.inject({
+        method: 'POST',
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Doe',
+          email: 'attacker@example.com',
+          role: 'Manager'
+        }
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/resubmit'),
+        expect.objectContaining({ email: TEST_OPERATOR.email })
       )
     })
 
