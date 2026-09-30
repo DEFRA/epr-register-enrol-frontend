@@ -325,7 +325,7 @@
       "heading": "[Welsh] Declaration",
       "declarationIntro": "[Welsh] By entering your name and submitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "[Welsh] you are a person with delegated authority who is eligible to submit this application on behalf of {organisationName}",
+        "eligiblePerson": "[Welsh] you are an approved person for your organisation OR an approved person has confirmed by email to your regulator that they authorise this submission",
         "accurateInformation": "[Welsh] the information you are submitting is accurate",
         "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading information"
       },
@@ -417,19 +417,18 @@
       "declarationSubHeading": "[Welsh] Declaration",
       "declarationIntro": "[Welsh] By entering your name and resubmitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "[Welsh] you are a person with delegated authority who is eligible to respond to this query on behalf of {organisationName}",
-        "accurateInformation": "[Welsh] the information you are submitting in response to the query is accurate",
+        "eligiblePerson": "[Welsh] you are an approved person for your organisation OR an approved person has confirmed by email to your regulator that they authorise this submission",
+        "accurateInformation": "[Welsh] the information you are submitting is accurate",
         "enforcementAction": "[Welsh] you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Rhowch eich enw llawn",
-      "emailLabel": "[Welsh] Enter your email address",
+      "fullNameHint": "[Welsh] This is your full name as it appears on this account",
       "roleLabel": "[Welsh] Enter your job title",
+      "roleHint": "[Welsh] This is your job title as it appears on this account",
       "resubmitButton": "[Welsh] Resubmit application",
       "successMessage": "[Welsh] Your application has been resubmitted to the regulator.",
       "validation": {
         "fullNameRequired": "Rhowch eich enw llawn",
-        "emailRequired": "[Welsh] Enter your email address",
-        "emailInvalid": "[Welsh] Enter an email address in the correct format, like name@example.com",
         "roleRequired": "[Welsh] Enter your job title",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
         "notQueriedError": "[Welsh] This application is no longer awaiting a response to a query.",

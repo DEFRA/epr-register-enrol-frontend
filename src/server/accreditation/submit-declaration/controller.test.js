@@ -90,7 +90,7 @@ describe('#submitDeclarationController', () => {
       expect(result).toContain('Declaration')
     })
 
-    test('renders the declaration intro and bulleted list, interpolating the organisation name', async () => {
+    test('renders the declaration intro and bulleted list', async () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
@@ -103,7 +103,7 @@ describe('#submitDeclarationController', () => {
       )
       expect(result).toContain('data-testid="declaration-bullets"')
       expect(result).toContain(
-        `eligible to submit this application on behalf of ${ORGANISATION_NAME}`
+        'you are an approved person for your organisation OR an approved person has confirmed by email to your regulator that they authorise this submission'
       )
       expect(result).toContain('the information you are submitting is accurate')
       expect(result).toContain(
