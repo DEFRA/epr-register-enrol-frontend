@@ -327,7 +327,7 @@
       "heading": "Declaration",
       "declarationIntro": "By entering your name and submitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "you are a person with delegated authority who is eligible to submit this application on behalf of {organisationName}",
+        "eligiblePerson": "you are an approved person for your organisation OR an approved person has confirmed by email to your regulator that they authorise this submission",
         "accurateInformation": "the information you are submitting is accurate",
         "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading information"
       },
@@ -419,19 +419,18 @@
       "declarationSubHeading": "Declaration",
       "declarationIntro": "By entering your name and resubmitting this application, you are verifying:",
       "bullets": {
-        "eligiblePerson": "you are a person with delegated authority who is eligible to respond to this query on behalf of {organisationName}",
-        "accurateInformation": "the information you are submitting in response to the query is accurate",
+        "eligiblePerson": "you are an approved person for your organisation OR an approved person has confirmed by email to your regulator that they authorise this submission",
+        "accurateInformation": "the information you are submitting is accurate",
         "enforcementAction": "you understand that you may face enforcement action if you submit false or misleading information"
       },
       "fullNameLabel": "Enter your full name",
-      "emailLabel": "Enter your email address",
+      "fullNameHint": "This is your full name as it appears on this account",
       "roleLabel": "Enter your job title",
+      "roleHint": "This is your job title as it appears on this account",
       "resubmitButton": "Resubmit application",
       "successMessage": "Your application has been resubmitted to the regulator.",
       "validation": {
         "fullNameRequired": "Enter your full name",
-        "emailRequired": "Enter your email address",
-        "emailInvalid": "Enter an email address in the correct format, like name@example.com",
         "roleRequired": "Enter your job title",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "notQueriedError": "This application is no longer awaiting a response to a query.",
@@ -795,6 +794,7 @@
         "rows": {
           "siteName": "Site name",
           "location": "Location",
+          "coordinates": "Coordinates",
           "contactName": "Contact name",
           "contactEmail": "Contact email",
           "contactPhone": "Contact phone number",
