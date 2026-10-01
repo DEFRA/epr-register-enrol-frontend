@@ -95,11 +95,11 @@
             </h2>
           </div>
           <div class="govuk-notification-banner__content">
-            <p class="govuk-body">
+            <div class="govuk-body">
               {{ t('pages.selectOverseasSites.interimSite.withdrawnBanner.body') }}
               <strong data-testid="withdrawn-interim-site-name">{{ withdrawnInterimSite.siteName }}</strong>.
               {% if not readOnly %}
-                <form method="post" style="display:inline" data-testid="undo-withdraw-form">
+                <form method="post" class="select-overseas-sites-undo-form" data-testid="undo-withdraw-form">
                   <input type="hidden" name="crumb" value="{{ crumb }}">
                   <input type="hidden" name="interimSiteId" value="{{ withdrawnInterimSite.interimSiteId }}">
                   <button type="submit" name="submitAction" value="restoreInterimSite"
@@ -109,7 +109,7 @@
                   </button>
                 </form>
               {% endif %}
-            </p>
+            </div>
           </div>
         </div>
       {% endif %}
