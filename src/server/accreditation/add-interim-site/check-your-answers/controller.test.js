@@ -312,6 +312,38 @@ describe('#addInterimSiteCyaController', () => {
       expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
+    // The refused answers can never be saved, so they must not linger to
+    // pre-fill the next "Add interim site": the CYA page has nothing to show.
+    test('clears the wizard answers when the save is refused with a 409', async () => {
+      const err = Object.assign(new Error('conflict'), { status: 409 })
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockRejectedValue(
+        err
+      )
+
+      const refused = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          Cookie: cookiesFrom(refused) || cookie
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+    })
+
     // Multiple interim sites off: the create is held to one per ORS against a
     // fresh read, whichever page the operator came in from. 555 is the ORS the
     // session was linked to in beforeEach.

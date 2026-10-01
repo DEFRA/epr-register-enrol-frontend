@@ -283,8 +283,11 @@ export const addInterimSiteCyaPostController = {
       // above and this write landing — send the operator back to the
       // section's own (now read-only) list page rather than a raw error.
       // InterimSiteLimitError takes the same path: the list is where the
-      // interim site already on this ORS can be seen.
+      // interim site already on this ORS can be seen. The answers can never
+      // be saved now, so they are cleared rather than left to pre-fill the
+      // next "Add interim site".
       if (err.status === statusCodes.conflict) {
+        clearAddInterimSiteSession(request)
         return h.redirect(selectOverseasSitesUrl(applicationId))
       }
       return renderPage(
