@@ -107,3 +107,9 @@
     margin-bottom: 0;
   }
 }
+
+// The withdrawn banner's Undo button sits on the same line as its message. An
+// inline style attribute would be blocked by the CSP, so it lives here.
+.select-overseas-sites-undo-form {
+  display: inline;
+}

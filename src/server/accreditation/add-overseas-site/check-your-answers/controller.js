@@ -14,6 +14,7 @@ import {
 } from '../../../common/helpers/addInterimSiteSession.js'
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
+import { siteCanTakeInterimSite } from '../../../common/helpers/interimSiteLimit.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
@@ -191,12 +192,19 @@ function cyaBackLink(applicationId, session) {
     : repatriatedLoadsUrl(applicationId)
 }
 
-function buildViewData(t, applicationId, session, error) {
+function buildViewData(
+  t,
+  applicationId,
+  session,
+  error,
+  showAddInterimSiteButton = true
+) {
   return {
     pageTitle: t('pages.addOverseasSite.cya.title'),
     heading: t('pages.addOverseasSite.cya.heading'),
     submitButton: t('pages.addOverseasSite.cya.submitButton'),
     addInterimSiteButton: t('pages.addOverseasSite.cya.addInterimSiteButton'),
+    showAddInterimSiteButton,
     cancelLink: t('pages.addOverseasSite.cya.cancelLink'),
     backLink: cyaBackLink(applicationId, session),
     cancelUrl: selectOrsUrl(applicationId),
@@ -250,6 +258,26 @@ function handleDeleteBaselCode(request, h, session, action, applicationId) {
   return h.redirect(cyaUrl(applicationId))
 }
 
+// RA-603: with multiple interim sites off an ORS may hold one, so "Save and add
+// interim site" is only offered while the ORS has none. A brand-new ORS always
+// qualifies; an edited or promoted one is checked against the application.
+// Fails open - the interim site create re-checks the limit before it writes,
+// so a failed read here costs a button, not the rule.
+async function interimSiteAllowed(organisationId, applicationId, siteId) {
+  if (siteId == null) {
+    return true
+  }
+  try {
+    return await siteCanTakeInterimSite({
+      organisationId,
+      applicationId,
+      siteId
+    })
+  } catch {
+    return true
+  }
+}
+
 export const addOrsCyaGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -269,7 +297,15 @@ export const addOrsCyaGetController = {
     }
 
     const session = getAddOrsSession(request)
-    return renderPage(h, buildViewData(t, applicationId, session, null))
+    const showAddInterimSiteButton = await interimSiteAllowed(
+      organisationId,
+      applicationId,
+      session.editingSiteId ?? session.promotingSiteId
+    )
+    return renderPage(
+      h,
+      buildViewData(t, applicationId, session, null, showAddInterimSiteButton)
+    )
   }
 }
 
@@ -381,7 +417,16 @@ export const addOrsCyaPostController = {
 
     clearAddOrsSession(request)
 
-    if (action === ADD_INTERIM_SITE_ACTION) {
+    // The button is hidden when the ORS may not take another interim site, but
+    // a stale page can still post it; that case saves the ORS like "Confirm".
+    if (
+      action === ADD_INTERIM_SITE_ACTION &&
+      (await interimSiteAllowed(
+        organisationId,
+        applicationId,
+        savedSite?.siteId
+      ))
+    ) {
       resetAddInterimSiteSession(request)
       setAddInterimSiteSession(request, { linkedSiteId: savedSite?.siteId })
       return h.redirect(addInterimSiteCountryUrl(applicationId))
