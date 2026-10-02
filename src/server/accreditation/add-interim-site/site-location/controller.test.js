@@ -286,4 +286,47 @@ describe('#addInterimSiteLocationController', () => {
       expect(result).toContain('Enter the town or city')
     })
   })
+
+  // RA-620: every limit mirrors the backend's validator, so the value one past
+  // it is refused here, inline, rather than as a 400 at check-your-answers.
+  describe('RA-620: backend length limits', () => {
+    const limitPostHeaders = {
+      'x-test-user-type': 'operator',
+      'content-type': 'application/x-www-form-urlencoded'
+    }
+    const postForm = (fields) =>
+      server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: limitPostHeaders,
+        payload: new URLSearchParams(fields).toString()
+      })
+
+    const validFields = Object.fromEntries(new URLSearchParams(VALID_PAYLOAD))
+
+    test.each([
+      ['addressLine1', 200, 'Address line 1 must be 200 characters or less'],
+      ['addressLine2', 200, 'Address line 2 must be 200 characters or less'],
+      ['townOrCity', 100, 'Town or city must be 100 characters or less'],
+      ['stateOrRegion', 100, 'State or region must be 100 characters or less'],
+      ['postcode', 20, 'Postcode must be 20 characters or less']
+    ])(
+      '%s: accepts %i characters and refuses one more',
+      async (field, max, message) => {
+        const atLimit = await postForm({
+          ...validFields,
+          [field]: 'a'.repeat(max)
+        })
+        expect(atLimit.statusCode).toBe(statusCodes.redirect)
+
+        const overLimit = await postForm({
+          ...validFields,
+          [field]: 'a'.repeat(max + 1)
+        })
+        expect(overLimit.statusCode).toBe(statusCodes.badRequest)
+        expect(overLimit.result).toContain('data-testid="error-summary"')
+        expect(overLimit.result).toContain(message)
+      }
+    )
+  })
 })

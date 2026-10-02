@@ -6,6 +6,10 @@ import {
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 import { COUNTRIES } from '../../../common/data/countries.js'
+import {
+  SITE_FIELD_MAX_LENGTHS,
+  exceedsMaxLength
+} from '../../../common/constants/siteFieldLimits.js'
 
 const MIN_LATITUDE = -90
 const MAX_LATITUDE = 90
@@ -188,8 +192,26 @@ function validateCoordinates(t, coordinates) {
   return t(`pages.addOverseasSite.siteLocation.validation.${key}`)
 }
 
+// RA-620: only the fields sent to the backend - stateOrRegion and postcode are
+// collected on this page but are not part of the overseas site payload.
+const MAX_LENGTH_RULES = [
+  ['addressLine1', SITE_FIELD_MAX_LENGTHS.addressLine, 'addressLine1TooLong'],
+  ['addressLine2', SITE_FIELD_MAX_LENGTHS.addressLine, 'addressLine2TooLong'],
+  ['townOrCity', SITE_FIELD_MAX_LENGTHS.townOrCity, 'townOrCityTooLong'],
+  ['country', SITE_FIELD_MAX_LENGTHS.country, 'countryTooLong']
+]
+
+function addMaxLengthErrors(t, fields, errors) {
+  for (const [field, maxLength, key] of MAX_LENGTH_RULES) {
+    if (!errors[field] && exceedsMaxLength(fields[field], maxLength)) {
+      errors[field] = t(`pages.addOverseasSite.siteLocation.validation.${key}`)
+    }
+  }
+}
+
 function validateSiteLocationFields(t, fields) {
   const errors = validateRequiredFields(t, fields)
+  addMaxLengthErrors(t, fields, errors)
   const coordinatesError = validateCoordinates(t, fields.coordinates)
   if (coordinatesError) {
     errors.coordinates = coordinatesError

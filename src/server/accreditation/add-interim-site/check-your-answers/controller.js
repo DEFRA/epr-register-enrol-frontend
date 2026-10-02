@@ -6,6 +6,7 @@ import {
   getAddInterimSiteSession,
   clearAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
+import { describeSiteSaveValidationError } from '../../../common/helpers/logging/describe-site-save-validation-error.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 
 export const INTERIM_SITE_SUCCESS_FLASH = 'interimSiteSuccess'
@@ -255,7 +256,7 @@ export const addInterimSiteCyaPostController = {
         request.server.logger,
         err,
         {},
-        'Interim site CYA createInterimSite error'
+        `Interim site CYA createInterimSite error for application ${applicationId}${describeSiteSaveValidationError(err, sitePayload)}`
       )
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the

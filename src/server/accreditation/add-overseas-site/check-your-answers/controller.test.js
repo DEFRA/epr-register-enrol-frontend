@@ -1060,6 +1060,55 @@ describe('#addOrsCyaController', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
+
+    // RA-620: the two production 400s from promoteOverseasSite logged only
+    // "API request failed: 400 Bad Request", so nobody could tell which field
+    // the backend refused.
+    test('logs the fields the backend rejected, and the payload shape, without any submitted values', async () => {
+      const sessionCookie = await seedPromoteSession()
+      const attemptedPhone = '+44 (0)20 7946 0000 9876 543210'
+      const err = new Error('API request failed: 400 Bad Request')
+      err.status = statusCodes.badRequest
+      err.response = JSON.stringify([
+        {
+          propertyName: 'ContactPhone',
+          errorMessage:
+            "The length of 'Contact Phone' must be 30 characters or fewer. You entered 31 characters.",
+          attemptedValue: attemptedPhone,
+          errorCode: 'MaximumLengthValidator'
+        }
+      ])
+      vi.spyOn(
+        accreditationApiService,
+        'promoteOverseasSite'
+      ).mockRejectedValue(err)
+      const errorLog = vi.spyOn(server.logger, 'error')
+
+      await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: ''
+      })
+
+      const [, message] = errorLog.mock.calls.find(([, text]) =>
+        text.startsWith('CYA site save error (promoteOverseasSite)')
+      )
+      expect(message).toContain(
+        "validation failed: ContactPhone (MaximumLengthValidator: The length of 'Contact Phone' must be 30 characters or fewer. You entered 31 characters.)"
+      )
+      expect(message).toContain('siteName: 15 chars')
+      expect(message).toContain('contactEmail: 16 chars')
+      expect(message).toContain('code2: null')
+      expect(message).toContain('operationCodes: 1 items')
+      expect(message).not.toContain(attemptedPhone)
+      expect(message).not.toContain('jane@example.com')
+      expect(message).not.toContain('Registered Site')
+    })
   })
 
   describe('POST — arriving via the edit (Change) entry point', () => {

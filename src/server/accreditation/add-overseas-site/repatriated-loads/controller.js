@@ -5,6 +5,10 @@ import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
+import {
+  SITE_FIELD_MAX_LENGTHS,
+  exceedsMaxLength
+} from '../../../common/constants/siteFieldLimits.js'
 
 const STEEL_ALU_MATERIALS = new Set(['Steel', 'Aluminium'])
 
@@ -122,6 +126,27 @@ export const addOrsRepatriatedLoadsPostController = {
           applicationId,
           repatriatedLoads,
           t('pages.addOverseasSite.repatriatedLoads.validation.tooManyWords')
+        )
+      ).code(400)
+    }
+
+    // RA-620: 500 words can still run past the backend's 5000-character cap
+    // (long words, or a pasted list with heavy punctuation), so both apply.
+    if (
+      exceedsMaxLength(
+        repatriatedLoads,
+        SITE_FIELD_MAX_LENGTHS.repatriatedLoads
+      )
+    ) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          repatriatedLoads,
+          t(
+            'pages.addOverseasSite.repatriatedLoads.validation.tooManyCharacters'
+          )
         )
       ).code(400)
     }

@@ -6,6 +6,10 @@ import {
   setAddOrsSession,
   resetAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
+import {
+  SITE_FIELD_MAX_LENGTHS,
+  exceedsMaxLength
+} from '../../../common/constants/siteFieldLimits.js'
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -92,6 +96,18 @@ export const addOrsiteNamePostController = {
           applicationId,
           '',
           t('pages.addOverseasSite.siteName.validation.required')
+        )
+      ).code(400)
+    }
+
+    if (exceedsMaxLength(siteName, SITE_FIELD_MAX_LENGTHS.siteName)) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          siteName,
+          t('pages.addOverseasSite.siteName.validation.tooLong')
         )
       ).code(400)
     }

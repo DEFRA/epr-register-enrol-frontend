@@ -253,4 +253,35 @@ describe('#addOrsRepatriatedLoadsController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
     })
   })
+
+  // RA-620: every limit mirrors the backend's validator, so the value one past
+  // it is refused here, inline, rather than as a 400 at check-your-answers.
+  describe('RA-620: backend length limits', () => {
+    const limitPostHeaders = {
+      'x-test-user-type': 'operator',
+      'content-type': 'application/x-www-form-urlencoded'
+    }
+    const postForm = (fields) =>
+      server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: limitPostHeaders,
+        payload: new URLSearchParams(fields).toString()
+      })
+
+    test('accepts 5000 characters', async () => {
+      const { statusCode } = await postForm({
+        repatriatedLoads: 'a'.repeat(5000)
+      })
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('refuses 5001 characters even when under the 500-word limit', async () => {
+      const text = 'a'.repeat(5001)
+      const { statusCode, result } = await postForm({ repatriatedLoads: text })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Description must be 5,000 characters or less')
+      expect(result).toContain(text)
+    })
+  })
 })

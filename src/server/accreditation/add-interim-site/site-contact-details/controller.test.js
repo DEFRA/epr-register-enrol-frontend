@@ -325,4 +325,47 @@ describe('#addInterimSiteContactDetailsController', () => {
       expect(statusCode).toBe(statusCodes.redirect)
     })
   })
+
+  // RA-620: every limit mirrors the backend's validator, so the value one past
+  // it is refused here, inline, rather than as a 400 at check-your-answers.
+  describe('RA-620: backend length limits', () => {
+    const limitPostHeaders = {
+      'x-test-user-type': 'operator',
+      'content-type': 'application/x-www-form-urlencoded'
+    }
+    const postForm = (fields) =>
+      server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: limitPostHeaders,
+        payload: new URLSearchParams(fields).toString()
+      })
+
+    const validFields = Object.fromEntries(new URLSearchParams(VALID_PAYLOAD))
+
+    test.each([7, 20])(
+      'accepts a %i-character phone number',
+      async (length) => {
+        const { statusCode } = await postForm({
+          ...validFields,
+          siteContactPhone: '1'.repeat(length)
+        })
+        expect(statusCode).toBe(statusCodes.redirect)
+      }
+    )
+
+    test.each([6, 21])(
+      'refuses a %i-character phone number inline',
+      async (length) => {
+        const { statusCode, result } = await postForm({
+          ...validFields,
+          siteContactPhone: '1'.repeat(length)
+        })
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(result).toContain(
+          'Phone number must be between 7 and 20 characters, not counting a + at the start'
+        )
+      }
+    )
+  })
 })

@@ -311,6 +311,45 @@ describe('#addInterimSiteCyaController', () => {
       expect(headers.location).toBe(SELECT_ORS_URL)
     })
 
+    // RA-620: same diagnosability gap as the overseas site save.
+    test('logs the fields the backend rejected when createInterimSite returns a 400', async () => {
+      const err = Object.assign(new Error('API request failed: 400'), {
+        status: 400,
+        response: JSON.stringify([
+          {
+            propertyName: 'ContactPhone',
+            errorMessage: 'ContactPhone must be a valid phone number.',
+            attemptedValue: '+44 1234 5678 9012 3456',
+            errorCode: 'RegularExpressionValidator'
+          }
+        ])
+      })
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockRejectedValue(
+        err
+      )
+      const errorLog = vi.spyOn(server.logger, 'error')
+
+      await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      const [, message] = errorLog.mock.calls.find(([, text]) =>
+        text.startsWith('Interim site CYA createInterimSite error')
+      )
+      expect(message).toContain(
+        'validation failed: ContactPhone (RegularExpressionValidator: ContactPhone must be a valid phone number.)'
+      )
+      expect(message).toContain('contactPhone: ')
+      expect(message).not.toContain('+44 1234 5678 9012 3456')
+    })
+
     test('renders error when API call fails', async () => {
       vi.spyOn(accreditationApiService, 'createInterimSite').mockRejectedValue(
         new Error('API error')
