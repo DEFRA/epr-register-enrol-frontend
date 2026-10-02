@@ -731,6 +731,266 @@ describe('basel/OECD code type-ahead client validation', () => {
   })
 })
 
+// RA-268/RA-361. Mirrors what govukCharacterCount actually renders: ONE div
+// carries BOTH govuk-form-group and govuk-character-count (govukTextarea's
+// formGroup.classes is merged onto its own wrapping div, not a separate
+// nested wrapper — confirmed against node_modules/govuk-frontend/dist/govuk/
+// components/{character-count,textarea}/template.njk), with data-module and
+// data-maxlength/data-maxwords on that same div, label/hint/error message/
+// textarea/count-message as its direct children. Close enough for both
+// govuk-frontend's own CharacterCount module and
+// initCharacterCountLiveErrorClearing to find what they each need: the
+// "{id}-info" element (CharacterCount throws if that's missing), and, when
+// errorType is given, a .govuk-error-message carrying data-error-type and
+// referenced from the textarea's aria-describedby — exactly how
+// business-plan-detail and repatriated-loads wire theirs up via
+// buildTextareaInputs/buildTextareaInput.
+function renderCharacterCountField({
+  id,
+  limitAttr = 'data-maxlength="500"',
+  errorType
+}) {
+  const errorId = `${id}-error`
+  const errorHtml = errorType
+    ? `<p class="govuk-error-message" id="${errorId}" data-error-type="${errorType}">Too long</p>`
+    : ''
+  const describedBy = [`${id}-hint`, `${id}-info`, errorType ? errorId : null]
+    .filter(Boolean)
+    .join(' ')
+
+  document.body.innerHTML = `
+    <div class="govuk-form-group govuk-character-count${errorType ? ' govuk-form-group--error' : ''}"
+         data-module="govuk-character-count" ${limitAttr}>
+      <label class="govuk-label" for="${id}">Label</label>
+      <div id="${id}-hint" class="govuk-hint">Hint</div>
+      ${errorHtml}
+      <textarea class="govuk-textarea govuk-js-character-count${errorType ? ' govuk-textarea--error' : ''}"
+                id="${id}" name="${id}" rows="5"
+                aria-describedby="${describedBy}"></textarea>
+      <div id="${id}-info" class="govuk-hint govuk-character-count__message"></div>
+    </div>
+  `
+}
+
+describe('character-count live error clearing', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('does nothing when no field carries a length-type error', async () => {
+    renderCharacterCountField({ id: 'field' })
+    await expect(loadApplication()).resolves.toBeDefined()
+
+    const textarea = document.getElementById('field')
+    // No error was ever rendered, so typing (in either direction) must not
+    // conjure one up — the clearing logic only ever removes, never adds.
+    expect(() => typeInto(textarea, 'a'.repeat(600))).not.toThrow()
+    expect(document.getElementById('field-error')).toBeNull()
+  })
+
+  it('clears a too-long character error once the value is reduced back within the limit', async () => {
+    renderCharacterCountField({
+      id: 'field',
+      limitAttr: 'data-maxlength="10"',
+      errorType: 'length'
+    })
+    await loadApplication()
+    const textarea = document.getElementById('field')
+    const formGroup = textarea.closest('.govuk-form-group')
+
+    typeInto(textarea, 'still too long')
+    expect(document.getElementById('field-error')).not.toBeNull()
+
+    typeInto(textarea, 'short')
+
+    expect(document.getElementById('field-error')).toBeNull()
+    expect(formGroup.classList.contains('govuk-form-group--error')).toBe(false)
+    expect(textarea.classList.contains('govuk-textarea--error')).toBe(false)
+    // The hint and count-message ids survive; only the removed error's own
+    // id is stripped out.
+    expect(textarea.getAttribute('aria-describedby')).toBe(
+      'field-hint field-info'
+    )
+  })
+
+  // CharacterCount's own JS decides once, in its constructor, whether it
+  // will ever toggle govuk-textarea--error, based on whether a server error
+  // element existed at that point — having found one, it defers permanently
+  // and never revisits that decision, even after this code removes the
+  // element. So re-applying the class on the way back over the limit can't
+  // be left to it; this has to keep doing it itself for the lifetime of the
+  // field, not just the one time the error first clears.
+  it('re-applies the error styling if the value goes back over the limit after clearing', async () => {
+    renderCharacterCountField({
+      id: 'field',
+      limitAttr: 'data-maxlength="10"',
+      errorType: 'length'
+    })
+    await loadApplication()
+    const textarea = document.getElementById('field')
+    const formGroup = textarea.closest('.govuk-form-group')
+
+    typeInto(textarea, 'still too long')
+    typeInto(textarea, 'short')
+    expect(textarea.classList.contains('govuk-textarea--error')).toBe(false)
+    expect(formGroup.classList.contains('govuk-form-group--error')).toBe(false)
+
+    typeInto(textarea, 'too long again')
+
+    expect(textarea.classList.contains('govuk-textarea--error')).toBe(true)
+    expect(formGroup.classList.contains('govuk-form-group--error')).toBe(true)
+    // The removed error message paragraph itself is gone for good — there's
+    // no server text to restore, and the live count next to it already
+    // says the field is over the limit again.
+    expect(document.getElementById('field-error')).toBeNull()
+  })
+
+  it('leaves the error alone while the value is still over the limit', async () => {
+    renderCharacterCountField({
+      id: 'field',
+      limitAttr: 'data-maxlength="10"',
+      errorType: 'length'
+    })
+    await loadApplication()
+    const textarea = document.getElementById('field')
+
+    typeInto(textarea, 'this is definitely too long')
+
+    expect(document.getElementById('field-error')).not.toBeNull()
+  })
+
+  it('counts words, not characters, for a maxwords field', async () => {
+    renderCharacterCountField({
+      id: 'field',
+      limitAttr: 'data-maxwords="3"',
+      errorType: 'length'
+    })
+    await loadApplication()
+    const textarea = document.getElementById('field')
+
+    // 4 words, still over the 3-word limit even though it's short in
+    // characters — proves this counts words when maxwords is set, the same
+    // way govuk-frontend's own CharacterCount does.
+    typeInto(textarea, 'one two three four')
+    expect(document.getElementById('field-error')).not.toBeNull()
+
+    typeInto(textarea, 'one two three')
+    expect(document.getElementById('field-error')).toBeNull()
+  })
+
+  // RA-268: the "required" error shares the same errorMessage slot, inside
+  // the same .govuk-character-count wrapper, as the "too long" one on
+  // business-plan-detail — but it's a different rule entirely and, per
+  // buildTextareaInputs, carries no data-error-type. Typing must never clear
+  // it purely by being under the length limit; only a fresh submit
+  // re-validates it server-side.
+  it('never clears an error with no data-error-type="length", regardless of length', async () => {
+    renderCharacterCountField({ id: 'field' })
+    document
+      .querySelector('.govuk-textarea')
+      .insertAdjacentHTML(
+        'beforebegin',
+        '<p class="govuk-error-message" id="field-required">Required</p>'
+      )
+    await loadApplication()
+    const textarea = document.getElementById('field')
+
+    typeInto(textarea, 'anything at all')
+
+    expect(document.getElementById('field-required')).not.toBeNull()
+  })
+
+  // Defensive: a root with neither data-maxlength nor data-maxwords set to a
+  // real number (malformed markup, or a future maxwords-less/limitless use of
+  // govukCharacterCount carrying a stray data-error-type="length" for some
+  // other reason) must not crash and must not touch an error it has no
+  // reliable way to judge the length of.
+  it('does nothing for a field whose limit attribute is missing or not a number', async () => {
+    renderCharacterCountField({
+      id: 'field',
+      limitAttr: 'data-maxlength="not-a-number"',
+      errorType: 'length'
+    })
+    await expect(loadApplication()).resolves.toBeDefined()
+    const textarea = document.getElementById('field')
+
+    expect(() => typeInto(textarea, 'short')).not.toThrow()
+    expect(document.getElementById('field-error')).not.toBeNull()
+  })
+
+  // Isolation: business-plan-detail renders up to seven of these fields on
+  // one page. Fixing one must not touch a sibling's still-broken error —
+  // each field's clearing is wired to its own textarea, error and limit,
+  // not shared global state.
+  it('clears one field without disturbing a second, independently-errored field on the same page', async () => {
+    renderCharacterCountField({
+      id: 'field-a',
+      limitAttr: 'data-maxlength="10"',
+      errorType: 'length'
+    })
+    const fieldAHtml = document.body.innerHTML
+    renderCharacterCountField({
+      id: 'field-b',
+      limitAttr: 'data-maxlength="10"',
+      errorType: 'length'
+    })
+    document.body.innerHTML = fieldAHtml + document.body.innerHTML
+
+    await loadApplication()
+    const fieldA = document.getElementById('field-a')
+    const fieldB = document.getElementById('field-b')
+    typeInto(fieldA, 'way too long for a')
+    typeInto(fieldB, 'way too long for b')
+    expect(document.getElementById('field-a-error')).not.toBeNull()
+    expect(document.getElementById('field-b-error')).not.toBeNull()
+
+    typeInto(fieldA, 'short')
+
+    expect(document.getElementById('field-a-error')).toBeNull()
+    // field-b was never touched, and its own value is still over its own
+    // limit, so its error must survive untouched.
+    expect(document.getElementById('field-b-error')).not.toBeNull()
+  })
+
+  // The tests above hand-build the DOM govukCharacterCount renders, to
+  // isolate initCharacterCountLiveErrorClearing from govuk-frontend's own
+  // CharacterCount (which jsdom's isSupported() check blocks by default —
+  // see the SupportError logged at the top of this file's output). This one
+  // instead turns CharacterCount on for real (the same
+  // govuk-frontend-supported class a real page's <body> carries) and drives
+  // the two together, because the two working correctly in isolation is not
+  // the same claim as the two working correctly TOGETHER on the one root
+  // element govuk-frontend actually renders — the earlier tests could not
+  // have shown a real regression where CharacterCount's own DOM mutations
+  // moved or renamed something this clearing logic depends on finding.
+  it('works alongside the real govuk-frontend CharacterCount module, not just a hand-built stand-in', async () => {
+    document.body.classList.add('govuk-frontend-supported')
+    renderCharacterCountField({
+      id: 'field',
+      limitAttr: 'data-maxlength="10"',
+      errorType: 'length'
+    })
+    await loadApplication()
+    const textarea = document.getElementById('field')
+    const statusMessage = document.querySelector(
+      '.govuk-character-count__status'
+    )
+
+    typeInto(textarea, 'still too long')
+
+    // The real component's own live counter is running.
+    expect(statusMessage.textContent).toContain('too many')
+    expect(document.getElementById('field-error')).not.toBeNull()
+
+    typeInto(textarea, 'short')
+
+    // Both update: govuk-frontend's own message switches to "remaining",
+    // and the server-rendered error this repo adds is cleared alongside it.
+    expect(statusMessage.textContent).toContain('remaining')
+    expect(document.getElementById('field-error')).toBeNull()
+  })
+})
+
 describe('#country field enhancement', () => {
   beforeEach(() => {
     document.body.innerHTML = ''
