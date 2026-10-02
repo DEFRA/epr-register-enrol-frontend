@@ -21,6 +21,23 @@ export const DETAIL_FIELDS = BUSINESS_PLAN_DETAIL_FIELDS
 
 const MAX_CHARS = 500
 
+// A native <textarea maxlength="500"> counts a line break as a single "\n"
+// character — that's what the browser enforces while the operator is
+// typing, and it's what the GOV.UK character-count JS enhancement counts too
+// (it reads textarea.value.length, and a DOM textarea's value never contains
+// "\r"). But per the HTML forms spec, when the browser BUILDS the submitted
+// request body it normalises every line break in a textarea's value to CRLF
+// ("\r\n") before percent-encoding it — see "5.1 application/x-www-form-
+// urlencoded encoding algorithm" in the HTML Living Standard. So a value the
+// operator typed at exactly the 500-character limit arrives here longer by
+// one extra character per line break it contains, and a raw `.length` check
+// rejects text the operator was never able to exceed. Normalising back to
+// LF-only here is what makes the server count the same way the browser (and
+// its own maxlength attribute) already did.
+function normaliseNewlines(value) {
+  return (value ?? '').replace(/\r\n|\r/g, '\n')
+}
+
 export function validateDetailFields(payload, t, application) {
   const errors = {}
 
@@ -33,14 +50,19 @@ export function validateDetailFields(payload, t, application) {
       }
     }
 
-    const value = payload[field] ?? ''
+    const value = normaliseNewlines(payload[field])
     if (value.length > MAX_CHARS) {
       const label = t(`pages.businessPlanDetail.fields.${field}`)
       errors[field] = {
         text: t('pages.businessPlanDetail.validation.tooLong').replace(
           '{field}',
           label
-        )
+        ),
+        // RA-268: distinguishes this from the "required" error below, which
+        // shares the same errorMessage slot in buildTextareaInputs but isn't
+        // a length rule — see the comment there for why that distinction
+        // matters to the client.
+        tooLong: true
       }
     } else if (application && !value.trim()) {
       errors[field] = {
@@ -52,7 +74,38 @@ export function validateDetailFields(payload, t, application) {
   return errors
 }
 
-export function buildTextareaInputs(payload, errors, t, application) {
+// RA-268: each field is handed to GOV.UK Frontend's own govukCharacterCount
+// macro (already used the same way on withdraw-application's reason field),
+// so the keys here are macro parameter names, not free-form view data. The
+// macro's JS progressively enhances the textarea into a live "characters
+// remaining"/"characters too many" counter that updates on every keystroke,
+// entirely client-side and before any submit. That is on top of, never
+// instead of, the server-side check in validateDetailFields: the macro puts
+// `maxlength` on the wrapper as a `data-maxlength` attribute for its own JS
+// to read, never as a `maxlength` attribute on the textarea itself, so
+// without JS there is no client-side cap at all — validateDetailFields is
+// the only real gate.
+//
+// The live counter updating is NOT the same as the error going away, though —
+// govuk-frontend's CharacterCount deliberately never removes a server-
+// rendered .govuk-error-message it finds on the page (it reads it once, in
+// its constructor, purely to decide whether to also toggle error styling on
+// the textarea itself, and never touches it again). So without more, an
+// operator who reduces back under the limit sees the live count correctly
+// say "0 characters remaining" right next to a static error paragraph still
+// insisting the field is too long — which is the bug reported after this
+// first shipped. `data-error-type="length"` on that paragraph (only for the
+// tooLong case, never for the unrelated "required" error below, which
+// shares this same slot but isn't fixed by typing up to the limit) is what
+// lets application.js's initCharacterCountLiveErrorClearing find and clear
+// it once the operator is back within the limit — finishing what the
+// component's own JS deliberately leaves undone.
+//
+// `disabled` has to live under `attributes`, not as a top-level macro param:
+// character-count/template.njk builds its own govukTextarea({...}) call and
+// doesn't forward a top-level `disabled` key, so one set there is silently
+// dropped and the field stays editable on a locked application.
+export function buildTextareaInputs(payload, errors, t, application, readOnly) {
   const fields = application
     ? DETAIL_FIELDS.filter((field) => {
         const category = DETAIL_FIELD_TO_CATEGORY[field]
@@ -64,11 +117,23 @@ export function buildTextareaInputs(payload, errors, t, application) {
   return fields.map((field) => ({
     id: field,
     name: field,
-    value: payload[field] ?? '',
-    label: t(`pages.businessPlanDetail.fields.${field}`),
-    hint: t('pages.businessPlanDetail.characterCountHint'),
+    value: normaliseNewlines(payload[field]),
+    label: { text: t(`pages.businessPlanDetail.fields.${field}`) },
     maxlength: MAX_CHARS,
-    errorMessage: errors[field] ? { text: errors[field].text } : undefined
+    errorMessage: errors[field]
+      ? {
+          text: errors[field].text,
+          attributes: {
+            'data-testid': `field-error-${field}`,
+            ...(errors[field].tooLong ? { 'data-error-type': 'length' } : {})
+          }
+        }
+      : undefined,
+    attributes: {
+      'data-testid': `textarea-${field}`,
+      ...(readOnly ? { disabled: true } : {})
+    },
+    formGroup: { attributes: { 'data-testid': `field-group-${field}` } }
   }))
 }
 
@@ -108,7 +173,13 @@ function buildViewData(
     intro: t('pages.businessPlanDetail.intro'),
     backLink: businessPlanUrl(applicationId),
     taskListLink: taskListUrl(applicationId),
-    textareaInputs: buildTextareaInputs(payload, errors, t, application),
+    textareaInputs: buildTextareaInputs(
+      payload,
+      errors,
+      t,
+      application,
+      readOnly
+    ),
     errors,
     readOnly,
     isQueriedApplication
@@ -263,7 +334,7 @@ export const businessPlanDetailPostController = {
 
     const patchBody = {}
     for (const field of DETAIL_FIELDS) {
-      patchBody[field] = fieldPayload[field] ?? ''
+      patchBody[field] = normaliseNewlines(fieldPayload[field])
     }
     if (isSaveAndComeLater) {
       patchBody.sectionStatus = 'InProgress'

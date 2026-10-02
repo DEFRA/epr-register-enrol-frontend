@@ -1,4 +1,5 @@
 {% extends "layouts/page.njk" %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -52,30 +53,19 @@
       <form method="post" novalidate>
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
+        {# RA-268: govukCharacterCount progressively enhances this into a live
+           "characters remaining"/"characters too many" counter (GOV.UK
+           Frontend's own character-count.js, already loaded in
+           application.js and already used the same way by
+           withdraw-application's reason field) that updates, and clears
+           itself, on every keystroke — before the operator ever submits.
+           validateDetailFields on the server is still the real gate; this is
+           the same 500-character rule surfaced earlier. textareaInputs
+           already carries every macro param (id/name/value/label/hint/
+           maxlength/errorMessage/attributes/formGroup) built in
+           controller.js#buildTextareaInputs. #}
         {% for textarea in textareaInputs %}
-          <div class="govuk-form-group {% if textarea.errorMessage %}govuk-form-group--error{% endif %}" data-testid="field-group-{{ textarea.id }}">
-            <label class="govuk-label" for="{{ textarea.id }}">
-              {{ textarea.label }}
-            </label>
-            <div id="{{ textarea.id }}-hint" class="govuk-hint">
-              {{ textarea.hint }}
-            </div>
-            {% if textarea.errorMessage %}
-              <p id="{{ textarea.id }}-error" class="govuk-error-message" data-testid="field-error-{{ textarea.id }}">
-                <span class="govuk-visually-hidden">Error:</span>
-                {{ textarea.errorMessage.text }}
-              </p>
-            {% endif %}
-            <textarea
-              class="govuk-textarea {% if textarea.errorMessage %}govuk-textarea--error{% endif %}"
-              id="{{ textarea.id }}"
-              name="{{ textarea.name }}"
-              rows="5"
-              maxlength="{{ textarea.maxlength }}"
-              aria-describedby="{{ textarea.id }}-hint{% if textarea.errorMessage %} {{ textarea.id }}-error{% endif %}"
-              {% if readOnly %}disabled{% endif %}
-              data-testid="textarea-{{ textarea.id }}">{{ textarea.value }}</textarea>
-          </div>
+          {{ govukCharacterCount(textarea) }}
         {% endfor %}
 
         {% if not readOnly %}

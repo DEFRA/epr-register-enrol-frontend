@@ -1,4 +1,5 @@
 {% extends "layouts/page.njk" %}
+{% from "govuk/components/character-count/macro.njk" import govukCharacterCount %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -21,23 +22,15 @@
       <form method="post">
         <input type="hidden" name="crumb" value="{{ crumb }}">
 
-        <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="repatriated-loads">{{ label }}</label>
-          {% if hint %}
-            <div class="govuk-hint">{{ hint }}</div>
-          {% endif %}
-          {% if error %}
-            <p class="govuk-error-message"><span class="govuk-visually-hidden">Error:</span> {{ error }}</p>
-          {% endif %}
-          <textarea class="govuk-textarea{% if error %} govuk-textarea--error{% endif %}"
-                    id="repatriated-loads"
-                    name="repatriatedLoads"
-                    rows="8"
-                    data-testid="repatriated-loads-textarea">{{ repatriatedLoads }}</textarea>
-          <div class="govuk-hint govuk-character-count__message">
-            {{ maxWords if maxWords else '' }}
-          </div>
-        </div>
+        {# RA-361: govukCharacterCount progressively enhances this into a live
+           "words remaining"/"words too many" counter (GOV.UK Frontend's own
+           character-count.js, already loaded in application.js and already
+           used the same way by withdraw-application's reason field and
+           business-plan-detail) that updates, and clears itself, on every
+           keystroke — before the operator ever submits. countWords in
+           controller.js is still the real gate. textareaInput carries every
+           macro param, built in controller.js#buildTextareaInput. #}
+        {{ govukCharacterCount(textareaInput) }}
 
         <button type="submit" class="govuk-button" data-module="govuk-button"
                 data-testid="continue-button">
