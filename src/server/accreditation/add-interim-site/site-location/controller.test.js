@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
+import { expectFieldError } from '../../../common/test-helpers/field-error.js'
 
 const APPLICATION_ID = 'app-is-loc-001'
 const BASE_URL = `/accreditation/add-interim-site/${APPLICATION_ID}/site-location`
@@ -305,14 +306,34 @@ describe('#addInterimSiteLocationController', () => {
     const validFields = Object.fromEntries(new URLSearchParams(VALID_PAYLOAD))
 
     test.each([
-      ['addressLine1', 200, 'Address line 1 must be 200 characters or less'],
-      ['addressLine2', 200, 'Address line 2 must be 200 characters or less'],
-      ['townOrCity', 100, 'Town or city must be 100 characters or less'],
-      ['stateOrRegion', 100, 'State or region must be 100 characters or less'],
-      ['postcode', 20, 'Postcode must be 20 characters or less']
+      [
+        'addressLine1',
+        200,
+        'Address line 1 must be 200 characters or less',
+        'address-line1'
+      ],
+      [
+        'addressLine2',
+        200,
+        'Address line 2 must be 200 characters or less',
+        'address-line2'
+      ],
+      [
+        'townOrCity',
+        100,
+        'Town or city must be 100 characters or less',
+        'town-or-city'
+      ],
+      [
+        'stateOrRegion',
+        100,
+        'State or region must be 100 characters or less',
+        'state-or-region'
+      ],
+      ['postcode', 20, 'Postcode must be 20 characters or less', 'postcode']
     ])(
       '%s: accepts %i characters and refuses one more',
-      async (field, max, message) => {
+      async (field, max, message, fieldId) => {
         const atLimit = await postForm({
           ...validFields,
           [field]: 'a'.repeat(max)
@@ -326,6 +347,7 @@ describe('#addInterimSiteLocationController', () => {
         expect(overLimit.statusCode).toBe(statusCodes.badRequest)
         expect(overLimit.result).toContain('data-testid="error-summary"')
         expect(overLimit.result).toContain(message)
+        expectFieldError(overLimit.result, fieldId, message)
       }
     )
   })
