@@ -52,7 +52,8 @@ import { addInterimSiteCya } from './accreditation/add-interim-site/check-your-a
 // Hapi's default payload.maxBytes (1MB) is well under the 20MB MAX_FILE_BYTES enforced by
 // sampling-plan-upload/upload-bes-evidence, so any real file over 1MB passed their own
 // validation but still 413'd here.
-const MAX_STUB_UPLOAD_BYTES = 20 * 1024 * 1024
+const MAX_STUB_UPLOAD_MB = 20
+const MAX_STUB_UPLOAD_BYTES = MAX_STUB_UPLOAD_MB * 1024 * 1024
 
 // Stub CDP upload endpoint, registered only when api.stubEnabled is set.
 //
