@@ -2,6 +2,7 @@ import inert from '@hapi/inert'
 
 import { config } from '../config/config.js'
 import { stubCompleteUpload } from './common/stub-api-client.js'
+import { statusCodes } from './common/constants/status-codes.js'
 import { home } from './home/index.js'
 import { contact } from './contact/index.js'
 import { cookies } from './cookies/index.js'
@@ -48,6 +49,45 @@ import { addInterimSiteSiteContactDetails } from './accreditation/add-interim-si
 import { addInterimSiteRecyclingOperationDetails } from './accreditation/add-interim-site/recycling-operation-details/index.js'
 import { addInterimSiteCya } from './accreditation/add-interim-site/check-your-answers/index.js'
 
+// Hapi's default payload.maxBytes (1MB) is well under the 20MB MAX_FILE_BYTES enforced by
+// sampling-plan-upload/upload-bes-evidence, so any real file over 1MB passed their own
+// validation but still 413'd here.
+const MAX_STUB_UPLOAD_BYTES = 20 * 1024 * 1024
+
+// Stub CDP upload endpoint, registered only when api.stubEnabled is set.
+//
+// RA-619: uploads arrive as a multipart form, like they do at cdp-uploader, because a
+// filename above U+00FF can't travel in a request header. The 'annotated' output keeps
+// each part's filename and headers.
+const stubUploadRoute = {
+  method: 'POST',
+  path: '/api/stub/upload/{fileUploadId}',
+  options: {
+    auth: false,
+    plugins: { crumb: false },
+    payload: {
+      output: 'data',
+      parse: true,
+      multipart: { output: 'annotated' },
+      maxBytes: MAX_STUB_UPLOAD_BYTES
+    }
+  },
+  handler(request, h) {
+    const { fileUploadId } = request.params
+    const filePart = request.payload?.file
+    if (!filePart?.filename) {
+      return h
+        .response({ message: 'No file part' })
+        .code(statusCodes.badRequest)
+    }
+    const filename = filePart.filename
+    const contentType =
+      filePart.headers?.['content-type'] ?? 'application/octet-stream'
+    stubCompleteUpload(fileUploadId, { filename, contentType })
+    return h.response({}).code(statusCodes.ok)
+  }
+}
+
 export const router = {
   plugin: {
     name: 'router',
@@ -61,40 +101,7 @@ export const router = {
       await server.register([authRoutes])
 
       if (config.get('api.stubEnabled')) {
-        server.route({
-          method: 'POST',
-          path: '/api/stub/upload/{fileUploadId}',
-          options: {
-            auth: false,
-            plugins: { crumb: false },
-            // Hapi's default payload.maxBytes (1MB) is well under the 20MB
-            // MAX_FILE_BYTES enforced by sampling-plan-upload/upload-bes-evidence,
-            // so any real file over 1MB passed their own validation but still
-            // 413'd here.
-            //
-            // RA-619: uploads arrive as a multipart form, like they do at cdp-uploader,
-            // because a filename above U+00FF can't travel in a request header. The
-            // 'annotated' output keeps each part's filename and headers.
-            payload: {
-              output: 'data',
-              parse: true,
-              multipart: { output: 'annotated' },
-              maxBytes: 20 * 1024 * 1024
-            }
-          },
-          handler(request, h) {
-            const { fileUploadId } = request.params
-            const filePart = request.payload?.file
-            if (!filePart?.filename) {
-              return h.response({ message: 'No file part' }).code(400)
-            }
-            const filename = filePart.filename
-            const contentType =
-              filePart.headers?.['content-type'] ?? 'application/octet-stream'
-            stubCompleteUpload(fileUploadId, { filename, contentType })
-            return h.response({}).code(200)
-          }
-        })
+        server.route(stubUploadRoute)
       }
 
       // Application specific routes, add your own routes here
