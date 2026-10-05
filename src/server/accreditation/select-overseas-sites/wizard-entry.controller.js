@@ -27,6 +27,10 @@ function siteNameUrl(applicationId) {
   return `/accreditation/add-overseas-site/${applicationId}/site-name`
 }
 
+function checkYourAnswersUrl(applicationId) {
+  return `/accreditation/add-overseas-site/${applicationId}/check-your-answers`
+}
+
 function interimSiteCountryUrl(applicationId) {
   return `/accreditation/add-interim-site/${applicationId}/country`
 }
@@ -170,8 +174,8 @@ export const selectOverseasSitesPromoteEntryGetController = {
 }
 
 // Entry point for the "Change" link on an already-accredited/new/registered-added site —
-// seeds the add-overseas-site wizard session from that site's existing data and replays the
-// same wizard, keyed by editingSiteId instead of promotingSiteId. check-your-answers reads
+// seeds the add-overseas-site wizard session from that site's existing data and lands on the
+// wizard's check-your-answers page (RA-573; each row there links back to its own step), keyed by editingSiteId instead of promotingSiteId. check-your-answers reads
 // editingSiteId back off the session to call updateOverseasSite (PATCH) instead of
 // promoteOverseasSite/createOverseasSite on submit.
 export const selectOverseasSitesEditEntryGetController = {
@@ -190,7 +194,7 @@ export const selectOverseasSitesEditEntryGetController = {
       editingSiteId: site.siteId
     })
 
-    return h.redirect(siteNameUrl(applicationId))
+    return h.redirect(checkYourAnswersUrl(applicationId))
   }
 }
 
