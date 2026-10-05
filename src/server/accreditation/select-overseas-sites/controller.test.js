@@ -5,13 +5,15 @@ import {
   beforeAll,
   afterAll,
   vi,
-  beforeEach
+  beforeEach,
+  afterEach
 } from 'vitest'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
 import { config } from '../../../config/config.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
+import { setMultipleInterimSitesEnabled } from '../../common/test-helpers/feature-flags.js'
 
 const APPLICATION_ID = 'app-sos-001'
 
@@ -1205,7 +1207,11 @@ describe('#selectOverseasSitesController', () => {
     // RA-486: clearing an interim site reuses the same bulk patchOverseasSites
     // endpoint as removeAccredited/deleteNewSite above, just with the
     // targeted site's interimSite field set to null.
-    test('removeInterimSite patches the site with interimSite: null and redirects back', async () => {
+    // RA-603: withdrawing goes through the interim site's own endpoint. It used
+    // to rebuild the whole site list and send it back through the bulk PATCH,
+    // which cannot survive an ORS holding several interim sites - a concurrent
+    // change to any other site would be silently overwritten.
+    test('removeInterimSite calls DELETE on the interim site and redirects back', async () => {
       const accreditedWithInterim = {
         ...ACCREDITED_SITE,
         interimSite: { siteId: 42, siteName: 'Interim Depot' }
@@ -1218,54 +1224,90 @@ describe('#selectOverseasSitesController', () => {
           }
         })
       )
+      const deleteSpy = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
       const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
         `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       )
-      expect(patchSpy).toHaveBeenCalledWith(
-        expect.stringContaining('overseas-sites'),
-        expect.objectContaining({
-          sites: expect.arrayContaining([
-            expect.objectContaining({ siteId: 900001, interimSite: null })
-          ])
-        })
+      expect(deleteSpy).toHaveBeenCalledWith(
+        expect.stringContaining('/overseas-sites/900001/interim-sites/42')
       )
+      // The whole site list is no longer rewritten to remove one interim site.
+      expect(patchSpy).not.toHaveBeenCalled()
     })
 
-    test('removeInterimSite returns 500 when PATCH fails', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(new Error('patch failed'))
+    test('removeInterimSite returns 500 when the withdraw fails', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                ...ACCREDITED_SITE,
+                interimSite: { siteId: 42, siteName: 'Interim Depot' }
+              }
+            ]
+          }
+        })
+      )
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(
+        new Error('delete failed')
+      )
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
     })
 
-    test('removeInterimSite redirects back to this page (not a raw error) when the PATCH fails with a 409', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+    test('removeInterimSite redirects back to this page (not a raw error) when the withdraw fails with a 409', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                ...ACCREDITED_SITE,
+                interimSite: { siteId: 42, siteName: 'Interim Depot' }
+              }
+            ]
+          }
+        })
+      )
       const err = Object.assign(new Error('conflict'), { status: 409 })
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(err)
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(err)
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
         headers: operatorHeaders,
-        payload: { submitAction: 'removeInterimSite', siteId: '900001' }
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1296,15 +1338,16 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).toContain('data-testid="interim-site-row-900001"')
-      expect(result).toContain('data-testid="interim-site-name-900001"')
+      expect(result).toContain('data-testid="interim-site-row-42"')
+      expect(result).toContain('data-testid="interim-site-name-42"')
       expect(result).toContain('Interim Depot')
-      expect(result).toContain('data-testid="change-interim-site-900001"')
+      expect(result).toContain('data-testid="change-interim-site-42"')
+      expect(result).toContain('data-testid="remove-button-interim-site-42"')
+      // RA-603: keyed on the interim site's own id (42), not its parent ORS's
+      // (900001). An ORS can hold several, so the parent no longer identifies
+      // which one to edit.
       expect(result).toContain(
-        'data-testid="remove-button-interim-site-900001"'
-      )
-      expect(result).toContain(
-        `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`
       )
     })
 
@@ -1317,7 +1360,7 @@ describe('#selectOverseasSitesController', () => {
         headers: operatorHeaders
       })
 
-      expect(result).not.toContain('data-testid="interim-site-row-900001"')
+      expect(result).not.toContain('data-testid="interim-site-row-42"')
     })
   })
 
@@ -1327,7 +1370,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
         headers: operatorHeaders
       })
 
@@ -1363,7 +1406,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
         headers: operatorHeaders
       })
 
@@ -1407,7 +1450,7 @@ describe('#selectOverseasSitesController', () => {
 
       const editResponse = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/900001`,
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
         headers: operatorHeaders
       })
       expect(editResponse.statusCode).toBe(statusCodes.redirect)
@@ -1481,6 +1524,7 @@ describe('#selectOverseasSitesController', () => {
     })
 
     test('renders one list entry per interim site, behind a single disclosure', async () => {
+      const flag = setMultipleInterimSitesEnabled(true)
       const result = await renderWithSites([
         {
           ...ACCREDITED_SITE,
@@ -1490,12 +1534,89 @@ describe('#selectOverseasSitesController', () => {
           ]
         }
       ])
+      flag.mockRestore()
 
-      expect(result).toContain('data-testid="interim-site-row-900001"')
-      expect(result).toContain('data-testid="interim-site-row-is43"')
+      expect(result).toContain('data-testid="interim-site-row-42"')
+      expect(result).toContain('data-testid="interim-site-row-43"')
       expect(result).toContain('First Depot')
       expect(result).toContain('Second Depot')
       expect(result).toContain('Show interim sites (2)')
+      expect(result).toContain('data-testid="add-interim-site-900001"')
+    })
+
+    // featureFlags.multipleInterimSitesEnabled off (the default): an ORS holds
+    // at most one interim site, as before RA-603. It must still be able to get
+    // that one, and must not be offered a second.
+    describe('with multiple interim sites off', () => {
+      let flag
+      beforeEach(() => {
+        flag = setMultipleInterimSitesEnabled(false)
+      })
+      afterEach(() => {
+        flag.mockRestore()
+      })
+
+      test('lists only the first active interim site', async () => {
+        const result = await renderWithSites([
+          {
+            ...ACCREDITED_SITE,
+            interimSites: [
+              { ...INTERIM_SITE, siteId: 42, siteName: 'First Depot' },
+              { ...INTERIM_SITE, siteId: 43, siteName: 'Second Depot' }
+            ]
+          }
+        ])
+
+        expect(result).toContain('data-testid="interim-site-row-42"')
+        expect(result).not.toContain('data-testid="interim-site-row-43"')
+        expect(result).not.toContain('Second Depot')
+        expect(result).toContain('Show interim sites (1)')
+      })
+
+      test('skips a withdrawn first entry when choosing which one to show', async () => {
+        const result = await renderWithSites([
+          {
+            ...ACCREDITED_SITE,
+            interimSites: [
+              {
+                ...INTERIM_SITE,
+                siteId: 42,
+                siteName: 'Withdrawn Depot',
+                removedAt: '2026-09-01T00:00:00Z'
+              },
+              { ...INTERIM_SITE, siteId: 43, siteName: 'Live Depot' }
+            ]
+          }
+        ])
+
+        expect(result).toContain('data-testid="interim-site-row-43"')
+        expect(result).not.toContain('data-testid="interim-site-row-42"')
+      })
+
+      test('offers no "Add another interim site" once the ORS has one', async () => {
+        const result = await renderWithSites([
+          { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
+        ])
+
+        expect(result).toContain('Interim Depot')
+        expect(result).not.toContain('data-testid="add-interim-site-900001"')
+      })
+
+      // Withdrawing the only one frees the slot: the disclosure still renders
+      // (it carries the withdrawn one), and adding a replacement is allowed.
+      test('offers adding one again once the only interim site is withdrawn', async () => {
+        const result = await renderWithSites([
+          {
+            ...ACCREDITED_SITE,
+            interimSites: [
+              { ...INTERIM_SITE, removedAt: '2026-09-01T00:00:00Z' }
+            ]
+          }
+        ])
+
+        expect(result).toContain('data-testid="add-interim-site-900001"')
+        expect(result).toContain('data-testid="restore-button-interim-site-42"')
+      })
     })
 
     // The disclosure line is a summary, not a record: name, country and R
@@ -1516,9 +1637,7 @@ describe('#selectOverseasSitesController', () => {
         { ...ACCREDITED_SITE, interimSite: INTERIM_SITE }
       ])
 
-      expect(result).toContain(
-        'data-testid="interim-site-operation-codes-900001"'
-      )
+      expect(result).toContain('data-testid="interim-site-operation-codes-42"')
       expect(result).toContain('R12, R13')
     })
 
@@ -1608,6 +1727,257 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('Add to application')
       expect(result).not.toContain('Remove from accreditation')
       expect(result).not.toContain('Add to accreditation')
+    })
+  })
+
+  // RA-603 C4. Withdrawing an interim site is soft, so it can be undone. Two
+  // ways back, deliberately: the banner catches the mis-click noticed at once,
+  // which is most of what will happen, and the withdrawn-sites disclosure
+  // catches the operator who realises the next day, which the banner cannot.
+  describe('RA-603 C4 — putting a withdrawn interim site back', () => {
+    const SITE_WITH_INTERIM = {
+      ...ACCREDITED_SITE,
+      interimSites: [
+        { siteId: 42, siteName: 'Interim Depot', country: 'France' }
+      ]
+    }
+
+    function mockApplication(sites) {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: { sectionStatus: 'InProgress', sites }
+        })
+      )
+    }
+
+    test('offers an undo naming the site just withdrawn', async () => {
+      mockApplication([SITE_WITH_INTERIM])
+      vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+
+      const withdraw = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
+      })
+
+      const cookie = (withdraw.headers['set-cookie'] ?? [])[0]?.split(';')[0]
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      expect(result).toContain('data-testid="interim-site-withdrawn-banner"')
+      // Naming it is what makes the offer specific rather than "undo something".
+      expect(result).toContain('Interim Depot')
+      expect(result).toContain('data-testid="undo-withdraw-button"')
+      // A <form> inside a <p> closes the paragraph early, and an inline style
+      // is blocked by the CSP - neither would keep the button on the line.
+      const banner = result.slice(
+        result.indexOf('data-testid="interim-site-withdrawn-banner"'),
+        result.indexOf('</form>')
+      )
+      expect(banner).not.toMatch(/<p(?:\s[^>]*)?>(?:(?!<\/p>)[\s\S])*<form/)
+      expect(banner).toContain(
+        '<form method="post" class="select-overseas-sites-undo-form" data-testid="undo-withdraw-form">'
+      )
+    })
+
+    test('does not offer an undo on a plain page load', async () => {
+      mockApplication([SITE_WITH_INTERIM])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      expect(result).not.toContain(
+        'data-testid="interim-site-withdrawn-banner"'
+      )
+    })
+
+    test('restoreInterimSite calls the restore endpoint and redirects back', async () => {
+      mockApplication([
+        {
+          ...ACCREDITED_SITE,
+          interimSites: [
+            {
+              siteId: 42,
+              siteName: 'Interim Depot',
+              removedAt: '2026-08-14T09:30:00.000Z'
+            }
+          ]
+        }
+      ])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'restoreInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '/overseas-sites/900001/interim-sites/42/restore'
+        )
+      )
+    })
+
+    test('shows a withdrawn interim site in its own disclosure, not the main list', async () => {
+      const flag = setMultipleInterimSitesEnabled(true)
+      mockApplication([
+        {
+          ...ACCREDITED_SITE,
+          interimSites: [
+            { siteId: 42, siteName: 'Still Here' },
+            {
+              siteId: 43,
+              siteName: 'Old Depot',
+              removedAt: '2026-08-14T09:30:00.000Z'
+            }
+          ]
+        }
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders
+      })
+
+      flag.mockRestore()
+
+      expect(result).toContain('Show interim sites (1)')
+      expect(result).toContain('Show withdrawn interim sites (1)')
+      expect(result).toContain('data-testid="restore-button-interim-site-43"')
+      // The withdrawn one is not offered a Change or Withdraw of its own.
+      expect(result).not.toContain('data-testid="change-interim-site-43"')
+    })
+
+    // Multiple interim sites off: restoring counts as adding one. With an
+    // active interim site already on the ORS it would make two, so it is
+    // neither offered nor carried out.
+    describe('with multiple interim sites off and an active interim site on the ORS', () => {
+      const SITE_WITH_ACTIVE_AND_WITHDRAWN = {
+        ...ACCREDITED_SITE,
+        interimSites: [
+          { siteId: 42, siteName: 'Still Here' },
+          {
+            siteId: 43,
+            siteName: 'Old Depot',
+            removedAt: '2026-08-14T09:30:00.000Z'
+          }
+        ]
+      }
+      let flag
+      beforeEach(() => {
+        flag = setMultipleInterimSitesEnabled(false)
+      })
+      afterEach(() => {
+        flag.mockRestore()
+      })
+
+      test('lists the withdrawn site without offering to restore it', async () => {
+        mockApplication([SITE_WITH_ACTIVE_AND_WITHDRAWN])
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+          headers: operatorHeaders
+        })
+
+        expect(result).toContain('Show withdrawn interim sites (1)')
+        expect(result).not.toContain(
+          'data-testid="restore-button-interim-site-43"'
+        )
+      })
+
+      test('refuses a restore posted anyway, without calling the API', async () => {
+        mockApplication([SITE_WITH_ACTIVE_AND_WITHDRAWN])
+        const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+          headers: operatorHeaders,
+          payload: {
+            submitAction: 'restoreInterimSite',
+            siteId: '900001',
+            interimSiteId: '43'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+        )
+        expect(postSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    test('redirects back without calling the API when the interim site is unknown', async () => {
+      mockApplication([SITE_WITH_INTERIM])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'restoreInterimSite',
+          siteId: '900001',
+          interimSiteId: '999'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns 500 when the restore fails', async () => {
+      mockApplication([
+        {
+          ...ACCREDITED_SITE,
+          interimSites: [
+            {
+              siteId: 42,
+              siteName: 'Old Depot',
+              removedAt: '2026-08-14T09:30:00.000Z'
+            }
+          ]
+        }
+      ])
+      vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('restore failed'))
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: {
+          submitAction: 'restoreInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-summary"')
     })
   })
 })

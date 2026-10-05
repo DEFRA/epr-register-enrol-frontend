@@ -229,7 +229,6 @@
       "heading": "Add more details about how you'll spend the PRN income",
       "headingExporter": "Add more details about how you'll spend the PERN income",
       "intro": "The details will help the regulator to better understand your plans.",
-      "characterCountHint": "You can enter up to 500 characters",
       "saveAndContinue": "Save and continue",
       "saveAndComeLater": "Save and come back later",
       "fields": {
@@ -481,7 +480,15 @@
       },
       "interimSite": {
         "removeButton": "Withdraw from application",
-        "disclosure": "Show interim sites"
+        "disclosure": "Show interim sites",
+        "addAnother": "Add another interim site",
+        "withdrawnDisclosure": "Show withdrawn interim sites",
+        "restoreButton": "Add back to application",
+        "withdrawnBanner": {
+          "title": "Interim site withdrawn",
+          "body": "You withdrew",
+          "undo": "Undo"
+        }
       },
       "validation": {
         "noSitesAccredited": "Add at least one overseas reprocessing site to accreditation",
@@ -761,7 +768,6 @@
         "heading": "What are the arrangements for loads rejected or returned to the UK?",
         "label": "Describe the arrangements",
         "hint": "Do not include personal or financial information.",
-        "maxWords": "You can enter up to 500 words",
         "validation": {
           "required": "Describe the arrangements for loads that are rejected or returned to the UK",
           "tooManyWords": "Description must be 500 words or fewer",

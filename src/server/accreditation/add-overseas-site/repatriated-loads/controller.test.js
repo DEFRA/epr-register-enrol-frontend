@@ -97,6 +97,24 @@ describe('#addOrsRepatriatedLoadsController', () => {
       expect(result).toContain('data-testid="repatriated-loads-textarea"')
     })
 
+    // RA-361: govuk-frontend's own CharacterCount module (already loaded
+    // globally in application.js) progressively enhances this field into a
+    // live "words remaining"/"words too many" counter that updates — and
+    // clears itself — on every keystroke, before any submit. It previously
+    // had none of that: the "up to 500 words" line was static text with no
+    // data-module behind it.
+    test('wires the textarea up as a govuk-character-count component', async () => {
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: operatorHeaders
+      })
+
+      expect(result).toContain('data-module="govuk-character-count"')
+      expect(result).toContain('data-maxwords="500"')
+      expect(result).toContain('data-testid="repatriated-loads-textarea"')
+    })
+
     test('back link points to basel-convention-and-oecd-code', async () => {
       const { result } = await server.inject({
         method: 'GET',
@@ -228,6 +246,25 @@ describe('#addOrsRepatriatedLoadsController', () => {
       )
     })
 
+    // RA-361: the "required" (empty) error shares buildTextareaInput's
+    // errorMessage slot with "too many words" but isn't a length rule the
+    // character-count component knows about — confirms it is NOT tagged, the
+    // counterpart to the tagged case below. Mirrors the same pair of tests
+    // on business-plan-detail.
+    test('does not tag the empty-text error as a length error', async () => {
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: 'repatriatedLoads='
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      const errorTag = result.match(/<p[^>]*id="repatriated-loads-error"[^>]*>/)
+      expect(errorTag).not.toBeNull()
+      expect(errorTag[0]).not.toContain('data-error-type')
+    })
+
     test('returns 400 when text exceeds 500 words', async () => {
       const tooManyWords = Array(502).fill('word').join(' ')
       const { statusCode, result } = await server.inject({
@@ -239,6 +276,26 @@ describe('#addOrsRepatriatedLoadsController', () => {
 
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('Description must be 500 words or fewer')
+    })
+
+    // RA-361: this is what the live-clearing fix in application.js actually
+    // depends on — initCharacterCountLiveErrorClearing only ever touches an
+    // error carrying data-error-type="length". Regression guard for the
+    // half of the fix that lives in this repo (found missing once already,
+    // when the rebuilt bundle that reads it hadn't been redeployed).
+    test('tags the too-many-words error with data-error-type="length" so the client can clear it live', async () => {
+      const tooManyWords = Array(502).fill('word').join(' ')
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders,
+        payload: `repatriatedLoads=${encodeURIComponent(tooManyWords)}`
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      const errorTag = result.match(/<p[^>]*id="repatriated-loads-error"[^>]*>/)
+      expect(errorTag).not.toBeNull()
+      expect(errorTag[0]).toContain('data-error-type="length"')
     })
 
     test('accepts exactly 500 words and redirects', async () => {
@@ -282,6 +339,14 @@ describe('#addOrsRepatriatedLoadsController', () => {
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('Description must be 5,000 characters or less')
       expect(result).toContain(text)
+      expect(result).not.toContain('data-error-type="length"')
+    })
+
+    test('counts line breaks as the CRLF the browser submits', async () => {
+      const text = `${'a'.repeat(2499)}\r\n${'b'.repeat(2500)}`
+      expect(text).toHaveLength(5001)
+      const { statusCode } = await postForm({ repatriatedLoads: text })
+      expect(statusCode).toBe(statusCodes.badRequest)
     })
   })
 })

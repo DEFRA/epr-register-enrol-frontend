@@ -131,13 +131,17 @@ describe('stubApiClient.post — interim site', () => {
     expect(site.interimSite.isNewSite).toBe(true)
   })
 
-  test('still returns a created interim site when siteId is not found', async () => {
+  // RA-603: this used to fabricate and return an interim site for an ORS that
+  // does not exist. The real backend 404s, and the fabricated object was never
+  // attached to anything, so the only thing it achieved was showing a caller
+  // success where production fails. It now returns nothing, matching both the
+  // backend and the plural routes.
+  test('returns nothing when the ORS does not exist', async () => {
     const result = await stub.post(
       '/api/v1/accreditation-applications/50004/app004exp/overseas-sites/999999/interim-site',
       { country: 'Spain' }
     )
-    expect(result.country).toBe('Spain')
-    expect(result.isNewSite).toBe(true)
+    expect(result).toBeUndefined()
   })
 })
 
@@ -930,5 +934,332 @@ describe('stubApiClient.put', () => {
   test('always resolves to an empty object', async () => {
     const stub = await freshStub()
     await expect(stub.put('/anything', { any: 'body' })).resolves.toEqual({})
+  })
+})
+
+const ORS = '/api/v1/accreditation-applications/50006/app006exp/overseas-sites'
+const ORS_SITE_ID = 900003
+const INTERIM_COLLECTION = `${ORS}/${ORS_SITE_ID}/interim-sites`
+
+function interimBody(overrides = {}) {
+  return {
+    country: 'France',
+    siteName: 'Calais Interim Depot',
+    addressLine1: '1 Rue du Port',
+    townOrCity: 'Calais',
+    contactName: 'Marie Curie',
+    contactEmail: 'marie@example.com',
+    contactPhone: '0033111222333',
+    operationCodes: ['R12'],
+    ...overrides
+  }
+}
+
+async function readSite(stub) {
+  const app = await stub.get(
+    '/api/v1/accreditation-applications/50006/app006exp'
+  )
+  return app.overseasSites.sites.find((s) => s.siteId === ORS_SITE_ID)
+}
+
+describe('nextSiteId', () => {
+  test('starts at 1 when there is nothing to count', async () => {
+    const mod = await freshStubModule()
+    expect(mod.nextSiteId([])).toBe(1)
+  })
+
+  // Shared on purpose: the interim routes address a site by its own id without
+  // naming its parent, so an interim id colliding with an ORS id would make
+  // /interim-sites/{id} ambiguous.
+  test('counts interim site ids as well as ORS ids', async () => {
+    const mod = await freshStubModule()
+    expect(mod.nextSiteId([{ siteId: 2, interimSites: [{ siteId: 7 }] }])).toBe(
+      8
+    )
+  })
+
+  test('counts a withdrawn interim site, whose id stays claimed', async () => {
+    const mod = await freshStubModule()
+    expect(
+      mod.nextSiteId([
+        { siteId: 1, interimSites: [{ siteId: 9, removedAt: '2026-01-01' }] }
+      ])
+    ).toBe(10)
+  })
+
+  // An ORS written before RA-603 has no list at all.
+  test('reads the legacy singular shape', async () => {
+    const mod = await freshStubModule()
+    expect(mod.nextSiteId([{ siteId: 1, interimSite: { siteId: 4 } }])).toBe(5)
+  })
+})
+
+describe('nextInterimSiteNumber', () => {
+  test('starts at 001', async () => {
+    const mod = await freshStubModule()
+    expect(mod.nextInterimSiteNumber([])).toBe('001')
+  })
+
+  // Counted across the whole application rather than restarted per ORS.
+  test('continues past the highest number on any ORS', async () => {
+    const mod = await freshStubModule()
+    expect(
+      mod.nextInterimSiteNumber([
+        { siteId: 1, interimSites: [{ siteNumber: '001' }] },
+        { siteId: 2, interimSites: [{ siteNumber: '002' }] }
+      ])
+    ).toBe('003')
+  })
+
+  // AC05 keeps the record forever, so reissuing its number would put one
+  // regulator-visible identifier on two rows.
+  test('keeps a withdrawn interim site number reserved', async () => {
+    const mod = await freshStubModule()
+    expect(
+      mod.nextInterimSiteNumber([
+        {
+          siteId: 1,
+          interimSites: [{ siteNumber: '001', removedAt: '2026-01-01' }]
+        }
+      ])
+    ).toBe('002')
+  })
+
+  // The format real stored data uses. It must not parse, or numbering breaks.
+  test('ignores a legacy SN-000N number', async () => {
+    const mod = await freshStubModule()
+    expect(
+      mod.nextInterimSiteNumber([
+        { siteId: 1, interimSites: [{ siteNumber: 'SN-0021' }] }
+      ])
+    ).toBe('001')
+  })
+
+  test('reads the legacy singular shape', async () => {
+    const mod = await freshStubModule()
+    expect(
+      mod.nextInterimSiteNumber([
+        { siteId: 1, interimSite: { siteNumber: '004' } }
+      ])
+    ).toBe('005')
+  })
+})
+
+describe('stubApiClient — interim sites (RA-603)', () => {
+  test('adds an interim site numbered 001 and lists it', async () => {
+    const stub = await freshStub()
+    const created = await stub.post(INTERIM_COLLECTION, interimBody())
+
+    expect(created.siteNumber).toBe('001')
+    expect(created.removedAt).toBeNull()
+    expect(created.createdAt).toBeTruthy()
+    expect((await readSite(stub)).interimSites).toHaveLength(1)
+  })
+
+  // AC01/AC06: the restriction this ticket exists to lift.
+  test('adds a second interim site, keeping the first', async () => {
+    const stub = await freshStub()
+    const first = await stub.post(INTERIM_COLLECTION, interimBody())
+    const second = await stub.post(
+      INTERIM_COLLECTION,
+      interimBody({ siteName: 'Dunkirk Interim Depot' })
+    )
+
+    expect(second.siteNumber).toBe('002')
+    expect(second.siteId).not.toBe(first.siteId)
+    const site = await readSite(stub)
+    expect(site.interimSites.map((i) => i.siteName)).toEqual([
+      'Calais Interim Depot',
+      'Dunkirk Interim Depot'
+    ])
+  })
+
+  test('points the legacy singular mirror at the first interim site', async () => {
+    const stub = await freshStub()
+    await stub.post(INTERIM_COLLECTION, interimBody())
+
+    expect((await readSite(stub)).interimSite.siteName).toBe(
+      'Calais Interim Depot'
+    )
+  })
+
+  // AC04: one write touches one interim site.
+  test('edits one interim site and leaves its sibling alone', async () => {
+    const stub = await freshStub()
+    const first = await stub.post(INTERIM_COLLECTION, interimBody())
+    const second = await stub.post(
+      INTERIM_COLLECTION,
+      interimBody({ siteName: 'Dunkirk Interim Depot' })
+    )
+
+    await stub.patch(`${INTERIM_COLLECTION}/${second.siteId}`, {
+      siteName: 'Renamed Depot'
+    })
+
+    const site = await readSite(stub)
+    expect(
+      site.interimSites.find((i) => i.siteId === second.siteId).siteName
+    ).toBe('Renamed Depot')
+    expect(
+      site.interimSites.find((i) => i.siteId === first.siteId).siteName
+    ).toBe('Calais Interim Depot')
+  })
+
+  test('ignores server-owned fields in a patch body', async () => {
+    const stub = await freshStub()
+    const created = await stub.post(INTERIM_COLLECTION, interimBody())
+
+    await stub.patch(`${INTERIM_COLLECTION}/${created.siteId}`, {
+      siteNumber: '999',
+      siteId: 12345,
+      siteName: 'Renamed'
+    })
+
+    const [interimSite] = (await readSite(stub)).interimSites
+    expect(interimSite.siteNumber).toBe('001')
+    expect(interimSite.siteId).toBe(created.siteId)
+    expect(interimSite.siteName).toBe('Renamed')
+  })
+
+  // AC05. A hard delete would pass every page-level assertion and fail this one,
+  // which is the only reason this test is worth having.
+  test('withdrawing keeps the record, stamped with when it went', async () => {
+    const stub = await freshStub()
+    const created = await stub.post(INTERIM_COLLECTION, interimBody())
+
+    await stub.delete(`${INTERIM_COLLECTION}/${created.siteId}`)
+
+    const site = await readSite(stub)
+    expect(site.interimSites).toHaveLength(1)
+    expect(site.interimSites[0].removedAt).toBeTruthy()
+    expect(site.interimSites[0].siteNumber).toBe('001')
+  })
+
+  test('withdrawing re-points the mirror at the next site still active', async () => {
+    const stub = await freshStub()
+    const first = await stub.post(INTERIM_COLLECTION, interimBody())
+    await stub.post(
+      INTERIM_COLLECTION,
+      interimBody({ siteName: 'Dunkirk Interim Depot' })
+    )
+
+    await stub.delete(`${INTERIM_COLLECTION}/${first.siteId}`)
+
+    expect((await readSite(stub)).interimSite.siteName).toBe(
+      'Dunkirk Interim Depot'
+    )
+  })
+
+  test('withdrawing the only interim site clears the mirror', async () => {
+    const stub = await freshStub()
+    const created = await stub.post(INTERIM_COLLECTION, interimBody())
+
+    await stub.delete(`${INTERIM_COLLECTION}/${created.siteId}`)
+
+    expect((await readSite(stub)).interimSite).toBeNull()
+  })
+
+  // The identity link AC05 exists to protect: the same record resumes rather
+  // than a replacement arriving with the same name.
+  test('restoring brings back the same record, not a lookalike', async () => {
+    const stub = await freshStub()
+    const created = await stub.post(INTERIM_COLLECTION, interimBody())
+    await stub.delete(`${INTERIM_COLLECTION}/${created.siteId}`)
+
+    await stub.post(`${INTERIM_COLLECTION}/${created.siteId}/restore`)
+
+    const [interimSite] = (await readSite(stub)).interimSites
+    expect(interimSite.removedAt).toBeNull()
+    expect(interimSite.siteId).toBe(created.siteId)
+    expect(interimSite.siteNumber).toBe('001')
+    expect(interimSite.createdAt).toBe(created.createdAt)
+  })
+
+  test('a withdrawn number is not reissued to the next interim site', async () => {
+    const stub = await freshStub()
+    const created = await stub.post(INTERIM_COLLECTION, interimBody())
+    await stub.delete(`${INTERIM_COLLECTION}/${created.siteId}`)
+
+    const next = await stub.post(
+      INTERIM_COLLECTION,
+      interimBody({ siteName: 'Dunkirk Interim Depot' })
+    )
+
+    expect(next.siteNumber).toBe('002')
+  })
+
+  test('returns nothing for an unknown ORS or interim site', async () => {
+    const stub = await freshStub()
+    await expect(
+      stub.post(`${ORS}/424242/interim-sites`, interimBody())
+    ).resolves.toBeUndefined()
+    await expect(
+      stub.patch(`${INTERIM_COLLECTION}/424242`, { siteName: 'x' })
+    ).resolves.toBeUndefined()
+  })
+})
+
+describe('stubApiClient — interim sites, pre-RA-603 documents', () => {
+  // The legacy singular route is still mapped. It has to leave the document in
+  // BOTH shapes, or a caller that used it would then be invisible to every
+  // plural route.
+  test('the legacy singular route writes the list as well as the mirror', async () => {
+    const stub = await freshStub()
+    const created = await stub.post(
+      `${ORS}/${ORS_SITE_ID}/interim-site`,
+      interimBody()
+    )
+
+    const site = await readSite(stub)
+    expect(site.interimSites).toHaveLength(1)
+    expect(site.interimSite.siteId).toBe(created.siteId)
+    expect(created.siteNumber).toBe('001')
+  })
+
+  // A document written before RA-603: a singular field and NO list at all. This
+  // is the shape the normalise step exists for.
+  test('folds a legacy-only interim site into the list when a second is added', async () => {
+    const stub = await freshStub()
+    const site = await readSite(stub)
+    site.interimSite = {
+      siteId: 4242,
+      siteNumber: 'SN-0042',
+      siteName: 'Legacy Depot',
+      operationCodes: ['R12']
+    }
+    delete site.interimSites
+
+    const added = await stub.post(
+      INTERIM_COLLECTION,
+      interimBody({ siteName: 'Calais Interim Depot' })
+    )
+
+    const after = await readSite(stub)
+    expect(after.interimSites.map((i) => i.siteName)).toEqual([
+      'Legacy Depot',
+      'Calais Interim Depot'
+    ])
+    // Its id is counted, so the new site cannot collide with it...
+    expect(added.siteId).toBeGreaterThan(4242)
+    // ...while its unparseable legacy number is skipped rather than parsed.
+    expect(added.siteNumber).toBe('001')
+  })
+
+  test('withdraws a legacy-only interim site without destroying it', async () => {
+    const stub = await freshStub()
+    const site = await readSite(stub)
+    site.interimSite = {
+      siteId: 4242,
+      siteNumber: 'SN-0042',
+      siteName: 'Legacy Depot'
+    }
+    delete site.interimSites
+
+    await stub.delete(`${INTERIM_COLLECTION}/4242`)
+
+    const after = await readSite(stub)
+    expect(after.interimSites).toHaveLength(1)
+    expect(after.interimSites[0].removedAt).toBeTruthy()
+    expect(after.interimSite).toBeNull()
   })
 })
