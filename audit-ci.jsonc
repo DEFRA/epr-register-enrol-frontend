@@ -1,4 +1,8 @@
 {
   "high": true,
-  "allowlist": ["GHSA-vfj7-8cjw-p6xm"]
+  "allowlist": [
+    // braces: stack-exhaustion DoS (high). No upstream fix as of 2026-10-05 (latest 3.0.3).
+    // Remove this entry once a patched braces release exists (PR #360).
+    "GHSA-vfj7-8cjw-p6xm"
+  ]
 }
