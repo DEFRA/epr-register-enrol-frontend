@@ -1101,7 +1101,7 @@ describe('#addOrsCyaController', () => {
       })
       expect(entryResponse.statusCode).toBe(statusCodes.redirect)
       expect(entryResponse.headers.location).toBe(
-        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`
       )
       return cookieHeaderFrom(entryResponse, cookie)
     }

@@ -39,6 +39,7 @@ import { addOverseasSiteRecyclingOperationDetails } from './accreditation/add-ov
 import { addOverseasSiteBaselCode } from './accreditation/add-overseas-site/basel-convention-and-oecd-code/index.js'
 import { addOverseasSiteRepatriatedLoads } from './accreditation/add-overseas-site/repatriated-loads/index.js'
 import { addOverseasSiteConditionsOfExport } from './accreditation/add-overseas-site/conditions-of-export/index.js'
+import { addOverseasSiteReturnToCya } from './accreditation/add-overseas-site/return-to-cya.js'
 import { addOverseasSiteCya } from './accreditation/add-overseas-site/check-your-answers/index.js'
 import { addInterimSiteCountry } from './accreditation/add-interim-site/country/index.js'
 import { addInterimSiteSiteName } from './accreditation/add-interim-site/site-name/index.js'
@@ -132,6 +133,7 @@ export const router = {
         addOverseasSiteBaselCode,
         addOverseasSiteRepatriatedLoads,
         addOverseasSiteConditionsOfExport,
+        addOverseasSiteReturnToCya,
         addOverseasSiteCya,
         addInterimSiteCountry,
         addInterimSiteSiteName,

@@ -804,7 +804,7 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
-    test('redirects to site-name and seeds the session (editingSiteId) when the site is found', async () => {
+    test('redirects to check-your-answers (RA-573), not site-name, when the site is found', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { statusCode, headers } = await server.inject({
@@ -815,11 +815,11 @@ describe('#selectOverseasSitesController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`
       )
     })
 
-    test("re-populates the site's existing name on site-name", async () => {
+    test("seeds the session so check-your-answers shows the site's existing name", async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       function cookieHeaderFrom(response, fallback) {
@@ -840,7 +840,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`,
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`,
         headers: { ...operatorHeaders, cookie: sessionCookie }
       })
 
@@ -1707,7 +1707,7 @@ describe('#selectOverseasSitesController', () => {
   // it was actually "Remove from accreditation"/"Add to accreditation". Either
   // way, neither phrasing may survive this change.
   describe('RA-603 AC11 — application action wording', () => {
-    test('uses "Withdraw from application" and "Add to application"', async () => {
+    test('uses "Withdraw from application" and "Include in this application"', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           overseasSites: {
@@ -1724,7 +1724,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('Withdraw from application')
-      expect(result).toContain('Add to application')
+      expect(result).toContain('Include in this application')
       expect(result).not.toContain('Remove from accreditation')
       expect(result).not.toContain('Add to accreditation')
     })
