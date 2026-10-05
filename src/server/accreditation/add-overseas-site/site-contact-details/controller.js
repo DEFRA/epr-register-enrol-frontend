@@ -10,20 +10,22 @@ import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
-import { ORS_CONTACT_PHONE_RULES } from '../../../common/constants/siteFieldLimits.js'
+import {
+  ORS_CONTACT_PHONE_RULES,
+  PAYLOAD_SIZE_GUARD
+} from '../../../common/constants/siteFieldLimits.js'
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a
 // non-string field (e.g. an array) crashes `.trim()` above with an
 // unhandled exception rather than a graceful error (M1, 2026-08-08 pentest
-// report). .unknown(true) lets the CSRF crumb field through. The caps are a
-// coarse size guard set well above the real limits (RA-620): a value over
-// them fails here with Hapi's bare 400 page, so they must never be the limit
-// an operator actually meets - the handler's inline errors are.
+// report). .unknown(true) lets the CSRF crumb field through. The cap is only
+// a size guard (RA-620): the limits an operator meets are the handler's
+// inline errors, not this.
 export const siteContactDetailsPayloadSchema = Joi.object({
-  siteContactName: Joi.string().allow('').max(2000).optional(),
-  siteContactEmail: Joi.string().allow('').max(2000).optional(),
-  siteContactPhone: Joi.string().allow('').max(2000).optional()
+  siteContactName: Joi.string().allow('').max(PAYLOAD_SIZE_GUARD).optional(),
+  siteContactEmail: Joi.string().allow('').max(PAYLOAD_SIZE_GUARD).optional(),
+  siteContactPhone: Joi.string().allow('').max(PAYLOAD_SIZE_GUARD).optional()
 }).unknown(true)
 
 function selectOrsUrl(applicationId) {

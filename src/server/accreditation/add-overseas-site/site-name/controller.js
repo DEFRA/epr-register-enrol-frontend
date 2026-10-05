@@ -10,6 +10,7 @@ import {
   SITE_FIELD_MAX_LENGTHS,
   exceedsMaxLength
 } from '../../../common/constants/siteFieldLimits.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -97,7 +98,7 @@ export const addOrsiteNamePostController = {
           '',
           t('pages.addOverseasSite.siteName.validation.required')
         )
-      ).code(400)
+      ).code(statusCodes.badRequest)
     }
 
     if (exceedsMaxLength(siteName, SITE_FIELD_MAX_LENGTHS.siteName)) {
@@ -109,7 +110,7 @@ export const addOrsiteNamePostController = {
           siteName,
           t('pages.addOverseasSite.siteName.validation.tooLong')
         )
-      ).code(400)
+      ).code(statusCodes.badRequest)
     }
 
     setAddOrsSession(request, { siteName })

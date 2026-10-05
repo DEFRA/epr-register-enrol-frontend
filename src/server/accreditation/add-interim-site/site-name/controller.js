@@ -8,6 +8,7 @@ import {
   SITE_FIELD_MAX_LENGTHS,
   exceedsMaxLength
 } from '../../../common/constants/siteFieldLimits.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -93,7 +94,7 @@ export const addInterimSiteNamePostController = {
           '',
           t('pages.addInterimSite.siteName.validation.required')
         )
-      ).code(400)
+      ).code(statusCodes.badRequest)
     }
 
     if (exceedsMaxLength(siteName, SITE_FIELD_MAX_LENGTHS.siteName)) {
@@ -105,7 +106,7 @@ export const addInterimSiteNamePostController = {
           siteName,
           t('pages.addInterimSite.siteName.validation.tooLong')
         )
-      ).code(400)
+      ).code(statusCodes.badRequest)
     }
 
     setAddInterimSiteSession(request, { siteName })

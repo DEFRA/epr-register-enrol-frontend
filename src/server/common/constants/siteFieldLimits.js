@@ -33,3 +33,9 @@ export const INTERIM_CONTACT_PHONE_RULES = Object.freeze({
 export function exceedsMaxLength(value, maxLength) {
   return typeof value === 'string' && value.length > maxLength
 }
+
+// A coarse size guard for a route's Joi payload schema, set far above every
+// real limit above. A value over it gets Hapi's bare 400 page rather than an
+// inline error, so it must never be the limit an operator actually meets - it
+// only stops absurdly large bodies reaching the handler.
+export const PAYLOAD_SIZE_GUARD = 2000
