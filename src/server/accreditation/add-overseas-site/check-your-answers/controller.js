@@ -16,6 +16,7 @@ import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 import { describeSiteSaveValidationError } from '../../../common/helpers/logging/describe-site-save-validation-error.js'
 import { siteCanTakeInterimSite } from '../../../common/helpers/interimSiteLimit.js'
+import { fromCyaQuery } from '../return-to-cya.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
@@ -75,7 +76,7 @@ function buildSiteNameRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.siteName'),
     value: session.siteName ?? '',
-    changeUrl: siteNameUrl(applicationId),
+    changeUrl: `${siteNameUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'site-name'
   }
 }
@@ -84,7 +85,7 @@ function buildLocationRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.location'),
     value: formatSiteAddress(session),
-    changeUrl: siteLocationUrl(applicationId),
+    changeUrl: `${siteLocationUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'location'
   }
 }
@@ -93,7 +94,7 @@ function buildCoordinatesRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.coordinates'),
     value: session.coordinates ?? '',
-    changeUrl: siteLocationUrl(applicationId),
+    changeUrl: `${siteLocationUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'coordinates'
   }
 }
@@ -102,7 +103,7 @@ function buildContactNameRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.contactName'),
     value: session.siteContactName ?? '',
-    changeUrl: contactDetailsUrl(applicationId),
+    changeUrl: `${contactDetailsUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'contact-name'
   }
 }
@@ -111,7 +112,7 @@ function buildContactEmailRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.contactEmail'),
     value: session.siteContactEmail ?? '',
-    changeUrl: contactDetailsUrl(applicationId),
+    changeUrl: `${contactDetailsUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'contact-email'
   }
 }
@@ -120,7 +121,7 @@ function buildContactPhoneRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.contactPhone'),
     value: session.siteContactPhone ?? '',
-    changeUrl: contactDetailsUrl(applicationId),
+    changeUrl: `${contactDetailsUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'contact-phone'
   }
 }
@@ -129,7 +130,7 @@ function buildRecyclingOperationRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.recyclingOperation'),
     value: (session.recyclingOperationCodes ?? []).join(', '),
-    changeUrl: recyclingOperationUrl(applicationId),
+    changeUrl: `${recyclingOperationUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'recycling-operation'
   }
 }
@@ -142,7 +143,7 @@ function buildBaselCodesRow(t, applicationId, session) {
       value,
       index
     })),
-    changeUrl: baselCodeUrl(applicationId),
+    changeUrl: `${baselCodeUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'basel-codes'
   }
 }
@@ -151,7 +152,7 @@ function buildRepatriatedLoadsRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.repatriatedLoads'),
     value: session.repatriatedLoads ?? '',
-    changeUrl: repatriatedLoadsUrl(applicationId),
+    changeUrl: `${repatriatedLoadsUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'repatriated-loads'
   }
 }
@@ -163,7 +164,7 @@ function buildConditionsOfExportRow(t, applicationId, session) {
   return {
     key: t('pages.addOverseasSite.cya.rows.conditionsOfExport'),
     value: session.conditionsOfExport ? t('common.yes') : t('common.no'),
-    changeUrl: conditionsOfExportUrl(applicationId),
+    changeUrl: `${conditionsOfExportUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'conditions-of-export'
   }
 }

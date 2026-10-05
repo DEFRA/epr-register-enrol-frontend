@@ -17,7 +17,7 @@ const env = nunjucks.configure(
 const LABELS = {
   change: 'Change',
   withdraw: 'Withdraw from application',
-  add: 'Add to application',
+  add: 'Include in this application',
   interimRemove: 'Withdraw from application',
   interimDisclosure: 'Show interim sites',
   addAnotherInterimSite: 'Add another interim site',
@@ -161,7 +161,7 @@ describe('overseasSiteRows component', () => {
       expect(form.find('input[name="siteId"]').attr('value')).toBe('900001')
     })
 
-    test('renders the Add to application link instead of Change/Withdraw in promote mode', () => {
+    test('renders the Include in this application link instead of Change/Withdraw in promote mode', () => {
       const $ = render(
         accreditedParams({
           testIdPrefix: 'registered-site',
@@ -171,7 +171,7 @@ describe('overseasSiteRows component', () => {
       )
 
       const add = $('[data-testid="add-button-registered-900001"]')
-      expect(add.text().trim()).toBe('Add to application')
+      expect(add.text().trim()).toBe('Include in this application')
       expect(add.attr('href')).toBe('/promote/900001')
       expect($('[data-testid="edit-button-accredited-900001"]')).toHaveLength(0)
       expect($('[data-testid="remove-button-accredited-900001"]')).toHaveLength(

@@ -25,7 +25,7 @@
     "pretest": "npm run build:frontend",
     "test": "cross-env TZ=UTC vitest run --coverage",
     "test:watch": "cross-env TZ=UTC vitest",
-    "security-audit": "npm audit --audit-level=high",
+    "security-audit": "audit-ci --config audit-ci.jsonc",
     "server:watch": "nodemon --inspect=0.0.0.0 --ext js,json,njk --legacy-watch ./src",
     "server:debug": "nodemon --inspect-brk=0.0.0.0 --ext js,json,njk --legacy-watch ./src",
     "prestart": "npm run build:frontend",
@@ -73,6 +73,7 @@
   "devDependencies": {
     "@babel/preset-env": "8.0.2",
     "@vitest/coverage-v8": "4.1.10",
+    "audit-ci": "7.1.0",
     "autoprefixer": "10.5.4",
     "babel-loader": "10.1.1",
     "cheerio": "1.2.0",
