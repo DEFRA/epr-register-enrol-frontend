@@ -70,17 +70,26 @@ export const router = {
             // MAX_FILE_BYTES enforced by sampling-plan-upload/upload-bes-evidence,
             // so any real file over 1MB passed their own validation but still
             // 413'd here.
+            //
+            // RA-619: uploads arrive as a multipart form, like they do at cdp-uploader,
+            // because a filename above U+00FF can't travel in a request header. The
+            // 'annotated' output keeps each part's filename and headers.
             payload: {
               output: 'data',
-              parse: false,
+              parse: true,
+              multipart: { output: 'annotated' },
               maxBytes: 20 * 1024 * 1024
             }
           },
           handler(request, h) {
             const { fileUploadId } = request.params
-            const filename = request.headers['x-filename'] ?? 'unknown'
+            const filePart = request.payload?.file
+            if (!filePart?.filename) {
+              return h.response({ message: 'No file part' }).code(400)
+            }
+            const filename = filePart.filename
             const contentType =
-              request.headers['content-type'] ?? 'application/octet-stream'
+              filePart.headers?.['content-type'] ?? 'application/octet-stream'
             stubCompleteUpload(fileUploadId, { filename, contentType })
             return h.response({}).code(200)
           }
