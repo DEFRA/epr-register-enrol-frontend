@@ -2,6 +2,7 @@
 
 {# Import GOVUK components globally #}
 {% from "govuk/components/breadcrumbs/macro.njk" import govukBreadcrumbs %}
+{% from "govuk/components/cookie-banner/macro.njk" import govukCookieBanner %}
 {% from "govuk/components/service-navigation/macro.njk" import govukServiceNavigation %}
 
 {# Import custom components globally #}
@@ -16,6 +17,64 @@
 
 {% block head %}
   <link href="{{ getAssetPath('stylesheets/application.scss') }}" rel="stylesheet">
+{% endblock %}
+
+{# GOV.UK requires the cookie banner before the skip link. #}
+{% block bodyStart %}
+  {% if not hideCookieBanner %}
+    {% set cookieBannerHeading = t('components.cookieBanner.heading') | replace('%SERVICE%', serviceName) %}
+    {% if analytics.shouldAskConsent %}
+      <form method="post" action="/cookies/consent" data-testid="cookie-banner-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        <input type="hidden" name="returnUrl" value="{{ analytics.returnUrl }}">
+        {{ govukCookieBanner({
+          ariaLabel: cookieBannerHeading,
+          attributes: { 'data-testid': 'cookie-banner' },
+          messages: [{
+            headingText: cookieBannerHeading,
+            html: '<p class="govuk-body">' + t('components.cookieBanner.essential') + '</p><p class="govuk-body">' + t('components.cookieBanner.analytics') + '</p>',
+            actions: [
+              {
+                text: t('components.cookieBanner.accept'),
+                type: "submit",
+                name: "analytics",
+                value: "accepted",
+                attributes: { 'data-testid': 'cookie-banner-accept' }
+              },
+              {
+                text: t('components.cookieBanner.reject'),
+                type: "submit",
+                name: "analytics",
+                value: "rejected",
+                attributes: { 'data-testid': 'cookie-banner-reject' }
+              },
+              {
+                text: t('components.cookieBanner.view'),
+                href: cookiesPath
+              }
+            ]
+          }]
+        }) }}
+      </form>
+    {% elif analytics.confirmation %}
+      {% set cookieSettingsLink = '<a class="govuk-link" href="' + cookiesPath + '">' + t('components.cookieBanner.changeSettingsLink') + '</a>' %}
+      {{ govukCookieBanner({
+        ariaLabel: cookieBannerHeading,
+        attributes: { 'data-testid': 'cookie-banner-confirmation' },
+        messages: [{
+          html: '<p class="govuk-body">' + t('components.cookieBanner.' + analytics.confirmation) + ' ' + (t('components.cookieBanner.changeSettings') | replace('%LINK%', cookieSettingsLink)) + '</p>',
+          role: "alert",
+          actions: [
+            {
+              text: t('components.cookieBanner.hide'),
+              href: analytics.returnUrl,
+              attributes: { 'data-testid': 'cookie-banner-hide' }
+            }
+          ]
+        }]
+      }) }}
+    {% endif %}
+  {% endif %}
 {% endblock %}
 
 {% block header %}
@@ -81,8 +140,9 @@
           text: "Privacy"
         },
         {
-          href: "/cookies",
-          text: "Cookies"
+          href: cookiesPath,
+          text: "Cookies",
+          attributes: { 'data-testid': 'footer-cookies' }
         },
         {
           href: "https://www.gov.uk/guidance/extended-producer-responsibility-for-packaging-accessibility-statement",

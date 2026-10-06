@@ -57,7 +57,16 @@ describe('context and cache', () => {
           user: null,
           userType: null,
           applicationHeader: null,
-          concurrentLoginNotice: null
+          concurrentLoginNotice: null,
+          analytics: {
+            confirmation: null,
+            hasConsented: false,
+            hasRejected: false,
+            isEnabled: false,
+            returnUrl: '/',
+            shouldAskConsent: false
+          },
+          cookiesPath: '/cookies'
         })
       })
 
@@ -167,7 +176,16 @@ describe('context and cache', () => {
           user: null,
           userType: null,
           applicationHeader: null,
-          concurrentLoginNotice: null
+          concurrentLoginNotice: null,
+          analytics: {
+            confirmation: null,
+            hasConsented: false,
+            hasRejected: false,
+            isEnabled: false,
+            returnUrl: '/',
+            shouldAskConsent: false
+          },
+          cookiesPath: '/cookies'
         })
       })
     })

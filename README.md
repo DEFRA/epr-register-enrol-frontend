@@ -147,6 +147,19 @@ run under stub auth.
 | `API_TIMEOUT`      | No      | Backend request timeout (ms)                                                                                                                                                           |
 | `API_STUB_ENABLED` | No      | Replaces all backend API calls with in-memory fixture data — see [Development without a backend](#development-without-a-backend). Boot fails loudly if `true` while `ENVIRONMENT=prod` |
 
+### Analytics and cookie consent
+
+| Variable                   | Default   | Description                                                                             |
+| -------------------------- | --------- | --------------------------------------------------------------------------------------- |
+| `ANALYTICS_ENABLED`        | `false`   | Shows the cookie banner, the analytics section of `/cookies`, and allows GA4 in the CSP |
+| `ANALYTICS_MEASUREMENT_ID` | _(blank)_ | GA4 measurement id for the environment                                                  |
+
+Both must be set for any of this to switch on; with neither set, the service
+asks for no consent and allows no analytics. If `ANALYTICS_ENABLED` is `true`
+but the id is blank, the service logs an error at startup and stays off. The
+choice is stored in an `analyticsConsent` cookie (base64 JSON:
+`{ analytics, version, decidedAt }`), the same as `epr-register-enrol-management-fe`.
+
 ### Example local/testing values
 
 ```bash
@@ -158,7 +171,12 @@ ENTRA_TENANT_ID=00000000-0000-0000-0000-000000000000
 AUTH_SHARED_SECRET__BACKEND=local-dev-shared-secret-not-real
 SESSION_COOKIE_PASSWORD=the-password-must-be-at-least-32-characters-long
 FILE_UPLOAD_S3_BUCKET=epr-register-enrol-file-uploads
+ANALYTICS_ENABLED=true
+ANALYTICS_MEASUREMENT_ID=G-LOCAL0000
 ```
+
+`G-LOCAL0000` is a placeholder that switches the cookie banner on locally;
+nothing reports to it.
 
 `AUTH_STUB_ENABLED=true` (the local default) makes the Defra ID/Entra ID
 values above irrelevant for a plain local run — see

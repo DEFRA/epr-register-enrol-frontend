@@ -5,6 +5,8 @@ import { config } from '../../config.js'
 import { buildNavigation } from './build-navigation.js'
 import { createLogger } from '../../../server/common/helpers/logging/logger.js'
 import { getTranslator } from '../helpers/get-translation.js'
+import { analyticsConsent } from '../../../server/common/analytics/consent.js'
+import { consentConfirmationFor } from '../../../server/common/analytics/confirmation.js'
 
 const logger = createLogger()
 const assetPath = config.get('assetPath')
@@ -51,6 +53,11 @@ export function context(request) {
     applicationHeader: request.app?.applicationHeader ?? null,
     // RA-462: set by the concurrent-login onPostAuth extension when another
     // sign-in for this identity has been detected.
-    concurrentLoginNotice: request.app?.concurrentLoginNotice ?? null
+    concurrentLoginNotice: request.app?.concurrentLoginNotice ?? null,
+    analytics: {
+      ...analyticsConsent(request),
+      confirmation: consentConfirmationFor(request)
+    },
+    cookiesPath: currentLocale === 'cy' ? '/cy/cookies' : '/cookies'
   }
 }

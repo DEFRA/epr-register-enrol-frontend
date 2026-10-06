@@ -996,7 +996,36 @@
           "name": "session",
           "purpose": "Saves your responses and keeps you signed in so you have a better experience.",
           "expires": "4 hours"
+        },
+        "analyticsConsent": {
+          "name": "analyticsConsent",
+          "purpose": "Remembers whether you accepted or rejected analytics cookies.",
+          "expires": "1 year"
         }
+      },
+      "analyticsCookies": {
+        "heading": "Analytics cookies (optional)",
+        "description": "With your permission, we use Google Analytics to collect data about how you use this service. This information helps us improve it.",
+        "ga": {
+          "name": "_ga",
+          "purpose": "Checks if you have visited the service before. This helps us count how many people use it.",
+          "expires": "400 days"
+        },
+        "gaProperty": {
+          "name": "_ga_",
+          "purpose": "Helps us measure how you use the service.",
+          "expires": "400 days"
+        }
+      },
+      "choice": {
+        "heading": "Do you want to accept analytics cookies?",
+        "accept": "Use cookies that measure my service use",
+        "reject": "Do not use cookies that measure my service use",
+        "save": "Save cookie settings"
+      },
+      "saved": {
+        "title": "Success",
+        "body": "You've set your cookie preferences."
       }
     }
   },
@@ -1065,6 +1094,19 @@
       "infoBody": "You were already signed in on another browser or device at %TIME%. Both sessions will stay signed in.",
       "signOut": "Sign out",
       "hide": "Hide"
+    },
+    "cookieBanner": {
+      "heading": "Cookies on %SERVICE%",
+      "essential": "We use some essential cookies to make this service work.",
+      "analytics": "We'd also like to use analytics cookies so we can understand how you use the service and make improvements.",
+      "accept": "Accept analytics cookies",
+      "reject": "Reject analytics cookies",
+      "view": "View cookies",
+      "accepted": "You've accepted analytics cookies.",
+      "rejected": "You've rejected analytics cookies.",
+      "changeSettings": "You can %LINK% at any time.",
+      "changeSettingsLink": "change your cookie settings",
+      "hide": "Hide cookie message"
     }
   }
 }

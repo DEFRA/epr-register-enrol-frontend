@@ -1,8 +1,24 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/button/macro.njk" import govukButton %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
+{% from "govuk/components/radios/macro.njk" import govukRadios %}
 {% from "govuk/components/table/macro.njk" import govukTable %}
 
 {% block content %}
+  {% if analytics.confirmation %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        {{ govukNotificationBanner({
+          type: "success",
+          titleText: t('pages.cookies.saved.title'),
+          text: t('pages.cookies.saved.body'),
+          attributes: { 'data-testid': 'cookies-saved' }
+        }) }}
+      </div>
+    </div>
+  {% endif %}
+
   {{ appHeading({
     text: heading,
     caption: serviceName
@@ -20,6 +36,7 @@
         <p>{{ t('pages.cookies.essentialCookies.description') }}</p>
 
         {{ govukTable({
+          attributes: { 'data-testid': 'essential-cookies' },
           head: [
             { text: t('pages.cookies.table.name') },
             { text: t('pages.cookies.table.purpose') },
@@ -35,9 +52,73 @@
               { text: t('pages.cookies.table.session.name') },
               { text: t('pages.cookies.table.session.purpose') },
               { text: t('pages.cookies.table.session.expires') }
+            ],
+            [
+              { text: t('pages.cookies.table.analyticsConsent.name') },
+              { text: t('pages.cookies.table.analyticsConsent.purpose') },
+              { text: t('pages.cookies.table.analyticsConsent.expires') }
             ]
           ]
         }) }}
+
+        {% if analytics.isEnabled %}
+          <h2 class="govuk-heading-m">{{ t('pages.cookies.analyticsCookies.heading') }}</h2>
+
+          <p>{{ t('pages.cookies.analyticsCookies.description') }}</p>
+
+          {{ govukTable({
+            attributes: { 'data-testid': 'analytics-cookies' },
+            head: [
+              { text: t('pages.cookies.table.name') },
+              { text: t('pages.cookies.table.purpose') },
+              { text: t('pages.cookies.table.expires') }
+            ],
+            rows: [
+              [
+                { text: t('pages.cookies.analyticsCookies.ga.name') },
+                { text: t('pages.cookies.analyticsCookies.ga.purpose') },
+                { text: t('pages.cookies.analyticsCookies.ga.expires') }
+              ],
+              [
+                { text: t('pages.cookies.analyticsCookies.gaProperty.name') },
+                { text: t('pages.cookies.analyticsCookies.gaProperty.purpose') },
+                { text: t('pages.cookies.analyticsCookies.gaProperty.expires') }
+              ]
+            ]
+          }) }}
+
+          <form method="post" action="/cookies/consent" novalidate data-testid="cookies-form">
+            <input type="hidden" name="crumb" value="{{ crumb }}">
+            <input type="hidden" name="returnUrl" value="{{ cookiesPath }}">
+
+            {{ govukRadios({
+              name: "analytics",
+              fieldset: {
+                legend: {
+                  text: t('pages.cookies.choice.heading'),
+                  classes: "govuk-fieldset__legend--m"
+                }
+              },
+              items: [
+                {
+                  value: "accepted",
+                  text: t('pages.cookies.choice.accept'),
+                  checked: analytics.hasConsented
+                },
+                {
+                  value: "rejected",
+                  text: t('pages.cookies.choice.reject'),
+                  checked: analytics.hasRejected
+                }
+              ]
+            }) }}
+
+            {{ govukButton({
+              text: t('pages.cookies.choice.save'),
+              attributes: { 'data-testid': 'cookies-save' }
+            }) }}
+          </form>
+        {% endif %}
       </div>
     </div>
   </div>

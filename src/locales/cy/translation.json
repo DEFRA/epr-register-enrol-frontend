@@ -994,7 +994,36 @@
           "name": "session",
           "purpose": "[Welsh] Saves your responses and keeps you signed in so you have a better experience.",
           "expires": "[Welsh] 4 hours"
+        },
+        "analyticsConsent": {
+          "name": "analyticsConsent",
+          "purpose": "[Welsh] Remembers whether you accepted or rejected analytics cookies.",
+          "expires": "[Welsh] 1 year"
         }
+      },
+      "analyticsCookies": {
+        "heading": "[Welsh] Analytics cookies (optional)",
+        "description": "[Welsh] With your permission, we use Google Analytics to collect data about how you use this service. This information helps us improve it.",
+        "ga": {
+          "name": "_ga",
+          "purpose": "[Welsh] Checks if you have visited the service before. This helps us count how many people use it.",
+          "expires": "[Welsh] 400 days"
+        },
+        "gaProperty": {
+          "name": "_ga_",
+          "purpose": "[Welsh] Helps us measure how you use the service.",
+          "expires": "[Welsh] 400 days"
+        }
+      },
+      "choice": {
+        "heading": "[Welsh] Do you want to accept analytics cookies?",
+        "accept": "[Welsh] Use cookies that measure my service use",
+        "reject": "[Welsh] Do not use cookies that measure my service use",
+        "save": "[Welsh] Save cookie settings"
+      },
+      "saved": {
+        "title": "[Welsh] Success",
+        "body": "[Welsh] You've set your cookie preferences."
       }
     }
   },
@@ -1063,6 +1092,19 @@
       "infoBody": "[Welsh] You were already signed in on another browser or device at %TIME%. Both sessions will stay signed in.",
       "signOut": "[Welsh] Sign out",
       "hide": "[Welsh] Hide"
+    },
+    "cookieBanner": {
+      "heading": "[Welsh] Cookies on %SERVICE%",
+      "essential": "[Welsh] We use some essential cookies to make this service work.",
+      "analytics": "[Welsh] We'd also like to use analytics cookies so we can understand how you use the service and make improvements.",
+      "accept": "[Welsh] Accept analytics cookies",
+      "reject": "[Welsh] Reject analytics cookies",
+      "view": "[Welsh] View cookies",
+      "accepted": "[Welsh] You've accepted analytics cookies.",
+      "rejected": "[Welsh] You've rejected analytics cookies.",
+      "changeSettings": "[Welsh] You can %LINK% at any time.",
+      "changeSettingsLink": "[Welsh] change your cookie settings",
+      "hide": "[Welsh] Hide cookie message"
     }
   }
 }
