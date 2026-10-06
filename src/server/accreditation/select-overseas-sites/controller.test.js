@@ -1380,7 +1380,9 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
-    test('redirects to the interim wizard country step and seeds the session when the interim site is found', async () => {
+    // RA-632: Change lands on check-your-answers, the same as the ORS's own
+    // Change (RA-573), rather than replaying the wizard from its first step.
+    test("redirects to the interim wizard's check-your-answers when the interim site is found", async () => {
       const accreditedWithInterim = {
         ...ACCREDITED_SITE,
         interimSite: {
@@ -1412,8 +1414,65 @@ describe('#selectOverseasSitesController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        `/accreditation/add-interim-site/${APPLICATION_ID}/country`
+        `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`
       )
+    })
+
+    test("lands on check-your-answers showing the interim site's existing answers", async () => {
+      const accreditedWithInterim = {
+        ...ACCREDITED_SITE,
+        interimSite: {
+          siteId: 42,
+          siteName: 'Interim Depot',
+          country: 'France',
+          addressLine1: 'Unit 1',
+          townOrCity: 'Rotterdam',
+          contactName: 'Jane Smith',
+          contactEmail: 'jane@example.com',
+          contactPhone: '+441234567890',
+          operationCodes: ['R12']
+        }
+      }
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [accreditedWithInterim, REGISTERED_SITE]
+          }
+        })
+      )
+
+      function cookieHeaderFrom(response, fallback) {
+        const raw = response.headers['set-cookie']
+        if (!raw) {
+          return fallback
+        }
+        return Array.isArray(raw) ? raw[0].split(';')[0] : raw.split(';')[0]
+      }
+
+      const editResponse = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
+        headers: operatorHeaders
+      })
+      expect(editResponse.statusCode).toBe(statusCodes.redirect)
+      expect(editResponse.headers.location).toBe(
+        `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: editResponse.headers.location,
+        headers: {
+          ...operatorHeaders,
+          cookie: cookieHeaderFrom(editResponse, '')
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="row-site-name"')
+      expect(result).toContain('Interim Depot')
+      expect(result).toContain('France')
     })
 
     test("re-populates the interim site's existing name on the interim wizard's site-name step", async () => {
