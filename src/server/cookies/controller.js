@@ -10,6 +10,8 @@ export const cookiesController = {
     return h.view('cookies/index', {
       pageTitle,
       heading,
+      // The page has its own form for this choice.
+      hideCookieBanner: true,
       breadcrumbs: [
         {
           text: t('navigation.home'),

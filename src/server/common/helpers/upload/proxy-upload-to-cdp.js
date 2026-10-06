@@ -22,7 +22,10 @@ export async function proxyUploadToCdp({
     duplex: 'half',
     redirect: 'manual',
     headers: {
-      'x-filename': filename,
+      // HTTP header values must be Latin-1 (ByteString) — fetch throws for any
+      // character above code point 255, so a filename with e.g. Vietnamese or
+      // other non-Latin1 characters would otherwise crash the upload.
+      'x-filename': encodeURIComponent(filename),
       'Content-Type': contentType
     }
   })

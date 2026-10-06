@@ -99,4 +99,32 @@ describe('#proxyUploadToCdp', () => {
       }
     )
   })
+
+  test('percent-encodes a filename containing non-Latin1 characters', async () => {
+    // Regression guard: fetch's headers must be ByteString (Latin1-only), so a
+    // filename with e.g. Vietnamese characters previously crashed the upload with
+    // "Cannot convert argument to a ByteString" instead of reaching cdp-uploader.
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200 })
+
+    await proxyUploadToCdp({
+      uploadUrl: 'http://cdp-uploader/upload/abc',
+      payload: Buffer.from('file-bytes'),
+      filename: 'giấy chứng nhận.pdf',
+      contentType: 'application/pdf'
+    })
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://cdp-uploader/upload/abc',
+      {
+        method: 'POST',
+        body: Buffer.from('file-bytes'),
+        duplex: 'half',
+        redirect: 'manual',
+        headers: {
+          'x-filename': encodeURIComponent('giấy chứng nhận.pdf'),
+          'Content-Type': 'application/pdf'
+        }
+      }
+    )
+  })
 })

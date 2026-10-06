@@ -55,6 +55,40 @@ describe('#startServer', () => {
     })
   })
 
+  describe('When analytics is switched on without a measurement id', () => {
+    let server
+    let original
+
+    beforeAll(() => {
+      original = {
+        isEnabled: config.get('analytics.isEnabled'),
+        measurementId: config.get('analytics.measurementId')
+      }
+      config.set('analytics.isEnabled', true)
+      config.set('analytics.measurementId', '')
+    })
+
+    afterAll(async () => {
+      config.set('analytics.isEnabled', original.isEnabled)
+      config.set('analytics.measurementId', original.measurementId)
+      await server?.stop({ timeout: 0 })
+    })
+
+    test('logs the misconfiguration and still starts', async () => {
+      const enabledImport = await import('../analytics/enabled.js')
+      const logSpy = vi.spyOn(enabledImport, 'logAnalyticsMisconfiguration')
+
+      server = await startServerImport.startServer()
+
+      expect(logSpy).toHaveBeenCalledWith(server.logger)
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: '/health'
+      })
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
+
   describe('When server start fails', () => {
     test('Should log failed startup message', async () => {
       createServerSpy.mockRejectedValue(new Error('Server failed to start'))
