@@ -335,4 +335,54 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
       )
     })
   })
+
+  // RA-620: every limit mirrors the backend's validator, so the value one past
+  // it is refused here, inline, rather than as a 400 at check-your-answers.
+  describe('RA-620: backend length limits', () => {
+    const limitPostHeaders = {
+      'x-test-user-type': 'operator',
+      'content-type': 'application/x-www-form-urlencoded'
+    }
+    const postForm = (fields) =>
+      server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: limitPostHeaders,
+        payload: new URLSearchParams(fields).toString()
+      })
+
+    const validFields = Object.fromEntries(new URLSearchParams(VALID_PAYLOAD))
+
+    test('accepts a 30-character phone number', async () => {
+      const { statusCode } = await postForm({
+        ...validFields,
+        siteContactPhone: '1'.repeat(30)
+      })
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('refuses a 31-character phone number inline', async () => {
+      const { statusCode, result } = await postForm({
+        ...validFields,
+        siteContactPhone: '+44 (0)20 7946 0000 9876 543210'
+      })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Phone number must be 30 characters or less')
+    })
+
+    // The route's Joi schema used to cap the phone at 50 and the email at 320,
+    // so a longer value got Hapi's bare 400 page instead of an inline error.
+    test('still answers inline for values far past the limits', async () => {
+      const { statusCode, result } = await postForm({
+        ...validFields,
+        siteContactPhone: '1'.repeat(60),
+        siteContactEmail: `${'a'.repeat(400)}@example.com`
+      })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Phone number must be 30 characters or less')
+      expect(result).toContain('Email address must be 254 characters or less')
+    })
+  })
 })

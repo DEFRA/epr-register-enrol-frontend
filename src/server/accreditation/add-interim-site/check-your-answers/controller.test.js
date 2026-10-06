@@ -378,6 +378,45 @@ describe('#addInterimSiteCyaController', () => {
       expect(createSpy).not.toHaveBeenCalled()
     })
 
+    // RA-620: same diagnosability gap as the overseas site save.
+    test('logs the fields the backend rejected when createInterimSite returns a 400', async () => {
+      const err = Object.assign(new Error('API request failed: 400'), {
+        status: 400,
+        response: JSON.stringify([
+          {
+            propertyName: 'ContactPhone',
+            errorMessage: 'ContactPhone must be a valid phone number.',
+            attemptedValue: '+44 1234 5678 9012 3456',
+            errorCode: 'RegularExpressionValidator'
+          }
+        ])
+      })
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockRejectedValue(
+        err
+      )
+      const errorLog = vi.spyOn(server.logger, 'error')
+
+      await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          ...operatorHeaders,
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      const [, message] = errorLog.mock.calls.find(([, text]) =>
+        text.startsWith('Interim site CYA save error (createInterimSite)')
+      )
+      expect(message).toContain(
+        'validation failed: ContactPhone (RegularExpressionValidator: ContactPhone must be a valid phone number.)'
+      )
+      expect(message).toContain('contactPhone: ')
+      expect(message).not.toContain('+44 1234 5678 9012 3456')
+    })
+
     test('renders error when API call fails', async () => {
       vi.spyOn(accreditationApiService, 'createInterimSite').mockRejectedValue(
         new Error('API error')
@@ -602,6 +641,45 @@ describe('#addInterimSiteCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(accreditationApiService.createInterimSite).toHaveBeenCalled()
+    })
+
+    // RA-620: an edit's 400 is logged under the call that actually failed,
+    // with the backend's failing fields and none of the submitted values.
+    test('logs updateInterimSite and the fields the backend rejected when an edit returns a 400', async () => {
+      const sessionCookie = await seedEditSession()
+      const err = Object.assign(new Error('API request failed: 400'), {
+        status: 400,
+        response: JSON.stringify([
+          {
+            propertyName: 'Postcode',
+            errorMessage:
+              "The length of 'Postcode' must be 20 characters or fewer. You entered 21 characters.",
+            attemptedValue: 'SW1A 1AA SW1A 1AA 999',
+            errorCode: 'MaximumLengthValidator'
+          }
+        ])
+      })
+      vi.spyOn(accreditationApiService, 'updateInterimSite').mockRejectedValue(
+        err
+      )
+      vi.spyOn(accreditationApiService, 'createInterimSite')
+      const errorLog = vi.spyOn(server.logger, 'error')
+
+      await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: { ...postHeaders, cookie: sessionCookie },
+        payload: ''
+      })
+
+      const [, message] = errorLog.mock.calls.find(([, text]) =>
+        text.startsWith('Interim site CYA save error (updateInterimSite)')
+      )
+      expect(message).toContain(
+        'validation failed: Postcode (MaximumLengthValidator:'
+      )
+      expect(message).not.toContain('SW1A 1AA SW1A 1AA 999')
+      expect(accreditationApiService.createInterimSite).not.toHaveBeenCalled()
     })
 
     // Only a 404 means "it is not there any more". Anything else is a real

@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
+import { expectFieldError } from '../../../common/test-helpers/field-error.js'
 
 const APPLICATION_ID = 'app-sl-001'
 const BASE_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/site-location`
@@ -416,6 +417,72 @@ describe('#addOverseasSiteSiteLocationController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(NEXT_URL)
+    })
+  })
+
+  // RA-620: every limit mirrors the backend's validator, so the value one past
+  // it is refused here, inline, rather than as a 400 at check-your-answers.
+  describe('RA-620: backend length limits', () => {
+    const limitPostHeaders = {
+      'x-test-user-type': 'operator',
+      'content-type': 'application/x-www-form-urlencoded'
+    }
+    const postForm = (fields) =>
+      server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: limitPostHeaders,
+        payload: new URLSearchParams(fields).toString()
+      })
+
+    const validFields = Object.fromEntries(new URLSearchParams(VALID_PAYLOAD))
+
+    test.each([
+      [
+        'addressLine1',
+        200,
+        'Address line 1 must be 200 characters or less',
+        'address-line1'
+      ],
+      [
+        'addressLine2',
+        200,
+        'Address line 2 must be 200 characters or less',
+        'address-line2'
+      ],
+      [
+        'townOrCity',
+        100,
+        'Town or city must be 100 characters or less',
+        'town-or-city'
+      ],
+      ['country', 100, 'Country must be 100 characters or less', 'country']
+    ])(
+      '%s: accepts %i characters and refuses one more',
+      async (field, max, message, fieldId) => {
+        const atLimit = await postForm({
+          ...validFields,
+          [field]: 'a'.repeat(max)
+        })
+        expect(atLimit.statusCode).toBe(statusCodes.redirect)
+
+        const overLimit = await postForm({
+          ...validFields,
+          [field]: 'a'.repeat(max + 1)
+        })
+        expect(overLimit.statusCode).toBe(statusCodes.badRequest)
+        expect(overLimit.result).toContain('data-testid="error-summary"')
+        expect(overLimit.result).toContain(message)
+        expectFieldError(overLimit.result, fieldId, message)
+      }
+    )
+
+    test('keeps the town or city "required" message ahead of the length rule', async () => {
+      const { result } = await postForm({ ...validFields, townOrCity: '' })
+      expect(result).toContain('Enter the town or city')
+      expect(result).not.toContain(
+        'Town or city must be 100 characters or less'
+      )
     })
   })
 })

@@ -4,6 +4,10 @@ import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
+import {
+  SITE_FIELD_MAX_LENGTHS,
+  exceedsMaxLength
+} from '../../../common/constants/siteFieldLimits.js'
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -78,6 +82,26 @@ export const addInterimSiteLocationGetController = {
   }
 }
 
+const MAX_LENGTH_RULES = [
+  ['addressLine1', SITE_FIELD_MAX_LENGTHS.addressLine, 'addressLine1TooLong'],
+  ['addressLine2', SITE_FIELD_MAX_LENGTHS.addressLine, 'addressLine2TooLong'],
+  ['townOrCity', SITE_FIELD_MAX_LENGTHS.townOrCity, 'townOrCityTooLong'],
+  [
+    'stateOrRegion',
+    SITE_FIELD_MAX_LENGTHS.stateOrRegion,
+    'stateOrRegionTooLong'
+  ],
+  ['postcode', SITE_FIELD_MAX_LENGTHS.postcode, 'postcodeTooLong']
+]
+
+function addMaxLengthErrors(t, fields, errors) {
+  for (const [field, maxLength, key] of MAX_LENGTH_RULES) {
+    if (!errors[field] && exceedsMaxLength(fields[field], maxLength)) {
+      errors[field] = t(`pages.addInterimSite.siteLocation.validation.${key}`)
+    }
+  }
+}
+
 export const addInterimSiteLocationPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
@@ -103,6 +127,7 @@ export const addInterimSiteLocationPostController = {
         'pages.addInterimSite.siteLocation.validation.townOrCityRequired'
       )
     }
+    addMaxLengthErrors(t, fields, errors)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(
