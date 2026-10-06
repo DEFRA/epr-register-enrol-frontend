@@ -5,7 +5,12 @@ import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
+import {
+  SITE_FIELD_MAX_LENGTHS,
+  exceedsMaxLength
+} from '../../../common/constants/siteFieldLimits.js'
 import { COUNTRIES } from '../../../common/data/countries.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -87,7 +92,19 @@ export const addInterimSiteCountryPostController = {
           '',
           t('pages.addInterimSite.country.validation.required')
         )
-      ).code(400)
+      ).code(statusCodes.badRequest)
+    }
+
+    if (exceedsMaxLength(country, SITE_FIELD_MAX_LENGTHS.country)) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          country,
+          t('pages.addInterimSite.country.validation.tooLong')
+        )
+      ).code(statusCodes.badRequest)
     }
 
     setAddInterimSiteSession(request, { country })

@@ -5,6 +5,11 @@ import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
+import {
+  SITE_FIELD_MAX_LENGTHS,
+  exceedsMaxLength
+} from '../../../common/constants/siteFieldLimits.js'
+import { statusCodes } from '../../../common/constants/status-codes.js'
 
 const STEEL_ALU_MATERIALS = new Set(['Steel', 'Aluminium'])
 
@@ -163,7 +168,7 @@ export const addOrsRepatriatedLoadsPostController = {
           '',
           t('pages.addOverseasSite.repatriatedLoads.validation.required')
         )
-      ).code(400)
+      ).code(statusCodes.badRequest)
     }
 
     const wordCount = countWords(repatriatedLoads)
@@ -177,7 +182,32 @@ export const addOrsRepatriatedLoadsPostController = {
           t('pages.addOverseasSite.repatriatedLoads.validation.tooManyWords'),
           true
         )
-      ).code(400)
+      ).code(statusCodes.badRequest)
+    }
+
+    // RA-620: 500 words can still run past the backend's 5000-character cap
+    // (long words, or a pasted list with heavy punctuation), so both apply.
+    // Counted as submitted, line breaks as the browser's CRLF, because that is
+    // the string the backend receives and measures. Not flagged
+    // tooManyWords: the browser clears a "length" error once the text is back
+    // under 500 words, which says nothing about this limit.
+    if (
+      exceedsMaxLength(
+        repatriatedLoads,
+        SITE_FIELD_MAX_LENGTHS.repatriatedLoads
+      )
+    ) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          repatriatedLoads,
+          t(
+            'pages.addOverseasSite.repatriatedLoads.validation.tooManyCharacters'
+          )
+        )
+      ).code(statusCodes.badRequest)
     }
 
     setAddOrsSession(request, { repatriatedLoads })
