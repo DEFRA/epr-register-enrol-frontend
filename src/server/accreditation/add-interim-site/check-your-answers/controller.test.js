@@ -481,8 +481,9 @@ describe('#addInterimSiteCyaController', () => {
         headers: operatorHeaders
       })
       expect(entryResponse.statusCode).toBe(statusCodes.redirect)
+      // RA-632: Change lands straight on this page.
       expect(entryResponse.headers.location).toBe(
-        `/accreditation/add-interim-site/${APPLICATION_ID}/country`
+        `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`
       )
 
       return cookiesFrom(entryResponse)
