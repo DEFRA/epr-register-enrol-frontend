@@ -15,9 +15,9 @@ import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplica
 // Split out of controller.js (RA-486 self-review, SonarCloud S104: that file
 // had grown past the 500-line limit) — these three "Change"/"Add To
 // Accreditation" entry points all replay an existing site's data into a
-// fresh wizard session and hand off to that wizard's first step, which is a
-// distinct concern from the list/remove/save-for-later handling that stayed
-// behind in controller.js.
+// fresh wizard session and hand off to that wizard (its first step, or its
+// check-your-answers page for a Change), which is a distinct concern from the
+// list/remove/save-for-later handling that stayed behind in controller.js.
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -33,6 +33,10 @@ function checkYourAnswersUrl(applicationId) {
 
 function interimSiteCountryUrl(applicationId) {
   return `/accreditation/add-interim-site/${applicationId}/country`
+}
+
+function interimSiteCheckYourAnswersUrl(applicationId) {
+  return `/accreditation/add-interim-site/${applicationId}/check-your-answers`
 }
 
 // Mirrors the check controller.js's POST handler already applies to every
@@ -244,6 +248,10 @@ function buildInterimSiteSessionSeed(interimSite) {
  *
  * A withdrawn interim site is not editable: restoring it is a separate,
  * deliberate action, and the backend refuses the edit anyway.
+ *
+ * RA-632: lands on the wizard's check-your-answers page, the same as the ORS's
+ * own Change (RA-573), so the operator sees the site's current answers and uses
+ * each row's Change link for the one they want to edit.
  */
 export const selectOverseasSitesInterimSiteEditEntryGetController = {
   async handler(request, h) {
@@ -269,7 +277,7 @@ export const selectOverseasSitesInterimSiteEditEntryGetController = {
       editingInterimSiteId: found.interimSite.siteId
     })
 
-    return h.redirect(interimSiteCountryUrl(applicationId))
+    return h.redirect(interimSiteCheckYourAnswersUrl(applicationId))
   }
 }
 
