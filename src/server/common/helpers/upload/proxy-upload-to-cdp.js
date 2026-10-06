@@ -10,24 +10,27 @@
 // but Node's native `fetch()` doesn't do that conversion — it returns the real status
 // and a normal `type` (e.g. 'basic'). Checking the status range directly, rather than
 // relying on `type`, is what actually works against Node's fetch implementation.
+//
+// RA-619: the file goes up as a multipart form rather than a raw body with the name in an
+// `x-filename` header. A request header value must be Latin-1, so any filename holding a
+// character above U+00FF (Vietnamese diacritics, CJK, emoji) made fetch() throw before the
+// request was sent. In a multipart body the filename is part of the content, written as
+// UTF-8, so it has no such limit and cdp-uploader records the name exactly as chosen. The
+// single part must be called `file` because that is the key the upload status reads back.
 export async function proxyUploadToCdp({
   uploadUrl,
   payload,
   filename,
   contentType
 }) {
+  const form = new FormData()
+  form.append('file', new Blob([payload], { type: contentType }), filename)
+
+  // No headers: fetch sets the multipart Content-Type itself, because it owns the boundary.
   const proxyResponse = await fetch(uploadUrl, {
     method: 'POST',
-    body: payload,
-    duplex: 'half',
-    redirect: 'manual',
-    headers: {
-      // HTTP header values must be Latin-1 (ByteString) — fetch throws for any
-      // character above code point 255, so a filename with e.g. Vietnamese or
-      // other non-Latin1 characters would otherwise crash the upload.
-      'x-filename': encodeURIComponent(filename),
-      'Content-Type': contentType
-    }
+    body: form,
+    redirect: 'manual'
   })
 
   const isRedirect = proxyResponse.status >= 300 && proxyResponse.status < 400
