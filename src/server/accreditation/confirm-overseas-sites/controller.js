@@ -9,6 +9,8 @@ import {
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { activeInterimSites } from '../../common/helpers/interimSites.js'
+import { isMultipleInterimSitesEnabled } from '../../common/helpers/interimSiteLimit.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -16,6 +18,23 @@ function taskListUrl(applicationId) {
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
+}
+
+// RA-630: list the interim sites the same way select-overseas-sites does - every
+// active one, or only the first while multiple interim sites are off - rather
+// than reading the singular `interimSite` mirror, which holds just one.
+function decorateSite(site) {
+  const active = activeInterimSites(site)
+  return {
+    ...site,
+    interimSites: isMultipleInterimSitesEnabled() ? active : active.slice(0, 1)
+  }
+}
+
+function selectedSites(application) {
+  return (application.overseasSites?.sites ?? [])
+    .filter((s) => s.selected !== false)
+    .map(decorateSite)
 }
 
 function renderPage(h, viewData) {
@@ -81,9 +100,7 @@ export const confirmOverseasSitesGetController = {
       return h.redirect(queryTaskListUrl(applicationId))
     }
 
-    const sites = (application.overseasSites?.sites ?? []).filter(
-      (s) => s.selected !== false
-    )
+    const sites = selectedSites(application)
 
     return renderPage(
       h,
@@ -128,9 +145,7 @@ export const confirmOverseasSitesPostController = {
       return guardRedirect
     }
 
-    const sites = (application.overseasSites?.sites ?? []).filter(
-      (s) => s.selected !== false
-    )
+    const sites = selectedSites(application)
 
     try {
       await accreditationApiService.patchOverseasSites(
