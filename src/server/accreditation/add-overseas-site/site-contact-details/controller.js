@@ -10,16 +10,22 @@ import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
+import {
+  ORS_CONTACT_PHONE_RULES,
+  PAYLOAD_SIZE_GUARD
+} from '../../../common/constants/siteFieldLimits.js'
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a
 // non-string field (e.g. an array) crashes `.trim()` above with an
 // unhandled exception rather than a graceful error (M1, 2026-08-08 pentest
-// report). .unknown(true) lets the CSRF crumb field through.
+// report). .unknown(true) lets the CSRF crumb field through. The cap is only
+// a size guard (RA-620): the limits an operator meets are the handler's
+// inline errors, not this.
 export const siteContactDetailsPayloadSchema = Joi.object({
-  siteContactName: Joi.string().allow('').max(200).optional(),
-  siteContactEmail: Joi.string().allow('').max(320).optional(),
-  siteContactPhone: Joi.string().allow('').max(50).optional()
+  siteContactName: Joi.string().allow('').max(PAYLOAD_SIZE_GUARD).optional(),
+  siteContactEmail: Joi.string().allow('').max(PAYLOAD_SIZE_GUARD).optional(),
+  siteContactPhone: Joi.string().allow('').max(PAYLOAD_SIZE_GUARD).optional()
 }).unknown(true)
 
 function selectOrsUrl(applicationId) {
@@ -46,7 +52,8 @@ function renderPage(h, viewData) {
 const CONTACT_VALIDATION_OPTIONS = {
   keyPrefix: 'pages.addOverseasSite.siteContactDetails.validation',
   phoneRequired: false,
-  nameRejectsDigits: true
+  nameRejectsDigits: true,
+  phoneRules: ORS_CONTACT_PHONE_RULES
 }
 
 function buildViewData(t, applicationId, fields, errors) {

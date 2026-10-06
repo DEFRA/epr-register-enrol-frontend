@@ -8,6 +8,7 @@ import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
+import { INTERIM_CONTACT_PHONE_RULES } from '../../../common/constants/siteFieldLimits.js'
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -33,7 +34,8 @@ function renderPage(h, viewData) {
 const CONTACT_VALIDATION_OPTIONS = {
   keyPrefix: 'pages.addInterimSite.siteContactDetails.validation',
   phoneRequired: true,
-  nameRejectsDigits: false
+  nameRejectsDigits: false,
+  phoneRules: INTERIM_CONTACT_PHONE_RULES
 }
 
 function buildViewData(t, applicationId, fields, errors) {

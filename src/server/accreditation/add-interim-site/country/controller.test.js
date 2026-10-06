@@ -395,4 +395,33 @@ describe('#addInterimSiteCountryController', () => {
       expect(cancelResponse.headers.location).toBe(SELECT_ORS_URL)
     })
   })
+
+  // RA-620: every limit mirrors the backend's validator, so the value one past
+  // it is refused here, inline, rather than as a 400 at check-your-answers.
+  describe('RA-620: backend length limits', () => {
+    const limitPostHeaders = {
+      'x-test-user-type': 'operator',
+      'content-type': 'application/x-www-form-urlencoded'
+    }
+    const postForm = (fields) =>
+      server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: limitPostHeaders,
+        payload: new URLSearchParams(fields).toString()
+      })
+
+    test('accepts a 100-character country', async () => {
+      const { statusCode } = await postForm({ country: 'a'.repeat(100) })
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('refuses a 101-character country inline', async () => {
+      const { statusCode, result } = await postForm({
+        country: 'a'.repeat(101)
+      })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Country must be 100 characters or less')
+    })
+  })
 })

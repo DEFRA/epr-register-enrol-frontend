@@ -339,4 +339,34 @@ describe('#addOverseasSiteSiteNameController', () => {
       expect(getResponse.result).not.toContain('Stale Site')
     })
   })
+
+  // RA-620: every limit mirrors the backend's validator, so the value one past
+  // it is refused here, inline, rather than as a 400 at check-your-answers.
+  describe('RA-620: backend length limits', () => {
+    const limitPostHeaders = {
+      'x-test-user-type': 'operator',
+      'content-type': 'application/x-www-form-urlencoded'
+    }
+    const postForm = (fields) =>
+      server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: limitPostHeaders,
+        payload: new URLSearchParams(fields).toString()
+      })
+
+    test('accepts a 200-character site name', async () => {
+      const { statusCode } = await postForm({ siteName: 'a'.repeat(200) })
+      expect(statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('refuses a 201-character site name inline, keeping what was typed', async () => {
+      const siteName = 'a'.repeat(201)
+      const { statusCode, result } = await postForm({ siteName })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Site name must be 200 characters or less')
+      expect(result).toContain(siteName)
+    })
+  })
 })
