@@ -1013,6 +1013,42 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
+    test.each([
+      ['Vietnamese diacritics', 'Báo cáo kiểm tra ẻ.pdf'],
+      ['CJK only', '报告.pdf'],
+      ['emoji', '🚀 plan.pdf']
+    ])(
+      'RA-619: a file named with %s reaches CDP and redirects to the status page',
+      async (_label, filename) => {
+        // The stand-in runs fetch()'s real header validation (new Headers), which is
+        // what threw "Cannot convert argument to a ByteString" in production, and fakes
+        // only the network. Replacing fetch wholesale with a bare mock cannot catch this.
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+        global.fetch = vi.fn(async (_url, options) => {
+          Object.fromEntries(new Headers(options.headers ?? {}))
+          return { ok: false, status: 302, type: 'basic' }
+        })
+
+        const { statusCode, headers } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+          headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+          payload: buildMultipartPayload({
+            filename,
+            contentType: 'application/pdf'
+          })
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+        expect(headers.location).toBe(
+          `/accreditation/sampling-plan/${APPLICATION_ID}/status`
+        )
+        expect(global.fetch.mock.calls[0][1].body.get('file').name).toBe(
+          filename
+        )
+      }
+    )
+
     test('genuine non-2xx/3xx proxy response still returns 500 with uploadError', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 })
