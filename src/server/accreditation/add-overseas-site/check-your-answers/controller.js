@@ -188,7 +188,13 @@ function buildRows(t, applicationId, session) {
 // Steel/Aluminium sites also visit conditions-of-export, everyone else goes
 // straight from repatriated-loads to here. Mirrors the same conditional
 // used to decide whether the conditionsOfExport row is shown above.
+//
+// RA-636: when the wizard was entered from the ORS list (Change or Add To
+// Accreditation), Back returns to that list instead.
 function cyaBackLink(applicationId, session) {
+  if (session.editingSiteId != null || session.promotingSiteId != null) {
+    return selectOrsUrl(applicationId)
+  }
   return session.conditionsOfExport != null
     ? conditionsOfExportUrl(applicationId)
     : repatriatedLoadsUrl(applicationId)

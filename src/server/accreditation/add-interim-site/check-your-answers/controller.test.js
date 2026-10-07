@@ -489,6 +489,22 @@ describe('#addInterimSiteCyaController', () => {
       return cookiesFrom(entryResponse)
     }
 
+    // RA-636
+    test('back link returns to the ORS list', async () => {
+      const sessionCookie = await seedEditSession()
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="back-link"[^>]*href="/accreditation/select-overseas-sites/${APPLICATION_ID}"|href="/accreditation/select-overseas-sites/${APPLICATION_ID}"[^>]*data-testid="back-link"`
+        )
+      )
+    })
+
     // RA-603: an edit now goes through the interim site's own endpoint. It used
     // to rebuild the whole site list and send it back through the bulk PATCH,
     // which was a read-modify-write over every site and could not express
