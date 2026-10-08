@@ -22,7 +22,7 @@ export const stubAuthPlugin = {
         // the only user type this service has. Any x-test-user-type header a
         // test still sends is ignored.
         server.auth.scheme('test-bypass', () => ({
-          authenticate(request, h) {
+          authenticate(_request, h) {
             return h.authenticated({ credentials: TEST_OPERATOR })
           }
         }))
