@@ -1,4 +1,4 @@
-import { getUser, isRegulator, isOperator } from './get-user.js'
+import { getUser, isOperator } from './get-user.js'
 
 describe('#getUser', () => {
   test('returns credentials when authenticated', () => {
@@ -14,22 +14,6 @@ describe('#getUser', () => {
 
   test('returns null when credentials is absent', () => {
     expect(getUser({ auth: {} })).toBeNull()
-  })
-})
-
-describe('#isRegulator', () => {
-  test('returns true for regulator credentials', () => {
-    const request = { auth: { credentials: { userType: 'regulator' } } }
-    expect(isRegulator(request)).toBe(true)
-  })
-
-  test('returns false for operator credentials', () => {
-    const request = { auth: { credentials: { userType: 'operator' } } }
-    expect(isRegulator(request)).toBe(false)
-  })
-
-  test('returns false when unauthenticated', () => {
-    expect(isRegulator({})).toBe(false)
   })
 })
 

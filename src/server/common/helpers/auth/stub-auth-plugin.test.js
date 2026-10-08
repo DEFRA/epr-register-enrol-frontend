@@ -1,12 +1,12 @@
 import { vi } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../constants/status-codes.js'
-import { TEST_USER, TEST_REGULATOR, TEST_OPERATOR } from './stub-auth-plugin.js'
-import { requireRegulator, requireOperator } from './auth-scopes.js'
-import { ROLE_REGULATOR_STANDARD } from './auth-scopes.js'
+import { TEST_OPERATOR } from './stub-auth-plugin.js'
+import { requireOperator } from './auth-scopes.js'
 
 describe('#stubAuthPlugin (test mode)', () => {
   let server
+  let captured
 
   beforeAll(async () => {
     server = await createServer()
@@ -15,15 +15,17 @@ describe('#stubAuthPlugin (test mode)', () => {
     server.route([
       {
         method: 'GET',
-        path: '/test-regulator-only',
-        options: requireRegulator,
+        path: '/test-operator-only',
+        options: requireOperator,
         handler: (request, h) => h.response('ok').code(statusCodes.ok)
       },
       {
         method: 'GET',
-        path: '/test-operator-only',
-        options: requireOperator,
-        handler: (request, h) => h.response('ok').code(statusCodes.ok)
+        path: '/test-scope-check',
+        handler(request, h) {
+          captured = request.auth.credentials
+          return h.response('ok').code(statusCodes.ok)
+        }
       }
     ])
   })
@@ -32,118 +34,41 @@ describe('#stubAuthPlugin (test mode)', () => {
     await server.stop({ timeout: 0 })
   })
 
-  test('auto-authenticates requests in test mode', async () => {
+  beforeEach(() => {
+    captured = undefined
+  })
+
+  test('auto-authenticates requests in test mode as TEST_OPERATOR', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/test-regulator-only'
+      url: '/test-scope-check'
+    })
+    expect(statusCode).toBe(statusCodes.ok)
+    expect(captured).toMatchObject({ ...TEST_OPERATOR })
+  })
+
+  test('allows access to operator routes without any x-test-user-type header', async () => {
+    const { statusCode } = await server.inject({
+      method: 'GET',
+      url: '/test-operator-only'
     })
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('TEST_USER is the default regulator', () => {
-    expect(TEST_USER).toBe(TEST_REGULATOR)
-  })
-
-  describe('default user type (regulator)', () => {
-    test('populates credentials with regulator scope', async () => {
-      let captured
-      server.route({
-        method: 'GET',
-        path: '/test-scope-check',
-        handler(request, h) {
-          captured = request.auth.credentials
-          return h.response('ok').code(statusCodes.ok)
-        }
-      })
+  // RA-537: the regulator user type was removed, so the header no longer
+  // selects anything — any value, including the retired 'regulator', still
+  // authenticates as the operator.
+  test.each(['operator', 'regulator', 'not-a-real-user-type'])(
+    'authenticates as TEST_OPERATOR with x-test-user-type: %s',
+    async (userType) => {
       await server.inject({
         method: 'GET',
-        url: '/test-scope-check'
-      })
-      expect(captured).toMatchObject({ ...TEST_REGULATOR })
-    })
-
-    test('allows access to regulator routes', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/test-regulator-only'
-      })
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    test('rejects access to operator routes', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/test-operator-only'
-      })
-      expect(statusCode).toBe(statusCodes.forbidden)
-    })
-  })
-
-  describe('with x-test-user-type: operator header', () => {
-    test('populates credentials with operator scope', async () => {
-      let captured
-      server.route({
-        method: 'GET',
-        path: '/test-operator-scope-check',
-        handler(request, h) {
-          captured = request.auth.credentials
-          return h.response('ok').code(statusCodes.ok)
-        }
-      })
-      await server.inject({
-        method: 'GET',
-        url: '/test-operator-scope-check',
-        headers: {
-          'x-test-user-type': 'operator'
-        }
+        url: '/test-scope-check',
+        headers: { 'x-test-user-type': userType }
       })
       expect(captured).toMatchObject({ ...TEST_OPERATOR })
-    })
-
-    test('allows access to operator routes', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/test-operator-only',
-        headers: {
-          'x-test-user-type': 'operator'
-        }
-      })
-      expect(statusCode).toBe(statusCodes.ok)
-    })
-
-    test('rejects access to regulator routes', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/test-regulator-only',
-        headers: {
-          'x-test-user-type': 'operator'
-        }
-      })
-      expect(statusCode).toBe(statusCodes.forbidden)
-    })
-  })
-
-  describe('with an unrecognised x-test-user-type header', () => {
-    test('falls back to the default regulator user', async () => {
-      let captured
-      server.route({
-        method: 'GET',
-        path: '/test-unknown-user-type-scope-check',
-        handler(request, h) {
-          captured = request.auth.credentials
-          return h.response('ok').code(statusCodes.ok)
-        }
-      })
-      await server.inject({
-        method: 'GET',
-        url: '/test-unknown-user-type-scope-check',
-        headers: {
-          'x-test-user-type': 'not-a-real-user-type'
-        }
-      })
-      expect(captured).toMatchObject({ ...TEST_REGULATOR })
-    })
-  })
+    }
+  )
 })
 
 describe('#stubAuthPlugin (stub/local-dev mode)', () => {
@@ -215,28 +140,7 @@ describe('#stubAuthPlugin (stub/local-dev mode)', () => {
     expect(h.authenticated).not.toHaveBeenCalled()
   })
 
-  test('adds the regulatorRole to scope when the session user has one', async () => {
-    const authenticate = await getYarSessionAuthenticate()
-    const user = {
-      userType: 'regulator',
-      regulatorRole: ROLE_REGULATOR_STANDARD
-    }
-    const request = {
-      yar: { get: vi.fn().mockReturnValue(user), set: vi.fn() }
-    }
-    const h = { unauthenticated: vi.fn(), authenticated: vi.fn((v) => v) }
-
-    authenticate(request, h)
-
-    expect(h.authenticated).toHaveBeenCalledWith({
-      credentials: {
-        ...user,
-        scope: ['regulator', ROLE_REGULATOR_STANDARD]
-      }
-    })
-  })
-
-  test('omits the regulatorRole from scope when the session user has none', async () => {
+  test('builds scope from the session user type', async () => {
     const authenticate = await getYarSessionAuthenticate()
     const user = { userType: 'operator' }
     const request = {

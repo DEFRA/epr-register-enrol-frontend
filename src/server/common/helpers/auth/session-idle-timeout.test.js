@@ -151,7 +151,10 @@ describe('yarSessionAuthenticate', () => {
     expect(result).toBe('unauthenticated-result')
   })
 
-  test('builds credentials scope from userType and regulatorRole when present', () => {
+  // RA-537: regulator sub-roles were removed. A session written before the
+  // change keeps only its userType as scope, so it can never satisfy
+  // requireOperator.
+  test('ignores a leftover regulatorRole on a pre-RA-537 session', () => {
     const yar = fakeYar({
       user: { userType: 'regulator', regulatorRole: 'regulator-standard' }
     })
@@ -163,12 +166,12 @@ describe('yarSessionAuthenticate', () => {
       credentials: {
         userType: 'regulator',
         regulatorRole: 'regulator-standard',
-        scope: ['regulator', 'regulator-standard']
+        scope: ['regulator']
       }
     })
   })
 
-  test('builds credentials scope from userType only when regulatorRole absent', () => {
+  test('builds credentials scope from userType', () => {
     const yar = fakeYar({ user: { userType: 'operator' } })
     const h = mockH()
 

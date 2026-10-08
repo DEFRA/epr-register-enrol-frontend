@@ -1,5 +1,3 @@
-import Boom from '@hapi/boom'
-
 import { config } from '../../../config/config.js'
 import {
   STUB_OPERATOR_RELATIONSHIPS,
@@ -9,21 +7,9 @@ import {
   confirmPostLoginRedirect,
   popPostLoginRedirect
 } from '../../common/helpers/auth/auth-redirect.js'
-import { ROLE_REGULATOR_STANDARD } from '../../common/helpers/auth/auth-scopes.js'
-import { isRegulatorAccessDisabled as regulatorAccessDisabled } from '../../common/helpers/auth/regulator-access.js'
 import { markLoginAndNotifyPrevious } from '../../common/helpers/auth/concurrent-login.js'
 
 export const STUB_USERS = {
-  regulator: [
-    {
-      id: 'stub-reg-1',
-      name: 'Stub Regulator',
-      email: 'regulator@stub.example',
-      userType: 'regulator',
-      roles: ['admin'],
-      regulatorRole: ROLE_REGULATOR_STANDARD
-    }
-  ],
   operator: [
     {
       id: 'stub-op-1',
@@ -38,11 +24,6 @@ export const STUB_USERS = {
     }
   ]
 }
-
-// RA-427: type=regulator shares this route (and its POST counterpart below)
-// with type=operator via a query param rather than a route of its own, so
-// it can't be disabled by simply not registering a route — both handlers
-// must check regulatorAccessDisabled() explicitly.
 
 // `type` is caller-controlled (query param / form field); a plain STUB_USERS[type]
 // lookup resolves inherited Object.prototype keys (e.g. type=constructor
@@ -68,29 +49,16 @@ function isDefraIdConfigured(type) {
   )
 }
 
-function isEntraIdConfigured(type) {
-  return (
-    type === 'regulator' &&
-    Boolean(
-      config.get('auth.azureEntraId.clientId') &&
-      config.get('auth.azureEntraId.tenantId')
-    )
-  )
-}
-
 export function stubLoginGetController(request, h) {
   const type = request.query.type
   const rt = request.query.rt
 
-  if (type === 'regulator' && regulatorAccessDisabled()) {
-    throw Boom.notFound()
-  }
-
   const users = getStubUsers(type)
 
+  // Missing or unknown type (including the retired `type=regulator`) falls
+  // back to the operator chooser, the only user type this service has.
   if (!users) {
-    const fallbackType = regulatorAccessDisabled() ? 'operator' : 'regulator'
-    return h.redirect(stubLoginUrl(fallbackType, rt))
+    return h.redirect(stubLoginUrl('operator', rt))
   }
 
   confirmPostLoginRedirect(request, type)
@@ -99,18 +67,12 @@ export function stubLoginGetController(request, h) {
     type,
     users,
     defraIdConfigured: isDefraIdConfigured(type),
-    entraIdConfigured: isEntraIdConfigured(type),
-    regulatorAccessDisabled: regulatorAccessDisabled(),
     rt: rt ?? ''
   })
 }
 
 export async function stubLoginPostController(request, h) {
   const { userId, type } = request.payload
-
-  if (type === 'regulator' && regulatorAccessDisabled()) {
-    throw Boom.notFound()
-  }
 
   const users = getStubUsers(type) ?? []
   const user = users.find((u) => u.id === userId)
@@ -120,7 +82,6 @@ export async function stubLoginPostController(request, h) {
       .view('auth/stub/login', {
         type,
         users: getStubUsers(type) ?? [],
-        regulatorAccessDisabled: regulatorAccessDisabled(),
         error: 'Please select a user'
       })
       .code(400)

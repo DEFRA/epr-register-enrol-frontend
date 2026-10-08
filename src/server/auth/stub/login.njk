@@ -58,21 +58,6 @@
         </a>
       {% endif %}
 
-      {% if entraIdConfigured %}
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-        <h2 class="govuk-heading-m">Or sign in with a real account</h2>
-        <a href="/auth/regulator/entra-id{{ '?rt=' + rt if rt }}" class="govuk-button govuk-button--secondary" data-testid="entra-id-login">
-          Sign in with Entra ID
-        </a>
-      {% endif %}
-
-      {% if not (type == 'operator' and regulatorAccessDisabled) %}
-        <p class="govuk-body">
-          <a href="/auth/stub/login?type={{ 'operator' if type == 'regulator' else 'regulator' }}" class="govuk-link">
-            Switch to {{ 'operator' if type == 'regulator' else 'regulator' }} login
-          </a>
-        </p>
-      {% endif %}
     </div>
   </div>
 {% endblock %}

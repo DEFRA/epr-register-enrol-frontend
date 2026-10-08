@@ -274,9 +274,10 @@ describe('#basicAuthPlugin', () => {
       expect(basicAuthExcludedPaths).toContain('/favicon.ico')
     })
 
-    test('contains OIDC callback routes', () => {
-      expect(basicAuthExcludedPaths).toContain('/auth/regulator/callback')
+    test('contains the Defra ID OIDC callback route only', () => {
       expect(basicAuthExcludedPaths).toContain('/auth/operator/callback')
+      // RA-537: the Entra ID regulator callback was removed.
+      expect(basicAuthExcludedPaths).not.toContain('/auth/regulator/callback')
     })
 
     // Exported as a frozen array so no import site can accidentally push to it

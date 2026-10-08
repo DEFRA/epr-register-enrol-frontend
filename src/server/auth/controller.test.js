@@ -34,21 +34,6 @@ describe('#logoutController', () => {
     return headers['set-cookie'].map((c) => c.split(';')[0]).join('; ')
   }
 
-  test('redirects a stub regulator to the regulator login page', async () => {
-    const cookie = await loginAs('regulator')
-
-    const { statusCode, headers } = await server.inject({
-      method: 'GET',
-      url: '/auth/logout',
-      headers: {
-        cookie
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.redirect)
-    expect(headers.location).toBe('/auth/regulator/login')
-  })
-
   test('redirects a stub operator to the operator login page', async () => {
     const cookie = await loginAs('operator')
 
@@ -79,8 +64,8 @@ describe('#logoutController', () => {
 // never touch the real session-validation scheme. Proving a signed-out
 // session is actually revoked (AC04) requires the real 'yar-session' auth
 // scheme instead of the test-bypass scheme stubAuthPlugin registers when
-// config.get('isTest') is true (which authenticates every request from the
-// x-test-user-type header, ignoring cookies entirely). This suite forces
+// config.get('isTest') is true (which authenticates every request as
+// TEST_OPERATOR, ignoring cookies entirely). This suite forces
 // isTest: false — still stub-login, but with real cookie-based session
 // checks and crumb (CSRF) enforcement — on its own server instance so the
 // other tests above are unaffected.
@@ -127,7 +112,7 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
       .split(';')[0]
   }
 
-  test.each(['operator', 'regulator'])(
+  test.each(['operator'])(
     'a signed-out %s session can no longer authenticate, even replaying the pre-logout cookie',
     async (type) => {
       const oldSessionCookie = await loginAs(type)

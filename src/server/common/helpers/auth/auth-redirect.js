@@ -1,11 +1,8 @@
 import { randomUUID } from 'node:crypto'
 
-// Keyed per user type, not a single shared key — otherwise a target stashed
-// while bouncing to the regulator login could get replayed after an
-// unrelated operator login in the same session (or vice versa), landing the
-// user on a 403 access-denied page instead of home.
+// Keyed per user type. Operator is the only user type this service signs in;
+// an unknown type has no key, so nothing is stashed or replayed for it.
 const REDIRECT_SESSION_KEY = {
-  regulator: 'postLoginRedirectRegulator',
   operator: 'postLoginRedirectOperator'
 }
 
@@ -22,11 +19,8 @@ function isSafeRedirectTarget(target) {
 
 /**
  * onPreResponse extension that redirects unauthenticated requests to the
- * appropriate login page before the generic error handler runs.
- *
- * The target login page is determined by the route's required scope:
- *   scope: ['regulator']  → /auth/regulator/login
- *   anything else         → /auth/operator/login  (default)
+ * operator login page (/auth/operator/login) before the generic error
+ * handler runs.
  *
  * 403 (wrong user type) is intentionally not redirected — the user is already
  * authenticated and should see an access-denied error instead.
@@ -45,11 +39,7 @@ export function redirectToLogin(request, h) {
     return h.continue
   }
 
-  const requiredScope =
-    request.route.settings.auth?.access?.[0]?.scope?.selection ?? []
-  const userType = requiredScope.includes('regulator')
-    ? 'regulator'
-    : 'operator'
+  const userType = 'operator'
 
   let query = ''
 
@@ -67,7 +57,7 @@ export function redirectToLogin(request, h) {
 
 /**
  * Called by every login entry-point GET handler (the stub chooser page, the
- * real Defra ID / Entra ID initiators) before it renders or redirects. A
+ * real Defra ID initiator) before it renders or redirects. A
  * stash is only kept if this request carries the nonce that redirectToLogin
  * minted for it — i.e. this is a continuation of the specific redirect
  * chain that created the stash, not a direct visit, a bookmark, or a stale

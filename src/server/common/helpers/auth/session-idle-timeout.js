@@ -40,10 +40,7 @@ export function yarSessionAuthenticate(request, h) {
   return h.authenticated({
     credentials: {
       ...user,
-      scope: [
-        user.userType,
-        ...(user.regulatorRole ? [user.regulatorRole] : [])
-      ]
+      scope: [user.userType]
     }
   })
 }

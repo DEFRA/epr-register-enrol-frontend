@@ -54,13 +54,6 @@ export function getMissingRequiredConfig(cfg) {
     missing.push('DEFRA_ID_MANAGE_ACCOUNT_URL')
   }
 
-  // Same real-auth-outside-local condition as the existing ENTRA_CLIENT_ID/
-  // ENTRA_CLIENT_SECRET boot guard in config.js — tenantId is just as load-bearing
-  // (used to build the Microsoft OAuth URLs) but was never included in that guard.
-  if (!stubEnabled && !isLocal && !cfg.get('auth.azureEntraId.tenantId')) {
-    missing.push('ENTRA_TENANT_ID')
-  }
-
   // Same real-auth-outside-local condition as the existing DEFRA_ID_CLIENT_ID/
   // DEFRA_ID_CLIENT_SECRET/DEFRA_ID_DISCOVERY_URL boot guard — serviceId was
   // never included in that guard despite being used in the same auth flow.

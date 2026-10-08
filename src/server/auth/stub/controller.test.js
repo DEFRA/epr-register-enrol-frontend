@@ -21,76 +21,56 @@ describe('#stubLoginController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  describe('Entra ID button visibility', () => {
-    let entraServer
-
-    beforeAll(async () => {
-      vi.mocked(config.get).mockImplementation((key) => {
-        if (key === 'auth.azureEntraId.clientId') {
-          return 'test-client-id'
-        }
-        if (key === 'auth.azureEntraId.tenantId') {
-          return 'Defradev.onmicrosoft.com'
-        }
-        return realConfigGet(key)
-      })
-      entraServer = await createServer()
-      await entraServer.initialize()
-    })
-
-    afterAll(async () => {
-      await entraServer?.stop({ timeout: 0 })
-      // Restore to standard stub mock for any tests that run after this describe
-      vi.mocked(config.get).mockImplementation((key) => {
-        return realConfigGet(key)
-      })
-    })
-
-    test('shows Entra ID button when credentials are configured for regulator', async () => {
-      const { result, statusCode } = await entraServer.inject({
+  // RA-537: the regulator side of the app (and its Entra ID sign-in) was
+  // removed — the chooser only offers operators, and every regulator login
+  // entry point is gone rather than merely hidden.
+  describe('regulator login removed', () => {
+    test('type=regulator falls back to the operator chooser like any unknown type', async () => {
+      const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=regulator'
+        url: '/auth/stub/login?type=regulator&rt=abc'
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="entra-id-login"')
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe('/auth/stub/login?type=operator&rt=abc')
     })
 
-    test('does not show Entra ID button when credentials are absent for regulator', async () => {
-      // Use the outer server (created without Entra ID config)
-      // and temporarily restore the standard mock for this request
-      vi.mocked(config.get).mockImplementation((key) => {
-        return realConfigGet(key)
-      })
-
+    test('operator chooser offers no regulator login, switch link or Entra ID button', async () => {
       const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/auth/stub/login?type=regulator'
-      })
-
-      // Restore Entra ID mock for remaining tests in this block
-      vi.mocked(config.get).mockImplementation((key) => {
-        if (key === 'auth.azureEntraId.clientId') {
-          return 'test-client-id'
-        }
-        if (key === 'auth.azureEntraId.tenantId') {
-          return 'Defradev.onmicrosoft.com'
-        }
-        return realConfigGet(key)
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).not.toContain('data-testid="entra-id-login"')
-    })
-
-    test('does not show Entra ID button for operator type', async () => {
-      const { result, statusCode } = await entraServer.inject({
         method: 'GET',
         url: '/auth/stub/login?type=operator'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('type=regulator')
+      expect(result).not.toContain('Switch to')
       expect(result).not.toContain('data-testid="entra-id-login"')
+      expect(result).not.toMatch(/regulator/i)
+    })
+
+    test('POST with type=regulator does not sign anyone in', async () => {
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: '/auth/stub/login',
+        payload: { userId: 'stub-reg-1', type: 'regulator' }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(headers.location).toBeUndefined()
+    })
+
+    test.each([
+      '/auth/regulator/login',
+      '/auth/regulator/entra-id',
+      '/auth/regulator/callback'
+    ])('%s is not registered (404)', async (url) => {
+      const { statusCode } = await server.inject({ method: 'GET', url })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('STUB_USERS only has operators', () => {
+      expect(Object.keys(STUB_USERS)).toEqual(['operator'])
     })
   })
 
@@ -138,17 +118,6 @@ describe('#stubLoginController', () => {
   })
 
   describe('GET /auth/stub/login', () => {
-    test('renders chooser for regulator type', async () => {
-      const { result, statusCode } = await server.inject({
-        method: 'GET',
-        url: '/auth/stub/login?type=regulator'
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Stub Login')
-      expect(result).toContain(STUB_USERS.regulator[0].name)
-    })
-
     test('renders chooser for operator type', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
@@ -160,14 +129,14 @@ describe('#stubLoginController', () => {
       expect(result).toContain(STUB_USERS.operator[0].name)
     })
 
-    test('redirects to regulator login for unknown type', async () => {
+    test('redirects to operator login for unknown type', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: '/auth/stub/login?type=unknown'
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe('/auth/stub/login?type=regulator')
+      expect(headers.location).toBe('/auth/stub/login?type=operator')
     })
 
     // `type` is a caller-controlled query param — a plain STUB_USERS[type]
@@ -183,7 +152,7 @@ describe('#stubLoginController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.redirect)
-        expect(headers.location).toBe('/auth/stub/login?type=regulator')
+        expect(headers.location).toBe('/auth/stub/login?type=operator')
       }
     )
   })
@@ -194,8 +163,8 @@ describe('#stubLoginController', () => {
         method: 'POST',
         url: '/auth/stub/login',
         payload: {
-          userId: STUB_USERS.regulator[0].id,
-          type: 'regulator'
+          userId: STUB_USERS.operator[0].id,
+          type: 'operator'
         }
       })
 
@@ -209,7 +178,7 @@ describe('#stubLoginController', () => {
         url: '/auth/stub/login',
         payload: {
           userId: 'nonexistent-user',
-          type: 'regulator'
+          type: 'operator'
         }
       })
 
@@ -230,15 +199,15 @@ describe('#stubLoginController', () => {
     })
   })
 
-  describe('GET /auth/regulator/login stub chooser redirect', () => {
+  describe('GET /auth/operator/login stub chooser redirect', () => {
     test('redirects to the stub chooser without an rt param when none is supplied', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: '/auth/regulator/login'
+        url: '/auth/operator/login'
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe('/auth/stub/login?type=regulator')
+      expect(headers.location).toBe('/auth/stub/login?type=operator')
     })
 
     test('preserves an rt param, URL-encoded, on the stub chooser redirect', async () => {

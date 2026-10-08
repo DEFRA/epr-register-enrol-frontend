@@ -27,7 +27,7 @@ describe('config sensitive field redaction', () => {
   test('other sensitive fields are also redacted', () => {
     // Verify the pattern works for existing sensitive fields so we can be
     // confident the mechanism itself is functioning, not just our declaration.
-    expect(serialised.auth.azureEntraId.clientSecret).toBe('[Sensitive]')
+    expect(serialised.auth.defraId.clientSecret).toBe('[Sensitive]')
     expect(serialised.session.cookie.password).toBe('[Sensitive]')
   })
 })

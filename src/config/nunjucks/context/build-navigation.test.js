@@ -59,19 +59,10 @@ describe('#buildNavigation', () => {
     ])
   })
 
-  test('regulator sees Home (regulator landing page) and Sign out, no Manage account', () => {
-    expect(buildNavigation(mockRequest('regulator'), t)).toEqual([
-      {
-        text: 'Home',
-        href: '/regulator',
-        attributes: { 'data-testid': 'nav-home-link' }
-      },
-      {
-        text: 'Sign out',
-        href: '/auth/logout',
-        attributes: { 'data-testid': 'nav-sign-out-link' }
-      }
-    ])
+  // RA-537: the regulator side was removed — a leftover regulator session
+  // gets no navigation rather than a link to the removed /regulator page.
+  test('a leftover regulator session shows no navigation', () => {
+    expect(buildNavigation(mockRequest('regulator'), t)).toEqual([])
   })
 
   test('no session (pre-login pages, 404s, etc.) shows no navigation', () => {

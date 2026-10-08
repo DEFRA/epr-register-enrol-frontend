@@ -1,16 +1,6 @@
 import { config } from '../../../../config/config.js'
 import { redirectToLogin } from './auth-redirect.js'
-import { ROLE_REGULATOR_STANDARD } from './auth-scopes.js'
 import { yarSessionAuthenticate } from './session-idle-timeout.js'
-
-export const TEST_REGULATOR = {
-  id: 'test-regulator-id',
-  email: 'regulator@test.example',
-  name: 'Test Regulator',
-  userType: 'regulator',
-  regulatorRole: ROLE_REGULATOR_STANDARD,
-  scope: ['regulator', ROLE_REGULATOR_STANDARD]
-}
 
 export const TEST_OPERATOR = {
   id: 'test-operator-id',
@@ -23,24 +13,17 @@ export const TEST_OPERATOR = {
   relationships: ['rel-test-operator:org-123:Test Operator Org']
 }
 
-// Default test user — kept for backwards compatibility
-export const TEST_USER = TEST_REGULATOR
-
-const TEST_USERS = { regulator: TEST_REGULATOR, operator: TEST_OPERATOR }
-
 export const stubAuthPlugin = {
   plugin: {
     name: 'auth',
     async register(server) {
       if (config.get('isTest')) {
-        // Test mode: bypass scheme — always authenticated.
-        // Tests can override the user type by setting the x-test-user-type header
-        // (e.g. 'regulator' or 'operator'). Defaults to regulator.
+        // Test mode: bypass scheme — always authenticated as TEST_OPERATOR,
+        // the only user type this service has. Any x-test-user-type header a
+        // test still sends is ignored.
         server.auth.scheme('test-bypass', () => ({
           authenticate(request, h) {
-            const userType = request.headers['x-test-user-type'] ?? 'regulator'
-            const user = TEST_USERS[userType] ?? TEST_REGULATOR
-            return h.authenticated({ credentials: user })
+            return h.authenticated({ credentials: TEST_OPERATOR })
           }
         }))
         server.auth.strategy('session', 'test-bypass')

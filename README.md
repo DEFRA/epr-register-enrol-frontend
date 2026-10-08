@@ -92,22 +92,12 @@ Required in production whenever `AUTH_STUB_ENABLED=false`; boot fails loudly
 if `AUTH_STUB_ENABLED=true` while `ENVIRONMENT=prod`. Leave blank for a local
 run under stub auth.
 
-### Entra ID (internal/regulator sign-in)
-
-| Variable                        | Secret? | Description                                                                                         |
-| ------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| `ENTRA_CLIENT_ID`               | Yes     | Azure Entra ID client ID                                                                            |
-| `ENTRA_CLIENT_SECRET`           | Yes     | Paired client secret                                                                                |
-| `ENTRA_TENANT_ID`               | No      | Azure AD tenant ID                                                                                  |
-| `ENTRA_REGULATOR_ROLE_VALUE`    | No      | Entra app-role name mapped to "regulator, standard" (default `Waste.Regulator.Standard`)            |
-| `ENTRA_SUPPORT_USER_ROLE_VALUE` | No      | Entra app-role name mapped to "regulator, read-only support" (default `Waste.SupportUser.ReadOnly`) |
-
 ### Service-to-service auth
 
 | Variable                      | Secret? | Description                                                                                                                            |
 | ----------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `AUTH_SHARED_SECRET__BACKEND` | Yes     | Bearer token sent on every outbound call to `epr-register-enrol-backend` — must match backend's `AUTH_SHARED_SECRET__FRONTEND` exactly |
-| `AUTH_CALLBACK_BASE_URL`      | No      | Base URL used to build both Defra ID and Entra ID OAuth callback URLs. Default `http://localhost:3000`                                 |
+| `AUTH_CALLBACK_BASE_URL`      | No      | Base URL used to build the Defra ID OAuth callback URLs. Default `http://localhost:3000`                                               |
 | `AUTH_STUB_ENABLED`           | No      | Bypasses real OAuth, auto-authenticates every request as a fixed stub user. Boot fails loudly if `true` while `ENVIRONMENT=prod`       |
 
 ### Session and cache
@@ -165,9 +155,6 @@ choice is stored in an `analyticsConsent` cookie (base64 JSON:
 ```bash
 DEFRA_ID_CLIENT_ID=local-dev-defra-id-client-id
 DEFRA_ID_CLIENT_SECRET=local-dev-fake-secret-value
-ENTRA_CLIENT_ID=local-dev-entra-client-id
-ENTRA_CLIENT_SECRET=local-dev-fake-entra-secret
-ENTRA_TENANT_ID=00000000-0000-0000-0000-000000000000
 AUTH_SHARED_SECRET__BACKEND=local-dev-shared-secret-not-real
 SESSION_COOKIE_PASSWORD=the-password-must-be-at-least-32-characters-long
 FILE_UPLOAD_S3_BUCKET=epr-register-enrol-file-uploads
@@ -178,7 +165,7 @@ ANALYTICS_MEASUREMENT_ID=G-LOCAL0000
 `G-LOCAL0000` is a placeholder that switches the cookie banner on locally;
 nothing reports to it.
 
-`AUTH_STUB_ENABLED=true` (the local default) makes the Defra ID/Entra ID
+`AUTH_STUB_ENABLED=true` (the local default) makes the Defra ID
 values above irrelevant for a plain local run — see
 [`.env.example`](.env.example) for every var's actual default.
 

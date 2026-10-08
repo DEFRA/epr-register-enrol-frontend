@@ -7,7 +7,7 @@ import {
 } from './auth-redirect.js'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../constants/status-codes.js'
-import { requireRegulator, requireOperator } from './auth-scopes.js'
+import { requireOperator } from './auth-scopes.js'
 import { STUB_USERS } from '../../../auth/stub/controller.js'
 
 // --- Unit tests for the redirect logic ---
@@ -52,10 +52,12 @@ describe('#redirectToLogin', () => {
       expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
     })
 
-    test('redirects to regulator login for a 401 on a regulator-scoped route', () => {
+    // RA-537: regulator login was removed — a route still scoped to the
+    // retired 'regulator' scope must not send anyone to /auth/regulator/login.
+    test('redirects to operator login even for a 401 on a regulator-scoped route', () => {
       const h = mockH()
       redirectToLogin(mockRequest(401, ['regulator']), h)
-      expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
+      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
     })
 
     test('redirects to operator login for a 401 with no scope (default)', () => {
@@ -66,7 +68,7 @@ describe('#redirectToLogin', () => {
 
     test('does not redirect for a 403 — returns h.continue', () => {
       const h = mockH()
-      const result = redirectToLogin(mockRequest(403, ['regulator']), h)
+      const result = redirectToLogin(mockRequest(403, ['operator']), h)
       expect(h.redirect).not.toHaveBeenCalled()
       expect(result).toBe(h.continue)
     })
@@ -115,22 +117,6 @@ describe('#redirectToLogin', () => {
       expect(h.redirect).toHaveBeenCalledWith(
         `/auth/operator/login?rt=${stashed.nonce}`
       )
-    })
-
-    test('stashes under a separate key per user type', () => {
-      const yar = fakeYar()
-      const h = mockH()
-      redirectToLogin(
-        mockRequest(401, ['regulator'], {
-          method: 'get',
-          path: '/cases/123',
-          url: { search: '' },
-          yar
-        }),
-        h
-      )
-      expect(yar.get('postLoginRedirectRegulator').target).toBe('/cases/123')
-      expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
 
     test('does not stash a non-GET request', () => {
@@ -204,16 +190,6 @@ describe('#redirectToLogin', () => {
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
 
-    test('does not leak a target stashed for a different user type', () => {
-      const yar = fakeYar()
-      yar.set('postLoginRedirectRegulator', {
-        target: '/cases/123',
-        nonce: 'n1'
-      })
-      const request = { yar }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
-    })
-
     test('returns the fallback when nothing was stashed', () => {
       const request = { yar: fakeYar() }
       expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
@@ -247,14 +223,6 @@ describe('#redirectToLogin', () => {
           method: 'GET',
           path: '/test-requires-login',
           options: { auth: false },
-          handler: () => {
-            throw Boom.unauthorized(null, 'session')
-          }
-        },
-        {
-          method: 'GET',
-          path: '/test-redirect-regulator',
-          options: requireRegulator,
           handler: () => {
             throw Boom.unauthorized(null, 'session')
           }
@@ -374,28 +342,6 @@ describe('#redirectToLogin', () => {
 
       expect(stubLogin.headers.location).toBe('/')
     })
-
-    test('does not replay a regulator-scoped stash into an operator login', async () => {
-      const loginRedirect = await server.inject({
-        method: 'GET',
-        url: '/test-redirect-regulator?scope=1'
-      })
-      expect(loginRedirect.headers.location).toMatch(
-        /^\/auth\/regulator\/login\?rt=/
-      )
-      const cookies = extractCookies(loginRedirect.headers)
-
-      // Same session, but the user completes login as an operator instead —
-      // must land on the operator default, not the stashed regulator path.
-      const stubLogin = await server.inject({
-        method: 'POST',
-        url: '/auth/stub/login',
-        headers: { cookie: cookieHeader(cookies) },
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
-      })
-
-      expect(stubLogin.headers.location).toBe('/')
-    })
   })
 
   // --- Integration tests: scope enforcement via the running server ---
@@ -407,44 +353,24 @@ describe('#redirectToLogin', () => {
       server = await createServer()
       await server.initialize()
 
-      server.route([
-        {
-          method: 'GET',
-          path: '/test-redirect-regulator',
-          options: requireRegulator,
-          handler: (request, h) => h.response('ok').code(statusCodes.ok)
-        },
-        {
-          method: 'GET',
-          path: '/test-redirect-operator',
-          options: requireOperator,
-          handler: (request, h) => h.response('ok').code(statusCodes.ok)
-        }
-      ])
+      server.route({
+        method: 'GET',
+        path: '/test-redirect-operator',
+        options: requireOperator,
+        handler: (request, h) => h.response('ok').code(statusCodes.ok)
+      })
     })
 
     afterAll(async () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('operator cannot access a regulator route — receives 403, not a redirect', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/test-redirect-regulator',
-        headers: {
-          'x-test-user-type': 'operator'
-        }
-      })
-      expect(statusCode).toBe(statusCodes.forbidden)
-    })
-
-    test('regulator cannot access an operator route — receives 403, not a redirect', async () => {
+    test('the default test user (operator) can access an operator route', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test-redirect-operator'
-        // default test user is regulator
       })
-      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(statusCode).toBe(statusCodes.ok)
     })
   })
 })

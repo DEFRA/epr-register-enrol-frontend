@@ -49,29 +49,19 @@ describe('#homeController', () => {
     expect(result).toEqual(expect.stringContaining('Home |'))
   })
 
-  test('Should redirect a regulator to the regulator landing page', async () => {
-    const { headers, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/',
-      headers: {
-        'x-test-user-type': 'regulator'
-      }
-    })
+  // RA-537: the regulator placeholder page was removed. Its paths now fall
+  // through to the `/{language}` catch-all, where route-params-guard rejects
+  // the invalid language segment with a 404 (not a 400 or a login redirect).
+  test.each(['/regulator', '/en/regulator', '/cy/regulator'])(
+    '%s returns the not-found page',
+    async (url) => {
+      const { result, statusCode } = await server.inject({
+        method: 'GET',
+        url
+      })
 
-    expect(statusCode).toBe(statusCodes.redirect)
-    expect(headers.location).toBe('/regulator')
-  })
-
-  test('Should redirect a regulator to the language-prefixed regulator landing page', async () => {
-    const { headers, statusCode } = await server.inject({
-      method: 'GET',
-      url: '/en',
-      headers: {
-        'x-test-user-type': 'regulator'
-      }
-    })
-
-    expect(statusCode).toBe(statusCodes.redirect)
-    expect(headers.location).toBe('/en/regulator')
-  })
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(result).toContain('Page not found')
+    }
+  )
 })

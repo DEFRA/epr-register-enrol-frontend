@@ -36,37 +36,6 @@ export const authSchema = {
     env: 'BASIC_PASSWD',
     sensitive: true
   },
-  azureEntraId: {
-    clientId: {
-      format: String,
-      default: '',
-      env: 'ENTRA_CLIENT_ID',
-      sensitive: true
-    },
-    clientSecret: {
-      format: String,
-      default: '',
-      env: 'ENTRA_CLIENT_SECRET',
-      sensitive: true
-    },
-    tenantId: {
-      format: String,
-      default: '',
-      env: 'ENTRA_TENANT_ID'
-    },
-    regulatorRoleValue: {
-      doc: 'RA-429. Entra ID app role a signed-in user must hold to be treated as a regulator.',
-      format: String,
-      default: 'Waste.Regulator.Standard',
-      env: 'ENTRA_REGULATOR_ROLE_VALUE'
-    },
-    supportUserRoleValue: {
-      doc: 'RA-429. Entra ID app role a signed-in user must hold to be treated as a read-only support user.',
-      format: String,
-      default: 'Waste.SupportUser.ReadOnly',
-      env: 'ENTRA_SUPPORT_USER_ROLE_VALUE'
-    }
-  },
   defraId: {
     clientId: {
       format: String,
@@ -108,11 +77,5 @@ export const authSchema = {
     format: String,
     default: 'http://localhost:3000',
     env: 'AUTH_CALLBACK_BASE_URL'
-  },
-  regulatorAccessDisabled: {
-    doc: 'RA-427. Kill switch for the regulator side of the app while no regulator-facing features are built out yet. When true: the stub login chooser hides the "switch to regulator login" link, regulator login (both stub and real Entra ID) is not accessible (404), and no regulator pages are accessible (404). Operator login/pages are unaffected.',
-    format: Boolean,
-    default: false,
-    env: 'REGULATOR_ACCESS_DISABLED'
   }
 }
