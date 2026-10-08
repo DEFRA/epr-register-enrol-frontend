@@ -6,10 +6,7 @@ import {
   setAddOrsSession,
   resetAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
-import {
-  SITE_FIELD_MAX_LENGTHS,
-  exceedsMaxLength
-} from '../../../common/constants/siteFieldLimits.js'
+import { validateSiteName } from '../../../common/helpers/overseasSiteAnswerValidation.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 
 function selectOrsUrl(applicationId) {
@@ -89,27 +86,11 @@ export const addOrsiteNamePostController = {
 
     const siteName = (request.payload?.siteName ?? '').trim()
 
-    if (!siteName) {
+    const error = validateSiteName(t, siteName)
+    if (error) {
       return renderPage(
         h,
-        buildViewData(
-          t,
-          applicationId,
-          '',
-          t('pages.addOverseasSite.siteName.validation.required')
-        )
-      ).code(statusCodes.badRequest)
-    }
-
-    if (exceedsMaxLength(siteName, SITE_FIELD_MAX_LENGTHS.siteName)) {
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteName,
-          t('pages.addOverseasSite.siteName.validation.tooLong')
-        )
+        buildViewData(t, applicationId, siteName, error)
       ).code(statusCodes.badRequest)
     }
 

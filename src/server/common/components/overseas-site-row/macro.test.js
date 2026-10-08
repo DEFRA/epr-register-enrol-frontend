@@ -22,7 +22,8 @@ const LABELS = {
   interimDisclosure: 'Show interim sites',
   addAnotherInterimSite: 'Add another interim site',
   withdrawnDisclosure: 'Show withdrawn interim sites',
-  restore: 'Add back to application'
+  restore: 'Add back to application',
+  incomplete: 'Incomplete'
 }
 
 function interimSite(overrides = {}) {
@@ -533,6 +534,46 @@ describe('overseasSiteRows component', () => {
       )
 
       expect($('[data-testid="add-interim-site-900001"]')).toHaveLength(0)
+    })
+  })
+
+  describe('the Incomplete tag', () => {
+    test('is shown beside the name of a site that is missing details', () => {
+      const $ = render(accreditedParams({ site: site({ incomplete: true }) }))
+
+      const tag = $('[data-testid="accredited-site-incomplete-900001"]')
+      expect(tag).toHaveLength(1)
+      expect(tag.text()).toBe('Incomplete')
+      expect(tag.hasClass('govuk-tag')).toBe(true)
+      expect($('[data-testid="accredited-site-name-900001"]').text()).toContain(
+        'Site Alpha'
+      )
+    })
+
+    test('is not shown for a complete site', () => {
+      const $ = render(accreditedParams({ site: site({ incomplete: false }) }))
+
+      expect(
+        $('[data-testid="accredited-site-incomplete-900001"]')
+      ).toHaveLength(0)
+    })
+
+    test('is not shown when the controller did not assess the site', () => {
+      const $ = render(accreditedParams())
+
+      expect(
+        $('[data-testid="accredited-site-incomplete-900001"]')
+      ).toHaveLength(0)
+    })
+
+    test('still shows on a read-only page, where there are no actions', () => {
+      const $ = render(
+        accreditedParams({ site: site({ incomplete: true }), readOnly: true })
+      )
+
+      expect(
+        $('[data-testid="accredited-site-incomplete-900001"]')
+      ).toHaveLength(1)
     })
   })
 })

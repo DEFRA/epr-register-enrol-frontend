@@ -7,6 +7,7 @@ import {
 } from '../../common/helpers/paymentDetails.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { redirectIfStatusNot } from '../../common/helpers/accreditationUrls.js'
+import { redirectIfSitesIncomplete } from '../../common/helpers/incompleteSitesGate.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -84,6 +85,17 @@ export const submitDeclarationGetController = {
     const statusRedirect = redirectIfStatusNot(h, application, 'Started')
     if (statusRedirect) {
       return statusRedirect
+    }
+
+    const incompleteRedirect = redirectIfSitesIncomplete({
+      request,
+      h,
+      t,
+      application,
+      applicationId
+    })
+    if (incompleteRedirect) {
+      return incompleteRedirect
     }
 
     const saved = request.yar.get(ACCREDITATION_SESSION_KEYS.declaration) ?? {}
@@ -164,6 +176,17 @@ export const submitDeclarationPostController = {
         jobTitle: jobTitle ?? ''
       })
       return h.redirect(taskListUrl(applicationId))
+    }
+
+    const incompleteRedirect = redirectIfSitesIncomplete({
+      request,
+      h,
+      t,
+      application,
+      applicationId
+    })
+    if (incompleteRedirect) {
+      return incompleteRedirect
     }
 
     const errors = validateDeclaration(fullName, jobTitle, t)

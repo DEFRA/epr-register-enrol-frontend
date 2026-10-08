@@ -6,10 +6,8 @@ import {
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 import { BASEL_OECD_CODES } from '../../../common/data/baselOecdCodes.js'
+import { validateBaselCodes } from '../../../common/helpers/overseasSiteAnswerValidation.js'
 
-const BASEL_OECD_CODES_SET = new Set(
-  BASEL_OECD_CODES.map((code) => code.toUpperCase())
-)
 const MAX_CODES = 3
 const GUIDANCE_LINK_URL =
   'https://www.gov.uk/government/publications/waste-shipments-regulation-wsr-consolidated-waste-list'
@@ -100,48 +98,6 @@ export const addOrsBaselCodeGetController = {
     const values = codes.length > 0 ? codes : ['']
     return renderPage(h, buildViewData(t, applicationId, values, {}))
   }
-}
-
-// Extracted from addOrsBaselCodePostController (SonarCloud: function too
-// long) — the invalid/duplicate/at-least-one-required checks are a
-// self-contained pass over `values` with no dependency on the rest of the
-// handler's flow.
-function validateBaselCodes(values, t) {
-  const errors = {}
-  const seenCodes = new Set()
-  let anyCodeEntered = false
-
-  values.forEach((value, index) => {
-    if (!value) {
-      return
-    }
-
-    anyCodeEntered = true
-
-    if (!BASEL_OECD_CODES_SET.has(value.toUpperCase())) {
-      errors[index] = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.codeInvalid'
-      )
-      return
-    }
-
-    if (seenCodes.has(value.toUpperCase())) {
-      errors[index] = t(
-        'pages.addOverseasSite.baselAndOecdCodes.validation.duplicateCode'
-      )
-      return
-    }
-
-    seenCodes.add(value.toUpperCase())
-  })
-
-  if (!anyCodeEntered) {
-    errors[0] = t(
-      'pages.addOverseasSite.baselAndOecdCodes.validation.atLeastOneCodeRequired'
-    )
-  }
-
-  return errors
 }
 
 export const addOrsBaselCodePostController = {

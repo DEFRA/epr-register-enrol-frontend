@@ -16,6 +16,9 @@ import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 import { describeSiteSaveValidationError } from '../../../common/helpers/logging/describe-site-save-validation-error.js'
 import { siteCanTakeInterimSite } from '../../../common/helpers/interimSiteLimit.js'
+import { activeInterimSites } from '../../../common/helpers/interimSites.js'
+import { findIncompleteAnswers } from '../../../common/helpers/overseasSiteCompleteness.js'
+import { requiresConditionsOfExport } from '../../../common/helpers/overseasSiteAnswerValidation.js'
 import { fromCyaQuery } from '../return-to-cya.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
@@ -157,19 +160,31 @@ function buildRepatriatedLoadsRow(t, applicationId, session) {
   }
 }
 
-function buildConditionsOfExportRow(t, applicationId, session) {
-  if (session.conditionsOfExport == null) {
+function conditionsOfExportValue(t, conditionsOfExport) {
+  if (conditionsOfExport == null) {
+    return ''
+  }
+  return conditionsOfExport ? t('common.yes') : t('common.no')
+}
+
+// Steel and Aluminium sites must answer this, so the row stays on the page
+// (as "Not provided") even when there is no answer yet.
+function buildConditionsOfExportRow(t, applicationId, session, materialType) {
+  if (
+    session.conditionsOfExport == null &&
+    !requiresConditionsOfExport(materialType)
+  ) {
     return null
   }
   return {
     key: t('pages.addOverseasSite.cya.rows.conditionsOfExport'),
-    value: session.conditionsOfExport ? t('common.yes') : t('common.no'),
+    value: conditionsOfExportValue(t, session.conditionsOfExport),
     changeUrl: `${conditionsOfExportUrl(applicationId)}${fromCyaQuery()}`,
     testId: 'conditions-of-export'
   }
 }
 
-function buildRows(t, applicationId, session) {
+function buildRows(t, applicationId, session, materialType) {
   return [
     buildSiteNameRow(t, applicationId, session),
     buildLocationRow(t, applicationId, session),
@@ -180,8 +195,75 @@ function buildRows(t, applicationId, session) {
     buildRecyclingOperationRow(t, applicationId, session),
     buildBaselCodesRow(t, applicationId, session),
     buildRepatriatedLoadsRow(t, applicationId, session),
-    buildConditionsOfExportRow(t, applicationId, session)
+    buildConditionsOfExportRow(t, applicationId, session, materialType)
   ].filter(Boolean)
+}
+
+const isBlank = (row) =>
+  row.type === 'codeList' ? row.codes.length === 0 : !row.value
+
+// Attaches the problems found by the shared completeness check to the rows
+// they belong to, and builds the error summary: each entry links to the page
+// that fixes it, since the answers are changed there rather than on this page.
+function annotateRows(t, rows, issues) {
+  const changeUrlByRow = Object.fromEntries(
+    rows.map((row) => [row.testId, row.changeUrl])
+  )
+  return {
+    rows: rows.map((row) => ({
+      ...row,
+      isBlank: isBlank(row),
+      errors: issues
+        .filter((found) => found.row === row.testId)
+        .map((found) => found.message)
+    })),
+    errorSummary: issues.map((found) => ({
+      message: found.message,
+      href: changeUrlByRow[found.row]
+    }))
+  }
+}
+
+function summariseInterimSite(site) {
+  return {
+    siteName: site.siteName,
+    location: formatSiteAddress(site),
+    contactName: site.contactName,
+    contactEmail: site.contactEmail,
+    contactPhone: site.contactPhone,
+    recyclingOperation: (site.operationCodes ?? []).join(', ')
+  }
+}
+
+// Read-only: the interim sites already on the site being included or changed.
+// They are changed from the site list, not here. A failure to load them must
+// not stop the operator reviewing and saving the site itself.
+async function loadInterimSites(
+  request,
+  organisationId,
+  applicationId,
+  session
+) {
+  const siteId = session.editingSiteId ?? session.promotingSiteId
+  if (siteId == null) {
+    return []
+  }
+  try {
+    const application = await accreditationApiService.getApplication(
+      organisationId,
+      applicationId
+    )
+    const site = application?.overseasSites?.sites?.find(
+      (candidate) => candidate.siteId === siteId
+    )
+    return activeInterimSites(site).map(summariseInterimSite)
+  } catch (err) {
+    request.server.logger.warn(
+      { err },
+      `Could not load interim sites for the check-your-answers summary, application ${applicationId}`
+    )
+    return []
+  }
 }
 
 // RA-486: the last wizard step before this page depends on materialType —
@@ -205,8 +287,14 @@ function buildViewData(
   applicationId,
   session,
   error,
-  showAddInterimSiteButton = true
+  showAddInterimSiteButton = true,
+  { materialType, issues = [], interimSites = [] } = {}
 ) {
+  const { rows, errorSummary } = annotateRows(
+    t,
+    buildRows(t, applicationId, session, materialType),
+    issues
+  )
   return {
     pageTitle: t('pages.addOverseasSite.cya.title'),
     heading: t('pages.addOverseasSite.cya.heading'),
@@ -216,7 +304,18 @@ function buildViewData(
     cancelLink: t('pages.addOverseasSite.cya.cancelLink'),
     backLink: cyaBackLink(applicationId, session),
     cancelUrl: selectOrsUrl(applicationId),
-    rows: buildRows(t, applicationId, session),
+    rows,
+    errorSummary,
+    interimSites,
+    interimSitesHeading: t('pages.addOverseasSite.cya.interimSitesHeading'),
+    interimSiteLabels: {
+      location: t('pages.addInterimSite.cya.rows.location'),
+      contactName: t('pages.addInterimSite.cya.rows.contactName'),
+      contactEmail: t('pages.addInterimSite.cya.rows.contactEmail'),
+      contactPhone: t('pages.addInterimSite.cya.rows.contactPhone'),
+      recyclingOperation: t('pages.addInterimSite.cya.rows.recyclingOperation')
+    },
+    notProvidedLabel: t('pages.addOverseasSite.cya.notProvided'),
     changeLabel: t('pages.addOverseasSite.cya.changeLink'),
     removeCodeLabel: t('pages.addOverseasSite.cya.removeCode'),
     noCodesEnteredLabel: t('pages.addOverseasSite.cya.noCodesEntered'),
@@ -312,7 +411,15 @@ export const addOrsCyaGetController = {
     )
     return renderPage(
       h,
-      buildViewData(t, applicationId, session, null, showAddInterimSiteButton)
+      buildViewData(t, applicationId, session, null, showAddInterimSiteButton, {
+        materialType: request.yar.get(ACCREDITATION_SESSION_KEYS.materialType),
+        interimSites: await loadInterimSites(
+          request,
+          organisationId,
+          applicationId,
+          session
+        )
+      })
     )
   }
 }
@@ -398,6 +505,40 @@ export const addOrsCyaPostController = {
     }
 
     const { t } = getLocaleAndTranslator(request)
+
+    const materialType = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.materialType
+    )
+
+    // The site must be complete before it is saved, wherever its answers
+    // came from (the operator, or Re/Ex via the site list).
+    const issues = findIncompleteAnswers(t, session, materialType)
+    if (issues.length > 0) {
+      return renderPage(
+        h,
+        buildViewData(
+          t,
+          applicationId,
+          session,
+          null,
+          await interimSiteAllowed(
+            organisationId,
+            applicationId,
+            session.editingSiteId ?? session.promotingSiteId
+          ),
+          {
+            materialType,
+            issues,
+            interimSites: await loadInterimSites(
+              request,
+              organisationId,
+              applicationId,
+              session
+            )
+          }
+        )
+      ).code(statusCodes.badRequest)
+    }
 
     const mode = resolveSiteSaveMode(session)
 

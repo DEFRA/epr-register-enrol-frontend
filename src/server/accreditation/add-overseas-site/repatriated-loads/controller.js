@@ -6,20 +6,10 @@ import {
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 import {
-  SITE_FIELD_MAX_LENGTHS,
-  exceedsMaxLength
-} from '../../../common/constants/siteFieldLimits.js'
+  requiresConditionsOfExport,
+  validateRepatriatedLoads
+} from '../../../common/helpers/overseasSiteAnswerValidation.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-
-const STEEL_ALU_MATERIALS = new Set(['Steel', 'Aluminium'])
-
-export function requiresConditionsOfExport(materialType) {
-  return STEEL_ALU_MATERIALS.has(materialType)
-}
-
-function countWords(text) {
-  return text.trim().split(/\s+/).filter(Boolean).length
-}
 
 function selectOrsUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -159,53 +149,16 @@ export const addOrsRepatriatedLoadsPostController = {
 
     const repatriatedLoads = (request.payload?.repatriatedLoads ?? '').trim()
 
-    if (!repatriatedLoads) {
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          '',
-          t('pages.addOverseasSite.repatriatedLoads.validation.required')
-        )
-      ).code(statusCodes.badRequest)
-    }
-
-    const wordCount = countWords(repatriatedLoads)
-    if (wordCount > 500) {
+    const invalid = validateRepatriatedLoads(t, repatriatedLoads)
+    if (invalid) {
       return renderPage(
         h,
         buildViewData(
           t,
           applicationId,
           repatriatedLoads,
-          t('pages.addOverseasSite.repatriatedLoads.validation.tooManyWords'),
-          true
-        )
-      ).code(statusCodes.badRequest)
-    }
-
-    // RA-620: 500 words can still run past the backend's 5000-character cap
-    // (long words, or a pasted list with heavy punctuation), so both apply.
-    // Counted as submitted, line breaks as the browser's CRLF, because that is
-    // the string the backend receives and measures. Not flagged
-    // tooManyWords: the browser clears a "length" error once the text is back
-    // under 500 words, which says nothing about this limit.
-    if (
-      exceedsMaxLength(
-        repatriatedLoads,
-        SITE_FIELD_MAX_LENGTHS.repatriatedLoads
-      )
-    ) {
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          repatriatedLoads,
-          t(
-            'pages.addOverseasSite.repatriatedLoads.validation.tooManyCharacters'
-          )
+          invalid.message,
+          invalid.tooManyWords
         )
       ).code(statusCodes.badRequest)
     }
@@ -215,7 +168,7 @@ export const addOrsRepatriatedLoadsPostController = {
     const materialType = request.yar.get(
       ACCREDITATION_SESSION_KEYS.materialType
     )
-    const nextUrl = STEEL_ALU_MATERIALS.has(materialType)
+    const nextUrl = requiresConditionsOfExport(materialType)
       ? conditionsOfExportUrl(applicationId)
       : cyaUrl(applicationId)
 

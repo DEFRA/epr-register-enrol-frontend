@@ -488,9 +488,11 @@
           "undo": "[Welsh] Undo"
         }
       },
+      "incompleteTag": "[Welsh] Incomplete",
       "validation": {
         "noSitesAccredited": "[Welsh] Add at least one overseas reprocessing site to accreditation",
-        "saveError": "[Welsh] Sorry, we were unable to save your site selection. Please try again."
+        "saveError": "[Welsh] Sorry, we were unable to save your site selection. Please try again.",
+        "incompleteSite": "[Welsh] Complete the missing details for {siteName}"
       }
     },
     "confirmOverseasSites": {
@@ -808,6 +810,8 @@
           "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads",
           "conditionsOfExport": "[Welsh] Conditions of export"
         },
+        "notProvided": "[Welsh] Not provided",
+        "interimSitesHeading": "[Welsh] Interim sites",
         "noCodesEntered": "[Welsh] None entered",
         "removeCode": "[Welsh] Remove",
         "changeLink": "[Welsh] Change",

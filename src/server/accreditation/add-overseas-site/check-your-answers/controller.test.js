@@ -12,6 +12,11 @@ import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { setMultipleInterimSitesEnabled } from '../../../common/test-helpers/feature-flags.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
+import {
+  addOrsCyaGetController,
+  addOrsCyaPostController
+} from './controller.js'
 
 const APPLICATION_ID = 'app-cya-001'
 const BASE_URL = `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`
@@ -35,9 +40,55 @@ function extractRowHtml(html, testId) {
   return match ? match[0] : ''
 }
 
+const FORM = 'application/x-www-form-urlencoded'
+
+// Every answer a fresh add of a Plastic/Glass-style site needs, one wizard step
+// per entry, in the order the wizard asks for them.
+const COMPLETE_ANSWERS = [
+  ['site-name', 'siteName=Acme+Recyclers+GmbH'],
+  [
+    'site-location',
+    'addressLine1=Unit+1&townOrCity=Rotterdam&country=Netherlands&coordinates=51.9225%2C+4.4792'
+  ],
+  [
+    'site-contact-details',
+    'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com&siteContactPhone=%2B441234567890'
+  ],
+  ['recycling-operation-details', 'recyclingOperationCodes=R3'],
+  [
+    'basel-convention-and-oecd-code',
+    'action=continue&visibleCount=1&code-0=A1181'
+  ],
+  ['repatriated-loads', 'repatriatedLoads=Returned+within+30+days']
+]
+
 describe('#addOrsCyaController', () => {
   let server
   let cookie
+  let emptyCookie
+
+  // Walks the wizard steps with valid answers so the session holds everything
+  // check-your-answers now requires before it will save a site.
+  async function completeSession(startCookie) {
+    let sessionCookie = startCookie
+    for (const [step, payload] of COMPLETE_ANSWERS) {
+      const response = await server.inject({
+        method: 'POST',
+        url: `/accreditation/add-overseas-site/${APPLICATION_ID}/${step}`,
+        headers: {
+          'x-test-user-type': 'operator',
+          'content-type': FORM,
+          cookie: sessionCookie
+        },
+        payload
+      })
+      const raw = response.headers['set-cookie']
+      if (raw) {
+        sessionCookie = (Array.isArray(raw) ? raw[0] : raw).split(';')[0]
+      }
+    }
+    return sessionCookie
+  }
 
   beforeAll(async () => {
     server = await createServer()
@@ -49,7 +100,10 @@ describe('#addOrsCyaController', () => {
   })
 
   beforeEach(async () => {
-    vi.clearAllMocks()
+    // Restored, not just cleared: the session below is built by posting the
+    // wizard steps, and a lingering "locked application" mock from the
+    // previous test would make every one of those posts redirect unsaved.
+    vi.restoreAllMocks()
 
     const res = await server.inject({
       method: 'GET',
@@ -62,6 +116,8 @@ describe('#addOrsCyaController', () => {
     cookie = Array.isArray(setCookie)
       ? setCookie[0].split(';')[0]
       : (setCookie ?? '').split(';')[0]
+    emptyCookie = cookie
+    cookie = await completeSession(emptyCookie)
   })
 
   const operatorHeaders = {
@@ -222,7 +278,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { ...operatorHeaders, cookie: emptyCookie }
       })
 
       expect(result).toContain('data-testid="row-basel-codes"')
@@ -239,17 +295,18 @@ describe('#addOrsCyaController', () => {
       'recycling-operation',
       'repatriated-loads'
     ])(
-      'renders an empty value for the %s row when nothing has been entered',
+      'says "Not provided" for the %s row when nothing has been entered',
       async (testId) => {
         const { result } = await server.inject({
           method: 'GET',
           url: BASE_URL,
-          headers: { ...operatorHeaders, cookie }
+          headers: { ...operatorHeaders, cookie: emptyCookie }
         })
 
         expect(extractRowHtml(result, testId)).toContain(
-          '<dd class="govuk-summary-list__value"></dd>'
+          `data-testid="not-provided-${testId}"`
         )
+        expect(extractRowHtml(result, testId)).toContain('Not provided')
       }
     )
 
@@ -422,6 +479,9 @@ describe('#addOrsCyaController', () => {
 
     test('renders error when the application fetch itself fails', async () => {
       vi.spyOn(accreditationApiService, 'getApplication').mockRejectedValue(
+        new Error('network error')
+      )
+      vi.spyOn(accreditationApiService, 'createOverseasSite').mockRejectedValue(
         new Error('network error')
       )
 
@@ -988,6 +1048,7 @@ describe('#addOrsCyaController', () => {
       addressLine1: 'Unit 1',
       townOrCity: 'Rotterdam',
       country: 'Netherlands',
+      coordinates: '51.9225, 4.4792',
       contactName: 'Jane Smith',
       contactEmail: 'jane@example.com',
       operationCodes: ['R3'],
@@ -1007,13 +1068,13 @@ describe('#addOrsCyaController', () => {
       })
       expect(entryResponse.statusCode).toBe(statusCodes.redirect)
       expect(entryResponse.headers.location).toBe(
-        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`
       )
       return cookieHeaderFrom(entryResponse, cookie)
     }
 
-    // RA-636: promote walks the whole wizard, but Back on check-your-answers
-    // returns to the ORS list, not the last wizard step.
+    // RA-636: Back on check-your-answers returns to the ORS list, not the last
+    // wizard step.
     test('back link returns to the ORS list', async () => {
       const sessionCookie = await seedPromoteSession()
       const { result } = await server.inject({
@@ -1031,6 +1092,7 @@ describe('#addOrsCyaController', () => {
 
     test('calls promoteOverseasSite instead of createOverseasSite, keyed on the original siteId', async () => {
       const sessionCookie = await seedPromoteSession()
+      vi.spyOn(accreditationApiService, 'createOverseasSite')
       vi.spyOn(
         accreditationApiService,
         'promoteOverseasSite'
@@ -1148,6 +1210,7 @@ describe('#addOrsCyaController', () => {
       addressLine1: 'Unit 1',
       townOrCity: 'Rotterdam',
       country: 'Netherlands',
+      coordinates: '51.9225, 4.4792',
       contactName: 'Jane Smith',
       contactEmail: 'jane@example.com',
       operationCodes: ['R3'],
@@ -1190,6 +1253,8 @@ describe('#addOrsCyaController', () => {
 
     test('calls updateOverseasSite instead of createOverseasSite/promoteOverseasSite, keyed on the original siteId', async () => {
       const sessionCookie = await seedEditSession()
+      vi.spyOn(accreditationApiService, 'createOverseasSite')
+      vi.spyOn(accreditationApiService, 'promoteOverseasSite')
       vi.spyOn(accreditationApiService, 'updateOverseasSite').mockResolvedValue(
         { siteId: 900001 }
       )
@@ -1425,5 +1490,539 @@ describe('#addOrsCyaController', () => {
       expect(cyaGetResponse.statusCode).toBe(statusCodes.ok)
       expect(cyaGetResponse.result).toContain('Accredited Site')
     })
+  })
+})
+
+// A site must be complete before it is saved, wherever its answers came from:
+// the operator typing them in, or Re/Ex via the site list. Every message is the
+// wizard step's own, so the operator sees the same wording on either path.
+describe('#addOrsCyaController — completeness gate', () => {
+  let server
+  let emptyCookie
+
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(async () => {
+    vi.restoreAllMocks()
+    const res = await server.inject({
+      method: 'GET',
+      url: BASE_URL,
+      headers: { 'x-test-user-type': 'operator' }
+    })
+    const raw = res.headers['set-cookie']
+    emptyCookie = (Array.isArray(raw) ? raw[0] : (raw ?? '')).split(';')[0]
+  })
+
+  const operatorHeaders = { 'x-test-user-type': 'operator' }
+  const postHeaders = (cookie) => ({
+    ...operatorHeaders,
+    'content-type': FORM,
+    cookie
+  })
+  const fromCya = '?from=check-your-answers'
+  const stepUrl = (step) =>
+    `/accreditation/add-overseas-site/${APPLICATION_ID}/${step}`
+
+  const EVERYTHING_MISSING = [
+    'Enter the site name',
+    'Enter address line 1',
+    'Enter the town or city',
+    'Select a country',
+    'Enter the coordinates',
+    'Enter the contact name',
+    'Enter the email address',
+    'Select at least one recycling operation',
+    'Enter at least one Basel Convention or OECD code',
+    'Describe the arrangements for loads that are rejected or returned to the UK'
+  ]
+
+  function summaryLinks(html) {
+    return [
+      ...html.matchAll(
+        /<a href="([^"]+)" data-testid="error-summary-link-\d+">([^<]+)<\/a>/g
+      )
+    ].map(([, href, message]) => ({ href, message }))
+  }
+
+  describe('a session with nothing in it', () => {
+    test('is refused with an error summary naming every missing answer, and nothing is saved', async () => {
+      const createSpy = vi.spyOn(accreditationApiService, 'createOverseasSite')
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders(emptyCookie),
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(createSpy).not.toHaveBeenCalled()
+      expect(result).toContain('data-testid="error-summary"')
+      expect(summaryLinks(result).map(({ message }) => message)).toEqual(
+        EVERYTHING_MISSING
+      )
+    })
+
+    test('each summary entry links to the step that fixes it, and Back from there returns here', async () => {
+      const { result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders(emptyCookie),
+        payload: ''
+      })
+
+      const hrefs = summaryLinks(result).map(({ href }) => href)
+      expect(new Set(hrefs)).toEqual(
+        new Set([
+          `${stepUrl('site-name')}${fromCya}`,
+          `${stepUrl('site-location')}${fromCya}`,
+          `${stepUrl('site-contact-details')}${fromCya}`,
+          `${stepUrl('recycling-operation-details')}${fromCya}`,
+          `${stepUrl('basel-convention-and-oecd-code')}${fromCya}`,
+          `${stepUrl('repatriated-loads')}${fromCya}`
+        ])
+      )
+    })
+
+    test('shows the error against the row it belongs to, as well as in the summary', async () => {
+      const { result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders(emptyCookie),
+        payload: ''
+      })
+
+      expect(extractRowHtml(result, 'contact-name')).toContain(
+        'data-testid="error-contact-name"'
+      )
+      expect(extractRowHtml(result, 'contact-name')).toContain(
+        'Enter the contact name'
+      )
+      expect(extractRowHtml(result, 'coordinates')).toContain(
+        'Enter the coordinates'
+      )
+    })
+
+    test('does not flag the optional phone number', async () => {
+      const { result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders(emptyCookie),
+        payload: ''
+      })
+
+      expect(extractRowHtml(result, 'contact-phone')).not.toContain(
+        'data-testid="error-contact-phone"'
+      )
+    })
+
+    test.each(['confirm', 'addInterimSite'])(
+      'applies to the %s action too, because both save the site',
+      async (action) => {
+        const createSpy = vi.spyOn(
+          accreditationApiService,
+          'createOverseasSite'
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: BASE_URL,
+          headers: postHeaders(emptyCookie),
+          payload: `action=${action}`
+        })
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(createSpy).not.toHaveBeenCalled()
+      }
+    )
+  })
+
+  describe('a site brought in from Re/Ex with gaps', () => {
+    const PROMOTE_ENTRY_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`
+    const EDIT_ENTRY_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
+
+    // What Re/Ex supplies: a name and an address, but no coordinates, contact
+    // or export details.
+    const REEX_SITE = {
+      siteId: 900002,
+      orsId: '002',
+      siteName: 'Re/Ex Site',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      country: 'Netherlands',
+      selected: false
+    }
+
+    function sessionCookieFrom(response, fallback) {
+      const raw = response.headers['set-cookie']
+      return raw ? (Array.isArray(raw) ? raw[0] : raw).split(';')[0] : fallback
+    }
+
+    async function enter(entryUrl, site) {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        makeApplication([site])
+      )
+      const response = await server.inject({
+        method: 'GET',
+        url: entryUrl,
+        headers: operatorHeaders
+      })
+      expect(response.headers.location).toBe(BASE_URL)
+      return sessionCookieFrom(response, emptyCookie)
+    }
+
+    test('"Include in this application" opens check-your-answers with what is already known', async () => {
+      const sessionCookie = await enter(PROMOTE_ENTRY_URL, REEX_SITE)
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(extractRowHtml(result, 'site-name')).toContain('Re/Ex Site')
+      expect(extractRowHtml(result, 'location')).toContain(
+        'Unit 1, Rotterdam, Netherlands'
+      )
+      expect(extractRowHtml(result, 'contact-name')).toContain('Not provided')
+      expect(result).not.toContain('data-testid="error-summary"')
+    })
+
+    test('refuses to include it until the gaps are filled, naming only what is missing', async () => {
+      const sessionCookie = await enter(PROMOTE_ENTRY_URL, REEX_SITE)
+      const promoteSpy = vi.spyOn(
+        accreditationApiService,
+        'promoteOverseasSite'
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders(sessionCookie),
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(promoteSpy).not.toHaveBeenCalled()
+      expect(summaryLinks(result).map(({ message }) => message)).toEqual([
+        'Enter the coordinates',
+        'Enter the contact name',
+        'Enter the email address',
+        'Select at least one recycling operation',
+        'Enter at least one Basel Convention or OECD code',
+        'Describe the arrangements for loads that are rejected or returned to the UK'
+      ])
+    })
+
+    test('can be included once every gap has been filled in through the Change links', async () => {
+      let sessionCookie = await enter(PROMOTE_ENTRY_URL, REEX_SITE)
+      const promoteSpy = vi
+        .spyOn(accreditationApiService, 'promoteOverseasSite')
+        .mockResolvedValue({ siteId: 900002 })
+      const fill = async (step, payload) => {
+        const response = await server.inject({
+          method: 'POST',
+          url: `${stepUrl(step)}${fromCya}`,
+          headers: postHeaders(sessionCookie),
+          payload
+        })
+        expect(response.statusCode).toBe(statusCodes.redirect)
+        sessionCookie = sessionCookieFrom(response, sessionCookie)
+      }
+
+      await fill(
+        'site-location',
+        'addressLine1=Unit+1&townOrCity=Rotterdam&country=Netherlands&coordinates=51.9225%2C+4.4792'
+      )
+      await fill(
+        'site-contact-details',
+        'siteContactName=Jane+Smith&siteContactEmail=jane%40example.com'
+      )
+      await fill('recycling-operation-details', 'recyclingOperationCodes=R3')
+      await fill(
+        'basel-convention-and-oecd-code',
+        'action=continue&visibleCount=1&code-0=A1181'
+      )
+      await fill('repatriated-loads', 'repatriatedLoads=Returned+in+30+days')
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders(sessionCookie),
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(promoteSpy).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        900002,
+        expect.objectContaining({
+          siteName: 'Re/Ex Site',
+          coordinates: '51.9225, 4.4792',
+          contactName: 'Jane Smith',
+          operationCodes: ['R3'],
+          code1: 'A1181'
+        })
+      )
+    })
+
+    test('the same goes for an existing accredited site opened with Change', async () => {
+      const sessionCookie = await enter(EDIT_ENTRY_URL, {
+        ...REEX_SITE,
+        siteId: 900001,
+        selected: true
+      })
+      const updateSpy = vi.spyOn(accreditationApiService, 'updateOverseasSite')
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: postHeaders(sessionCookie),
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(updateSpy).not.toHaveBeenCalled()
+      expect(summaryLinks(result)).not.toHaveLength(0)
+    })
+
+    test('and the next registered site goes through the same page (add several in a loop)', async () => {
+      const first = await enter(PROMOTE_ENTRY_URL, REEX_SITE)
+      const second = await enter(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900003`,
+        { ...REEX_SITE, siteId: 900003, siteName: 'Second Re/Ex Site' }
+      )
+
+      const page = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: second }
+      })
+
+      expect(first).toBeTruthy()
+      expect(extractRowHtml(page.result, 'site-name')).toContain(
+        'Second Re/Ex Site'
+      )
+      expect(extractRowHtml(page.result, 'contact-name')).toContain(
+        'Not provided'
+      )
+    })
+  })
+
+  describe('interim sites already on the site', () => {
+    const EDIT_ENTRY_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
+    const SITE_WITH_INTERIMS = {
+      siteId: 900001,
+      siteName: 'Accredited Site',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      country: 'Netherlands',
+      selected: true,
+      interimSites: [
+        {
+          siteId: 1,
+          siteName: 'Porto Depot',
+          addressLine1: '1 Rua Example',
+          townOrCity: 'Porto',
+          country: 'Portugal',
+          contactName: 'Ana Silva',
+          contactEmail: 'ana@example.com',
+          contactPhone: '+351 22 000 0000',
+          operationCodes: ['R12', 'R13']
+        },
+        { siteId: 2, siteName: 'Withdrawn Depot', removedAt: '2026-09-01' }
+      ]
+    }
+
+    async function openEdit(application) {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+        application
+      )
+      const entry = await server.inject({
+        method: 'GET',
+        url: EDIT_ENTRY_URL,
+        headers: operatorHeaders
+      })
+      const raw = entry.headers['set-cookie']
+      return (Array.isArray(raw) ? raw[0] : (raw ?? emptyCookie)).split(';')[0]
+    }
+
+    test('are listed read-only with their details, withdrawn ones left out', async () => {
+      const cookie = await openEdit(makeApplication([SITE_WITH_INTERIMS]))
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      expect(result).toContain('data-testid="interim-sites-heading"')
+      expect(result).toContain('Porto Depot')
+      expect(result).toContain('1 Rua Example, Porto, Portugal')
+      expect(result).toContain('Ana Silva')
+      expect(result).toContain('ana@example.com')
+      expect(result).toContain('R12, R13')
+      expect(result).not.toContain('Withdrawn Depot')
+      expect(result).not.toContain('change-interim')
+    })
+
+    test('are not mentioned for a site that has none', async () => {
+      const cookie = await openEdit(
+        makeApplication([{ ...SITE_WITH_INTERIMS, interimSites: [] }])
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      expect(result).not.toContain('data-testid="interim-sites-heading"')
+    })
+
+    test('failing to load them does not stop the page being used', async () => {
+      const cookie = await openEdit(makeApplication([SITE_WITH_INTERIMS]))
+      vi.spyOn(accreditationApiService, 'getApplication').mockRejectedValue(
+        new Error('network error')
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('data-testid="interim-sites-heading"')
+      expect(result).toContain('data-testid="submit-button"')
+    })
+  })
+
+  // Conditions of export only apply to Steel and Aluminium, and the material
+  // lives in the session, so these call the handlers directly.
+  describe('Steel and Aluminium sites also need conditions of export', () => {
+    const ANSWERS = {
+      siteName: 'Steel Recyclers',
+      addressLine1: 'Unit 1',
+      townOrCity: 'Rotterdam',
+      country: 'Netherlands',
+      coordinates: '51.9225, 4.4792',
+      siteContactName: 'Jane Smith',
+      siteContactEmail: 'jane@example.com',
+      recyclingOperationCodes: ['R4'],
+      baselAndOecdCodes: ['A1181'],
+      repatriatedLoads: 'Returned within 30 days'
+    }
+
+    function mockRequest(materialType, answers) {
+      return {
+        path: BASE_URL,
+        params: { applicationId: APPLICATION_ID },
+        payload: {},
+        server: { logger: { warn: vi.fn(), error: vi.fn() } },
+        yar: {
+          get: vi.fn((key) => {
+            if (key === ACCREDITATION_SESSION_KEYS.materialType) {
+              return materialType
+            }
+            if (key === ACCREDITATION_SESSION_KEYS.addOverseasSite) {
+              return answers
+            }
+            return null
+          }),
+          set: vi.fn(),
+          clear: vi.fn(),
+          flash: vi.fn()
+        }
+      }
+    }
+
+    function mockH() {
+      return {
+        view: vi.fn((view, data) => ({
+          viewData: data,
+          code: vi.fn((status) => ({ status, viewData: data }))
+        })),
+        redirect: vi.fn((url) => ({ redirectedTo: url }))
+      }
+    }
+
+    const rowIds = (viewData) => viewData.rows.map((row) => row.testId)
+
+    test.each(['Steel', 'Aluminium'])(
+      '%s: the conditions-of-export row is shown, as "Not provided", before it is answered',
+      async (materialType) => {
+        const { viewData } = await addOrsCyaGetController.handler(
+          mockRequest(materialType, ANSWERS),
+          mockH()
+        )
+
+        const row = viewData.rows.find(
+          ({ testId }) => testId === 'conditions-of-export'
+        )
+        expect(row).toMatchObject({ isBlank: true, errors: [] })
+      }
+    )
+
+    test('other materials are not asked, so the row stays out of the page', async () => {
+      const { viewData } = await addOrsCyaGetController.handler(
+        mockRequest('Plastic', { ...ANSWERS, recyclingOperationCodes: ['R3'] }),
+        mockH()
+      )
+
+      expect(rowIds(viewData)).not.toContain('conditions-of-export')
+    })
+
+    test('a Steel site cannot be saved without it', async () => {
+      const createSpy = vi.spyOn(accreditationApiService, 'createOverseasSite')
+
+      const response = await addOrsCyaPostController.handler(
+        mockRequest('Steel', ANSWERS),
+        mockH()
+      )
+
+      expect(response.status).toBe(statusCodes.badRequest)
+      expect(createSpy).not.toHaveBeenCalled()
+      expect(response.viewData.errorSummary).toEqual([
+        {
+          message: 'Select yes if the site meets the conditions of export',
+          href: `${stepUrl('conditions-of-export')}${fromCya}`
+        }
+      ])
+    })
+
+    test.each([true, false])(
+      'a Steel site that answered %s goes through',
+      async (answer) => {
+        vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue(
+          makeApplication([])
+        )
+        const createSpy = vi
+          .spyOn(accreditationApiService, 'createOverseasSite')
+          .mockResolvedValue({ siteId: 5 })
+
+        const response = await addOrsCyaPostController.handler(
+          mockRequest('Steel', { ...ANSWERS, conditionsOfExport: answer }),
+          mockH()
+        )
+
+        expect(response).toEqual({ redirectedTo: SELECT_ORS_URL })
+        expect(createSpy).toHaveBeenCalledWith(
+          null,
+          APPLICATION_ID,
+          expect.objectContaining({ conditionsOfExport: answer })
+        )
+      }
+    )
   })
 })

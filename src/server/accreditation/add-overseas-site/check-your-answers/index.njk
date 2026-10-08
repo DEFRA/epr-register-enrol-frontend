@@ -4,11 +4,20 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      {% if error %}
+      {% if error or errorSummary.length %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
           <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
           <div class="govuk-error-summary__body">
-            <p>{{ error }}</p>
+            {% if error %}
+              <p>{{ error }}</p>
+            {% endif %}
+            {% if errorSummary.length %}
+              <ul class="govuk-list govuk-error-summary__list" data-testid="error-summary-list">
+                {% for item in errorSummary %}
+                  <li><a href="{{ item.href }}" data-testid="error-summary-link-{{ loop.index0 }}">{{ item.message }}</a></li>
+                {% endfor %}
+              </ul>
+            {% endif %}
           </div>
         </div>
       {% endif %}
@@ -41,9 +50,21 @@
                     {% endfor %}
                   </ul>
                 {% endif %}
+                {% for message in row.errors %}
+                  <p class="govuk-error-message govuk-!-margin-top-1 govuk-!-margin-bottom-0" data-testid="error-{{ row.testId }}"><span class="govuk-visually-hidden">Error:</span> {{ message }}</p>
+                {% endfor %}
               </dd>
             {% else %}
-              <dd class="govuk-summary-list__value">{{ row.value }}</dd>
+              <dd class="govuk-summary-list__value" data-testid="value-{{ row.testId }}">
+                {% if row.isBlank %}
+                  <span class="govuk-hint govuk-!-margin-bottom-0" data-testid="not-provided-{{ row.testId }}">{{ notProvidedLabel }}</span>
+                {% else %}
+                  {{ row.value }}
+                {% endif %}
+                {% for message in row.errors %}
+                  <p class="govuk-error-message govuk-!-margin-top-1 govuk-!-margin-bottom-0" data-testid="error-{{ row.testId }}"><span class="govuk-visually-hidden">Error:</span> {{ message }}</p>
+                {% endfor %}
+              </dd>
             {% endif %}
             <dd class="govuk-summary-list__actions">
               <a class="govuk-link" href="{{ row.changeUrl }}" data-testid="change-{{ row.testId }}">
@@ -53,6 +74,41 @@
           </div>
         {% endfor %}
       </dl>
+
+      {% if interimSites.length %}
+        <h2 class="govuk-heading-m" data-testid="interim-sites-heading">{{ interimSitesHeading }}</h2>
+        {% for interimSite in interimSites %}
+          <div class="govuk-summary-card" data-testid="interim-site-{{ loop.index0 }}">
+            <div class="govuk-summary-card__title-wrapper">
+              <h3 class="govuk-summary-card__title" data-testid="interim-site-{{ loop.index0 }}-name">{{ interimSite.siteName }}</h3>
+            </div>
+            <div class="govuk-summary-card__content">
+              <dl class="govuk-summary-list">
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">{{ interimSiteLabels.location }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-{{ loop.index0 }}-location">{{ interimSite.location }}</dd>
+                </div>
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">{{ interimSiteLabels.contactName }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-{{ loop.index0 }}-contact-name">{{ interimSite.contactName }}</dd>
+                </div>
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">{{ interimSiteLabels.contactEmail }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-{{ loop.index0 }}-contact-email">{{ interimSite.contactEmail }}</dd>
+                </div>
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">{{ interimSiteLabels.contactPhone }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-{{ loop.index0 }}-contact-phone">{{ interimSite.contactPhone }}</dd>
+                </div>
+                <div class="govuk-summary-list__row">
+                  <dt class="govuk-summary-list__key">{{ interimSiteLabels.recyclingOperation }}</dt>
+                  <dd class="govuk-summary-list__value" data-testid="interim-site-{{ loop.index0 }}-recycling-operation">{{ interimSite.recyclingOperation }}</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
 
       <form method="post">
         <input type="hidden" name="crumb" value="{{ crumb }}">

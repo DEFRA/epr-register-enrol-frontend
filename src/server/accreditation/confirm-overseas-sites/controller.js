@@ -11,6 +11,7 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
 import { isMultipleInterimSitesEnabled } from '../../common/helpers/interimSiteLimit.js'
+import { redirectIfSitesIncomplete } from '../../common/helpers/incompleteSitesGate.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -143,6 +144,17 @@ export const confirmOverseasSitesPostController = {
     })
     if (guardRedirect) {
       return guardRedirect
+    }
+
+    const incompleteRedirect = redirectIfSitesIncomplete({
+      request,
+      h,
+      t,
+      application,
+      applicationId
+    })
+    if (incompleteRedirect) {
+      return incompleteRedirect
     }
 
     const sites = selectedSites(application)

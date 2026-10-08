@@ -495,4 +495,175 @@ describe('#submitDeclarationController', () => {
       )
     })
   })
+
+  // The business rule: mandatory site details are enforced before the
+  // application is submitted, even for a site the operator never opened (one
+  // that came with the application from Re/Ex).
+  describe('a site in the application is missing details', () => {
+    const LIST_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+    const DECLARATION_URL = `/accreditation/submit-declaration/${APPLICATION_ID}`
+    const COMPLETE_SITE = {
+      siteId: 900001,
+      siteName: 'Site Alpha',
+      country: 'Germany',
+      addressLine1: '123 Test St',
+      townOrCity: 'Berlin',
+      coordinates: '52.5200, 13.4050',
+      contactName: 'Jane Smith',
+      contactEmail: 'jane@example.com',
+      operationCodes: ['R3'],
+      code1: 'A1181',
+      repatriatedLoads: 'Returned within 30 days',
+      selected: true
+    }
+    const INCOMPLETE_SITE = {
+      siteId: 900002,
+      siteName: 'Site Beta',
+      country: 'France',
+      selected: true
+    }
+
+    const withSites = (...sites) =>
+      makeApplication({
+        materialType: 'Plastic',
+        isExporter: true,
+        overseasSites: { sectionStatus: 'Completed', sites }
+      })
+
+    const declare = (cookie) =>
+      server.inject({
+        method: 'POST',
+        url: DECLARATION_URL,
+        headers: { ...operatorHeaders, ...(cookie ? { cookie } : {}) },
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Director',
+          submitAction: 'submit'
+        }
+      })
+
+    test('the declaration page turns the operator back to the site list', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        withSites(COMPLETE_SITE, INCOMPLETE_SITE)
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(LIST_URL)
+    })
+
+    test('and the list explains why, naming the site, once', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        withSites(COMPLETE_SITE, INCOMPLETE_SITE)
+      )
+      const turnedBack = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL,
+        headers: operatorHeaders
+      })
+      const cookie = turnedBack.headers['set-cookie']
+        .map((c) => c.split(';')[0])
+        .join('; ')
+
+      const list = await server.inject({
+        method: 'GET',
+        url: LIST_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+
+      expect(list.result).toContain('data-testid="error-summary"')
+      expect(list.result).toContain(
+        `<a href="${LIST_URL}/edit/900002" data-testid="incomplete-site-error-0">Complete the missing details for Site Beta</a>`
+      )
+      expect(list.result).not.toContain(
+        'Complete the missing details for Site Alpha'
+      )
+    })
+
+    test('submitting is refused, and nothing is sent to the backend', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(withSites(INCOMPLETE_SITE))
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, headers } = await declare()
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(LIST_URL)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('save and come back later still works, since nothing is submitted', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(withSites(INCOMPLETE_SITE))
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: DECLARATION_URL,
+        headers: operatorHeaders,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Director',
+          submitAction: 'saveAndComeLater'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/task-list/${APPLICATION_ID}`
+      )
+    })
+
+    test('is not in the way when every site is complete', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(withSites(COMPLETE_SITE))
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
+        accreditationReference: 'RA-000000001',
+        applicationStatus: 'Submitted'
+      })
+
+      const page = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL,
+        headers: operatorHeaders
+      })
+      const { statusCode, headers } = await declare()
+
+      expect(page.statusCode).toBe(statusCodes.ok)
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toContain(
+        `/accreditation/submit-confirmation/${APPLICATION_ID}`
+      )
+      expect(postSpy).toHaveBeenCalled()
+    })
+
+    test('ignores a registered site that was never included', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        withSites(COMPLETE_SITE, { ...INCOMPLETE_SITE, selected: false })
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('does not affect an application with no overseas sites (a non-exporter)', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ isExporter: false })
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL,
+        headers: operatorHeaders
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
 })

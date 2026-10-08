@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
+import { fillCompleteOrsAnswers } from '../../../common/test-helpers/ors-session.js'
 
 const APPLICATION_ID = 'app-is-sn-001'
 const BASE_URL = `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`
@@ -68,7 +69,12 @@ describe('#addInterimSiteNameController', () => {
     const cyaResponse = await server.inject({
       method: 'POST',
       url: `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`,
-      headers: postHeaders,
+      headers: {
+        ...postHeaders,
+        // The overseas site must be complete before it is saved, so fill in
+        // every step first.
+        cookie: await fillCompleteOrsAnswers(server, APPLICATION_ID)
+      },
       payload: 'action=addInterimSite'
     })
     expect(cyaResponse.statusCode).toBe(statusCodes.redirect)

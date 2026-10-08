@@ -117,12 +117,17 @@
       <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
 
-      {% if error %}
+      {% if error or incompleteSiteErrors.length %}
         <div class="govuk-error-summary" data-module="govuk-error-summary" role="alert" data-testid="error-summary">
           <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
           <div class="govuk-error-summary__body">
             <ul class="govuk-list govuk-error-summary__list">
-              <li><a href="#accredited-sites" data-testid="sites-error">{{ error }}</a></li>
+              {% if error %}
+                <li><a href="#accredited-sites" data-testid="sites-error">{{ error }}</a></li>
+              {% endif %}
+              {% for item in incompleteSiteErrors %}
+                <li><a href="{{ item.href }}" data-testid="incomplete-site-error-{{ loop.index0 }}">{{ item.message }}</a></li>
+              {% endfor %}
             </ul>
           </div>
         </div>
@@ -156,6 +161,7 @@
           change: t('pages.selectOverseasSites.changeButton'),
           withdraw: t('pages.selectOverseasSites.withdrawFromApplicationButton'),
           add: t('pages.selectOverseasSites.addToApplicationButton'),
+          incomplete: t('pages.selectOverseasSites.incompleteTag'),
           interimRemove: t('pages.selectOverseasSites.interimSite.removeButton'),
           interimDisclosure: t('pages.selectOverseasSites.interimSite.disclosure'),
           addAnotherInterimSite: t('pages.selectOverseasSites.interimSite.addAnother'),

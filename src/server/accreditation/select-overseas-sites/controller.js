@@ -26,6 +26,10 @@ import {
   restoreInterimSite,
   INTERIM_SITE_WITHDRAWN_FLASH
 } from './interim-site-actions.js'
+import {
+  INCOMPLETE_SITES_FLASH,
+  findIncompleteSites
+} from '../../common/helpers/overseasSiteCompleteness.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -162,6 +166,52 @@ function decorateSite(applicationId, site) {
   }
 }
 
+// Marks each site that is part of the application and not complete, using the
+// same check as check-your-answers, the section confirmation and the submit
+// declaration. Registered sites that have not been included are left alone.
+function flagIncompleteSites(sections, t, materialType) {
+  const incompleteIds = new Set(
+    findIncompleteSites(
+      t,
+      [
+        ...sections.accredited,
+        ...sections.newSites,
+        ...sections.registeredSitesAdded
+      ],
+      materialType
+    ).map(({ site }) => site.siteId)
+  )
+  const flag = (sites) =>
+    sites.map((site) => ({
+      ...site,
+      incomplete: incompleteIds.has(site.siteId)
+    }))
+  return {
+    ...sections,
+    accredited: flag(sections.accredited),
+    newSites: flag(sections.newSites),
+    registeredSitesAdded: flag(sections.registeredSitesAdded)
+  }
+}
+
+// One error summary entry per incomplete site, linking to its Change page,
+// which opens check-your-answers with the gaps marked.
+function incompleteSiteErrors(t, applicationId, flaggedSections) {
+  return [
+    ...flaggedSections.accredited,
+    ...flaggedSections.newSites,
+    ...flaggedSections.registeredSitesAdded
+  ]
+    .filter((site) => site.incomplete)
+    .map((site) => ({
+      message: t('pages.selectOverseasSites.validation.incompleteSite').replace(
+        '{siteName}',
+        site.siteName
+      ),
+      href: editUrl(applicationId, site.siteId)
+    }))
+}
+
 function withEditUrl(applicationId, sites) {
   return sites.map((site) => ({
     ...decorateSite(applicationId, site),
@@ -198,7 +248,8 @@ const BANNER_DEFAULTS = {
   querySummary: null,
   regulatorQueryFields: null,
   readOnly: false,
-  isQueriedApplication: false
+  isQueriedApplication: false,
+  incompleteSiteErrors: []
 }
 
 function resolveBannerDefaults(banners) {
@@ -407,35 +458,41 @@ export const selectOverseasSitesGetController = {
 
     const queried = isRegulatorQueryBannerVisible(application, { readOnly })
 
+    const sections = flagIncompleteSites(
+      partitionSites(application.overseasSites?.sites),
+      t,
+      application.materialType
+    )
+    const turnedBackFromSubmit = !!(
+      request.yar.flash(INCOMPLETE_SITES_FLASH) ?? []
+    ).length
+
     return renderPage(
       h,
-      buildViewData(
-        t,
-        applicationId,
-        partitionSites(application.overseasSites?.sites),
-        null,
-        {
-          successBanner,
-          queried,
-          interimSiteSuccessBanner,
-          promoteSuccessBanner,
-          editSuccessBanner,
-          withdrawnInterimSite,
-          querySummary: queried
-            ? buildRegulatorQuerySummary('overseasSites', t)
-            : null,
-          regulatorQueryFields: queried
-            ? [
-                {
-                  label: t('pages.taskList.tasks.overseasSites'),
-                  href: '#accredited-sites'
-                }
-              ]
-            : null,
-          readOnly,
-          isQueriedApplication: application.applicationStatus === 'Queried'
-        }
-      )
+      buildViewData(t, applicationId, sections, null, {
+        incompleteSiteErrors: turnedBackFromSubmit
+          ? incompleteSiteErrors(t, applicationId, sections)
+          : [],
+        successBanner,
+        queried,
+        interimSiteSuccessBanner,
+        promoteSuccessBanner,
+        editSuccessBanner,
+        withdrawnInterimSite,
+        querySummary: queried
+          ? buildRegulatorQuerySummary('overseasSites', t)
+          : null,
+        regulatorQueryFields: queried
+          ? [
+              {
+                label: t('pages.taskList.tasks.overseasSites'),
+                href: '#accredited-sites'
+              }
+            ]
+          : null,
+        readOnly,
+        isQueriedApplication: application.applicationStatus === 'Queried'
+      })
     )
   }
 }
@@ -564,6 +621,17 @@ export const selectOverseasSitesPostController = {
           t('pages.selectOverseasSites.validation.noSitesAccredited')
         )
       ).code(400)
+    }
+
+    const flagged = flagIncompleteSites(sections, t, application.materialType)
+    const incompleteErrors = incompleteSiteErrors(t, applicationId, flagged)
+    if (incompleteErrors.length > 0) {
+      return renderPage(
+        h,
+        buildViewData(t, applicationId, flagged, null, {
+          incompleteSiteErrors: incompleteErrors
+        })
+      ).code(statusCodes.badRequest)
     }
 
     return h.redirect(confirmOverseasSitesUrl(applicationId))

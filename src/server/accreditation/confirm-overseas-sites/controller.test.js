@@ -15,13 +15,27 @@ import { setMultipleInterimSitesEnabled } from '../../common/test-helpers/featur
 
 const APPLICATION_ID = 'app-cos-001'
 
+// Everything a fresh add of a Plastic site asks for, so a site counts as
+// complete unless a test takes something away.
+const COMPLETE_DETAILS = {
+  addressLine1: '123 Test St',
+  townOrCity: 'Berlin',
+  coordinates: '52.5200, 13.4050',
+  contactName: 'Jane Smith',
+  contactEmail: 'jane@example.com',
+  operationCodes: ['R3'],
+  code1: 'A1181',
+  repatriatedLoads: 'Returned within 30 days'
+}
+
 const SITE_ONE = {
   siteId: 900001,
   siteName: 'Site Alpha',
   siteAddress: '123 Test St',
   country: 'Germany',
   isEu: true,
-  isOecd: true
+  isOecd: true,
+  ...COMPLETE_DETAILS
 }
 
 const SITE_TWO = {
@@ -30,7 +44,8 @@ const SITE_TWO = {
   siteAddress: '456 Test Ave',
   country: 'Chad',
   isEu: false,
-  isOecd: false
+  isOecd: false,
+  ...COMPLETE_DETAILS
 }
 
 function makeApplication(overrides = {}) {
@@ -485,6 +500,111 @@ describe('#confirmOverseasSitesController', () => {
       expect(headers.location).toBe(
         `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       )
+    })
+  })
+
+  // RA-xxx: the section is not marked complete while a site in the application
+  // is missing details. The operator is sent to the site list, which says which.
+  describe('POST — a site in the application is missing details', () => {
+    const LIST_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+    const BARE_SITE = {
+      siteId: 900001,
+      siteName: 'Site Alpha',
+      country: 'Germany'
+    }
+
+    const confirm = () =>
+      server.inject({
+        method: 'POST',
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+        headers: operatorHeaders,
+        payload: { submitAction: 'confirm' }
+      })
+
+    function applicationWith(...sites) {
+      return makeApplication({
+        overseasSites: { sectionStatus: 'InProgress', sites }
+      })
+    }
+
+    test('does not mark the section complete, and sends the operator to the site list', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(applicationWith(BARE_SITE))
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await confirm()
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(LIST_URL)
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('the list then names the site that needs attention, once', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(applicationWith(BARE_SITE))
+      const turnedBack = await confirm()
+      const cookie = turnedBack.headers['set-cookie']
+        .map((c) => c.split(';')[0])
+        .join('; ')
+
+      const first = await server.inject({
+        method: 'GET',
+        url: LIST_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+      expect(first.result).toContain('data-testid="error-summary"')
+      expect(first.result).toContain(
+        `<a href="${LIST_URL}/edit/900001" data-testid="incomplete-site-error-0">Complete the missing details for Site Alpha</a>`
+      )
+
+      const again = await server.inject({
+        method: 'GET',
+        url: LIST_URL,
+        headers: { ...operatorHeaders, cookie }
+      })
+      expect(again.result).not.toContain('data-testid="error-summary"')
+      expect(again.result).toContain('accredited-site-incomplete-900001')
+    })
+
+    test('one incomplete site among complete ones is enough to turn the operator back', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(SITE_ONE, { ...SITE_TWO, contactEmail: '' })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { headers } = await confirm()
+
+      expect(headers.location).toBe(LIST_URL)
+      expect(patchSpy).not.toHaveBeenCalled()
+    })
+
+    test('a registered site that was never included does not hold the section up', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(SITE_ONE, {
+          ...BARE_SITE,
+          siteId: 900009,
+          selected: false
+        })
+      )
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { headers } = await confirm()
+
+      expect(headers.location).toContain(
+        `/accreditation/task-list/${APPLICATION_ID}`
+      )
+      expect(patchSpy).toHaveBeenCalled()
+    })
+
+    test('a Steel site that has not answered conditions of export holds the section up', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        ...applicationWith({ ...SITE_ONE, operationCodes: ['R4'] }),
+        materialType: 'Steel'
+      })
+      const patchSpy = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { headers } = await confirm()
+
+      expect(headers.location).toBe(LIST_URL)
+      expect(patchSpy).not.toHaveBeenCalled()
     })
   })
 })

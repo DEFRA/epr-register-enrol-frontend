@@ -17,6 +17,19 @@ import { setMultipleInterimSitesEnabled } from '../../common/test-helpers/featur
 
 const APPLICATION_ID = 'app-sos-001'
 
+// Everything a fresh add of a Plastic site asks for, so a site in the
+// application counts as complete unless a test takes something away.
+const COMPLETE_DETAILS = {
+  addressLine1: '123 Test St',
+  townOrCity: 'Berlin',
+  coordinates: '52.5200, 13.4050',
+  contactName: 'Jane Smith',
+  contactEmail: 'jane@example.com',
+  operationCodes: ['R3'],
+  code1: 'A1181',
+  repatriatedLoads: 'Returned within 30 days'
+}
+
 const ACCREDITED_SITE = {
   siteId: 900001,
   orsId: '001',
@@ -25,7 +38,8 @@ const ACCREDITED_SITE = {
   country: 'Germany',
   isEu: true,
   isOecd: true,
-  selected: true
+  selected: true,
+  ...COMPLETE_DETAILS
 }
 
 const REGISTERED_SITE = {
@@ -46,7 +60,8 @@ const NEW_SITE = {
   siteName: 'Site Gamma',
   country: 'France',
   selected: true,
-  isNewSite: true
+  isNewSite: true,
+  ...COMPLETE_DETAILS
 }
 
 const REGISTERED_SITE_ADDED = {
@@ -55,7 +70,8 @@ const REGISTERED_SITE_ADDED = {
   siteName: 'Site Delta',
   country: 'Japan',
   selected: true,
-  registeredNowAccredited: true
+  registeredNowAccredited: true,
+  ...COMPLETE_DETAILS
 }
 
 function makeApplication(overrides = {}) {
@@ -701,7 +717,7 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
-    test('redirects to site-name and seeds the session when the site is found', async () => {
+    test('redirects to check-your-answers and seeds the session when the site is found', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { statusCode, headers } = await server.inject({
@@ -712,7 +728,7 @@ describe('#selectOverseasSitesController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        `/accreditation/add-overseas-site/${APPLICATION_ID}/site-name`
+        `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`
       )
     })
 
@@ -2037,6 +2053,203 @@ describe('#selectOverseasSitesController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="error-summary"')
+    })
+  })
+})
+
+// A site that is part of the application must have everything a fresh add
+// asks for. The list says which ones do not, and will not move on while any
+// of them is missing something.
+describe('#selectOverseasSitesController — incomplete sites', () => {
+  let server
+
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const operatorHeaders = { 'x-test-user-type': 'operator' }
+  const LIST_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+
+  // What a site carried over from Re/Ex can look like: a name and a country.
+  const BARE = (site) => ({
+    siteId: site.siteId,
+    orsId: site.orsId,
+    siteName: site.siteName,
+    country: site.country,
+    selected: site.selected,
+    isNewSite: site.isNewSite,
+    registeredNowAccredited: site.registeredNowAccredited
+  })
+
+  const applicationWith = (...sites) =>
+    makeApplication({
+      overseasSites: { sectionStatus: 'InProgress', sites }
+    })
+
+  const get = () =>
+    server.inject({ method: 'GET', url: LIST_URL, headers: operatorHeaders })
+  const post = (payload) =>
+    server.inject({
+      method: 'POST',
+      url: LIST_URL,
+      headers: operatorHeaders,
+      payload
+    })
+
+  describe('the Incomplete tag', () => {
+    test.each([
+      [
+        'accredited',
+        BARE(ACCREDITED_SITE),
+        'accredited-site-incomplete-900001'
+      ],
+      ['new', BARE(NEW_SITE), 'new-site-incomplete-900003'],
+      [
+        'registered and added',
+        BARE(REGISTERED_SITE_ADDED),
+        'registered-sites-added-incomplete-900004'
+      ]
+    ])(
+      'marks a %s site that is missing details',
+      async (_section, site, testId) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(applicationWith(site))
+
+        const { result } = await get()
+
+        expect(result).toContain(`data-testid="${testId}"`)
+        expect(result).toContain('Incomplete')
+      }
+    )
+
+    test('does not mark a site that has everything', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(ACCREDITED_SITE, NEW_SITE, REGISTERED_SITE_ADDED)
+      )
+
+      const { result } = await get()
+
+      expect(result).not.toContain('-incomplete-')
+    })
+
+    test('does not mark a registered site that has not been included yet', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(BARE(REGISTERED_SITE))
+      )
+
+      const { result } = await get()
+
+      expect(result).not.toContain('-incomplete-')
+    })
+
+    test('marks only the sites that are missing something', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(
+          ACCREDITED_SITE,
+          { ...BARE(NEW_SITE), ...COMPLETE_DETAILS, contactEmail: '' },
+          REGISTERED_SITE
+        )
+      )
+
+      const { result } = await get()
+
+      expect(result).toContain('new-site-incomplete-900003')
+      expect(result).not.toContain('accredited-site-incomplete-')
+    })
+
+    test('says nothing in an error summary just for loading the page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(BARE(ACCREDITED_SITE))
+      )
+
+      const { statusCode, result } = await get()
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('data-testid="error-summary"')
+    })
+  })
+
+  describe('continuing', () => {
+    test('is refused while a site in the application is missing details, naming it', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(BARE(ACCREDITED_SITE), REGISTERED_SITE)
+      )
+
+      const { statusCode, headers, result } = await post({
+        submitAction: 'continue'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(headers.location).toBeUndefined()
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain(
+        `<a href="${LIST_URL}/edit/900001" data-testid="incomplete-site-error-0">Complete the missing details for Site Alpha</a>`
+      )
+    })
+
+    test('names every incomplete site, each linking to its own Change page', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(
+          BARE(ACCREDITED_SITE),
+          BARE(NEW_SITE),
+          BARE(REGISTERED_SITE_ADDED)
+        )
+      )
+
+      const { result } = await post({ submitAction: 'continue' })
+
+      for (const [index, [id, name]] of [
+        [900001, 'Site Alpha'],
+        [900003, 'Site Gamma'],
+        [900004, 'Site Delta']
+      ].entries()) {
+        expect(result).toContain(
+          `<a href="${LIST_URL}/edit/${id}" data-testid="incomplete-site-error-${index}">Complete the missing details for ${name}</a>`
+        )
+      }
+    })
+
+    test('still shows the tags on the page it refuses with', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(BARE(ACCREDITED_SITE))
+      )
+
+      const { result } = await post({ submitAction: 'continue' })
+
+      expect(result).toContain('accredited-site-incomplete-900001')
+    })
+
+    test('goes ahead once every site in the application is complete, ignoring registered sites', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        applicationWith(ACCREDITED_SITE, BARE(REGISTERED_SITE))
+      )
+
+      const { statusCode, headers } = await post({ submitAction: 'continue' })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
+      )
+    })
+
+    test('uses the application material: Steel also needs conditions of export', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        ...applicationWith({ ...ACCREDITED_SITE, operationCodes: ['R4'] }),
+        materialType: 'Steel'
+      })
+
+      const { statusCode, result } = await post({ submitAction: 'continue' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('Complete the missing details for Site Alpha')
     })
   })
 })
