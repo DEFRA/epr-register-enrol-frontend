@@ -51,12 +51,12 @@ export function redirectToLogin(request, h) {
 
 /**
  * Called by every login entry-point GET handler (the stub chooser page, the
- * real Defra ID initiator) before it renders or redirects. A stash is only kept if this request carries the nonce that redirectToLogin
- * minted for it — i.e. this is a continuation of the specific redirect
- * chain that created the stash, not a direct visit, a bookmark, or a stale
- * tab completing an unrelated login later in the same session. Any
- * mismatch drops the stash rather than letting it be replayed against this
- * login.
+ * real Defra ID initiator) before it renders or redirects. A stash is only
+ * kept if this request carries the nonce that redirectToLogin minted for it
+ * — i.e. this is a continuation of the specific redirect chain that created
+ * the stash, not a direct visit, a bookmark, or a stale tab completing an
+ * unrelated login later in the same session. Any mismatch drops the stash
+ * rather than letting it be replayed against this login.
  */
 export function confirmPostLoginRedirect(request) {
   const stashed = request.yar.get(REDIRECT_SESSION_KEY)
@@ -66,9 +66,10 @@ export function confirmPostLoginRedirect(request) {
 }
 
 /**
- * Reads and clears the URL stashed by redirectToLogin, for use by login completion handlers once a session has been
- * established. Falls back to `fallback` when nothing was stashed, or when
- * confirmPostLoginRedirect already dropped it as stale.
+ * Reads and clears the URL stashed by redirectToLogin, for use by login
+ * completion handlers once a session has been established. Falls back to
+ * `fallback` when nothing was stashed, or when confirmPostLoginRedirect
+ * already dropped it as stale.
  */
 export function popPostLoginRedirect(request, fallback) {
   const stashed = request.yar.get(REDIRECT_SESSION_KEY)
