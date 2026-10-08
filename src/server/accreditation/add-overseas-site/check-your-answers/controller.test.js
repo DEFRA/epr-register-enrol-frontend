@@ -1012,6 +1012,23 @@ describe('#addOrsCyaController', () => {
       return cookieHeaderFrom(entryResponse, cookie)
     }
 
+    // RA-636: promote walks the whole wizard, but Back on check-your-answers
+    // returns to the ORS list, not the last wizard step.
+    test('back link returns to the ORS list', async () => {
+      const sessionCookie = await seedPromoteSession()
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="back-link"[^>]*href="/accreditation/select-overseas-sites/${APPLICATION_ID}"|href="/accreditation/select-overseas-sites/${APPLICATION_ID}"[^>]*data-testid="back-link"`
+        )
+      )
+    })
+
     test('calls promoteOverseasSite instead of createOverseasSite, keyed on the original siteId', async () => {
       const sessionCookie = await seedPromoteSession()
       vi.spyOn(
@@ -1154,6 +1171,22 @@ describe('#addOrsCyaController', () => {
       )
       return cookieHeaderFrom(entryResponse, cookie)
     }
+
+    // RA-636
+    test('back link returns to the ORS list', async () => {
+      const sessionCookie = await seedEditSession()
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { ...operatorHeaders, cookie: sessionCookie }
+      })
+
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="back-link"[^>]*href="/accreditation/select-overseas-sites/${APPLICATION_ID}"|href="/accreditation/select-overseas-sites/${APPLICATION_ID}"[^>]*data-testid="back-link"`
+        )
+      )
+    })
 
     test('calls updateOverseasSite instead of createOverseasSite/promoteOverseasSite, keyed on the original siteId', async () => {
       const sessionCookie = await seedEditSession()

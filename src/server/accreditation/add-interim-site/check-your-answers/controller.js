@@ -121,7 +121,11 @@ function buildViewData(t, applicationId, session, error) {
     heading: t('pages.addInterimSite.cya.heading'),
     submitButton: t('pages.addInterimSite.cya.submitButton'),
     cancelLink: t('pages.addInterimSite.cya.cancelLink'),
-    backLink: recyclingOperationDetailsUrl(applicationId),
+    // RA-636: an edit enters from the ORS list, so Back returns there.
+    backLink:
+      session.editingInterimSiteId == null
+        ? recyclingOperationDetailsUrl(applicationId)
+        : selectOverseasSitesUrl(applicationId),
     cancelUrl: selectOverseasSitesUrl(applicationId),
     rows: buildRows(t, applicationId, session),
     changeLabel: t('pages.addInterimSite.cya.changeLink'),
