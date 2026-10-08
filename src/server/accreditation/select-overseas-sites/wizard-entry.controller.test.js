@@ -20,8 +20,6 @@ const APPLICATION_ID = 'app-wizard-entry-001'
 const ORS_SITE_ID = 900010
 const INTERIM_SITE_ID = 900011
 
-const operatorHeaders = { 'x-test-user-type': 'operator' }
-
 function makeApplication(overrides = {}) {
   return {
     applicationId: APPLICATION_ID,
@@ -77,8 +75,7 @@ describe('select-overseas-sites wizard entry points', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`
       })
       flag.mockRestore()
 
@@ -95,8 +92,7 @@ describe('select-overseas-sites wizard entry points', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`
       })
       flag.mockRestore()
 
@@ -115,8 +111,7 @@ describe('select-overseas-sites wizard entry points', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`
       })
       flag.mockRestore()
 
@@ -132,8 +127,7 @@ describe('select-overseas-sites wizard entry points', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/424242`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/424242`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -161,8 +155,7 @@ describe('select-overseas-sites wizard entry points', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/add/${ORS_SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -179,8 +172,7 @@ describe('select-overseas-sites wizard entry points', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/${INTERIM_SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/${INTERIM_SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -192,8 +184,7 @@ describe('select-overseas-sites wizard entry points', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/424242`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/424242`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)

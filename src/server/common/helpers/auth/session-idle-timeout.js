@@ -30,6 +30,15 @@ export function yarSessionAuthenticate(request, h) {
     return h.unauthenticated(Boom.unauthorized(null, 'session'))
   }
 
+  // RA-537: operator is the only user type this service signs in. A session
+  // written before regulator sign-in was removed (userType 'regulator') is
+  // dropped and treated as signed out, so it goes through the normal
+  // redirect-to-login path instead of 403ing on every page.
+  if (user.userType !== 'operator') {
+    request.yar.reset()
+    return h.unauthenticated(Boom.unauthorized(null, 'session'))
+  }
+
   if (isSessionIdle(request.yar, config.get('session.idleTimeoutMs'))) {
     request.yar.reset()
     return h.unauthenticated(Boom.unauthorized(null, 'session'))

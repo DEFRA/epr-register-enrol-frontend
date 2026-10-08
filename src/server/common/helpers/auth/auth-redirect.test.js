@@ -155,7 +155,7 @@ describe('#redirectToLogin', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
       const request = { yar, query: { rt: 'n1' } }
-      confirmPostLoginRedirect(request, 'operator')
+      confirmPostLoginRedirect(request)
       expect(yar.get('postLoginRedirectOperator')).toBeDefined()
     })
 
@@ -163,7 +163,7 @@ describe('#redirectToLogin', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
       const request = { yar, query: {} }
-      confirmPostLoginRedirect(request, 'operator')
+      confirmPostLoginRedirect(request)
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
 
@@ -171,28 +171,26 @@ describe('#redirectToLogin', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
       const request = { yar, query: { rt: 'wrong' } }
-      confirmPostLoginRedirect(request, 'operator')
+      confirmPostLoginRedirect(request)
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
   })
 
   describe('#popPostLoginRedirect', () => {
-    test('returns and clears the stashed target for the given user type', () => {
+    test('returns and clears the stashed target', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', {
         target: '/organisations/123',
         nonce: 'n1'
       })
       const request = { yar }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe(
-        '/organisations/123'
-      )
+      expect(popPostLoginRedirect(request, '/')).toBe('/organisations/123')
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
 
     test('returns the fallback when nothing was stashed', () => {
       const request = { yar: fakeYar() }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
+      expect(popPostLoginRedirect(request, '/')).toBe('/')
     })
 
     test('returns the fallback for a protocol-relative stashed value (open-redirect guard)', () => {
@@ -202,7 +200,7 @@ describe('#redirectToLogin', () => {
         nonce: 'n1'
       })
       const request = { yar }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
+      expect(popPostLoginRedirect(request, '/')).toBe('/')
     })
   })
 
@@ -268,14 +266,10 @@ describe('#redirectToLogin', () => {
       // Follow the redirect chain exactly as a browser would: GET the stub
       // chooser with the rt query string still attached, which is what
       // confirms the stash (see confirmPostLoginRedirect) before it can be
-      // consumed. Built via URL/searchParams rather than string
-      // concatenation, since the location already carries its own `?rt=`
-      // — naively appending `?type=operator` would produce a second `?`
-      // that hapi parses as part of the `type` value, silently skipping
-      // confirmPostLoginRedirect and leaving this path uncovered.
+      // consumed. Built via URL/searchParams so the rt nonce is carried over
+      // exactly as redirectToLogin minted it.
       const rtUrl = new URL(loginRedirect.headers.location, 'http://localhost')
       const chooserUrl = new URL('/auth/stub/login', 'http://localhost')
-      chooserUrl.searchParams.set('type', 'operator')
       chooserUrl.searchParams.set('rt', rtUrl.searchParams.get('rt'))
 
       const chooserPage = await server.inject({
@@ -290,7 +284,7 @@ describe('#redirectToLogin', () => {
         method: 'POST',
         url: '/auth/stub/login',
         headers: { cookie: cookieHeader(cookies) },
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
+        payload: { userId: STUB_USERS[0].id }
       })
 
       expect(stubLogin.statusCode).toBe(statusCodes.redirect)
@@ -301,7 +295,7 @@ describe('#redirectToLogin', () => {
       const stubLogin = await server.inject({
         method: 'POST',
         url: '/auth/stub/login',
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
+        payload: { userId: STUB_USERS[0].id }
       })
 
       expect(stubLogin.statusCode).toBe(statusCodes.redirect)
@@ -325,7 +319,7 @@ describe('#redirectToLogin', () => {
       // no rt in the query string.
       const chooserPage = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=operator',
+        url: '/auth/stub/login',
         headers: { cookie: cookieHeader(cookies) }
       })
       const mergedCookies = {
@@ -337,7 +331,7 @@ describe('#redirectToLogin', () => {
         method: 'POST',
         url: '/auth/stub/login',
         headers: { cookie: cookieHeader(mergedCookies) },
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
+        payload: { userId: STUB_USERS[0].id }
       })
 
       expect(stubLogin.headers.location).toBe('/')

@@ -32,12 +32,7 @@ describe('#addInterimSiteCountryController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -80,8 +75,7 @@ describe('#addInterimSiteCountryController', () => {
     test('redirects to select-overseas-sites when there is no linked ORS site (direct navigation)', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -94,7 +88,7 @@ describe('#addInterimSiteCountryController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -109,7 +103,7 @@ describe('#addInterimSiteCountryController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain(
@@ -126,7 +120,7 @@ describe('#addInterimSiteCountryController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="country-input"')
@@ -138,7 +132,7 @@ describe('#addInterimSiteCountryController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toMatch(
@@ -155,7 +149,7 @@ describe('#addInterimSiteCountryController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -168,7 +162,7 @@ describe('#addInterimSiteCountryController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -191,7 +185,7 @@ describe('#addInterimSiteCountryController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -212,7 +206,7 @@ describe('#addInterimSiteCountryController', () => {
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(getResponse.statusCode).toBe(statusCodes.ok)
@@ -232,7 +226,7 @@ describe('#addInterimSiteCountryController', () => {
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(getResponse.result).toContain('value="France" selected')
@@ -244,7 +238,7 @@ describe('#addInterimSiteCountryController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/cy${BASE_URL}`,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -258,7 +252,6 @@ describe('#addInterimSiteCountryController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'country=Germany'
@@ -280,7 +273,6 @@ describe('#addInterimSiteCountryController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'country=Germany'
@@ -303,7 +295,7 @@ describe('#addInterimSiteCountryController', () => {
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(getResponse.result).toContain('Spain')
@@ -314,7 +306,6 @@ describe('#addInterimSiteCountryController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'country='
@@ -330,7 +321,6 @@ describe('#addInterimSiteCountryController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'country='
@@ -344,7 +334,6 @@ describe('#addInterimSiteCountryController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: ''
@@ -359,7 +348,6 @@ describe('#addInterimSiteCountryController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'country=   '
@@ -374,7 +362,6 @@ describe('#addInterimSiteCountryController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'country=Italy'
@@ -388,7 +375,7 @@ describe('#addInterimSiteCountryController', () => {
       const cancelResponse = await server.inject({
         method: 'GET',
         url: cancelUrl,
-        headers: { ...operatorHeaders, cookie: cookieHeader }
+        headers: { cookie: cookieHeader }
       })
 
       expect(cancelResponse.statusCode).toBe(statusCodes.redirect)
@@ -400,7 +387,6 @@ describe('#addInterimSiteCountryController', () => {
   // it is refused here, inline, rather than as a 400 at check-your-answers.
   describe('RA-620: backend length limits', () => {
     const limitPostHeaders = {
-      'x-test-user-type': 'operator',
       'content-type': 'application/x-www-form-urlencoded'
     }
     const postForm = (fields) =>

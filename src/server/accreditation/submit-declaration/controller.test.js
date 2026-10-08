@@ -73,16 +73,11 @@ describe('#submitDeclarationController', () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/submit-declaration/{applicationId}', () => {
     test('returns 200 and renders page heading', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -93,8 +88,7 @@ describe('#submitDeclarationController', () => {
     test('renders the declaration intro and bulleted list', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="declaration-intro"')
@@ -114,8 +108,7 @@ describe('#submitDeclarationController', () => {
     test('renders full name and job title inputs with hints', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="full-name-input"')
@@ -132,8 +125,7 @@ describe('#submitDeclarationController', () => {
     test('renders confirm-and-submit and save-and-come-back buttons', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="submit-button"')
@@ -144,8 +136,7 @@ describe('#submitDeclarationController', () => {
     test('back link points to the task list', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -157,7 +148,6 @@ describe('#submitDeclarationController', () => {
       const postResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
@@ -173,7 +163,7 @@ describe('#submitDeclarationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookieHeader }
+        headers: { Cookie: cookieHeader }
       })
 
       expect(result).toContain('value="Jane Smith"')
@@ -183,8 +173,7 @@ describe('#submitDeclarationController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -196,8 +185,7 @@ describe('#submitDeclarationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -218,8 +206,7 @@ describe('#submitDeclarationController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -236,7 +223,6 @@ describe('#submitDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           submitAction: 'saveAndComeLater'
@@ -267,7 +253,6 @@ describe('#submitDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
@@ -299,7 +284,6 @@ describe('#submitDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
@@ -320,7 +304,6 @@ describe('#submitDeclarationController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: '',
           jobTitle: 'Director',
@@ -337,7 +320,6 @@ describe('#submitDeclarationController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: '',
@@ -360,7 +342,6 @@ describe('#submitDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
@@ -395,7 +376,6 @@ describe('#submitDeclarationController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: '  Jane Smith  ',
           jobTitle: '  Director  ',
@@ -434,7 +414,6 @@ describe('#submitDeclarationController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
@@ -456,7 +435,6 @@ describe('#submitDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
@@ -479,7 +457,6 @@ describe('#submitDeclarationController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Smith',
           jobTitle: 'Director',

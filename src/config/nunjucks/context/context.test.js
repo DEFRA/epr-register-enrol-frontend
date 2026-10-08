@@ -55,7 +55,6 @@ describe('context and cache', () => {
           serviceUrl: '/',
           t: expect.any(Function),
           user: null,
-          userType: null,
           applicationHeader: null,
           concurrentLoginNotice: null,
           analytics: {
@@ -174,7 +173,6 @@ describe('context and cache', () => {
           serviceUrl: '/',
           t: expect.any(Function),
           user: null,
-          userType: null,
           applicationHeader: null,
           concurrentLoginNotice: null,
           analytics: {

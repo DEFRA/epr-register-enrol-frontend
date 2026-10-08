@@ -163,17 +163,12 @@ describe('#queryTaskListGetController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   test('returns 200 and renders the queried section without the officer note', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -210,8 +205,7 @@ describe('#queryTaskListGetController', () => {
       try {
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/query-task-list/${APPLICATION_ID}`
         })
 
         expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -232,8 +226,7 @@ describe('#queryTaskListGetController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(result).toContain(
@@ -248,8 +241,7 @@ describe('#queryTaskListGetController', () => {
 
     const { statusCode, headers } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(statusCode).toBe(statusCodes.redirect)
@@ -268,8 +260,7 @@ describe('#queryTaskListGetController', () => {
 
     const { headers } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(headers.location).not.toContain('undefined')
@@ -280,8 +271,7 @@ describe('#queryTaskListGetController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(result).toContain('data-testid="task-prns-link"')
@@ -299,8 +289,7 @@ describe('#queryTaskListGetController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(result).toContain('data-testid="task-prns-label"')
@@ -322,8 +311,7 @@ describe('#queryTaskListGetController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(result).toContain('data-testid="task-prns"')
@@ -338,8 +326,7 @@ describe('#queryTaskListGetController', () => {
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
-      url: `/accreditation/query-task-list/${APPLICATION_ID}`,
-      headers: operatorHeaders
+      url: `/accreditation/query-task-list/${APPLICATION_ID}`
     })
 
     expect(statusCode).toBe(statusCodes.internalServerError)

@@ -47,12 +47,7 @@ describe('#addInterimSiteLocationController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -84,8 +79,7 @@ describe('#addInterimSiteLocationController', () => {
     test('redirects to select-overseas-sites when there is no linked ORS site (direct navigation)', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -98,7 +92,7 @@ describe('#addInterimSiteLocationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -112,7 +106,7 @@ describe('#addInterimSiteLocationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="address-line1-input"')
@@ -128,7 +122,7 @@ describe('#addInterimSiteLocationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).not.toContain('data-testid="country-input"')
@@ -141,7 +135,7 @@ describe('#addInterimSiteLocationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -154,7 +148,7 @@ describe('#addInterimSiteLocationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -177,7 +171,7 @@ describe('#addInterimSiteLocationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -198,7 +192,7 @@ describe('#addInterimSiteLocationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('Rotterdam')
@@ -211,7 +205,7 @@ describe('#addInterimSiteLocationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/cy${BASE_URL}`,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -292,7 +286,6 @@ describe('#addInterimSiteLocationController', () => {
   // it is refused here, inline, rather than as a 400 at check-your-answers.
   describe('RA-620: backend length limits', () => {
     const limitPostHeaders = {
-      'x-test-user-type': 'operator',
       'content-type': 'application/x-www-form-urlencoded'
     }
     const postForm = (fields) =>

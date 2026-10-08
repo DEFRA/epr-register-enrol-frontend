@@ -186,18 +186,13 @@ describe('#uploadEvidenceListController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/upload-evidence-for-overseas-site/{applicationId}', () => {
     test('returns 200 with page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -212,8 +207,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="sites-table"')
@@ -226,8 +220,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="evidence-status-900001"')
@@ -239,8 +232,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="evidence-status-900002"')
@@ -252,8 +244,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="upload-link-900001"')
@@ -268,8 +259,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="upload-link-900002"')
@@ -288,8 +278,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="no-sites-message"')
@@ -308,8 +297,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -327,8 +315,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -340,8 +327,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -353,8 +339,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -371,8 +356,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -393,8 +377,7 @@ describe('#uploadEvidenceListController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -412,8 +395,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -437,8 +419,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -456,8 +437,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -489,8 +469,7 @@ describe('#uploadEvidenceListController', () => {
       try {
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
         })
 
         expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -505,8 +484,7 @@ describe('#uploadEvidenceListController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -529,7 +507,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -552,7 +529,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -577,7 +553,6 @@ describe('#uploadEvidenceListController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: {}
         })
 
@@ -595,7 +570,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -624,7 +598,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -645,7 +618,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })
 
@@ -665,7 +637,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -687,7 +658,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -708,7 +678,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -730,7 +699,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -754,7 +722,6 @@ describe('#uploadEvidenceListController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 

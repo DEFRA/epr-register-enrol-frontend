@@ -25,20 +25,10 @@ describe('#stubLoginController', () => {
   // removed — the chooser only offers operators, and every regulator login
   // entry point is gone rather than merely hidden.
   describe('regulator login removed', () => {
-    test('type=regulator falls back to the operator chooser like any unknown type', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: '/auth/stub/login?type=regulator&rt=abc'
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe('/auth/stub/login?type=operator&rt=abc')
-    })
-
-    test('operator chooser offers no regulator login, switch link or Entra ID button', async () => {
+    test('chooser offers no regulator login, switch link or Entra ID button', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=operator'
+        url: '/auth/stub/login'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -48,11 +38,11 @@ describe('#stubLoginController', () => {
       expect(result).not.toMatch(/regulator/i)
     })
 
-    test('POST with type=regulator does not sign anyone in', async () => {
+    test('POST with the old regulator stub user does not sign anyone in', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: '/auth/stub/login',
-        payload: { userId: 'stub-reg-1', type: 'regulator' }
+        payload: { userId: 'stub-reg-1' }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
@@ -70,7 +60,7 @@ describe('#stubLoginController', () => {
     })
 
     test('STUB_USERS only has operators', () => {
-      expect(Object.keys(STUB_USERS)).toEqual(['operator'])
+      expect(STUB_USERS.map((u) => u.userType)).toEqual(['operator'])
     })
   })
 
@@ -118,41 +108,32 @@ describe('#stubLoginController', () => {
   })
 
   describe('GET /auth/stub/login', () => {
-    test('renders chooser for operator type', async () => {
+    test('renders the operator chooser', async () => {
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=operator'
+        url: '/auth/stub/login'
       })
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('Stub Login')
-      expect(result).toContain(STUB_USERS.operator[0].name)
+      expect(result).toContain('Select an operator user')
+      expect(result).toContain(STUB_USERS[0].name)
+      expect(result).not.toContain('name="type"')
     })
 
-    test('redirects to operator login for unknown type', async () => {
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: '/auth/stub/login?type=unknown'
-      })
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe('/auth/stub/login?type=operator')
-    })
-
-    // `type` is a caller-controlled query param — a plain STUB_USERS[type]
-    // lookup would resolve inherited Object.prototype keys instead of
-    // treating them as "no such type", crashing wherever the result is used
-    // as a user array.
-    test.each(['constructor', 'toString', 'hasOwnProperty'])(
-      'treats type=%s as an unknown type, not an inherited Object.prototype member',
+    // Older links and bookmarks still carry a `type` param; it is accepted
+    // and ignored rather than redirected or rejected.
+    test.each(['operator', 'regulator', 'unknown', 'constructor'])(
+      'renders the same operator chooser for a leftover type=%s param',
       async (type) => {
-        const { statusCode, headers } = await server.inject({
+        const { result, statusCode } = await server.inject({
           method: 'GET',
           url: `/auth/stub/login?type=${type}`
         })
 
-        expect(statusCode).toBe(statusCodes.redirect)
-        expect(headers.location).toBe('/auth/stub/login?type=operator')
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('Select an operator user')
+        expect(result).toContain(STUB_USERS[0].name)
       }
     )
   })
@@ -163,8 +144,7 @@ describe('#stubLoginController', () => {
         method: 'POST',
         url: '/auth/stub/login',
         payload: {
-          userId: STUB_USERS.operator[0].id,
-          type: 'operator'
+          userId: STUB_USERS[0].id
         }
       })
 
@@ -177,22 +157,18 @@ describe('#stubLoginController', () => {
         method: 'POST',
         url: '/auth/stub/login',
         payload: {
-          userId: 'nonexistent-user',
-          type: 'operator'
+          userId: 'nonexistent-user'
         }
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
     })
 
-    test('returns 400 rather than crashing for type=constructor', async () => {
+    test('returns 400 when no userId is posted', async () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: '/auth/stub/login',
-        payload: {
-          userId: 'anyone',
-          type: 'constructor'
-        }
+        payload: {}
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
@@ -207,7 +183,7 @@ describe('#stubLoginController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe('/auth/stub/login?type=operator')
+      expect(headers.location).toBe('/auth/stub/login')
     })
 
     test('preserves an rt param, URL-encoded, on the stub chooser redirect', async () => {
@@ -218,7 +194,7 @@ describe('#stubLoginController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(
-        '/auth/stub/login?type=operator&rt=%2Faccreditation%2Ftask-list%2F123'
+        '/auth/stub/login?rt=%2Faccreditation%2Ftask-list%2F123'
       )
     })
   })

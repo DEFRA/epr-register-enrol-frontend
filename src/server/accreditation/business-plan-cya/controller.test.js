@@ -164,10 +164,6 @@ describe('#businessPlanCyaController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/business-plan-cya/{applicationId}', () => {
     test('redirects to query-task-list when application is Queried and business plan section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -182,8 +178,7 @@ describe('#businessPlanCyaController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -197,8 +192,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -210,8 +204,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="percent-summary-list"')
@@ -225,8 +218,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -240,8 +232,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Not provided')
@@ -252,8 +243,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Investing in sorting lines')
@@ -264,8 +254,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('?fromCYA=true')
@@ -276,8 +265,7 @@ describe('#businessPlanCyaController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -291,8 +279,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('PRN income')
@@ -306,8 +293,7 @@ describe('#businessPlanCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('PERN income')
@@ -323,8 +309,7 @@ describe('#businessPlanCyaController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/business-plan-cya/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -352,7 +337,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -370,7 +354,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -396,7 +379,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -413,7 +395,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -428,7 +409,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -447,7 +427,6 @@ describe('#businessPlanCyaController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: { submitAction: 'confirm' }
         })
 
@@ -474,7 +453,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -490,7 +468,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -508,7 +485,6 @@ describe('#businessPlanCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })
 

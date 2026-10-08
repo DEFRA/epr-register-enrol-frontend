@@ -46,12 +46,7 @@ describe('#addInterimSiteContactDetailsController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -83,8 +78,7 @@ describe('#addInterimSiteContactDetailsController', () => {
     test('redirects to select-overseas-sites when there is no linked ORS site (direct navigation)', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -97,7 +91,7 @@ describe('#addInterimSiteContactDetailsController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -111,7 +105,7 @@ describe('#addInterimSiteContactDetailsController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="contact-name-input"')
@@ -125,7 +119,7 @@ describe('#addInterimSiteContactDetailsController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -138,7 +132,7 @@ describe('#addInterimSiteContactDetailsController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -161,7 +155,7 @@ describe('#addInterimSiteContactDetailsController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -182,7 +176,7 @@ describe('#addInterimSiteContactDetailsController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('Jane Smith')
@@ -195,7 +189,7 @@ describe('#addInterimSiteContactDetailsController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/cy${BASE_URL}`,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -330,7 +324,6 @@ describe('#addInterimSiteContactDetailsController', () => {
   // it is refused here, inline, rather than as a 400 at check-your-answers.
   describe('RA-620: backend length limits', () => {
     const limitPostHeaders = {
-      'x-test-user-type': 'operator',
       'content-type': 'application/x-www-form-urlencoded'
     }
     const postForm = (fields) =>

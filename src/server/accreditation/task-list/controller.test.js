@@ -499,18 +499,13 @@ describe('#taskListGetController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/task-list/{applicationId}', () => {
     test('returns 200 with the reapply heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -524,8 +519,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -541,8 +535,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="task-prns"')
@@ -555,8 +548,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('NOT STARTED')
@@ -570,8 +562,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('IN PROGRESS')
@@ -585,8 +576,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('COMPLETED')
@@ -598,8 +588,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="continue-button"')
@@ -616,8 +605,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="continue-button"')
@@ -638,8 +626,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="continue-button"')
@@ -660,8 +647,7 @@ describe('#taskListGetController', () => {
 
         const { result, statusCode } = await server.inject({
           method: 'GET',
-          url: `/accreditation/task-list/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/task-list/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -679,8 +665,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -699,8 +684,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain(
@@ -716,8 +700,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="save-come-back-link"')
@@ -728,8 +711,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain(
@@ -744,8 +726,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain(`/accreditation/business-plan/${APPLICATION_ID}`)
@@ -764,8 +745,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="save-come-back-link"')
@@ -779,8 +759,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -791,8 +770,7 @@ describe('#taskListGetController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -814,8 +792,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -836,8 +813,7 @@ describe('#taskListGetController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -860,8 +836,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Reapply for accreditation')
@@ -882,8 +857,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="continue-button"')
@@ -904,8 +878,7 @@ describe('#taskListGetController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="continue-button"')
@@ -916,8 +889,7 @@ describe('#taskListGetController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -931,8 +903,7 @@ describe('#taskListGetController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/task-list/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/task-list/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -950,8 +921,7 @@ describe('#taskListGetController', () => {
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
-          url: `/accreditation/task-list/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/task-list/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.redirect)

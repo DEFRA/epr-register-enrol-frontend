@@ -40,7 +40,7 @@ function logWarn(request, msg, data) {
 // --- Login — redirect to provider ---
 
 export async function operatorLoginController(request, h) {
-  confirmPostLoginRedirect(request, 'operator')
+  confirmPostLoginRedirect(request)
 
   const provider = getDefraIdConfig(config)
   const { authUrl } = await getDefraIdEndpoints(provider.discoveryUrl)
@@ -165,7 +165,7 @@ export async function operatorCallbackController(request, h) {
     userType: 'operator'
   }
 
-  const redirectTo = popPostLoginRedirect(request, 'operator', '/')
+  const redirectTo = popPostLoginRedirect(request, '/')
 
   request.yar.reset()
 

@@ -19,8 +19,7 @@ export const stubAuthPlugin = {
     async register(server) {
       if (config.get('isTest')) {
         // Test mode: bypass scheme — always authenticated as TEST_OPERATOR,
-        // the only user type this service has. Any x-test-user-type header a
-        // test still sends is ignored.
+        // the only user type this service has.
         server.auth.scheme('test-bypass', () => ({
           authenticate(_request, h) {
             return h.authenticated({ credentials: TEST_OPERATOR })

@@ -35,8 +35,8 @@ export const authRoutes = {
           options: { auth: false },
           handler(request, h) {
             const rt = request.query.rt
-            const rtParam = rt ? '&rt=' + encodeURIComponent(rt) : ''
-            return h.redirect(`/auth/stub/login?type=operator${rtParam}`)
+            const rtParam = rt ? '?rt=' + encodeURIComponent(rt) : ''
+            return h.redirect(`/auth/stub/login${rtParam}`)
           }
         })
 

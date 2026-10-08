@@ -94,8 +94,7 @@ describe('#test pages (RA-459) — TEST_PAGES_DISABLED=false (default)', () => {
   test('GET / works', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: '/',
-      headers: { 'x-test-user-type': 'operator' }
+      url: '/'
     })
 
     expect(statusCode).toBe(statusCodes.ok)

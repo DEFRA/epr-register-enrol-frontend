@@ -47,12 +47,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -60,8 +55,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
     test('returns 200 with page heading', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -74,8 +68,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
     test('renders all address input fields', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="address-line1-input"')
@@ -90,8 +83,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
     test('back link points to site-name', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -101,8 +93,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
     test('cancel link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -123,8 +114,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -143,7 +133,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(result).toContain('123 Main St')
@@ -154,8 +144,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        url: `/cy${BASE_URL}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -208,7 +197,7 @@ describe('#addOverseasSiteSiteLocationController', () => {
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(getResponse.result).toContain('123 Main St')
@@ -424,7 +413,6 @@ describe('#addOverseasSiteSiteLocationController', () => {
   // it is refused here, inline, rather than as a 400 at check-your-answers.
   describe('RA-620: backend length limits', () => {
     const limitPostHeaders = {
-      'x-test-user-type': 'operator',
       'content-type': 'application/x-www-form-urlencoded'
     }
     const postForm = (fields) =>

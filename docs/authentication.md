@@ -37,8 +37,8 @@ All application routes are protected by default. The health check and static fil
 ```
 request arrives
   → yar-session scheme reads request.yar.get('user')
-    → present and not idle: credentials = { ...user, scope: [user.userType] }
-    → missing or idle: 401 → redirectToLogin sends a GET to /auth/operator/login
+    → present, an operator, and not idle: credentials = { ...user, scope: ['operator'] }
+    → missing, idle, or not an operator: 401 → redirectToLogin sends a GET to /auth/operator/login
 ```
 
 No external plugins or middleware are involved in enforcement — this is Hapi's native `server.auth.strategy` mechanism.
@@ -79,7 +79,7 @@ GET /auth/operator/callback?code=...&state=...
 Copy `.env.example` to `.env` and run `npm run dev`. With `ENVIRONMENT=local` (the default), stub auth is automatically enabled. The dev server loads `.env` automatically via `--env-file-if-exists`.
 
 1. Visit any protected route (e.g. `/`) — redirected to `/auth/operator/login`.
-2. That redirects to `/auth/stub/login?type=operator`.
+2. That redirects to the stub chooser at `/auth/stub/login`.
 3. Select a user and click **Log in**.
 4. Authenticated and redirected to `/`.
 
@@ -136,16 +136,12 @@ How it works: every authenticated session carries a `scope` array derived from `
 ## Accessing the authenticated user in a controller
 
 ```javascript
-import { getUser, isOperator } from '../common/helpers/auth/get-user.js'
+import { getUser } from '../common/helpers/auth/get-user.js'
 
 export const myController = {
   handler(request, h) {
     const user = getUser(request)
-    // user: { id, email, name, userType, roles, ... }
-
-    if (isOperator(request)) {
-      // operator-specific logic
-    }
+    // user: { id, email, name, userType: 'operator', roles, ... }
 
     return h.view('my-view', { user })
   }
@@ -156,7 +152,7 @@ export const myController = {
 
 ## Nunjucks templates
 
-`user` and `userType` are automatically available in all templates:
+`user` is automatically available in all templates:
 
 ```njk
 {% if user %}
@@ -191,7 +187,7 @@ test('POST /auth/stub/login sets session and redirects', async () => {
   const { statusCode, headers } = await server.inject({
     method: 'POST',
     url: '/auth/stub/login',
-    payload: { userId: 'stub-op-1', type: 'operator' }
+    payload: { userId: 'stub-op-1' }
   })
   expect(statusCode).toBe(302)
   expect(headers.location).toBe('/')
@@ -205,20 +201,18 @@ test('POST /auth/stub/login sets session and redirects', async () => {
 Stub users are defined in `src/server/auth/stub/controller.js`:
 
 ```javascript
-export const STUB_USERS = {
-  operator: [
-    {
-      id: 'stub-op-1',
-      name: 'Stub Operator',
-      email: 'test@defra.gov.uk',
-      userType: 'operator',
-      roles: ['user'],
-      currentRelationshipId: STUB_OPERATOR_CURRENT_RELATIONSHIP_ID,
-      relationships: STUB_OPERATOR_RELATIONSHIPS
-    }
-    // Add more operator users here
-  ]
-}
+export const STUB_USERS = [
+  {
+    id: 'stub-op-1',
+    name: 'Stub Operator',
+    email: 'test@defra.gov.uk',
+    userType: 'operator',
+    roles: ['user'],
+    currentRelationshipId: STUB_OPERATOR_CURRENT_RELATIONSHIP_ID,
+    relationships: STUB_OPERATOR_RELATIONSHIPS
+  }
+  // Add more operator users here
+]
 ```
 
 Each user must have a unique `id`.

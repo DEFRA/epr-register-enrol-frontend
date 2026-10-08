@@ -47,28 +47,13 @@ describe('#stubAuthPlugin (test mode)', () => {
     expect(captured).toMatchObject({ ...TEST_OPERATOR })
   })
 
-  test('allows access to operator routes without any x-test-user-type header', async () => {
+  test('allows access to operator routes', async () => {
     const { statusCode } = await server.inject({
       method: 'GET',
       url: '/test-operator-only'
     })
     expect(statusCode).toBe(statusCodes.ok)
   })
-
-  // RA-537: the regulator user type was removed, so the header no longer
-  // selects anything — any value, including the retired 'regulator', still
-  // authenticates as the operator.
-  test.each(['operator', 'regulator', 'not-a-real-user-type'])(
-    'authenticates as TEST_OPERATOR with x-test-user-type: %s',
-    async (userType) => {
-      await server.inject({
-        method: 'GET',
-        url: '/test-scope-check',
-        headers: { 'x-test-user-type': userType }
-      })
-      expect(captured).toMatchObject({ ...TEST_OPERATOR })
-    }
-  )
 })
 
 describe('#stubAuthPlugin (stub/local-dev mode)', () => {

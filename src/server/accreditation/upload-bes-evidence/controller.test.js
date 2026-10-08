@@ -172,10 +172,6 @@ describe('#uploadBesEvidenceController', () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true })
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const boundary = 'test-boundary-bes'
   const multipartContentType = `multipart/form-data; boundary=${boundary}`
 
@@ -258,8 +254,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -273,8 +268,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -290,8 +284,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="file-input"')
@@ -304,8 +297,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -317,8 +309,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -339,8 +330,7 @@ describe('#uploadBesEvidenceController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -357,7 +347,6 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndComeLater' }
       })
 
@@ -373,7 +362,6 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndComeLater' }
       })
 
@@ -394,7 +382,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -411,7 +399,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({ filename: '' })
       })
 
@@ -426,7 +414,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           fileBytes: Buffer.alloc(MAX_FILE_BYTES + 1, 'a')
         })
@@ -442,7 +430,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({ filename: 'malware.exe' })
       })
 
@@ -474,7 +462,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({ filename: 'evidence.pdf' })
       })
 
@@ -514,7 +502,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'Evidence Rafa.docx',
           contentType:
@@ -532,7 +520,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           validFromDay: 'x',
           validFromMonth: 'y',
@@ -550,7 +538,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           validToDay: 'x',
           validToMonth: 'y',
@@ -569,7 +557,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           validToDay: '',
           validToMonth: '',
@@ -594,7 +582,7 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           validFromDay: '1',
           validFromMonth: '11',
@@ -616,7 +604,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -639,7 +627,7 @@ describe('#uploadBesEvidenceController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-          headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+          headers: { 'Content-Type': multipartContentType },
           payload: buildMultipartPayload()
         })
 
@@ -662,7 +650,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -687,7 +675,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -708,7 +696,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -724,7 +712,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -747,7 +735,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -780,7 +768,7 @@ describe('#uploadBesEvidenceController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-          headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+          headers: { 'Content-Type': multipartContentType },
           payload: buildMultipartPayload({ filename })
         })
 
@@ -801,7 +789,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
 
@@ -816,7 +804,7 @@ describe('#uploadBesEvidenceController', () => {
       const postResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload()
       })
       const raw = postResponse.headers['set-cookie']
@@ -830,7 +818,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -847,7 +835,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -864,7 +852,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -893,7 +881,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -930,7 +918,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -960,7 +948,7 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -976,8 +964,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -992,8 +979,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/does-not-exist`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/does-not-exist`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1012,8 +998,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1034,8 +1019,7 @@ describe('#uploadBesEvidenceController', () => {
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
-          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-          headers: operatorHeaders
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`
         })
 
         expect(statusCode).toBe(statusCodes.redirect)
@@ -1050,8 +1034,7 @@ describe('#uploadBesEvidenceController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -1066,7 +1049,6 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-        headers: operatorHeaders,
         payload: {
           validFromDay: '',
           validFromMonth: '',
@@ -1087,7 +1069,6 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-        headers: operatorHeaders,
         payload: {
           validFromDay: '1',
           validFromMonth: '11',
@@ -1109,7 +1090,6 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-        headers: operatorHeaders,
         payload: {
           validFromDay: '2',
           validFromMonth: '11',
@@ -1141,7 +1121,6 @@ describe('#uploadBesEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/does-not-exist`,
-        headers: operatorHeaders,
         payload: {
           validFromDay: '2',
           validFromMonth: '11',
@@ -1162,7 +1141,6 @@ describe('#uploadBesEvidenceController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-        headers: operatorHeaders,
         payload: {
           validFromDay: '2',
           validFromMonth: '11',
@@ -1188,7 +1166,6 @@ describe('#uploadBesEvidenceController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/amend/file-bes-001`,
-          headers: operatorHeaders,
           payload: {
             validFromDay: '2',
             validFromMonth: '11',

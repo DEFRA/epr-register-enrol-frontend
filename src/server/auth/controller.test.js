@@ -21,13 +21,12 @@ describe('#logoutController', () => {
     vi.restoreAllMocks()
   })
 
-  async function loginAs(type) {
+  async function loginAsOperator() {
     const { headers } = await server.inject({
       method: 'POST',
       url: '/auth/stub/login',
       payload: {
-        userId: STUB_USERS[type][0].id,
-        type
+        userId: STUB_USERS[0].id
       }
     })
 
@@ -35,7 +34,7 @@ describe('#logoutController', () => {
   }
 
   test('redirects a stub operator to the operator login page', async () => {
-    const cookie = await loginAs('operator')
+    const cookie = await loginAsOperator()
 
     const { statusCode, headers } = await server.inject({
       method: 'GET',
@@ -88,10 +87,10 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
     vi.restoreAllMocks()
   })
 
-  async function loginAs(type) {
+  async function loginAsOperator() {
     const crumbResponse = await server.inject({
       method: 'GET',
-      url: `/auth/stub/login?type=${type}`
+      url: '/auth/stub/login'
     })
     const crumbCookie = crumbResponse.headers['set-cookie']
       .find((c) => c.startsWith('crumb='))
@@ -101,7 +100,7 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
     const loginResponse = await server.inject({
       method: 'POST',
       url: '/auth/stub/login',
-      payload: { userId: STUB_USERS[type][0].id, type, crumb },
+      payload: { userId: STUB_USERS[0].id, crumb },
       headers: {
         cookie: crumbCookie
       }
@@ -112,31 +111,62 @@ describe('#logoutController session revocation (real yar-session scheme)', () =>
       .split(';')[0]
   }
 
-  test.each(['operator'])(
-    'a signed-out %s session can no longer authenticate, even replaying the pre-logout cookie',
-    async (type) => {
-      const oldSessionCookie = await loginAs(type)
+  test('a signed-out session can no longer authenticate, even replaying the pre-logout cookie', async () => {
+    const oldSessionCookie = await loginAsOperator()
 
-      await server.inject({
-        method: 'GET',
-        url: '/auth/logout',
-        headers: {
-          cookie: oldSessionCookie
-        }
-      })
+    await server.inject({
+      method: 'GET',
+      url: '/auth/logout',
+      headers: {
+        cookie: oldSessionCookie
+      }
+    })
 
-      const { statusCode, headers } = await server.inject({
-        method: 'GET',
-        url: '/',
-        headers: {
-          cookie: oldSessionCookie
-        }
-      })
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: '/',
+      headers: {
+        cookie: oldSessionCookie
+      }
+    })
 
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toMatch(
-        /^\/auth\/(operator|regulator)\/login(\?rt=.+)?$/
-      )
-    }
-  )
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(headers.location).toMatch(/^\/auth\/operator\/login(\?rt=.+)?$/)
+  })
+
+  // RA-537: a session written before regulator sign-in was removed must be
+  // treated as signed out — sent to login — not left authenticated with a
+  // scope that 403s on every page.
+  test('a leftover regulator session is redirected to the operator login', async () => {
+    server.route({
+      method: 'GET',
+      path: '/test-seed-legacy-regulator-session',
+      options: { auth: false },
+      handler(request, h) {
+        request.yar.set('user', {
+          id: 'stub-reg-1',
+          userType: 'regulator',
+          regulatorRole: 'regulator-standard'
+        })
+        return h.response('seeded')
+      }
+    })
+
+    const seeded = await server.inject({
+      method: 'GET',
+      url: '/test-seed-legacy-regulator-session'
+    })
+    const sessionCookie = seeded.headers['set-cookie']
+      .find((c) => c.startsWith('session='))
+      .split(';')[0]
+
+    const { statusCode, headers } = await server.inject({
+      method: 'GET',
+      url: '/',
+      headers: { cookie: sessionCookie }
+    })
+
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(headers.location).toMatch(/^\/auth\/operator\/login(\?rt=.+)?$/)
+  })
 })

@@ -9,85 +9,55 @@ import {
 } from '../../common/helpers/auth/auth-redirect.js'
 import { markLoginAndNotifyPrevious } from '../../common/helpers/auth/concurrent-login.js'
 
-export const STUB_USERS = {
-  operator: [
-    {
-      id: 'stub-op-1',
-      name: 'Stub Operator',
-      email: 'test@defra.gov.uk',
-      userType: 'operator',
-      roles: ['user'],
-      // Relationships (and the /defra-link map) are derived from the shared
-      // STUB_OPERATOR_ORGS fixture so they cannot drift apart.
-      currentRelationshipId: STUB_OPERATOR_CURRENT_RELATIONSHIP_ID,
-      relationships: STUB_OPERATOR_RELATIONSHIPS
-    }
-  ]
-}
+export const STUB_USERS = [
+  {
+    id: 'stub-op-1',
+    name: 'Stub Operator',
+    email: 'test@defra.gov.uk',
+    userType: 'operator',
+    roles: ['user'],
+    // Relationships (and the /defra-link map) are derived from the shared
+    // STUB_OPERATOR_ORGS fixture so they cannot drift apart.
+    currentRelationshipId: STUB_OPERATOR_CURRENT_RELATIONSHIP_ID,
+    relationships: STUB_OPERATOR_RELATIONSHIPS
+  }
+]
 
-// `type` is caller-controlled (query param / form field); a plain STUB_USERS[type]
-// lookup resolves inherited Object.prototype keys (e.g. type=constructor
-// returns the Object constructor function, not undefined), which then blows
-// up wherever the result is treated as a user array. Object.hasOwn confines
-// the lookup to STUB_USERS' own keys.
-function getStubUsers(type) {
-  return Object.hasOwn(STUB_USERS, type) ? STUB_USERS[type] : undefined
-}
-
-function stubLoginUrl(type, rt) {
-  const rtParam = rt ? `&rt=${encodeURIComponent(rt)}` : ''
-  return `/auth/stub/login?type=${type}${rtParam}`
-}
-
-function isDefraIdConfigured(type) {
-  return (
-    type === 'operator' &&
-    Boolean(
-      config.get('auth.defraId.discoveryUrl') &&
-      config.get('auth.defraId.clientId')
-    )
+function isDefraIdConfigured() {
+  return Boolean(
+    config.get('auth.defraId.discoveryUrl') &&
+    config.get('auth.defraId.clientId')
   )
 }
 
+// Any `type` query param (a leftover from older `?type=operator` /
+// `?type=regulator` links) is ignored: the chooser only offers operators.
 export function stubLoginGetController(request, h) {
-  const type = request.query.type
   const rt = request.query.rt
 
-  const users = getStubUsers(type)
-
-  // Missing or unknown type (including the retired `type=regulator`) falls
-  // back to the operator chooser, the only user type this service has.
-  if (!users) {
-    return h.redirect(stubLoginUrl('operator', rt))
-  }
-
-  confirmPostLoginRedirect(request, type)
+  confirmPostLoginRedirect(request)
 
   return h.view('auth/stub/login', {
-    type,
-    users,
-    defraIdConfigured: isDefraIdConfigured(type),
+    users: STUB_USERS,
+    defraIdConfigured: isDefraIdConfigured(),
     rt: rt ?? ''
   })
 }
 
 export async function stubLoginPostController(request, h) {
-  const { userId, type } = request.payload
-
-  const users = getStubUsers(type) ?? []
-  const user = users.find((u) => u.id === userId)
+  const { userId } = request.payload ?? {}
+  const user = STUB_USERS.find((u) => u.id === userId)
 
   if (!user) {
     return h
       .view('auth/stub/login', {
-        type,
-        users: getStubUsers(type) ?? [],
+        users: STUB_USERS,
         error: 'Please select a user'
       })
       .code(400)
   }
 
-  const redirectTo = popPostLoginRedirect(request, type, '/')
+  const redirectTo = popPostLoginRedirect(request, '/')
   // Session fixation defence-in-depth (M3, 2026-08-08 pentest report),
   // matching the real OAuth callbacks (controller.js) — reset before
   // establishing the authenticated session so a pre-auth session id can't be

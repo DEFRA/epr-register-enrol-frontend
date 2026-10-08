@@ -224,18 +224,13 @@ describe('#businessPlanController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/business-plan/{applicationId}', () => {
     test('returns 200 with page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -247,8 +242,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(BUSINESS_PLAN_FIELDS).toContain('otherPercent')
@@ -262,8 +256,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain('value="20"')
@@ -276,8 +269,7 @@ describe('#businessPlanController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -289,8 +281,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -303,8 +294,7 @@ describe('#businessPlanController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -316,8 +306,7 @@ describe('#businessPlanController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -328,8 +317,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -342,8 +330,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       const matches =
@@ -356,8 +343,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain('[Welsh] Enter the percentage as a whole number')
@@ -370,8 +356,7 @@ describe('#businessPlanController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -389,8 +374,7 @@ describe('#businessPlanController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -409,8 +393,7 @@ describe('#businessPlanController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -437,8 +420,7 @@ describe('#businessPlanController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/business-plan/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/business-plan/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -465,8 +447,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -485,8 +466,7 @@ describe('#businessPlanController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -506,8 +486,7 @@ describe('#businessPlanController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -528,8 +507,7 @@ describe('#businessPlanController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/business-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -560,8 +538,7 @@ describe('#businessPlanController', () => {
       try {
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/business-plan/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/business-plan/${APPLICATION_ID}`
         })
 
         expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -581,7 +558,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -601,7 +577,6 @@ describe('#businessPlanController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -620,7 +595,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -634,7 +608,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndContinue' }
       })
 
@@ -654,7 +627,6 @@ describe('#businessPlanController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -682,7 +654,6 @@ describe('#businessPlanController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/business-plan/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: { ...validPayload(), submitAction: 'saveAndContinue' }
         })
 
@@ -706,7 +677,6 @@ describe('#businessPlanController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -725,7 +695,6 @@ describe('#businessPlanController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -741,7 +710,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           ...validPayload(),
           newInfrastructurePercent: '10',
@@ -759,7 +727,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           ...validPayload(),
           newMarketsPercent: 'abc',
@@ -779,7 +746,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndContinue' }
       })
 
@@ -795,7 +761,6 @@ describe('#businessPlanController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -821,7 +786,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { ...validPayload(), submitAction: 'saveAndContinue' }
       })
 
@@ -838,7 +802,6 @@ describe('#businessPlanController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           newInfrastructurePercent: '50',
           priceSupportPercent: '',
@@ -867,7 +830,6 @@ describe('#businessPlanController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/business-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           newInfrastructurePercent: 'abc',
           priceSupportPercent: '',

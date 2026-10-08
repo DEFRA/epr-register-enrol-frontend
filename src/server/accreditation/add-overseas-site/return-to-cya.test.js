@@ -4,7 +4,6 @@ import { createServer } from '../../server.js'
 const APPLICATION_ID = 'app-cya-return-001'
 const BASE = `/accreditation/add-overseas-site/${APPLICATION_ID}`
 const CYA_URL = `${BASE}/check-your-answers`
-const headers = { 'x-test-user-type': 'operator' }
 
 const STEPS = [
   'site-name',
@@ -39,8 +38,7 @@ describe('RA-573 return to check-your-answers', () => {
     async (step) => {
       const { result } = await server.inject({
         method: 'GET',
-        url: `${BASE}/${step}?from=check-your-answers`,
-        headers
+        url: `${BASE}/${step}?from=check-your-answers`
       })
       expect(backHref(result)).toBe(CYA_URL)
     }
@@ -49,8 +47,7 @@ describe('RA-573 return to check-your-answers', () => {
   test('back link is unchanged without the tag', async () => {
     const { result } = await server.inject({
       method: 'GET',
-      url: `${BASE}/site-location`,
-      headers
+      url: `${BASE}/site-location`
     })
     expect(backHref(result)).toBe(`${BASE}/site-name`)
   })
