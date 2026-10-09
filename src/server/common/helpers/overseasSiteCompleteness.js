@@ -51,8 +51,8 @@ export function answersFromSite(site) {
 
 const text = (value) => (typeof value === 'string' ? value.trim() : '')
 
-// Which check-your-answers row each problem belongs to, and the wizard step
-// that fixes it. Row ids are the rows' data-testid values.
+// Which check-your-answers row each problem belongs to. Row ids are the
+// rows' data-testid values.
 const LOCATION_ROW_FIELDS = new Set([
   'addressLine1',
   'addressLine2',
@@ -65,24 +65,8 @@ const CONTACT_ROWS = {
   siteContactPhone: 'contact-phone'
 }
 
-const LOCATION_STEP = 'site-location'
-const CONTACT_STEP = 'site-contact-details'
-
-export const STEP_FOR_ROW = {
-  'site-name': 'site-name',
-  location: LOCATION_STEP,
-  coordinates: LOCATION_STEP,
-  'contact-name': CONTACT_STEP,
-  'contact-email': CONTACT_STEP,
-  'contact-phone': CONTACT_STEP,
-  'recycling-operation': 'recycling-operation-details',
-  'basel-codes': 'basel-convention-and-oecd-code',
-  'repatriated-loads': 'repatriated-loads',
-  'conditions-of-export': 'conditions-of-export'
-}
-
 function issue(row, message) {
-  return { row, step: STEP_FOR_ROW[row], message }
+  return { row, message }
 }
 
 function locationIssues(t, answers) {
@@ -136,7 +120,7 @@ function singleIssue(row, message) {
  * @param {object} answers - wizard answers, see {@link answersFromSite}
  * @param {string} [materialType] - the application's material, which decides
  *   the allowed recycling operations and whether conditions of export apply
- * @returns {{row: string, step: string, message: string}[]} empty when complete
+ * @returns {{row: string, message: string}[]} empty when complete
  */
 export function findIncompleteAnswers(t, answers, materialType) {
   const codes = Array.isArray(answers.recyclingOperationCodes)

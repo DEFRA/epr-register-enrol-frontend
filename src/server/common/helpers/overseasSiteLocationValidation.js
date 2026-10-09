@@ -5,7 +5,7 @@ import {
 
 // The add-overseas-site wizard's "where is it" rules, shared so the same checks
 // run on the location step and on every check that a site's saved answers are
-// complete (RA-xxx). Moved out of the site-location controller unchanged.
+// complete (RA-597). Moved out of the site-location controller unchanged.
 
 const MIN_LATITUDE = -90
 const MAX_LATITUDE = 90

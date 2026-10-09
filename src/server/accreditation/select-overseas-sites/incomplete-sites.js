@@ -47,7 +47,7 @@ export function incompleteSiteErrors(
     .map((site) => ({
       message: t('pages.selectOverseasSites.validation.incompleteSite').replace(
         '{siteName}',
-        site.siteName
+        () => site.siteName
       ),
       href: editUrl(applicationId, site.siteId)
     }))

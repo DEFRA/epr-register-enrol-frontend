@@ -1,6 +1,5 @@
 import { describe, test, expect } from 'vitest'
 import {
-  STEP_FOR_ROW,
   answersFromSite,
   findIncompleteAnswers,
   findIncompleteSites
@@ -118,30 +117,6 @@ describe('#findIncompleteAnswers', () => {
     ])
   })
 
-  test('every issue names the wizard step that fixes it', () => {
-    const issues = findIncompleteAnswers(
-      t,
-      answersFromSite({ siteId: 1 }),
-      'Steel'
-    )
-
-    expect(issues.length).toBeGreaterThan(0)
-    for (const { row, step } of issues) {
-      expect(step).toBe(STEP_FOR_ROW[row])
-    }
-    expect(new Set(issues.map(({ step }) => step))).toEqual(
-      new Set([
-        'site-name',
-        'site-location',
-        'site-contact-details',
-        'recycling-operation-details',
-        'basel-convention-and-oecd-code',
-        'repatriated-loads',
-        'conditions-of-export'
-      ])
-    )
-  })
-
   test.each([
     ['siteName', '   ', 'site-name', `${SITE}.siteName.validation.required`],
     [
@@ -165,9 +140,7 @@ describe('#findIncompleteAnswers', () => {
   ])(
     'treats a blank %s as missing, whitespace included',
     (field, value, row, message) => {
-      expect(issuesFor({ [field]: value })).toEqual([
-        { row, step: STEP_FOR_ROW[row], message }
-      ])
+      expect(issuesFor({ [field]: value })).toEqual([{ row, message }])
     }
   )
 
@@ -176,7 +149,6 @@ describe('#findIncompleteAnswers', () => {
       expect(issuesFor({ townOrCity: 'Hamburg 2' })).toEqual([
         {
           row: 'location',
-          step: 'site-location',
           message: `${SITE}.siteLocation.validation.townOrCityInvalid`
         }
       ])
@@ -186,7 +158,6 @@ describe('#findIncompleteAnswers', () => {
       expect(issuesFor({ coordinates: '53.5, 9.9' })).toEqual([
         {
           row: 'coordinates',
-          step: 'site-location',
           message: `${SITE}.siteLocation.validation.coordinatesPrecision`
         }
       ])
@@ -196,7 +167,6 @@ describe('#findIncompleteAnswers', () => {
       expect(issuesFor({ contactEmail: 'not-an-email' })).toEqual([
         {
           row: 'contact-email',
-          step: 'site-contact-details',
           message: `${SITE}.siteContactDetails.validation.emailInvalid`
         }
       ])
@@ -206,7 +176,6 @@ describe('#findIncompleteAnswers', () => {
       expect(issuesFor({ code1: 'ZZ999' })).toEqual([
         {
           row: 'basel-codes',
-          step: 'basel-convention-and-oecd-code',
           message: `${SITE}.baselAndOecdCodes.validation.codeInvalid`
         }
       ])
@@ -216,7 +185,6 @@ describe('#findIncompleteAnswers', () => {
       expect(issuesFor({ code1: 'A1181', code2: 'A1181' })).toEqual([
         {
           row: 'basel-codes',
-          step: 'basel-convention-and-oecd-code',
           message: `${SITE}.baselAndOecdCodes.validation.duplicateCode`
         }
       ])
@@ -226,7 +194,6 @@ describe('#findIncompleteAnswers', () => {
       expect(issuesFor({ repatriatedLoads: 'a'.repeat(5001) })).toEqual([
         {
           row: 'repatriated-loads',
-          step: 'repatriated-loads',
           message: `${SITE}.repatriatedLoads.validation.tooManyCharacters`
         }
       ])
@@ -240,7 +207,6 @@ describe('#findIncompleteAnswers', () => {
       ).toEqual([
         {
           row: 'recycling-operation',
-          step: 'recycling-operation-details',
           message: `${SITE}.recyclingOperationDetails.validation.required`
         }
       ])
@@ -250,7 +216,6 @@ describe('#findIncompleteAnswers', () => {
       expect(issuesFor({ operationCodes: ['R12', 'R13'] })).toEqual([
         {
           row: 'recycling-operation',
-          step: 'recycling-operation-details',
           message: `${SITE}.recyclingOperationDetails.validation.coreCodeRequired`
         }
       ])
@@ -269,7 +234,6 @@ describe('#findIncompleteAnswers', () => {
       ).toEqual([
         {
           row: 'conditions-of-export',
-          step: 'conditions-of-export',
           message: `${SITE}.conditionsOfExport.validation.required`
         }
       ])
@@ -324,7 +288,6 @@ describe('#findIncompleteSites', () => {
     expect(result[0].issues).toEqual([
       {
         row: 'contact-name',
-        step: 'site-contact-details',
         message: `${SITE}.siteContactDetails.validation.nameRequired`
       }
     ])
