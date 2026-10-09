@@ -52,10 +52,6 @@ describe('#checkSiteConditionsController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/check-site-conditions/{applicationId}/{siteId}', () => {
     test('redirects to query-task-list when application is Queried and BES evidence section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -67,8 +63,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -82,8 +77,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -101,8 +95,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain(
@@ -118,8 +111,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="placeholder-content"')
@@ -131,8 +123,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/999999`,
-        headers: operatorHeaders
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/999999`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -144,8 +135,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain(
@@ -158,8 +148,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -171,8 +160,7 @@ describe('#checkSiteConditionsController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -191,8 +179,7 @@ describe('#checkSiteConditionsController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -207,7 +194,6 @@ describe('#checkSiteConditionsController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/check-site-conditions/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 

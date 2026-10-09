@@ -8,7 +8,6 @@ import { contact } from './contact/index.js'
 import { cookies } from './cookies/index.js'
 import { health } from './health/index.js'
 import { authRoutes } from './auth/index.js'
-import { regulator } from './regulator/index.js'
 import { operator } from './operator/index.js'
 import { operatorAccreditation } from './operator-accreditation/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
@@ -110,7 +109,6 @@ export const router = {
         home,
         contact,
         cookies,
-        regulator,
         operator,
         operatorAccreditation,
         taskList,

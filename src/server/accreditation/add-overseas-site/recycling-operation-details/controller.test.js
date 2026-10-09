@@ -75,12 +75,7 @@ describe('#addOrsRecyclingOperationController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -88,8 +83,7 @@ describe('#addOrsRecyclingOperationController', () => {
     test('returns 200 with page heading', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -102,8 +96,7 @@ describe('#addOrsRecyclingOperationController', () => {
     test('renders checkboxes, not radios', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('type="checkbox"')
@@ -113,8 +106,7 @@ describe('#addOrsRecyclingOperationController', () => {
     test('back link points to site-contact-details', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -124,8 +116,7 @@ describe('#addOrsRecyclingOperationController', () => {
     test('cancel link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -146,8 +137,7 @@ describe('#addOrsRecyclingOperationController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -166,7 +156,7 @@ describe('#addOrsRecyclingOperationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(result).toMatch(/value="R3"\s+checked/)
@@ -176,8 +166,7 @@ describe('#addOrsRecyclingOperationController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        url: `/cy${BASE_URL}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -235,7 +224,6 @@ describe('#addOrsRecyclingOperationController', () => {
         method: 'GET',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           cookie: cookiesFrom(postResponse)
         }
       })

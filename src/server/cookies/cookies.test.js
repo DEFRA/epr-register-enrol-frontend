@@ -15,8 +15,6 @@ import { ANALYTICS_CONSENT_VERSION } from '../common/analytics/consent.js'
 import { cookies } from './index.js'
 import { safeReturnUrl } from './consent-controller.js'
 
-const OPERATOR_HEADERS = { 'x-test-user-type': 'operator' }
-
 const original = {
   isEnabled: config.get('analytics.isEnabled'),
   measurementId: config.get('analytics.measurementId')
@@ -99,8 +97,7 @@ describe('cookies routes', () => {
     test('lists the essential cookies and keeps the signed-in navigation', async () => {
       const res = await server.inject({
         method: 'GET',
-        url: '/cookies',
-        headers: OPERATOR_HEADERS
+        url: '/cookies'
       })
       const $ = load(res.result)
 
@@ -277,11 +274,10 @@ describe('cookies routes', () => {
     })
 
     test('works for a signed-in operator', async () => {
-      const res = await postConsent(
-        server,
-        { analytics: 'rejected', returnUrl: '/cookies' },
-        { headers: OPERATOR_HEADERS }
-      )
+      const res = await postConsent(server, {
+        analytics: 'rejected',
+        returnUrl: '/cookies'
+      })
 
       expect(res.statusCode).toBe(statusCodes.redirect)
       expect(setCookieFor(res, 'analyticsConsent')).toBeDefined()

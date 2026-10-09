@@ -8,11 +8,6 @@
       "title": "Home",
       "heading": "Home"
     },
-    "regulator": {
-      "title": "Regulator",
-      "heading": "Regulator Landing Page",
-      "description": "This is a placeholder page for the regulator journey."
-    },
     "organisationList": {
       "title": "Organisation List",
       "heading": "Organisation List",
@@ -1031,7 +1026,6 @@
   },
   "navigation": {
     "home": "Home",
-    "regulator": "Regulator",
     "organisationList": "Organisations",
     "manageAccount": "Manage account",
     "signOut": "Sign out"

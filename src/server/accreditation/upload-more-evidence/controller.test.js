@@ -53,10 +53,6 @@ describe('#uploadMoreEvidenceController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/upload-more-evidence/{applicationId}/{siteId}', () => {
     test('redirects to query-task-list when application is Queried and BES evidence section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -68,8 +64,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -83,8 +78,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -100,8 +94,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain(
@@ -114,8 +107,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="answer-yes"')
@@ -127,8 +119,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/999999`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/999999`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -140,8 +131,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -153,8 +143,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -173,8 +162,7 @@ describe('#uploadMoreEvidenceController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -195,8 +183,7 @@ describe('#uploadMoreEvidenceController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain(
@@ -221,7 +208,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { answer: 'no' }
       })
 
@@ -238,7 +224,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { answer: 'yes' }
       })
 
@@ -252,7 +237,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/999999`,
-        headers: operatorHeaders,
         payload: { answer: 'yes' }
       })
 
@@ -265,7 +249,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -280,7 +263,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { answer: 'yes' }
       })
 
@@ -297,7 +279,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { answer: 'no' }
       })
 
@@ -320,7 +301,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { answer: 'no' }
       })
 
@@ -342,7 +322,6 @@ describe('#uploadMoreEvidenceController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders,
           payload: { answer: 'no' }
         })
 
@@ -362,7 +341,6 @@ describe('#uploadMoreEvidenceController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/upload-more-evidence/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: { answer: 'no' }
       })
 

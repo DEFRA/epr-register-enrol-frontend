@@ -2,19 +2,27 @@
 
 ## Overview
 
-The app supports two OAuth2 identity providers:
+The app signs in operators through one OAuth2 / OIDC identity provider:
 
-| Provider           | Users      | Login path              |
-| ------------------ | ---------- | ----------------------- |
-| **Azure Entra ID** | Regulators | `/auth/regulator/login` |
-| **Defra ID**       | Operators  | `/auth/operator/login`  |
+| Provider     | Users     | Login path             |
+| ------------ | --------- | ---------------------- |
+| **Defra ID** | Operators | `/auth/operator/login` |
 
-Route protection is enforced by Hapi's built-in `server.auth.strategy` / `server.auth.default` mechanism using `@hapi/cookie` as the session scheme. After a successful OAuth exchange the user profile is stored in the server-side yar session and the cookie strategy validates it on every subsequent request.
+Regulators do not sign in to this service: regulator casework lives in the
+Case Management service (`epr-register-enrol-management-fe`). The regulator
+landing page, the Azure Entra ID regulator login and the `regulator` user scope
+were removed in RA-537.
+
+Route protection is enforced by Hapi's built-in `server.auth.strategy` /
+`server.auth.default` mechanism, using a custom `yar-session` scheme
+(`src/server/common/helpers/auth/auth-plugin.js`). After a successful OAuth
+exchange the user profile is stored in the server-side yar session, and the
+scheme reads it back on every subsequent request.
 
 A **stub auth** mode is available for local development and automated tests:
 
-- **Local/dev** (`AUTH_STUB_ENABLED=true`): a login chooser page at `/auth/stub/login` lets you select a fake user without hitting any real OAuth provider.
-- **Tests** (`NODE_ENV=test`): a bypass scheme auto-authenticates all requests with a default test user — no cookies, no sessions needed.
+- **Local/dev** (`AUTH_STUB_ENABLED=true`): a login chooser page at `/auth/stub/login` lets you select a fake operator without hitting Defra ID.
+- **Tests** (`NODE_ENV=test`): a bypass scheme auto-authenticates every request as `TEST_OPERATOR`. No cookies or sessions are needed.
 
 All application routes are protected by default. The health check and static file routes are explicitly public.
 
@@ -24,53 +32,45 @@ All application routes are protected by default. The health check and static fil
 
 ### Route protection
 
-`server.auth.default('session')` in the auth plugin makes every route require a valid session cookie. The `session` strategy is backed by `@hapi/cookie`:
+`server.auth.default('session')` in the auth plugin makes every route require a valid session. The `session` strategy is backed by the `yar-session` scheme:
 
 ```
 request arrives
-  → cookie strategy reads the `auth` cookie
-    → validate() checks request.yar.get('user')
-      → valid: passes credentials to request.auth.credentials
-      → invalid: Hapi returns 401 (unauthenticated)
+  → yar-session scheme reads request.yar.get('user')
+    → present, an operator, and not idle: credentials = { ...user, scope: ['operator'] }
+    → missing, idle, or not an operator: 401 → redirectToLogin sends a GET to /auth/operator/login
 ```
 
 No external plugins or middleware are involved in enforcement — this is Hapi's native `server.auth.strategy` mechanism.
 
-### OAuth flow (real providers)
+### OAuth flow (Defra ID)
 
 ```
-GET /auth/regulator/login
-  → generate state, store in yar
-  → redirect to Azure Entra ID authorize endpoint
+GET /auth/operator/login
+  → generate state, nonce and PKCE verifier, store in yar
+  → redirect to the Defra ID authorize endpoint (discovered from DEFRA_ID_DISCOVERY_URL)
 
-GET /auth/regulator/callback?code=...&state=...
-  → verify state matches yar-stored value (CSRF protection)
-  → POST code to Azure token endpoint → access token
-  → GET /v1.0/me with access token → user profile
-  → request.yar.set('user', profile)
-  → request.cookieAuth.set(profile)  ← sets the auth cookie
-  → redirect to /
+GET /auth/operator/callback?code=...&state=...
+  → verify state matches the yar-stored value (CSRF protection)
+  → POST code to the Defra ID token endpoint → id_token
+  → verify the id_token (signature, issuer, audience, nonce)
+  → request.yar.reset(), then request.yar.set('user', profile)
+  → redirect to the stashed post-login target, or /
 ```
-
-The operator flow is identical, using Defra ID endpoints instead.
 
 ---
 
 ## Environment variables
 
-| Variable                    | Description                                                                                                                                                                                                                                                            | Default                 |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `ENVIRONMENT`               | Deployment environment (`local`, `dev`, `test`, `perf-test`, `ext-test`, `infra-dev`, `management`, `prod`)                                                                                                                                                            | `local`                 |
-| `AUTH_STUB_ENABLED`         | Enable stub auth. Defaults `true` when `ENVIRONMENT != prod`                                                                                                                                                                                                           | `true`                  |
-| `AUTH_CALLBACK_BASE_URL`    | Base URL used to construct OAuth callback redirect URIs                                                                                                                                                                                                                | `http://localhost:3000` |
-| `AZURE_CLIENT_ID`           | Azure Entra ID client ID                                                                                                                                                                                                                                               | _(empty)_               |
-| `AZURE_CLIENT_SECRET`       | Azure Entra ID client secret                                                                                                                                                                                                                                           | _(empty)_               |
-| `AZURE_TENANT_ID`           | Azure Entra ID tenant ID                                                                                                                                                                                                                                               | _(empty)_               |
-| `DEFRA_ID_CLIENT_ID`        | Defra ID application (client) ID                                                                                                                                                                                                                                       | _(empty)_               |
-| `DEFRA_ID_CLIENT_SECRET`    | Defra ID client secret                                                                                                                                                                                                                                                 | _(empty)_               |
-| `DEFRA_ID_SERVICE_ID`       | Defra ID service ID provided during onboarding                                                                                                                                                                                                                         | _(empty)_               |
-| `DEFRA_ID_DISCOVERY_URL`    | Full OIDC metadata URL for Defra ID. The app fetches this on first use to discover `authorization_endpoint` and `token_endpoint`. e.g. CPDEV: `https://your-account.cpdev.cui.defra.gov.uk/idphub/b2c/b2c_1a_cui_cpdev_signupsignin/.well-known/openid-configuration`  | _(empty)_               |
-| `REGULATOR_ACCESS_DISABLED` | RA-427 kill switch for the regulator side of the app. When `true`: the stub login chooser hides the "switch to regulator login" link, regulator login (stub and real Entra ID) 404s, and no regulator pages are accessible (404). Operator login/pages are unaffected. | `false`                 |
+| Variable                 | Description                                                                                                                                                                                                                                                           | Default                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `ENVIRONMENT`            | Deployment environment (`local`, `dev`, `test`, `perf-test`, `ext-test`, `infra-dev`, `management`, `prod`)                                                                                                                                                           | `local`                 |
+| `AUTH_STUB_ENABLED`      | Enable stub auth. Defaults `true` when `ENVIRONMENT != prod`                                                                                                                                                                                                          | `true`                  |
+| `AUTH_CALLBACK_BASE_URL` | Base URL used to construct OAuth callback redirect URIs                                                                                                                                                                                                               | `http://localhost:3000` |
+| `DEFRA_ID_CLIENT_ID`     | Defra ID application (client) ID                                                                                                                                                                                                                                      | _(empty)_               |
+| `DEFRA_ID_CLIENT_SECRET` | Defra ID client secret                                                                                                                                                                                                                                                | _(empty)_               |
+| `DEFRA_ID_SERVICE_ID`    | Defra ID service ID provided during onboarding                                                                                                                                                                                                                        | _(empty)_               |
+| `DEFRA_ID_DISCOVERY_URL` | Full OIDC metadata URL for Defra ID. The app fetches this on first use to discover `authorization_endpoint` and `token_endpoint`. e.g. CPDEV: `https://your-account.cpdev.cui.defra.gov.uk/idphub/b2c/b2c_1a_cui_cpdev_signupsignin/.well-known/openid-configuration` | _(empty)_               |
 
 ---
 
@@ -78,25 +78,16 @@ The operator flow is identical, using Defra ID endpoints instead.
 
 Copy `.env.example` to `.env` and run `npm run dev`. With `ENVIRONMENT=local` (the default), stub auth is automatically enabled. The dev server loads `.env` automatically via `--env-file-if-exists`.
 
-1. Visit any protected route (e.g. `/`) — redirected to `/auth/regulator/login`.
-2. That redirects to `/auth/stub/login?type=regulator`.
+1. Visit any protected route (e.g. `/`) — redirected to `/auth/operator/login`.
+2. That redirects to the stub chooser at `/auth/stub/login`.
 3. Select a user and click **Log in**.
 4. Authenticated and redirected to `/`.
 
-To test as an operator: visit `/auth/operator/login` or use the "Switch to operator login" link.
-
 To log out: visit `/auth/logout`.
 
-### Using a real OAuth provider in dev
+### Using Defra ID in dev
 
-When `AUTH_STUB_ENABLED=true`, you can optionally authenticate against a real OAuth provider alongside the stub chooser by setting the relevant credentials in `.env`:
-
-| Provider                    | Variables to set                                                                                | Button shown          |
-| --------------------------- | ----------------------------------------------------------------------------------------------- | --------------------- |
-| Defra ID (operators)        | `DEFRA_ID_CLIENT_ID`, `DEFRA_ID_CLIENT_SECRET`, `DEFRA_ID_DISCOVERY_URL`, `DEFRA_ID_SERVICE_ID` | Sign in with Defra ID |
-| Azure Entra ID (regulators) | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`                                     | Sign in with Entra ID |
-
-The button appears on the stub chooser and initiates the real OAuth flow. Stub users are still available if you don't set the credentials.
+When `AUTH_STUB_ENABLED=true`, you can optionally authenticate against the real Defra ID alongside the stub chooser by setting `DEFRA_ID_CLIENT_ID`, `DEFRA_ID_CLIENT_SECRET`, `DEFRA_ID_DISCOVERY_URL` and `DEFRA_ID_SERVICE_ID` in `.env`. A **Sign in with Defra ID** button then appears on the stub chooser and starts the real OAuth flow. Stub users are still available if you don't set the credentials.
 
 ---
 
@@ -117,25 +108,13 @@ server.route({
 })
 ```
 
-### Restricting a route to a specific user type
+### Restricting a route to operators
 
-Use the `requireRegulator` or `requireOperator` helpers from `auth-scopes.js`. These use Hapi's built-in scope checking, so a user authenticated with the wrong provider receives a **403 before the controller runs** — no controller-level type checks needed.
+Use the `requireOperator` helper from `auth-scopes.js`. It uses Hapi's built-in scope checking, so a session without the `operator` scope receives a **403 before the controller runs** — no controller-level type checks needed.
 
 ```javascript
-import {
-  requireRegulator,
-  requireOperator
-} from '../common/helpers/auth/auth-scopes.js'
+import { requireOperator } from '../common/helpers/auth/auth-scopes.js'
 
-// Only regulator users can reach this route — operators get 403
-server.route({
-  method: 'GET',
-  path: '/regulator/dashboard',
-  options: requireRegulator,
-  handler: dashboardController
-})
-
-// Only operator users can reach this route — regulators get 403
 server.route({
   method: 'GET',
   path: '/operator/enrol',
@@ -144,37 +123,25 @@ server.route({
 })
 ```
 
-The helpers can be spread alongside other options:
+The helper can be spread alongside other options:
 
 ```javascript
-options: { ...requireRegulator, cache: { expiresIn: 5000 } }
+options: { ...requireOperator, cache: { expiresIn: 5000 } }
 ```
 
-How it works: every authenticated session carries a `scope` array derived from `userType` (e.g. `['regulator']`). Hapi compares this against the route's required scope before dispatching to the handler — this is the framework's native `server.auth.strategy` scope mechanism, not middleware.
+How it works: every authenticated session carries a `scope` array derived from `userType` (`['operator']`). Hapi compares this against the route's required scope before dispatching to the handler — this is the framework's native `server.auth.strategy` scope mechanism, not middleware.
 
 ---
 
 ## Accessing the authenticated user in a controller
 
 ```javascript
-import {
-  getUser,
-  isRegulator,
-  isOperator
-} from '../common/helpers/auth/get-user.js'
+import { getUser } from '../common/helpers/auth/get-user.js'
 
 export const myController = {
   handler(request, h) {
     const user = getUser(request)
-    // user: { id, email, name, userType, roles }
-
-    if (isRegulator(request)) {
-      // regulator-specific logic
-    }
-
-    if (isOperator(request)) {
-      // operator-specific logic
-    }
+    // user: { id, email, name, userType: 'operator', roles, ... }
 
     return h.view('my-view', { user })
   }
@@ -185,14 +152,11 @@ export const myController = {
 
 ## Nunjucks templates
 
-`user` and `userType` are automatically available in all templates:
+`user` is automatically available in all templates:
 
 ```njk
 {% if user %}
   <p>Hello, {{ user.name }}</p>
-  {% if userType == 'regulator' %}
-    <p>You are a regulator.</p>
-  {% endif %}
 {% endif %}
 ```
 
@@ -202,43 +166,15 @@ export const myController = {
 
 ### Regular controller tests
 
-The test-bypass scheme (active when `NODE_ENV=test`) auto-authenticates every request as `TEST_REGULATOR` by default. No special setup needed:
+The test-bypass scheme (active when `NODE_ENV=test`) auto-authenticates every request as `TEST_OPERATOR`. No special setup needed:
 
 ```javascript
 test('renders the page', async () => {
   const { statusCode } = await server.inject({
     method: 'GET',
-    url: '/my-regulator-route'
+    url: '/my-operator-route'
   })
   expect(statusCode).toBe(200)
-})
-```
-
-To test an **operator** route, pass the `x-test-user-type` header:
-
-```javascript
-import { TEST_OPERATOR } from '../common/helpers/auth/stub-auth-plugin.js'
-
-test('renders operator page', async () => {
-  const { statusCode } = await server.inject({
-    method: 'GET',
-    url: '/my-operator-route',
-    headers: { 'x-test-user-type': 'operator' }
-  })
-  expect(statusCode).toBe(200)
-})
-```
-
-To assert that a route correctly **rejects** the wrong user type:
-
-```javascript
-test('operator cannot access regulator route', async () => {
-  const { statusCode } = await server.inject({
-    method: 'GET',
-    url: '/regulator/dashboard',
-    headers: { 'x-test-user-type': 'operator' }
-  })
-  expect(statusCode).toBe(403)
 })
 ```
 
@@ -251,7 +187,7 @@ test('POST /auth/stub/login sets session and redirects', async () => {
   const { statusCode, headers } = await server.inject({
     method: 'POST',
     url: '/auth/stub/login',
-    payload: { userId: 'stub-reg-1', type: 'regulator' }
+    payload: { userId: 'stub-op-1' }
   })
   expect(statusCode).toBe(302)
   expect(headers.location).toBe('/')
@@ -265,44 +201,37 @@ test('POST /auth/stub/login sets session and redirects', async () => {
 Stub users are defined in `src/server/auth/stub/controller.js`:
 
 ```javascript
-export const STUB_USERS = {
-  regulator: [
-    {
-      id: 'stub-reg-1',
-      name: 'Stub Regulator',
-      email: 'regulator@stub.example',
-      userType: 'regulator',
-      roles: ['admin']
-    }
-    // Add more regulator users here
-  ],
-  operator: [
-    {
-      id: 'stub-op-1',
-      name: 'Stub Operator',
-      email: 'test@defra.gov.uk',
-      userType: 'operator',
-      roles: ['user']
-    }
-    // Add more operator users here
-  ]
-}
+export const STUB_USERS = [
+  {
+    id: 'stub-op-1',
+    name: 'Stub Operator',
+    email: 'test@defra.gov.uk',
+    userType: 'operator',
+    roles: ['user'],
+    currentRelationshipId: STUB_OPERATOR_CURRENT_RELATIONSHIP_ID,
+    relationships: STUB_OPERATOR_RELATIONSHIPS
+  }
+  // Add more operator users here
+]
 ```
 
-Each user must have a unique `id` within its type group.
+Each user must have a unique `id`.
 
 ---
 
 ## Session shape
 
-After successful authentication (real or stub), `request.auth.credentials` contains:
+After successful authentication (Defra ID or stub), `request.auth.credentials` contains:
 
 ```javascript
 {
   id: string,
   email: string,
   name: string,
-  userType: 'regulator' | 'operator',
-  roles: string[]
+  userType: 'operator',
+  roles: string[],
+  currentRelationshipId: string,
+  relationships: string[],
+  scope: ['operator']
 }
 ```

@@ -51,10 +51,7 @@ describe('#noStoreCacheHeaders integration', () => {
   test('rendered pages are not cacheable by the browser', async () => {
     const { statusCode, headers } = await server.inject({
       method: 'GET',
-      url: '/',
-      headers: {
-        'x-test-user-type': 'operator'
-      }
+      url: '/'
     })
 
     expect(statusCode).toBe(statusCodes.ok)

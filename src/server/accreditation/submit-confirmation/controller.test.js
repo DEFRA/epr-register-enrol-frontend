@@ -49,10 +49,6 @@ describe('#submitConfirmationController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   async function getSessionCookieWithReference(reference = 'RA-000000001') {
     // Use the submit-declaration POST to seed the session with an accreditationReference
     // submit-declaration's POST handler fetches the application (for the
@@ -71,7 +67,6 @@ describe('#submitConfirmationController', () => {
     const postResponse = await server.inject({
       method: 'POST',
       url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
-      headers: operatorHeaders,
       payload: {
         fullName: 'Jane Smith',
         jobTitle: 'Director',
@@ -89,8 +84,7 @@ describe('#submitConfirmationController', () => {
     test('redirects to task list when no applicationReference in session', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -106,7 +100,7 @@ describe('#submitConfirmationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -121,7 +115,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain('data-testid="application-reference"')
@@ -140,7 +134,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain('Glass - Remelt')
@@ -153,7 +147,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain('Now pay the application charge')
@@ -168,7 +162,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain('data-testid="payment-text"')
@@ -184,7 +178,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain(
@@ -207,7 +201,7 @@ describe('#submitConfirmationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -229,7 +223,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain('data-testid="amount-due"')
@@ -262,7 +256,7 @@ describe('#submitConfirmationController', () => {
           const { result } = await server.inject({
             method: 'GET',
             url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-            headers: { ...operatorHeaders, Cookie: cookie }
+            headers: { Cookie: cookie }
           })
 
           expect(result).toContain('data-testid="bank-payment-reference"')
@@ -286,7 +280,7 @@ describe('#submitConfirmationController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-          headers: { ...operatorHeaders, Cookie: cookie }
+          headers: { Cookie: cookie }
         })
 
         expect(result).toContain('data-testid="bank-payment-reference"')
@@ -300,7 +294,7 @@ describe('#submitConfirmationController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-          headers: { ...operatorHeaders, Cookie: cookie }
+          headers: { Cookie: cookie }
         })
 
         expect(result).toContain('data-testid="application-reference"')
@@ -341,7 +335,7 @@ describe('#submitConfirmationController', () => {
           const { result } = await server.inject({
             method: 'GET',
             url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-            headers: { ...operatorHeaders, Cookie: cookie }
+            headers: { Cookie: cookie }
           })
 
           expect(result).toContain('data-testid="contact-regulator-heading"')
@@ -372,7 +366,7 @@ describe('#submitConfirmationController', () => {
         const { statusCode, result } = await server.inject({
           method: 'GET',
           url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-          headers: { ...operatorHeaders, Cookie: cookie }
+          headers: { Cookie: cookie }
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -394,7 +388,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain('data-testid="bank-account-name"')
@@ -412,7 +406,7 @@ describe('#submitConfirmationController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(result).toContain('data-testid="how-long-payments-take"')
@@ -429,7 +423,7 @@ describe('#submitConfirmationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -444,7 +438,7 @@ describe('#submitConfirmationController', () => {
       const firstResponse = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
       expect(firstResponse.statusCode).toBe(statusCodes.ok)
 
@@ -459,7 +453,7 @@ describe('#submitConfirmationController', () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: persistedCookie }
+        headers: { Cookie: persistedCookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -473,7 +467,7 @@ describe('#submitConfirmationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -488,7 +482,7 @@ describe('#submitConfirmationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/cy/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)

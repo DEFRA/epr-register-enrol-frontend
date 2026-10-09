@@ -63,10 +63,6 @@ describe('#cyaEvidenceForSiteController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/cya-evidence-for-overseas-site/{applicationId}/{siteId}', () => {
     test('redirects to query-task-list when application is Queried and BES evidence section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -78,8 +74,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -93,8 +88,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -108,8 +102,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="evidence-list"')
@@ -145,8 +138,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -158,8 +150,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/999999`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/999999`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -185,8 +176,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="no-files-message"')
@@ -211,8 +201,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -224,8 +213,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="amend-file-file-bes-001"')
@@ -245,8 +233,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).not.toContain('data-testid="amend-file-file-bes-001"')
@@ -260,8 +247,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="add-file-link"')
@@ -280,8 +266,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).not.toContain('data-testid="add-file-link"')
@@ -292,8 +277,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(result).toContain('data-testid="confirm-button"')
@@ -304,8 +288,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -317,8 +300,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -337,8 +319,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -364,8 +345,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(result).toContain('data-testid="back-link"')
@@ -377,8 +357,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
         })
 
         const href = backLinkHref(result)
@@ -396,8 +375,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -417,8 +395,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
           const { statusCode, result } = await server.inject({
             method: 'GET',
-            url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-            headers: operatorHeaders
+            url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
           })
 
           expect(statusCode).toBe(statusCodes.ok)
@@ -432,8 +409,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/cy/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/cy/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(backLinkHref(result)).toBe(EVIDENCE_LIST_URL)
@@ -444,8 +420,7 @@ describe('#cyaEvidenceForSiteController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)
@@ -461,7 +436,6 @@ describe('#cyaEvidenceForSiteController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -477,7 +451,6 @@ describe('#cyaEvidenceForSiteController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -498,7 +471,6 @@ describe('#cyaEvidenceForSiteController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders,
           payload: {}
         })
 
@@ -546,7 +518,6 @@ describe('#cyaEvidenceForSiteController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders,
           payload: { action: 'deleteFile', fileId: 'file-1' }
         })
 
@@ -570,7 +541,6 @@ describe('#cyaEvidenceForSiteController', () => {
         const { result, statusCode } = await server.inject({
           method: 'POST',
           url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders,
           payload: { action: 'deleteFile', fileId: 'file-1' }
         })
 
@@ -590,7 +560,6 @@ describe('#cyaEvidenceForSiteController', () => {
         const injectPromise = server.inject({
           method: 'POST',
           url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-          headers: operatorHeaders,
           payload: { action: 'deleteFile', fileId: 'file-1' }
         })
         await vi.advanceTimersByTimeAsync(15000)
@@ -613,7 +582,6 @@ describe('#cyaEvidenceForSiteController', () => {
           const { statusCode, headers } = await server.inject({
             method: 'POST',
             url: `/accreditation/cya-evidence-for-overseas-site/${APPLICATION_ID}/${SITE_ID}`,
-            headers: operatorHeaders,
             payload: { action: 'deleteFile', fileId: 'file-1' }
           })
 

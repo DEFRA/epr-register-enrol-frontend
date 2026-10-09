@@ -53,10 +53,7 @@ describe('#addOrsCyaController', () => {
 
     const res = await server.inject({
       method: 'GET',
-      url: BASE_URL,
-      headers: {
-        'x-test-user-type': 'operator'
-      }
+      url: BASE_URL
     })
     const setCookie = res.headers['set-cookie']
     cookie = Array.isArray(setCookie)
@@ -64,16 +61,11 @@ describe('#addOrsCyaController', () => {
       : (setCookie ?? '').split(';')[0]
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe(`GET ${BASE_URL}`, () => {
     test('returns 200 with check your answers heading', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -83,8 +75,7 @@ describe('#addOrsCyaController', () => {
     test('renders summary list', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="summary-list"')
@@ -93,8 +84,7 @@ describe('#addOrsCyaController', () => {
     test('renders site name row', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="row-site-name"')
@@ -104,8 +94,7 @@ describe('#addOrsCyaController', () => {
     test('renders contact name row', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="row-contact-name"')
@@ -114,8 +103,7 @@ describe('#addOrsCyaController', () => {
     test('renders repatriated loads row', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="row-repatriated-loads"')
@@ -124,8 +112,7 @@ describe('#addOrsCyaController', () => {
     test('renders change links', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="change-site-name"')
@@ -134,8 +121,7 @@ describe('#addOrsCyaController', () => {
     test('renders a back link to repatriated-loads (last step for materials without conditions-of-export)', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -147,8 +133,7 @@ describe('#addOrsCyaController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        url: `/cy${BASE_URL}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -160,7 +145,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
@@ -176,7 +160,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('data-testid="row-basel-codes"')
@@ -192,7 +176,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/site-location`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
@@ -209,7 +192,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('data-testid="row-coordinates"')
@@ -222,7 +205,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="row-basel-codes"')
@@ -244,7 +227,7 @@ describe('#addOrsCyaController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url: BASE_URL,
-          headers: { ...operatorHeaders, cookie }
+          headers: { cookie }
         })
 
         expect(extractRowHtml(result, testId)).toContain(
@@ -257,7 +240,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).not.toContain('data-testid="row-conditions-of-export"')
@@ -268,7 +251,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/conditions-of-export`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
@@ -284,7 +266,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(extractRowHtml(result, 'conditions-of-export')).toContain('Yes')
@@ -303,7 +285,7 @@ describe('#addOrsCyaController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'GET',
           url: BASE_URL,
-          headers: { ...operatorHeaders, cookie }
+          headers: { cookie }
         })
 
         expect(statusCode).toBe(statusCodes.redirect)
@@ -325,7 +307,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -355,7 +336,6 @@ describe('#addOrsCyaController', () => {
           method: 'POST',
           url: BASE_URL,
           headers: {
-            ...operatorHeaders,
             'content-type': 'application/x-www-form-urlencoded',
             Cookie: cookie
           },
@@ -383,7 +363,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -409,7 +388,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -429,7 +407,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -453,7 +430,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -476,7 +452,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
@@ -493,7 +468,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -525,7 +499,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
@@ -542,7 +515,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -569,7 +541,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -588,7 +559,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
@@ -607,7 +577,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('data-testid="submit-button"')
@@ -620,7 +590,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('data-testid="submit-button"')
@@ -633,7 +603,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('data-testid="submit-button"')
@@ -653,7 +623,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -678,7 +647,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -703,7 +671,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -730,7 +697,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -751,7 +717,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/basel-convention-and-oecd-code`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie
         },
@@ -769,7 +734,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -789,7 +753,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: postDeleteCookie }
+        headers: { cookie: postDeleteCookie }
       })
 
       expect(result).toContain('A1181')
@@ -821,7 +785,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -844,7 +807,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -867,7 +829,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -884,7 +845,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: ADD_INTERIM_SITE_COUNTRY_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -897,7 +857,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -910,7 +869,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-location`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -923,7 +881,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-contact-details`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -946,7 +903,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -1002,8 +958,7 @@ describe('#addOrsCyaController', () => {
       )
       const entryResponse = await server.inject({
         method: 'GET',
-        url: PROMOTE_ENTRY_URL,
-        headers: operatorHeaders
+        url: PROMOTE_ENTRY_URL
       })
       expect(entryResponse.statusCode).toBe(statusCodes.redirect)
       expect(entryResponse.headers.location).toBe(
@@ -1019,7 +974,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toMatch(
@@ -1040,7 +995,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -1069,7 +1023,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -1107,7 +1060,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -1162,8 +1114,7 @@ describe('#addOrsCyaController', () => {
       )
       const entryResponse = await server.inject({
         method: 'GET',
-        url: EDIT_ENTRY_URL,
-        headers: operatorHeaders
+        url: EDIT_ENTRY_URL
       })
       expect(entryResponse.statusCode).toBe(statusCodes.redirect)
       expect(entryResponse.headers.location).toBe(
@@ -1178,7 +1129,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toMatch(
@@ -1198,7 +1149,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -1238,7 +1188,7 @@ describe('#addOrsCyaController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url: BASE_URL,
-          headers: { ...operatorHeaders, cookie: sessionCookie }
+          headers: { cookie: sessionCookie }
         })
 
         expect(result).not.toContain(
@@ -1253,7 +1203,7 @@ describe('#addOrsCyaController', () => {
         const { result } = await server.inject({
           method: 'GET',
           url: BASE_URL,
-          headers: { ...operatorHeaders, cookie: sessionCookie }
+          headers: { cookie: sessionCookie }
         })
 
         expect(result).toContain(
@@ -1274,7 +1224,6 @@ describe('#addOrsCyaController', () => {
           method: 'POST',
           url: BASE_URL,
           headers: {
-            ...operatorHeaders,
             'content-type': 'application/x-www-form-urlencoded',
             cookie: sessionCookie
           },
@@ -1297,7 +1246,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -1318,7 +1266,6 @@ describe('#addOrsCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -1334,7 +1281,7 @@ describe('#addOrsCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: SELECT_ORS_URL,
-        headers: { ...operatorHeaders, cookie: selectOrsCookie }
+        headers: { cookie: selectOrsCookie }
       })
 
       expect(result).toContain('data-testid="ors-edit-success-banner"')
@@ -1355,7 +1302,6 @@ describe('#addOrsCyaController', () => {
           method: 'POST',
           url: stepUrl(step),
           headers: {
-            ...operatorHeaders,
             'content-type': 'application/x-www-form-urlencoded',
             cookie: sessionCookie
           },
@@ -1420,7 +1366,7 @@ describe('#addOrsCyaController', () => {
       const cyaGetResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
       expect(cyaGetResponse.statusCode).toBe(statusCodes.ok)
       expect(cyaGetResponse.result).toContain('Accredited Site')

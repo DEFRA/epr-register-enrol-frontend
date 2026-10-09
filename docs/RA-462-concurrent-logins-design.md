@@ -23,8 +23,8 @@ own copy with caseworker-app deltas. E2E coverage is specced in
 
 ## 1. Problem recap
 
-`src/server/auth/controller.js` — `operatorCallbackController` and
-`regulatorCallbackController` — call `request.yar.reset()` before
+`src/server/auth/controller.js` — `operatorCallbackController` — calls
+`request.yar.reset()` before
 `request.yar.set('user', ...)`. Same in `src/server/auth/stub/controller.js`
 (`stubLoginPostController`). `yar.reset()` is scoped to the current request's
 session: a session created earlier in another browser has its own cookie,
@@ -63,7 +63,7 @@ At each login completion, in addition to `request.yar.set('user', user)`:
 request.yar.set('loginAt', Date.now())
 ```
 
-Call sites: `regulatorCallbackController`, `operatorCallbackController`
+Call sites: `operatorCallbackController`
 (`src/server/auth/controller.js`), `stubLoginPostController`
 (`src/server/auth/stub/controller.js`).
 
@@ -98,8 +98,7 @@ if (previous && previous.lastLoginSessionId !== request.yar.id) {
 }
 ```
 
-`user.id`: `claims.oid ?? claims.sub` (regulator), `claims.sub` (operator),
-`STUB_USERS[*].id` (stub).
+`user.id`: `claims.sub` (Defra ID operator), `STUB_USERS[*].id` (stub).
 
 ### 3.4 On every authenticated request — compute the notice
 
@@ -192,31 +191,31 @@ request.app.concurrentLoginNotice, recomputed>)`, `request.yar.clear('concurrent
 ### 3.7 Config
 
 Add `SESSION_CONCURRENT_LOGIN_NOTICE_ENABLED` (Boolean, default `true`) —
-env-switchable kill-switch, mirroring `REGULATOR_ACCESS_DISABLED`. When `false`:
+env-switchable kill-switch. When `false`:
 the `onPostAuth` extension returns immediately and `recordLogin` still runs (so
 turning it back on works without a gap).
 
 ## 4. Files to change
 
-| File                                                                                 | Change                                                                                                                        |
-| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `src/server/common/helpers/auth/active-session-registry.js` (+ `.test.js`)           | **New.** Registry helper (§3.2).                                                                                              |
-| `src/server/common/helpers/auth/concurrent-login-notice.js` (+ `.test.js`)           | **New.** The `onPostAuth` handler (§3.4), unit-tested in isolation.                                                           |
-| `src/server/auth/controller.js`                                                      | `loginAt` stamp + `recordLogin` + Info flag in both callbacks (§3.1, §3.3); `clear(registry, user.id)` in `logoutController`. |
-| `src/server/auth/stub/controller.js`                                                 | Same stamp + `recordLogin` + Info flag in `stubLoginPostController`.                                                          |
-| `src/server/auth/controller.test.js` / `controller.unit.test.js`                     | Assert stamp + registry write after `yar.reset`; Info flag set only when a prior entry exists; registry cleared on logout.    |
-| `src/server/auth/session-notice/index.js` + `controller.js` (+ `controller.test.js`) | **New.** Dismissal route (§3.6).                                                                                              |
-| `src/server/common/helpers/auth/auth-plugin.js` / `stub-auth-plugin.js`              | Register the `onPostAuth` extension (dev + real branches only).                                                               |
-| `src/server/server.js` / small plugin                                                | `server.cache({ segment: 'active-sessions', ... })` → `server.app.activeSessionRegistry`.                                     |
-| `src/config/nunjucks/context/context.js` (+ `context.test.js`)                       | Surface `concurrentLoginNotice`.                                                                                              |
-| `src/server/common/components/session-notice/template.njk` + `.scss`                 | **New.** Banner markup.                                                                                                       |
-| `src/server/common/templates/layouts/page.njk`                                       | Include the component when `concurrentLoginNotice`.                                                                           |
-| `src/client/javascripts/session-notice.js` (+ `.test.js`)                            | **New.** Toast progressive enhancement; imported by `application.js`.                                                         |
-| `src/client/stylesheets/components/_session-notice.scss` + `_index.scss`             | **New** styles.                                                                                                               |
-| `src/locales/en/translation.json`, `src/locales/cy/translation.json`                 | Toast copy (both variants, Hide, Sign out).                                                                                   |
-| `src/config/config.js`                                                               | `SESSION_CONCURRENT_LOGIN_NOTICE_ENABLED`.                                                                                    |
-| `docs/authentication.md`                                                             | New "Concurrent-login notification" section.                                                                                  |
-| `docs/adr/0001-single-active-session-per-user.md`                                    | Flip **Status** to Accepted on sign-off.                                                                                      |
+| File                                                                                 | Change                                                                                                                      |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `src/server/common/helpers/auth/active-session-registry.js` (+ `.test.js`)           | **New.** Registry helper (§3.2).                                                                                            |
+| `src/server/common/helpers/auth/concurrent-login-notice.js` (+ `.test.js`)           | **New.** The `onPostAuth` handler (§3.4), unit-tested in isolation.                                                         |
+| `src/server/auth/controller.js`                                                      | `loginAt` stamp + `recordLogin` + Info flag in the callback (§3.1, §3.3); `clear(registry, user.id)` in `logoutController`. |
+| `src/server/auth/stub/controller.js`                                                 | Same stamp + `recordLogin` + Info flag in `stubLoginPostController`.                                                        |
+| `src/server/auth/controller.test.js` / `controller.unit.test.js`                     | Assert stamp + registry write after `yar.reset`; Info flag set only when a prior entry exists; registry cleared on logout.  |
+| `src/server/auth/session-notice/index.js` + `controller.js` (+ `controller.test.js`) | **New.** Dismissal route (§3.6).                                                                                            |
+| `src/server/common/helpers/auth/auth-plugin.js` / `stub-auth-plugin.js`              | Register the `onPostAuth` extension (dev + real branches only).                                                             |
+| `src/server/server.js` / small plugin                                                | `server.cache({ segment: 'active-sessions', ... })` → `server.app.activeSessionRegistry`.                                   |
+| `src/config/nunjucks/context/context.js` (+ `context.test.js`)                       | Surface `concurrentLoginNotice`.                                                                                            |
+| `src/server/common/components/session-notice/template.njk` + `.scss`                 | **New.** Banner markup.                                                                                                     |
+| `src/server/common/templates/layouts/page.njk`                                       | Include the component when `concurrentLoginNotice`.                                                                         |
+| `src/client/javascripts/session-notice.js` (+ `.test.js`)                            | **New.** Toast progressive enhancement; imported by `application.js`.                                                       |
+| `src/client/stylesheets/components/_session-notice.scss` + `_index.scss`             | **New** styles.                                                                                                             |
+| `src/locales/en/translation.json`, `src/locales/cy/translation.json`                 | Toast copy (both variants, Hide, Sign out).                                                                                 |
+| `src/config/config.js`                                                               | `SESSION_CONCURRENT_LOGIN_NOTICE_ENABLED`.                                                                                  |
+| `docs/authentication.md`                                                             | New "Concurrent-login notification" section.                                                                                |
+| `docs/adr/0001-single-active-session-per-user.md`                                    | Flip **Status** to Accepted on sign-off.                                                                                    |
 
 ## 5. Test plan (unit / integration — this repo)
 
@@ -251,8 +250,7 @@ turning it back on works without a gap).
    alert re-appears in A and B.
 5. With JavaScript disabled: the banner renders in-flow and the "Hide" link
    dismisses it via a full-page POST.
-6. Repeat for a regulator identity via Entra ID.
-7. Screen-reader pass on both variants (NVDA + VoiceOver): the toast is
+6. Screen-reader pass on both variants (NVDA + VoiceOver): the toast is
    announced once, the close control is reachable, focus is not trapped.
 
 ## 7. Out of scope (candidate follow-ups)

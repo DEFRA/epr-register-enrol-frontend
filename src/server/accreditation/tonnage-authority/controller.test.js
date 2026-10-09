@@ -152,18 +152,13 @@ describe('#tonnageAuthorityController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/tonnage-authority/{applicationId}', () => {
     test('returns 200 with the "Authority to issue PRNs" heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -176,8 +171,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="no-authorisers-message"')
@@ -198,8 +192,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="authorisers-table"')
@@ -227,8 +220,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(result).toMatch(/value="jane@example\.com"[\s\S]*?checked/)
@@ -250,8 +242,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(result).toMatch(/value="jane@example\.com"[\s\S]*?checked/)
@@ -270,8 +261,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -283,8 +273,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -296,8 +285,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="add-authoriser-details"')
@@ -311,8 +299,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -339,8 +326,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -367,8 +353,7 @@ describe('#tonnageAuthorityController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -390,8 +375,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -419,8 +403,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -442,8 +425,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -482,8 +464,7 @@ describe('#tonnageAuthorityController', () => {
       try {
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
         })
 
         expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -508,8 +489,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain(
@@ -527,7 +507,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Jane Smith',
@@ -568,7 +547,6 @@ describe('#tonnageAuthorityController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Bob',
@@ -593,7 +571,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: '',
@@ -611,7 +588,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Jane Smith',
@@ -629,7 +605,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Jane Smith',
@@ -657,7 +632,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Jane Again',
@@ -676,7 +650,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Jane Smith',
@@ -703,7 +676,6 @@ describe('#tonnageAuthorityController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Bob',
@@ -735,7 +707,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -767,7 +738,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -797,7 +767,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -825,7 +794,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndContinue' }
       })
 
@@ -851,7 +819,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -885,7 +852,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -918,7 +884,6 @@ describe('#tonnageAuthorityController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: {
             submitAction: 'saveAndContinue',
             selectedEmails: 'jane@example.com'
@@ -951,7 +916,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -971,7 +935,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })
 
@@ -1000,7 +963,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -1017,7 +979,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -1036,7 +997,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: '',
@@ -1080,7 +1040,6 @@ describe('#tonnageAuthorityController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: ['jane@example.com', 'bob@example.com']
@@ -1106,7 +1065,6 @@ describe('#tonnageAuthorityController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -1129,7 +1087,6 @@ describe('#tonnageAuthorityController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -1150,7 +1107,6 @@ describe('#tonnageAuthorityController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: 'jane@example.com'
@@ -1171,7 +1127,6 @@ describe('#tonnageAuthorityController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'saveAndComeLater',
           selectedEmails: 'jane@example.com'
@@ -1194,7 +1149,6 @@ describe('#tonnageAuthorityController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           newFullName: 'Jane Smith',
@@ -1220,8 +1174,7 @@ describe('#tonnageAuthorityController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1258,8 +1211,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
-
-  const operatorHeaders = { 'x-test-user-type': 'operator' }
 
   const ALICE = { fullName: 'Alice', email: 'alice@example.com' }
   const BOB = { fullName: 'Bob', email: 'bob@example.com' }
@@ -1307,8 +1258,7 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-authority/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1328,7 +1278,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       const post = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           selectedEmails: BOB.email,
@@ -1353,7 +1302,7 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       // the reported bug
@@ -1374,7 +1323,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           selectedEmails: BOB.email,
@@ -1405,7 +1353,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           selectedEmails: BOB.email,
@@ -1427,7 +1374,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           selectedEmails: BOB.email,
@@ -1452,7 +1398,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndContinue', selectedEmails: BOB.email }
       })
 
@@ -1483,7 +1428,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       const add = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'addAuthoriser',
           selectedEmails: BOB.email,
@@ -1506,7 +1450,7 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
       const save = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, cookie: addCookie },
+        headers: { cookie: addCookie },
         payload: {
           submitAction: 'saveAndContinue',
           selectedEmails: [ALICE.email, BOB.email, CHARLIE_EMAIL]
@@ -1518,7 +1462,6 @@ describe('#tonnageAuthorityController - RA-555 authoriser selection', () => {
         method: 'GET',
         url: `/accreditation/tonnage-authority/${APPLICATION_ID}`,
         headers: {
-          ...operatorHeaders,
           cookie: sessionCookie(save) ?? addCookie
         }
       })

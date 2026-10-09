@@ -64,10 +64,6 @@ describe('#confirmOverseasSitesController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/confirm-overseas-sites/{applicationId}', () => {
     test('redirects to query-task-list when application is Queried and overseas sites section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -79,8 +75,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -94,8 +89,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -111,8 +105,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="change-link-900001"')
@@ -124,8 +117,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="confirm-button"')
@@ -140,8 +132,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="no-sites-message"')
@@ -156,8 +147,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -169,8 +159,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -183,8 +172,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -211,8 +199,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="interim-site-row-42"')
@@ -237,8 +224,7 @@ describe('#confirmOverseasSitesController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
         })
         return result
       }
@@ -317,8 +303,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="interim-site-row-900001"')
@@ -329,8 +314,7 @@ describe('#confirmOverseasSitesController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -354,8 +338,7 @@ describe('#confirmOverseasSitesController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -379,7 +362,6 @@ describe('#confirmOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -396,7 +378,6 @@ describe('#confirmOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -411,7 +392,6 @@ describe('#confirmOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -432,7 +412,6 @@ describe('#confirmOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -457,7 +436,6 @@ describe('#confirmOverseasSitesController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: { submitAction: 'confirm' }
         })
 
@@ -477,7 +455,6 @@ describe('#confirmOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 

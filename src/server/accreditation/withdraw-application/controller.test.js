@@ -83,18 +83,13 @@ describe('#withdrawApplicationController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/withdraw-application/{applicationId}', () => {
     test('returns 200 with the withdraw form for a withdrawable status', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/withdraw-application/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -109,8 +104,7 @@ describe('#withdrawApplicationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/withdraw-application/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -128,8 +122,7 @@ describe('#withdrawApplicationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/withdraw-application/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -153,8 +146,7 @@ describe('#withdrawApplicationController', () => {
 
         const { statusCode, headers } = await server.inject({
           method: 'GET',
-          url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/withdraw-application/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.redirect)
@@ -172,7 +164,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -187,7 +178,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'no' }
       })
 
@@ -204,7 +194,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'yes', reason: '' }
       })
 
@@ -218,7 +207,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           confirmWithdraw: 'yes',
           reason: Array(201).fill('word').join(' ')
@@ -238,7 +226,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'yes', reason: '  No longer required  ' }
       })
 
@@ -264,7 +251,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'yes', reason: 'No longer required' }
       })
 
@@ -283,7 +269,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'yes', reason: 'No longer required' }
       })
 
@@ -300,7 +285,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'yes', reason: 'No longer required' }
       })
 
@@ -317,7 +301,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'yes', reason: 'No longer required' }
       })
 
@@ -330,7 +313,6 @@ describe('#withdrawApplicationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/withdraw-application/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { confirmWithdraw: 'yes', reason: 'No longer required' }
       })
 

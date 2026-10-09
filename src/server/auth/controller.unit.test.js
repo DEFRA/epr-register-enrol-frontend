@@ -1,39 +1,24 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import { statusCodes } from '../common/constants/status-codes.js'
-import { ROLE_REGULATOR_STANDARD } from '../common/helpers/auth/auth-scopes.js'
-
 // Every network/crypto-verification dependency of controller.js is mocked so
 // these are pure unit tests of the branch logic — the real crypto/JWT paths
-// are already exercised by defra-id-token.test.js / azure-id-token.test.js,
+// are already exercised by defra-id-token.test.js,
 // and the real end-to-end login/logout flow by controller.test.js.
-vi.mock('../common/helpers/auth/providers/azure-entra-id.js', () => ({
-  getAzureEntraIdConfig: vi.fn()
-}))
 vi.mock('../common/helpers/auth/providers/defra-id.js', () => ({
   getDefraIdConfig: vi.fn(),
   getDefraIdEndpoints: vi.fn()
-}))
-vi.mock('../common/helpers/auth/providers/azure-id-token.js', () => ({
-  verifyAzureIdToken: vi.fn()
 }))
 vi.mock('../common/helpers/auth/providers/defra-id-token.js', () => ({
   verifyDefraIdToken: vi.fn()
 }))
 
-const { getAzureEntraIdConfig } =
-  await import('../common/helpers/auth/providers/azure-entra-id.js')
 const { getDefraIdConfig, getDefraIdEndpoints } =
   await import('../common/helpers/auth/providers/defra-id.js')
-const { verifyAzureIdToken } =
-  await import('../common/helpers/auth/providers/azure-id-token.js')
 const { verifyDefraIdToken } =
   await import('../common/helpers/auth/providers/defra-id-token.js')
 
 const {
-  regulatorLoginController,
   operatorLoginController,
-  regulatorCallbackController,
   operatorCallbackController,
   logoutController
 } = await import('./controller.js')
@@ -58,18 +43,6 @@ function mockH() {
   return h
 }
 
-const AZURE_PROVIDER = {
-  authUrl: 'https://login.microsoftonline.com/tenant/authorize',
-  tokenUrl: 'https://login.microsoftonline.com/tenant/token',
-  jwksUri: 'https://login.microsoftonline.com/tenant/keys',
-  issuer: 'https://login.microsoftonline.com/tenant/v2.0',
-  logoutUrl: 'https://login.microsoftonline.com/tenant/logout',
-  scopes: ['openid', 'profile', 'email'],
-  clientId: 'azure-client-id',
-  clientSecret: 'azure-secret',
-  callbackUrl: 'http://localhost:3000/auth/regulator/callback'
-}
-
 const DEFRA_PROVIDER = {
   discoveryUrl: 'https://defra.example/.well-known/openid-configuration',
   scopes: ['openid', 'offline_access', 'defra-client-id'],
@@ -88,7 +61,6 @@ const DEFRA_ENDPOINTS = {
 }
 
 beforeEach(() => {
-  getAzureEntraIdConfig.mockReturnValue(AZURE_PROVIDER)
   getDefraIdConfig.mockReturnValue(DEFRA_PROVIDER)
   getDefraIdEndpoints.mockResolvedValue(DEFRA_ENDPOINTS)
 })
@@ -96,33 +68,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
-})
-
-describe('#regulatorLoginController', () => {
-  test('stashes state/nonce/pkce and redirects to the Azure authorize URL', () => {
-    const yar = fakeYar()
-    const h = mockH()
-    const request = { yar, query: {} }
-
-    regulatorLoginController(request, h)
-
-    expect(yar.get('oauthState')).toBeTruthy()
-    expect(yar.get('oauthNonce')).toBeTruthy()
-    expect(yar.get('pkceVerifier')).toBeTruthy()
-
-    expect(h.redirect).toHaveBeenCalledTimes(1)
-    const [url] = h.redirect.mock.calls[0]
-    expect(url.startsWith(`${AZURE_PROVIDER.authUrl}?`)).toBe(true)
-    const params = new URL(url).searchParams
-    expect(params.get('client_id')).toBe(AZURE_PROVIDER.clientId)
-    expect(params.get('response_type')).toBe('code')
-    expect(params.get('redirect_uri')).toBe(AZURE_PROVIDER.callbackUrl)
-    expect(params.get('scope')).toBe(AZURE_PROVIDER.scopes.join(' '))
-    expect(params.get('state')).toBe(yar.get('oauthState'))
-    expect(params.get('nonce')).toBe(yar.get('oauthNonce'))
-    expect(params.get('code_challenge_method')).toBe('S256')
-    expect(params.get('code_challenge')).toBeTruthy()
-  })
 })
 
 describe('#operatorLoginController', () => {
@@ -147,213 +92,6 @@ describe('#operatorLoginController', () => {
     expect(params.get('redirect_uri')).toBe(DEFRA_PROVIDER.callbackUrl)
     expect(params.get('state')).toBe(yar.get('oauthState'))
     expect(params.get('nonce')).toBe(yar.get('oauthNonce'))
-  })
-})
-
-describe('#regulatorCallbackController', () => {
-  function makeRequest({ query, yarInitial } = {}) {
-    return {
-      query: query ?? { code: 'auth-code', state: 'the-state' },
-      yar: fakeYar(
-        yarInitial ?? {
-          oauthState: 'the-state',
-          oauthNonce: 'the-nonce',
-          pkceVerifier: 'the-verifier'
-        }
-      ),
-      logger: { warn: vi.fn() }
-    }
-  }
-
-  test('redirects to login when code is missing', async () => {
-    const h = mockH()
-    const request = makeRequest({ query: { state: 'the-state' } })
-    await regulatorCallbackController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
-  })
-
-  test('redirects to login when state does not match', async () => {
-    const h = mockH()
-    const request = makeRequest({
-      query: { code: 'auth-code', state: 'wrong-state' }
-    })
-    await regulatorCallbackController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
-    expect(request.logger.warn).toHaveBeenCalled()
-  })
-
-  test('clears the stashed oauth values once state has been checked', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 400 })
-    )
-    await regulatorCallbackController(request, h)
-    expect(request.yar.get('oauthState')).toBeUndefined()
-    expect(request.yar.get('oauthNonce')).toBeUndefined()
-    expect(request.yar.get('pkceVerifier')).toBeUndefined()
-  })
-
-  test('redirects to login when nonce or pkce verifier missing from session', async () => {
-    const h = mockH()
-    const request = makeRequest({
-      yarInitial: { oauthState: 'the-state' }
-    })
-    await regulatorCallbackController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
-  })
-
-  test('redirects to login when the token endpoint returns non-2xx', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: false, status: 400 })
-    )
-    await regulatorCallbackController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
-  })
-
-  test('redirects to login when the token endpoint request throws', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')))
-    await regulatorCallbackController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
-  })
-
-  test('redirects to login when the token response has no id_token', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ access_token: 'x' })
-      })
-    )
-    await regulatorCallbackController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
-  })
-
-  test('redirects to login when id_token verification fails', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ id_token: 'bad-token' })
-      })
-    )
-    verifyAzureIdToken.mockRejectedValue(new Error('bad signature'))
-    await regulatorCallbackController(request, h)
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
-  })
-
-  test('returns access-denied 403 when the caller has neither regulator role', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ id_token: 'good-token' })
-      })
-    )
-    verifyAzureIdToken.mockResolvedValue({ sub: 'u1', roles: ['SomeOther'] })
-
-    const result = await regulatorCallbackController(request, h)
-
-    expect(h.view).toHaveBeenCalledWith(
-      'error/access-denied',
-      expect.objectContaining({ pageTitle: expect.any(String) })
-    )
-    expect(h.view.mock.results[0].value.code).toHaveBeenCalledWith(
-      statusCodes.forbidden
-    )
-    expect(result).toBe('viewed')
-  })
-
-  test('signs in a standard regulator and redirects to the default target', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ id_token: 'good-token' })
-      })
-    )
-    verifyAzureIdToken.mockResolvedValue({
-      oid: 'oid-1',
-      preferred_username: 'reg@example.com',
-      name: 'Reg User',
-      roles: ['Waste.Regulator.Standard']
-    })
-
-    await regulatorCallbackController(request, h)
-
-    const user = request.yar.get('user')
-    expect(user).toEqual({
-      id: 'oid-1',
-      email: 'reg@example.com',
-      name: 'Reg User',
-      userType: 'regulator',
-      regulatorRole: ROLE_REGULATOR_STANDARD
-    })
-    expect(h.redirect).toHaveBeenCalledWith('/')
-  })
-
-  test('signs in a support read-only regulator', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ id_token: 'good-token' })
-      })
-    )
-    verifyAzureIdToken.mockResolvedValue({
-      sub: 'sub-1',
-      roles: ['Waste.SupportUser.ReadOnly']
-    })
-
-    await regulatorCallbackController(request, h)
-
-    const user = request.yar.get('user')
-    expect(user.regulatorRole).toBe('regulator-support-readonly')
-    expect(user.id).toBe('sub-1')
-    expect(user.email).toBeNull()
-    expect(user.name).toBeNull()
-  })
-
-  test('falls back to email claim and stashed redirect target when preferred_username absent', async () => {
-    const h = mockH()
-    const request = makeRequest()
-    request.yar.set('postLoginRedirectRegulator', {
-      target: '/cases/42',
-      nonce: 'n1'
-    })
-    request.query.rt = 'n1'
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ id_token: 'good-token' })
-      })
-    )
-    verifyAzureIdToken.mockResolvedValue({
-      sub: 'sub-2',
-      email: 'fallback@example.com',
-      roles: ['Waste.Regulator.Standard']
-    })
-
-    await regulatorCallbackController(request, h)
-
-    expect(h.redirect).toHaveBeenCalledWith('/cases/42')
   })
 })
 
@@ -524,11 +262,19 @@ describe('#logoutController federated (Defra ID) branch', () => {
     )
   })
 
-  // RA-437: a regulator now federates through Entra ID's own end_session
-  // endpoint too, mirroring the operator/Defra ID branch above — signing
-  // out of our service used to leave the caller's Entra ID SSO session
-  // alive, so a later sign-in would silently re-authenticate via SSO.
-  test('federates logout for a regulator through Entra ID when an id_token is present', async () => {
+  // RA-537: regulator sign-in was removed. A return leg still carrying the
+  // old `?userType=regulator` tag (an IdP round trip begun before deploy)
+  // lands on the operator login page like any other value.
+  test('a legacy userType=regulator return leg (empty session) lands on the operator login page', async () => {
+    const h = mockH()
+    const request = { query: { userType: 'regulator' }, yar: fakeYar() }
+
+    await logoutController(request, h)
+
+    expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+  })
+
+  test('a leftover regulator session with an id_token logs out through Defra ID, not Entra ID', async () => {
     const h = mockH()
     const request = {
       query: {},
@@ -540,26 +286,10 @@ describe('#logoutController federated (Defra ID) branch', () => {
 
     await logoutController(request, h)
 
-    expect(getDefraIdEndpoints).not.toHaveBeenCalled()
-    expect(request.yar.get('user')).toBeUndefined()
     const [url] = h.redirect.mock.calls[0]
-    expect(url.startsWith(`${AZURE_PROVIDER.logoutUrl}?`)).toBe(true)
-    const params = new URL(url).searchParams
-    expect(params.get('id_token_hint')).toBe('stored-id-token')
-    expect(params.get('post_logout_redirect_uri')).toBe(
-      'http://localhost:3000/auth/logout?userType=regulator'
+    expect(url.startsWith(`${DEFRA_ENDPOINTS.endSessionUrl}?`)).toBe(true)
+    expect(new URL(url).searchParams.get('post_logout_redirect_uri')).toBe(
+      'http://localhost:3000/auth/logout?userType=operator'
     )
-  })
-
-  // The round trip: Entra/Defra ID redirect back to /auth/logout, by which
-  // point the session (and `user`) is already gone — only the userType
-  // query param this same controller set carries the provider through.
-  test('a regulator redirecting back from Entra ID (empty session, userType query param) lands on the regulator login page', async () => {
-    const h = mockH()
-    const request = { query: { userType: 'regulator' }, yar: fakeYar() }
-
-    await logoutController(request, h)
-
-    expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
   })
 })

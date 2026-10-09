@@ -97,10 +97,6 @@ describe('#tonnageCyaController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/tonnage-cya/{applicationId}', () => {
     test('redirects to query-task-list when application is Queried and PRNs section has not been started', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -112,8 +108,7 @@ describe('#tonnageCyaController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -127,8 +122,7 @@ describe('#tonnageCyaController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -140,8 +134,7 @@ describe('#tonnageCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="summary-list"')
@@ -154,8 +147,7 @@ describe('#tonnageCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="tonnage-value"')
@@ -166,8 +158,7 @@ describe('#tonnageCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Jane Smith')
@@ -180,8 +171,7 @@ describe('#tonnageCyaController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -202,8 +192,7 @@ describe('#tonnageCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="authorisers-value"')
@@ -214,8 +203,7 @@ describe('#tonnageCyaController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="change-tonnage-link"')
@@ -230,8 +218,7 @@ describe('#tonnageCyaController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -244,8 +231,7 @@ describe('#tonnageCyaController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -264,8 +250,7 @@ describe('#tonnageCyaController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -290,7 +275,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -308,7 +292,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -334,7 +317,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -348,7 +330,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -365,7 +346,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -388,7 +368,6 @@ describe('#tonnageCyaController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: { submitAction: 'confirm' }
         })
 
@@ -408,7 +387,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -426,7 +404,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })
 
@@ -463,7 +440,6 @@ describe('#tonnageCyaController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'confirm' }
       })
 
@@ -486,8 +462,7 @@ describe('#tonnageCyaController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/tonnage-cya/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
