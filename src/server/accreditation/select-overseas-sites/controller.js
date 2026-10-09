@@ -510,6 +510,20 @@ const OVERSEAS_SITES_ACTION_HANDLERS = {
     )
 }
 
+function renderIfIncomplete({ h, t, applicationId, sections, materialType }) {
+  const flagged = flagIncompleteSites(sections, t, materialType)
+  const errors = incompleteSiteErrors(t, applicationId, flagged, editUrl)
+  if (errors.length === 0) {
+    return null
+  }
+  return renderPage(
+    h,
+    buildViewData(t, applicationId, flagged, null, {
+      incompleteSiteErrors: errors
+    })
+  ).code(statusCodes.badRequest)
+}
+
 export const selectOverseasSitesPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -578,20 +592,15 @@ export const selectOverseasSitesPostController = {
       ).code(400)
     }
 
-    const flagged = flagIncompleteSites(sections, t, application.materialType)
-    const incompleteErrors = incompleteSiteErrors(
+    const incompleteResponse = renderIfIncomplete({
+      h,
       t,
       applicationId,
-      flagged,
-      editUrl
-    )
-    if (incompleteErrors.length > 0) {
-      return renderPage(
-        h,
-        buildViewData(t, applicationId, flagged, null, {
-          incompleteSiteErrors: incompleteErrors
-        })
-      ).code(statusCodes.badRequest)
+      sections,
+      materialType: application.materialType
+    })
+    if (incompleteResponse) {
+      return incompleteResponse
     }
 
     return h.redirect(confirmOverseasSitesUrl(applicationId))

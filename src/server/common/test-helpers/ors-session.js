@@ -49,11 +49,14 @@ export function fillCompleteOrsAnswers(
       },
       payload
     })
-    const raw = response.headers['set-cookie']
-    return raw ? (Array.isArray(raw) ? raw[0] : raw).split(';')[0] : cookie
+    const raw = [response.headers['set-cookie']].flat()[0]
+    return raw ? raw.split(';')[0] : cookie
   }
 
   // One step after the other: each answer lands in the session the previous
   // response set up.
-  return COMPLETE_ORS_ANSWERS.reduce(postStep, Promise.resolve(startCookie))
+  return COMPLETE_ORS_ANSWERS.reduce(
+    (previousCookie, answer) => postStep(previousCookie, answer),
+    Promise.resolve(startCookie)
+  )
 }
