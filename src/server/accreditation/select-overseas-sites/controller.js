@@ -26,10 +26,11 @@ import {
   restoreInterimSite,
   INTERIM_SITE_WITHDRAWN_FLASH
 } from './interim-site-actions.js'
+import { INCOMPLETE_SITES_FLASH } from '../../common/helpers/overseasSiteCompleteness.js'
 import {
-  INCOMPLETE_SITES_FLASH,
-  findIncompleteSites
-} from '../../common/helpers/overseasSiteCompleteness.js'
+  flagIncompleteSites,
+  incompleteSiteErrors
+} from './incomplete-sites.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -164,52 +165,6 @@ function decorateSite(applicationId, site) {
       : null,
     canRestoreInterimSite: canAdd
   }
-}
-
-// Marks each site that is part of the application and not complete, using the
-// same check as check-your-answers, the section confirmation and the submit
-// declaration. Registered sites that have not been included are left alone.
-function flagIncompleteSites(sections, t, materialType) {
-  const incompleteIds = new Set(
-    findIncompleteSites(
-      t,
-      [
-        ...sections.accredited,
-        ...sections.newSites,
-        ...sections.registeredSitesAdded
-      ],
-      materialType
-    ).map(({ site }) => site.siteId)
-  )
-  const flag = (sites) =>
-    sites.map((site) => ({
-      ...site,
-      incomplete: incompleteIds.has(site.siteId)
-    }))
-  return {
-    ...sections,
-    accredited: flag(sections.accredited),
-    newSites: flag(sections.newSites),
-    registeredSitesAdded: flag(sections.registeredSitesAdded)
-  }
-}
-
-// One error summary entry per incomplete site, linking to its Change page,
-// which opens check-your-answers with the gaps marked.
-function incompleteSiteErrors(t, applicationId, flaggedSections) {
-  return [
-    ...flaggedSections.accredited,
-    ...flaggedSections.newSites,
-    ...flaggedSections.registeredSitesAdded
-  ]
-    .filter((site) => site.incomplete)
-    .map((site) => ({
-      message: t('pages.selectOverseasSites.validation.incompleteSite').replace(
-        '{siteName}',
-        site.siteName
-      ),
-      href: editUrl(applicationId, site.siteId)
-    }))
 }
 
 function withEditUrl(applicationId, sites) {
@@ -471,7 +426,7 @@ export const selectOverseasSitesGetController = {
       h,
       buildViewData(t, applicationId, sections, null, {
         incompleteSiteErrors: turnedBackFromSubmit
-          ? incompleteSiteErrors(t, applicationId, sections)
+          ? incompleteSiteErrors(t, applicationId, sections, editUrl)
           : [],
         successBanner,
         queried,
@@ -624,7 +579,12 @@ export const selectOverseasSitesPostController = {
     }
 
     const flagged = flagIncompleteSites(sections, t, application.materialType)
-    const incompleteErrors = incompleteSiteErrors(t, applicationId, flagged)
+    const incompleteErrors = incompleteSiteErrors(
+      t,
+      applicationId,
+      flagged,
+      editUrl
+    )
     if (incompleteErrors.length > 0) {
       return renderPage(
         h,

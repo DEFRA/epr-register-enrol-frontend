@@ -205,7 +205,7 @@ const isBlank = (row) =>
 // Attaches the problems found by the shared completeness check to the rows
 // they belong to, and builds the error summary: each entry links to the page
 // that fixes it, since the answers are changed there rather than on this page.
-function annotateRows(t, rows, issues) {
+function annotateRows(rows, issues) {
   const changeUrlByRow = Object.fromEntries(
     rows.map((row) => [row.testId, row.changeUrl])
   )
@@ -291,7 +291,6 @@ function buildViewData(
   { materialType, issues = [], interimSites = [] } = {}
 ) {
   const { rows, errorSummary } = annotateRows(
-    t,
     buildRows(t, applicationId, session, materialType),
     issues
   )
@@ -480,6 +479,40 @@ async function saveSite(mode, session, organisationId, applicationId) {
   )
 }
 
+// Shows the page again with what is missing named, in place of saving the site.
+async function renderIncompleteSite({
+  request,
+  h,
+  t,
+  organisationId,
+  applicationId,
+  session,
+  materialType,
+  issues
+}) {
+  const siteId = session.editingSiteId ?? session.promotingSiteId
+  return renderPage(
+    h,
+    buildViewData(
+      t,
+      applicationId,
+      session,
+      null,
+      await interimSiteAllowed(organisationId, applicationId, siteId),
+      {
+        materialType,
+        issues,
+        interimSites: await loadInterimSites(
+          request,
+          organisationId,
+          applicationId,
+          session
+        )
+      }
+    )
+  ).code(statusCodes.badRequest)
+}
+
 export const addOrsCyaPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
@@ -514,30 +547,16 @@ export const addOrsCyaPostController = {
     // came from (the operator, or Re/Ex via the site list).
     const issues = findIncompleteAnswers(t, session, materialType)
     if (issues.length > 0) {
-      return renderPage(
+      return renderIncompleteSite({
+        request,
         h,
-        buildViewData(
-          t,
-          applicationId,
-          session,
-          null,
-          await interimSiteAllowed(
-            organisationId,
-            applicationId,
-            session.editingSiteId ?? session.promotingSiteId
-          ),
-          {
-            materialType,
-            issues,
-            interimSites: await loadInterimSites(
-              request,
-              organisationId,
-              applicationId,
-              session
-            )
-          }
-        )
-      ).code(statusCodes.badRequest)
+        t,
+        organisationId,
+        applicationId,
+        session,
+        materialType,
+        issues
+      })
     }
 
     const mode = resolveSiteSaveMode(session)

@@ -32,13 +32,13 @@ export const COMPLETE_ORS_ANSWERS = [
  * @param {string} [startCookie] - continue an existing session
  * @returns {Promise<string>} cookie header value for the next request
  */
-export async function fillCompleteOrsAnswers(
+export function fillCompleteOrsAnswers(
   server,
   applicationId,
   startCookie = ''
 ) {
-  let cookie = startCookie
-  for (const [step, payload] of COMPLETE_ORS_ANSWERS) {
+  const postStep = async (previousCookie, [step, payload]) => {
+    const cookie = await previousCookie
     const response = await server.inject({
       method: 'POST',
       url: `/accreditation/add-overseas-site/${applicationId}/${step}`,
@@ -50,9 +50,10 @@ export async function fillCompleteOrsAnswers(
       payload
     })
     const raw = response.headers['set-cookie']
-    if (raw) {
-      cookie = (Array.isArray(raw) ? raw[0] : raw).split(';')[0]
-    }
+    return raw ? (Array.isArray(raw) ? raw[0] : raw).split(';')[0] : cookie
   }
-  return cookie
+
+  // One step after the other: each answer lands in the session the previous
+  // response set up.
+  return COMPLETE_ORS_ANSWERS.reduce(postStep, Promise.resolve(startCookie))
 }

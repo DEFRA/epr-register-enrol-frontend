@@ -65,13 +65,16 @@ const CONTACT_ROWS = {
   siteContactPhone: 'contact-phone'
 }
 
+const LOCATION_STEP = 'site-location'
+const CONTACT_STEP = 'site-contact-details'
+
 export const STEP_FOR_ROW = {
   'site-name': 'site-name',
-  location: 'site-location',
-  coordinates: 'site-location',
-  'contact-name': 'site-contact-details',
-  'contact-email': 'site-contact-details',
-  'contact-phone': 'site-contact-details',
+  location: LOCATION_STEP,
+  coordinates: LOCATION_STEP,
+  'contact-name': CONTACT_STEP,
+  'contact-email': CONTACT_STEP,
+  'contact-phone': CONTACT_STEP,
   'recycling-operation': 'recycling-operation-details',
   'basel-codes': 'basel-convention-and-oecd-code',
   'repatriated-loads': 'repatriated-loads',
