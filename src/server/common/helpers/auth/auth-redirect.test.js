@@ -7,7 +7,7 @@ import {
 } from './auth-redirect.js'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../constants/status-codes.js'
-import { requireRegulator, requireOperator } from './auth-scopes.js'
+import { requireOperator } from './auth-scopes.js'
 import { STUB_USERS } from '../../../auth/stub/controller.js'
 
 // --- Unit tests for the redirect logic ---
@@ -52,10 +52,12 @@ describe('#redirectToLogin', () => {
       expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
     })
 
-    test('redirects to regulator login for a 401 on a regulator-scoped route', () => {
+    // RA-537: regulator login was removed — a route still scoped to the
+    // retired 'regulator' scope must not send anyone to /auth/regulator/login.
+    test('redirects to operator login even for a 401 on a regulator-scoped route', () => {
       const h = mockH()
       redirectToLogin(mockRequest(401, ['regulator']), h)
-      expect(h.redirect).toHaveBeenCalledWith('/auth/regulator/login')
+      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
     })
 
     test('redirects to operator login for a 401 with no scope (default)', () => {
@@ -66,7 +68,7 @@ describe('#redirectToLogin', () => {
 
     test('does not redirect for a 403 — returns h.continue', () => {
       const h = mockH()
-      const result = redirectToLogin(mockRequest(403, ['regulator']), h)
+      const result = redirectToLogin(mockRequest(403, ['operator']), h)
       expect(h.redirect).not.toHaveBeenCalled()
       expect(result).toBe(h.continue)
     })
@@ -117,22 +119,6 @@ describe('#redirectToLogin', () => {
       )
     })
 
-    test('stashes under a separate key per user type', () => {
-      const yar = fakeYar()
-      const h = mockH()
-      redirectToLogin(
-        mockRequest(401, ['regulator'], {
-          method: 'get',
-          path: '/cases/123',
-          url: { search: '' },
-          yar
-        }),
-        h
-      )
-      expect(yar.get('postLoginRedirectRegulator').target).toBe('/cases/123')
-      expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
-    })
-
     test('does not stash a non-GET request', () => {
       const yar = fakeYar()
       const h = mockH()
@@ -169,7 +155,7 @@ describe('#redirectToLogin', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
       const request = { yar, query: { rt: 'n1' } }
-      confirmPostLoginRedirect(request, 'operator')
+      confirmPostLoginRedirect(request)
       expect(yar.get('postLoginRedirectOperator')).toBeDefined()
     })
 
@@ -177,7 +163,7 @@ describe('#redirectToLogin', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
       const request = { yar, query: {} }
-      confirmPostLoginRedirect(request, 'operator')
+      confirmPostLoginRedirect(request)
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
 
@@ -185,38 +171,26 @@ describe('#redirectToLogin', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', { target: '/orgs/123', nonce: 'n1' })
       const request = { yar, query: { rt: 'wrong' } }
-      confirmPostLoginRedirect(request, 'operator')
+      confirmPostLoginRedirect(request)
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
     })
   })
 
   describe('#popPostLoginRedirect', () => {
-    test('returns and clears the stashed target for the given user type', () => {
+    test('returns and clears the stashed target', () => {
       const yar = fakeYar()
       yar.set('postLoginRedirectOperator', {
         target: '/organisations/123',
         nonce: 'n1'
       })
       const request = { yar }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe(
-        '/organisations/123'
-      )
+      expect(popPostLoginRedirect(request, '/')).toBe('/organisations/123')
       expect(yar.get('postLoginRedirectOperator')).toBeUndefined()
-    })
-
-    test('does not leak a target stashed for a different user type', () => {
-      const yar = fakeYar()
-      yar.set('postLoginRedirectRegulator', {
-        target: '/cases/123',
-        nonce: 'n1'
-      })
-      const request = { yar }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
     })
 
     test('returns the fallback when nothing was stashed', () => {
       const request = { yar: fakeYar() }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
+      expect(popPostLoginRedirect(request, '/')).toBe('/')
     })
 
     test('returns the fallback for a protocol-relative stashed value (open-redirect guard)', () => {
@@ -226,7 +200,7 @@ describe('#redirectToLogin', () => {
         nonce: 'n1'
       })
       const request = { yar }
-      expect(popPostLoginRedirect(request, 'operator', '/')).toBe('/')
+      expect(popPostLoginRedirect(request, '/')).toBe('/')
     })
   })
 
@@ -247,14 +221,6 @@ describe('#redirectToLogin', () => {
           method: 'GET',
           path: '/test-requires-login',
           options: { auth: false },
-          handler: () => {
-            throw Boom.unauthorized(null, 'session')
-          }
-        },
-        {
-          method: 'GET',
-          path: '/test-redirect-regulator',
-          options: requireRegulator,
           handler: () => {
             throw Boom.unauthorized(null, 'session')
           }
@@ -300,14 +266,10 @@ describe('#redirectToLogin', () => {
       // Follow the redirect chain exactly as a browser would: GET the stub
       // chooser with the rt query string still attached, which is what
       // confirms the stash (see confirmPostLoginRedirect) before it can be
-      // consumed. Built via URL/searchParams rather than string
-      // concatenation, since the location already carries its own `?rt=`
-      // — naively appending `?type=operator` would produce a second `?`
-      // that hapi parses as part of the `type` value, silently skipping
-      // confirmPostLoginRedirect and leaving this path uncovered.
+      // consumed. Built via URL/searchParams so the rt nonce is carried over
+      // exactly as redirectToLogin minted it.
       const rtUrl = new URL(loginRedirect.headers.location, 'http://localhost')
       const chooserUrl = new URL('/auth/stub/login', 'http://localhost')
-      chooserUrl.searchParams.set('type', 'operator')
       chooserUrl.searchParams.set('rt', rtUrl.searchParams.get('rt'))
 
       const chooserPage = await server.inject({
@@ -322,7 +284,7 @@ describe('#redirectToLogin', () => {
         method: 'POST',
         url: '/auth/stub/login',
         headers: { cookie: cookieHeader(cookies) },
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
+        payload: { userId: STUB_USERS[0].id }
       })
 
       expect(stubLogin.statusCode).toBe(statusCodes.redirect)
@@ -333,7 +295,7 @@ describe('#redirectToLogin', () => {
       const stubLogin = await server.inject({
         method: 'POST',
         url: '/auth/stub/login',
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
+        payload: { userId: STUB_USERS[0].id }
       })
 
       expect(stubLogin.statusCode).toBe(statusCodes.redirect)
@@ -357,7 +319,7 @@ describe('#redirectToLogin', () => {
       // no rt in the query string.
       const chooserPage = await server.inject({
         method: 'GET',
-        url: '/auth/stub/login?type=operator',
+        url: '/auth/stub/login',
         headers: { cookie: cookieHeader(cookies) }
       })
       const mergedCookies = {
@@ -369,29 +331,7 @@ describe('#redirectToLogin', () => {
         method: 'POST',
         url: '/auth/stub/login',
         headers: { cookie: cookieHeader(mergedCookies) },
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
-      })
-
-      expect(stubLogin.headers.location).toBe('/')
-    })
-
-    test('does not replay a regulator-scoped stash into an operator login', async () => {
-      const loginRedirect = await server.inject({
-        method: 'GET',
-        url: '/test-redirect-regulator?scope=1'
-      })
-      expect(loginRedirect.headers.location).toMatch(
-        /^\/auth\/regulator\/login\?rt=/
-      )
-      const cookies = extractCookies(loginRedirect.headers)
-
-      // Same session, but the user completes login as an operator instead —
-      // must land on the operator default, not the stashed regulator path.
-      const stubLogin = await server.inject({
-        method: 'POST',
-        url: '/auth/stub/login',
-        headers: { cookie: cookieHeader(cookies) },
-        payload: { userId: STUB_USERS.operator[0].id, type: 'operator' }
+        payload: { userId: STUB_USERS[0].id }
       })
 
       expect(stubLogin.headers.location).toBe('/')
@@ -407,44 +347,24 @@ describe('#redirectToLogin', () => {
       server = await createServer()
       await server.initialize()
 
-      server.route([
-        {
-          method: 'GET',
-          path: '/test-redirect-regulator',
-          options: requireRegulator,
-          handler: (request, h) => h.response('ok').code(statusCodes.ok)
-        },
-        {
-          method: 'GET',
-          path: '/test-redirect-operator',
-          options: requireOperator,
-          handler: (request, h) => h.response('ok').code(statusCodes.ok)
-        }
-      ])
+      server.route({
+        method: 'GET',
+        path: '/test-redirect-operator',
+        options: requireOperator,
+        handler: (request, h) => h.response('ok').code(statusCodes.ok)
+      })
     })
 
     afterAll(async () => {
       await server.stop({ timeout: 0 })
     })
 
-    test('operator cannot access a regulator route — receives 403, not a redirect', async () => {
-      const { statusCode } = await server.inject({
-        method: 'GET',
-        url: '/test-redirect-regulator',
-        headers: {
-          'x-test-user-type': 'operator'
-        }
-      })
-      expect(statusCode).toBe(statusCodes.forbidden)
-    })
-
-    test('regulator cannot access an operator route — receives 403, not a redirect', async () => {
+    test('the default test user (operator) can access an operator route', async () => {
       const { statusCode } = await server.inject({
         method: 'GET',
         url: '/test-redirect-operator'
-        // default test user is regulator
       })
-      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(statusCode).toBe(statusCodes.ok)
     })
   })
 })

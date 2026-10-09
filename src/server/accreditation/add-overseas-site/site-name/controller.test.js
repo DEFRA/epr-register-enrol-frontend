@@ -32,16 +32,11 @@ describe('#addOverseasSiteSiteNameController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe(`GET ${BASE_URL}`, () => {
     test('returns 200 with page heading', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -54,8 +49,7 @@ describe('#addOverseasSiteSiteNameController', () => {
     test('renders site name input', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="site-name-input"')
@@ -64,8 +58,7 @@ describe('#addOverseasSiteSiteNameController', () => {
     test('back link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -75,8 +68,7 @@ describe('#addOverseasSiteSiteNameController', () => {
     test('cancel link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -89,7 +81,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=My+Test+Site'
@@ -102,7 +93,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'GET',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           cookie: Array.isArray(sessionCookie)
             ? sessionCookie.map((c) => c.split(';')[0]).join('; ')
             : (sessionCookie?.split(';')[0] ?? '')
@@ -116,8 +106,7 @@ describe('#addOverseasSiteSiteNameController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        url: `/cy${BASE_URL}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -140,8 +129,7 @@ describe('#addOverseasSiteSiteNameController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -155,7 +143,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=Acme+Recyclers+GmbH'
@@ -170,7 +157,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=Recyclers+Ltd'
@@ -182,7 +168,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'GET',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           cookie: Array.isArray(sessionCookie)
             ? sessionCookie.map((c) => c.split(';')[0]).join('; ')
             : (sessionCookie?.split(';')[0] ?? '')
@@ -197,7 +182,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName='
@@ -213,7 +197,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=   '
@@ -229,7 +212,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=Site+To+Cancel'
@@ -243,7 +225,7 @@ describe('#addOverseasSiteSiteNameController', () => {
       const cancelResponse = await server.inject({
         method: 'GET',
         url: cancelUrl,
-        headers: { ...operatorHeaders, cookie: cookieHeader }
+        headers: { cookie: cookieHeader }
       })
 
       expect(cancelResponse.statusCode).toBe(statusCodes.redirect)
@@ -262,7 +244,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=Acme+Recyclers+GmbH'
@@ -286,8 +267,7 @@ describe('#addOverseasSiteSiteNameController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: NEW_URL,
-        headers: operatorHeaders
+        url: NEW_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -297,8 +277,7 @@ describe('#addOverseasSiteSiteNameController', () => {
     test('redirects to site-name', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: NEW_URL,
-        headers: operatorHeaders
+        url: NEW_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -310,7 +289,6 @@ describe('#addOverseasSiteSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=Stale+Site'
@@ -323,7 +301,7 @@ describe('#addOverseasSiteSiteNameController', () => {
       const newResponse = await server.inject({
         method: 'GET',
         url: NEW_URL,
-        headers: { ...operatorHeaders, cookie: postCookieHeader }
+        headers: { cookie: postCookieHeader }
       })
       const newCookie = newResponse.headers['set-cookie']
       const newCookieHeader = Array.isArray(newCookie)
@@ -333,7 +311,7 @@ describe('#addOverseasSiteSiteNameController', () => {
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: newCookieHeader }
+        headers: { cookie: newCookieHeader }
       })
 
       expect(getResponse.result).not.toContain('Stale Site')
@@ -344,7 +322,6 @@ describe('#addOverseasSiteSiteNameController', () => {
   // it is refused here, inline, rather than as a 400 at check-your-answers.
   describe('RA-620: backend length limits', () => {
     const limitPostHeaders = {
-      'x-test-user-type': 'operator',
       'content-type': 'application/x-www-form-urlencoded'
     }
     const postForm = (fields) =>

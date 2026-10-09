@@ -46,12 +46,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -59,8 +54,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
     test('returns 200 with page heading', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -73,8 +67,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
     test('renders name, email and phone inputs', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="contact-name-input"')
@@ -85,8 +78,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
     test('back link points to site-location', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -96,8 +88,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
     test('cancel link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -118,8 +109,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -138,7 +128,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(result).toContain('Jane Smith')
@@ -148,8 +138,7 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        url: `/cy${BASE_URL}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -340,7 +329,6 @@ describe('#addOverseasSiteSiteContactDetailsController', () => {
   // it is refused here, inline, rather than as a 400 at check-your-answers.
   describe('RA-620: backend length limits', () => {
     const limitPostHeaders = {
-      'x-test-user-type': 'operator',
       'content-type': 'application/x-www-form-urlencoded'
     }
     const postForm = (fields) =>

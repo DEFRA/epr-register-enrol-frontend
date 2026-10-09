@@ -105,18 +105,13 @@ describe('#selectOverseasSitesController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/select-overseas-sites/{applicationId}', () => {
     test('returns 200 with page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -141,8 +136,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="accredited-site-row-900001"')
@@ -158,8 +152,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="accredited-heading"')
@@ -190,8 +183,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       // RA-603: the page is a govuk-table now, so the ORS id lives in a column
@@ -220,8 +212,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="accredited-site-row-900001"')
@@ -235,8 +226,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="add-button-registered-900002"')
@@ -250,8 +240,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="edit-button-accredited-900001"')
@@ -272,8 +261,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="edit-button-new-900003"')
@@ -293,8 +281,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain(
@@ -311,8 +298,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="no-sites-message"')
@@ -326,8 +312,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -339,8 +324,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="continue-button"')
@@ -352,8 +336,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -365,8 +348,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -378,8 +360,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -391,8 +372,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="add-new-ors-button"')
@@ -406,8 +386,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="ors-success-banner"')
@@ -420,8 +399,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="interim-site-success-banner"')
@@ -447,7 +425,6 @@ describe('#selectOverseasSitesController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/country`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'country=France'
@@ -459,7 +436,6 @@ describe('#selectOverseasSitesController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -472,7 +448,6 @@ describe('#selectOverseasSitesController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-location`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -485,7 +460,6 @@ describe('#selectOverseasSitesController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-contact-details`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -499,7 +473,6 @@ describe('#selectOverseasSitesController', () => {
         method: 'POST',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           cookie: sessionCookie
         },
@@ -514,7 +487,7 @@ describe('#selectOverseasSitesController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('data-testid="interim-site-success-banner"')
@@ -533,8 +506,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -558,8 +530,7 @@ describe('#selectOverseasSitesController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -581,8 +552,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -612,8 +582,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -634,8 +603,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -672,8 +640,7 @@ describe('#selectOverseasSitesController', () => {
       try {
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
         })
 
         expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -692,8 +659,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -707,8 +673,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/999999`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/999999`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -722,8 +687,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -745,8 +709,7 @@ describe('#selectOverseasSitesController', () => {
 
       const promoteResponse = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`
       })
       expect(promoteResponse.statusCode).toBe(statusCodes.redirect)
       const sessionCookie = cookieHeaderFrom(promoteResponse, '')
@@ -754,7 +717,7 @@ describe('#selectOverseasSitesController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/recycling-operation-details`,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toMatch(/value="R3"\s+checked/)
@@ -778,8 +741,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/promote/900002`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -795,8 +757,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -810,8 +771,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/999999`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/999999`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -825,8 +785,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -848,8 +807,7 @@ describe('#selectOverseasSitesController', () => {
 
       const editResponse = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
       })
       expect(editResponse.statusCode).toBe(statusCodes.redirect)
       const sessionCookie = cookieHeaderFrom(editResponse, '')
@@ -857,7 +815,7 @@ describe('#selectOverseasSitesController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/add-overseas-site/${APPLICATION_ID}/check-your-answers`,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('Site Alpha')
@@ -876,8 +834,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/edit/900001`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -903,7 +860,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'continue' }
       })
 
@@ -926,7 +882,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'continue' }
       })
 
@@ -956,7 +911,6 @@ describe('#selectOverseasSitesController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: { submitAction: 'removeAccredited', siteId: '900001' }
         })
 
@@ -974,7 +928,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'continue' }
       })
 
@@ -997,7 +950,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'continue' }
       })
 
@@ -1015,7 +967,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })
 
@@ -1036,7 +987,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'saveAndComeLater' }
       })
 
@@ -1051,7 +1001,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'removeAccredited', siteId: '900001' }
       })
 
@@ -1076,7 +1025,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'removeAccredited', siteId: '900001' }
       })
 
@@ -1092,7 +1040,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'removeAccredited', siteId: '900001' }
       })
 
@@ -1116,7 +1063,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'deleteNewSite', siteId: '900003' }
       })
 
@@ -1146,7 +1092,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'revertAccreditation', siteId: '900004' }
       })
 
@@ -1173,7 +1118,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'revertAccreditation', siteId: '900004' }
       })
 
@@ -1196,7 +1140,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'revertAccreditation', siteId: '900004' }
       })
 
@@ -1212,7 +1155,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { submitAction: 'continue' }
       })
 
@@ -1246,7 +1188,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'removeInterimSite',
           siteId: '900001',
@@ -1286,7 +1227,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'removeInterimSite',
           siteId: '900001',
@@ -1318,7 +1258,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'removeInterimSite',
           siteId: '900001',
@@ -1350,8 +1289,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="interim-site-row-42"')
@@ -1372,8 +1310,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="interim-site-row-42"')
@@ -1386,8 +1323,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1424,8 +1360,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1468,8 +1403,7 @@ describe('#selectOverseasSitesController', () => {
 
       const editResponse = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`
       })
       expect(editResponse.statusCode).toBe(statusCodes.redirect)
       expect(editResponse.headers.location).toBe(
@@ -1480,7 +1414,6 @@ describe('#selectOverseasSitesController', () => {
         method: 'GET',
         url: editResponse.headers.location,
         headers: {
-          ...operatorHeaders,
           cookie: cookieHeaderFrom(editResponse, '')
         }
       })
@@ -1525,8 +1458,7 @@ describe('#selectOverseasSitesController', () => {
 
       const editResponse = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`
       })
       expect(editResponse.statusCode).toBe(statusCodes.redirect)
       const sessionCookie = cookieHeaderFrom(editResponse, '')
@@ -1534,7 +1466,7 @@ describe('#selectOverseasSitesController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/add-interim-site/${APPLICATION_ID}/site-name`,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toContain('Interim Depot')
@@ -1565,8 +1497,7 @@ describe('#selectOverseasSitesController', () => {
       )
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
       return result
     }
@@ -1751,8 +1682,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -1767,8 +1697,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -1794,8 +1723,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Withdraw from application')
@@ -1832,7 +1760,6 @@ describe('#selectOverseasSitesController', () => {
       const withdraw = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'removeInterimSite',
           siteId: '900001',
@@ -1844,7 +1771,7 @@ describe('#selectOverseasSitesController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="interim-site-withdrawn-banner"')
@@ -1868,8 +1795,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain(
@@ -1895,7 +1821,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'restoreInterimSite',
           siteId: '900001',
@@ -1932,8 +1857,7 @@ describe('#selectOverseasSitesController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
       flag.mockRestore()
@@ -1973,8 +1897,7 @@ describe('#selectOverseasSitesController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
         })
 
         expect(result).toContain('Show withdrawn interim sites (1)')
@@ -1990,7 +1913,6 @@ describe('#selectOverseasSitesController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-          headers: operatorHeaders,
           payload: {
             submitAction: 'restoreInterimSite',
             siteId: '900001',
@@ -2013,7 +1935,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'restoreInterimSite',
           siteId: '900001',
@@ -2043,7 +1964,6 @@ describe('#selectOverseasSitesController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           submitAction: 'restoreInterimSite',
           siteId: '900001',

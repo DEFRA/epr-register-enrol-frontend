@@ -34,12 +34,7 @@ describe('#addInterimSiteNameController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -87,8 +82,7 @@ describe('#addInterimSiteNameController', () => {
     test('redirects to select-overseas-sites when there is no linked ORS site (direct navigation)', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -101,7 +95,7 @@ describe('#addInterimSiteNameController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -115,7 +109,7 @@ describe('#addInterimSiteNameController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="site-name-input"')
@@ -127,7 +121,7 @@ describe('#addInterimSiteNameController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -140,7 +134,7 @@ describe('#addInterimSiteNameController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -163,7 +157,7 @@ describe('#addInterimSiteNameController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -184,7 +178,7 @@ describe('#addInterimSiteNameController', () => {
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(getResponse.statusCode).toBe(statusCodes.ok)
@@ -197,7 +191,7 @@ describe('#addInterimSiteNameController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/cy${BASE_URL}`,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -250,7 +244,7 @@ describe('#addInterimSiteNameController', () => {
       const getResponse = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(getResponse.result).toContain('Interim Ltd')
@@ -261,7 +255,6 @@ describe('#addInterimSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName='
@@ -277,7 +270,6 @@ describe('#addInterimSiteNameController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded'
         },
         payload: 'siteName=   '
@@ -292,7 +284,6 @@ describe('#addInterimSiteNameController', () => {
   // it is refused here, inline, rather than as a 400 at check-your-answers.
   describe('RA-620: backend length limits', () => {
     const limitPostHeaders = {
-      'x-test-user-type': 'operator',
       'content-type': 'application/x-www-form-urlencoded'
     }
     const postForm = (fields) =>

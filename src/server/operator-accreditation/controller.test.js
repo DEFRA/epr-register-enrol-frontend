@@ -617,10 +617,6 @@ describe('#operatorAccreditationController', () => {
     )
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const baseUrl = `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
 
   test('returns 403 when operator is not related to the organisation', async () => {
@@ -629,8 +625,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
-      headers: operatorHeaders
+      url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
     })
 
     expect(statusCode).toBe(statusCodes.forbidden)
@@ -646,8 +641,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(statusCode).toBe(statusCodes.serviceUnavailable)
@@ -661,8 +655,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -675,8 +668,7 @@ describe('#operatorAccreditationController', () => {
 
     await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(postSpy).not.toHaveBeenCalled()
@@ -695,8 +687,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL.toLowerCase()}/${YEAR}`,
-      headers: operatorHeaders
+      url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL.toLowerCase()}/${YEAR}`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -709,8 +700,7 @@ describe('#operatorAccreditationController', () => {
 
     await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(postSpy).toHaveBeenCalledWith(
@@ -725,8 +715,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -749,8 +738,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="current-accreditation-site-address"')
@@ -766,8 +754,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="application-header-operator-name"')
@@ -778,8 +765,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="page-heading"')
@@ -796,8 +782,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="application-details-table"')
@@ -815,8 +800,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="application-due-date"')
@@ -836,8 +820,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="application-due-date"')
@@ -852,8 +835,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="application-due-date"')
@@ -872,8 +854,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode, result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -886,8 +867,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain('data-testid="current-accreditation-summary"')
@@ -910,8 +890,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="current-accreditation-summary"')
@@ -949,8 +928,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain(
@@ -967,8 +945,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="page-heading"')
@@ -982,8 +959,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('govuk-tag--blue')
@@ -998,8 +974,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('govuk-tag--red')
@@ -1012,8 +987,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain(
@@ -1026,8 +1000,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain(
@@ -1040,8 +1013,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain(
@@ -1054,8 +1026,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain(
@@ -1070,8 +1041,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).not.toContain(
@@ -1085,8 +1055,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain(
@@ -1099,8 +1068,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain(
@@ -1113,8 +1081,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="continue-button"')
@@ -1126,8 +1093,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="back-link"')
@@ -1144,8 +1110,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toMatch(/data-testid="back-link"[^>]*>\s*Back\s*</)
@@ -1169,8 +1134,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain(
@@ -1188,8 +1152,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain(
@@ -1207,8 +1170,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain(
@@ -1226,8 +1188,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="application-header"')
@@ -1242,8 +1203,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="application-summary"')
@@ -1254,8 +1214,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain('data-testid="applications-list"')
@@ -1266,8 +1225,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="notification-status"')
@@ -1279,8 +1237,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain('data-testid="notification-status"')
@@ -1291,8 +1248,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain('data-testid="notification-status"')
@@ -1303,8 +1259,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).not.toContain('data-testid="notification-status"')
@@ -1315,8 +1270,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(statusCode).toBe(statusCodes.internalServerError)
@@ -1329,8 +1283,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(result).toContain('data-testid="back-link"')
@@ -1343,8 +1296,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: baseUrl,
-      headers: operatorHeaders
+      url: baseUrl
     })
 
     expect(statusCode).toBe(statusCodes.internalServerError)
@@ -1358,8 +1310,7 @@ describe('#operatorAccreditationController', () => {
 
     const { statusCode } = await server.inject({
       method: 'GET',
-      url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2026`,
-      headers: operatorHeaders
+      url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2026`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -1371,8 +1322,7 @@ describe('#operatorAccreditationController', () => {
 
     const { result, statusCode } = await server.inject({
       method: 'GET',
-      url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
-      headers: operatorHeaders
+      url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
     })
 
     expect(statusCode).toBe(statusCodes.ok)
@@ -1407,8 +1357,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1427,8 +1376,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).toContain('WITHDRAWN')
@@ -1442,8 +1390,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1460,8 +1407,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).toContain('data-testid="start-new-form"')
@@ -1482,8 +1428,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `${baseUrl}/start-new`,
-        headers: operatorHeaders
+        url: `${baseUrl}/start-new`
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
@@ -1498,8 +1443,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'POST',
-        url: `${baseUrl}/start-new`,
-        headers: operatorHeaders
+        url: `${baseUrl}/start-new`
       })
 
       expect(postSpy).toHaveBeenCalledWith(
@@ -1516,8 +1460,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1532,8 +1475,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'POST',
-        url: `${baseUrl}/start-new`,
-        headers: operatorHeaders
+        url: `${baseUrl}/start-new`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1546,8 +1488,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'POST',
-        url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/start-new`,
-        headers: operatorHeaders
+        url: `/operator-accreditation/not-my-org/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/start-new`
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)
@@ -1561,8 +1502,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `${baseUrl}/start-new`,
-        headers: operatorHeaders
+        url: `${baseUrl}/start-new`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -1578,8 +1518,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'POST',
-        url: `/cy${baseUrl}/start-new`,
-        headers: operatorHeaders
+        url: `/cy${baseUrl}/start-new`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1592,8 +1531,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `${baseUrl}/start-new`,
-        headers: operatorHeaders
+        url: `${baseUrl}/start-new`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -1609,8 +1547,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).not.toContain('data-testid="start-new-link"')
@@ -1646,8 +1583,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).not.toContain(
@@ -1672,8 +1608,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).toContain(
@@ -1686,8 +1621,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).toContain('data-testid="application-summary"')
@@ -1699,8 +1633,7 @@ describe('#operatorAccreditationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(result).toContain('data-testid="page-heading"')
@@ -1714,8 +1647,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`,
-        headers: operatorHeaders
+        url: `/cy/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1727,8 +1659,7 @@ describe('#operatorAccreditationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: baseUrl,
-        headers: operatorHeaders
+        url: baseUrl
       })
 
       expect(statusCode).toBe(statusCodes.ok)

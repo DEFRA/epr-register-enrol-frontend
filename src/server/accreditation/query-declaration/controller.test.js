@@ -68,18 +68,13 @@ describe('#queryDeclarationController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/query-declaration/{applicationId}', () => {
     test('returns 200 with the declaration form when Queried', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -93,8 +88,7 @@ describe('#queryDeclarationController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -108,8 +102,7 @@ describe('#queryDeclarationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="declaration-bullets"')
@@ -135,8 +128,7 @@ describe('#queryDeclarationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(500)
@@ -152,8 +144,7 @@ describe('#queryDeclarationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -165,8 +156,7 @@ describe('#queryDeclarationController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="full-name-input"')
@@ -184,7 +174,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { fullName: '', role: '' }
       })
 
@@ -197,8 +186,7 @@ describe('#queryDeclarationController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'POST',
-        url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/query-declaration/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.badRequest)
@@ -213,7 +201,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: { fullName: '', role: '' }
       })
 
@@ -230,7 +217,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -260,7 +246,6 @@ describe('#queryDeclarationController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           email: 'attacker@example.com',
@@ -289,7 +274,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -316,7 +300,6 @@ describe('#queryDeclarationController', () => {
       const { headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -335,7 +318,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -357,7 +339,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -377,7 +358,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -399,7 +379,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -416,7 +395,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -438,7 +416,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -457,7 +434,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -477,7 +453,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -502,7 +477,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -521,7 +495,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/query-declaration/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {
           fullName: 'Jane Doe',
           role: 'Manager'
@@ -558,8 +531,7 @@ describe('#queryDeclarationController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: DECLARATION_URL,
-        headers: operatorHeaders
+        url: DECLARATION_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -573,7 +545,6 @@ describe('#queryDeclarationController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: DECLARATION_URL,
-        headers: operatorHeaders,
         payload: { fullName: 'Jane Doe', role: 'Manager' }
       })
 
@@ -589,8 +560,7 @@ describe('#queryDeclarationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: DECLARATION_URL,
-        headers: operatorHeaders
+        url: DECLARATION_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -625,8 +595,7 @@ describe('#queryDeclarationController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: DECLARATION_URL,
-        headers: operatorHeaders
+        url: DECLARATION_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)

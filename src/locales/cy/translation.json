@@ -8,11 +8,6 @@
       "title": "Hafan",
       "heading": "Hafan"
     },
-    "regulator": {
-      "title": "Rheoleiddiwr",
-      "heading": "Rheoleiddiwr",
-      "description": "[Welsh] This is a placeholder page for the regulator journey."
-    },
     "organisationList": {
       "title": "Rhestr Sefydliadau",
       "heading": "Rhestr Sefydliadau",
@@ -1033,7 +1028,6 @@
   },
   "navigation": {
     "home": "Hafan",
-    "regulator": "Rheoleiddiwr",
     "organisationList": "Sefydliadau",
     "manageAccount": "Rheoli cyfrif",
     "signOut": "Allgofnodi"

@@ -21,12 +21,11 @@
 
       <form method="POST" action="/auth/stub/login">
         <input type="hidden" name="crumb" value="{{ crumb }}">
-        <input type="hidden" name="type" value="{{ type }}">
 
         <div class="govuk-form-group">
           <fieldset class="govuk-fieldset">
             <legend class="govuk-fieldset__legend govuk-fieldset__legend--m">
-              <h2 class="govuk-fieldset__heading">Select a {{ type }} user</h2>
+              <h2 class="govuk-fieldset__heading">Select an operator user</h2>
             </legend>
             <div class="govuk-radios">
               {% for user in users %}
@@ -58,21 +57,6 @@
         </a>
       {% endif %}
 
-      {% if entraIdConfigured %}
-        <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
-        <h2 class="govuk-heading-m">Or sign in with a real account</h2>
-        <a href="/auth/regulator/entra-id{{ '?rt=' + rt if rt }}" class="govuk-button govuk-button--secondary" data-testid="entra-id-login">
-          Sign in with Entra ID
-        </a>
-      {% endif %}
-
-      {% if not (type == 'operator' and regulatorAccessDisabled) %}
-        <p class="govuk-body">
-          <a href="/auth/stub/login?type={{ 'operator' if type == 'regulator' else 'regulator' }}" class="govuk-link">
-            Switch to {{ 'operator' if type == 'regulator' else 'regulator' }} login
-          </a>
-        </p>
-      {% endif %}
     </div>
   </div>
 {% endblock %}

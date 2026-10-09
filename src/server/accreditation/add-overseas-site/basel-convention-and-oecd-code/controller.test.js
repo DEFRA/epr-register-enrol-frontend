@@ -45,12 +45,7 @@ describe('#addOrsBaselCodeController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -77,8 +72,7 @@ describe('#addOrsBaselCodeController', () => {
     test('returns 200 with page heading', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -91,8 +85,7 @@ describe('#addOrsBaselCodeController', () => {
     test('renders a single code input and no remove button by default', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="basel-code-1-input"')
@@ -104,8 +97,7 @@ describe('#addOrsBaselCodeController', () => {
     test('renders the code field as a type-ahead select sourced from the approved list, not free text', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('<select')
@@ -129,7 +121,7 @@ describe('#addOrsBaselCodeController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain(
@@ -141,8 +133,7 @@ describe('#addOrsBaselCodeController', () => {
     test('shows a GDS-style guidance link that opens in a new tab', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="guidance-link"')
@@ -157,8 +148,7 @@ describe('#addOrsBaselCodeController', () => {
     test('back link points to recycling-operation-details', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -168,8 +158,7 @@ describe('#addOrsBaselCodeController', () => {
     test('cancel link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -190,8 +179,7 @@ describe('#addOrsBaselCodeController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -210,7 +198,7 @@ describe('#addOrsBaselCodeController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(result).toContain('data-testid="basel-code-1-input"')
@@ -224,8 +212,7 @@ describe('#addOrsBaselCodeController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        url: `/cy${BASE_URL}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -350,7 +337,7 @@ describe('#addOrsBaselCodeController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(result).toContain('A1181')
@@ -372,7 +359,7 @@ describe('#addOrsBaselCodeController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(result).toContain('value="A1181" selected')
@@ -461,7 +448,7 @@ describe('#addOrsBaselCodeController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: cookiesFrom(postResponse) }
+        headers: { cookie: cookiesFrom(postResponse) }
       })
 
       expect(result).toContain('data-testid="basel-code-1-input"')

@@ -41,12 +41,7 @@ describe('#addInterimSiteCyaController', () => {
     await server.stop({ timeout: 0 })
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   const postHeaders = {
-    ...operatorHeaders,
     'content-type': 'application/x-www-form-urlencoded'
   }
 
@@ -126,8 +121,7 @@ describe('#addInterimSiteCyaController', () => {
     test('redirects to select-overseas-sites when there is no linked ORS site (direct navigation)', async () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -138,7 +132,7 @@ describe('#addInterimSiteCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -149,7 +143,7 @@ describe('#addInterimSiteCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="summary-list"')
@@ -159,7 +153,7 @@ describe('#addInterimSiteCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="row-country"')
@@ -176,7 +170,7 @@ describe('#addInterimSiteCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).not.toContain('data-testid="row-site-number"')
@@ -186,7 +180,7 @@ describe('#addInterimSiteCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="change-country"')
@@ -197,7 +191,7 @@ describe('#addInterimSiteCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -208,7 +202,7 @@ describe('#addInterimSiteCyaController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/cy${BASE_URL}`,
-        headers: { ...operatorHeaders, cookie }
+        headers: { cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -231,7 +225,7 @@ describe('#addInterimSiteCyaController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'GET',
           url: BASE_URL,
-          headers: { ...operatorHeaders, cookie }
+          headers: { cookie }
         })
 
         expect(statusCode).toBe(statusCodes.redirect)
@@ -252,7 +246,6 @@ describe('#addInterimSiteCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -284,7 +277,6 @@ describe('#addInterimSiteCyaController', () => {
           method: 'POST',
           url: BASE_URL,
           headers: {
-            ...operatorHeaders,
             'content-type': 'application/x-www-form-urlencoded',
             Cookie: cookie
           },
@@ -307,7 +299,6 @@ describe('#addInterimSiteCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -330,7 +321,6 @@ describe('#addInterimSiteCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -341,7 +331,6 @@ describe('#addInterimSiteCyaController', () => {
         method: 'GET',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           Cookie: cookiesFrom(refused) || cookie
         }
       })
@@ -371,7 +360,6 @@ describe('#addInterimSiteCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -406,7 +394,6 @@ describe('#addInterimSiteCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -432,7 +419,6 @@ describe('#addInterimSiteCyaController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -483,8 +469,7 @@ describe('#addInterimSiteCyaController', () => {
         // RA-603: the edit route names the INTERIM site (42), not its parent
         // ORS (555). An ORS can hold several, so the parent no longer says
         // which one.
-        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`,
-        headers: operatorHeaders
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}/interim-site/edit/42`
       })
       expect(entryResponse.statusCode).toBe(statusCodes.redirect)
       // RA-632: Change lands straight on this page.
@@ -501,7 +486,7 @@ describe('#addInterimSiteCyaController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: BASE_URL,
-        headers: { ...operatorHeaders, cookie: sessionCookie }
+        headers: { cookie: sessionCookie }
       })
 
       expect(result).toMatch(

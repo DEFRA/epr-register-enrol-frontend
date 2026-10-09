@@ -38,7 +38,6 @@ describe('#readyController', () => {
       'api.stubEnabled': false,
       'api.sharedSecret': 'shared-secret',
       'reex.frontendBaseUrl': 'http://reex-frontend.test',
-      'auth.azureEntraId.tenantId': 'tenant-id',
       'auth.defraId.serviceId': 'service-id',
       'auth.callbackBaseUrl': 'https://app.test'
     }

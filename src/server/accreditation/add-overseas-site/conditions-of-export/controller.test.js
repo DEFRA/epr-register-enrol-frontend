@@ -35,10 +35,7 @@ describe('#addOrsConditionsOfExportController', () => {
 
     const res = await server.inject({
       method: 'GET',
-      url: BASE_URL,
-      headers: {
-        'x-test-user-type': 'operator'
-      }
+      url: BASE_URL
     })
     const setCookie = res.headers['set-cookie']
     cookie = Array.isArray(setCookie)
@@ -46,16 +43,11 @@ describe('#addOrsConditionsOfExportController', () => {
       : (setCookie ?? '').split(';')[0]
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe(`GET ${BASE_URL}`, () => {
     test('returns 200 with page heading', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -65,8 +57,7 @@ describe('#addOrsConditionsOfExportController', () => {
     test('renders conditions list', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="conditions-list"')
@@ -78,8 +69,7 @@ describe('#addOrsConditionsOfExportController', () => {
     test('renders Yes/No radios', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="radio-yes"')
@@ -89,8 +79,7 @@ describe('#addOrsConditionsOfExportController', () => {
     test('back link points to repatriated-loads', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="back-link"')
@@ -100,8 +89,7 @@ describe('#addOrsConditionsOfExportController', () => {
     test('cancel link points to select-overseas-sites', async () => {
       const { result } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(result).toContain('data-testid="cancel-link"')
@@ -122,8 +110,7 @@ describe('#addOrsConditionsOfExportController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: BASE_URL,
-        headers: operatorHeaders
+        url: BASE_URL
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -133,8 +120,7 @@ describe('#addOrsConditionsOfExportController', () => {
     test('returns 200 in Welsh locale', async () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy${BASE_URL}`,
-        headers: operatorHeaders
+        url: `/cy${BASE_URL}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -157,7 +143,6 @@ describe('#addOrsConditionsOfExportController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -173,7 +158,6 @@ describe('#addOrsConditionsOfExportController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -192,7 +176,6 @@ describe('#addOrsConditionsOfExportController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },
@@ -208,7 +191,6 @@ describe('#addOrsConditionsOfExportController', () => {
         method: 'POST',
         url: BASE_URL,
         headers: {
-          ...operatorHeaders,
           'content-type': 'application/x-www-form-urlencoded',
           Cookie: cookie
         },

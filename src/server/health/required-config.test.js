@@ -11,7 +11,6 @@ function makeConfig(overrides = {}) {
     'api.sharedSecret': 'shared-secret',
     'reex.frontendBaseUrl': 'http://reex-frontend.test',
     'auth.defraId.manageAccountUrl': 'http://manage-account.test',
-    'auth.azureEntraId.tenantId': 'tenant-id',
     'auth.defraId.serviceId': 'service-id',
     'auth.callbackBaseUrl': 'https://app.test',
     ...overrides
@@ -127,23 +126,6 @@ describe('#getMissingRequiredConfig', () => {
     ).toEqual([])
   })
 
-  test('flags ENTRA_TENANT_ID when blank, real auth, non-local', () => {
-    expect(
-      getMissingRequiredConfig(makeConfig({ 'auth.azureEntraId.tenantId': '' }))
-    ).toEqual(['ENTRA_TENANT_ID'])
-  })
-
-  test('does not flag ENTRA_TENANT_ID when auth.stubEnabled is true', () => {
-    expect(
-      getMissingRequiredConfig(
-        makeConfig({
-          'auth.azureEntraId.tenantId': '',
-          'auth.stubEnabled': true
-        })
-      )
-    ).toEqual([])
-  })
-
   test('flags DEFRA_ID_SERVICE_ID when blank, real auth, non-local', () => {
     expect(
       getMissingRequiredConfig(makeConfig({ 'auth.defraId.serviceId': '' }))
@@ -185,7 +167,6 @@ describe('#getMissingRequiredConfig', () => {
           'api.sharedSecret': '',
           'reex.frontendBaseUrl': '',
           'auth.defraId.manageAccountUrl': '',
-          'auth.azureEntraId.tenantId': '',
           'auth.defraId.serviceId': '',
           'auth.callbackBaseUrl': 'http://localhost:3000'
         })
@@ -195,7 +176,6 @@ describe('#getMissingRequiredConfig', () => {
       'AUTH_SHARED_SECRET__BACKEND',
       'REEX_FRONTEND_BASE_URL',
       'DEFRA_ID_MANAGE_ACCOUNT_URL',
-      'ENTRA_TENANT_ID',
       'DEFRA_ID_SERVICE_ID',
       'AUTH_CALLBACK_BASE_URL'
     ])

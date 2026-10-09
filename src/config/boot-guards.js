@@ -4,8 +4,6 @@ export const PLACEHOLDER_SESSION_COOKIE_PASSWORD =
 const LOCAL_REDIS_HOSTS = new Set(['localhost', '127.0.0.1'])
 
 const OAUTH_CREDENTIALS = [
-  ['auth.azureEntraId.clientId', 'ENTRA_CLIENT_ID'],
-  ['auth.azureEntraId.clientSecret', 'ENTRA_CLIENT_SECRET'],
   ['auth.defraId.clientId', 'DEFRA_ID_CLIENT_ID'],
   ['auth.defraId.clientSecret', 'DEFRA_ID_CLIENT_SECRET'],
   ['auth.defraId.discoveryUrl', 'DEFRA_ID_DISCOVERY_URL']

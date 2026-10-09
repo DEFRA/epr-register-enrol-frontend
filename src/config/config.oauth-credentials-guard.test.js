@@ -26,35 +26,9 @@ describe('OAuth credentials boot guard', () => {
     process.env = originalEnv
   })
 
-  test('production boot rejects empty ENTRA_CLIENT_ID when stub auth disabled', async () => {
-    setProdWithRedisDeps()
-    process.env.AUTH_STUB_ENABLED = 'false'
-    delete process.env.ENTRA_CLIENT_ID
-    process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
-    process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'
-    process.env.DEFRA_ID_CLIENT_SECRET = 'defra-id-client-secret'
-    process.env.DEFRA_ID_DISCOVERY_URL = 'https://defra-id.example/.well-known'
-
-    await expect(import('./config.js')).rejects.toThrow(/ENTRA_CLIENT_ID/)
-  })
-
-  test('production boot rejects empty ENTRA_CLIENT_SECRET when stub auth disabled', async () => {
-    setProdWithRedisDeps()
-    process.env.AUTH_STUB_ENABLED = 'false'
-    process.env.ENTRA_CLIENT_ID = 'azure-client-id'
-    delete process.env.ENTRA_CLIENT_SECRET
-    process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'
-    process.env.DEFRA_ID_CLIENT_SECRET = 'defra-id-client-secret'
-    process.env.DEFRA_ID_DISCOVERY_URL = 'https://defra-id.example/.well-known'
-
-    await expect(import('./config.js')).rejects.toThrow(/ENTRA_CLIENT_SECRET/)
-  })
-
   test('production boot rejects empty DEFRA_ID_CLIENT_ID when stub auth disabled', async () => {
     setProdWithRedisDeps()
     process.env.AUTH_STUB_ENABLED = 'false'
-    process.env.ENTRA_CLIENT_ID = 'azure-client-id'
-    process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
     delete process.env.DEFRA_ID_CLIENT_ID
     process.env.DEFRA_ID_CLIENT_SECRET = 'defra-id-client-secret'
     process.env.DEFRA_ID_DISCOVERY_URL = 'https://defra-id.example/.well-known'
@@ -65,8 +39,6 @@ describe('OAuth credentials boot guard', () => {
   test('production boot rejects empty DEFRA_ID_CLIENT_SECRET when stub auth disabled', async () => {
     setProdWithRedisDeps()
     process.env.AUTH_STUB_ENABLED = 'false'
-    process.env.ENTRA_CLIENT_ID = 'azure-client-id'
-    process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
     process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'
     delete process.env.DEFRA_ID_CLIENT_SECRET
     process.env.DEFRA_ID_DISCOVERY_URL = 'https://defra-id.example/.well-known'
@@ -79,8 +51,6 @@ describe('OAuth credentials boot guard', () => {
   test('production boot rejects empty DEFRA_ID_DISCOVERY_URL when stub auth disabled', async () => {
     setProdWithRedisDeps()
     process.env.AUTH_STUB_ENABLED = 'false'
-    process.env.ENTRA_CLIENT_ID = 'azure-client-id'
-    process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
     process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'
     process.env.DEFRA_ID_CLIENT_SECRET = 'defra-id-client-secret'
     delete process.env.DEFRA_ID_DISCOVERY_URL
@@ -90,18 +60,15 @@ describe('OAuth credentials boot guard', () => {
     )
   })
 
-  test('production boot succeeds when all Entra and Defra ID credentials are set', async () => {
+  test('production boot succeeds when all Defra ID credentials are set', async () => {
     setProdWithRedisDeps()
     process.env.AUTH_STUB_ENABLED = 'false'
     process.env.API_STUB_ENABLED = 'false'
-    process.env.ENTRA_CLIENT_ID = 'azure-client-id'
-    process.env.ENTRA_CLIENT_SECRET = 'azure-client-secret'
     process.env.DEFRA_ID_CLIENT_ID = 'defra-id-client-id'
     process.env.DEFRA_ID_CLIENT_SECRET = 'defra-id-client-secret'
     process.env.DEFRA_ID_DISCOVERY_URL = 'https://defra-id.example/.well-known'
 
     const mod = await import('./config.js')
-    expect(mod.config.get('auth.azureEntraId.clientId')).toBe('azure-client-id')
     expect(mod.config.get('auth.defraId.clientId')).toBe('defra-id-client-id')
   })
 
@@ -111,8 +78,6 @@ describe('OAuth credentials boot guard', () => {
     process.env.ENVIRONMENT = 'dev'
     process.env.SESSION_COOKIE_PASSWORD = REAL_SECRET
     process.env.AUTH_STUB_ENABLED = 'true'
-    delete process.env.ENTRA_CLIENT_ID
-    delete process.env.ENTRA_CLIENT_SECRET
     delete process.env.DEFRA_ID_CLIENT_ID
     delete process.env.DEFRA_ID_CLIENT_SECRET
     delete process.env.DEFRA_ID_DISCOVERY_URL
@@ -130,15 +95,20 @@ describe('OAuth credentials boot guard', () => {
     delete process.env.SESSION_COOKIE_PASSWORD
     delete process.env.SESSION_COOKIE_SECURE
     delete process.env.AUTH_STUB_ENABLED
-    delete process.env.ENTRA_CLIENT_ID
-    delete process.env.ENTRA_CLIENT_SECRET
     delete process.env.DEFRA_ID_CLIENT_ID
     delete process.env.DEFRA_ID_CLIENT_SECRET
     delete process.env.DEFRA_ID_DISCOVERY_URL
 
     const mod = await import('./config.js')
     expect(mod.config.get('isProduction')).toBe(false)
-    expect(mod.config.get('auth.azureEntraId.clientId')).toBe('')
     expect(mod.config.get('auth.defraId.clientId')).toBe('')
+  })
+
+  // RA-537: regulator sign-in (Azure Entra ID) and its RA-427 kill switch were
+  // removed — the schema keys must be gone, not just left unread.
+  test('has no Entra ID or regulator-access config keys', async () => {
+    const mod = await import('./config.js')
+    expect(() => mod.config.get('auth.azureEntraId')).toThrow()
+    expect(() => mod.config.get('auth.regulatorAccessDisabled')).toThrow()
   })
 })

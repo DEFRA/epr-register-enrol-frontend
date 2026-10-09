@@ -270,18 +270,13 @@ describe('#samplingPlanUploadController', () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true })
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/sampling-plan/{applicationId}', () => {
     test('returns 200 with page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -298,8 +293,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -317,8 +311,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -331,8 +324,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="sub-heading"')
@@ -346,8 +338,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="file-requirements"')
@@ -360,8 +351,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="document-type-input"')
@@ -381,8 +371,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="uploaded-files-table"')
@@ -393,8 +382,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="view-uploaded-files-link"')
@@ -412,8 +400,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="view-uploaded-files-link"')
@@ -428,8 +415,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -442,8 +428,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -460,8 +445,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -482,8 +466,7 @@ describe('#samplingPlanUploadController', () => {
 
         const { statusCode, result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}`
         })
 
         expect(statusCode).toBe(statusCodes.ok)
@@ -501,8 +484,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -527,8 +509,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -546,8 +527,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -578,8 +558,7 @@ describe('#samplingPlanUploadController', () => {
       try {
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}`
         })
 
         expect(result).not.toContain('data-testid="regulator-query-banner"')
@@ -594,8 +573,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result, statusCode } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/sampling-plan/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -669,7 +647,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -693,7 +671,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -717,7 +695,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -741,7 +719,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -765,7 +743,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -793,7 +771,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -817,7 +795,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -835,7 +813,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({ filename: '' })
       })
 
@@ -849,7 +827,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'malware.exe',
           contentType: 'application/octet-stream'
@@ -875,7 +853,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({ filename: 'sampling-plan.pdf' })
       })
 
@@ -898,7 +876,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'Evidence Rafa.docx',
           contentType:
@@ -916,7 +894,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png',
@@ -935,7 +913,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png',
@@ -953,7 +931,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({ filename: '', documentType: '' })
       })
 
@@ -968,7 +946,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'malware.exe',
           contentType: 'application/octet-stream',
@@ -996,7 +974,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -1032,7 +1010,7 @@ describe('#samplingPlanUploadController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-          headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+          headers: { 'Content-Type': multipartContentType },
           payload: buildMultipartPayload({
             filename,
             contentType: 'application/pdf'
@@ -1056,7 +1034,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'sampling-plan.png',
           contentType: 'image/png'
@@ -1075,7 +1053,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildMultipartPayload({
           filename: 'plan.pdf',
           contentType: 'application/pdf'
@@ -1095,7 +1073,6 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: operatorHeaders,
         payload: {}
       })
 
@@ -1134,7 +1111,7 @@ describe('#samplingPlanUploadController', () => {
       const postResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildFilePayload(documentType)
       })
       const raw = postResponse.headers['set-cookie']
@@ -1151,7 +1128,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1179,7 +1156,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1213,7 +1190,7 @@ describe('#samplingPlanUploadController', () => {
       await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(postSpy).toHaveBeenCalledWith(
@@ -1240,7 +1217,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1269,7 +1246,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1299,7 +1276,7 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1348,7 +1325,7 @@ describe('#samplingPlanUploadController', () => {
       const uploadResponse = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
-        headers: { ...operatorHeaders, 'Content-Type': multipartContentType },
+        headers: { 'Content-Type': multipartContentType },
         payload: buildFilePayload(filename, documentType)
       })
       const raw = uploadResponse.headers['set-cookie']
@@ -1372,7 +1349,7 @@ describe('#samplingPlanUploadController', () => {
       const statusResponse = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { ...operatorHeaders, Cookie: cookie }
+        headers: { Cookie: cookie }
       })
 
       return { statusResponse, addFileSpy }
@@ -1402,8 +1379,7 @@ describe('#samplingPlanUploadController', () => {
       )
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('first.pdf')
@@ -1439,8 +1415,7 @@ describe('#samplingPlanUploadController', () => {
       )
       const finalResults = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
       expect(finalResults.result).toContain('first.pdf')
       expect(finalResults.result).toContain('second.pdf')
@@ -1479,8 +1454,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1501,8 +1475,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1528,8 +1501,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(result).toContain('Supporting evidence')
@@ -1547,8 +1519,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(result).toContain('Not specified')
@@ -1577,8 +1548,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(result).toContain('clean.pdf')
@@ -1590,8 +1560,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1611,8 +1580,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
       })
 
       expect(result).toContain('problem uploading your file')
@@ -1630,8 +1598,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(result).toContain(
@@ -1644,8 +1611,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -1662,8 +1628,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, headers } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(statusCode).toBe(statusCodes.redirect)
@@ -1682,8 +1647,7 @@ describe('#samplingPlanUploadController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1706,7 +1670,6 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 
@@ -1729,7 +1692,6 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, headers } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 
@@ -1754,7 +1716,6 @@ describe('#samplingPlanUploadController', () => {
         const { statusCode, headers } = await server.inject({
           method: 'POST',
           url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-          headers: operatorHeaders,
           payload: { action: 'saveAndContinue' }
         })
 
@@ -1772,7 +1733,6 @@ describe('#samplingPlanUploadController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 
@@ -1795,7 +1755,6 @@ describe('#samplingPlanUploadController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 
@@ -1819,7 +1778,6 @@ describe('#samplingPlanUploadController', () => {
       const { result, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 
@@ -1844,7 +1802,6 @@ describe('#samplingPlanUploadController', () => {
       const { headers, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 
@@ -1872,7 +1829,6 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 
@@ -1896,7 +1852,6 @@ describe('#samplingPlanUploadController', () => {
       const { headers, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndComeLater' }
       })
 
@@ -1917,7 +1872,6 @@ describe('#samplingPlanUploadController', () => {
       await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndComeLater' }
       })
 
@@ -1934,7 +1888,6 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndComeLater' }
       })
 
@@ -1957,7 +1910,6 @@ describe('#samplingPlanUploadController', () => {
       const { headers, statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'deleteFile', fileId: 'file-001' }
       })
 
@@ -1980,7 +1932,6 @@ describe('#samplingPlanUploadController', () => {
       const injectPromise = server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'deleteFile', fileId: 'file-001' }
       })
       await vi.advanceTimersByTimeAsync(15000)
@@ -2002,7 +1953,6 @@ describe('#samplingPlanUploadController', () => {
       const injectPromise = server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'deleteFile', fileId: 'file-001' }
       })
       await vi.advanceTimersByTimeAsync(5000)
@@ -2022,7 +1972,6 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'deleteFile' }
       })
 
@@ -2038,7 +1987,6 @@ describe('#samplingPlanUploadController', () => {
       const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results`,
-        headers: operatorHeaders,
         payload: { action: 'saveAndContinue' }
       })
 

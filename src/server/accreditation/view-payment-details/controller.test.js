@@ -48,18 +48,13 @@ describe('#viewPaymentDetailsController', () => {
     vi.clearAllMocks()
   })
 
-  const operatorHeaders = {
-    'x-test-user-type': 'operator'
-  }
-
   describe('GET /accreditation/view-payment-details/{applicationId}', () => {
     test('returns 200 and renders page heading', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -74,8 +69,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -91,8 +85,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="success-banner"')
@@ -105,8 +98,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="bank-payment-reference"')
@@ -128,8 +120,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="bank-payment-reference"')
@@ -142,8 +133,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="bank-sort-code"')
@@ -165,8 +155,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('data-testid="amount-due"')
@@ -188,8 +177,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       // 2 sites x £328 = £656
@@ -215,8 +203,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       // 2 selected sites x £328 = £656; total = £546 + £656 = £1,202
@@ -246,8 +233,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       // 2 ORS x £328 = £656; total = £546 + £656 = £1,202
@@ -271,8 +257,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('Overseas Sites')
@@ -287,8 +272,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).not.toContain('Overseas Sites')
@@ -309,8 +293,7 @@ describe('#viewPaymentDetailsController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`
         })
 
         expect(result).toContain(expectedAmount)
@@ -324,8 +307,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -350,13 +332,11 @@ describe('#viewPaymentDetailsController', () => {
       const [first, second] = await Promise.all([
         server.inject({
           method: 'GET',
-          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`
         }),
         server.inject({
           method: 'GET',
-          url: `/accreditation/view-payment-details/app-inv-002`,
-          headers: operatorHeaders
+          url: `/accreditation/view-payment-details/app-inv-002`
         })
       ])
 
@@ -371,8 +351,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Glass')
@@ -388,8 +367,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Glass - Remelt')
@@ -406,8 +384,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Glass - Other')
@@ -421,8 +398,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Glass')
@@ -440,8 +416,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain('Steel')
@@ -455,8 +430,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { statusCode } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -469,8 +443,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -482,8 +455,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.internalServerError)
@@ -495,8 +467,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { result } = await server.inject({
         method: 'GET',
-        url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(result).toContain(
@@ -509,8 +480,7 @@ describe('#viewPaymentDetailsController', () => {
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
-        url: `/cy/accreditation/view-payment-details/${APPLICATION_ID}`,
-        headers: operatorHeaders
+        url: `/cy/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -579,8 +549,7 @@ describe('#viewPaymentDetailsController', () => {
 
           const { result } = await server.inject({
             method: 'GET',
-            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-            headers: operatorHeaders
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`
           })
 
           for (const [testId, value] of Object.entries(expectPresent)) {
@@ -631,8 +600,7 @@ describe('#viewPaymentDetailsController', () => {
 
           const { result } = await server.inject({
             method: 'GET',
-            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-            headers: operatorHeaders
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`
           })
 
           for (const [testId, value] of Object.entries(expectPresent)) {
@@ -650,8 +618,7 @@ describe('#viewPaymentDetailsController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`
         })
 
         expect(result).toContain('EA RECEIPTS')
@@ -665,8 +632,7 @@ describe('#viewPaymentDetailsController', () => {
 
         const { result } = await server.inject({
           method: 'GET',
-          url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-          headers: operatorHeaders
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`
         })
 
         expect(result).toContain('data-testid="banner-heading"')
@@ -696,8 +662,7 @@ describe('#viewPaymentDetailsController', () => {
 
           const { result } = await server.inject({
             method: 'GET',
-            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-            headers: operatorHeaders
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`
           })
 
           expect(result).toContain('data-testid="bank-payment-reference"')
@@ -744,8 +709,7 @@ describe('#viewPaymentDetailsController', () => {
 
           const { result } = await server.inject({
             method: 'GET',
-            url: `/accreditation/view-payment-details/${APPLICATION_ID}`,
-            headers: operatorHeaders
+            url: `/accreditation/view-payment-details/${APPLICATION_ID}`
           })
 
           expect(result).toContain('data-testid="contact-regulator-heading"')

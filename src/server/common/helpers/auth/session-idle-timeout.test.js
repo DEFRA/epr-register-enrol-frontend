@@ -151,24 +151,27 @@ describe('yarSessionAuthenticate', () => {
     expect(result).toBe('unauthenticated-result')
   })
 
-  test('builds credentials scope from userType and regulatorRole when present', () => {
-    const yar = fakeYar({
-      user: { userType: 'regulator', regulatorRole: 'regulator-standard' }
-    })
-    const h = mockH()
+  // RA-537: a session written before regulator sign-in was removed is
+  // dropped and treated as signed out, so the caller is sent to login
+  // instead of 403ing on every page.
+  test.each(['regulator', undefined])(
+    'treats a session with userType %s as unauthenticated and resets it',
+    (userType) => {
+      const yar = fakeYar({
+        user: { userType, regulatorRole: 'regulator-standard' }
+      })
+      const h = mockH()
 
-    yarSessionAuthenticate({ yar }, h)
+      const result = yarSessionAuthenticate({ yar }, h)
 
-    expect(h.authenticated).toHaveBeenCalledWith({
-      credentials: {
-        userType: 'regulator',
-        regulatorRole: 'regulator-standard',
-        scope: ['regulator', 'regulator-standard']
-      }
-    })
-  })
+      expect(yar._calls.some((c) => c.op === 'reset')).toBe(true)
+      expect(h.unauthenticated).toHaveBeenCalledTimes(1)
+      expect(h.authenticated).not.toHaveBeenCalled()
+      expect(result).toBe('unauthenticated-result')
+    }
+  )
 
-  test('builds credentials scope from userType only when regulatorRole absent', () => {
+  test('builds credentials scope from userType', () => {
     const yar = fakeYar({ user: { userType: 'operator' } })
     const h = mockH()
 

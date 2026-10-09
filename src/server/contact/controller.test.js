@@ -40,8 +40,7 @@ describe('#contactController', () => {
   test('Should render the real translated top nav for an authenticated operator', async () => {
     const { result } = await server.inject({
       method: 'GET',
-      url: '/contact',
-      headers: { 'x-test-user-type': 'operator' }
+      url: '/contact'
     })
 
     expect(result).toContain('data-testid="nav-home-link"')
@@ -57,8 +56,7 @@ describe('#contactController', () => {
   test('Should render the real translated top nav in Welsh for an authenticated operator', async () => {
     const { result } = await server.inject({
       method: 'GET',
-      url: '/cy/contact',
-      headers: { 'x-test-user-type': 'operator' }
+      url: '/cy/contact'
     })
 
     expect(result).toMatch(/nav-manage-account-link"[^>]*>\s*Rheoli cyfrif\s*</)

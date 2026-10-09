@@ -15,7 +15,6 @@ export const basicAuthExcludedPaths = Object.freeze([
   '/health',
   '/health/ready',
   '/favicon.ico',
-  '/auth/regulator/callback',
   '/auth/operator/callback'
 ])
 
