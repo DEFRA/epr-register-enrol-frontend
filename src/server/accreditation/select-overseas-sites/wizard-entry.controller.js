@@ -1,5 +1,6 @@
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { findInterimSite } from '../../common/helpers/interimSites.js'
+import { answersFromSite } from '../../common/helpers/overseasSiteCompleteness.js'
 import { canAddInterimSite } from '../../common/helpers/interimSiteLimit.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
@@ -21,10 +22,6 @@ import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplica
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
-}
-
-function siteNameUrl(applicationId) {
-  return `/accreditation/add-overseas-site/${applicationId}/site-name`
 }
 
 function checkYourAnswersUrl(applicationId) {
@@ -125,38 +122,13 @@ async function loadSiteForWizardEntry(request, h) {
 // [sessionField, siteField, fallback] rather than a `??`-per-line object literal — a chain of
 // that many nullish-coalescing operators in one expression trips SonarCloud's cyclomatic-
 // complexity gate even though there's no real branching here, just a flat field-by-field default.
-const ORS_SESSION_SEED_FIELDS = [
-  ['siteName', 'siteName', ''],
-  ['addressLine1', 'addressLine1', ''],
-  ['addressLine2', 'addressLine2', ''],
-  ['townOrCity', 'townOrCity', ''],
-  ['country', 'country', ''],
-  ['coordinates', 'coordinates', ''],
-  ['siteContactName', 'contactName', ''],
-  ['siteContactEmail', 'contactEmail', ''],
-  ['siteContactPhone', 'contactPhone', ''],
-  ['recyclingOperationCodes', 'operationCodes', []],
-  ['repatriatedLoads', 'repatriatedLoads', ''],
-  ['conditionsOfExport', 'conditionsOfExport', null]
-]
-
-function buildOrsSessionSeed(site) {
-  const seed = ORS_SESSION_SEED_FIELDS.reduce(
-    (acc, [sessionField, siteField, fallback]) => {
-      acc[sessionField] = site[siteField] ?? fallback
-      return acc
-    },
-    {}
-  )
-  seed.baselAndOecdCodes = [site.code1, site.code2, site.code3].filter(Boolean)
-  return seed
-}
-
-// Entry point for the Registered section's "Add To Accreditation" button — seeds the
+// Entry point for the Registered section's "Include in this application" button — seeds the
 // add-overseas-site wizard session from an existing registered site's known fields (mirrors
 // the linkedSiteId precedent used to seed the add-interim-site wizard from check-your-answers)
-// then hands off to the wizard's first step. check-your-answers reads promotingSiteId back off
-// the session to call promoteOverseasSite instead of createOverseasSite on submit.
+// and lands on check-your-answers, which shows everything known about the site and refuses
+// to save it until anything missing (Re/Ex does not supply every field) has been filled in
+// through the rows' Change links. check-your-answers reads promotingSiteId back off the
+// session to call promoteOverseasSite instead of createOverseasSite on submit.
 export const selectOverseasSitesPromoteEntryGetController = {
   async handler(request, h) {
     const { redirect, applicationId, site } = await loadSiteForWizardEntry(
@@ -169,11 +141,11 @@ export const selectOverseasSitesPromoteEntryGetController = {
 
     resetAddOrsSession(request)
     setAddOrsSession(request, {
-      ...buildOrsSessionSeed(site),
+      ...answersFromSite(site),
       promotingSiteId: site.siteId
     })
 
-    return h.redirect(siteNameUrl(applicationId))
+    return h.redirect(checkYourAnswersUrl(applicationId))
   }
 }
 
@@ -194,7 +166,7 @@ export const selectOverseasSitesEditEntryGetController = {
 
     resetAddOrsSession(request)
     setAddOrsSession(request, {
-      ...buildOrsSessionSeed(site),
+      ...answersFromSite(site),
       editingSiteId: site.siteId
     })
 

@@ -8,6 +8,7 @@ import {
 } from '../../common/helpers/accreditationUrls.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { redirectIfSitesIncomplete } from '../../common/helpers/incompleteSitesGate.js'
 
 function renderPage(h, viewData) {
   return h.view('accreditation/query-declaration/index', viewData)
@@ -94,6 +95,17 @@ export const queryDeclarationGetController = {
       return statusRedirect
     }
 
+    const incompleteRedirect = redirectIfSitesIncomplete({
+      request,
+      h,
+      t,
+      application,
+      applicationId
+    })
+    if (incompleteRedirect) {
+      return incompleteRedirect
+    }
+
     return renderPage(
       h,
       baseViewData(
@@ -133,6 +145,17 @@ export const queryDeclarationPostController = {
     const statusRedirect = redirectIfStatusNot(h, application, 'Queried')
     if (statusRedirect) {
       return statusRedirect
+    }
+
+    const incompleteRedirect = redirectIfSitesIncomplete({
+      request,
+      h,
+      t,
+      application,
+      applicationId
+    })
+    if (incompleteRedirect) {
+      return incompleteRedirect
     }
 
     const errors = validateQueryDeclaration(fullName, role, t)

@@ -13,10 +13,12 @@ import {
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
+import { annotateRows, buildRows } from './rows.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 import { describeSiteSaveValidationError } from '../../../common/helpers/logging/describe-site-save-validation-error.js'
 import { siteCanTakeInterimSite } from '../../../common/helpers/interimSiteLimit.js'
-import { fromCyaQuery } from '../return-to-cya.js'
+import { activeInterimSites } from '../../../common/helpers/interimSites.js'
+import { findIncompleteAnswers } from '../../../common/helpers/overseasSiteCompleteness.js'
 
 const ORS_SUCCESS_FLASH = 'orsSuccess'
 const ORS_PROMOTE_SUCCESS_FLASH = 'orsPromoteSuccess'
@@ -31,26 +33,6 @@ function selectOrsUrl(applicationId) {
 
 function addInterimSiteCountryUrl(applicationId) {
   return `/accreditation/add-interim-site/${applicationId}/country`
-}
-
-function siteNameUrl(applicationId) {
-  return `/accreditation/add-overseas-site/${applicationId}/site-name`
-}
-
-function siteLocationUrl(applicationId) {
-  return `/accreditation/add-overseas-site/${applicationId}/site-location`
-}
-
-function contactDetailsUrl(applicationId) {
-  return `/accreditation/add-overseas-site/${applicationId}/site-contact-details`
-}
-
-function recyclingOperationUrl(applicationId) {
-  return `/accreditation/add-overseas-site/${applicationId}/recycling-operation-details`
-}
-
-function baselCodeUrl(applicationId) {
-  return `/accreditation/add-overseas-site/${applicationId}/basel-convention-and-oecd-code`
 }
 
 function repatriatedLoadsUrl(applicationId) {
@@ -72,116 +54,46 @@ function renderPage(h, viewData) {
   )
 }
 
-function buildSiteNameRow(t, applicationId, session) {
+function summariseInterimSite(site) {
   return {
-    key: t('pages.addOverseasSite.cya.rows.siteName'),
-    value: session.siteName ?? '',
-    changeUrl: `${siteNameUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'site-name'
+    siteName: site.siteName,
+    location: formatSiteAddress(site),
+    contactName: site.contactName,
+    contactEmail: site.contactEmail,
+    contactPhone: site.contactPhone,
+    recyclingOperation: (site.operationCodes ?? []).join(', ')
   }
 }
 
-function buildLocationRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.location'),
-    value: formatSiteAddress(session),
-    changeUrl: `${siteLocationUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'location'
+// Read-only: the interim sites already on the site being included or changed.
+// They are changed from the site list, not here. A failure to load them must
+// not stop the operator reviewing and saving the site itself.
+async function loadInterimSites(
+  request,
+  organisationId,
+  applicationId,
+  session
+) {
+  const siteId = session.editingSiteId ?? session.promotingSiteId
+  if (siteId == null) {
+    return []
   }
-}
-
-function buildCoordinatesRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.coordinates'),
-    value: session.coordinates ?? '',
-    changeUrl: `${siteLocationUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'coordinates'
+  try {
+    const application = await accreditationApiService.getApplication(
+      organisationId,
+      applicationId
+    )
+    const site = application?.overseasSites?.sites?.find(
+      (candidate) => candidate.siteId === siteId
+    )
+    return activeInterimSites(site).map(summariseInterimSite)
+  } catch (err) {
+    request.server.logger.warn(
+      { err },
+      `Could not load interim sites for the check-your-answers summary, application ${applicationId}`
+    )
+    return []
   }
-}
-
-function buildContactNameRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.contactName'),
-    value: session.siteContactName ?? '',
-    changeUrl: `${contactDetailsUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'contact-name'
-  }
-}
-
-function buildContactEmailRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.contactEmail'),
-    value: session.siteContactEmail ?? '',
-    changeUrl: `${contactDetailsUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'contact-email'
-  }
-}
-
-function buildContactPhoneRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.contactPhone'),
-    value: session.siteContactPhone ?? '',
-    changeUrl: `${contactDetailsUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'contact-phone'
-  }
-}
-
-function buildRecyclingOperationRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.recyclingOperation'),
-    value: (session.recyclingOperationCodes ?? []).join(', '),
-    changeUrl: `${recyclingOperationUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'recycling-operation'
-  }
-}
-
-function buildBaselCodesRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.baselCodes'),
-    type: 'codeList',
-    codes: (session.baselAndOecdCodes ?? []).map((value, index) => ({
-      value,
-      index
-    })),
-    changeUrl: `${baselCodeUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'basel-codes'
-  }
-}
-
-function buildRepatriatedLoadsRow(t, applicationId, session) {
-  return {
-    key: t('pages.addOverseasSite.cya.rows.repatriatedLoads'),
-    value: session.repatriatedLoads ?? '',
-    changeUrl: `${repatriatedLoadsUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'repatriated-loads'
-  }
-}
-
-function buildConditionsOfExportRow(t, applicationId, session) {
-  if (session.conditionsOfExport == null) {
-    return null
-  }
-  return {
-    key: t('pages.addOverseasSite.cya.rows.conditionsOfExport'),
-    value: session.conditionsOfExport ? t('common.yes') : t('common.no'),
-    changeUrl: `${conditionsOfExportUrl(applicationId)}${fromCyaQuery()}`,
-    testId: 'conditions-of-export'
-  }
-}
-
-function buildRows(t, applicationId, session) {
-  return [
-    buildSiteNameRow(t, applicationId, session),
-    buildLocationRow(t, applicationId, session),
-    buildCoordinatesRow(t, applicationId, session),
-    buildContactNameRow(t, applicationId, session),
-    buildContactEmailRow(t, applicationId, session),
-    buildContactPhoneRow(t, applicationId, session),
-    buildRecyclingOperationRow(t, applicationId, session),
-    buildBaselCodesRow(t, applicationId, session),
-    buildRepatriatedLoadsRow(t, applicationId, session),
-    buildConditionsOfExportRow(t, applicationId, session)
-  ].filter(Boolean)
 }
 
 // RA-486: the last wizard step before this page depends on materialType —
@@ -205,8 +117,13 @@ function buildViewData(
   applicationId,
   session,
   error,
-  showAddInterimSiteButton = true
+  showAddInterimSiteButton = true,
+  { materialType, issues = [], interimSites = [] } = {}
 ) {
+  const { rows, errorSummary } = annotateRows(
+    buildRows(t, applicationId, session, materialType),
+    issues
+  )
   return {
     pageTitle: t('pages.addOverseasSite.cya.title'),
     heading: t('pages.addOverseasSite.cya.heading'),
@@ -216,7 +133,18 @@ function buildViewData(
     cancelLink: t('pages.addOverseasSite.cya.cancelLink'),
     backLink: cyaBackLink(applicationId, session),
     cancelUrl: selectOrsUrl(applicationId),
-    rows: buildRows(t, applicationId, session),
+    rows,
+    errorSummary,
+    interimSites,
+    interimSitesHeading: t('pages.addOverseasSite.cya.interimSitesHeading'),
+    interimSiteLabels: {
+      location: t('pages.addInterimSite.cya.rows.location'),
+      contactName: t('pages.addInterimSite.cya.rows.contactName'),
+      contactEmail: t('pages.addInterimSite.cya.rows.contactEmail'),
+      contactPhone: t('pages.addInterimSite.cya.rows.contactPhone'),
+      recyclingOperation: t('pages.addInterimSite.cya.rows.recyclingOperation')
+    },
+    notProvidedLabel: t('pages.addOverseasSite.cya.notProvided'),
     changeLabel: t('pages.addOverseasSite.cya.changeLink'),
     removeCodeLabel: t('pages.addOverseasSite.cya.removeCode'),
     noCodesEnteredLabel: t('pages.addOverseasSite.cya.noCodesEntered'),
@@ -312,7 +240,15 @@ export const addOrsCyaGetController = {
     )
     return renderPage(
       h,
-      buildViewData(t, applicationId, session, null, showAddInterimSiteButton)
+      buildViewData(t, applicationId, session, null, showAddInterimSiteButton, {
+        materialType: request.yar.get(ACCREDITATION_SESSION_KEYS.materialType),
+        interimSites: await loadInterimSites(
+          request,
+          organisationId,
+          applicationId,
+          session
+        )
+      })
     )
   }
 }
@@ -373,6 +309,40 @@ async function saveSite(mode, session, organisationId, applicationId) {
   )
 }
 
+// Shows the page again with what is missing named, in place of saving the site.
+async function renderIncompleteSite({
+  request,
+  h,
+  t,
+  organisationId,
+  applicationId,
+  session,
+  materialType,
+  issues
+}) {
+  const siteId = session.editingSiteId ?? session.promotingSiteId
+  return renderPage(
+    h,
+    buildViewData(
+      t,
+      applicationId,
+      session,
+      null,
+      await interimSiteAllowed(organisationId, applicationId, siteId),
+      {
+        materialType,
+        issues,
+        interimSites: await loadInterimSites(
+          request,
+          organisationId,
+          applicationId,
+          session
+        )
+      }
+    )
+  ).code(statusCodes.badRequest)
+}
+
 export const addOrsCyaPostController = {
   async handler(request, h) {
     const { applicationId } = request.params
@@ -398,6 +368,26 @@ export const addOrsCyaPostController = {
     }
 
     const { t } = getLocaleAndTranslator(request)
+
+    const materialType = request.yar.get(
+      ACCREDITATION_SESSION_KEYS.materialType
+    )
+
+    // The site must be complete before it is saved, wherever its answers
+    // came from (the operator, or Re/Ex via the site list).
+    const issues = findIncompleteAnswers(t, session, materialType)
+    if (issues.length > 0) {
+      return renderIncompleteSite({
+        request,
+        h,
+        t,
+        organisationId,
+        applicationId,
+        session,
+        materialType,
+        issues
+      })
+    }
 
     const mode = resolveSiteSaveMode(session)
 

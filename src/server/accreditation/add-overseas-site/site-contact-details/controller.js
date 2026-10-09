@@ -2,18 +2,13 @@ import Joi from 'joi'
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import { guardOverseasSiteWizardEntry } from '../../../common/helpers/overseasSiteWizardGuard.js'
-import {
-  extractSiteContactFields,
-  validateSiteContactDetails
-} from '../../../common/helpers/siteContactDetails.js'
+import { extractSiteContactFields } from '../../../common/helpers/siteContactDetails.js'
+import { validateOrsContactDetails } from '../../../common/helpers/overseasSiteAnswerValidation.js'
 import {
   getAddOrsSession,
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
-import {
-  ORS_CONTACT_PHONE_RULES,
-  PAYLOAD_SIZE_GUARD
-} from '../../../common/constants/siteFieldLimits.js'
+import { PAYLOAD_SIZE_GUARD } from '../../../common/constants/siteFieldLimits.js'
 
 // Type/size only, not "is this valid": the handler renders its own friendly
 // inline errors for missing/malformed values already. Without this, a
@@ -45,15 +40,6 @@ function renderPage(h, viewData) {
     'accreditation/add-overseas-site/site-contact-details/index',
     viewData
   )
-}
-
-// RA-468: the phone is optional here (only validated once entered) and the
-// contact name must not contain digits.
-const CONTACT_VALIDATION_OPTIONS = {
-  keyPrefix: 'pages.addOverseasSite.siteContactDetails.validation',
-  phoneRequired: false,
-  nameRejectsDigits: true,
-  phoneRules: ORS_CONTACT_PHONE_RULES
 }
 
 function buildViewData(t, applicationId, fields, errors) {
@@ -116,11 +102,7 @@ export const addOrsSiteContactDetailsPostController = {
     }
 
     const fields = extractSiteContactFields(request.payload)
-    const errors = validateSiteContactDetails(
-      t,
-      fields,
-      CONTACT_VALIDATION_OPTIONS
-    )
+    const errors = validateOrsContactDetails(t, fields)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

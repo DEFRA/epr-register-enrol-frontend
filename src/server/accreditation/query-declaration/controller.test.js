@@ -507,4 +507,98 @@ describe('#queryDeclarationController', () => {
       )
     })
   })
+
+  // A query response is also a submission: a site that is missing details has
+  // to be fixed first - but only when the operator is able to fix it.
+  describe('a site in the application is missing details', () => {
+    const LIST_URL = `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+    const DECLARATION_URL = `/accreditation/query-declaration/${APPLICATION_ID}`
+    const INCOMPLETE_SITE = {
+      siteId: 900002,
+      siteName: 'Site Beta',
+      country: 'France',
+      selected: true
+    }
+
+    const withOverseasSites = (sectionStatus) =>
+      makeApplication({
+        isExporter: true,
+        overseasSites: { sectionStatus, sites: [INCOMPLETE_SITE] }
+      })
+
+    test('GET turns the operator back to the site list when that section was queried', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(withOverseasSites('Queried'))
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(LIST_URL)
+    })
+
+    test('POST refuses to resubmit, and nothing is sent to the backend', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(withOverseasSites('Queried'))
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: DECLARATION_URL,
+        payload: { fullName: 'Jane Doe', role: 'Manager' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(LIST_URL)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('does not trap the operator when the sites section is read-only for this query', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        withOverseasSites('Completed')
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('lets a queried application with complete sites through', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          isExporter: true,
+          overseasSites: {
+            sectionStatus: 'Queried',
+            sites: [
+              {
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                country: 'Germany',
+                addressLine1: '123 Test St',
+                townOrCity: 'Berlin',
+                coordinates: '52.5200, 13.4050',
+                contactName: 'Jane Smith',
+                contactEmail: 'jane@example.com',
+                operationCodes: ['R4'],
+                code1: 'A1181',
+                repatriatedLoads: 'Returned within 30 days',
+                conditionsOfExport: true,
+                selected: true
+              }
+            ]
+          }
+        })
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: DECLARATION_URL
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+  })
 })

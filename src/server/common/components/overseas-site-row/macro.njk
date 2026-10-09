@@ -44,7 +44,9 @@
     promoteTestId  (string) - e.g. 'add-button-registered'
     labels         (object) - pre-translated strings, matching how every other
                    component here takes copy. Keys: change, withdraw, add,
-                   interimRemove, interimDisclosure
+                   incomplete, interimRemove, interimDisclosure
+    site.incomplete (boolean) - the site is in the application but missing
+                   required details; shows the "Incomplete" tag by its name
 #}
 
 {% macro interimSiteDisclosure(params) %}
@@ -193,7 +195,7 @@
   <tr class="govuk-table__row select-overseas-sites-row{% if site.interimSites.length or site.withdrawnInterimSites.length %} select-overseas-sites-row--has-interim{% endif %}"
       data-testid="{{ params.testIdPrefix }}-row-{{ site.siteId }}">
     <td class="govuk-table__cell select-overseas-sites-orsid" data-testid="{{ params.testIdPrefix }}-orsid-{{ site.siteId }}">{{ site.orsId }}</td>
-    <th scope="row" class="govuk-table__header select-overseas-sites-name-cell" data-testid="{{ params.testIdPrefix }}-name-{{ site.siteId }}">{{ site.siteName }}</th>
+    <th scope="row" class="govuk-table__header select-overseas-sites-name-cell" data-testid="{{ params.testIdPrefix }}-name-{{ site.siteId }}">{{ site.siteName }}{% if site.incomplete %}<strong class="govuk-tag govuk-tag--red govuk-!-margin-left-2" data-testid="{{ params.testIdPrefix }}-incomplete-{{ site.siteId }}">{{ params.labels.incomplete }}</strong>{% endif %}</th>
     <td class="govuk-table__cell" data-testid="{{ params.testIdPrefix }}-country-{{ site.siteId }}">{{ site.country }}</td>
     {% if not params.readOnly %}
       <td class="govuk-table__cell select-overseas-sites-actions-cell">
