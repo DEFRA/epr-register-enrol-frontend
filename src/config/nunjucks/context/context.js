@@ -34,6 +34,7 @@ export function context(request) {
   const t = getTranslator(currentLocale)
 
   const user = request.auth?.credentials ?? null
+  const consent = analyticsConsent(request)
 
   return {
     assetPath: `${assetPath}/assets`,
@@ -54,8 +55,13 @@ export function context(request) {
     // sign-in for this identity has been detected.
     concurrentLoginNotice: request.app?.concurrentLoginNotice ?? null,
     analytics: {
-      ...analyticsConsent(request),
-      confirmation: consentConfirmationFor(request)
+      ...consent,
+      confirmation: consentConfirmationFor(request),
+      // Only a page for a visitor who has accepted carries the id, so the
+      // tag can't load before consent or after it's withdrawn.
+      gtmContainerId: consent.hasConsented
+        ? config.get('analytics.gtmContainerId')
+        : null
     },
     cookiesPath: currentLocale === 'cy' ? '/cy/cookies' : '/cookies'
   }
