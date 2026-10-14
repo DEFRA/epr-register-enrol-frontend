@@ -193,6 +193,7 @@ describe('Fixed granted accreditation', () => {
   test.each([
     ['assessment-in-progress', 'Assessment in progress'],
     ['rejected', 'awaiting confirmation'],
+    ['approved', 'awaiting confirmation'],
     [null, 'Current case state unavailable']
   ])(
     'active request shows current management state %s without releasing Change',
@@ -213,6 +214,43 @@ describe('Fixed granted accreditation', () => {
       )
     }
   )
+
+  test('approved additions with identical details remain distinct beside the baseline and restore Change', async () => {
+    vi.mocked(realApiClient.get).mockResolvedValue({
+      ...target,
+      activeRequest: null,
+      approvedAdditions: [
+        { siteId: 'site-1', requestId: 'request-1', ...target.proposal },
+        { siteId: 'site-2', requestId: 'request-2', ...target.proposal }
+      ],
+      history: [
+        {
+          requestId: 'request-1',
+          caseId: 'case-1',
+          proposedSiteId: 'site-1',
+          status: 'approved'
+        },
+        {
+          requestId: 'request-2',
+          caseId: 'case-2',
+          proposedSiteId: 'site-2',
+          status: 'approved'
+        }
+      ]
+    })
+    const response = await server.inject(summary)
+    expect(response.statusCode).toBe(200)
+    expect(response.result).toContain('Overseas Site 1 (Germany)')
+    expect(response.result.match(/Spike Glass Recycling/g)).toHaveLength(2)
+    for (const id of ['site-1', 'site-2']) {
+      expect(response.result).toContain(
+        `data-testid="approved-ors-addition" data-site-id="${id}"`
+      )
+    }
+    expect(response.result).not.toContain('requestStates.approved')
+    expect(response.result).toContain('data-testid="accreditation-change"')
+    expect(response.result).not.toContain('data-testid="active-change-request"')
+  })
 
   test('submission checks organisation ownership before sending a mutation', async () => {
     vi.mocked(operatorCanAccessOrganisation).mockResolvedValue(false)

@@ -38,6 +38,9 @@
       {% for site in target.overseasSites %}
         <li>{{ site.siteName }} — {{ site.siteAddress }}, {{ site.country }}</li>
       {% endfor %}
+      {% for site in target.approvedAdditions %}
+        <li data-testid="approved-ors-addition" data-site-id="{{ site.siteId }}" data-request-id="{{ site.requestId }}">{{ site.siteName }} — {{ site.siteAddress }}, {{ site.country }}</li>
+      {% endfor %}
     </ul>
     {% if not target.activeRequest %}
       <p class="govuk-body"><a class="govuk-link" href="{{ changeUrl }}" data-testid="accreditation-change">{{ t('pages.grantedAccreditation.change') }}</a></p>
@@ -53,7 +56,7 @@
         { key: { text: t('pages.grantedAccreditation.caseId') }, value: { text: target.activeRequest.caseId or t('pages.grantedAccreditation.awaitingReceipt') } },
         { key: { text: t('pages.grantedAccreditation.caseState') }, value: { text: t('pages.grantedAccreditation.caseStates.' + caseStateKey) } }
       ] }) }}
-      {% if target.activeRequest.caseState === 'rejected' %}
+      {% if target.activeRequest.caseState === 'rejected' or target.activeRequest.caseState === 'approved' %}
         <p class="govuk-body" data-testid="ors-outcome-unconfirmed">{{ t('pages.grantedAccreditation.outcomeUnconfirmed') }}</p>
       {% endif %}
       {% if target.activeRequest.status === 'submission-pending' %}

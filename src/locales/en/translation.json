@@ -34,7 +34,7 @@
       "retrySubmission": "Retry submission",
       "history": "Previous change requests",
       "caseState": "Management case state",
-      "outcomeUnconfirmed": "The refusal is awaiting confirmation. This request remains active until the outcome is received.",
+      "outcomeUnconfirmed": "The decision is awaiting confirmation. This request remains active until the outcome is received.",
       "caseStates": {
         "submitted": "Submitted",
         "assessment": "Assessment in progress",
@@ -46,7 +46,8 @@
       "requestStates": {
         "submissionPending": "Submission unconfirmed",
         "submitted": "Submitted",
-        "rejected": "Refused"
+        "rejected": "Refused",
+        "approved": "Granted"
       }
     },
     "home": {

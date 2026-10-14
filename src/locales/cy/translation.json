@@ -34,7 +34,7 @@
       "retrySubmission": "Ailgynnig y cyflwyniad",
       "history": "Ceisiadau newid blaenorol",
       "caseState": "Statws yr achos rheoli",
-      "outcomeUnconfirmed": "Mae'r gwrthodiad yn aros am gadarnhad. Mae'r cais hwn yn parhau'n weithredol nes bod y canlyniad wedi dod i law.",
+      "outcomeUnconfirmed": "Mae'r penderfyniad yn aros am gadarnhad. Mae'r cais hwn yn parhau'n weithredol nes bod y canlyniad wedi dod i law.",
       "caseStates": {
         "submitted": "Wedi’i gyflwyno",
         "assessment": "Asesiad ar y gweill",
@@ -46,7 +46,8 @@
       "requestStates": {
         "submissionPending": "Cyflwyniad heb ei gadarnhau",
         "submitted": "Wedi’i gyflwyno",
-        "rejected": "Wedi’i wrthod"
+        "rejected": "Wedi’i wrthod",
+        "approved": "Wedi’i ganiatáu"
       }
     },
     "home": {

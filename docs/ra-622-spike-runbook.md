@@ -1,4 +1,4 @@
-# RA-622 spike: fixed accreditation, Add ORS submission and refusal (tasks 001–003)
+# RA-622 spike: fixed accreditation, Add ORS submission and decisions (tasks 001–004)
 
 Run the existing four services on `feature/ra-622-spike`, with the existing MongoDB instance at `mongodb://127.0.0.1:27017`. Use the database names below; do not clear MongoDB or reuse the earlier feature-demo databases. No uploader, S3 emulator, Redis, OAuth service or notification service is required. Frontend sessions use the existing memory cache option.
 
@@ -9,7 +9,7 @@ Run the existing four services on `feature/ra-622-spike`, with the existing Mong
 | Management frontend | http://localhost:5001 | `ra-622-spike-management-session` |
 | Management backend  | http://localhost:8085 | `epr-ra-622-spike-management`     |
 
-The frontend callback base URLs match their own portal URLs. `App__BaseUrl` on the operator backend is its own public URL. Management callbacks use `OperatorBackendApi__Url=http://localhost:5000`; operator submission uses `CaseWorking__Url=http://localhost:8085`. Submission crosses the signed management ingestion API. Task 003 enables assessment and refusal with a signed outcome callback. Approval and withdrawal remain for tasks 004 and 005.
+The frontend callback base URLs match their own portal URLs. `App__BaseUrl` on the operator backend is its own public URL. Management callbacks use `OperatorBackendApi__Url=http://localhost:5000`; operator submission uses `CaseWorking__Url=http://localhost:8085`. Submission crosses the signed management ingestion API. Assessment, approval and refusal use the module-owned decision path and signed outcome callback. Withdrawal remains for task 005.
 
 ## Start the services
 
@@ -285,3 +285,75 @@ Task 003 supporting implementation commits:
 | Management browser tests | `20e9f3dcd5c8a659695b7749393a0bbd5c3321fd` |
 
 The operator frontend task 003 commit contains this runbook, the review and the completed task document. Quality checks were run explicitly before the local commits; frontend hooks were disabled to avoid repeating completed suites and the previously documented unrelated management formatting failures. All six repositories remain on `feature/ra-622-spike`; no commit was pushed. Runtime logs and receipt files remain in ignored caches, and the operator backend's pre-existing untracked `.cache/` was left out of its commit.
+
+## Task 004: approval and repeatable ORS additions
+
+From Assessment in progress, **Approve request** calls the protected module route `/work-items/add-overseas-site/{id}/approve`. It extends the same decision service as refusal, using the existing engine and unchanged stored v1 workflow. The generic action route still cannot bypass the module. Support remains read-only, and frontend mutations require CSRF protection. Approval cannot run before assessment or replace a refused decision. The same recorded decision can be retried after failed delivery; it does not make another transition or audit entry. Confirmed delivery offers no further decision controls.
+
+The signed operator outcome route now accepts `approved` as well as `rejected`. Both use the same exact request/case/site/target checks and atomic status/active-marker/closure update. An unconfirmed outcome keeps the request active and contributes no approved site, even if management readback already reports Granted. Both portals show delivery confirmation separately from case/request status. A confirmed outcome releases the slot, retains terminal history and restores Change.
+
+The fixed-target read preserves `overseasSites` as the original ReEx baseline and derives `approvedAdditions` from that target's closed approved requests, in creation order. Each addition carries the request's stable proposed-site ID as `siteId`, its `requestId`, and the persisted proposal details. The frontend renders baseline and additions together in the Approved overseas sites list. This keeps baseline fields and future submissions' baseline snapshots unchanged. No mutable registry copy, ReEx write or next-year application amendment is involved.
+
+**Local demo assumption:** different requests may approve identical prepared ORS details. Each contributes a separate entry. There is no cross-request deduplication by name, address or country; replay of a callback for one request contributes no extra entry. Production site identity and duplicate-site policy remain decisions for later delivery refinement.
+
+Run this sequence from the named browser repository, with the same four services and retained spike databases:
+
+```powershell
+$env:RA_622_SPIKE_RECEIPT_FILE = 'C:\epr-register-enrol-frontend\.cache\task004\submission.json'
+$env:CHROMEDRIVER_PORT = '9515'
+$env:CHROME_BINARY = 'C:\Users\ContainerAdministrator\AppData\Local\ms-playwright\chromium-1223\chrome-win64\chrome.exe'
+# Operator browser: submit or resume and capture the starting approved-site view.
+$env:RA_622_SPIKE_PHASE = 'submit'
+npx wdio run wdio.spike.conf.js
+# Management browser: assess and approve through the real protected route.
+$env:RA_622_SPIKE_PHASE = 'approve'
+npx wdio run wdio.spike.conf.js
+# Operator browser: check first approval and submit another prepared request.
+$env:RA_622_SPIKE_PHASE = 'approval-repeat'
+npx wdio run wdio.spike.conf.js
+# Management browser: assess and approve the new request.
+$env:RA_622_SPIKE_PHASE = 'approve'
+npx wdio run wdio.spike.conf.js
+# Operator browser: check both approved requests, sites, history and restored Change.
+$env:RA_622_SPIKE_PHASE = 'approval-readback'
+npx wdio run wdio.spike.conf.js
+```
+
+The new receipt file records real identities and the initial site entries; it must be written by the `submit` phase. The readback compares its count and preserved starting entries against that capture, so earlier approvals remain valid and data need not be cleared. The repeat phase carries both the earlier approved request and the newly submitted correlation to management. The final readback checks exactly two additional entries with distinct request/case/site identities. This sequence proves task 004 only; withdrawal and the complete restart-durability demonstration remain in their recorded later tasks.
+
+### Task 004 validation (14 October 2026)
+
+The four full suites passed: operator backend 1,630; management backend 2,127 with nine opt-in external checks skipped; operator frontend 132 files / 2,634 tests; management frontend 104 files / 2,127 tests. Operator coverage remained 98.51% statements, 98.49% lines, 91.82% branches and 98.66% functions. Management coverage was 97.68% statements, 97.90% lines, 93.28% branches and 97.12% functions. Both coverage thresholds passed. Frontend builds, full frontend lint, operator formatting, changed management-file formatting, browser lint/formatting and critical-severity audits passed.
+
+The public operator checks approve two separate requests with identical details, check the same original baseline on each submission, reject wrong request/case/site/target correlation, replay each approval concurrently, reject conflicting terminal outcomes and preserve earlier closed requests/sites when later requests exist. Refusal and pending requests remain excluded from approved additions. Management public checks exercise both decisions through the stored workflow, audit and permissions, block generic actions, retain a decision on callback failure, and retry only that decision with the same correlated payload and no further audit entry. Frontend checks cover protected approval, read-only support, state-specific actions, confirmation/retry notices, translated operator history and distinct identical additions.
+
+The initial backend test builds could not replace apphost files while the existing services were running. Stopping only those two application processes allowed the focused red/green checks and full suites to run; MongoDB remained running with its data unchanged. The first browser attempt then found that launching DLLs from the repository root omitted the project development settings and hid the configured target. Correcting the two backend working directories to their project folders restored the intended target. That failed attempt is not counted as successful browser evidence. The documented `dotnet run --project` commands already set the appropriate working directory. No application or runner configuration was changed to address this local launch error.
+
+The [independent task 004 review](ra-622-task004-review.md) has no outstanding Standards or Spec findings. Full test-suite output and connected receipts remain in ignored `.cache/task004*` paths. No live ReEx interface verification is claimed.
+
+### Task 004 connected browser evidence
+
+The successful five-phase sequence resumed the retained task 003 request, approved it through management, checked its actual operator readback, submitted a new request through Change, approved that new case through management, and checked both additions without clearing MongoDB. The starting approved-site count was four; the final count was six. Both requests contain Spike Glass Recycling, 25 Example Road, Hamburg, Germany.
+
+| Correlation     | First approved request                 | Second approved request                |
+| --------------- | -------------------------------------- | -------------------------------------- |
+| Request         | `9aefb88e-a23c-45d6-9be6-2853a27b6157` | `d0d86b09-6be1-4a6d-92e3-f98346ee1953` |
+| Proposed site   | `6f0ce39c-e087-43d7-b849-cbc2b87db6b1` | `af2ef169-0a73-4321-a0ee-7a05a3f33515` |
+| Management case | `a3b6b819-35f4-4446-a02b-c2ee62372e4f` | `a82f3e08-7e59-4c8b-8e6c-24c3d8861957` |
+| Case reference  | `AP26EA50006GL3`                       | `AP26EA50006GL4`                       |
+
+Operator submission passed one browser check; each management approval phase passed all three checks; operator repeat and final readback each passed one check. The final operator browser verified each site's exact request correlation, retained terminal history, original starting site entries, unchanged Granted status, no active request and restored Change. Earlier refused history remains retained and contributes no addition. Management confirmed real operator outcome delivery for both decisions. All four readiness endpoints returned 200. Chromium and ChromeDriver used 148.0.7778.96.
+
+The final data contains two Refused and two Granted change requests, four unchanged baseline sites, two approved additions and no active request. Task 005 remains next and has not been started. All task 004 commits remain local on `feature/ra-622-spike`; nothing was pushed. Checks were run explicitly before committing, so commit hooks were disabled for these commits to avoid repeating the completed suites and the previously recorded unrelated management formatting failures. The operator backend's pre-existing untracked `.cache/` remains outside its commit.
+
+Task 004 supporting commits:
+
+| Repository               | Commit                                     |
+| ------------------------ | ------------------------------------------ |
+| Operator backend         | `ae2d3e41c7b5397a7dda5e15c50842e2e3fbeff8` |
+| Management backend       | `d2bc9d9c79264b40b12bc1d02a8a65cc428e1c3d` |
+| Management frontend      | `559a1d03d98365e8be4749999fad8ea9beec05e4` |
+| Operator browser tests   | `76f24ad40e54a7931f30ba88cb8f45dd6a015257` |
+| Management browser tests | `a71a516a961951fd1f0cb37634a578d445485137` |
+
+The operator frontend task 004 commit contains the rendering/translation checks, this runbook, the review and the completed task moved to `.tasks/done/`. The parent spec remains in `.tasks/` while later tasks remain open.
