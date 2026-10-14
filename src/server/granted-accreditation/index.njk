@@ -1,0 +1,38 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
+{% from "govuk/components/tag/macro.njk" import govukTag %}
+
+{% block content %}
+  {{ appHeading({ text: pageTitle }) }}
+  <div data-testid="granted-accreditation-summary">
+    {{ govukSummaryList({ rows: [
+      { key: { text: t('pages.grantedAccreditation.organisation') }, value: { text: target.organisationName } },
+      { key: { text: t('pages.grantedAccreditation.organisationId') }, value: { text: target.organisationId } },
+      { key: { text: t('pages.grantedAccreditation.registration') }, value: { text: target.registrationReference } },
+      { key: { text: t('pages.grantedAccreditation.registrationId') }, value: { text: target.registrationId } },
+      { key: { text: t('pages.grantedAccreditation.accreditation') }, value: { text: target.accreditationId } },
+      { key: { text: t('pages.grantedAccreditation.material') }, value: { text: t('pages.operatorAccreditation.materials.' + target.materialType) } },
+      { key: { text: t('pages.grantedAccreditation.year') }, value: { text: target.year } },
+      { key: { text: t('pages.grantedAccreditation.status') }, value: { html: govukTag({ text: t('pages.grantedAccreditation.granted'), classes: 'govuk-tag--green', attributes: { 'data-testid': 'granted-status' } }) } }
+    ] }) }}
+  </div>
+  {% if proposal %}
+    <h2 class="govuk-heading-m">{{ t('pages.grantedAccreditation.proposedSite') }}</h2>
+    <div data-testid="prepared-ors-proposal">
+      {{ govukSummaryList({ rows: [
+        { key: { text: t('pages.grantedAccreditation.siteName') }, value: { text: target.proposal.siteName } },
+        { key: { text: t('pages.grantedAccreditation.address') }, value: { text: target.proposal.siteAddress } },
+        { key: { text: t('pages.grantedAccreditation.country') }, value: { text: target.proposal.country } }
+      ] }) }}
+    </div>
+    <p class="govuk-body" data-testid="proposal-read-only">{{ t('pages.grantedAccreditation.submissionUnavailable') }}</p>
+  {% else %}
+    <h2 class="govuk-heading-m">{{ t('pages.grantedAccreditation.approvedSites') }}</h2>
+    <ul class="govuk-list govuk-list--bullet" data-testid="approved-sites">
+      {% for site in target.overseasSites %}
+        <li>{{ site.siteName }} — {{ site.siteAddress }}, {{ site.country }}</li>
+      {% endfor %}
+    </ul>
+    <p class="govuk-body"><a class="govuk-link" href="{{ changeUrl }}" data-testid="accreditation-change">{{ t('pages.grantedAccreditation.change') }}</a></p>
+  {% endif %}
+{% endblock %}

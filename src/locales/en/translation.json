@@ -4,6 +4,27 @@
     "language": "Language"
   },
   "pages": {
+    "grantedAccreditation": {
+      "landingHeading": "Accreditation change demo",
+      "title": "Granted accreditation",
+      "proposalTitle": "Prepared overseas site proposal",
+      "organisation": "Organisation",
+      "organisationId": "Organisation ID",
+      "registration": "Registration reference",
+      "registrationId": "Registration ID",
+      "accreditation": "Accreditation ID",
+      "material": "Material",
+      "year": "Accreditation year",
+      "status": "Accreditation status",
+      "granted": "Granted",
+      "approvedSites": "Approved overseas sites",
+      "proposedSite": "Proposed overseas site",
+      "siteName": "Site name",
+      "address": "Address",
+      "country": "Country",
+      "change": "Change",
+      "submissionUnavailable": "This example is ready to review. Submission is not available yet."
+    },
     "home": {
       "title": "Home",
       "heading": "Home"

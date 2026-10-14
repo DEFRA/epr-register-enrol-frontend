@@ -15,6 +15,12 @@
     <div class="govuk-grid-column-two-thirds">
       <div class="govuk-body" data-testid="app-page-body">
         <p>{{ t('pages.operator.description') }}</p>
+        {% if grantedAccreditationLink %}
+          <section data-testid="accreditation-change-spike">
+            <h2 class="govuk-heading-m">{{ t('pages.grantedAccreditation.landingHeading') }}</h2>
+            <p class="govuk-body"><a class="govuk-link" href="{{ grantedAccreditationLink }}" data-testid="spike-accreditation-link">{{ grantedAccreditationName }} — {{ t('pages.grantedAccreditation.title') }}</a></p>
+          </section>
+        {% endif %}
         <ul class="govuk-list govuk-list--bullet">
           <li><a href="/operator-accreditation/50001/aaa000000000000000050001/Plastic/2027" class="govuk-link">New Accreditation for NEWDEV RECYCLING LIMITED, Plastic, 2027</a></li>
           <li><a href="/operator-accreditation/50011/aaa000000000000000050011/Plastic/2027" class="govuk-link">New Accreditation for APPDEV RECYCLING LIMITED, Plastic, 2027</a></li>

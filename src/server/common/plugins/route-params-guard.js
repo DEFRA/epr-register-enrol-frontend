@@ -34,6 +34,7 @@ const PARAM_SCHEMAS = {
   applicationId: SAFE_ID,
   organisationId: SAFE_ID,
   registrationId: SAFE_ID,
+  accreditationId: SAFE_ID,
   companiesHouseNo: SAFE_ID,
   siteId: Joi.number().integer().positive(),
   fileId: SAFE_ID,

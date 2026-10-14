@@ -323,6 +323,14 @@ export const config = convict({
       env: 'TEST_PAGES_DISABLED'
     }
   },
+  accreditationChangeSpike: {
+    enabled: {
+      doc: 'Enable the fixed accreditation change demo in local/development with a real backend.',
+      format: Boolean,
+      default: false,
+      env: 'ACCREDITATION_CHANGE_SPIKE_ENABLED'
+    }
+  },
   analytics: {
     isEnabled: {
       doc: 'Show the analytics cookie banner and allow analytics. Only takes effect alongside a Google Tag Manager container id.',

@@ -4,6 +4,27 @@
     "language": "Iaith"
   },
   "pages": {
+    "grantedAccreditation": {
+      "landingHeading": "Dangos newid achrediad",
+      "title": "Achrediad a ganiatawyd",
+      "proposalTitle": "Cynnig safle tramor wedi’i baratoi",
+      "organisation": "Sefydliad",
+      "organisationId": "ID y sefydliad",
+      "registration": "Cyfeirnod cofrestru",
+      "registrationId": "ID cofrestru",
+      "accreditation": "ID achrediad",
+      "material": "Deunydd",
+      "year": "Blwyddyn achrediad",
+      "status": "Statws achrediad",
+      "granted": "Wedi’i ganiatáu",
+      "approvedSites": "Safleoedd tramor cymeradwy",
+      "proposedSite": "Safle tramor arfaethedig",
+      "siteName": "Enw’r safle",
+      "address": "Cyfeiriad",
+      "country": "Gwlad",
+      "change": "Newid",
+      "submissionUnavailable": "Mae’r enghraifft hon yn barod i’w hadolygu. Nid yw cyflwyno ar gael eto."
+    },
     "home": {
       "title": "Hafan",
       "heading": "Hafan"
