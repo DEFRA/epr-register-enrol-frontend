@@ -66,6 +66,15 @@
           {{ govukButton({ text: t('pages.grantedAccreditation.retrySubmission'), attributes: { 'data-testid': 'retry-ors-submission' } }) }}
         </form>
       {% endif %}
+      {% if target.activeRequest.withdrawalPending %}
+        <p class="govuk-body" data-testid="ors-withdrawal-unconfirmed">{{ t('pages.grantedAccreditation.withdrawalUnconfirmed') }}</p>
+      {% endif %}
+      {% if target.activeRequest.status === 'submitted' and (target.activeRequest.caseState === 'submitted' or (target.activeRequest.withdrawalPending and (target.activeRequest.caseState === 'withdrawn' or not target.activeRequest.caseState))) %}
+        <form method="post" action="{{ withdrawUrl }}">
+          <input type="hidden" name="crumb" value="{{ crumb }}">
+          {{ govukButton({ text: t('pages.grantedAccreditation.' + ('retryWithdrawal' if target.activeRequest.withdrawalPending else 'withdrawRequest')), attributes: { 'data-testid': 'withdraw-ors-request' } }) }}
+        </form>
+      {% endif %}
     </section>
   {% endif %}
   {% if target.history.length %}

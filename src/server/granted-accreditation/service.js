@@ -62,3 +62,22 @@ export async function readFixedAccreditation(target) {
     )
   }
 }
+
+export async function withdrawSubmittedRequest(target) {
+  try {
+    await realApiClient.post(
+      `/api/v1/accreditation-changes/${targetPath(target)}/requests/${encodeURIComponent(target.requestId)}/withdraw`,
+      {}
+    )
+  } catch (error) {
+    if (error.status === 404) {
+      throw Boom.notFound()
+    }
+    // Read the retained request after unconfirmed closure or a stale eligibility rejection.
+    if (![409, 503].includes(error.status)) {
+      throw Boom.serverUnavailable(
+        'Accreditation service temporarily unavailable'
+      )
+    }
+  }
+}

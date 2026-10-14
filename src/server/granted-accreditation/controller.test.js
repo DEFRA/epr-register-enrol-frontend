@@ -94,6 +94,23 @@ describe('Fixed granted accreditation', () => {
     expect(post).not.toHaveBeenCalled()
   })
 
+  test('submitted case offers a protected withdrawal bound to its request identity', async () => {
+    vi.mocked(realApiClient.get).mockResolvedValue({
+      ...target,
+      activeRequest: {
+        requestId: 'request-1',
+        caseId: 'case-1',
+        status: 'submitted',
+        caseState: 'submitted'
+      }
+    })
+    const response = await server.inject(summary)
+    expect(response.statusCode).toBe(200)
+    expect(response.result).toContain('data-testid="withdraw-ors-request"')
+    expect(response.result).toContain(`${summary}/requests/request-1/withdraw`)
+    expect(response.result).toContain('name="crumb"')
+  })
+
   test('submission redirects to the persisted summary', async () => {
     vi.spyOn(realApiClient, 'post').mockResolvedValue({
       requestId: 'request-1'
@@ -108,6 +125,150 @@ describe('Fixed granted accreditation', () => {
       '/api/v1/accreditation-changes/50006/aaa000000000000000050006/reex-acc-50006-Glass-2026/Glass/2026/submit',
       {}
     )
+  })
+
+  test.each([
+    'assessment-in-progress',
+    'approved',
+    'rejected',
+    'withdrawn',
+    null
+  ])(
+    'withdrawal is absent when current case state is %s',
+    async (caseState) => {
+      vi.mocked(realApiClient.get).mockResolvedValue({
+        ...target,
+        activeRequest: {
+          requestId: 'request-1',
+          caseId: 'case-1',
+          status: 'submitted',
+          caseState
+        }
+      })
+      const response = await server.inject(summary)
+      expect(response.statusCode).toBe(200)
+      expect(response.result).not.toContain(
+        'data-testid="withdraw-ors-request"'
+      )
+    }
+  )
+
+  test.each(['submitted', 'withdrawn', null])(
+    'unconfirmed withdrawal offers retry of the same request with case state %s',
+    async (caseState) => {
+      vi.mocked(realApiClient.get).mockResolvedValue({
+        ...target,
+        activeRequest: {
+          requestId: 'request-1',
+          caseId: 'case-1',
+          status: 'submitted',
+          caseState,
+          withdrawalPending: true
+        }
+      })
+      const response = await server.inject(summary)
+      expect(response.result).toContain(
+        'data-testid="ors-withdrawal-unconfirmed"'
+      )
+      expect(response.result).toContain('Retry withdrawal')
+      expect(response.result).toContain(
+        `${summary}/requests/request-1/withdraw`
+      )
+      expect(response.result).not.toContain(
+        'data-testid="accreditation-change"'
+      )
+    }
+  )
+
+  test.each(['', '/cy'])(
+    'withdrawal sends the displayed identity and returns to the summary (%s)',
+    async (prefix) => {
+      vi.spyOn(realApiClient, 'post').mockResolvedValue({})
+      const response = await server.inject({
+        method: 'POST',
+        url: `${prefix}${summary}/requests/request-1/withdraw`
+      })
+      expect(response.statusCode).toBe(302)
+      expect(response.headers.location).toBe(`${prefix}${summary}`)
+      expect(realApiClient.post).toHaveBeenCalledWith(
+        '/api/v1/accreditation-changes/50006/aaa000000000000000050006/reex-acc-50006-Glass-2026/Glass/2026/requests/request-1/withdraw',
+        {}
+      )
+    }
+  )
+
+  test.each([
+    [409, 302],
+    [503, 302],
+    [404, 404],
+    [500, 503]
+  ])('withdrawal delivery %s returns %s', async (status, expected) => {
+    vi.spyOn(realApiClient, 'post').mockRejectedValue(
+      Object.assign(new Error('Unavailable'), { status })
+    )
+    const response = await server.inject({
+      method: 'POST',
+      url: `${summary}/requests/request-1/withdraw`
+    })
+    expect(response.statusCode).toBe(expected)
+  })
+
+  test('withdrawn history is translated and preserves approved additions and restored Change', async () => {
+    vi.mocked(realApiClient.get).mockResolvedValue({
+      ...target,
+      activeRequest: null,
+      approvedAdditions: [
+        {
+          siteId: 'approved-site',
+          requestId: 'approved-request',
+          ...target.proposal
+        }
+      ],
+      history: [
+        {
+          requestId: 'old-request',
+          caseId: 'old-case',
+          proposedSiteId: 'old-site',
+          status: 'withdrawn'
+        }
+      ]
+    })
+    for (const [prefix, status] of [
+      ['', 'Withdrawn'],
+      ['/cy', 'Wedi’i dynnu’n ôl']
+    ]) {
+      const response = await server.inject(`${prefix}${summary}`)
+      expect(response.result).toContain(status)
+      expect(response.result).toContain('Overseas Site 1 (Germany)')
+      expect(response.result).toContain('data-site-id="approved-site"')
+      expect(response.result).toContain('data-request-id="old-request"')
+      expect(response.result).toContain('data-testid="accreditation-change"')
+      expect(response.result).not.toContain(
+        'data-testid="withdraw-ors-request"'
+      )
+    }
+  })
+
+  test('withdrawal rejects unrelated ownership and missing CSRF before sending a mutation', async () => {
+    const post = vi.spyOn(realApiClient, 'post')
+    vi.mocked(operatorCanAccessOrganisation).mockResolvedValue(false)
+    const unrelated = await server.inject({
+      method: 'POST',
+      url: `${summary}/requests/request-1/withdraw`
+    })
+    expect(unrelated.statusCode).toBe(403)
+    vi.mocked(operatorCanAccessOrganisation).mockResolvedValue(true)
+    config.set('isTest', false)
+    try {
+      const missingCrumb = await server.inject({
+        method: 'POST',
+        url: `${summary}/requests/request-1/withdraw`
+      })
+      expect(missingCrumb.statusCode).toBe(403)
+      expect(post).not.toHaveBeenCalled()
+    } finally {
+      config.reset('isTest')
+    }
   })
 
   test('an active request hides Change and retains Granted and the approved sites', async () => {
@@ -368,6 +529,11 @@ describe('Fixed granted accreditation', () => {
           url: `${summary}/submit`
         })
         expect(post.statusCode).toBe(404)
+        const withdrawal = await server.inject({
+          method: 'POST',
+          url: `${summary}/requests/request-1/withdraw`
+        })
+        expect(withdrawal.statusCode).toBe(404)
         const landing = await server.inject('/operator')
         expect(landing.result).not.toContain(
           'data-testid="spike-accreditation-link"'

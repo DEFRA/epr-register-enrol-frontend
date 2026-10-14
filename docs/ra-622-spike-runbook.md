@@ -1,4 +1,4 @@
-# RA-622 spike: fixed accreditation, Add ORS submission and decisions (tasks 001–004)
+# RA-622 spike: fixed accreditation, Add ORS submission, decisions and withdrawal (tasks 001–005)
 
 Run the existing four services on `feature/ra-622-spike`, with the existing MongoDB instance at `mongodb://127.0.0.1:27017`. Use the database names below; do not clear MongoDB or reuse the earlier feature-demo databases. No uploader, S3 emulator, Redis, OAuth service or notification service is required. Frontend sessions use the existing memory cache option.
 
@@ -9,7 +9,7 @@ Run the existing four services on `feature/ra-622-spike`, with the existing Mong
 | Management frontend | http://localhost:5001 | `ra-622-spike-management-session` |
 | Management backend  | http://localhost:8085 | `epr-ra-622-spike-management`     |
 
-The frontend callback base URLs match their own portal URLs. `App__BaseUrl` on the operator backend is its own public URL. Management callbacks use `OperatorBackendApi__Url=http://localhost:5000`; operator submission uses `CaseWorking__Url=http://localhost:8085`. Submission crosses the signed management ingestion API. Assessment, approval and refusal use the module-owned decision path and signed outcome callback. Withdrawal remains for task 005.
+The frontend callback base URLs match their own portal URLs. `App__BaseUrl` on the operator backend is its own public URL. Management callbacks use `OperatorBackendApi__Url=http://localhost:5000`; operator submission and withdrawal use `CaseWorking__Url=http://localhost:8085`. Submission crosses the signed management ingestion API. Assessment, approval and refusal use the module-owned decision path and signed outcome callback. Operator withdrawal uses a separate module-owned management operation and confirms closure through its correlated response.
 
 ## Start the services
 
@@ -357,3 +357,67 @@ Task 004 supporting commits:
 | Management browser tests | `a71a516a961951fd1f0cb37634a578d445485137` |
 
 The operator frontend task 004 commit contains the rendering/translation checks, this runbook, the review and the completed task moved to `.tasks/done/`. The parent spec remains in `.tasks/` while later tasks remain open.
+
+## Task 005: submitted-request withdrawal
+
+The fixed summary offers **Withdraw request** only when the current correlated management read reports Submitted. The form carries the existing CSRF crumb and posts to `/granted-accreditation/{organisationId}/{registrationId}/{accreditationId}/{materialType}/{year}/requests/{requestId}/withdraw`. Its request identity is bound to the displayed attempt, so an old form cannot select a later active request. The existing operator and organisation guards apply to this mutation, including Welsh routes.
+
+The frontend calls the protected operator API at the same target path under `/api/v1/accreditation-changes`. The operator sends its persisted request/site/target correlation to the real `/work-items/add-overseas-site/{caseId}/withdraw` operation using existing service signing. Management permits the authenticated operator backend, verifies the signed organisation identity and exact request/site/target, and invokes the existing engine's stored workflow, audit and optimistic concurrency guard. Assessment and decided cases reject withdrawal. Generic actions cannot bypass the module. Replaying a matching withdrawn case returns its existing closure without another transition or audit entry.
+
+Before sending, the operator durably marks withdrawal pending. Only a matching Withdrawn response atomically records the terminal outcome, clears that marker and releases the request's active slot. Failure, timeout or a mismatched receipt retains the active request. Its summary offers **Retry withdrawal** for the same request, including when management already closed it but its response was lost. A definitive management conflict leaves it active, clears the pending marker and allows current readback to remove withdrawal once assessment begins. No callback is fabricated to establish withdrawal; the module response confirms the actual closure. Decision callbacks retain their existing approval/refusal contract.
+
+Withdrawn history contributes no approved site. Granted, the original ReEx baseline, earlier approved additions and earlier terminal attempts are preserved. Change returns after confirmed closure, and explicit submission produces distinct request, case and proposed-site identities. Old withdrawal replay does not contact the new case or close its slot. Recovery remains an explicit retry; no background reconciliation or withdrawal from assessment/query is introduced.
+
+### Repeated-case reference correction
+
+Connected execution found that the existing reference generator's five deterministic candidates were exhausted by the retained same-target cases. The required new submission after withdrawal honestly remained unconfirmed. New change-case references now include the full stable `operatorRequestId` GUID after the normal reference prefix; the existing bounded collision handling remains. This affects newly generated change-case references only. Re-accreditation inputs and persisted cases retain their references, and submission replay returns its original receipt. A public six-request ingestion/read/replay test reproduced the previous limit before the correction and verifies the fix. No database reset, reference migration or invented receipt is used.
+
+### Connected browser commands
+
+Use the same services, configuration, databases and Chromium/ChromeDriver as above. Run each command from the named browser-test repository, sharing this receipt path:
+
+```powershell
+$env:RA_622_SPIKE_RECEIPT_FILE = 'C:\epr-register-enrol-frontend\.cache\task005\submission.json'
+$env:CHROMEDRIVER_PORT = '9515'
+$env:CHROME_BINARY = 'C:\Users\ContainerAdministrator\AppData\Local\ms-playwright\chromium-1223\chrome-win64\chrome.exe'
+# Operator browser: submit or resume the prepared change and capture starting sites.
+$env:RA_622_SPIKE_PHASE = 'submit'
+npx wdio run wdio.spike.conf.js
+# Operator browser: withdraw through the protected form, check closure/history and submit anew.
+$env:RA_622_SPIKE_PHASE = 'withdrawal-repeat'
+npx wdio run wdio.spike.conf.js
+# Management browser: verify the old real case is Withdrawn and the new one is Submitted.
+$env:RA_622_SPIKE_PHASE = 'withdrawal-readback'
+npx wdio run wdio.spike.conf.js
+```
+
+The operator compares every starting site entry, unchanged baseline and approved-addition API readback, preserved earlier history, real withdrawn correlation and the new request's distinct identities. The management browser reads both real cases and verifies the closed case has no assessment/decision/retry controls. The successful sequence leaves the new request Submitted for a later demonstration. Task 006's combined flow, all-service restart proof and template-versioning check remain separate recorded work.
+
+### Task 005 validation (14 October 2026)
+
+All four full suites passed: operator backend 1,631; management backend 2,129 with nine opt-in external checks skipped; operator frontend 132 files / 2,651 tests; management frontend 104 files / 2,128 tests. Operator coverage was 98.51% statements, 98.49% lines, 91.84% branches and 98.66% functions. Management coverage was 97.61% statements, 97.84% lines, 93.24% branches and 97.12% functions. Both frontend coverage gates passed. The reference correction additionally passed 148 focused public and shared generator/engine checks. Frontend builds, operator full lint/formatting and security audit, changed management-test formatting/lint, browser formatting/lint and operator C# whitespace formatting passed. The independent [Standards and Spec reviews](ra-622-task005-review.md) have zero outstanding findings.
+
+The first management full suite identified the missing size limit on the new route that disables automatic JSON validation. Adding the existing 10 KB limit made that guard and the full suite pass. The first withdrawal browser run closed the actual case and started a new operator request, but read it before submission completed; the test now awaits the Submitted summary before checking that readback. Its subsequent submission retry exposed the five-candidate reference exhaustion described above. The fix passed its red/green regression and the final management full suite. Failed runs are not counted as successful connected evidence. MongoDB and earlier history remained intact throughout; the reserved request was retried through normal submission after the fix.
+
+The successful final sequence passed operator submission/resumption (one check), operator withdrawal/readback/new submission/old replay (one check), and management old Withdrawn/new Submitted readback (two checks; its decision scenario was intentionally skipped in the readback phase). All four readiness endpoints returned 200. Chromium/ChromeDriver used 148.0.7778.96. Runtime logs and actual receipts remain under ignored `.cache/task005/`.
+
+| Correlation     | Withdrawn request                                | Subsequent Submitted request                     |
+| --------------- | ------------------------------------------------ | ------------------------------------------------ |
+| Request         | `73cf691f-eb0f-463f-bf25-595ee7fbc2dc`           | `40b753f9-53b3-4d0b-85b3-5e3b70273516`           |
+| Proposed site   | `5cd70823-fb95-4d4b-9383-1e548c387cba`           | `2c3c4134-071e-42b8-9603-64e8325f4f44`           |
+| Management case | `1b146e23-1d81-403e-aba5-e7f25a21688d`           | `d722b1ee-fc05-4bcd-aa2d-4203217b6957`           |
+| Case reference  | `AP26EA50006GL-73CF691FEB0F463FBF25595EE7FBC2DC` | `AP26EA50006GL-40B753F953B34D0B85B35E3B70273516` |
+
+The final summary retains Granted, four original baseline sites and the same two earlier approved additions: six site entries before and after withdrawal. It retains two Refused, two Granted and two Withdrawn attempts; the earlier withdrawn attempt came from the failed browser run and remains honest history. The new request is Submitted in both services. No service reset, seeded outcome, ReEx mutation or re-accreditation amendment supplied this evidence. Task 006 remains next and has not been started.
+
+All six task 005 commits are local on `feature/ra-622-spike`; nothing was pushed. Quality checks were run explicitly before commits, and hooks were disabled to avoid repeating completed suites and previously documented unrelated management formatting failures. The operator backend's pre-existing untracked `.cache/` remains outside its commit. The parent spec remains in `.tasks/` while tasks 006 and 007 remain open.
+
+Task 005 supporting commits, compatible with the operator frontend task 005 commit containing this runbook:
+
+| Repository               | Commit                                     |
+| ------------------------ | ------------------------------------------ |
+| Operator backend         | `e6de0f8578cc093a49c90b59e1addaa43c1fabce` |
+| Management backend       | `4d55f697568b39c5daa614ecc7908a175f6b1392` |
+| Management frontend      | `09dfd5715a3f4f7711566de292201438e3a13c2c` |
+| Operator browser tests   | `0a4182879823121e19c7dd580d53ffddfa93a58f` |
+| Management browser tests | `57f432adcf133ab246155b6567d9ed803ca03605` |

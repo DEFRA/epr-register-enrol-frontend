@@ -6,7 +6,8 @@ import {
   grantedAccreditationUrl,
   isAccreditationChangeSpikeEnabled,
   readFixedAccreditation,
-  submitPreparedProposal
+  submitPreparedProposal,
+  withdrawSubmittedRequest
 } from './service.js'
 
 async function checkAccess(request) {
@@ -44,7 +45,8 @@ async function render(request, h, proposal) {
         : target.activeRequest?.caseState || 'unavailable',
     backLink: proposal ? summaryUrl : '/operator',
     changeUrl: `${summaryUrl}/change`,
-    submitUrl: `${summaryUrl}/submit`
+    submitUrl: `${summaryUrl}/submit`,
+    withdrawUrl: `${summaryUrl}/requests/${encodeURIComponent(target.activeRequest?.requestId || '')}/withdraw`
   })
 }
 
@@ -60,6 +62,17 @@ export const submitPreparedProposalController = {
   async handler(request, h) {
     await checkAccess(request)
     await submitPreparedProposal(request.params)
+    const { currentLocale } = getLocaleAndTranslator(request)
+    return h.redirect(
+      `${currentLocale === 'cy' ? '/cy' : ''}${grantedAccreditationUrl(request.params)}`
+    )
+  }
+}
+
+export const withdrawSubmittedRequestController = {
+  async handler(request, h) {
+    await checkAccess(request)
+    await withdrawSubmittedRequest(request.params)
     const { currentLocale } = getLocaleAndTranslator(request)
     return h.redirect(
       `${currentLocale === 'cy' ? '/cy' : ''}${grantedAccreditationUrl(request.params)}`

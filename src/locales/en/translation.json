@@ -32,6 +32,9 @@
       "awaitingReceipt": "Awaiting confirmation",
       "unconfirmed": "Submission is unconfirmed. Retry to send the same request again.",
       "retrySubmission": "Retry submission",
+      "withdrawRequest": "Withdraw request",
+      "retryWithdrawal": "Retry withdrawal",
+      "withdrawalUnconfirmed": "Withdrawal is unconfirmed. This request remains active. Retry withdrawal to confirm closure of the same case.",
       "history": "Previous change requests",
       "caseState": "Management case state",
       "outcomeUnconfirmed": "The decision is awaiting confirmation. This request remains active until the outcome is received.",
@@ -47,7 +50,8 @@
         "submissionPending": "Submission unconfirmed",
         "submitted": "Submitted",
         "rejected": "Refused",
-        "approved": "Granted"
+        "approved": "Granted",
+        "withdrawn": "Withdrawn"
       }
     },
     "home": {

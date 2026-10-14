@@ -32,6 +32,9 @@
       "awaitingReceipt": "Yn aros am gadarnhad",
       "unconfirmed": "Nid yw’r cyflwyniad wedi’i gadarnhau. Rhowch gynnig arall arni i anfon yr un cais eto.",
       "retrySubmission": "Ailgynnig y cyflwyniad",
+      "withdrawRequest": "Tynnu’r cais yn ôl",
+      "retryWithdrawal": "Ailgynnig tynnu’r cais yn ôl",
+      "withdrawalUnconfirmed": "Nid yw’r cais i dynnu’n ôl wedi’i gadarnhau. Mae’r cais hwn yn parhau’n weithredol. Rhowch gynnig arall arni i gadarnhau bod yr un achos wedi cau.",
       "history": "Ceisiadau newid blaenorol",
       "caseState": "Statws yr achos rheoli",
       "outcomeUnconfirmed": "Mae'r penderfyniad yn aros am gadarnhad. Mae'r cais hwn yn parhau'n weithredol nes bod y canlyniad wedi dod i law.",
@@ -47,7 +50,8 @@
         "submissionPending": "Cyflwyniad heb ei gadarnhau",
         "submitted": "Wedi’i gyflwyno",
         "rejected": "Wedi’i wrthod",
-        "approved": "Wedi’i ganiatáu"
+        "approved": "Wedi’i ganiatáu",
+        "withdrawn": "Wedi’i dynnu’n ôl"
       }
     },
     "home": {
