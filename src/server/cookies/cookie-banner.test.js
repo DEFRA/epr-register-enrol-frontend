@@ -11,7 +11,7 @@ const PAGE = '/contact'
 
 const original = {
   isEnabled: config.get('analytics.isEnabled'),
-  measurementId: config.get('analytics.measurementId')
+  gtmContainerId: config.get('analytics.gtmContainerId')
 }
 
 function cookieHeaderFrom(res) {
@@ -35,7 +35,7 @@ describe('cookie banner', () => {
 
   afterEach(() => {
     config.set('analytics.isEnabled', original.isEnabled)
-    config.set('analytics.measurementId', original.measurementId)
+    config.set('analytics.gtmContainerId', original.gtmContainerId)
   })
 
   async function render({ cookie, url = PAGE } = {}) {
@@ -71,14 +71,14 @@ describe('cookie banner', () => {
   )
 
   test.each([
-    { isEnabled: false, measurementId: '' },
-    { isEnabled: false, measurementId: 'G-TEST' },
-    { isEnabled: true, measurementId: '' }
+    { isEnabled: false, gtmContainerId: '' },
+    { isEnabled: false, gtmContainerId: 'GTM-TEST' },
+    { isEnabled: true, gtmContainerId: '' }
   ])(
-    'is not shown when analytics is off (isEnabled=$isEnabled, measurementId="$measurementId")',
-    async ({ isEnabled, measurementId }) => {
+    'is not shown when analytics is off (isEnabled=$isEnabled, gtmContainerId="$gtmContainerId")',
+    async ({ isEnabled, gtmContainerId }) => {
       config.set('analytics.isEnabled', isEnabled)
-      config.set('analytics.measurementId', measurementId)
+      config.set('analytics.gtmContainerId', gtmContainerId)
 
       const { $ } = await render()
 
@@ -86,10 +86,26 @@ describe('cookie banner', () => {
     }
   )
 
+  test.each([
+    { isEnabled: false, gtmContainerId: 'GTM-TEST' },
+    { isEnabled: true, gtmContainerId: 'G-PLACEHOLDER' }
+  ])(
+    'loads no tag while analytics is off, even for a visitor who accepted (isEnabled=$isEnabled, gtmContainerId="$gtmContainerId")',
+    async ({ isEnabled, gtmContainerId }) => {
+      config.set('analytics.isEnabled', isEnabled)
+      config.set('analytics.gtmContainerId', gtmContainerId)
+
+      const { res } = await render({ cookie: consentCookie('accepted') })
+
+      expect(res.result).not.toContain('analytics-gtm-container-id')
+      expect(res.result).not.toContain('/analytics.')
+    }
+  )
+
   describe('with analytics on', () => {
     beforeEach(() => {
       config.set('analytics.isEnabled', true)
-      config.set('analytics.measurementId', 'G-TEST')
+      config.set('analytics.gtmContainerId', 'GTM-TEST')
     })
 
     test('asks a visitor who has not answered', async () => {
