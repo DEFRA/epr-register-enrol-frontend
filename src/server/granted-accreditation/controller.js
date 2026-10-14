@@ -38,6 +38,10 @@ async function render(request, h, proposal) {
       target.activeRequest?.status === 'submission-pending'
         ? 'submissionPending'
         : target.activeRequest?.status,
+    caseStateKey:
+      target.activeRequest?.caseState === 'assessment-in-progress'
+        ? 'assessment'
+        : target.activeRequest?.caseState || 'unavailable',
     backLink: proposal ? summaryUrl : '/operator',
     changeUrl: `${summaryUrl}/change`,
     submitUrl: `${summaryUrl}/submit`

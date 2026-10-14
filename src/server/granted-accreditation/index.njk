@@ -50,8 +50,12 @@
         { key: { text: t('pages.grantedAccreditation.requestId') }, value: { text: target.activeRequest.requestId } },
         { key: { text: t('pages.grantedAccreditation.requestStatus') }, value: { text: t('pages.grantedAccreditation.requestStates.' + requestStatusKey) } },
         { key: { text: t('pages.grantedAccreditation.caseReference') }, value: { text: target.activeRequest.caseReference or t('pages.grantedAccreditation.awaitingReceipt') } },
-        { key: { text: t('pages.grantedAccreditation.caseId') }, value: { text: target.activeRequest.caseId or t('pages.grantedAccreditation.awaitingReceipt') } }
+        { key: { text: t('pages.grantedAccreditation.caseId') }, value: { text: target.activeRequest.caseId or t('pages.grantedAccreditation.awaitingReceipt') } },
+        { key: { text: t('pages.grantedAccreditation.caseState') }, value: { text: t('pages.grantedAccreditation.caseStates.' + caseStateKey) } }
       ] }) }}
+      {% if target.activeRequest.caseState === 'rejected' %}
+        <p class="govuk-body" data-testid="ors-outcome-unconfirmed">{{ t('pages.grantedAccreditation.outcomeUnconfirmed') }}</p>
+      {% endif %}
       {% if target.activeRequest.status === 'submission-pending' %}
         <p class="govuk-body">{{ t('pages.grantedAccreditation.unconfirmed') }}</p>
         <form method="post" action="{{ submitUrl }}">
@@ -59,6 +63,21 @@
           {{ govukButton({ text: t('pages.grantedAccreditation.retrySubmission'), attributes: { 'data-testid': 'retry-ors-submission' } }) }}
         </form>
       {% endif %}
+    </section>
+  {% endif %}
+  {% if target.history.length %}
+    <section data-testid="change-request-history">
+      <h2 class="govuk-heading-m">{{ t('pages.grantedAccreditation.history') }}</h2>
+      {% for attempt in target.history %}
+        <div data-testid="closed-change-request" data-request-id="{{ attempt.requestId }}" data-case-id="{{ attempt.caseId }}" data-site-id="{{ attempt.proposedSiteId }}">
+          {{ govukSummaryList({ rows: [
+            { key: { text: t('pages.grantedAccreditation.requestId') }, value: { text: attempt.requestId } },
+            { key: { text: t('pages.grantedAccreditation.requestStatus') }, value: { text: t('pages.grantedAccreditation.requestStates.' + attempt.status) } },
+            { key: { text: t('pages.grantedAccreditation.caseReference') }, value: { text: attempt.caseReference } },
+            { key: { text: t('pages.grantedAccreditation.caseId') }, value: { text: attempt.caseId } }
+          ] }) }}
+        </div>
+      {% endfor %}
     </section>
   {% endif %}
 {% endblock %}

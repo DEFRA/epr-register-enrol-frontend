@@ -32,9 +32,21 @@
       "awaitingReceipt": "Awaiting confirmation",
       "unconfirmed": "Submission is unconfirmed. Retry to send the same request again.",
       "retrySubmission": "Retry submission",
+      "history": "Previous change requests",
+      "caseState": "Management case state",
+      "outcomeUnconfirmed": "The refusal is awaiting confirmation. This request remains active until the outcome is received.",
+      "caseStates": {
+        "submitted": "Submitted",
+        "assessment": "Assessment in progress",
+        "rejected": "Refused",
+        "approved": "Granted",
+        "withdrawn": "Withdrawn",
+        "unavailable": "Current case state unavailable"
+      },
       "requestStates": {
         "submissionPending": "Submission unconfirmed",
-        "submitted": "Submitted"
+        "submitted": "Submitted",
+        "rejected": "Refused"
       }
     },
     "home": {

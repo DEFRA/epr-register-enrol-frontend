@@ -159,6 +159,61 @@ describe('Fixed granted accreditation', () => {
     )
   })
 
+  test('refused history retains correlation and restores Change alongside the unchanged accreditation', async () => {
+    vi.mocked(realApiClient.get).mockResolvedValue({
+      ...target,
+      activeRequest: null,
+      history: [
+        {
+          requestId: 'old-request',
+          caseId: 'old-case',
+          proposedSiteId: 'old-site',
+          caseReference: 'AP26OLD',
+          status: 'rejected'
+        }
+      ]
+    })
+    const response = await server.inject(summary)
+    expect(response.statusCode).toBe(200)
+    expect(response.result).toContain('data-testid="change-request-history"')
+    for (const text of [
+      'old-request',
+      'old-case',
+      'AP26OLD',
+      'Refused',
+      'Granted',
+      'Overseas Site 1 (Germany)'
+    ]) {
+      expect(response.result).toContain(text)
+    }
+    expect(response.result).toContain('data-testid="accreditation-change"')
+    expect(response.result).not.toContain('data-testid="active-change-request"')
+  })
+
+  test.each([
+    ['assessment-in-progress', 'Assessment in progress'],
+    ['rejected', 'awaiting confirmation'],
+    [null, 'Current case state unavailable']
+  ])(
+    'active request shows current management state %s without releasing Change',
+    async (caseState, label) => {
+      vi.mocked(realApiClient.get).mockResolvedValue({
+        ...target,
+        activeRequest: {
+          requestId: 'request-1',
+          caseId: 'case-1',
+          status: 'submitted',
+          caseState
+        }
+      })
+      const response = await server.inject(summary)
+      expect(response.result).toContain(label)
+      expect(response.result).not.toContain(
+        'data-testid="accreditation-change"'
+      )
+    }
+  )
+
   test('submission checks organisation ownership before sending a mutation', async () => {
     vi.mocked(operatorCanAccessOrganisation).mockResolvedValue(false)
     const post = vi.spyOn(realApiClient, 'post')

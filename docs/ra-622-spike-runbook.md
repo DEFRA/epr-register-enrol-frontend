@@ -1,4 +1,4 @@
-# RA-622 spike: fixed accreditation and Add ORS submission (tasks 001–002)
+# RA-622 spike: fixed accreditation, Add ORS submission and refusal (tasks 001–003)
 
 Run the existing four services on `feature/ra-622-spike`, with the existing MongoDB instance at `mongodb://127.0.0.1:27017`. Use the database names below; do not clear MongoDB or reuse the earlier feature-demo databases. No uploader, S3 emulator, Redis, OAuth service or notification service is required. Frontend sessions use the existing memory cache option.
 
@@ -9,7 +9,7 @@ Run the existing four services on `feature/ra-622-spike`, with the existing Mong
 | Management frontend | http://localhost:5001 | `ra-622-spike-management-session` |
 | Management backend  | http://localhost:8085 | `epr-ra-622-spike-management`     |
 
-The frontend callback base URLs match their own portal URLs. `App__BaseUrl` on the operator backend is its own public URL. Management callbacks use `OperatorBackendApi__Url=http://localhost:5000`; operator submission uses `CaseWorking__Url=http://localhost:8085`. Submission crosses the signed management ingestion API. Assessment, decisions and withdrawal remain unavailable until their supporting tasks implement the operations.
+The frontend callback base URLs match their own portal URLs. `App__BaseUrl` on the operator backend is its own public URL. Management callbacks use `OperatorBackendApi__Url=http://localhost:5000`; operator submission uses `CaseWorking__Url=http://localhost:8085`. Submission crosses the signed management ingestion API. Task 003 enables assessment and refusal with a signed outcome callback. Approval and withdrawal remain for tasks 004 and 005.
 
 ## Start the services
 
@@ -216,3 +216,72 @@ Task 002 supporting implementation commits:
 | Management browser tests | `042a9daed97b4cb6f2e142bb765d53a555dede6f` |
 
 The operator frontend task 002 commit contains this runbook and the completed task document. All six repositories remain on `feature/ra-622-spike`; no commit was pushed. Task 003 is the next recorded task.
+
+## Task 003: assessment and refusal
+
+Use the same four-service configuration above, MongoDB data directory, isolated databases and unchanged ReEx fixtures. On an Add ORS case summary, **Start assessment** moves Submitted to Assessment in progress. **Refuse request** records Refused through the existing engine, then sends the actual outcome to the operator backend. No payment, duly-making, SLA or checklist step is involved. Approval and withdrawal are still unavailable.
+
+The module owns protected management POSTs at `/work-items/add-overseas-site/{id}/start-assessment` and `/work-items/add-overseas-site/{id}/refuse`. The frontend uses the existing standard-caseworker scope and CSRF protection. Its backend call forwards the signed standard role; the backend requires that role and an acting user. Support users retain read access without mutation controls. All generic action routes remain unable to invoke the module's transitions directly, including refusal and approval. Existing stored v1 cases use their unchanged workflow snapshots and engine audit/state/version guards.
+
+Refusal delivery uses the existing `DefaultClient` and six-line v3 HMAC signing helper, with the configured `OperatorBackendApi` URL, secret and timeout. The authenticated operator endpoint is POST `/api/v1/accreditation-changes/outcome`, with `{ requestId, caseId, proposedSiteId, target, outcome: "rejected" }`. It checks the exact persisted request/case/site/five-field target, then changes status to `rejected`, records closure time and releases the active marker in one atomic MongoDB update. Matching replay succeeds without changing history. A mismatched or unsupported outcome is rejected. An old callback addresses only its original request, including after a later request has reserved the target.
+
+The management decision is durable before callback delivery. A failed or disabled delivery returns 503 and leaves the case Refused with **Operator outcome delivery is unconfirmed** and **Retry outcome delivery**. That button repeats the recorded refusal; it cannot choose a new outcome or add another decision audit entry. An acknowledged delivery stores `outcomeDeliveryConfirmed` on the case. There is no background retry worker. The operator keeps its active request until the callback is accepted, even if a public management read already reports Refused. A callback arriving before submission receipt confirmation must be retried after correlation is confirmed.
+
+The operator summary reads the case through the existing signed GET `/work-items/{caseId}` transport, validates its correlation and displays its current state separately from request status. A failed/mismatched read displays **Current case state unavailable** and retains the slot. Confirmed refusal adds the closed request to **Previous change requests**, restores Change and preserves Granted and all approved sites. A later protected submission reuses the prepared details with new request/site/case identities. History and the active marker come from MongoDB, not frontend session state.
+
+Run the connected browser sequence from the two existing test repositories with the services running:
+
+```powershell
+$env:RA_622_SPIKE_RECEIPT_FILE = 'C:\epr-register-enrol-frontend\.cache\task003\submission.json'
+$env:CHROMEDRIVER_PORT = '9515'
+$env:CHROME_BINARY = 'C:\Users\ContainerAdministrator\AppData\Local\ms-playwright\chromium-1223\chrome-win64\chrome.exe'
+# Operator browser repository: protected submission or resume.
+$env:RA_622_SPIKE_PHASE = 'submit'
+npx wdio run wdio.spike.conf.js
+# Management browser repository: list/detail, assessment and actual refusal callback.
+$env:RA_622_SPIKE_PHASE = 'refuse'
+npx wdio run wdio.spike.conf.js
+# Operator browser repository: actual refusal readback, history, unchanged sites and a distinct submission.
+$env:RA_622_SPIKE_PHASE = 'refusal-readback'
+npx wdio run wdio.spike.conf.js
+# Management browser repository: read the actual new case; no decision.
+$env:RA_622_SPIKE_PHASE = 'read'
+npx wdio run wdio.spike.conf.js
+```
+
+The phase setting selects portal-specific checks and the shared receipt file carries actual service identities. These checks create no terminal records or fabricated receipts. The management spike runner allows 180 seconds per test so a slow sign-in completes before the next test starts. Both browser specs remain opt-in.
+
+### Task 003 evidence (14 October 2026)
+
+The retained task 002 case was assessed and refused through the real applications, then a new request was submitted. The final successful browser cycle assessed/refused that new request and demonstrated another explicit submission without a reset:
+
+| Correlation     | Confirmed refused attempt              | Subsequent submitted attempt           |
+| --------------- | -------------------------------------- | -------------------------------------- |
+| Request         | `37695813-0339-49f2-a179-a4ead9d0008f` | `9aefb88e-a23c-45d6-9be6-2853a27b6157` |
+| Proposed site   | `73989754-d7ac-48c2-9d31-2d9cf57747c7` | `6f0ce39c-e087-43d7-b849-cbc2b87db6b1` |
+| Management case | `d0c89f05-323d-45a7-9e85-7454d89cc0b7` | `a3b6b819-35f4-4446-a02b-c2ee62372e4f` |
+| Case reference  | `AP26EA50006GL2`                       | `AP26EA50006GL3`                       |
+
+The operator browser verified actual Refused history, restored Change, the same four approved-site entries and Granted status, then submitted the same prepared proposal with all three new identities. The earlier task 002 refused attempt also remains in history. The management browser verified assessment, Refused, confirmed operator delivery and the absence of approval/terminal mutation controls. Chromium and ChromeDriver both used 148.0.7778.96. All four readiness endpoints returned 200.
+
+Operator backend: full suite, 1,629 passed, including ten change-request public tests. Management backend: full suite, 2,126 passed and nine opt-in external checks skipped. Operator frontend: 132 files / 2,632 tests passed; coverage was 98.51% statements, 98.49% lines, 91.82% branches and 98.66% functions. Frontend builds, full lint and operator formatting passed. Changed management files passed formatting. Browser checks passed full operator lint/formatting and changed management lint/formatting. The configured critical-severity audits passed; existing lower-severity dependency findings were not changed.
+
+Public API checks cover out-of-order refusal, standard/support/service-only caller boundaries, generic action bypass, terminal assessment mutation, failed delivery and same-decision retry, exact correlation, concurrent harmless replay, retained sites/history and old callbacks after a new request. Public operator reads also exercise assessment, unconfirmed refusal and mismatched/unavailable management reads. Frontend checks include protected forms, hidden support controls, delivery failure/retry notices and retained closed attempts. Existing shared engine/transport/worklist/template and re-accreditation checks are included in the full suites.
+
+The first management browser run completed the actual refusal but hit an existing 60-second login timeout, allowing its unfinished test to interfere with the following filter assertion. The final run with the spike-only timeout passed all three scenarios. The first management frontend full run passed 2,114 tests but timed out an existing assignment-page setup hook, skipping five checks; an attempted rerun then hit the previously observed Windows `C:\@id\C:\...\vitest\dist\index.js` resolution error. Moving the local Vite cache aside and supplying an explicit root allowed the focused retry group to pass all 30 checks. These failed runs are not counted as successful full-suite evidence.
+
+The final management frontend full run passed all 104 files / 2,120 tests, with 97.68% statement, 97.90% line, 93.32% branch and 97.12% function coverage. The command was `npx vitest run --coverage --pool=forks --hookTimeout=30000 --root C:/epr-register-enrol-management-fe` with `AWS_EMF_ENVIRONMENT=Local` and `TZ=UTC`, after moving its ignored `node_modules/.vite` directory aside within that repository. No dependency or permanent runner configuration was changed. Management then found the new Submitted case in the browser: two read scenarios passed, with the decision scenario intentionally skipped by the `read` phase. The retained data now has two refused attempts, one active Submitted request, four approved sites and Granted status.
+
+The [task 003 review](ra-622-task003-review.md) has no outstanding findings. Task 004 remains next; no approval projection, withdrawal or full restart-durability proof is claimed here.
+
+Task 003 supporting implementation commits:
+
+| Repository               | Commit                                     |
+| ------------------------ | ------------------------------------------ |
+| Operator backend         | `4ec7ce95d6a19af247f9e7a94298757a4cd70094` |
+| Management backend       | `b48462458b90301967832ac0d325daa651e76bef` |
+| Management frontend      | `d6dd8084ebcb7305b7a2b6ff159c41e2e82a6530` |
+| Operator browser tests   | `256e231a23edcf92435e42839a9bd047df41a074` |
+| Management browser tests | `20e9f3dcd5c8a659695b7749393a0bbd5c3321fd` |
+
+The operator frontend task 003 commit contains this runbook, the review and the completed task document. Quality checks were run explicitly before the local commits; frontend hooks were disabled to avoid repeating completed suites and the previously documented unrelated management formatting failures. All six repositories remain on `feature/ra-622-spike`; no commit was pushed. Runtime logs and receipt files remain in ignored caches, and the operator backend's pre-existing untracked `.cache/` was left out of its commit.

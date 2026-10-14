@@ -32,9 +32,21 @@
       "awaitingReceipt": "Yn aros am gadarnhad",
       "unconfirmed": "Nid yw’r cyflwyniad wedi’i gadarnhau. Rhowch gynnig arall arni i anfon yr un cais eto.",
       "retrySubmission": "Ailgynnig y cyflwyniad",
+      "history": "Ceisiadau newid blaenorol",
+      "caseState": "Statws yr achos rheoli",
+      "outcomeUnconfirmed": "Mae'r gwrthodiad yn aros am gadarnhad. Mae'r cais hwn yn parhau'n weithredol nes bod y canlyniad wedi dod i law.",
+      "caseStates": {
+        "submitted": "Wedi’i gyflwyno",
+        "assessment": "Asesiad ar y gweill",
+        "rejected": "Wedi’i wrthod",
+        "approved": "Wedi’i ganiatáu",
+        "withdrawn": "Wedi’i dynnu’n ôl",
+        "unavailable": "Nid yw statws presennol yr achos ar gael"
+      },
       "requestStates": {
         "submissionPending": "Cyflwyniad heb ei gadarnhau",
-        "submitted": "Wedi’i gyflwyno"
+        "submitted": "Wedi’i gyflwyno",
+        "rejected": "Wedi’i wrthod"
       }
     },
     "home": {
