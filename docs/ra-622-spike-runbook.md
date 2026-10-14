@@ -1,4 +1,4 @@
-# RA-622 spike: fixed accreditation, Add ORS submission, decisions and withdrawal (tasks 001–005)
+# RA-622 spike: connected Add ORS flow (tasks 001–006)
 
 Run the existing four services on `feature/ra-622-spike`, with the existing MongoDB instance at `mongodb://127.0.0.1:27017`. Use the database names below; do not clear MongoDB or reuse the earlier feature-demo databases. No uploader, S3 emulator, Redis, OAuth service or notification service is required. Frontend sessions use the existing memory cache option.
 
@@ -45,11 +45,11 @@ $env:OperatorBackendApi__Enabled = 'true'
 $env:OperatorBackendApi__Url = 'http://localhost:5000'
 $env:OperatorBackendApi__ClientId = 'epr-register-enrol-management-be'
 $env:Notify__Enabled = 'false'
-$env:WorkItems__SeedOnStartup = 'true'
+$env:WorkItems__SeedOnStartup = 'false'
 dotnet run --no-launch-profile --project EprRegisterEnrolManagementBe --urls http://localhost:8085
 ```
 
-Management's existing development worklist seeding runs only in its isolated spike database. Real Notify is disabled. Existing uploader defaults may produce startup warnings, but the read-only demonstration uses no uploads or storage.
+The retained spike database already contains the existing development worklist examples. Keep startup seeding disabled for repeat demonstrations and restarts. For an entirely new isolated database only, enable the existing development seeder on its first launch, then disable it. Do not replace or clear requests or cases. Real Notify is disabled. Existing uploader defaults may produce startup warnings, but the demonstration uses no uploads or storage.
 
 Operator frontend (`epr-register-enrol-frontend`):
 
@@ -421,3 +421,184 @@ Task 005 supporting commits, compatible with the operator frontend task 005 comm
 | Management frontend      | `09dfd5715a3f4f7711566de292201438e3a13c2c` |
 | Operator browser tests   | `0a4182879823121e19c7dd580d53ffddfa93a58f` |
 | Management browser tests | `57f432adcf133ab246155b6567d9ed803ca03605` |
+
+## Task 006: complete flow, durability and versioning
+
+Use the retained databases and launch configuration at the top of this runbook. Management startup seeding is now disabled. The runtime uses operator frontend/backend on 3000/5000 and management frontend/backend on 5001/8085. Port 5001 is the actual compatible local management frontend port; the spec's preferred 3001 is not required. All four services use the unchanged development ReEx adapters, real portal/backend calls and distinct frontend session cookies. Real Notify is disabled.
+
+The [approach note](ra-622-spike-approach.md) answers the technical questions, includes the submission/closure sequence and records **Complete Add ORS changes against granted accreditations** as follow-on scope. It documents module/framework limits, production duplicate-site policy and conceptual tonnage/interim-site implications. No external ticket or deferred feature implementation is created.
+
+### Combined browser sequence
+
+Start with a fresh receipt path in an existing local cache directory, not a receipt from an earlier feature branch. The `submit` phase captures the actual starting public target record, all current approved-site entries and the real submitted/resumed identities. Refusal and withdrawal preserve that capture. Each later approval is compared with it. Existing applications, requests, cases and additions are never cleared.
+
+Run these commands sequentially in the same PowerShell session. Each browser repository continues using its existing WebdriverIO framework and opt-in spike configuration. The management case lookup adds its actual case ID as a search constraint, so old cases filling earlier worklist pages cannot prevent repeat demonstrations.
+
+```powershell
+$env:RA_622_SPIKE_RECEIPT_FILE = 'C:\epr-register-enrol-frontend\.cache\task006\submission.json'
+$env:CHROMEDRIVER_PORT = '9515'
+$env:CHROME_BINARY = 'C:\Users\ContainerAdministrator\AppData\Local\ms-playwright\chromium-1223\chrome-win64\chrome.exe'
+
+Set-Location C:\epr-register-enrol-fe-tests
+$env:RA_622_SPIKE_PHASE = 'submit'
+npx wdio run wdio.spike.conf.js
+
+Set-Location C:\epr-register-enrol-mgmt-tests
+$env:RA_622_SPIKE_PHASE = 'refuse'
+npx wdio run wdio.spike.conf.js
+
+Set-Location C:\epr-register-enrol-fe-tests
+$env:RA_622_SPIKE_PHASE = 'refusal-readback'
+npx wdio run wdio.spike.conf.js
+$env:RA_622_SPIKE_PHASE = 'withdrawal-repeat'
+npx wdio run wdio.spike.conf.js
+
+Set-Location C:\epr-register-enrol-mgmt-tests
+$env:RA_622_SPIKE_PHASE = 'withdrawal-readback'
+npx wdio run wdio.spike.conf.js
+$env:RA_622_SPIKE_PHASE = 'approve'
+npx wdio run wdio.spike.conf.js
+
+Set-Location C:\epr-register-enrol-fe-tests
+$env:RA_622_SPIKE_PHASE = 'approval-repeat'
+npx wdio run wdio.spike.conf.js
+
+Set-Location C:\epr-register-enrol-mgmt-tests
+$env:RA_622_SPIKE_PHASE = 'approve'
+npx wdio run wdio.spike.conf.js
+
+Set-Location C:\epr-register-enrol-fe-tests
+$env:RA_622_SPIKE_PHASE = 'approval-readback'
+npx wdio run wdio.spike.conf.js
+
+Set-Location C:\epr-register-enrol-mgmt-tests
+$env:RA_622_SPIKE_PHASE = 'durability-capture'
+npx wdio run wdio.spike.conf.js
+```
+
+Stop on a failing phase and inspect its result before proceeding. A failed phase can have performed a real mutation; preserve that history and recover through the normal service operation. Do not fabricate a receipt or force a terminal database state. For a normal fresh/repeat run, the starting target must have no active request, or the existing active request must still be Submitted. An assessed or unconfirmed active request requires its normal closure/retry first. Completed receipts are evidence of a specific run, not instructions to resubmit an old identity as a new attempt.
+
+The final operator phase records the entire public target response as `finalRead`. Management capture saves all terminal case public responses, including prior attempts and audit, in `submission.json.management.json`. Both files are ignored local artifacts. Their identifiers originate from actual application operations.
+
+### All-service restart
+
+Capture before stopping anything. Stop only the four verified application listeners. Keep MongoDB, its data directory and ChromeDriver running. With services started by the direct background launch used locally, the stop commands are:
+
+```powershell
+$servicePorts = @(3000, 5000, 5001, 8085)
+$serviceProcesses = Get-NetTCPConnection -State Listen |
+  Where-Object { $_.LocalPort -in $servicePorts } |
+  Select-Object -ExpandProperty OwningProcess -Unique
+Get-CimInstance Win32_Process |
+  Where-Object { $_.ProcessId -in $serviceProcesses } |
+  Select-Object ProcessId, ExecutablePath, CommandLine
+# Verify these are the two portal nodes and the two backend dotnet processes.
+Stop-Process -Id $serviceProcesses
+```
+
+Relaunch all four services using the four configuration blocks at the top. The executed local launches used `Start-Process -WindowStyle Hidden`, redirected each process's stdout/stderr into `.cache/task006/`, and used these commands/working directories after the test builds:
+
+| Working directory                                                  | Command                                                                                  |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `C:\epr-register-enrol-backend\EprRegisterEnrolBackend`            | `dotnet bin\Debug\net10.0\EprRegisterEnrolBackend.dll --urls http://localhost:5000`      |
+| `C:\epr-register-enrol-management-be\EprRegisterEnrolManagementBe` | `dotnet bin\Debug\net10.0\EprRegisterEnrolManagementBe.dll --urls http://localhost:8085` |
+| `C:\epr-register-enrol-frontend`                                   | `node src/index.js`                                                                      |
+| `C:\epr-register-enrol-management-fe`                              | `node src/index.js`                                                                      |
+
+The project working directories matter for backend development configuration. `dotnet run --project` in the top-level blocks is the ordinary alternative and handles this directory choice. The local cached launch scripts are execution artifacts, not a new orchestration platform. Wait for all four `/health/ready` endpoints to return 200, then run:
+
+```powershell
+Set-Location C:\epr-register-enrol-fe-tests
+$env:RA_622_SPIKE_PHASE = 'restart-readback'
+npx wdio run wdio.spike.conf.js
+Set-Location C:\epr-register-enrol-mgmt-tests
+$env:RA_622_SPIKE_PHASE = 'restart-readback'
+npx wdio run wdio.spike.conf.js
+```
+
+These phases sign in again because memory sessions do not survive restart. Operator compares its complete public target response with `finalRead`, plus rendered Granted status, retained history, original sites, one entry per approved request and restored Change. Management compares the complete signed public case responses, including audit and delivery confirmation, with its captured file and verifies terminal detail pages offer no actions. Neither phase writes outcomes, clears MongoDB or submits another request.
+
+To repeat the demo, choose a new receipt filename and start again at `submit` with the same databases. It captures the new starting baseline, so the next two approvals add exactly two entries without invalidating earlier runs. Keep both old capture files for review.
+
+### Focused workflow and regression checks
+
+The public backend version check uses the existing ephemeral Mongo test infrastructure. It submits an Add ORS case under v1, creates an upgraded test host against the same database with v2 registered instead, reads and replays the original case, and submits another request. The test-only v2 removes Start assessment. Through the public module action route the original v1 case still accepts it and records its audit, while the new v2 case rejects it and remains Submitted. Production still registers only v1; no workflow switch, second runtime declaration or migration platform is added.
+
+```powershell
+# Management backend: build and focused public check.
+dotnet test --filter-method '*Submission_RetainsFrozenV1*' --no-progress
+dotnet test --no-build --filter-class '*AddOverseasSiteSubmissionTests' --no-progress
+# Operator backend: focused public correlation/replay/active-slot/access/closure checks.
+dotnet test --no-build --filter-class '*ChangeRequestSubmissionTests' --no-progress
+# Full backend suites (already built; avoids replacing a running DLL/apphost).
+dotnet test --no-build --no-progress
+# Both frontends: ordinary full unit/page suites and coverage gates.
+npm test
+```
+
+Run each command from its respective repository. Existing management core template/version tests, Add ORS stored-v1 rendering, template registry and shared re-accreditation ingestion/worklist/action/transport regressions are included. The existing unit suites remain the unit evidence; this verification task adds a public HTTP version test and connected browser persistence checks rather than private engine tests.
+
+### Connected evidence (14 October 2026)
+
+The first complete run used `.cache/task006/submission.json`. It captured six starting site entries (four development ReEx baseline sites and two earlier approved additions), six terminal attempts and the Submitted request left by task 005. The refusal phase closed that actual request; each following request was created through the protected operator form. These were the actual correlations:
+
+| Outcome         | Operator request                       | Management case                        | Proposed site                          |
+| --------------- | -------------------------------------- | -------------------------------------- | -------------------------------------- |
+| Refused         | `40b753f9-53b3-4d0b-85b3-5e3b70273516` | `d722b1ee-fc05-4bcd-aa2d-4203217b6957` | `2c3c4134-071e-42b8-9603-64e8325f4f44` |
+| Withdrawn       | `e3caadff-cb18-4f15-b6ed-57d766ba6166` | `ef8cac2b-ed00-494f-8ca5-051dfe5e985b` | `4a926cd9-b949-48d3-bc7a-ae26f3187bee` |
+| Granted, first  | `31a8ceb3-5c4e-43a0-ad36-1eb061b7050f` | `afca9e83-d119-4084-8c6e-a3d56b9d0bb5` | `ec80a515-ec5f-4bad-91ce-7917c64892bc` |
+| Granted, second | `69c84098-47b7-4ef7-9bfa-73e015dbe569` | `5a9c9d90-f740-4ce4-9700-0cfe9ca44484` | `0c7208a1-71b4-4873-bc12-24da42a76b03` |
+
+All nine browser phases passed: five operator checks, management refusal/approval phases with three checks each, and management withdrawal readback with two checks and its decision deliberately skipped. The target retained Granted and its original six entries, then showed eight entries after two approvals of identical prepared details. History contained ten terminal attempts (three Refused, three Withdrawn, four Granted), no active request and restored Change. The final assertions compare all earlier history and approved additions, and exclude the new refused/withdrawn proposals. Old withdrawal replay leaves the subsequent request active. There are no fabricated outcomes or receipts.
+
+At 13:16 UTC, all four application processes were stopped together and relaunched with both spike database names unchanged and management seeding disabled. Process IDs changed from operator backend/frontend `6596`/`7020` and management backend/frontend `496`/`1624` to `5908`/`7152` and `3008`/`6448`. MongoDB stayed process `4012` with data directory `C:\epr-register-enrol-frontend\.cache\ra-622-mongo`. Every readiness endpoint returned 200. Operator restart readback passed complete public-record equality and all visible correlations, eight sites, Granted and Change. Management restart readback passed complete signed public-record equality for all ten retained cases, including audit, frozen v1 and delivery confirmation, plus the terminal detail pages. No MongoDB restart, clearing, reseed or direct outcome write was involved. The captures and process inventories remain in `.cache/task006/`.
+
+The initial public version check passed, then the focused groups passed all seven management and 12 operator checks. Full backend suites passed: operator 1,631 and management 2,130, with nine existing opt-in live Notify/ReEx checks skipped. Both suites used their existing ephemeral Mongo infrastructure, separate from the retained demonstration databases. Management's existing template-version and relevant shared re-accreditation tests are included. The ordinary test compile reported existing xUnit analyzer warnings outside the changed test, without a new warning from this change.
+
+Starting compatible revisions for this verification task:
+
+| Repository               | Starting revision                          |
+| ------------------------ | ------------------------------------------ |
+| Operator frontend        | `785429487cc1971fbd99eff147b98175ca006498` |
+| Operator backend         | `e6de0f8578cc093a49c90b59e1addaa43c1fabce` |
+| Management backend       | `4d55f697568b39c5daa614ecc7908a175f6b1392` |
+| Management frontend      | `09dfd5715a3f4f7711566de292201438e3a13c2c` |
+| Operator browser tests   | `0a4182879823121e19c7dd580d53ffddfa93a58f` |
+| Management browser tests | `57f432adcf133ab246155b6567d9ed803ca03605` |
+
+Operator backend and management frontend need no production change for task 006. The task 006 commits add the version test, repeatable connected assertions and restart checks, plus this runbook/approach/review/completion record. All repositories stay on `feature/ra-622-spike` and commits remain local.
+
+### Repeat on retained data
+
+After the successful restart checks, the complete nine-phase sequence ran again using `.cache/task006/repeat.json`, the same databases and no reset. It started with eight approved-site entries and ten terminal attempts and ended with ten entries and fourteen terminal attempts (four Refused, four Withdrawn, six Granted). All nine phases passed. Both new approvals retained the identical prepared site details with new identities, added exactly two entries over that second starting baseline, and left no active request with Change available. The first run's identities and all earlier history remained in the public record.
+
+| Outcome         | Operator request                       | Management case                        | Proposed site                          |
+| --------------- | -------------------------------------- | -------------------------------------- | -------------------------------------- |
+| Refused         | `1273f3d3-9be1-4676-a4e7-d5c4ad75fdb9` | `2a7a36be-a891-4bb0-a0b0-18e44af5c812` | `f21c37b4-42fd-4f0c-9504-3dc3517e75e1` |
+| Withdrawn       | `36a51477-2c05-4dcc-ac28-7741756a872c` | `78c09b4b-2bd0-4b02-aad7-305ae8d93087` | `b41abdad-155f-4659-a264-920364d4a584` |
+| Granted, first  | `97c89a87-0354-4524-b7c7-953e7cf569f8` | `c01ca1d0-1076-482b-b0c6-538fa243d3da` | `709cfbbe-f7f0-489d-9b94-a009726f0cf0` |
+| Granted, second | `09a3818f-7f4c-4536-8076-abc9dd6cb97a` | `4c69fe8a-6b36-40dd-8218-3d2c86b26eab` | `7b8c6f98-4a34-41fd-a1f9-aef3d3bc80ae` |
+
+The first attempt to launch the repeat sequence stopped because PowerShell's `ErrorActionPreference=Stop` treated a WebDriver BiDi cookie warning as a terminating native stderr error. The browser had already created a real Submitted request. The local helper was corrected to inspect each runner's exit code, and the successful repeat sequence resumed that same request through normal submission replay. No terminal state was forced or data discarded. Chromium/ChromeDriver 148.0.7778.96 also reports occasional scroll/BiDi warnings and uses its existing classic/Web API fallback; successful runs are distinguished by assertions and exit status. These launch warnings do not establish new delivery guarantees.
+
+During launch preparation the cached management helper's flags were corrected and inspected before the connected mutations. The successful flows and restart used Notify disabled and startup seeding disabled. No real notification or external ReEx amendment is claimed.
+
+The C# whitespace formatter initially reported both new formatting and pre-existing compact test formatting in `AddOverseasSiteSubmissionTests.cs`. The added test/declaration was formatted; existing test bodies were retained to keep this task focused. Whole-file whitespace verification still reports those pre-existing bodies and is not claimed as a passing gate. No production source was reformatted.
+
+### Final verification and completion
+
+All four full suites passed: operator frontend 132 files / 2,651 tests, management frontend 104 files / 2,128 tests, operator backend 1,631 tests, and management backend 2,130 tests with nine opt-in external checks skipped. Operator coverage passed at 98.51% statements, 98.49% lines, 91.84% branches and 98.66% functions. Management coverage passed at 97.68% statements, 97.90% lines, 93.32% branches and 97.12% functions. The operator command was `npm test`; management used its previously recorded Windows-compatible `npx vitest run --coverage --pool=forks --hookTimeout=30000 --root C:/epr-register-enrol-management-fe` after `npm run build:frontend`, with `AWS_EMF_ENVIRONMENT=Local` and `TZ=UTC`. No runner configuration or dependency was changed.
+
+Frontend builds, operator frontend full lint/formatting/security audit, operator browser full lint/formatting, management browser changed-file lint/formatting and Git whitespace checks passed. The formatted backend version test passed its final compile/public check; the earlier full suite remains valid because formatting changed no behaviour. Existing frontend `(type, version)` registry tests, Add ORS stored-v1 rendering and relevant re-accreditation/shared regressions passed within the full suites. The previously recorded management browser Windows glob/line-ending limitation is unchanged. The [independent Standards and Spec reviews](ra-622-task006-review.md) have zero outstanding findings, including supplemental review of repeat evidence and formatting.
+
+Task 006 is complete and moves to `.tasks/done/`. The parent spec stays in `.tasks/` because task 007 remains. No human demo acceptance, product/statutory signoff, real email delivery or external ReEx amendment is claimed. The retained final target has ten site entries and fourteen terminal requests, no active request and Change available. The four services remain running for later review. Full test output, receipts and launch/process evidence remain in ignored `.cache/task006/`; the operator backend's pre-existing untracked `.cache/` is excluded from commits. Completed quality checks are not rerun by commit hooks; these local commits use `HUSKY=0`. Nothing is pushed.
+
+Final compatible revisions, with the operator frontend task 006 commit containing this runbook:
+
+| Repository                      | Commit                                     |
+| ------------------------------- | ------------------------------------------ |
+| Operator backend (unchanged)    | `e6de0f8578cc093a49c90b59e1addaa43c1fabce` |
+| Management backend              | `a7b17312ba7d6315af720989dc5e263eb9a55b92` |
+| Management frontend (unchanged) | `09dfd5715a3f4f7711566de292201438e3a13c2c` |
+| Operator browser tests          | `a774a5b8ea07f467973b3615e476eb7efb6cd8b0` |
+| Management browser tests        | `6754b08822c2d95e423431f74e8115ba65e8e57d` |
