@@ -1,6 +1,7 @@
 {% extends 'layouts/page.njk' %}
 {% from "govuk/components/summary-list/macro.njk" import govukSummaryList %}
 {% from "govuk/components/tag/macro.njk" import govukTag %}
+{% from "govuk/components/button/macro.njk" import govukButton %}
 
 {% block content %}
   {{ appHeading({ text: pageTitle }) }}
@@ -25,7 +26,12 @@
         { key: { text: t('pages.grantedAccreditation.country') }, value: { text: target.proposal.country } }
       ] }) }}
     </div>
-    <p class="govuk-body" data-testid="proposal-read-only">{{ t('pages.grantedAccreditation.submissionUnavailable') }}</p>
+    {% if not target.activeRequest %}
+      <form method="post" action="{{ submitUrl }}" data-testid="ors-submission-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        {{ govukButton({ text: t('pages.grantedAccreditation.submitExample'), attributes: { 'data-testid': 'submit-ors-example' } }) }}
+      </form>
+    {% endif %}
   {% else %}
     <h2 class="govuk-heading-m">{{ t('pages.grantedAccreditation.approvedSites') }}</h2>
     <ul class="govuk-list govuk-list--bullet" data-testid="approved-sites">
@@ -33,6 +39,26 @@
         <li>{{ site.siteName }} — {{ site.siteAddress }}, {{ site.country }}</li>
       {% endfor %}
     </ul>
-    <p class="govuk-body"><a class="govuk-link" href="{{ changeUrl }}" data-testid="accreditation-change">{{ t('pages.grantedAccreditation.change') }}</a></p>
+    {% if not target.activeRequest %}
+      <p class="govuk-body"><a class="govuk-link" href="{{ changeUrl }}" data-testid="accreditation-change">{{ t('pages.grantedAccreditation.change') }}</a></p>
+    {% endif %}
+  {% endif %}
+  {% if target.activeRequest %}
+    <section data-testid="active-change-request" data-request-id="{{ target.activeRequest.requestId }}" data-case-id="{{ target.activeRequest.caseId }}" data-site-id="{{ target.activeRequest.proposedSiteId }}">
+      <h2 class="govuk-heading-m">{{ t('pages.grantedAccreditation.activeRequest') }}</h2>
+      {{ govukSummaryList({ rows: [
+        { key: { text: t('pages.grantedAccreditation.requestId') }, value: { text: target.activeRequest.requestId } },
+        { key: { text: t('pages.grantedAccreditation.requestStatus') }, value: { text: t('pages.grantedAccreditation.requestStates.' + requestStatusKey) } },
+        { key: { text: t('pages.grantedAccreditation.caseReference') }, value: { text: target.activeRequest.caseReference or t('pages.grantedAccreditation.awaitingReceipt') } },
+        { key: { text: t('pages.grantedAccreditation.caseId') }, value: { text: target.activeRequest.caseId or t('pages.grantedAccreditation.awaitingReceipt') } }
+      ] }) }}
+      {% if target.activeRequest.status === 'submission-pending' %}
+        <p class="govuk-body">{{ t('pages.grantedAccreditation.unconfirmed') }}</p>
+        <form method="post" action="{{ submitUrl }}">
+          <input type="hidden" name="crumb" value="{{ crumb }}">
+          {{ govukButton({ text: t('pages.grantedAccreditation.retrySubmission'), attributes: { 'data-testid': 'retry-ors-submission' } }) }}
+        </form>
+      {% endif %}
+    </section>
   {% endif %}
 {% endblock %}

@@ -1,7 +1,8 @@
 import { requireOperator } from '../common/helpers/auth/auth-scopes.js'
 import {
   grantedAccreditationController,
-  preparedProposalController
+  preparedProposalController,
+  submitPreparedProposalController
 } from './controller.js'
 
 export const grantedAccreditation = {
@@ -23,6 +24,12 @@ export const grantedAccreditation = {
             path: `${prefix}${targetPath}/change`,
             options: requireOperator,
             ...preparedProposalController
+          },
+          {
+            method: 'POST',
+            path: `${prefix}${targetPath}/submit`,
+            options: requireOperator,
+            ...submitPreparedProposalController
           }
         ])
       }

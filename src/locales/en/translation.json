@@ -23,7 +23,19 @@
       "address": "Address",
       "country": "Country",
       "change": "Change",
-      "submissionUnavailable": "This example is ready to review. Submission is not available yet."
+      "submitExample": "Submit example",
+      "activeRequest": "Active change request",
+      "requestId": "Request ID",
+      "requestStatus": "Request status",
+      "caseReference": "Case reference",
+      "caseId": "Case ID",
+      "awaitingReceipt": "Awaiting confirmation",
+      "unconfirmed": "Submission is unconfirmed. Retry to send the same request again.",
+      "retrySubmission": "Retry submission",
+      "requestStates": {
+        "submissionPending": "Submission unconfirmed",
+        "submitted": "Submitted"
+      }
     },
     "home": {
       "title": "Home",

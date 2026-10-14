@@ -23,7 +23,19 @@
       "address": "Cyfeiriad",
       "country": "Gwlad",
       "change": "Newid",
-      "submissionUnavailable": "Mae’r enghraifft hon yn barod i’w hadolygu. Nid yw cyflwyno ar gael eto."
+      "submitExample": "Cyflwyno enghraifft",
+      "activeRequest": "Cais newid gweithredol",
+      "requestId": "ID y cais",
+      "requestStatus": "Statws y cais",
+      "caseReference": "Cyfeirnod yr achos",
+      "caseId": "ID yr achos",
+      "awaitingReceipt": "Yn aros am gadarnhad",
+      "unconfirmed": "Nid yw’r cyflwyniad wedi’i gadarnhau. Rhowch gynnig arall arni i anfon yr un cais eto.",
+      "retrySubmission": "Ailgynnig y cyflwyniad",
+      "requestStates": {
+        "submissionPending": "Cyflwyniad heb ei gadarnhau",
+        "submitted": "Wedi’i gyflwyno"
+      }
     },
     "home": {
       "title": "Hafan",

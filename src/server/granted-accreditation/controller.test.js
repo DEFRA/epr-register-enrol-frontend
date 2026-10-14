@@ -83,15 +83,106 @@ describe('Fixed granted accreditation', () => {
     expect(post).not.toHaveBeenCalled()
   })
 
-  test('Change displays the prepared proposal without submission or capture', async () => {
+  test('Change displays a protected submission form without creating a request on GET', async () => {
     const post = vi.spyOn(realApiClient, 'post')
     const response = await server.inject(`${summary}/change`)
     expect(response.statusCode).toBe(200)
     expect(response.result).toContain('Spike Glass Recycling')
     expect(response.result).toContain('25 Example Road, Hamburg')
-    expect(response.result).not.toContain('type="submit"')
-    expect(response.result).not.toContain('<form')
+    expect(response.result).toContain('data-testid="submit-ors-example"')
+    expect(response.result).toContain('name="crumb"')
     expect(post).not.toHaveBeenCalled()
+  })
+
+  test('submission redirects to the persisted summary', async () => {
+    vi.spyOn(realApiClient, 'post').mockResolvedValue({
+      requestId: 'request-1'
+    })
+    const response = await server.inject({
+      method: 'POST',
+      url: `${summary}/submit`
+    })
+    expect(response.statusCode).toBe(302)
+    expect(response.headers.location).toBe(summary)
+    expect(realApiClient.post).toHaveBeenCalledWith(
+      '/api/v1/accreditation-changes/50006/aaa000000000000000050006/reex-acc-50006-Glass-2026/Glass/2026/submit',
+      {}
+    )
+  })
+
+  test('an active request hides Change and retains Granted and the approved sites', async () => {
+    vi.mocked(realApiClient.get).mockResolvedValue({
+      ...target,
+      activeRequest: {
+        requestId: 'request-1',
+        proposedSiteId: 'site-1',
+        status: 'submitted',
+        caseId: 'case-1',
+        caseReference: 'AP26EXAMPLE'
+      }
+    })
+    for (const path of [summary, `${summary}/change`]) {
+      const response = await server.inject(path)
+      expect(response.result).toContain('request-1')
+      expect(response.result).toContain('case-1')
+      expect(response.result).toContain('AP26EXAMPLE')
+      expect(response.result).toContain('Granted')
+      expect(response.result).not.toContain(
+        'data-testid="accreditation-change"'
+      )
+      expect(response.result).not.toContain('data-testid="submit-ors-example"')
+    }
+  })
+
+  test('unconfirmed submission offers retry of the reserved request', async () => {
+    vi.spyOn(realApiClient, 'post').mockRejectedValue(
+      Object.assign(new Error('Unconfirmed'), { status: 503 })
+    )
+    const response = await server.inject({
+      method: 'POST',
+      url: `${summary}/submit`
+    })
+    expect(response.statusCode).toBe(302)
+    vi.mocked(realApiClient.get).mockResolvedValue({
+      ...target,
+      activeRequest: {
+        requestId: 'pending-request',
+        status: 'submission-pending',
+        caseId: null
+      }
+    })
+    const summaryResponse = await server.inject(summary)
+    expect(summaryResponse.result).toContain('pending-request')
+    expect(summaryResponse.result).toContain('Submission unconfirmed')
+    expect(summaryResponse.result).toContain(
+      'data-testid="retry-ors-submission"'
+    )
+  })
+
+  test('submission checks organisation ownership before sending a mutation', async () => {
+    vi.mocked(operatorCanAccessOrganisation).mockResolvedValue(false)
+    const post = vi.spyOn(realApiClient, 'post')
+    const response = await server.inject({
+      method: 'POST',
+      url: `${summary}/submit`
+    })
+    expect(response.statusCode).toBe(403)
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  test('submission rejects a missing CSRF token when protection is enabled', async () => {
+    const post = vi.spyOn(realApiClient, 'post')
+    config.set('isTest', false)
+    try {
+      const response = await server.inject({
+        method: 'POST',
+        url: `${summary}/submit`
+      })
+      expect(response.statusCode).toBe(403)
+      expect(post).not.toHaveBeenCalled()
+    } finally {
+      config.reset('isTest')
+    }
   })
 
   test('an unrelated operator cannot read the target or proposal', async () => {
@@ -179,6 +270,11 @@ describe('Fixed granted accreditation', () => {
       try {
         const response = await server.inject(summary)
         expect(response.statusCode).toBe(404)
+        const post = await server.inject({
+          method: 'POST',
+          url: `${summary}/submit`
+        })
+        expect(post.statusCode).toBe(404)
         const landing = await server.inject('/operator')
         expect(landing.result).not.toContain(
           'data-testid="spike-accreditation-link"'

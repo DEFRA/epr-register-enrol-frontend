@@ -5,10 +5,11 @@ import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisati
 import {
   grantedAccreditationUrl,
   isAccreditationChangeSpikeEnabled,
-  readFixedAccreditation
+  readFixedAccreditation,
+  submitPreparedProposal
 } from './service.js'
 
-async function render(request, h, proposal) {
+async function checkAccess(request) {
   if (!isAccreditationChangeSpikeEnabled()) {
     throw Boom.notFound()
   }
@@ -20,6 +21,10 @@ async function render(request, h, proposal) {
   if (!canAccess) {
     throw Boom.forbidden('You do not have access to this organisation')
   }
+}
+
+async function render(request, h, proposal) {
+  await checkAccess(request)
   const target = await readFixedAccreditation(request.params)
   const { t } = getLocaleAndTranslator(request)
   const summaryUrl = grantedAccreditationUrl(target)
@@ -29,8 +34,13 @@ async function render(request, h, proposal) {
     ),
     target,
     proposal,
+    requestStatusKey:
+      target.activeRequest?.status === 'submission-pending'
+        ? 'submissionPending'
+        : target.activeRequest?.status,
     backLink: proposal ? summaryUrl : '/operator',
-    changeUrl: `${summaryUrl}/change`
+    changeUrl: `${summaryUrl}/change`,
+    submitUrl: `${summaryUrl}/submit`
   })
 }
 
@@ -40,4 +50,15 @@ export const grantedAccreditationController = {
 
 export const preparedProposalController = {
   handler: (request, h) => render(request, h, true)
+}
+
+export const submitPreparedProposalController = {
+  async handler(request, h) {
+    await checkAccess(request)
+    await submitPreparedProposal(request.params)
+    const { currentLocale } = getLocaleAndTranslator(request)
+    return h.redirect(
+      `${currentLocale === 'cy' ? '/cy' : ''}${grantedAccreditationUrl(request.params)}`
+    )
+  }
 }

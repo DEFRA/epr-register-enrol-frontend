@@ -26,6 +26,25 @@ function targetPath(target) {
     .join('/')
 }
 
+export async function submitPreparedProposal(target) {
+  try {
+    await realApiClient.post(
+      `/api/v1/accreditation-changes/${targetPath(target)}/submit`,
+      {}
+    )
+  } catch (error) {
+    if (error.status === 404) {
+      throw Boom.notFound()
+    }
+    // The summary reads the reserved request and offers a retry after an unconfirmed receipt.
+    if (error.status !== 503) {
+      throw Boom.serverUnavailable(
+        'Accreditation service temporarily unavailable'
+      )
+    }
+  }
+}
+
 export async function readFixedAccreditation(target) {
   if (!isAccreditationChangeSpikeEnabled()) {
     throw Boom.notFound()
