@@ -1753,6 +1753,33 @@ describe('#selectOverseasSitesController', () => {
       )
     }
 
+    test('names the site just withdrawn in the banner, without offering an undo (RA-638)', async () => {
+      mockApplication([SITE_WITH_INTERIM])
+      vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+
+      const withdraw = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        payload: {
+          submitAction: 'removeInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
+      })
+
+      const cookie = (withdraw.headers['set-cookie'] ?? [])[0]?.split(';')[0]
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        headers: { cookie }
+      })
+
+      expect(result).toContain('data-testid="interim-site-withdrawn-banner"')
+      expect(result).toContain('Interim Depot')
+      expect(result).not.toContain('data-testid="undo-withdraw-button"')
+      expect(result).not.toContain('data-testid="undo-withdraw-form"')
+    })
+
     test('does not offer an undo on a plain page load', async () => {
       mockApplication([SITE_WITH_INTERIM])
 
