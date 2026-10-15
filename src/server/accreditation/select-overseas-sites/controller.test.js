@@ -1753,7 +1753,7 @@ describe('#selectOverseasSitesController', () => {
       )
     }
 
-    test('offers an undo naming the site just withdrawn', async () => {
+    test('names the site just withdrawn in the banner, without offering an undo (RA-638)', async () => {
       mockApplication([SITE_WITH_INTERIM])
       vi.spyOn(apiClient, 'delete').mockResolvedValue({})
 
@@ -1775,19 +1775,9 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('data-testid="interim-site-withdrawn-banner"')
-      // Naming it is what makes the offer specific rather than "undo something".
       expect(result).toContain('Interim Depot')
-      expect(result).toContain('data-testid="undo-withdraw-button"')
-      // A <form> inside a <p> closes the paragraph early, and an inline style
-      // is blocked by the CSP - neither would keep the button on the line.
-      const banner = result.slice(
-        result.indexOf('data-testid="interim-site-withdrawn-banner"'),
-        result.indexOf('</form>')
-      )
-      expect(banner).not.toMatch(/<p(?:\s[^>]*)?>(?:(?!<\/p>)[\s\S])*<form/)
-      expect(banner).toContain(
-        '<form method="post" class="select-overseas-sites-undo-form" data-testid="undo-withdraw-form">'
-      )
+      expect(result).not.toContain('data-testid="undo-withdraw-button"')
+      expect(result).not.toContain('data-testid="undo-withdraw-form"')
     })
 
     test('does not offer an undo on a plain page load', async () => {

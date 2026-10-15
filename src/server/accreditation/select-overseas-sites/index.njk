@@ -98,17 +98,6 @@
             <div class="govuk-body">
               {{ t('pages.selectOverseasSites.interimSite.withdrawnBanner.body') }}
               <strong data-testid="withdrawn-interim-site-name">{{ withdrawnInterimSite.siteName }}</strong>.
-              {% if not readOnly %}
-                <form method="post" class="select-overseas-sites-undo-form" data-testid="undo-withdraw-form">
-                  <input type="hidden" name="crumb" value="{{ crumb }}">
-                  <input type="hidden" name="interimSiteId" value="{{ withdrawnInterimSite.interimSiteId }}">
-                  <button type="submit" name="submitAction" value="restoreInterimSite"
-                          class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-                          data-testid="undo-withdraw-button">
-                    {{ t('pages.selectOverseasSites.interimSite.withdrawnBanner.undo') }}
-                  </button>
-                </form>
-              {% endif %}
             </div>
           </div>
         </div>
