@@ -39,7 +39,7 @@
     removeFormTestId (string) - e.g. 'remove-form-accredited'
     removeTestId   (string) - e.g. 'remove-button-accredited'
     removeAction   (string) - submitAction value, e.g. 'removeAccredited'
-    promote        (boolean) - render the "Include in this application" link instead of
+    promote        (boolean) - render the "Add to application" link instead of
                    the Change/Withdraw pair (the registered-only section)
     promoteTestId  (string) - e.g. 'add-button-registered'
     labels         (object) - pre-translated strings, matching how every other
@@ -98,7 +98,7 @@
                   {# longer identifies which one to withdraw.                  #}
                   <input type="hidden" name="interimSiteId" value="{{ interimSite.siteId }}">
                   <button type="submit" name="submitAction" value="removeInterimSite"
-                          class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                          class="govuk-link select-overseas-sites-link-button select-overseas-sites-link-button--red"
                           data-testid="remove-button-interim-site-{{ suffix }}">
                     {{ params.labels.interimRemove }}
                   </button>
@@ -164,7 +164,7 @@
                     <input type="hidden" name="siteId" value="{{ site.siteId }}">
                     <input type="hidden" name="interimSiteId" value="{{ interimSite.siteId }}">
                     <button type="submit" name="submitAction" value="restoreInterimSite"
-                            class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
+                            class="govuk-link select-overseas-sites-link-button select-overseas-sites-link-button--blue"
                             data-testid="restore-button-interim-site-{{ interimSite.siteId }}">
                       {{ params.labels.restore }}
                     </button>
@@ -200,9 +200,8 @@
     {% if not params.readOnly %}
       <td class="govuk-table__cell select-overseas-sites-actions-cell">
         {% if params.promote %}
-          <a href="{{ site.promoteUrl }}" role="button" draggable="false"
-             class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0"
-             data-module="govuk-button"
+          <a href="{{ site.promoteUrl }}"
+             class="govuk-link"
              data-testid="{{ params.promoteTestId }}-{{ site.siteId }}">
             {{ params.labels.add }}
           </a>
@@ -215,7 +214,7 @@
             <input type="hidden" name="crumb" value="{{ params.crumb }}">
             <input type="hidden" name="siteId" value="{{ site.siteId }}">
             <button type="submit" name="submitAction" value="{{ params.removeAction }}"
-                    class="govuk-button govuk-button--warning govuk-!-margin-bottom-0"
+                    class="govuk-link select-overseas-sites-link-button select-overseas-sites-link-button--red"
                     data-testid="{{ params.removeTestId }}-{{ site.siteId }}">
               {{ params.labels.withdraw }}
             </button>

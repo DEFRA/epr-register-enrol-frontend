@@ -456,7 +456,7 @@
       "continueButton": "Parhau",
       "saveAndComeLater": "[Welsh] Save and come back later",
       "withdrawFromApplicationButton": "[Welsh] Withdraw from application",
-      "addToApplicationButton": "[Welsh] Include in this application",
+      "addToApplicationButton": "[Welsh] Add to application",
       "changeButton": "[Welsh] Change",
       "orsIdLabel": "[Welsh] ORS ID",
       "table": {
@@ -476,7 +476,7 @@
         "disclosure": "[Welsh] Show interim sites",
         "addAnother": "[Welsh] Add another interim site",
         "withdrawnDisclosure": "[Welsh] Show withdrawn interim sites",
-        "restoreButton": "[Welsh] Add back to application",
+        "restoreButton": "[Welsh] Add to application",
         "withdrawnBanner": {
           "title": "[Welsh] Interim site withdrawn",
           "body": "[Welsh] You withdrew",
