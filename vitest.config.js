@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    exclude: [...configDefaults.exclude, '.cache/**'],
     env: {
       BASIC_USER: 'test-user',
       BASIC_PASSWD: 'test-pass',
