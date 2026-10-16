@@ -122,7 +122,7 @@ async function loadSiteForWizardEntry(request, h) {
 // [sessionField, siteField, fallback] rather than a `??`-per-line object literal — a chain of
 // that many nullish-coalescing operators in one expression trips SonarCloud's cyclomatic-
 // complexity gate even though there's no real branching here, just a flat field-by-field default.
-// Entry point for the Registered section's "Include in this application" button — seeds the
+// Entry point for the Registered section's "Add to application" button — seeds the
 // add-overseas-site wizard session from an existing registered site's known fields (mirrors
 // the linkedSiteId precedent used to seed the add-interim-site wizard from check-your-answers)
 // and lands on check-your-answers, which shows everything known about the site and refuses

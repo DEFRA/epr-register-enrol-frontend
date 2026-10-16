@@ -138,6 +138,15 @@
         </div>
       {% endif %}
 
+      {% if not readOnly %}
+        <a href="{{ addOrsUrl }}" role="button" draggable="false"
+          class="govuk-button govuk-button--secondary"
+          data-module="govuk-button"
+          data-testid="add-new-ors-button-top">
+            {{ t('pages.addOverseasSite.addNewButton') }}
+        </a>
+      {% endif %}
+
       {% if not accreditedSites.length and not registeredSites.length and not newSites.length and not registeredSitesAddedSites.length %}
 
         <p class="govuk-body" data-testid="no-sites-message">
@@ -160,7 +169,7 @@
 
         {% if accreditedSites.length %}
           <h2 class="govuk-heading-m" id="accredited-sites" data-testid="accredited-heading">
-            {{ t('pages.selectOverseasSites.sections.accredited') }}
+            {{ t('pages.selectOverseasSites.sections.accredited') }}({{ accreditedSites.length }})
           </h2>
           <table class="govuk-table select-overseas-sites-table" data-testid="accredited-sites-list">
             {# The column headings are not wanted on screen, but a data table
@@ -197,7 +206,7 @@
 
         {% if registeredSites.length %}
           <h2 class="govuk-heading-m" data-testid="registered-heading">
-            {{ t('pages.selectOverseasSites.sections.registered') }}
+            {{ t('pages.selectOverseasSites.sections.registered') }}({{ registeredSites.length }})
           </h2>
           <table class="govuk-table select-overseas-sites-table" data-testid="registered-sites-list">
             {# The column headings are not wanted on screen, but a data table
@@ -232,7 +241,7 @@
 
         {% if newSites.length %}
           <h2 class="govuk-heading-m" data-testid="new-sites-heading">
-            {{ t('pages.selectOverseasSites.sections.newSites') }}
+            {{ t('pages.selectOverseasSites.sections.newSites') }}({{ newSites.length }})
           </h2>
           <table class="govuk-table select-overseas-sites-table" data-testid="new-sites-list">
             {# The column headings are not wanted on screen, but a data table
@@ -269,7 +278,7 @@
 
         {% if registeredSitesAddedSites.length %}
           <h2 class="govuk-heading-m" data-testid="registered-sites-added-heading">
-            {{ t('pages.selectOverseasSites.sections.registeredSitesAdded') }}
+            {{ t('pages.selectOverseasSites.sections.registeredSitesAdded') }}({{ registeredSitesAddedSites.length }})
           </h2>
           <table class="govuk-table select-overseas-sites-table" data-testid="registered-sites-added-list">
             {# The column headings are not wanted on screen, but a data table
@@ -305,6 +314,15 @@
         {% endif %}
 
         {% if not readOnly %}
+          <a href="{{ addOrsUrl }}" role="button" draggable="false"
+            class="govuk-button govuk-button--secondary"
+            data-module="govuk-button"
+            data-testid="add-new-ors-button">
+              {{ t('pages.addOverseasSite.addNewButton') }}
+          </a>
+        {% endif %}
+
+        {% if not readOnly %}
           <form method="post" data-testid="continue-form">
             <input type="hidden" name="crumb" value="{{ crumb }}">
             <button type="submit" name="submitAction" value="continue"
@@ -320,15 +338,6 @@
             </button>
           </form>
         {% endif %}
-      {% endif %}
-
-      {% if not readOnly %}
-        <a href="{{ addOrsUrl }}" role="button" draggable="false"
-          class="govuk-button govuk-button--secondary"
-          data-module="govuk-button"
-          data-testid="add-new-ors-button">
-            {{ t('pages.addOverseasSite.addNewButton') }}
-        </a>
       {% endif %}
     </div>
   </div>

@@ -17,12 +17,12 @@ const env = nunjucks.configure(
 const LABELS = {
   change: 'Change',
   withdraw: 'Withdraw from application',
-  add: 'Include in this application',
+  add: 'Add to application',
   interimRemove: 'Withdraw from application',
   interimDisclosure: 'Show interim sites',
   addAnotherInterimSite: 'Add another interim site',
   withdrawnDisclosure: 'Show withdrawn interim sites',
-  restore: 'Add back to application',
+  restore: 'Add to application',
   incomplete: 'Incomplete'
 }
 
@@ -154,6 +154,19 @@ describe('overseasSiteRows component', () => {
       expect(button.attr('value')).toBe('removeAccredited')
     })
 
+    test('styles Withdraw as a red link while keeping it a submit button', () => {
+      const $ = render(accreditedParams())
+      const button = $('[data-testid="remove-button-accredited-900001"]')
+
+      expect(button.attr('type')).toBe('submit')
+      expect(button.hasClass('govuk-link')).toBe(true)
+      expect(button.hasClass('select-overseas-sites-link-button--red')).toBe(
+        true
+      )
+      expect(button.hasClass('govuk-button')).toBe(false)
+      expect(button.hasClass('govuk-button--warning')).toBe(false)
+    })
+
     test('carries the CSRF crumb and the site id on the withdraw form', () => {
       const $ = render(accreditedParams())
       const form = $('[data-testid="remove-form-accredited-900001"]')
@@ -162,7 +175,7 @@ describe('overseasSiteRows component', () => {
       expect(form.find('input[name="siteId"]').attr('value')).toBe('900001')
     })
 
-    test('renders the Include in this application link instead of Change/Withdraw in promote mode', () => {
+    test('renders the Add to application link instead of Change/Withdraw in promote mode', () => {
       const $ = render(
         accreditedParams({
           testIdPrefix: 'registered-site',
@@ -172,8 +185,12 @@ describe('overseasSiteRows component', () => {
       )
 
       const add = $('[data-testid="add-button-registered-900001"]')
-      expect(add.text().trim()).toBe('Include in this application')
+      expect(add.text().trim()).toBe('Add to application')
       expect(add.attr('href')).toBe('/promote/900001')
+      expect(add.hasClass('govuk-link')).toBe(true)
+      expect(add.hasClass('govuk-link--text-colour')).toBe(false)
+      expect(add.hasClass('govuk-button')).toBe(false)
+      expect(add.attr('role')).toBeUndefined()
       expect($('[data-testid="edit-button-accredited-900001"]')).toHaveLength(0)
       expect($('[data-testid="remove-button-accredited-900001"]')).toHaveLength(
         0
@@ -415,6 +432,13 @@ describe('overseasSiteRows component', () => {
       ).toContain('Old Depot')
       const button = $('[data-testid="restore-button-interim-site-51"]')
       expect(button.attr('value')).toBe('restoreInterimSite')
+      expect(button.text().trim()).toBe('Add to application')
+      expect(button.attr('type')).toBe('submit')
+      expect(button.hasClass('govuk-link')).toBe(true)
+      expect(button.hasClass('select-overseas-sites-link-button--blue')).toBe(
+        true
+      )
+      expect(button.hasClass('govuk-button')).toBe(false)
     })
 
     test('counts the withdrawn sites separately from the active ones', () => {

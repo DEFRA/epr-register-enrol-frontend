@@ -458,7 +458,7 @@
       "continueButton": "Continue",
       "saveAndComeLater": "Save and come back later",
       "withdrawFromApplicationButton": "Withdraw from application",
-      "addToApplicationButton": "Include in this application",
+      "addToApplicationButton": "Add to application",
       "changeButton": "Change",
       "orsIdLabel": "ORS ID",
       "table": {
@@ -478,7 +478,7 @@
         "disclosure": "Show interim sites",
         "addAnother": "Add another interim site",
         "withdrawnDisclosure": "Show withdrawn interim sites",
-        "restoreButton": "Add back to application",
+        "restoreButton": "Add to application",
         "withdrawnBanner": {
           "title": "Interim site withdrawn",
           "body": "You withdrew",

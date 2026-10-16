@@ -33,7 +33,7 @@
   //
   // Right-aligned so every section's actions finish on the same edge. The
   // column is shrink-to-fit, so a narrow action - the registered section's
-  // lone "Include in this application" - would otherwise sit at the left of a wide
+  // lone "Add to application" - would otherwise sit at the left of a wide
   // cell, stranded in the middle of the page.
   .select-overseas-sites-actions-cell {
     white-space: nowrap;
@@ -112,4 +112,27 @@
 // inline style attribute would be blocked by the CSP, so it lives here.
 .select-overseas-sites-undo-form {
   display: inline;
+}
+
+// A POST action that must stay a <button> (it submits a form) but should read
+// as a link: strip the native button chrome and inherit the link typography.
+.select-overseas-sites-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &--blue,
+  &--blue:link,
+  &--blue:visited {
+    color: $govuk-link-colour;
+  }
+
+  &--red,
+  &--red:link,
+  &--red:visited {
+    color: govuk-colour('red');
+  }
 }
