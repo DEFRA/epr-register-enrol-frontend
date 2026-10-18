@@ -204,7 +204,14 @@ const BANNER_DEFAULTS = {
   regulatorQueryFields: null,
   readOnly: false,
   isQueriedApplication: false,
-  incompleteSiteErrors: []
+  incompleteSiteErrors: [],
+  accreditedYear: null
+}
+
+// The accredited sites were last used the year before the application's year. Null when the
+// application has no year, so the page can leave its caption out rather than print a blank.
+function accreditedYearFor(application) {
+  return application?.year ? application.year - 1 : null
 }
 
 function resolveBannerDefaults(banners) {
@@ -446,7 +453,8 @@ export const selectOverseasSitesGetController = {
             ]
           : null,
         readOnly,
-        isQueriedApplication: application.applicationStatus === 'Queried'
+        isQueriedApplication: application.applicationStatus === 'Queried',
+        accreditedYear: accreditedYearFor(application)
       })
     )
   }
@@ -510,7 +518,14 @@ const OVERSEAS_SITES_ACTION_HANDLERS = {
     )
 }
 
-function renderIfIncomplete({ h, t, applicationId, sections, materialType }) {
+function renderIfIncomplete({
+  h,
+  t,
+  applicationId,
+  sections,
+  materialType,
+  accreditedYear
+}) {
   const flagged = flagIncompleteSites(sections, t, materialType)
   const errors = incompleteSiteErrors(t, applicationId, flagged, editUrl)
   if (errors.length === 0) {
@@ -519,7 +534,8 @@ function renderIfIncomplete({ h, t, applicationId, sections, materialType }) {
   return renderPage(
     h,
     buildViewData(t, applicationId, flagged, null, {
-      incompleteSiteErrors: errors
+      incompleteSiteErrors: errors,
+      accreditedYear
     })
   ).code(statusCodes.badRequest)
 }
@@ -587,7 +603,8 @@ export const selectOverseasSitesPostController = {
           t,
           applicationId,
           sections,
-          t('pages.selectOverseasSites.validation.noSitesAccredited')
+          t('pages.selectOverseasSites.validation.noSitesAccredited'),
+          { accreditedYear: accreditedYearFor(application) }
         )
       ).code(400)
     }
@@ -597,7 +614,8 @@ export const selectOverseasSitesPostController = {
       t,
       applicationId,
       sections,
-      materialType: application.materialType
+      materialType: application.materialType,
+      accreditedYear: accreditedYearFor(application)
     })
     if (incompleteResponse) {
       return incompleteResponse

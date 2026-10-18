@@ -467,7 +467,9 @@
       },
       "sections": {
         "accredited": "[Welsh] Accredited",
+        "accreditedCaption": "[Welsh] These are the sites that you used in {year}.",
         "registered": "[Welsh] Registered",
+        "registeredCaption": "[Welsh] These are the registered sites that you can add to this application.",
         "newSites": "[Welsh] New sites",
         "registeredSitesAdded": "[Welsh] Registered sites added"
       },

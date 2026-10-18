@@ -383,6 +383,45 @@ describe('#selectOverseasSitesController', () => {
       )
     })
 
+    test('captions the accredited section with the year before the application year', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).toMatch(
+        /data-testid="accredited-caption">\s*These are the sites that you used in 2026\.\s*</
+      )
+    })
+
+    test('captions the registered section', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).toMatch(
+        /data-testid="registered-caption">\s*These are the registered sites that you can add to this application\.\s*</
+      )
+    })
+
+    test('leaves the accredited caption out when the application has no year', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ year: undefined })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).not.toContain('data-testid="accredited-caption"')
+    })
+
     test('renders Add New ORS buttons above the sections and above Continue', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 

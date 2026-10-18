@@ -171,6 +171,11 @@
           <h2 class="govuk-heading-m" id="accredited-sites" data-testid="accredited-heading">
             {{ t('pages.selectOverseasSites.sections.accredited') }}({{ accreditedSites.length }})
           </h2>
+          {% if accreditedYear %}
+            <p class="govuk-caption-m" data-testid="accredited-caption">
+              {{ t('pages.selectOverseasSites.sections.accreditedCaption') | replace('{year}', accreditedYear) }}
+            </p>
+          {% endif %}
           <table class="govuk-table select-overseas-sites-table" data-testid="accredited-sites-list">
             {# The column headings are not wanted on screen, but a data table
                without them is unusable with a screen reader - every cell loses
@@ -208,6 +213,9 @@
           <h2 class="govuk-heading-m" data-testid="registered-heading">
             {{ t('pages.selectOverseasSites.sections.registered') }}({{ registeredSites.length }})
           </h2>
+          <p class="govuk-caption-m" data-testid="registered-caption">
+            {{ t('pages.selectOverseasSites.sections.registeredCaption') }}
+          </p>
           <table class="govuk-table select-overseas-sites-table" data-testid="registered-sites-list">
             {# The column headings are not wanted on screen, but a data table
                without them is unusable with a screen reader - every cell loses

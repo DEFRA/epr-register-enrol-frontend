@@ -469,7 +469,9 @@
       },
       "sections": {
         "accredited": "Accredited",
+        "accreditedCaption": "These are the sites that you used in {year}.",
         "registered": "Registered",
+        "registeredCaption": "These are the registered sites that you can add to this application.",
         "newSites": "New sites",
         "registeredSitesAdded": "Registered sites added"
       },
