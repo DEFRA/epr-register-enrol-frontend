@@ -367,6 +367,80 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('[Welsh] Select the overseas reprocessing sites')
     })
 
+    test('shows the number of sites in each section heading', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).toMatch(
+        /data-testid="accredited-heading">\s*Accredited\(\d+\)\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="registered-heading">\s*Registered\(\d+\)\s*</
+      )
+    })
+
+    test('captions the accredited section with the year before the application year', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).toMatch(
+        /data-testid="accredited-caption">\s*These are the sites that you used in 2026\.\s*</
+      )
+    })
+
+    test('captions the registered section', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).toMatch(
+        /data-testid="registered-caption">\s*These are the registered sites that you can add to this application\.\s*</
+      )
+    })
+
+    test('leaves the accredited caption out when the application has no year', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({ year: undefined })
+      )
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).not.toContain('data-testid="accredited-caption"')
+    })
+
+    test('renders Add New ORS buttons above the sections and above Continue', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      const top = result.indexOf('data-testid="add-new-ors-button-top"')
+      const heading = result.indexOf('data-testid="accredited-heading"')
+      const bottom = result.indexOf('data-testid="add-new-ors-button"')
+      const cont = result.indexOf('data-testid="continue-form"')
+
+      expect(top).toBeGreaterThan(-1)
+      expect(top).toBeLessThan(heading)
+      expect(bottom).toBeGreaterThan(heading)
+      expect(bottom).toBeLessThan(cont)
+    })
+
     test('renders Add New ORS button linking to the wizard reset-and-start route', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -1711,7 +1785,7 @@ describe('#selectOverseasSitesController', () => {
   // it was actually "Remove from accreditation"/"Add to accreditation". Either
   // way, neither phrasing may survive this change.
   describe('RA-603 AC11 — application action wording', () => {
-    test('uses "Withdraw from application" and "Include in this application"', async () => {
+    test('uses "Withdraw from application" and "Add to application"', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           overseasSites: {
@@ -1727,7 +1801,9 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('Withdraw from application')
-      expect(result).toContain('Include in this application')
+      expect(result).toContain('Add to application')
+      expect(result).not.toContain('Include in this application')
+      expect(result).not.toContain('Add back to application')
       expect(result).not.toContain('Remove from accreditation')
       expect(result).not.toContain('Add to accreditation')
     })

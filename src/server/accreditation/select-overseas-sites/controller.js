@@ -3,10 +3,12 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { isRegulatorQueryBannerVisible } from '../../common/helpers/regulatorQuery.js'
 import {
-  buildRegulatorQuerySummary,
-  isRegulatorQueryBannerVisible
-} from '../../common/helpers/regulatorQuery.js'
+  accreditedYearFor,
+  queriedBannerData,
+  resolveBannerDefaults
+} from './view-banners.js'
 import {
   resolveQueriedSectionAccess,
   guardSectionWrite
@@ -188,32 +190,6 @@ function resolveFlashBanners(yar) {
     withdrawnInterimSite:
       (yar.flash(INTERIM_SITE_WITHDRAWN_FLASH) ?? [])[0] ?? null
   }
-}
-
-// Every banner the view expects, with the value it takes when the caller says
-// nothing. Held as data rather than ten `??` expressions: the branch-per-field
-// version read as ten decisions when it is really one rule applied ten times.
-const BANNER_DEFAULTS = {
-  successBanner: false,
-  queried: false,
-  interimSiteSuccessBanner: false,
-  promoteSuccessBanner: false,
-  editSuccessBanner: false,
-  withdrawnInterimSite: null,
-  querySummary: null,
-  regulatorQueryFields: null,
-  readOnly: false,
-  isQueriedApplication: false,
-  incompleteSiteErrors: []
-}
-
-function resolveBannerDefaults(banners) {
-  return Object.fromEntries(
-    Object.entries(BANNER_DEFAULTS).map(([key, fallback]) => [
-      key,
-      banners[key] ?? fallback
-    ])
-  )
 }
 
 function buildViewData(t, applicationId, sections, error, banners = {}) {
@@ -434,19 +410,10 @@ export const selectOverseasSitesGetController = {
         promoteSuccessBanner,
         editSuccessBanner,
         withdrawnInterimSite,
-        querySummary: queried
-          ? buildRegulatorQuerySummary('overseasSites', t)
-          : null,
-        regulatorQueryFields: queried
-          ? [
-              {
-                label: t('pages.taskList.tasks.overseasSites'),
-                href: '#accredited-sites'
-              }
-            ]
-          : null,
+        ...queriedBannerData(t, queried),
         readOnly,
-        isQueriedApplication: application.applicationStatus === 'Queried'
+        isQueriedApplication: application.applicationStatus === 'Queried',
+        accreditedYear: accreditedYearFor(application)
       })
     )
   }
@@ -510,7 +477,14 @@ const OVERSEAS_SITES_ACTION_HANDLERS = {
     )
 }
 
-function renderIfIncomplete({ h, t, applicationId, sections, materialType }) {
+function renderIfIncomplete({
+  h,
+  t,
+  applicationId,
+  sections,
+  materialType,
+  accreditedYear
+}) {
   const flagged = flagIncompleteSites(sections, t, materialType)
   const errors = incompleteSiteErrors(t, applicationId, flagged, editUrl)
   if (errors.length === 0) {
@@ -519,7 +493,8 @@ function renderIfIncomplete({ h, t, applicationId, sections, materialType }) {
   return renderPage(
     h,
     buildViewData(t, applicationId, flagged, null, {
-      incompleteSiteErrors: errors
+      incompleteSiteErrors: errors,
+      accreditedYear
     })
   ).code(statusCodes.badRequest)
 }
@@ -587,7 +562,8 @@ export const selectOverseasSitesPostController = {
           t,
           applicationId,
           sections,
-          t('pages.selectOverseasSites.validation.noSitesAccredited')
+          t('pages.selectOverseasSites.validation.noSitesAccredited'),
+          { accreditedYear: accreditedYearFor(application) }
         )
       ).code(400)
     }
@@ -597,7 +573,8 @@ export const selectOverseasSitesPostController = {
       t,
       applicationId,
       sections,
-      materialType: application.materialType
+      materialType: application.materialType,
+      accreditedYear: accreditedYearFor(application)
     })
     if (incompleteResponse) {
       return incompleteResponse
