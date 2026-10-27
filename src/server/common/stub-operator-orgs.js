@@ -44,7 +44,7 @@ const PERF_TEST_STUB_ORGS = [
 // near-identical blocks over the threshold) and because it's the same
 // pattern PERF_TEST_STUB_ORGS below already uses for the same reason.
 const NUMBERED_TEST_ORGS = [
-  ['50011', 'APPROVED RECYCLING LIMITED'],
+  ['50011', 'APPDEV RECYCLING LIMITED'],
   ['50012', 'Withdrawn Application Test Co'],
   ['50013', 'Interim Site Test Exports Ltd'],
   ['50014', 'ORS Fee Test Exports Ltd'],
