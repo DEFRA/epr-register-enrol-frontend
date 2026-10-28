@@ -236,7 +236,7 @@ export const STUB_ORG_DOCS = [
   },
   {
     orgId: 50011,
-    companyDetails: { name: 'APPROVED RECYCLING LIMITED' },
+    companyDetails: { name: 'APPDEV RECYCLING LIMITED' },
     accreditations: [
       {
         id: 'app011',
