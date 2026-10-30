@@ -1349,11 +1349,15 @@ describe('#samplingPlanUploadController', () => {
 
     test.each([
       [
-        'a 422 carrying the file-cap message',
+        'a 422 carrying the MaxFilesExceeded code',
         {
           status: 422,
-          response:
-            '"The maximum number of files permitted to be uploaded is ten"'
+          response: JSON.stringify({
+            status: 422,
+            detail:
+              'The maximum number of files permitted to be uploaded is ten',
+            code: 'MaxFilesExceeded'
+          })
         },
         '&reason=maxFiles'
       ],
@@ -1363,6 +1367,11 @@ describe('#samplingPlanUploadController', () => {
           status: 422,
           response: '"A file with this name has already been uploaded."'
         },
+        ''
+      ],
+      [
+        'a non-422 error that carries the MaxFilesExceeded code',
+        { status: 500, response: '{"code":"MaxFilesExceeded"}' },
         ''
       ],
       ['a non-422 error', { status: 500 }, '']

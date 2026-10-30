@@ -52,10 +52,10 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 // files don't count, matching the backend's AddFile check.
 export const MAX_FILES = 10
 
-// The backend also answers 422 for a duplicate filename or a disallowed content
-// type, so the status alone doesn't mean the cap was hit — match its message too.
-const MAX_FILES_API_MESSAGE =
-  'The maximum number of files permitted to be uploaded is ten'
+// The backend answers 422 for several reasons (duplicate filename, disallowed
+// content type), so the file cap is recognised by the error code in its
+// problem+json body rather than by status or wording.
+const MAX_FILES_API_ERROR_CODE = 'MaxFilesExceeded'
 const MAX_FILES_REASON = 'maxFiles'
 
 export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
@@ -394,6 +394,17 @@ function buildResultsFiles(files, t) {
   }))
 }
 
+function isMaxFilesRejection(err) {
+  if (err.status !== statusCodes.unprocessableEntity) {
+    return false
+  }
+  try {
+    return JSON.parse(err.response)?.code === MAX_FILES_API_ERROR_CODE
+  } catch {
+    return false
+  }
+}
+
 function uploadErrorMessage(t, { uploadFailed, maxFilesReached }) {
   if (!uploadFailed) {
     return null
@@ -705,10 +716,9 @@ export const samplingPlanCdpStatusController = {
         { applicationId },
         `Error saving uploaded file for application ${applicationId}`
       )
-      const maxFilesRejected =
-        err.status === statusCodes.unprocessableEntity &&
-        String(err.response ?? '').includes(MAX_FILES_API_MESSAGE)
-      const reason = maxFilesRejected ? `&reason=${MAX_FILES_REASON}` : ''
+      const reason = isMaxFilesRejection(err)
+        ? `&reason=${MAX_FILES_REASON}`
+        : ''
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed${reason}`)
     }
 
