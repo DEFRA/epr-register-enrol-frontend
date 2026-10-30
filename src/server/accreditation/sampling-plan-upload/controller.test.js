@@ -862,6 +862,67 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('already been uploaded')
     })
 
+    // RA-605
+    describe('file-count limit', () => {
+      const cleanFiles = (n) =>
+        Array.from({ length: n }, (_, i) =>
+          makeFile({
+            fileId: `file-${i}`,
+            filename: `doc-${i}.pdf`,
+            scanStatus: 'Clean'
+          })
+        )
+
+      test('blocks an 11th upload before initiating the CDP upload', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            samplingPlan: { sectionStatus: 'InProgress', files: cleanFiles(10) }
+          })
+        )
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+          headers: { 'Content-Type': multipartContentType },
+          payload: buildMultipartPayload({ filename: 'eleventh.pdf' })
+        })
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(result).toContain('data-testid="file-error"')
+        expect(result).toContain(
+          'The maximum number of files permitted to be uploaded is ten'
+        )
+        expect(initUpload).not.toHaveBeenCalled()
+      })
+
+      test('does not count infected files towards the limit', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({
+            samplingPlan: {
+              sectionStatus: 'InProgress',
+              files: [
+                ...cleanFiles(9),
+                makeFile({
+                  fileId: 'bad',
+                  filename: 'bad.pdf',
+                  scanStatus: 'Infected'
+                })
+              ]
+            }
+          })
+        )
+
+        const { statusCode } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}`,
+          headers: { 'Content-Type': multipartContentType },
+          payload: buildMultipartPayload({ filename: 'tenth.pdf' })
+        })
+
+        expect(statusCode).toBe(statusCodes.redirect)
+      })
+    })
+
     // RA-571 AC02: same base name, different extension — still a duplicate.
     test('filename matching an existing upload by base name only is still a duplicate', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
@@ -1284,6 +1345,48 @@ describe('#samplingPlanUploadController', () => {
         `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
       )
     })
+
+    test('redirects with reason=maxFiles when addFile is rejected with 422', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        form: { file: { fileId: 'f', fileStatus: 'complete' } }
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        Object.assign(new Error('Unprocessable'), { status: 422 })
+      )
+
+      const { headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { Cookie: cookie }
+      })
+
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed&reason=maxFiles`
+      )
+    })
+
+    test('keeps the generic failure redirect for non-422 addFile errors', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        form: { file: { fileId: 'f', fileStatus: 'complete' } }
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        Object.assign(new Error('Boom'), { status: 500 })
+      )
+
+      const { headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { Cookie: cookie }
+      })
+
+      expect(headers.location).toBe(
+        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
+      )
+    })
   })
 
   describe('uploading multiple files via the "Upload another file" loop', () => {
@@ -1581,6 +1684,31 @@ describe('#samplingPlanUploadController', () => {
       const { result } = await server.inject({
         method: 'GET',
         url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
+      })
+
+      expect(result).toContain('problem uploading your file')
+    })
+
+    test('shows the max-files message when redirected with reason=maxFiles', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed&reason=maxFiles`
+      })
+
+      expect(result).toContain(
+        'The maximum number of files permitted to be uploaded is ten'
+      )
+      expect(result).not.toContain('problem uploading your file')
+    })
+
+    test('ignores an unknown reason and shows the generic message', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed&reason=whatever`
       })
 
       expect(result).toContain('problem uploading your file')

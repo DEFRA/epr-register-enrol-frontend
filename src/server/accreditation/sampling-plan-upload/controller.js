@@ -47,6 +47,13 @@ export const ALLOWED_MIME_TYPES = [
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
 
+// RA-605: combined cap across SamplingPlan and SupportingEvidence; infected
+// files don't count, matching the backend's AddFile check.
+export const MAX_FILES = 10
+
+const UNPROCESSABLE_ENTITY = 422
+const MAX_FILES_REASON = 'maxFiles'
+
 export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
 
 const DOCUMENT_TYPE_LABEL_KEYS = {
@@ -128,6 +135,12 @@ function renderResultsPage(h, viewData) {
 // duplicate-filename rule (AC01-AC04) slots in without the branch nesting
 // Sonar's complexity/S3358 rules flag.
 function validateUploadedFile(t, { filename, fileSize, application }) {
+  const countedFiles = (application.samplingPlan?.files ?? []).filter(
+    (f) => f.scanStatus !== 'Infected'
+  )
+  if (countedFiles.length >= MAX_FILES) {
+    return t('pages.samplingPlanUpload.validation.maxFiles')
+  }
   if (!filename) {
     return t('pages.samplingPlanUpload.validation.noFile')
   }
@@ -377,6 +390,15 @@ function buildResultsFiles(files, t) {
     }))
 }
 
+function uploadErrorMessage(t, { uploadFailed, maxFilesReached }) {
+  if (!uploadFailed) {
+    return null
+  }
+  return maxFilesReached
+    ? t('pages.samplingPlanUpload.validation.maxFiles')
+    : t('pages.samplingPlanUpload.validation.uploadError')
+}
+
 export const samplingPlanResultsGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -385,6 +407,7 @@ export const samplingPlanResultsGetController = {
     )
     const { applicationId } = request.params
     const uploadFailed = request.query?.upload === 'failed'
+    const maxFilesReached = request.query?.reason === MAX_FILES_REASON
 
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
@@ -427,9 +450,7 @@ export const samplingPlanResultsGetController = {
       taskListLink: taskListUrl(applicationId),
       uploadAnotherLink: samplingPlanUrl(applicationId),
       files,
-      error: uploadFailed
-        ? t('pages.samplingPlanUpload.validation.uploadError')
-        : null,
+      error: uploadErrorMessage(t, { uploadFailed, maxFilesReached }),
       readOnly,
       isQueriedApplication: application.applicationStatus === 'Queried'
     })
@@ -680,7 +701,9 @@ export const samplingPlanCdpStatusController = {
         { applicationId },
         `Error saving uploaded file for application ${applicationId}`
       )
-      return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
+      const reason =
+        err.status === UNPROCESSABLE_ENTITY ? `&reason=${MAX_FILES_REASON}` : ''
+      return h.redirect(`${resultsUrl(applicationId)}?upload=failed${reason}`)
     }
 
     return h.redirect(
