@@ -920,6 +920,7 @@ describe('#samplingPlanUploadController', () => {
         })
 
         expect(statusCode).toBe(statusCodes.redirect)
+        expect(initUpload).toHaveBeenCalledTimes(1)
       })
     })
 
@@ -1346,75 +1347,48 @@ describe('#samplingPlanUploadController', () => {
       )
     })
 
-    test('redirects with reason=maxFiles when addFile is rejected with 422', async () => {
-      const cookie = await getStatusCookie()
-      vi.spyOn(apiClient, 'get').mockResolvedValue({
-        uploadStatus: 'ready',
-        form: { file: { fileId: 'f', fileStatus: 'complete' } }
-      })
-      vi.spyOn(apiClient, 'post').mockRejectedValue(
-        Object.assign(new Error('Unprocessable'), {
+    test.each([
+      [
+        'a 422 carrying the file-cap message',
+        {
           status: 422,
           response:
             '"The maximum number of files permitted to be uploaded is ten"'
-        })
-      )
-
-      const { headers } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { Cookie: cookie }
-      })
-
-      expect(headers.location).toBe(
-        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed&reason=maxFiles`
-      )
-    })
-
-    test('keeps the generic failure redirect for a 422 that is not the file cap (e.g. duplicate filename)', async () => {
-      const cookie = await getStatusCookie()
-      vi.spyOn(apiClient, 'get').mockResolvedValue({
-        uploadStatus: 'ready',
-        form: { file: { fileId: 'f', fileStatus: 'complete' } }
-      })
-      vi.spyOn(apiClient, 'post').mockRejectedValue(
-        Object.assign(new Error('Unprocessable'), {
+        },
+        '&reason=maxFiles'
+      ],
+      [
+        'a 422 that is not the file cap (e.g. duplicate filename)',
+        {
           status: 422,
           response: '"A file with this name has already been uploaded."'
+        },
+        ''
+      ],
+      ['a non-422 error', { status: 500 }, '']
+    ])(
+      'addFile rejected with %s redirects to results with the right failure reason',
+      async (_label, errorProps, expectedReason) => {
+        const cookie = await getStatusCookie()
+        vi.spyOn(apiClient, 'get').mockResolvedValue({
+          uploadStatus: 'ready',
+          form: { file: { fileId: 'f', fileStatus: 'complete' } }
         })
-      )
+        vi.spyOn(apiClient, 'post').mockRejectedValue(
+          Object.assign(new Error('Rejected'), errorProps)
+        )
 
-      const { headers } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { Cookie: cookie }
-      })
+        const { headers } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+          headers: { Cookie: cookie }
+        })
 
-      expect(headers.location).toBe(
-        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
-      )
-    })
-
-    test('keeps the generic failure redirect for non-422 addFile errors', async () => {
-      const cookie = await getStatusCookie()
-      vi.spyOn(apiClient, 'get').mockResolvedValue({
-        uploadStatus: 'ready',
-        form: { file: { fileId: 'f', fileStatus: 'complete' } }
-      })
-      vi.spyOn(apiClient, 'post').mockRejectedValue(
-        Object.assign(new Error('Boom'), { status: 500 })
-      )
-
-      const { headers } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
-        headers: { Cookie: cookie }
-      })
-
-      expect(headers.location).toBe(
-        `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed`
-      )
-    })
+        expect(headers.location).toBe(
+          `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed${expectedReason}`
+        )
+      }
+    )
   })
 
   describe('uploading multiple files via the "Upload another file" loop', () => {

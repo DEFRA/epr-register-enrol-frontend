@@ -17,6 +17,7 @@ import {
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
@@ -51,7 +52,6 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 // files don't count, matching the backend's AddFile check.
 export const MAX_FILES = 10
 
-const UNPROCESSABLE_ENTITY = 422
 // The backend also answers 422 for a duplicate filename or a disallowed content
 // type, so the status alone doesn't mean the cap was hit — match its message too.
 const MAX_FILES_API_MESSAGE =
@@ -135,14 +135,16 @@ function renderResultsPage(h, viewData) {
   return h.view('accreditation/sampling-plan-upload/results', viewData)
 }
 
+// RA-605: infected files are excluded from the cap and from the results list.
+function excludeInfected(files) {
+  return (files ?? []).filter((f) => f.scanStatus !== 'Infected')
+}
+
 // RA-571: sequential early returns rather than a nested ternary, so the
 // duplicate-filename rule (AC01-AC04) slots in without the branch nesting
 // Sonar's complexity/S3358 rules flag.
 function validateUploadedFile(t, { filename, fileSize, application }) {
-  const countedFiles = (application.samplingPlan?.files ?? []).filter(
-    (f) => f.scanStatus !== 'Infected'
-  )
-  if (countedFiles.length >= MAX_FILES) {
+  if (excludeInfected(application.samplingPlan?.files).length >= MAX_FILES) {
     return t('pages.samplingPlanUpload.validation.maxFiles')
   }
   if (!filename) {
@@ -386,12 +388,10 @@ export const samplingPlanUploadPostController = {
 }
 
 function buildResultsFiles(files, t) {
-  return buildFilesViewModel(files)
-    .filter((f) => f.scanStatus !== 'Infected')
-    .map((f) => ({
-      ...f,
-      documentTypeLabel: documentTypeLabel(t, f.documentType)
-    }))
+  return excludeInfected(buildFilesViewModel(files)).map((f) => ({
+    ...f,
+    documentTypeLabel: documentTypeLabel(t, f.documentType)
+  }))
 }
 
 function uploadErrorMessage(t, { uploadFailed, maxFilesReached }) {
@@ -706,7 +706,7 @@ export const samplingPlanCdpStatusController = {
         `Error saving uploaded file for application ${applicationId}`
       )
       const maxFilesRejected =
-        err.status === UNPROCESSABLE_ENTITY &&
+        err.status === statusCodes.unprocessableEntity &&
         String(err.response ?? '').includes(MAX_FILES_API_MESSAGE)
       const reason = maxFilesRejected ? `&reason=${MAX_FILES_REASON}` : ''
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed${reason}`)
