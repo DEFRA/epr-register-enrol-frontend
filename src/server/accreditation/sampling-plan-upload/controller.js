@@ -52,6 +52,10 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 export const MAX_FILES = 10
 
 const UNPROCESSABLE_ENTITY = 422
+// The backend also answers 422 for a duplicate filename or a disallowed content
+// type, so the status alone doesn't mean the cap was hit — match its message too.
+const MAX_FILES_API_MESSAGE =
+  'The maximum number of files permitted to be uploaded is ten'
 const MAX_FILES_REASON = 'maxFiles'
 
 export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
@@ -701,8 +705,10 @@ export const samplingPlanCdpStatusController = {
         { applicationId },
         `Error saving uploaded file for application ${applicationId}`
       )
-      const reason =
-        err.status === UNPROCESSABLE_ENTITY ? `&reason=${MAX_FILES_REASON}` : ''
+      const maxFilesRejected =
+        err.status === UNPROCESSABLE_ENTITY &&
+        String(err.response ?? '').includes(MAX_FILES_API_MESSAGE)
+      const reason = maxFilesRejected ? `&reason=${MAX_FILES_REASON}` : ''
       return h.redirect(`${resultsUrl(applicationId)}?upload=failed${reason}`)
     }
 
