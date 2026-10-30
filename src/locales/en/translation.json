@@ -309,6 +309,7 @@
         "invalidType": "The selected file must be a PDF, DOC, DOCX, XLS, CSV, PNG, TIF, JPG or MSG",
         "fileTooLarge": "Cannot upload file. The file is larger than 20MB. Please use a smaller file, or split the file and upload supporting documents separately. You can upload up to 10 files.",
         "duplicateFilename": "A file with this name has already been uploaded. Please rename the file so that each uploaded document has a unique filename",
+        "maxFiles": "The maximum number of files permitted to be uploaded is ten",
         "noCleanFile": "You must upload at least one file before continuing",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
         "uploadError": "Sorry, there was a problem uploading your file. Please try again.",

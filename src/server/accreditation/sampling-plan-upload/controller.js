@@ -17,6 +17,7 @@ import {
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
@@ -46,6 +47,16 @@ export const ALLOWED_MIME_TYPES = [
 ]
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
+
+// RA-605: combined cap across SamplingPlan and SupportingEvidence; infected
+// files don't count, matching the backend's AddFile check.
+export const MAX_FILES = 10
+
+// The backend answers 422 for several reasons (duplicate filename, disallowed
+// content type), so the file cap is recognised by the error code in its
+// problem+json body rather than by status or wording.
+const MAX_FILES_API_ERROR_CODE = 'MaxFilesExceeded'
+const MAX_FILES_REASON = 'maxFiles'
 
 export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
 
@@ -124,10 +135,18 @@ function renderResultsPage(h, viewData) {
   return h.view('accreditation/sampling-plan-upload/results', viewData)
 }
 
+// RA-605: infected files are excluded from the cap and from the results list.
+function excludeInfected(files) {
+  return (files ?? []).filter((f) => f.scanStatus !== 'Infected')
+}
+
 // RA-571: sequential early returns rather than a nested ternary, so the
 // duplicate-filename rule (AC01-AC04) slots in without the branch nesting
 // Sonar's complexity/S3358 rules flag.
 function validateUploadedFile(t, { filename, fileSize, application }) {
+  if (excludeInfected(application.samplingPlan?.files).length >= MAX_FILES) {
+    return t('pages.samplingPlanUpload.validation.maxFiles')
+  }
   if (!filename) {
     return t('pages.samplingPlanUpload.validation.noFile')
   }
@@ -369,12 +388,30 @@ export const samplingPlanUploadPostController = {
 }
 
 function buildResultsFiles(files, t) {
-  return buildFilesViewModel(files)
-    .filter((f) => f.scanStatus !== 'Infected')
-    .map((f) => ({
-      ...f,
-      documentTypeLabel: documentTypeLabel(t, f.documentType)
-    }))
+  return excludeInfected(buildFilesViewModel(files)).map((f) => ({
+    ...f,
+    documentTypeLabel: documentTypeLabel(t, f.documentType)
+  }))
+}
+
+function isMaxFilesRejection(err) {
+  if (err.status !== statusCodes.unprocessableEntity) {
+    return false
+  }
+  try {
+    return JSON.parse(err.response)?.code === MAX_FILES_API_ERROR_CODE
+  } catch {
+    return false
+  }
+}
+
+function uploadErrorMessage(t, { uploadFailed, maxFilesReached }) {
+  if (!uploadFailed) {
+    return null
+  }
+  return maxFilesReached
+    ? t('pages.samplingPlanUpload.validation.maxFiles')
+    : t('pages.samplingPlanUpload.validation.uploadError')
 }
 
 export const samplingPlanResultsGetController = {
@@ -385,6 +422,7 @@ export const samplingPlanResultsGetController = {
     )
     const { applicationId } = request.params
     const uploadFailed = request.query?.upload === 'failed'
+    const maxFilesReached = request.query?.reason === MAX_FILES_REASON
 
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
@@ -427,9 +465,7 @@ export const samplingPlanResultsGetController = {
       taskListLink: taskListUrl(applicationId),
       uploadAnotherLink: samplingPlanUrl(applicationId),
       files,
-      error: uploadFailed
-        ? t('pages.samplingPlanUpload.validation.uploadError')
-        : null,
+      error: uploadErrorMessage(t, { uploadFailed, maxFilesReached }),
       readOnly,
       isQueriedApplication: application.applicationStatus === 'Queried'
     })
@@ -680,7 +716,10 @@ export const samplingPlanCdpStatusController = {
         { applicationId },
         `Error saving uploaded file for application ${applicationId}`
       )
-      return h.redirect(`${resultsUrl(applicationId)}?upload=failed`)
+      const reason = isMaxFilesRejection(err)
+        ? `&reason=${MAX_FILES_REASON}`
+        : ''
+      return h.redirect(`${resultsUrl(applicationId)}?upload=failed${reason}`)
     }
 
     return h.redirect(
