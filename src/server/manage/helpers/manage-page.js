@@ -1,0 +1,80 @@
+import Boom from '@hapi/boom'
+
+import { config } from '../../../config/config.js'
+import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+import { getUser } from '../../common/helpers/auth/get-user.js'
+import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
+import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
+import { fetchCurrentAccreditation } from './current-accreditation.js'
+
+// Runs before auth, so a logged-out caller gets the same 404 as everyone else
+// rather than a redirect to sign in for a page that doesn't exist yet.
+function notFoundUnlessEnabled(_request, h) {
+  if (!config.get('featureFlags.manageOverseasSitesEnabled')) {
+    throw Boom.notFound()
+  }
+  return h.continue
+}
+
+export const manageRouteOptions = {
+  ...requireOperator,
+  ext: { onPreAuth: { method: notFoundUnlessEnabled } }
+}
+
+export function localePrefix(currentLocale) {
+  return currentLocale === 'cy' ? '/cy' : ''
+}
+
+function dashboardUrl(
+  { organisationId, registrationId, materialType },
+  currentLocale
+) {
+  return `${localePrefix(currentLocale)}/manage/${organisationId}/${registrationId}/${materialType}`
+}
+
+export function registrationAccreditationUrl(params, currentLocale) {
+  return `${dashboardUrl(params, currentLocale)}/registration-accreditation`
+}
+
+function serviceProblem(request, h, t) {
+  return h
+    .view('errors/service-problem', {
+      pageTitle: t('common.errors.serviceTitle'),
+      retryUrl: request.path
+    })
+    .code(statusCodes.serviceUnavailable)
+}
+
+/**
+ * Everything an RA-425 page needs before it renders: the organisation access
+ * check (before any data is read), then the current accreditation.
+ *
+ * Returns { response } when the page must not render — the service-problem
+ * page — otherwise { application, t, currentLocale }.
+ */
+export async function loadManagePage(request, h) {
+  const { t, currentLocale } = getLocaleAndTranslator(request)
+  const { organisationId, registrationId, materialType } = request.params
+
+  const canAccess = await operatorCanAccessOrganisation(
+    getUser(request),
+    organisationId,
+    { logger: request.logger }
+  )
+  if (!canAccess) {
+    throw Boom.forbidden('You do not have access to this organisation')
+  }
+
+  const application = await fetchCurrentAccreditation({
+    organisationId,
+    registrationId,
+    materialType,
+    logger: request.logger
+  })
+  if (!application) {
+    return { response: serviceProblem(request, h, t) }
+  }
+
+  return { application, t, currentLocale }
+}

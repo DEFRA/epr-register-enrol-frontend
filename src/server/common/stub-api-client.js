@@ -8,6 +8,7 @@ import {
   DETAIL_FIELD_TO_CATEGORY
 } from './constants/businessPlanCategories.js'
 import { allInterimSites } from './helpers/interimSites.js'
+import { MANAGE_STUB_ORG_DOC } from './stub-manage-accreditations.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -1003,7 +1004,8 @@ export const STUB_ORG_DOCS = [
         }
       }
     ]
-  }
+  },
+  MANAGE_STUB_ORG_DOC
 ]
 
 // Matches /{orgId}/{itemId}[/{section}] at end of path

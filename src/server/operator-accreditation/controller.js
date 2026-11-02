@@ -9,6 +9,7 @@ import {
   landingUrl,
   reExBackLinkUrl
 } from '../common/helpers/accreditationUrls.js'
+import { APPLICATION_STATUS_TAGS } from '../common/constants/applicationStatusTags.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
 import {
@@ -23,21 +24,6 @@ import {
 // both CSRF-able (no token) and replayable from history, bookmarks or prefetch,
 // silently creating an application every time it was re-visited.
 const START_NEW_SEGMENT = '/start-new'
-
-const STATUS_CONFIG = {
-  Saved: { tagClass: 'govuk-tag--grey' },
-  Started: { tagClass: 'govuk-tag--blue' },
-  NotStarted: { tagClass: 'govuk-tag--grey' },
-  InProgress: { tagClass: 'govuk-tag--blue' },
-  Submitted: { tagClass: 'govuk-tag--green' },
-  DulyMade: { tagClass: 'govuk-tag--turquoise' },
-  Queried: { tagClass: 'govuk-tag--orange' },
-  Updated: { tagClass: 'govuk-tag--turquoise' },
-  AwaitingDecision: { tagClass: 'govuk-tag--purple' },
-  Approved: { tagClass: 'govuk-tag--green' },
-  Rejected: { tagClass: 'govuk-tag--red' },
-  Withdrawn: { tagClass: 'govuk-tag--grey' }
-}
 
 // The reapply prompt only makes sense while an application is still live —
 // once it's been decided (approved/refused) or dropped (withdrawn/cancelled)
@@ -64,7 +50,7 @@ function buildCurrentAccreditation(application, siteName, priorYear) {
     accreditationNumber: accreditation.accreditationNumber,
     regulator: accreditation.regulator,
     status: 'Approved',
-    statusTagClass: STATUS_CONFIG.Approved.tagClass,
+    statusTagClass: APPLICATION_STATUS_TAGS.Approved.tagClass,
     expiryDate: `31 December ${priorYear}`,
     siteAddress: siteName,
     tonnage: accreditation.tonnage,
@@ -81,7 +67,7 @@ export function buildLandingViewModel(
   t,
   isExporter = false
 ) {
-  const config = STATUS_CONFIG[application.applicationStatus] ?? {
+  const config = APPLICATION_STATUS_TAGS[application.applicationStatus] ?? {
     tagClass: ''
   }
   const matDisp = materialDisplayName(application, t)

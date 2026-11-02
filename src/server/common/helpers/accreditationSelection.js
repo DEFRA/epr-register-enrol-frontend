@@ -65,7 +65,7 @@ function createdAtTime(application) {
   return Number.isNaN(parsed) ? -Infinity : parsed
 }
 
-function latest(applications) {
+export function latestByCreatedAt(applications) {
   return applications.reduce((best, application) => {
     if (best === null) {
       return application
@@ -101,7 +101,7 @@ export function selectApplicationForYear(
   )
 
   return {
-    application: latest(live) ?? latest(matching),
+    application: latestByCreatedAt(live) ?? latestByCreatedAt(matching),
     hasLive: live.length > 0,
     hasMatch: matching.length > 0
   }

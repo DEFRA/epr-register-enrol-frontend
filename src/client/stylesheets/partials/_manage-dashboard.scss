@@ -1,0 +1,57 @@
+@use 'govuk-frontend' as *;
+
+// RA-425: the material dashboard's waste balance panel and "Choose a task"
+// cards, per Figma "Dashboard - Material".
+
+.app-waste-balance__headline {
+  padding: govuk-spacing(5) govuk-spacing(4);
+  background-color: govuk-colour('light-grey');
+}
+
+.app-waste-balance__value,
+.app-waste-balance__caption {
+  color: govuk-colour('blue');
+}
+
+.app-waste-balance__hint {
+  padding: govuk-spacing(3) govuk-spacing(4);
+  background-color: govuk-colour('white');
+  border: 1px solid govuk-colour('light-grey');
+}
+
+// Equal-height cards in each row of two.
+.app-task-card__row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.app-task-card__column {
+  display: flex;
+  margin-bottom: govuk-spacing(6);
+}
+
+.app-task-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid govuk-colour('light-grey');
+}
+
+.app-task-card__header {
+  padding: govuk-spacing(3) govuk-spacing(3) govuk-spacing(4);
+  background-color: govuk-colour('light-grey');
+}
+
+.app-task-card__body {
+  flex-grow: 1;
+  padding: govuk-spacing(3);
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+// Styled as a link, but there is nowhere to go yet, so no pointer cursor.
+.app-inactive-link {
+  cursor: default;
+}

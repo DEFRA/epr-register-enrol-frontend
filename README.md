@@ -137,6 +137,13 @@ run under stub auth.
 | `API_TIMEOUT`      | No      | Backend request timeout (ms)                                                                                                                                                           |
 | `API_STUB_ENABLED` | No      | Replaces all backend API calls with in-memory fixture data — see [Development without a backend](#development-without-a-backend). Boot fails loudly if `true` while `ENVIRONMENT=prod` |
 
+### Feature flags
+
+| Variable                         | Default | Description                                                                                                                                             |
+| -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MULTIPLE_INTERIM_SITES_ENABLED` | `false` | RA-603. Lets an overseas reprocessing site carry more than one interim site                                                                             |
+| `MANAGE_OVERSEAS_SITES_ENABLED`  | `false` | RA-425. The material dashboard at `/manage/{organisationId}/{registrationId}/{materialType}` and its current-accreditation pages. Off, every route 404s |
+
 ### Analytics and cookie consent
 
 | Variable                     | Default   | Description                                                                                     |

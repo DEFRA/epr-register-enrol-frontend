@@ -50,7 +50,8 @@ const NUMBERED_TEST_ORGS = [
   ['50014', 'ORS Fee Test Exports Ltd'],
   ['50015', 'Exporter Accreditation Test Exports Ltd'],
   ['50016', 'Section Lock Test Recycling Ltd'],
-  ['50017', 'Coordinate Precision Test Exports Ltd']
+  ['50017', 'Coordinate Precision Test Exports Ltd'],
+  ['50018', 'Manage Accreditation Test Ltd']
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).

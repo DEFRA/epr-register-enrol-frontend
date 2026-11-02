@@ -16,5 +16,11 @@ export const featureFlagsSchema = {
     format: Boolean,
     default: false,
     env: 'MULTIPLE_INTERIM_SITES_ENABLED'
+  },
+  manageOverseasSitesEnabled: {
+    doc: 'RA-425. Show the material dashboard and the pages for viewing a current accreditation and its overseas reprocessing sites under /manage. Off by default; with it off every /manage route returns 404.',
+    format: Boolean,
+    default: false,
+    env: 'MANAGE_OVERSEAS_SITES_ENABLED'
   }
 }
