@@ -1,0 +1,68 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/tabs/macro.njk" import govukTabs %}
+{% from "overseas-site-row/macro.njk" import interimSiteDisclosure %}
+
+{% macro orsList(name, sites) %}
+  <h2 class="govuk-heading-m">{{ t('pages.manageOverseasSites.' + name + '.heading') }}</h2>
+  <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro') | replace('{year}', year) }}</p>
+  {% if sites.length %}
+    <ul class="govuk-list app-ors-list" data-testid="{{ name }}-sites-list">
+      {% for site in sites %}
+        <li class="app-ors-list__item" data-testid="{{ name }}-site-row-{{ site.siteId }}">
+          <span class="app-ors-list__number" data-testid="{{ name }}-site-orsid-{{ site.siteId }}">{{ site.orsId }}</span>
+          <div class="app-ors-list__details">
+            <strong class="govuk-!-font-weight-bold" data-testid="{{ name }}-site-name-{{ site.siteId }}">{{ site.siteName }}</strong>
+            <span class="app-ors-list__address" data-testid="{{ name }}-site-address-{{ site.siteId }}">{{ site.address }}</span>
+            {% if site.interimSites.length %}
+              {{ interimSiteDisclosure({
+                site: site,
+                readOnly: true,
+                labels: { interimDisclosure: t('pages.manageOverseasSites.interimDisclosure') }
+              }) }}
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body" data-testid="{{ name }}-sites-empty">{{ t('pages.manageOverseasSites.' + name + '.empty') }}</p>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
+      <h1 class="govuk-heading-xl" data-testid="page-heading">{{ heading }}</h1>
+    </div>
+  </div>
+
+  {{ govukTabs({
+    attributes: { 'data-testid': 'overseas-sites-tabs' },
+    items: [
+      {
+        label: t('pages.manageOverseasSites.accredited.tab') | replace('{count}', accreditedSites.length),
+        id: 'accredited',
+        attributes: { 'data-testid': 'accredited-sites-tab' },
+        panel: {
+          html: orsList('accredited', accreditedSites),
+          attributes: { 'data-testid': 'accredited-sites-panel' }
+        }
+      },
+      {
+        label: t('pages.manageOverseasSites.registered.tab') | replace('{count}', registeredSites.length),
+        id: 'registered',
+        attributes: { 'data-testid': 'registered-sites-tab' },
+        panel: {
+          html: orsList('registered', registeredSites),
+          attributes: { 'data-testid': 'registered-sites-panel' }
+        }
+      }
+    ]
+  }) }}
+
+  <p class="govuk-body">
+    <a href="{{ homeUrl }}" class="govuk-link" data-testid="return-to-home-link">{{ t('pages.manageOverseasSites.returnToHome') }}</a>
+  </p>
+{% endblock %}

@@ -55,3 +55,41 @@
 .app-inactive-link {
   cursor: default;
 }
+
+// RA-425: the overseas-sites page's ORS list, per Figma "Viewing ORSs for an
+// existing Accreditation - EXPORTER": the ORS number beside a bold name, the
+// address beneath it, and a rule between ORSs.
+.app-ors-list {
+  margin-top: govuk-spacing(6);
+}
+
+.app-ors-list__item {
+  display: flex;
+  gap: govuk-spacing(2);
+  margin-bottom: 0;
+  padding: govuk-spacing(3) 0;
+  border-bottom: 1px solid $govuk-border-colour;
+}
+
+.app-ors-list__details {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-ors-list__address {
+  @include govuk-font($size: 16);
+
+  color: $govuk-secondary-text-colour;
+}
+
+// The shared interim-site disclosure drops govuk-details' left border because
+// on select-overseas-sites it sits in an already-indented table cell. Here it
+// stands on its own, so Figma keeps the border.
+.app-ors-list .select-overseas-sites-interim-disclosure {
+  margin-top: govuk-spacing(2);
+
+  .govuk-details__text {
+    padding-left: govuk-spacing(4);
+    border-left: 5px solid $govuk-border-colour;
+  }
+}

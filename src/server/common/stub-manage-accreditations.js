@@ -38,6 +38,81 @@ function approvedApplication(overrides) {
   }
 }
 
+// The exporter's ORSs: three accredited and one registered only. Its interim
+// sites include a withdrawn one and one shared between ORSs 001 and 002, so the
+// overseas-sites page's per-ORS filtering shows up locally.
+function interimSite(siteId, siteName, country, overrides = {}) {
+  return {
+    siteId,
+    siteNumber: `IS${siteId}`,
+    siteName,
+    country,
+    addressLine1: '1 Quay Street',
+    townOrCity: 'Port',
+    contactName: 'Alex Morgan',
+    contactEmail: 'alex.morgan@example.com',
+    contactPhone: '0123456789',
+    operationCodes: ['R3', 'R13'],
+    removedAt: null,
+    ...overrides
+  }
+}
+
+const SHARED_INTERIM_SITE = interimSite(
+  901803,
+  'Antwerp Transfer Hub',
+  'Belgium'
+)
+
+function overseasSite(siteId, orsId, siteName, addressLine1, country, extra) {
+  return {
+    siteId,
+    orsId,
+    siteName,
+    addressLine1,
+    country,
+    siteAddress: `${addressLine1}, ${country}`,
+    isNewSite: false,
+    registeredNowAccredited: false,
+    selected: true,
+    interimSites: [],
+    ...extra
+  }
+}
+
+const EXPORTER_ORS = [
+  overseasSite(
+    901801,
+    '001',
+    'Rotterdam Recycling BV',
+    'Industrieweg 44',
+    'Netherlands',
+    {
+      interimSites: [
+        interimSite(901802, 'Calais Storage SARL', 'France', {
+          operationCodes: ['R13']
+        }),
+        SHARED_INTERIM_SITE,
+        interimSite(901804, 'Old Depot GmbH', 'Germany', {
+          removedAt: `${CURRENT_YEAR}-02-01T09:00:00Z`
+        })
+      ]
+    }
+  ),
+  overseasSite(901805, '002', 'Bharat Recycling', '12 Ring Road', 'India', {
+    interimSites: [{ ...SHARED_INTERIM_SITE }]
+  }),
+  overseasSite(901806, '003', 'Berlin Steel GmbH', 'Hafenstrasse 9', 'Germany'),
+  overseasSite(
+    901807,
+    '004',
+    'Dragon Recyclers',
+    '8 Harbour Avenue',
+    'Vietnam',
+    { selected: false }
+  )
+]
+
 export const MANAGE_STUB_ORG_DOC = {
   orgId: MANAGE_STUB_ORG_ID,
   companyDetails: { name: 'Manage Accreditation Test Ltd' },
@@ -56,7 +131,7 @@ export const MANAGE_STUB_ORG_DOC = {
         postcode: 'IP11 3AB'
       },
       companyRegisterAddressPostcode: 'IP11 3AB',
-      overseasSites: { sectionStatus: 'Completed', sites: [] },
+      overseasSites: { sectionStatus: 'Completed', sites: EXPORTER_ORS },
       besEvidence: { sectionStatus: 'Completed' }
     }),
     approvedApplication({
