@@ -53,6 +53,8 @@ describe('#operatorController', () => {
   describe('RA-425 material dashboard links', () => {
     const DELTA_GREEN_DASHBOARD =
       'href="/manage/50003/aaa000000000000000050003/Plastic"'
+    const EXPORTER_DASHBOARD =
+      'href="/manage/50018/aaa000000000000000050018/Plastic"'
 
     afterEach(() => {
       vi.restoreAllMocks()
@@ -73,7 +75,22 @@ describe('#operatorController', () => {
       )
     })
 
-    test('does not list it when the flag is off', async () => {
+    test('lists the seeded exporter dashboard when the flag is on', async () => {
+      setFeatureFlag('manageOverseasSitesEnabled', true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/operator'
+      })
+
+      expect(result).toMatch(
+        new RegExp(
+          `${EXPORTER_DASHBOARD}[^>]*data-testid="manage-dashboard-exporter-link"`
+        )
+      )
+    })
+
+    test('does not list either dashboard when the flag is off', async () => {
       setFeatureFlag('manageOverseasSitesEnabled', false)
 
       const { result } = await server.inject({
@@ -82,6 +99,7 @@ describe('#operatorController', () => {
       })
 
       expect(result).not.toContain(DELTA_GREEN_DASHBOARD)
+      expect(result).not.toContain(EXPORTER_DASHBOARD)
     })
   })
 })
