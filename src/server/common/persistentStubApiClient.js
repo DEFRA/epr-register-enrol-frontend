@@ -52,16 +52,17 @@ const ACCREDITATION_CHANGES_PREFIX = '/api/v1/accreditation-changes/'
 const accreditationChangesDeps = {
   async getApplication(orgId, appId) {
     const raw = await stubApiClient.get(`${BASE}/${orgId}/${appId}`)
-    if (!raw?.applicationStatus) {
+    // The application stub falls back to another application rather than
+    // failing for an unknown id; this journey needs that one exactly.
+    if (raw?.applicationId !== appId) {
       return null
     }
     return {
       ...raw,
       isExporter: raw.wasteProcessingType === 'exporter',
-      materialType: raw.material
-        ? raw.material.charAt(0).toUpperCase() + raw.material.slice(1)
-        : raw.materialType,
-      year: Number.parseInt(raw.yearlyMetrics?.year ?? raw.year, 10)
+      materialType:
+        raw.material.charAt(0).toUpperCase() + raw.material.slice(1),
+      year: Number.parseInt(raw.yearlyMetrics.year, 10)
     }
   },
   initiateUpload(orgId, appId, body) {
@@ -77,22 +78,13 @@ const accreditationChangesDeps = {
   }
 }
 
-function accreditationChanges(method, endpoint, body) {
-  return endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)
-    ? stubAccreditationChanges(method, endpoint, body, accreditationChangesDeps)
-    : undefined
-}
-
 function parseAppSegment(endpoint) {
   const m = endpoint.match(APP_SEGMENT_RE)
   return m ? { orgId: m[1], appId: m[2] } : null
 }
 
-export const persistentStubApiClient = {
+const persistentStubClient = {
   async get(endpoint) {
-    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
-      return accreditationChanges('get', endpoint)
-    }
     // CDP upload status — always use the stub. /files/initiate (see post() below)
     // never calls the real backend, so every fileUploadId this client hands out is
     // stub-only; the real backend has no record of it and its status endpoint
@@ -174,9 +166,6 @@ export const persistentStubApiClient = {
   },
 
   async post(endpoint, body) {
-    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
-      return accreditationChanges('post', endpoint, body)
-    }
     if (/\/initiate$/.test(endpoint)) {
       return stubApiClient.post(endpoint, body)
     }
@@ -218,9 +207,6 @@ export const persistentStubApiClient = {
   },
 
   async patch(endpoint, body) {
-    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
-      return accreditationChanges('patch', endpoint, body)
-    }
     const stubResult = await stubApiClient.patch(endpoint, body)
     const parsed = parseAppSegment(endpoint)
     if (parsed) {
@@ -235,9 +221,6 @@ export const persistentStubApiClient = {
   },
 
   async delete(endpoint) {
-    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
-      return accreditationChanges('delete', endpoint)
-    }
     const stubResult = await stubApiClient.delete(endpoint)
     const m = endpoint.match(DELETE_FILE_RE)
     if (m) {
@@ -248,3 +231,19 @@ export const persistentStubApiClient = {
     return stubResult
   }
 }
+
+// Every method first offers the call to the accreditation-changes stub.
+export const persistentStubApiClient = Object.fromEntries(
+  Object.entries(persistentStubClient).map(([method, call]) => [
+    method,
+    (endpoint, body) =>
+      endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)
+        ? stubAccreditationChanges(
+            method,
+            endpoint,
+            body,
+            accreditationChangesDeps
+          )
+        : call(endpoint, body)
+  ])
+)

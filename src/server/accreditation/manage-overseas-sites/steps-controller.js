@@ -9,6 +9,7 @@ import {
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { buildViewData as buildRecyclingViewData } from '../add-overseas-site/recycling-operation-details/controller.js'
 import { buildViewData as buildConditionsViewData } from '../add-overseas-site/conditions-of-export/controller.js'
 import {
@@ -57,7 +58,7 @@ async function loadStep(request, h, fields) {
   if (!draft) {
     return { redirect: h.redirect(manageOverseasSitesUrl(applicationId)) }
   }
-  const locked = new Set(draft.entry.lockedFields ?? [])
+  const locked = new Set(draft.entry.lockedFields)
   const open = fields.filter((field) => !locked.has(field))
   if (open.length === 0) {
     return {
@@ -65,6 +66,24 @@ async function loadStep(request, h, fields) {
     }
   }
   return { ...draft, open, locked, materialType: view.materialType }
+}
+
+/**
+ * A step's route handler: loads the draft site for the fields it edits and
+ * redirects when the step cannot be used (see loadStep), otherwise runs the
+ * step with the translator and the draft.
+ */
+function stepHandler(fields, step) {
+  return {
+    async handler(request, h) {
+      const draft = await loadStep(request, h, fields)
+      if (draft.redirect) {
+        return draft.redirect
+      }
+      const { t } = getLocaleAndTranslator(request)
+      return step(request, h, t, draft)
+    }
+  }
 }
 
 function effectiveValue(draft, field) {
@@ -93,7 +112,7 @@ async function patchSite(request, body) {
     )
     return null
   } catch (err) {
-    if (err.status === 400) {
+    if (err.status === statusCodes.badRequest) {
       return validationErrors(err)
     }
     throw err
@@ -142,28 +161,20 @@ function locationView(h, t, request, draft, fields, errors) {
   })
 }
 
-export const locationGetController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const draft = await loadStep(request, h, ['country', 'coordinates'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
+export const locationGetController = stepHandler(
+  ['country', 'coordinates'],
+  async (request, h, t, draft) => {
     const fields = {
       country: effectiveValue(draft, 'country') ?? '',
       coordinates: effectiveValue(draft, 'coordinates') ?? ''
     }
     return locationView(h, t, request, draft, fields, {})
   }
-}
+)
 
-export const locationPostController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const draft = await loadStep(request, h, ['country', 'coordinates'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
+export const locationPostController = stepHandler(
+  ['country', 'coordinates'],
+  async (request, h, t, draft) => {
     const fields = {
       country: (request.payload?.country ?? '').trim(),
       coordinates: (request.payload?.coordinates ?? '').trim()
@@ -177,7 +188,9 @@ export const locationPostController = {
         .map((field) => [field, allErrors[field]])
     )
     if (Object.keys(errors).length > 0) {
-      return locationView(h, t, request, draft, fields, errors).code(400)
+      return locationView(h, t, request, draft, fields, errors).code(
+        statusCodes.badRequest
+      )
     }
     const body = Object.fromEntries(
       draft.open.map((field) => [field, fields[field]])
@@ -196,11 +209,13 @@ export const locationPostController = {
           refusal(t, apiErrors, field)
         ])
       )
-      return locationView(h, t, request, draft, fields, shown).code(400)
+      return locationView(h, t, request, draft, fields, shown).code(
+        statusCodes.badRequest
+      )
     }
     return h.redirect(stepUrls(request).summary)
   }
-}
+)
 
 // --- Recycling operation (R code) ------------------------------------------
 
@@ -217,13 +232,9 @@ function recyclingView(h, t, request, draft, selected, error) {
   })
 }
 
-export const recyclingOperationGetController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const draft = await loadStep(request, h, ['operationCodes'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
+export const recyclingOperationGetController = stepHandler(
+  ['operationCodes'],
+  async (request, h, t, draft) => {
     return recyclingView(
       h,
       t,
@@ -233,15 +244,11 @@ export const recyclingOperationGetController = {
       null
     )
   }
-}
+)
 
-export const recyclingOperationPostController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const draft = await loadStep(request, h, ['operationCodes'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
+export const recyclingOperationPostController = stepHandler(
+  ['operationCodes'],
+  async (request, h, t, draft) => {
     const raw = request.payload?.recyclingOperationCodes
     const codes = [raw ?? []]
       .flat()
@@ -255,13 +262,18 @@ export const recyclingOperationPostController = {
         'operationCodes'
       )
     if (error) {
-      return recyclingView(h, t, request, draft, codes, error).code(400)
+      return recyclingView(h, t, request, draft, codes, error).code(
+        statusCodes.badRequest
+      )
     }
     return h.redirect(stepUrls(request).summary)
   }
-}
+)
 
 // --- Conditions of export --------------------------------------------------
+
+// The template's radio values for a saved answer; none selected when unset.
+const RADIO_VALUE = { true: 'yes', false: 'no' }
 
 function conditionsView(h, t, request, selected, error) {
   return h.view(VIEWS.conditions, {
@@ -275,26 +287,17 @@ function conditionsView(h, t, request, selected, error) {
   })
 }
 
-export const conditionsOfExportGetController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const draft = await loadStep(request, h, ['conditionsOfExport'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
-    const value = effectiveValue(draft, 'conditionsOfExport')
-    const selected = value === true ? 'yes' : value === false ? 'no' : null
+export const conditionsOfExportGetController = stepHandler(
+  ['conditionsOfExport'],
+  async (request, h, t, draft) => {
+    const selected = RADIO_VALUE[effectiveValue(draft, 'conditionsOfExport')]
     return conditionsView(h, t, request, selected, null)
   }
-}
+)
 
-export const conditionsOfExportPostController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const draft = await loadStep(request, h, ['conditionsOfExport'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
+export const conditionsOfExportPostController = stepHandler(
+  ['conditionsOfExport'],
+  async (request, h, t, draft) => {
     const value = request.payload?.conditionsOfExport
     if (value !== 'yes' && value !== 'no') {
       return conditionsView(
@@ -303,7 +306,7 @@ export const conditionsOfExportPostController = {
         request,
         null,
         t('pages.addOverseasSite.conditionsOfExport.validation.required')
-      ).code(400)
+      ).code(statusCodes.badRequest)
     }
     const error = refusal(
       t,
@@ -311,16 +314,18 @@ export const conditionsOfExportPostController = {
       'conditionsOfExport'
     )
     if (error) {
-      return conditionsView(h, t, request, value, error).code(400)
+      return conditionsView(h, t, request, value, error).code(
+        statusCodes.badRequest
+      )
     }
     return h.redirect(stepUrls(request).summary)
   }
-}
+)
 
 // --- Evidence of broadly equivalent standards ------------------------------
 
 function besView(h, t, request, draft, payload, errors) {
-  const siteName = draft.entry.site?.siteName ?? ''
+  const siteName = draft.entry.site.siteName
   return h.view(VIEWS.bes, {
     ...buildBesViewData(
       t,
@@ -344,38 +349,67 @@ function validateBesFile(t, uploadedFile) {
   if (!validateFileExtension(filename)) {
     return t('pages.uploadBesEvidence.validation.invalidType')
   }
-  if ((uploadedFile?.payload?.length ?? 0) > MAX_FILE_BYTES) {
+  if (uploadedFile.payload.length > MAX_FILE_BYTES) {
     return t('pages.uploadBesEvidence.validation.fileTooLarge')
   }
   return null
 }
 
-export const besEvidenceGetController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const draft = await loadStep(request, h, ['besEvidence'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
+export const besEvidenceGetController = stepHandler(
+  ['besEvidence'],
+  async (request, h, t, draft) => {
     return besView(h, t, request, draft, {}, {})
   }
+)
+
+/**
+ * Sends the file to the CDP uploader through the change request's own
+ * initiate endpoint, and remembers the upload for the status page.
+ */
+async function uploadToRequest(request, file, { validFrom, validTo }) {
+  const { applicationId, siteId } = request.params
+  const besEvidenceValidFromDate = validFrom.toISOString()
+  const besEvidenceExpiryDate = validTo?.toISOString() ?? null
+  const uploadDetail = await initUpload({
+    initiateUrl: accreditationChangesService.besEvidenceInitiateUrl(
+      organisationIdFrom(request),
+      applicationId
+    ),
+    redirectUrl: `${config.get('auth.callbackBaseUrl')}${stepUrl(applicationId, siteId, 'bes-evidence/status')}`,
+    s3Path: `accreditation-changes/bes-evidence/${applicationId}/${siteId}`,
+    s3Bucket: config.get('fileUpload.s3Bucket'),
+    metadata: { besEvidenceValidFromDate, besEvidenceExpiryDate },
+    mimeTypes: ALLOWED_MIME_TYPES,
+    maxFileSize: MAX_FILE_BYTES
+  })
+  await proxyUploadToCdp({
+    uploadUrl: uploadDetail.uploadUrl,
+    payload: file.payload,
+    filename: file.filename,
+    contentType: file.headers['content-type']
+  })
+  request.yar.set(IN_YEAR_BES_UPLOAD_SESSION_KEY, {
+    statusUrl: uploadDetail.statusUrl,
+    fileUploadId: uploadDetail.fileUploadId,
+    siteId: Number.parseInt(siteId, 10),
+    besEvidenceValidFromDate,
+    besEvidenceExpiryDate
+  })
 }
 
-export const besEvidencePostController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
+export const besEvidencePostController = stepHandler(
+  ['besEvidence'],
+  async (request, h, t, draft) => {
     const { applicationId, siteId } = request.params
-    const draft = await loadStep(request, h, ['besEvidence'])
-    if (draft.redirect) {
-      return draft.redirect
-    }
     const payload = request.payload ?? {}
     if (payload.action === 'saveAndComeLater') {
       return h.redirect(stepUrls(request).summary)
     }
     const fileError = validateBesFile(t, payload.file)
     if (fileError) {
-      return besView(h, t, request, draft, payload, { fileError }).code(400)
+      return besView(h, t, request, draft, payload, { fileError }).code(
+        statusCodes.badRequest
+      )
     }
     const validFrom = parseDate(
       payload.validFromDay,
@@ -387,7 +421,7 @@ export const besEvidencePostController = {
         validFromError: t(
           'pages.uploadBesEvidence.validation.validFromRequired'
         )
-      }).code(400)
+      }).code(statusCodes.badRequest)
     }
     const { validTo, error: validToError } = resolveBesEvidenceValidTo(
       payload,
@@ -395,39 +429,12 @@ export const besEvidencePostController = {
       t
     )
     if (validToError) {
-      return besView(h, t, request, draft, payload, { validToError }).code(400)
+      return besView(h, t, request, draft, payload, { validToError }).code(
+        statusCodes.badRequest
+      )
     }
-    const besEvidenceValidFromDate = validFrom.toISOString()
-    const besEvidenceExpiryDate = validTo ? validTo.toISOString() : null
-    const organisationId = organisationIdFrom(request)
-
     try {
-      const uploadDetail = await initUpload({
-        initiateUrl: accreditationChangesService.besEvidenceInitiateUrl(
-          organisationId,
-          applicationId
-        ),
-        redirectUrl: `${config.get('auth.callbackBaseUrl')}${stepUrl(applicationId, siteId, 'bes-evidence/status')}`,
-        s3Path: `accreditation-changes/bes-evidence/${applicationId}/${siteId}`,
-        s3Bucket: config.get('fileUpload.s3Bucket'),
-        metadata: { besEvidenceValidFromDate, besEvidenceExpiryDate },
-        mimeTypes: ALLOWED_MIME_TYPES,
-        maxFileSize: MAX_FILE_BYTES
-      })
-      await proxyUploadToCdp({
-        uploadUrl: uploadDetail.uploadUrl,
-        payload: payload.file.payload,
-        filename: payload.file.filename,
-        contentType:
-          payload.file.headers?.['content-type'] ?? 'application/octet-stream'
-      })
-      request.yar.set(IN_YEAR_BES_UPLOAD_SESSION_KEY, {
-        statusUrl: uploadDetail.statusUrl,
-        fileUploadId: uploadDetail.fileUploadId,
-        siteId: Number.parseInt(siteId, 10),
-        besEvidenceValidFromDate,
-        besEvidenceExpiryDate
-      })
+      await uploadToRequest(request, payload.file, { validFrom, validTo })
     } catch (err) {
       logStructuredError(
         request.server.logger,
@@ -437,11 +444,11 @@ export const besEvidencePostController = {
       )
       return besView(h, t, request, draft, payload, {
         fileError: t('pages.uploadBesEvidence.validation.uploadError')
-      }).code(500)
+      }).code(statusCodes.internalServerError)
     }
     return h.redirect(stepUrl(applicationId, siteId, 'bes-evidence/status'))
   }
-}
+)
 
 export const besEvidenceStatusController = {
   async handler(request, h) {
@@ -452,7 +459,7 @@ export const besEvidenceStatusController = {
       return h.view('accreditation/upload-bes-evidence/status', {
         pageTitle: t('pages.uploadBesEvidence.status.title'),
         heading: t('pages.uploadBesEvidence.status.heading'),
-        processingStatus: uploadStatus?.processingStatus ?? 'preprocessing'
+        processingStatus: uploadStatus.processingStatus ?? 'preprocessing'
       })
     }
     const session = request.yar.get(IN_YEAR_BES_UPLOAD_SESSION_KEY)
@@ -464,11 +471,11 @@ export const besEvidenceStatusController = {
       await accreditationChangesService.addBesEvidenceFile(
         organisationIdFrom(request),
         applicationId,
-        session?.siteId ?? Number.parseInt(siteId, 10),
+        session.siteId,
         {
-          fileUploadId: session?.fileUploadId,
-          besEvidenceValidFromDate: session?.besEvidenceValidFromDate,
-          besEvidenceExpiryDate: session?.besEvidenceExpiryDate
+          fileUploadId: session.fileUploadId,
+          besEvidenceValidFromDate: session.besEvidenceValidFromDate,
+          besEvidenceExpiryDate: session.besEvidenceExpiryDate
         }
       )
     } catch (err) {

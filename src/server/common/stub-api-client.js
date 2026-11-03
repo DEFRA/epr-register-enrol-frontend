@@ -195,6 +195,31 @@ const DEFAULT_BP_PERCENTS = {
   other: 10
 }
 
+// RA-492: an ORS on org 50018's granted accreditation (registered unless
+// `selected`), with the details every one of them shares.
+function inYearSite(siteId, orsId, siteName, details) {
+  return {
+    siteId,
+    orsId,
+    siteName,
+    isEu: false,
+    isOecd: false,
+    selected: false,
+    isNewSite: false,
+    registeredNowAccredited: false,
+    contactName: 'Site Contact',
+    contactEmail: 'contact@example.com',
+    contactPhone: '+44 20 7946 0000',
+    code1: 'B3011',
+    repatriatedLoads: "Returned to the UK at the exporter's cost",
+    besEvidence: {
+      besEvidenceUploads: [],
+      doYouWantToUploadMoreEvidence: false
+    },
+    ...details
+  }
+}
+
 export const STUB_ORG_DOCS = [
   {
     orgId: 50001,
@@ -1030,97 +1055,30 @@ export const STUB_ORG_DOCS = [
         overseasSites: {
           sectionStatus: 'Completed',
           sites: [
-            {
-              siteId: 900181,
-              orsId: '001',
-              siteName: 'In-Year Accredited Site',
+            inYearSite(900181, '001', 'In-Year Accredited Site', {
               siteAddress: '1 Accredited Road',
               country: 'Germany',
-              isEu: false,
-              isOecd: false,
               selected: true,
-              isNewSite: false,
-              registeredNowAccredited: false,
-              contactName: 'Site Contact',
-              contactEmail: 'contact@example.com',
-              contactPhone: '+44 20 7946 0000',
-              code1: 'B3011',
-              repatriatedLoads: "Returned to the UK at the exporter's cost",
-              coordinates: '52.52, 13.405',
+              coordinates: '52.5200, 13.4050',
               operationCodes: ['R3'],
-              conditionsOfExport: true,
-              besEvidence: {
-                besEvidenceUploads: [],
-                doYouWantToUploadMoreEvidence: false
-              }
-            },
-            {
-              siteId: 900182,
-              orsId: '002',
-              siteName: 'In-Year Complete Site',
+              conditionsOfExport: true
+            }),
+            inYearSite(900182, '002', 'In-Year Complete Site', {
               siteAddress: '2 Registered Road',
               country: 'Germany',
-              isEu: false,
-              isOecd: false,
-              selected: false,
-              isNewSite: false,
-              registeredNowAccredited: false,
-              contactName: 'Site Contact',
-              contactEmail: 'contact@example.com',
-              contactPhone: '+44 20 7946 0000',
-              code1: 'B3011',
-              repatriatedLoads: "Returned to the UK at the exporter's cost",
-              coordinates: '53.55, 9.993',
+              coordinates: '53.5500, 9.9930',
               operationCodes: ['R3'],
-              conditionsOfExport: true,
-              besEvidence: {
-                besEvidenceUploads: [],
-                doYouWantToUploadMoreEvidence: false
-              }
-            },
-            {
-              siteId: 900183,
-              orsId: '003',
-              siteName: 'In-Year India Site',
+              conditionsOfExport: true
+            }),
+            inYearSite(900183, '003', 'In-Year India Site', {
               siteAddress: '3 Registered Road',
-              country: 'India',
-              isEu: false,
-              isOecd: false,
-              selected: false,
-              isNewSite: false,
-              registeredNowAccredited: false,
-              contactName: 'Site Contact',
-              contactEmail: 'contact@example.com',
-              contactPhone: '+44 20 7946 0000',
-              code1: 'B3011',
-              repatriatedLoads: "Returned to the UK at the exporter's cost",
-              besEvidence: {
-                besEvidenceUploads: [],
-                doYouWantToUploadMoreEvidence: false
-              }
-            },
-            {
-              siteId: 900184,
-              orsId: '004',
-              siteName: 'In-Year Turkey Site',
+              country: 'India'
+            }),
+            inYearSite(900184, '004', 'In-Year Turkey Site', {
               siteAddress: '4 Registered Road',
               country: 'Turkey',
-              isEu: false,
-              isOecd: false,
-              selected: false,
-              isNewSite: false,
-              registeredNowAccredited: false,
-              contactName: 'Site Contact',
-              contactEmail: 'contact@example.com',
-              contactPhone: '+44 20 7946 0000',
-              code1: 'B3011',
-              repatriatedLoads: "Returned to the UK at the exporter's cost",
-              coordinates: '41.008, 28.978',
-              besEvidence: {
-                besEvidenceUploads: [],
-                doYouWantToUploadMoreEvidence: false
-              }
-            }
+              coordinates: '41.0080, 28.9780'
+            })
           ]
         },
         besEvidence: { sectionStatus: 'Completed' }

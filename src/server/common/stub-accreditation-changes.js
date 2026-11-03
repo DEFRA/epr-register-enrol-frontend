@@ -5,6 +5,8 @@
 // Sites come from the stub application itself, so any Approved exporter in
 // STUB_ORG_DOCS (org 50018 is seeded for it) can be used locally.
 
+import { statusCodes } from './constants/status-codes.js'
+
 const CHANGES_RE = /^\/api\/v1\/accreditation-changes\/([^/]+)\/([^/]+)(\/.*)?$/
 const LOCKABLE = [
   'country',
@@ -108,134 +110,179 @@ function buildView(orgId, appId, application, store) {
   }
 }
 
-/**
- * Handles an accreditation-changes call, or returns undefined when the
- * endpoint is not one.
- *
- * @param {object} deps - { getApplication(orgId, appId), getUploadStatus(path), initiateUpload(orgId, appId, body) }
- */
-export async function stubAccreditationChanges(method, endpoint, body, deps) {
-  const match = CHANGES_RE.exec(endpoint)
-  if (!match) {
-    return undefined
+function siteOf(ctx, siteId) {
+  return ctx.application.overseasSites.sites.find(
+    (site) => site.siteId === Number(siteId)
+  )
+}
+
+function draftSite(ctx, siteId) {
+  const entry = ctx.store.draft?.sites.find(
+    (site) => site.siteId === Number(siteId)
+  )
+  if (!entry) {
+    throw stubError(statusCodes.notFound, 'Site not in the draft')
   }
-  const [, orgId, appId, rest = ''] = match
+  return entry
+}
+
+const currentRequest = (ctx) => ctx.view().activeRequest
+
+function addSite(ctx) {
+  const target = siteOf(ctx, ctx.body?.siteId)
+  if (!target) {
+    throw stubError(statusCodes.notFound, 'Site not found')
+  }
+  const listed = ctx.view().sites.find((s) => s.siteId === target.siteId)
+  if (
+    listed.accreditationStatus === 'Accredited' ||
+    listed.pendingRequestStatus === 'Submitted'
+  ) {
+    throw stubError(statusCodes.conflict, 'Site cannot be added')
+  }
+  ctx.store.draft ??= {
+    requestId: `stub-request-${Date.now()}`,
+    status: 'InProgress',
+    sites: []
+  }
+  if (!ctx.store.draft.sites.some((s) => s.siteId === target.siteId)) {
+    ctx.store.draft.sites.push({
+      siteId: target.siteId,
+      answers: {},
+      besEvidenceUploads: []
+    })
+  }
+  return currentRequest(ctx)
+}
+
+function removeSite(ctx, siteId) {
+  draftSite(ctx, siteId)
+  ctx.store.draft.sites = ctx.store.draft.sites.filter(
+    (s) => s.siteId !== Number(siteId)
+  )
+  if (ctx.store.draft.sites.length === 0) {
+    ctx.store.draft = null
+  }
+  return currentRequest(ctx)
+}
+
+function patchSite(ctx, siteId) {
+  const entry = draftSite(ctx, siteId)
+  const site = siteOf(ctx, entry.siteId)
+  const locked = new Set(LOCKABLE.filter((field) => hasValue(site[field])))
+  const answers = Object.entries(ctx.body ?? {}).filter(
+    ([field, value]) => LOCKABLE.includes(field) && value != null
+  )
+  const errors = Object.fromEntries(
+    answers
+      .filter(([field]) => locked.has(field))
+      .map(([field]) => [field, [`${field} is already recorded on the ORS`]])
+  )
+  if (Object.keys(errors).length > 0) {
+    throw stubError(statusCodes.badRequest, 'Validation failed', { errors })
+  }
+  Object.assign(entry.answers, Object.fromEntries(answers))
+  return currentRequest(ctx)
+}
+
+async function addBesEvidenceFile(ctx, siteId) {
+  const entry = draftSite(ctx, siteId)
+  const status = await ctx.deps.getUploadStatus(
+    ctx.orgId,
+    ctx.appId,
+    ctx.body.fileUploadId
+  )
+  entry.besEvidenceUploads.push({
+    fileId: ctx.body.fileUploadId,
+    filename: status.form.file.filename,
+    scanStatus: 'Clean',
+    besEvidenceValidFromDate: ctx.body.besEvidenceValidFromDate ?? null,
+    besEvidenceExpiryDate: ctx.body.besEvidenceExpiryDate ?? null
+  })
+  return currentRequest(ctx)
+}
+
+function submit(ctx) {
+  const { store } = ctx
+  if (!store.draft) {
+    throw stubError(statusCodes.notFound, 'No draft')
+  }
+  if (!currentRequest(ctx).isComplete) {
+    throw stubError(statusCodes.unprocessableEntity, 'Incomplete')
+  }
+  store.draft.status = 'Submitted'
+  store.draft.submittedBy = {
+    fullName: ctx.body.fullName,
+    jobTitle: ctx.body.jobTitle,
+    email: ctx.body.email ?? null
+  }
+  store.submitted.push(store.draft)
+  store.draft = null
+  return ctx.view().requests[0]
+}
+
+const SITE_PATH = String.raw`/requests/current/sites/(\d+)`
+
+const ROUTES = [
+  ['get', '', (ctx) => ctx.view()],
+  ['post', '/requests/current/sites', addSite],
+  ['delete', SITE_PATH, removeSite],
+  ['patch', SITE_PATH, patchSite],
+  [
+    'post',
+    '/requests/current/bes-evidence/initiate',
+    (ctx) => ctx.deps.initiateUpload(ctx.orgId, ctx.appId, ctx.body)
+  ],
+  ['post', `${SITE_PATH}/bes-evidence/files`, addBesEvidenceFile],
+  ['post', '/requests/current/submit', submit]
+].map(([method, path, handle]) => ({
+  method,
+  pattern: new RegExp(`^${path}$`),
+  handle
+}))
+
+async function grantedApplication(deps, orgId, appId) {
   const application = await deps.getApplication(orgId, appId)
-  if (!application?.applicationStatus) {
-    throw stubError(404, 'Application not found')
+  if (!application) {
+    throw stubError(statusCodes.notFound, 'Application not found')
   }
   if (application.applicationStatus !== 'Approved' || !application.isExporter) {
-    throw stubError(409, 'Application is not a granted exporter accreditation')
-  }
-  const store = stateFor(`${orgId}/${appId}`)
-  const view = () => buildView(orgId, appId, application, store)
-  const site = (siteId) =>
-    (application.overseasSites?.sites ?? []).find(
-      (s) => s.siteId === Number(siteId)
+    throw stubError(
+      statusCodes.conflict,
+      'Application is not a granted exporter accreditation'
     )
-  const draftSite = (siteId) => {
-    const entry = store.draft?.sites.find((s) => s.siteId === Number(siteId))
-    if (!entry) {
-      throw stubError(404, 'Site not in the draft')
-    }
-    return entry
   }
-  const current = () => view().activeRequest
+  return application
+}
 
-  if (method === 'get' && rest === '') {
-    return view()
+/**
+ * Handles one accreditation-changes call.
+ *
+ * @param {object} deps - { getApplication(orgId, appId) -> application or
+ *   null, initiateUpload(orgId, appId, body), getUploadStatus(orgId, appId,
+ *   fileUploadId) }
+ */
+export async function stubAccreditationChanges(method, endpoint, body, deps) {
+  const [, orgId, appId, rest = ''] = CHANGES_RE.exec(endpoint)
+  const application = await grantedApplication(deps, orgId, appId)
+  const store = stateFor(`${orgId}/${appId}`)
+  const ctx = {
+    orgId,
+    appId,
+    application,
+    store,
+    body,
+    deps,
+    view: () => buildView(orgId, appId, application, store)
   }
-  if (method === 'post' && rest === '/requests/current/sites') {
-    const target = site(body?.siteId)
-    if (!target) {
-      throw stubError(404, 'Site not found')
+  for (const route of ROUTES) {
+    const match = route.method === method ? route.pattern.exec(rest) : null
+    if (match) {
+      return route.handle(ctx, match[1])
     }
-    const pending = view().sites.find((s) => s.siteId === target.siteId)
-    if (
-      pending.accreditationStatus === 'Accredited' ||
-      pending.pendingRequestStatus === 'Submitted'
-    ) {
-      throw stubError(409, 'Site cannot be added')
-    }
-    store.draft ??= {
-      requestId: `stub-request-${Date.now()}`,
-      status: 'InProgress',
-      sites: []
-    }
-    if (!store.draft.sites.some((s) => s.siteId === target.siteId)) {
-      store.draft.sites.push({
-        siteId: target.siteId,
-        answers: {},
-        besEvidenceUploads: []
-      })
-    }
-    return current()
   }
-  const siteMatch = rest.match(/^\/requests\/current\/sites\/(\d+)$/)
-  if (siteMatch && method === 'delete') {
-    draftSite(siteMatch[1])
-    store.draft.sites = store.draft.sites.filter(
-      (s) => s.siteId !== Number(siteMatch[1])
-    )
-    if (store.draft.sites.length === 0) {
-      store.draft = null
-    }
-    return current()
-  }
-  if (siteMatch && method === 'patch') {
-    const entry = draftSite(siteMatch[1])
-    const locked = LOCKABLE.filter((field) =>
-      hasValue(site(entry.siteId)[field])
-    )
-    const errors = Object.fromEntries(
-      Object.keys(body ?? {})
-        .filter((field) => body[field] != null && locked.includes(field))
-        .map((field) => [field, [`${field} is already recorded on the ORS`]])
-    )
-    if (Object.keys(errors).length > 0) {
-      throw stubError(400, 'Validation failed', { errors })
-    }
-    for (const field of LOCKABLE) {
-      if (body?.[field] != null) {
-        entry.answers[field] = body[field]
-      }
-    }
-    return current()
-  }
-  if (method === 'post' && rest === '/requests/current/bes-evidence/initiate') {
-    return deps.initiateUpload(orgId, appId, body)
-  }
-  const besMatch = rest.match(
-    /^\/requests\/current\/sites\/(\d+)\/bes-evidence\/files$/
+  throw stubError(
+    statusCodes.notFound,
+    `No stub for ${method.toUpperCase()} ${endpoint}`
   )
-  if (besMatch && method === 'post') {
-    const entry = draftSite(besMatch[1])
-    const status = await deps.getUploadStatus(orgId, appId, body?.fileUploadId)
-    entry.besEvidenceUploads.push({
-      fileId: body?.fileUploadId,
-      filename: status?.form?.file?.filename ?? 'evidence',
-      scanStatus: 'Clean',
-      besEvidenceValidFromDate: body?.besEvidenceValidFromDate ?? null,
-      besEvidenceExpiryDate: body?.besEvidenceExpiryDate ?? null
-    })
-    return current()
-  }
-  if (method === 'post' && rest === '/requests/current/submit') {
-    if (!store.draft) {
-      throw stubError(404, 'No draft')
-    }
-    if (!current().isComplete) {
-      throw stubError(422, 'Incomplete')
-    }
-    store.draft.status = 'Submitted'
-    store.draft.submittedBy = {
-      fullName: body?.fullName ?? '',
-      jobTitle: body?.jobTitle ?? '',
-      email: body?.email ?? null
-    }
-    store.submitted.push(store.draft)
-    store.draft = null
-    return view().requests[0]
-  }
-  throw stubError(404, `No stub for ${method.toUpperCase()} ${endpoint}`)
 }

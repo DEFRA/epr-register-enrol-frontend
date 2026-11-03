@@ -140,4 +140,15 @@ describe('buildInYearOrsPaymentDetails (RA-492)', () => {
     expect(details.tonnageDisplay).toBeUndefined()
     expect(details.companyName).toBe('Natural Resources Wales')
   })
+
+  test('uses the England bank details for an unknown nation', () => {
+    const details = buildInYearOrsPaymentDetails(
+      { materialType: 'Plastic' },
+      t,
+      'Atlantis',
+      { chargeableSites: 1, chargePerSitePence: 32800, totalPence: 32800 }
+    )
+    expect(details.companyName).toBe('Environment Agency')
+    expect(details.amount).toBe(328)
+  })
 })

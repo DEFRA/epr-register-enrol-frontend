@@ -74,6 +74,14 @@ function buildCurrentAccreditation(application, siteName, priorYear) {
   }
 }
 
+// RA-492: a granted exporter accreditation can have registered ORSs added
+// to it in-year.
+function manageOverseasSitesLink(application, isExporter) {
+  return isExporter && application.applicationStatus === 'Approved'
+    ? manageOverseasSitesUrl(application.applicationId)
+    : null
+}
+
 export function buildLandingViewModel(
   application,
   organisationName,
@@ -138,12 +146,7 @@ export function buildLandingViewModel(
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',
-    // RA-492: a granted exporter accreditation can have registered ORSs
-    // added to it in-year.
-    manageOverseasSitesUrl:
-      isExporter && application.applicationStatus === 'Approved'
-        ? manageOverseasSitesUrl(application.applicationId)
-        : null,
+    manageOverseasSitesUrl: manageOverseasSitesLink(application, isExporter),
     displayReapplyAccreditationText: !REAPPLY_TEXT_HIDDEN_STATUSES.has(
       application.applicationStatus
     )

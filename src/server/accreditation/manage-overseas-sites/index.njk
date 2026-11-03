@@ -81,11 +81,11 @@
                   <td class="govuk-table__cell govuk-table__cell--numeric">
                     {% if site.inProgress %}
                       <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-2" data-testid="site-status-tag-{{ site.orsId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
-                      <a class="govuk-link" href="/accreditation/manage-overseas-sites/{{ applicationId }}/add/{{ site.siteId }}" data-testid="view-request-{{ site.orsId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
+                      <a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.orsId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
                     {% else %}
                       {# Adding a site changes the draft request, so this is a
                          crumb-protected POST styled as a link. #}
-                      <form method="post" action="/accreditation/manage-overseas-sites/{{ applicationId }}/sites/{{ site.siteId }}" class="govuk-!-display-inline">
+                      <form method="post" action="{{ site.addUrl }}" class="govuk-!-display-inline">
                         <input type="hidden" name="crumb" value="{{ crumb }}">
                         <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--blue govuk-body" data-testid="add-to-accreditation-{{ site.orsId }}">{{ t('pages.manageOverseasSites.addToAccreditation') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></button>
                       </form>

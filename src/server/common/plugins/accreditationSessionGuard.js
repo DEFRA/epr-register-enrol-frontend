@@ -49,6 +49,25 @@ export function isInYearChangeOnGrantedAccreditation(path, application) {
   )
 }
 
+/**
+ * Where a page that edits the application must send the operator instead,
+ * given the application's status: its landing page once the application is
+ * terminal (except the in-year change journey on a granted accreditation),
+ * or back to itself for a write to a locked section. Null to carry on.
+ */
+export function editRestrictionRedirect(request, application) {
+  if (!isEditRestrictedPath(request.path)) {
+    return null
+  }
+  if (
+    TERMINAL_STATUSES.has(application?.applicationStatus) &&
+    !isInYearChangeOnGrantedAccreditation(request.path, application)
+  ) {
+    return landingUrl(application)
+  }
+  return isLockedSectionWrite(request, application) ? request.path : null
+}
+
 export function isEditRestrictedPath(path) {
   const segment = routeSegment(path)
   if (!segment) {
@@ -186,19 +205,9 @@ export const accreditationSessionGuard = {
           request.params?.applicationId
         )
 
-        if (
-          isEditRestrictedPath(request.path) &&
-          TERMINAL_STATUSES.has(application?.applicationStatus) &&
-          !isInYearChangeOnGrantedAccreditation(request.path, application)
-        ) {
-          return h.redirect(landingUrl(application)).takeover()
-        }
-
-        if (
-          isEditRestrictedPath(request.path) &&
-          isLockedSectionWrite(request, application)
-        ) {
-          return h.redirect(request.path).takeover()
+        const statusRedirect = editRestrictionRedirect(request, application)
+        if (statusRedirect) {
+          return h.redirect(statusRedirect).takeover()
         }
 
         if (application) {

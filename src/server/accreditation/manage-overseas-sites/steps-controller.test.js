@@ -133,6 +133,69 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     expect(proxyUploadToCdp).toHaveBeenCalled()
   })
 
+  test('an upload without a valid-to date has no expiry', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    vi.mocked(initUpload).mockResolvedValue({ fileUploadId: 'up-2' })
+    const { statusCode } = await postUpload({
+      action: 'uploadFile',
+      validFromDay: '1',
+      validFromMonth: '11',
+      validFromYear: '2026'
+    })
+    expect(statusCode).toBe(statusCodes.redirect)
+    expect(initUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ besEvidenceExpiryDate: null })
+      })
+    )
+  })
+
+  test.each([
+    [
+      'a file type that is not allowed',
+      dates,
+      'bes.exe',
+      'data-testid="file-error"'
+    ],
+    [
+      'a valid-to date before valid-from',
+      { ...dates, validToYear: '2025' },
+      'bes.pdf',
+      'data-testid="valid-to-error"'
+    ]
+  ])('rejects %s', async (_name, fields, file, marker) => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    const { statusCode, result } = await postUpload(fields, file)
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain(marker)
+    expect(initUpload).not.toHaveBeenCalled()
+  })
+
+  test('a backend failure saving an answer is not hidden', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    vi.spyOn(apiClient, 'patch').mockRejectedValue(
+      Object.assign(new Error('500'), { status: 500 })
+    )
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url: `${SITE}/conditions-of-export`,
+      payload: { conditionsOfExport: 'yes' }
+    })
+    expect(statusCode).toBe(statusCodes.internalServerError)
+  })
+
+  test('recycling operation: choosing none is rejected without saving', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    const patch = vi.spyOn(apiClient, 'patch')
+    const { statusCode } = await server.inject({
+      method: 'POST',
+      url: `${SITE}/recycling-operation`,
+      payload: {}
+    })
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(patch).not.toHaveBeenCalled()
+  })
+
   test('an upload failure stays on the page with an error', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(view)
     vi.mocked(initUpload).mockRejectedValue(new Error('down'))
@@ -151,8 +214,7 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
   test('status: polls until ready, then adds the file to the request and returns to the summary', async () => {
     const { cookie } = await uploadCookie()
     vi.spyOn(apiClient, 'get').mockResolvedValueOnce({
-      uploadStatus: 'pending',
-      processingStatus: 'pending'
+      uploadStatus: 'pending'
     })
     const pending = await server.inject({
       url: `${SITE}/bes-evidence/status`,
@@ -214,6 +276,35 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     })
     const { headers } = await server.inject(`${SITE}/location`)
     expect(headers.location).toBe(`/accreditation/manage-overseas-sites/${APP}`)
+  })
+
+  test('location: a site with neither value asks for both', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({
+      ...view,
+      sites: [{ ...view.sites[0], lockedFields: [] }],
+      activeRequest: {
+        sites: [{ ...view.activeRequest.sites[0], effective: {} }]
+      }
+    })
+    const { result } = await server.inject(`${SITE}/location`)
+    expect(result).toContain('data-testid="country-input"')
+    expect(result).toContain('data-testid="coordinates-input"')
+  })
+
+  test('location: a refusal that names no field is shown against the first one', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    vi.spyOn(apiClient, 'patch').mockRejectedValue(
+      Object.assign(new Error('400'), { status: 400, response: '{}' })
+    )
+    const { statusCode, result } = await server.inject({
+      method: 'POST',
+      url: `${SITE}/location`,
+      payload: { coordinates: '19.076000, 72.877700' }
+    })
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain(
+      'This information could not be saved. Check it and try again.'
+    )
   })
 
   test('location: a field the backend rejects is shown against that field', async () => {

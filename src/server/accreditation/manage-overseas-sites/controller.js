@@ -2,11 +2,13 @@ import Boom from '@hapi/boom'
 
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
+  PENCE_PER_POUND,
   buildInYearOrsPaymentDetails,
   buildPaymentReference,
   resolveNation,
@@ -45,6 +47,11 @@ const VIEWS = {
 
 const t2 = (t, key) => t(`pages.manageOverseasSites.${key}`)
 
+// 404 (no such application or site) and 409 (not a granted exporter
+// accreditation, or a site that cannot be added) mean the same thing to
+// these pages: there is nothing to show or do.
+const NOTHING_TO_DO = new Set([statusCodes.notFound, statusCodes.conflict])
+
 export function organisationIdFrom(request) {
   return request.yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
 }
@@ -61,7 +68,7 @@ export async function loadView(request) {
       request.params.applicationId
     )
   } catch (err) {
-    if (err.status === 404 || err.status === 409) {
+    if (NOTHING_TO_DO.has(err.status)) {
       throw Boom.notFound()
     }
     throw err
@@ -86,9 +93,9 @@ export function resolveDraftSite(view, siteId) {
 // AC03/AC04: the charge as the backend calculated it (pence -> pounds).
 function chargeFor(charge) {
   return {
-    count: charge?.chargeableSites ?? 0,
-    perSite: (charge?.chargePerSitePence ?? 0) / 100,
-    total: (charge?.totalPence ?? 0) / 100
+    count: charge.chargeableSites,
+    perSite: charge.chargePerSitePence / PENCE_PER_POUND,
+    total: charge.totalPence / PENCE_PER_POUND
   }
 }
 
@@ -102,9 +109,8 @@ export const manageOverseasSitesController = {
       heading: t2(t, 'title'),
       backLink: landingUrl({ ...view, year: view.year }),
       year: view.year,
-      applicationId,
       requestsUrl: requestsUrl(applicationId),
-      ...buildManageViewModel(view)
+      ...buildManageViewModel(view, applicationId)
     })
   }
 }
@@ -123,7 +129,7 @@ export const addSiteToRequestController = {
     } catch (err) {
       // 404 unknown site, 409 already accredited or in a submitted request
       // (AC09): nothing to add, so back to the list that offered it.
-      if (err.status === 404 || err.status === 409) {
+      if (NOTHING_TO_DO.has(err.status)) {
         return h.redirect(manageOverseasSitesUrl(applicationId))
       }
       throw err
@@ -133,7 +139,7 @@ export const addSiteToRequestController = {
 }
 
 function renderSummary(h, t, { applicationId, entry, requestSite, errors }) {
-  const siteName = entry.site?.siteName ?? ''
+  const siteName = entry.site.siteName
   const rows = buildSummaryRows({ t, applicationId, entry, requestSite })
   const errorByRow = Object.fromEntries(
     (errors ?? []).map((error) => [error.row, error.text])
@@ -173,7 +179,9 @@ export const addToAccreditationPostController = {
     }
     const errors = buildMissingFieldErrors(t, draft.requestSite)
     if (errors.length > 0) {
-      return renderSummary(h, t, { applicationId, ...draft, errors }).code(400)
+      return renderSummary(h, t, { applicationId, ...draft, errors }).code(
+        statusCodes.badRequest
+      )
     }
     return h.redirect(requestsUrl(applicationId))
   }
@@ -191,7 +199,7 @@ export const cancelAddToAccreditationController = {
         Number.parseInt(siteId, 10)
       )
     } catch (err) {
-      if (err.status !== 404) {
+      if (err.status !== statusCodes.notFound) {
         throw err
       }
     }
@@ -212,12 +220,12 @@ function renderRequests(h, t, { applicationId, view, errors }) {
       return {
         siteId: site.siteId,
         orsId: site.orsId,
-        siteName: site.siteName ?? entry?.site?.siteName ?? '',
-        address: siteAddressLine(entry?.site),
+        siteName: site.siteName,
+        address: siteAddressLine(entry.site),
         viewUrl: addToAccreditationUrl(applicationId, site.siteId)
       }
     }),
-    charge: chargeFor(view.activeRequest?.charge),
+    charge: view.activeRequest ? chargeFor(view.activeRequest.charge) : null,
     errors: errors ?? []
   })
 }
@@ -248,10 +256,12 @@ export const requestsPostController = {
         href: addToAccreditationUrl(applicationId, site.siteId),
         orsId: site.orsId,
         text: t2(t, 'requests.incomplete')
-          .replace('{site}', site.siteName ?? '')
+          .replace('{site}', site.siteName)
           .replace('{orsId}', site.orsId)
       }))
-      return renderRequests(h, t, { applicationId, view, errors }).code(400)
+      return renderRequests(h, t, { applicationId, view, errors }).code(
+        statusCodes.badRequest
+      )
     }
     return h.redirect(declarationUrl(applicationId))
   }
@@ -297,7 +307,7 @@ export const declarationPostController = {
           ...declarationViewData(t, applicationId, fullName, jobTitle),
           errors
         })
-        .code(400)
+        .code(statusCodes.badRequest)
     }
     try {
       // AC07: the backend moves the request to Submitted.
@@ -307,13 +317,13 @@ export const declarationPostController = {
         { fullName, jobTitle, email: getUser(request)?.email ?? null }
       )
     } catch (err) {
-      if (err.status === 404) {
+      if (err.status === statusCodes.notFound) {
         return h.redirect(manageOverseasSitesUrl(applicationId))
       }
-      if (err.status === 422) {
+      if (err.status === statusCodes.unprocessableEntity) {
         return h.redirect(requestsUrl(applicationId))
       }
-      request.logger?.error?.(
+      request.logger.error(
         { err, applicationId },
         'Error submitting in-year accreditation change request'
       )
@@ -322,7 +332,7 @@ export const declarationPostController = {
           ...declarationViewData(t, applicationId, fullName, jobTitle),
           error: t('pages.submitDeclaration.validation.submitError')
         })
-        .code(500)
+        .code(statusCodes.internalServerError)
     }
     return h.redirect(paymentUrl(applicationId))
   }
@@ -336,7 +346,7 @@ export const paymentGetController = {
     const { applicationId } = request.params
     const organisationId = organisationIdFrom(request)
     const view = await loadView(request)
-    const submitted = (view.requests ?? []).find(
+    const submitted = view.requests.find(
       (changeRequest) => changeRequest.status === SUBMITTED
     )
     if (!submitted) {
@@ -358,8 +368,8 @@ export const paymentGetController = {
       backLink: manageOverseasSitesUrl(applicationId),
       backLinkText: t2(t, 'payment.backLink'),
       materialDisplay: materialDisplayName(application, t),
-      submitterName: submitted.submittedBy?.fullName ?? '',
-      submitterEmail: submitted.submittedBy?.email ?? '',
+      submitterName: submitted.submittedBy.fullName,
+      submitterEmail: submitted.submittedBy.email ?? '',
       paymentReference: buildPaymentReference(
         nation,
         application.organisationNumber,

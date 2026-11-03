@@ -1,4 +1,4 @@
-import { stepUrl } from './urls.js'
+import { addSiteToRequestUrl, addToAccreditationUrl, stepUrl } from './urls.js'
 
 // RA-492: view models for the in-year add-ORS pages, built from the
 // backend's AccreditationChangesView (see service.js).
@@ -52,16 +52,17 @@ export function findRequestSite(view, siteId) {
  * request has been submitted moves to the Accredited tab with a Pending tag
  * (AC08) and loses its actions (AC09); one in the draft shows In progress.
  */
-export function buildManageViewModel(view) {
+export function buildManageViewModel(view, applicationId) {
   const toRow = (entry) => ({
-    siteId: entry.siteId,
     orsId: entry.orsId,
-    siteName: entry.site?.siteName ?? '',
+    addUrl: addSiteToRequestUrl(applicationId, entry.siteId),
+    viewUrl: addToAccreditationUrl(applicationId, entry.siteId),
+    siteName: entry.site.siteName,
     address: siteAddressLine(entry.site),
     pending: entry.pendingRequestStatus === SUBMITTED,
     inProgress: entry.pendingRequestStatus === IN_PROGRESS
   })
-  const sites = view.sites ?? []
+  const sites = view.sites
   const accredited = sites
     .filter(
       (entry) =>
@@ -118,25 +119,22 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
  * ORS (locked) or one the backend cannot change.
  */
 export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
-  const site = entry.site ?? {}
-  const effective = requestSite?.effective ?? {}
-  const locked = new Set(entry.lockedFields ?? [])
-  const lockable = (field, label) => {
-    const value = effective[field] ?? site[field]
+  const site = entry.site
+  // The backend's effective value: the ORS's own, or the operator's answer.
+  const effective = requestSite.effective
+  const locked = new Set(entry.lockedFields)
+  const lockable = (field, rowLabel) => {
+    const value = displayValue(t, field, effective[field])
     if (locked.has(field)) {
-      return fixedRow(
-        EDITABLE_FIELDS[field].row,
-        label,
-        displayValue(t, field, value)
-      )
+      return fixedRow(EDITABLE_FIELDS[field].row, rowLabel, value)
     }
     return editableRow({
       t,
       applicationId,
       siteId: entry.siteId,
       field,
-      label,
-      value: displayValue(t, field, value)
+      label: rowLabel,
+      value
     })
   }
   const label = (key) => t2(t, `rows.${key}`)
@@ -164,10 +162,10 @@ export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
     lockable('conditionsOfExport', label('conditionsOfExport'))
   ]
   // The location row is only "missing" when the country is.
-  rows[1].missing = !hasValue(effective.country ?? site.country)
+  rows[1].missing = !hasValue(effective.country)
 
-  const files = requestSite?.besEvidence?.besEvidenceUploads ?? []
-  if (requestSite?.besEvidenceRequired || files.length > 0) {
+  const files = requestSite.besEvidence?.besEvidenceUploads ?? []
+  if (requestSite.besEvidenceRequired || files.length > 0) {
     rows.push(
       editableRow({
         t,
@@ -187,7 +185,7 @@ export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
  * items pointing at the summary rows.
  */
 export function buildMissingFieldErrors(t, requestSite) {
-  return (requestSite?.missingFields ?? [])
+  return requestSite.missingFields
     .filter((field) => EDITABLE_FIELDS[field])
     .map((field) => ({
       row: EDITABLE_FIELDS[field].row,

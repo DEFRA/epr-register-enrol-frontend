@@ -58,6 +58,8 @@ export function resolveRegulatorContact(nation) {
 
 export const ORS_FEE = 328
 
+export const PENCE_PER_POUND = 100
+
 export const TONNAGE_FEES = {
   UpTo500: 546,
   UpTo5000: 2184,
@@ -133,11 +135,11 @@ export function buildPaymentDetails(application, t, nation) {
 // tonnage fee, so tonnageDisplay and amountTonnageDue are absent and the
 // payment-details macro leaves the tonnage line out.
 export function buildInYearOrsPaymentDetails(application, t, nation, charge) {
-  const amountOrsDue = (charge?.totalPence ?? 0) / 100
+  const amountOrsDue = charge.totalPence / PENCE_PER_POUND
   return {
     ...bankDetailsFor(nation),
     materialName: materialDisplayName(application, t),
-    numberOfORSs: charge?.chargeableSites ?? 0,
+    numberOfORSs: charge.chargeableSites,
     amountOrsDue,
     amount: amountOrsDue
   }

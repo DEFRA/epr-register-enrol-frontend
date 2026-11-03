@@ -40,10 +40,26 @@ describe('stubAccreditationChanges (RA-492)', () => {
   const call = (method, rest, body) =>
     stubAccreditationChanges(method, `${base}${rest}`, body, d)
 
-  test('ignores other endpoints', async () => {
-    expect(
-      await stubAccreditationChanges('get', '/api/v1/other', null, d)
-    ).toBeUndefined()
+  test('404 for an unknown application, route, site, or a site not in the draft', async () => {
+    d = deps(null)
+    await expect(call('get', '')).rejects.toMatchObject({ status: 404 })
+    d = deps(application())
+    await expect(call('get', '/nope')).rejects.toMatchObject({ status: 404 })
+    await expect(
+      call('post', '/requests/current/sites', { siteId: 99 })
+    ).rejects.toMatchObject({ status: 404 })
+    await expect(
+      call('patch', '/requests/current/sites/2', {})
+    ).rejects.toMatchObject({ status: 404 })
+    await expect(
+      call('post', '/requests/current/submit', {})
+    ).rejects.toMatchObject({ status: 404 })
+  })
+
+  test('adding a site already in the draft does not add it twice', async () => {
+    await call('post', '/requests/current/sites', { siteId: 2 })
+    const draft = await call('post', '/requests/current/sites', { siteId: 2 })
+    expect(draft.sites).toHaveLength(1)
   })
 
   test('409 for an application that is not a granted exporter', async () => {
@@ -135,5 +151,8 @@ describe('persistentStubApiClient accreditation-changes routing (RA-492)', () =>
     expect(
       await client.delete(`${base}/requests/current/sites/900184`)
     ).toBeNull()
+    await expect(
+      client.get('/api/v1/accreditation-changes/50018/no-such-app')
+    ).rejects.toMatchObject({ status: 404 })
   })
 })

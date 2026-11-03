@@ -4,6 +4,7 @@ import {
   shouldGuardPath,
   hasValidSession,
   hasOrganisationAccess,
+  editRestrictionRedirect,
   isEditRestrictedPath,
   isInYearChangeOnGrantedAccreditation,
   isLockedSectionWrite,
@@ -48,6 +49,37 @@ describe('shouldGuardPath', () => {
     expect(shouldGuardPath('/')).toBe(false)
     expect(shouldGuardPath('/operator-accreditation')).toBe(false)
     expect(shouldGuardPath('/health')).toBe(false)
+  })
+})
+
+describe('editRestrictionRedirect', () => {
+  const approved = {
+    applicationStatus: 'Approved',
+    organisationId: 'o',
+    registrationId: 'r',
+    materialType: 'Plastic',
+    year: 2026
+  }
+  test.each([
+    ['/operator', 'get', approved, null],
+    [
+      '/accreditation/task-list/a',
+      'get',
+      approved,
+      '/operator-accreditation/o/r/Plastic/2026'
+    ],
+    ['/accreditation/manage-overseas-sites/a', 'post', approved, null],
+    [
+      '/accreditation/tonnage/a',
+      'post',
+      { applicationStatus: 'Submitted', prns: {} },
+      '/accreditation/tonnage/a'
+    ],
+    ['/accreditation/tonnage/a', 'get', { applicationStatus: 'Started' }, null]
+  ])('%s %s -> %s', (path, method, application, expected) => {
+    expect(editRestrictionRedirect({ path, method }, application)).toBe(
+      expected
+    )
   })
 })
 

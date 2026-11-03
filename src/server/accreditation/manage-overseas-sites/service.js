@@ -59,7 +59,7 @@ export const accreditationChangesService = {
  * empty map.
  */
 export function validationErrors(err) {
-  const body = err?.response
+  const body = err.response
   try {
     const parsed = typeof body === 'string' ? JSON.parse(body) : body
     return parsed?.errors && typeof parsed.errors === 'object'

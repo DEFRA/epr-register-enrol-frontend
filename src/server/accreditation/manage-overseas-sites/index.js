@@ -1,4 +1,5 @@
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+import { MAX_FILE_BYTES } from '../upload-bes-evidence/controller.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
 import {
   addSiteToRequestController,
@@ -28,10 +29,13 @@ import {
 const BASE = '/accreditation/manage-overseas-sites/{applicationId}'
 const SITE = `${BASE}/add/{siteId}`
 
+const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
+
 const uploadOptions = {
   ...requireOperator,
   payload: {
-    maxBytes: 21 * 1024 * 1024,
+    // The file plus the form's other fields, as the upload-bes-evidence route.
+    maxBytes: MAX_FILE_BYTES + MULTIPART_OVERHEAD_BYTES,
     output: 'data',
     parse: true,
     multipart: { output: 'annotated' }
@@ -44,31 +48,48 @@ const statusOptions = {
 }
 
 // RA-492: in-year request to add registered ORSs to a granted accreditation.
+function route(method, path, controller, options = requireOperator) {
+  return { method, path, options, ...controller }
+}
+
 const ROUTES = [
-  ['GET', BASE, manageOverseasSitesController],
-  ['POST', `${BASE}/sites/{siteId}`, addSiteToRequestController],
-  ['GET', SITE, addToAccreditationGetController],
-  ['POST', SITE, addToAccreditationPostController],
-  ['POST', `${SITE}/cancel`, cancelAddToAccreditationController],
-  ['GET', `${SITE}/location`, locationGetController],
-  ['POST', `${SITE}/location`, locationPostController],
-  ['GET', `${SITE}/recycling-operation`, recyclingOperationGetController],
-  ['POST', `${SITE}/recycling-operation`, recyclingOperationPostController],
-  ['GET', `${SITE}/conditions-of-export`, conditionsOfExportGetController],
-  ['POST', `${SITE}/conditions-of-export`, conditionsOfExportPostController],
-  ['GET', `${SITE}/bes-evidence`, besEvidenceGetController],
-  ['POST', `${SITE}/bes-evidence`, besEvidencePostController, uploadOptions],
-  [
+  route('GET', BASE, manageOverseasSitesController),
+  route('POST', `${BASE}/sites/{siteId}`, addSiteToRequestController),
+  route('GET', SITE, addToAccreditationGetController),
+  route('POST', SITE, addToAccreditationPostController),
+  route('POST', `${SITE}/cancel`, cancelAddToAccreditationController),
+  route('GET', `${SITE}/location`, locationGetController),
+  route('POST', `${SITE}/location`, locationPostController),
+  route('GET', `${SITE}/recycling-operation`, recyclingOperationGetController),
+  route(
+    'POST',
+    `${SITE}/recycling-operation`,
+    recyclingOperationPostController
+  ),
+  route('GET', `${SITE}/conditions-of-export`, conditionsOfExportGetController),
+  route(
+    'POST',
+    `${SITE}/conditions-of-export`,
+    conditionsOfExportPostController
+  ),
+  route('GET', `${SITE}/bes-evidence`, besEvidenceGetController),
+  route(
+    'POST',
+    `${SITE}/bes-evidence`,
+    besEvidencePostController,
+    uploadOptions
+  ),
+  route(
     'GET',
     `${SITE}/bes-evidence/status`,
     besEvidenceStatusController,
     statusOptions
-  ],
-  ['GET', `${BASE}/requests`, requestsGetController],
-  ['POST', `${BASE}/requests`, requestsPostController],
-  ['GET', `${BASE}/declaration`, declarationGetController],
-  ['POST', `${BASE}/declaration`, declarationPostController],
-  ['GET', `${BASE}/payment`, paymentGetController]
+  ),
+  route('GET', `${BASE}/requests`, requestsGetController),
+  route('POST', `${BASE}/requests`, requestsPostController),
+  route('GET', `${BASE}/declaration`, declarationGetController),
+  route('POST', `${BASE}/declaration`, declarationPostController),
+  route('GET', `${BASE}/payment`, paymentGetController)
 ]
 
 export const manageOverseasSites = {
@@ -77,11 +98,9 @@ export const manageOverseasSites = {
     register(server) {
       for (const prefix of ['', '/{language}']) {
         server.route(
-          ROUTES.map(([method, path, controller, options]) => ({
-            method,
-            path: `${prefix}${path}`,
-            options: options ?? requireOperator,
-            ...controller
+          ROUTES.map((definition) => ({
+            ...definition,
+            path: prefix + definition.path
           }))
         )
       }

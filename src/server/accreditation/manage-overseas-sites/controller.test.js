@@ -52,7 +52,7 @@ function requestSite(overrides = {}) {
       conditionsOfExport: null
     },
     besEvidenceRequired: true,
-    besEvidence: { besEvidenceUploads: [] },
+    besEvidence: null,
     missingFields: ['conditionsOfExport', 'besEvidence'],
     isComplete: false,
     ...overrides
@@ -197,6 +197,12 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('data-testid="add-to-accreditation-004"')
     })
 
+    test('a backend failure is not hidden', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(500))
+      const { statusCode } = await server.inject(BASE)
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
     test('returns 404 when the application is not a granted exporter accreditation', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(409))
       const { statusCode } = await server.inject(BASE)
@@ -257,17 +263,54 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('Ejbyvvej, Denmark')
     })
 
+    test('a backend failure adding a site is not hidden', async () => {
+      vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(500))
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/sites/900182`
+      })
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    test('summary: uploaded BES evidence is listed by filename with Change', async () => {
+      mockGet(
+        makeView({
+          active: [
+            requestSite({
+              besEvidence: { besEvidenceUploads: [{ filename: 'bes.pdf' }] }
+            })
+          ]
+        })
+      )
+      const { result } = await server.inject(`${BASE}/add/900182`)
+      expect(result).toMatch(/data-testid="row-bes-evidence-value">\s*bes.pdf/)
+      expect(result).toMatch(/data-testid="row-bes-evidence-action">Change/)
+    })
+
+    test('summary: a site without a country shows Missing information on the location row', async () => {
+      const view = makeView({
+        active: [requestSite({ effective: { country: null } })]
+      })
+      view.sites[1].lockedFields = []
+      mockGet(view)
+      const { result } = await server.inject(`${BASE}/add/900182`)
+      expect(result).toContain('data-testid="row-location-missing"')
+      expect(result).toMatch(
+        /data-testid="row-location-action">Add information/
+      )
+    })
+
     test('summary: a field the operator filled in this request says Change', async () => {
       mockGet(
         makeView({
           active: [
             requestSite({
-              answers: { conditionsOfExport: true },
+              answers: { conditionsOfExport: false },
               effective: {
                 country: 'Denmark',
                 coordinates: '55.1, 10.2',
                 operationCodes: ['R3'],
-                conditionsOfExport: true
+                conditionsOfExport: false
               },
               besEvidenceRequired: false,
               missingFields: [],
@@ -280,6 +323,9 @@ describe('#manageOverseasSites (RA-492)', () => {
 
       expect(result).toMatch(
         /data-testid="row-conditions-of-export-action">Change/
+      )
+      expect(result).toMatch(
+        /data-testid="row-conditions-of-export-value">\s*No\s*</
       )
       expect(result).not.toContain('data-testid="row-bes-evidence"')
     })
@@ -325,6 +371,33 @@ describe('#manageOverseasSites (RA-492)', () => {
       )
       const { statusCode, headers } = await server.inject(`${BASE}/add/900182`)
       expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(BASE)
+    })
+
+    test('Cancel of a site already gone from the draft still returns to the list', async () => {
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(404))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/cancel`
+      })
+      expect(headers.location).toBe(BASE)
+    })
+
+    test('a backend failure on Cancel is not hidden', async () => {
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(500))
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/cancel`
+      })
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    test('Continue on a site not in the draft returns to the list', async () => {
+      mockGet(makeView({ active: null }))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182`
+      })
       expect(headers.location).toBe(BASE)
     })
 
@@ -538,6 +611,15 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(`${BASE}/declaration`)
     })
 
+    test('Continue with no draft returns to the list', async () => {
+      mockGet(makeView({ active: null }))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/requests`
+      })
+      expect(headers.location).toBe(BASE)
+    })
+
     test('with no draft there is nothing to continue', async () => {
       mockGet(makeView({ active: null }))
       const { result } = await server.inject(`${BASE}/requests`)
@@ -586,6 +668,16 @@ describe('#manageOverseasSites (RA-492)', () => {
         })
       )
       expect(headers.location).toBe(`${BASE}/payment`)
+    })
+
+    test('a submit with no draft (already submitted) returns to the list', async () => {
+      vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(404))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/declaration`,
+        payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+      })
+      expect(headers.location).toBe(BASE)
     })
 
     test('an incomplete request at submit goes back to the requests page', async () => {
