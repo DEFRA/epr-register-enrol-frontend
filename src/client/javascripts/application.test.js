@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ERROR_TOO_LARGE = 'The selected file must be smaller than 20MB'
 const ERROR_INVALID_TYPE =
@@ -988,6 +988,62 @@ describe('character-count live error clearing', () => {
     // and the server-rendered error this repo adds is cleared alongside it.
     expect(statusMessage.textContent).toContain('remaining')
     expect(document.getElementById('field-error')).toBeNull()
+  })
+})
+
+// RA-492: govuk-frontend hides every tab panel but the first once the page
+// is govuk-frontend-supported, so without createAll(Tabs) a second tab's
+// panel could never be shown.
+describe('govuk-frontend Tabs', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    document.documentElement.style.removeProperty('--govuk-breakpoint-tablet')
+  })
+
+  it('shows the Registered panel when its tab is clicked', async () => {
+    // What the compiled application.css and a tablet-width browser give the
+    // Tabs module; jsdom has neither.
+    document.documentElement.style.setProperty(
+      '--govuk-breakpoint-tablet',
+      '40.0625rem'
+    )
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }))
+    )
+    document.body.className = 'govuk-frontend-supported'
+    document.body.innerHTML = `
+      <div class="govuk-tabs" data-module="govuk-tabs">
+        <ul class="govuk-tabs__list">
+          <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+            <a class="govuk-tabs__tab" href="#accredited" data-testid="tab-accredited">Accredited</a>
+          </li>
+          <li class="govuk-tabs__list-item">
+            <a class="govuk-tabs__tab" href="#registered" data-testid="tab-registered">Registered</a>
+          </li>
+        </ul>
+        <div class="govuk-tabs__panel" id="accredited"></div>
+        <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="registered"></div>
+      </div>
+    `
+    await loadApplication()
+
+    document.querySelector('[data-testid="tab-registered"]').click()
+
+    expect(
+      document
+        .getElementById('registered')
+        .classList.contains('govuk-tabs__panel--hidden')
+    ).toBe(false)
+    expect(
+      document
+        .getElementById('accredited')
+        .classList.contains('govuk-tabs__panel--hidden')
+    ).toBe(true)
   })
 })
 

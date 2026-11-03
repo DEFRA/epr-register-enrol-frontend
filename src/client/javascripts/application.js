@@ -5,7 +5,8 @@ import {
   Checkboxes,
   ErrorSummary,
   Radios,
-  SkipLink
+  SkipLink,
+  Tabs
 } from 'govuk-frontend'
 import accessibleAutocomplete from 'accessible-autocomplete'
 
@@ -29,6 +30,9 @@ createAll(Checkboxes)
 createAll(ErrorSummary)
 createAll(Radios)
 createAll(SkipLink)
+// RA-492: the Manage overseas reprocessing sites page's Accredited /
+// Registered tabs.
+createAll(Tabs)
 
 const countrySelect = document.getElementById('country')
 if (countrySelect) {
