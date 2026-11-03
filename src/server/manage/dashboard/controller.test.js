@@ -17,6 +17,10 @@ import { apiClient } from '../../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { stubApiClient } from '../../common/stub-api-client.js'
 import {
+  apiError,
+  mockManageGets as mockApiGets
+} from '../../common/test-helpers/manage-api.js'
+import {
   MANAGE_STUB_ORG_ID,
   MANAGE_STUB_EXPORTER_REGISTRATION_ID,
   MANAGE_STUB_REPROCESSOR_REGISTRATION_ID,
@@ -56,25 +60,8 @@ const approvedRegistration = {
   status: 'Approved'
 }
 
-// listApplications, getApplication and getRegistrationStatus all go through
-// apiClient.get, so route by URL shape: the registration-status URL gets
-// `registration`, a last path segment matching an application id is the
-// single-application fetch, anything else is the list.
-function mockManageGets(apps, registration = approvedRegistration) {
-  return vi.spyOn(apiClient, 'get').mockImplementation(async (url) => {
-    if (url.startsWith('/api/v1/registrations/')) {
-      if (registration instanceof Error) {
-        throw registration
-      }
-      return registration
-    }
-    const lastSegment = url.split('/').pop()
-    return apps.find((app) => app.id === lastSegment) ?? apps
-  })
-}
-
-const apiError = (status) =>
-  Object.assign(new Error(`API request failed: ${status}`), { status })
+const mockManageGets = (apps, registration = approvedRegistration) =>
+  mockApiGets(apps, registration)
 
 const LIST_URL = `/api/v1/accreditation-applications/${ORG_ID}`
 

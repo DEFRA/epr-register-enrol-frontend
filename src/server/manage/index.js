@@ -1,8 +1,17 @@
 import { manageRouteOptions } from './helpers/manage-page.js'
 import { manageDashboardController } from './dashboard/controller.js'
+import { manageRegistrationAccreditationController } from './registration-accreditation/controller.js'
 
 const DASHBOARD_PATH =
   '/manage/{organisationId}/{registrationId}/{materialType}'
+
+const ROUTES = [
+  [DASHBOARD_PATH, manageDashboardController],
+  [
+    `${DASHBOARD_PATH}/registration-accreditation`,
+    manageRegistrationAccreditationController
+  ]
+]
 
 /**
  * RA-425: read-only pages for an operator's current accreditation, behind the
@@ -14,12 +23,14 @@ export const manage = {
     name: 'manage',
     register(server) {
       server.route(
-        [DASHBOARD_PATH, `/{language}${DASHBOARD_PATH}`].map((path) => ({
-          method: 'GET',
-          path,
-          options: manageRouteOptions,
-          ...manageDashboardController
-        }))
+        ROUTES.flatMap(([path, controller]) =>
+          [path, `/{language}${path}`].map((routePath) => ({
+            method: 'GET',
+            path: routePath,
+            options: manageRouteOptions,
+            ...controller
+          }))
+        )
       )
     }
   }

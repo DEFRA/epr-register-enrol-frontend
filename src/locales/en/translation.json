@@ -972,6 +972,23 @@
         "contactLink": "contact your regulator"
       }
     },
+    "manageRegistrationAccreditation": {
+      "heading": "Manage your registration and accreditation",
+      "applicationStatusLabel": "Application status:",
+      "accreditationNumberLabel": "Accreditation number:",
+      "registrationNumberLabel": "Registration number:",
+      "expiryDateLabel": "Expiry date:",
+      "manageAccreditation": {
+        "title": "Manage accreditation",
+        "description": "View and upgrade your tonnage band.",
+        "upgradeTonnageLink": "Upgrade tonnage"
+      },
+      "manageOverseasSites": {
+        "title": "Manage overseas reprocessing sites",
+        "description": "Add, update and manage your overseas reprocessing sites.",
+        "link": "Manage overseas reprocessing sites"
+      }
+    },
     "contact": {
       "title": "Contact",
       "heading": "Contact",

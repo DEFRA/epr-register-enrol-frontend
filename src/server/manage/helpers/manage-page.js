@@ -27,7 +27,7 @@ export function localePrefix(currentLocale) {
   return currentLocale === 'cy' ? '/cy' : ''
 }
 
-function dashboardUrl(
+export function dashboardUrl(
   { organisationId, registrationId, materialType },
   currentLocale
 ) {
@@ -36,6 +36,10 @@ function dashboardUrl(
 
 export function registrationAccreditationUrl(params, currentLocale) {
   return `${dashboardUrl(params, currentLocale)}/registration-accreditation`
+}
+
+export function overseasSitesUrl(params, currentLocale) {
+  return `${dashboardUrl(params, currentLocale)}/overseas-sites`
 }
 
 function serviceProblem(request, h, t) {

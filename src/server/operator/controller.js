@@ -1,3 +1,4 @@
+import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 
 export const operatorController = {
@@ -7,7 +8,10 @@ export const operatorController = {
     return h.view('operator/index', {
       pageTitle: t('pages.operator.title'),
       heading: t('pages.operator.heading'),
-      notification
+      notification,
+      manageOverseasSitesEnabled: config.get(
+        'featureFlags.manageOverseasSitesEnabled'
+      )
     })
   }
 }

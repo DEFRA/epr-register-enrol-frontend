@@ -970,6 +970,23 @@
         "contactLink": "[Welsh] contact your regulator"
       }
     },
+    "manageRegistrationAccreditation": {
+      "heading": "[Welsh] Manage your registration and accreditation",
+      "applicationStatusLabel": "[Welsh] Application status:",
+      "accreditationNumberLabel": "[Welsh] Accreditation number:",
+      "registrationNumberLabel": "[Welsh] Registration number:",
+      "expiryDateLabel": "[Welsh] Expiry date:",
+      "manageAccreditation": {
+        "title": "[Welsh] Manage accreditation",
+        "description": "[Welsh] View and upgrade your tonnage band.",
+        "upgradeTonnageLink": "[Welsh] Upgrade tonnage"
+      },
+      "manageOverseasSites": {
+        "title": "[Welsh] Manage overseas reprocessing sites",
+        "description": "[Welsh] Add, update and manage your overseas reprocessing sites.",
+        "link": "[Welsh] Manage overseas reprocessing sites"
+      }
+    },
     "contact": {
       "title": "[Welsh] Contact",
       "heading": "[Welsh] Contact",

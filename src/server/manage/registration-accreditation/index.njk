@@ -1,0 +1,56 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "task-card/macro.njk" import appTaskCard, appInactiveLink %}
+
+{% macro summaryItem(label, testId) %}
+  <div class="govuk-grid-column-one-quarter">
+    <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ label }}</p>
+    <div class="govuk-body" data-testid="{{ testId }}">{{ caller() }}</div>
+  </div>
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
+      <h1 class="govuk-heading-xl" data-testid="page-heading">{{ heading }}</h1>
+      {% if siteAddress %}
+        <p class="govuk-heading-s" data-testid="site-address">{{ siteAddress }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+  <div class="govuk-grid-row govuk-!-margin-bottom-6" data-testid="accreditation-summary">
+    {% call summaryItem(t('pages.manageRegistrationAccreditation.applicationStatusLabel'), 'application-status') %}
+      <strong class="govuk-tag {{ applicationStatusTag.classes }}" data-testid="application-status-tag">{{ applicationStatusTag.text }}</strong>
+    {% endcall %}
+    {% call summaryItem(t('pages.manageRegistrationAccreditation.accreditationNumberLabel'), 'accreditation-number') %}{{ accreditationNumber }}{% endcall %}
+    {% call summaryItem(t('pages.manageRegistrationAccreditation.registrationNumberLabel'), 'registration-number') %}{{ registrationNumber }}{% endcall %}
+    {% call summaryItem(t('pages.manageRegistrationAccreditation.expiryDateLabel'), 'expiry-date') %}{{ expiryDate | formatDate('d MMM yyyy') }}{% endcall %}
+  </div>
+
+  <div class="govuk-grid-row app-task-card__row">
+    {# RA-425: per Figma, a reprocessor's only card runs the full width. #}
+    {% call appTaskCard({
+      id: 'manage-accreditation',
+      title: t('pages.manageRegistrationAccreditation.manageAccreditation.title'),
+      description: t('pages.manageRegistrationAccreditation.manageAccreditation.description'),
+      columnClass: 'govuk-grid-column-one-half' if overseasSitesUrl else 'govuk-grid-column-full'
+    }) %}
+      {{ appInactiveLink('upgrade-tonnage-link', t('pages.manageRegistrationAccreditation.manageAccreditation.upgradeTonnageLink')) }}
+    {% endcall %}
+    {% if overseasSitesUrl %}
+      {% call appTaskCard({
+        id: 'manage-overseas-sites',
+        title: t('pages.manageRegistrationAccreditation.manageOverseasSites.title'),
+        description: t('pages.manageRegistrationAccreditation.manageOverseasSites.description')
+      }) %}
+        <p class="govuk-body">
+          <a href="{{ overseasSitesUrl }}" class="govuk-link" data-testid="manage-overseas-sites-link">{{ t('pages.manageRegistrationAccreditation.manageOverseasSites.link') }}</a>
+        </p>
+      {% endcall %}
+    {% endif %}
+  </div>
+{% endblock %}

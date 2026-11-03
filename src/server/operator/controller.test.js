@@ -1,4 +1,7 @@
+import { vi } from 'vitest'
+
 import { createServer } from '../server.js'
+import { config } from '../../config/config.js'
 import { statusCodes } from '../common/constants/status-codes.js'
 
 describe('#operatorController', () => {
@@ -45,5 +48,49 @@ describe('#operatorController', () => {
 
     expect(result).toEqual(expect.stringContaining('Operator'))
     expect(statusCode).toBe(statusCodes.ok)
+  })
+
+  describe('RA-425 material dashboard links', () => {
+    const DELTA_GREEN_DASHBOARD =
+      'href="/manage/50003/aaa000000000000000050003/Plastic"'
+
+    function setManageOverseasSitesEnabled(enabled) {
+      const realGet = config.get.bind(config)
+      vi.spyOn(config, 'get').mockImplementation((key) =>
+        key === 'featureFlags.manageOverseasSitesEnabled'
+          ? enabled
+          : realGet(key)
+      )
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    test('lists the Delta Green reprocessor dashboard when the flag is on', async () => {
+      setManageOverseasSitesEnabled(true)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/operator'
+      })
+
+      expect(result).toMatch(
+        new RegExp(
+          `${DELTA_GREEN_DASHBOARD}[^>]*data-testid="manage-dashboard-delta-green-link"`
+        )
+      )
+    })
+
+    test('does not list it when the flag is off', async () => {
+      setManageOverseasSitesEnabled(false)
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: '/operator'
+      })
+
+      expect(result).not.toContain(DELTA_GREEN_DASHBOARD)
+    })
   })
 })

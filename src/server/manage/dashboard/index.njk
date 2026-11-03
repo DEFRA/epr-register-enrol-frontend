@@ -1,24 +1,6 @@
 {% extends 'layouts/page.njk' %}
 
-{% macro taskCard(id, title, description) %}
-  <div class="govuk-grid-column-one-half app-task-card__column">
-    <div class="app-task-card" data-testid="task-card-{{ id }}">
-      <div class="app-task-card__header">
-        <h3 class="govuk-heading-m">{{ title }}</h3>
-        <p class="govuk-body-s govuk-!-margin-bottom-0">{{ description }}</p>
-      </div>
-      <div class="app-task-card__body">
-        {{ caller() }}
-      </div>
-    </div>
-  </div>
-{% endmacro %}
-
-{# RA-425: Summary log, PERNs and Reports have no destination yet, so they look
-   like links but have no href and can't be followed. #}
-{% macro inactiveLink(id, text) %}
-  <p class="govuk-body"><a class="govuk-link app-inactive-link" aria-disabled="true" data-testid="{{ id }}">{{ text }}</a></p>
-{% endmacro %}
+{% from "task-card/macro.njk" import appTaskCard, appInactiveLink %}
 
 {% block content %}
   <h1 class="govuk-heading-xl" data-testid="page-heading">{{ heading }}</h1>
@@ -58,20 +40,20 @@
   <h2 class="govuk-heading-l">{{ t('pages.manageDashboard.chooseATask') }}</h2>
 
   <div class="govuk-grid-row app-task-card__row">
-    {% call taskCard('summary-log', t('pages.manageDashboard.summaryLog.title'), t('pages.manageDashboard.summaryLog.description')) %}
-      {{ inactiveLink('upload-summary-log-link', t('pages.manageDashboard.summaryLog.uploadLink')) }}
+    {% call appTaskCard({ id: 'summary-log', title: t('pages.manageDashboard.summaryLog.title'), description: t('pages.manageDashboard.summaryLog.description') }) %}
+      {{ appInactiveLink('upload-summary-log-link', t('pages.manageDashboard.summaryLog.uploadLink')) }}
     {% endcall %}
-    {% call taskCard('perns', t('pages.manageDashboard.perns.title'), t('pages.manageDashboard.perns.description')) %}
-      {{ inactiveLink('create-pern-link', t('pages.manageDashboard.perns.createLink')) }}
-      {{ inactiveLink('manage-perns-link', t('pages.manageDashboard.perns.manageLink')) }}
+    {% call appTaskCard({ id: 'perns', title: t('pages.manageDashboard.perns.title'), description: t('pages.manageDashboard.perns.description') }) %}
+      {{ appInactiveLink('create-pern-link', t('pages.manageDashboard.perns.createLink')) }}
+      {{ appInactiveLink('manage-perns-link', t('pages.manageDashboard.perns.manageLink')) }}
     {% endcall %}
   </div>
 
   <div class="govuk-grid-row app-task-card__row">
-    {% call taskCard('reports', t('pages.manageDashboard.reports.title'), t('pages.manageDashboard.reports.description')) %}
-      {{ inactiveLink('manage-reports-link', t('pages.manageDashboard.reports.manageLink')) }}
+    {% call appTaskCard({ id: 'reports', title: t('pages.manageDashboard.reports.title'), description: t('pages.manageDashboard.reports.description') }) %}
+      {{ appInactiveLink('manage-reports-link', t('pages.manageDashboard.reports.manageLink')) }}
     {% endcall %}
-    {% call taskCard('registration-accreditation', t('pages.manageDashboard.registrationAccreditation.title'), t('pages.manageDashboard.registrationAccreditation.description')) %}
+    {% call appTaskCard({ id: 'registration-accreditation', title: t('pages.manageDashboard.registrationAccreditation.title'), description: t('pages.manageDashboard.registrationAccreditation.description') }) %}
       <p class="govuk-body">
         <a href="{{ manageRegistrationAccreditationUrl }}" class="govuk-link" data-testid="manage-registration-accreditation-link">{{ t('pages.manageDashboard.registrationAccreditation.manageLink') }}</a>
       </p>
