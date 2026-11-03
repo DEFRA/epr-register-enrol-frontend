@@ -297,7 +297,7 @@ export const conditionsOfExportGetController = stepHandler(
 
 export const conditionsOfExportPostController = stepHandler(
   ['conditionsOfExport'],
-  async (request, h, t, draft) => {
+  async (request, h, t) => {
     const value = request.payload?.conditionsOfExport
     if (value !== 'yes' && value !== 'no') {
       return conditionsView(
