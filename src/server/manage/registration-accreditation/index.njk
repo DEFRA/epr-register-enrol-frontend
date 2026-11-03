@@ -29,7 +29,7 @@
     {% endcall %}
     {% call summaryItem(t('pages.manageRegistrationAccreditation.accreditationNumberLabel'), 'accreditation-number') %}{{ accreditationNumber }}{% endcall %}
     {% call summaryItem(t('pages.manageRegistrationAccreditation.registrationNumberLabel'), 'registration-number') %}{{ registrationNumber }}{% endcall %}
-    {% call summaryItem(t('pages.manageRegistrationAccreditation.expiryDateLabel'), 'expiry-date') %}{{ expiryDate | formatDate('d MMM yyyy') }}{% endcall %}
+    {% call summaryItem(t('pages.manageRegistrationAccreditation.expiryDateLabel'), 'expiry-date') %}{{ expiryDate | formatDate('d MMM yyyy', currentLocale) }}{% endcall %}
   </div>
 
   <div class="govuk-grid-row app-task-card__row">

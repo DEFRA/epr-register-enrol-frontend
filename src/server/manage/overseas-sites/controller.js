@@ -1,11 +1,8 @@
-import Boom from '@hapi/boom'
-
-import { composeApplicationCaption } from '../../common/helpers/applicationHeader.js'
-import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
 import {
   dashboardUrl,
   loadManagePage,
+  manageCaption,
   registrationAccreditationUrl
 } from '../helpers/manage-page.js'
 
@@ -28,12 +25,14 @@ function toOrsView(site) {
 }
 
 // Accredited: selected on the accreditation. Registered: every other existing
-// ORS. A new site that was never selected is on neither.
+// ORS. A new site that was never selected is on neither. Unlike the
+// application journey, an ORS with no selected value is not accredited: on an
+// issued accreditation only an explicit selection counts.
 function partitionSites(sites) {
   const accredited = []
   const registered = []
   for (const site of sites) {
-    if (site.selected !== false) {
+    if (site.selected === true) {
       accredited.push(toOrsView(site))
     } else if (!site.isNewSite) {
       registered.push(toOrsView(site))
@@ -46,13 +45,11 @@ export const manageOverseasSitesController = {
   async handler(request, h) {
     const { application, t, currentLocale, response } = await loadManagePage(
       request,
-      h
+      h,
+      { exportersOnly: true }
     )
     if (response) {
       return response
-    }
-    if (!application.isExporter) {
-      throw Boom.notFound()
     }
 
     const heading = t('pages.manageOverseasSites.heading')
@@ -63,11 +60,7 @@ export const manageOverseasSitesController = {
     return h.view('manage/overseas-sites/index', {
       pageTitle: heading,
       heading,
-      caption: composeApplicationCaption({
-        operatorName: application.organisationName,
-        year: application.year,
-        materialType: materialDisplayName(application, t)
-      }),
+      caption: manageCaption(application, t),
       year: application.year,
       backLink: registrationAccreditationUrl(request.params, currentLocale),
       homeUrl: dashboardUrl(request.params, currentLocale),

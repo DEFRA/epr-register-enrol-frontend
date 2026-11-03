@@ -16,6 +16,16 @@ export const MANAGE_STUB_MISSING_REGISTRATION_ID = 'ddd000000000000000050018'
 const CURRENT_YEAR = new Date().getUTCFullYear()
 const YEAR_SUFFIX = String(CURRENT_YEAR).slice(-2)
 
+// Real formats. Registration and accreditation numbers: R or A, 2-digit year,
+// agency letter, R (reprocessor) or X (exporter), 6-digit org id, 4-digit
+// sequence, material code. A registration keeps the year it was issued, which
+// matches the backend's fake registry (FakeOrganisationPersistence). Application
+// references (management-be's ApplicationReferenceGenerator): AP, 2-digit year,
+// agency code, 6-digit org id, last 3 characters of the postcode, first 2
+// letters of the material.
+const EXPORTER_REGISTRATION_NUMBER = 'R26EX0500180001PL'
+const REPROCESSOR_REGISTRATION_NUMBER = 'R26ER0500180002GR'
+
 function approvedApplication(overrides) {
   return {
     applicationStatus: 'Approved',
@@ -39,12 +49,14 @@ function approvedApplication(overrides) {
 }
 
 // The exporter's ORSs: three accredited and one registered only. Its interim
-// sites include a withdrawn one and one shared between ORSs 001 and 002, so the
-// overseas-sites page's per-ORS filtering shows up locally.
-function interimSite(siteId, siteName, country, overrides = {}) {
+// sites include a withdrawn one, and ORSs 001 and 002 both use the same
+// physical site, so the overseas-sites page's per-ORS filtering shows up
+// locally. Each copy has its own id and number, as the backend allocates them.
+// Matches the backend's DevExporterAccreditationSeedService.
+function interimSite(siteId, siteNumber, siteName, country, overrides = {}) {
   return {
     siteId,
-    siteNumber: `IS${siteId}`,
+    siteNumber,
     siteName,
     country,
     addressLine1: '1 Quay Street',
@@ -58,11 +70,9 @@ function interimSite(siteId, siteName, country, overrides = {}) {
   }
 }
 
-const SHARED_INTERIM_SITE = interimSite(
-  901803,
-  'Antwerp Transfer Hub',
-  'Belgium'
-)
+function antwerpInterimSite(siteId, siteNumber) {
+  return interimSite(siteId, siteNumber, 'Antwerp Transfer Hub', 'Belgium')
+}
 
 function overseasSite(siteId, orsId, siteName, addressLine1, country, extra) {
   return {
@@ -89,18 +99,18 @@ const EXPORTER_ORS = [
     'Netherlands',
     {
       interimSites: [
-        interimSite(901802, 'Calais Storage SARL', 'France', {
+        interimSite(901802, '001', 'Calais Storage SARL', 'France', {
           operationCodes: ['R13']
         }),
-        SHARED_INTERIM_SITE,
-        interimSite(901804, 'Old Depot GmbH', 'Germany', {
+        antwerpInterimSite(901803, '002'),
+        interimSite(901804, '003', 'Old Depot GmbH', 'Germany', {
           removedAt: `${CURRENT_YEAR}-02-01T09:00:00Z`
         })
       ]
     }
   ),
   overseasSite(901805, '002', 'Bharat Recycling', '12 Ring Road', 'India', {
-    interimSites: [{ ...SHARED_INTERIM_SITE }]
+    interimSites: [antwerpInterimSite(901808, '004')]
   }),
   overseasSite(901806, '003', 'Berlin Steel GmbH', 'Hafenstrasse 9', 'Germany'),
   overseasSite(
@@ -119,12 +129,12 @@ export const MANAGE_STUB_ORG_DOC = {
   accreditations: [
     approvedApplication({
       id: 'app018exp',
-      applicationReference: `APP${YEAR_SUFFIX}EX500180001PL`,
-      accreditationReference: `A${YEAR_SUFFIX}EX500180001PL`,
+      applicationReference: `AP${YEAR_SUFFIX}EA0500183ABPL`,
+      accreditationReference: `A${YEAR_SUFFIX}EX0500180001PL`,
       material: 'plastic',
       wasteProcessingType: 'exporter',
       registrationId: MANAGE_STUB_EXPORTER_REGISTRATION_ID,
-      wasteRegistrationNumber: `R${YEAR_SUFFIX}EX500180001PL`,
+      wasteRegistrationNumber: EXPORTER_REGISTRATION_NUMBER,
       companyRegisteredAddress: {
         line1: '18 Harbour Road',
         town: 'Felixstowe',
@@ -136,13 +146,13 @@ export const MANAGE_STUB_ORG_DOC = {
     }),
     approvedApplication({
       id: 'app018rep',
-      applicationReference: `APP${YEAR_SUFFIX}ER500180002GL`,
-      accreditationReference: `A${YEAR_SUFFIX}ER500180002GL`,
+      applicationReference: `AP${YEAR_SUFFIX}EA0500185HTGL`,
+      accreditationReference: `A${YEAR_SUFFIX}ER0500180002GR`,
       material: 'glass',
       glassRecyclingProcess: ['glass_re_melt'],
       wasteProcessingType: 'reprocessor',
       registrationId: MANAGE_STUB_REPROCESSOR_REGISTRATION_ID,
-      wasteRegistrationNumber: `R${YEAR_SUFFIX}ER500180002GL`,
+      wasteRegistrationNumber: REPROCESSOR_REGISTRATION_NUMBER,
       siteAddress: {
         line1: 'Unit 18, Furnace Lane',
         town: 'Doncaster',
@@ -150,20 +160,20 @@ export const MANAGE_STUB_ORG_DOC = {
       }
     }),
     ...[
-      ['app018created', MANAGE_STUB_CREATED_REGISTRATION_ID, '0003'],
-      ['app018missing', MANAGE_STUB_MISSING_REGISTRATION_ID, '0004']
-    ].map(([id, registrationId, sequence]) =>
+      ['app018created', MANAGE_STUB_CREATED_REGISTRATION_ID, '0003', 'DN4 6HT'],
+      ['app018missing', MANAGE_STUB_MISSING_REGISTRATION_ID, '0004', 'DN4 7HT']
+    ].map(([id, registrationId, sequence, postcode]) =>
       approvedApplication({
         id,
-        applicationReference: `APP${YEAR_SUFFIX}ER50018${sequence}WO`,
-        accreditationReference: `A${YEAR_SUFFIX}ER50018${sequence}WO`,
+        applicationReference: `AP${YEAR_SUFFIX}EA050018${postcode.slice(-3)}WO`,
+        accreditationReference: `A${YEAR_SUFFIX}ER050018${sequence}WO`,
         material: 'wood',
         wasteProcessingType: 'reprocessor',
         registrationId,
         siteAddress: {
           line1: 'Unit 18, Furnace Lane',
           town: 'Doncaster',
-          postcode: 'DN4 5HT'
+          postcode
         }
       })
     )
@@ -176,11 +186,11 @@ export const MANAGE_STUB_ORG_DOC = {
  */
 export const MANAGE_STUB_REGISTRATION_STATUSES = {
   [MANAGE_STUB_EXPORTER_REGISTRATION_ID]: {
-    registrationNumber: `R${YEAR_SUFFIX}EX500180001PL`,
+    registrationNumber: EXPORTER_REGISTRATION_NUMBER,
     status: 'Approved'
   },
   [MANAGE_STUB_REPROCESSOR_REGISTRATION_ID]: {
-    registrationNumber: `R${YEAR_SUFFIX}ER500180002GL`,
+    registrationNumber: REPROCESSOR_REGISTRATION_NUMBER,
     status: 'Approved'
   },
   [MANAGE_STUB_CREATED_REGISTRATION_ID]: {

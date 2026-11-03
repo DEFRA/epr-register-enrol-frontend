@@ -15,11 +15,7 @@ const ROUTES = [
   [`${DASHBOARD_PATH}/overseas-sites`, manageOverseasSitesController]
 ]
 
-/**
- * RA-425: read-only pages for an operator's current accreditation, behind the
- * inYearChangesEnabled flag. Registered in src/server/router.js, under
- * both the default and the /{language} path.
- */
+// RA-425: every route 404s until inYearChangesEnabled is on (manageRouteOptions).
 export const manage = {
   plugin: {
     name: 'manage',

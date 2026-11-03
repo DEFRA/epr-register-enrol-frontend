@@ -1,7 +1,6 @@
 import { getRegistrationStatus } from '../../common/helpers/registrationApiService.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
-
-const APPROVED_STATUS = 'Approved'
+import { APPROVED_STATUS } from './constants.js'
 
 /**
  * The registration, provided it is Approved. Shared by every RA-425 page

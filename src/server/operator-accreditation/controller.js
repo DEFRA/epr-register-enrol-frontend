@@ -9,7 +9,10 @@ import {
   landingUrl,
   reExBackLinkUrl
 } from '../common/helpers/accreditationUrls.js'
-import { APPLICATION_STATUS_TAGS } from '../common/constants/applicationStatusTags.js'
+import {
+  APPLICATION_STATUS_TAGS,
+  applicationStatusTag
+} from '../common/constants/applicationStatusTags.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
 import {
@@ -67,9 +70,7 @@ export function buildLandingViewModel(
   t,
   isExporter = false
 ) {
-  const config = APPLICATION_STATUS_TAGS[application.applicationStatus] ?? {
-    tagClass: ''
-  }
+  const statusTag = applicationStatusTag(application.applicationStatus, t)
   const matDisp = materialDisplayName(application, t)
   const siteName = isExporter
     ? (application.companyRegisteredAddress ?? t('pages.taskList.siteNotSet'))
@@ -83,10 +84,8 @@ export function buildLandingViewModel(
     siteName,
     pageHeading: t('pages.operatorAccreditation.reapplyHeading'),
     materialDisplay: matDisp,
-    statusLabel: t(
-      `pages.operatorAccreditation.statuses.${application.applicationStatus}`
-    ),
-    statusTagClass: config.tagClass,
+    statusLabel: statusTag.text,
+    statusTagClass: statusTag.classes,
     // RA-415: sourced from CM's SLA due date (OJ-BE's WorkItemDetailResponseDto
     // -> AccreditationApplicationModel.DueDate), null until the application has
     // a linked CM work item — see dueDateNotAvailable fallback in the template.

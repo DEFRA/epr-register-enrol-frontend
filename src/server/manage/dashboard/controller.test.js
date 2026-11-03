@@ -47,8 +47,8 @@ const makeApp = (overrides = {}) => ({
   registrationId: REGISTRATION_ID,
   year: CURRENT_YEAR,
   createdAt: '2026-10-01T09:00:00Z',
-  applicationReference: 'APP27EX500180001PL',
-  accreditationReference: 'A27EX500180001PL',
+  applicationReference: 'AP27EA0500183ABPL',
+  accreditationReference: 'A27EX0500180001PL',
   ...overrides
 })
 
@@ -56,7 +56,7 @@ const REGISTRATION_STATUS_URL = `/api/v1/registrations/${REGISTRATION_ID}/status
 
 const approvedRegistration = {
   registrationId: REGISTRATION_ID,
-  registrationNumber: 'R27EX500180001PL',
+  registrationNumber: 'R26EX0500180001PL',
   status: 'Approved'
 }
 
@@ -346,13 +346,13 @@ describe('#manageDashboardController', () => {
 
     test('shows the registration number', () => {
       expect(result).toMatch(
-        /data-testid="registration-number"[^>]*>\s*R27EX500180001PL\s*</
+        /data-testid="registration-number"[^>]*>\s*R26EX0500180001PL\s*</
       )
     })
 
     test('shows the accreditation number', () => {
       expect(result).toMatch(
-        /data-testid="accreditation-number"[^>]*>\s*A27EX500180001PL\s*</
+        /data-testid="accreditation-number"[^>]*>\s*A27EX0500180001PL\s*</
       )
     })
 
@@ -456,7 +456,7 @@ describe('#manageDashboardController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toMatch(
         new RegExp(
-          `data-testid="accreditation-number"[^>]*>\\s*A${yearSuffix()}EX500180001PL\\s*<`
+          `data-testid="accreditation-number"[^>]*>\\s*A${yearSuffix()}EX0500180001PL\\s*<`
         )
       )
     })
@@ -473,13 +473,11 @@ describe('#manageDashboardController', () => {
       )
       expect(result).toMatch(
         new RegExp(
-          `data-testid="accreditation-number"[^>]*>\\s*A${yearSuffix()}ER500180002GL\\s*<`
+          `data-testid="accreditation-number"[^>]*>\\s*A${yearSuffix()}ER0500180002GR\\s*<`
         )
       )
       expect(result).toMatch(
-        new RegExp(
-          `data-testid="registration-number"[^>]*>\\s*R${yearSuffix()}ER500180002GL\\s*<`
-        )
+        /data-testid="registration-number"[^>]*>\s*R26ER0500180002GR\s*</
       )
       expect(result).toMatch(
         /data-testid="registration-status-tag"[^>]*>\s*Approved\s*</

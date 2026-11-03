@@ -1,7 +1,4 @@
-// Tag colours for an accreditation application's status. Labels live under
-// pages.operatorAccreditation.statuses in the translation files. Shared by the
-// re-accreditation landing page and the RA-425 manage pages so a status looks
-// the same everywhere.
+// Shared so a status looks the same on every page that shows one.
 export const APPLICATION_STATUS_TAGS = {
   Saved: { tagClass: 'govuk-tag--grey' },
   Started: { tagClass: 'govuk-tag--blue' },

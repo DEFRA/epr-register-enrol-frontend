@@ -38,7 +38,7 @@ const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
 const interimSite = (siteId, overrides = {}) => ({
   siteId,
-  siteNumber: `IS${siteId}`,
+  siteNumber: String(siteId).padStart(3, '0'),
   siteName: `Interim ${siteId}`,
   country: 'Belgium',
   addressLine1: `${siteId} Dock Road`,
@@ -64,7 +64,9 @@ const ors = (siteId, overrides = {}) => ({
   ...overrides
 })
 
-const SHARED_INTERIM = interimSite(50, { siteName: 'Shared Hub' })
+// One physical site under several ORSs: a copy under each, with its own id.
+const sharedHub = (siteId, overrides = {}) =>
+  interimSite(siteId, { siteName: 'Shared Hub', ...overrides })
 
 const SITES = [
   ors(1, {
@@ -73,18 +75,20 @@ const SITES = [
     interimSites: [
       interimSite(10),
       interimSite(11, { removedAt: '2027-03-01T00:00:00Z' }),
-      SHARED_INTERIM
+      sharedHub(50)
     ]
   }),
   ors(2, {
-    interimSites: [{ ...SHARED_INTERIM }]
+    interimSites: [sharedHub(51)]
   }),
   ors(3, {
     // Withdrawn here only: still current under ORSs 1 and 2.
-    interimSites: [{ ...SHARED_INTERIM, removedAt: '2027-04-01T00:00:00Z' }]
+    interimSites: [sharedHub(52, { removedAt: '2027-04-01T00:00:00Z' })]
   }),
   ors(4, { selected: false, siteName: 'Registered Only Ltd' }),
   ors(5, { selected: false }),
+  // No selected value: only an explicit selection is accredited.
+  ors(7, { selected: undefined }),
   // A new site the operator never put on the accreditation is on neither tab.
   ors(6, { selected: false, isNewSite: true })
 ]
@@ -98,14 +102,14 @@ const makeApp = (overrides = {}) => ({
   year: CURRENT_YEAR,
   createdAt: '2026-10-01T09:00:00Z',
   companyName: 'Acme Recycling Ltd',
-  accreditationReference: 'A27EX500180001PL',
+  accreditationReference: 'A27EX0500180001PL',
   overseasSites: { sectionStatus: 'Completed', sites: SITES },
   ...overrides
 })
 
 const approvedRegistration = {
   registrationId: REGISTRATION_ID,
-  registrationNumber: 'R27EX500180001PL',
+  registrationNumber: 'R26EX0500180001PL',
   status: 'Approved'
 }
 
@@ -202,6 +206,28 @@ describe('#manageOverseasSitesController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
+  test('returns 404 for a reprocessor accreditation whose registration is not Approved', async () => {
+    mockManageGets([makeApp({ wasteProcessingType: 'reprocessor' })], {
+      ...approvedRegistration,
+      status: 'Created'
+    })
+
+    const { statusCode } = await get(PAGE_URL)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  test('returns 404 for a reprocessor accreditation whose registration has no record', async () => {
+    mockManageGets(
+      [makeApp({ wasteProcessingType: 'reprocessor' })],
+      apiError(statusCodes.notFound)
+    )
+
+    const { statusCode } = await get(PAGE_URL)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
   describe('service problem', () => {
     function expectServiceProblem({ statusCode, result }) {
       expect(statusCode).toBe(statusCodes.serviceUnavailable)
@@ -267,7 +293,7 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(3\)\s*</
       )
       expect(result).toMatch(
-        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(2\)\s*</
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(3\)\s*</
       )
     })
 
@@ -297,7 +323,7 @@ describe('#manageOverseasSitesController', () => {
         expect(accredited).toContain(`data-testid="accredited-site-row-${id}"`)
         expect(registered).not.toContain(`site-row-${id}"`)
       }
-      for (const id of [4, 5]) {
+      for (const id of [4, 5, 7]) {
         expect(registered).toContain(`data-testid="registered-site-row-${id}"`)
         expect(accredited).not.toContain(`site-row-${id}"`)
       }

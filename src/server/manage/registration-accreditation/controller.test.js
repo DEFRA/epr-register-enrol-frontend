@@ -47,15 +47,15 @@ const makeApp = (overrides = {}) => ({
   year: CURRENT_YEAR,
   createdAt: '2026-10-01T09:00:00Z',
   companyName: 'Acme Recycling Ltd',
-  applicationReference: 'APP27EX500180001PL',
-  accreditationReference: 'A27EX500180001PL',
+  applicationReference: 'AP27EA0500183ABPL',
+  accreditationReference: 'A27EX0500180001PL',
   siteAddress: { line1: 'Unit 5', town: 'Bolton', postcode: 'BL4 7AQ' },
   ...overrides
 })
 
 const approvedRegistration = {
   registrationId: REGISTRATION_ID,
-  registrationNumber: 'R27EX500180001PL',
+  registrationNumber: 'R26EX0500180001PL',
   status: 'Approved'
 }
 
@@ -189,10 +189,10 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the accreditation and registration numbers', () => {
       expect(result).toMatch(
-        /data-testid="accreditation-number"[^>]*>\s*A27EX500180001PL\s*</
+        /data-testid="accreditation-number"[^>]*>\s*A27EX0500180001PL\s*</
       )
       expect(result).toMatch(
-        /data-testid="registration-number"[^>]*>\s*R27EX500180001PL\s*</
+        /data-testid="registration-number"[^>]*>\s*R26EX0500180001PL\s*</
       )
     })
 
@@ -281,6 +281,7 @@ describe('#manageRegistrationAccreditationController', () => {
     expect(result).toContain(
       '[Welsh] Manage your registration and accreditation'
     )
+    expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Rhag 2027\s*</)
     expect(result).toMatch(
       new RegExp(`href="/cy${DASHBOARD_URL}"[^>]*data-testid="back-link"`)
     )

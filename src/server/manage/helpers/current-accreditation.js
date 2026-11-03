@@ -1,8 +1,7 @@
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { latestByCreatedAt } from '../../common/helpers/accreditationSelection.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
-
-const APPROVED_STATUS = 'Approved'
+import { APPROVED_STATUS } from './constants.js'
 
 // RA-425: the compliance period is always the current calendar year, never a
 // URL parameter. Read from the clock on every request so a long-running

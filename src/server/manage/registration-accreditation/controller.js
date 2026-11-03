@@ -1,9 +1,8 @@
-import { composeApplicationCaption } from '../../common/helpers/applicationHeader.js'
-import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
 import {
   dashboardUrl,
   loadManagePage,
+  manageCaption,
   overseasSitesUrl
 } from '../helpers/manage-page.js'
 
@@ -26,11 +25,7 @@ export const manageRegistrationAccreditationController = {
     return h.view('manage/registration-accreditation/index', {
       pageTitle: heading,
       heading,
-      caption: composeApplicationCaption({
-        operatorName: application.organisationName,
-        year: application.year,
-        materialType: materialDisplayName(application, t)
-      }),
+      caption: manageCaption(application, t),
       backLink: dashboardUrl(request.params, currentLocale),
       isExporter: application.isExporter,
       siteAddress: application.siteAddress,

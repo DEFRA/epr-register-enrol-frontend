@@ -30,7 +30,6 @@ createAll(Checkboxes)
 createAll(ErrorSummary)
 createAll(Radios)
 createAll(SkipLink)
-// RA-425: the manage overseas-sites page's Accredited and Registered tabs.
 createAll(Tabs)
 
 const countrySelect = document.getElementById('country')
