@@ -9,10 +9,8 @@ import {
 
 export const manageDashboardController = {
   async handler(request, h) {
-    const { application, t, currentLocale, response } = await loadManagePage(
-      request,
-      h
-    )
+    const { application, registration, t, currentLocale, response } =
+      await loadManagePage(request, h)
     if (response) {
       return response
     }
@@ -24,6 +22,7 @@ export const manageDashboardController = {
       pageTitle: heading,
       heading,
       backLink: reExBackLinkUrl(organisationId, registrationId),
+      registrationNumber: registration.registrationNumber,
       accreditationStatusTag: applicationStatusTag(
         application.applicationStatus,
         t

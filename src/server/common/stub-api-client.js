@@ -8,7 +8,10 @@ import {
   DETAIL_FIELD_TO_CATEGORY
 } from './constants/businessPlanCategories.js'
 import { allInterimSites } from './helpers/interimSites.js'
-import { MANAGE_STUB_ORG_DOC } from './stub-manage-accreditations.js'
+import {
+  MANAGE_STUB_ORG_DOC,
+  MANAGE_STUB_REGISTRATION_STATUSES
+} from './stub-manage-accreditations.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -1092,6 +1095,22 @@ function mergeBpItems(existing, incoming) {
   return merged
 }
 
+const REGISTRATION_STATUS_RE = /^\/api\/v1\/registrations\/([^/]+)\/status$/
+
+// Rejects like the real API client does for a 404, so callers see the same
+// "no record" error with or without the stub.
+function stubRegistrationStatus(registrationId) {
+  const registration = MANAGE_STUB_REGISTRATION_STATUSES[registrationId]
+  if (!registration) {
+    return Promise.reject(
+      Object.assign(new Error('API request failed: 404 Not Found'), {
+        status: 404
+      })
+    )
+  }
+  return Promise.resolve({ registrationId, ...registration })
+}
+
 // In-memory store for stub CDP upload sessions (fileUploadId → scan result)
 const stubPendingUploads = new Map()
 
@@ -1124,6 +1143,13 @@ export const stubApiClient = {
           }
         }
       })
+    }
+
+    const registrationStatusMatch = endpoint.match(REGISTRATION_STATUS_RE)
+    if (registrationStatusMatch) {
+      return stubRegistrationStatus(
+        decodeURIComponent(registrationStatusMatch[1])
+      )
     }
 
     if (/\/api\/v1\/accreditation-applications\/[^/]+$/.test(endpoint)) {

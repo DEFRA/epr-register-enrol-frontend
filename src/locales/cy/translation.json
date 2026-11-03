@@ -937,6 +937,9 @@
       }
     },
     "manageDashboard": {
+      "registrationLabel": "[Welsh] Registration:",
+      "registrationApproved": "[Welsh] Approved",
+      "registrationNumberLabel": "[Welsh] Registration number:",
       "accreditationLabel": "[Welsh] Accreditation:",
       "accreditationNumberLabel": "[Welsh] Accreditation number:",
       "wasteBalanceNotAvailable": "[Welsh] Not available",

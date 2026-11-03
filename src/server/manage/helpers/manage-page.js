@@ -7,6 +7,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { fetchCurrentAccreditation } from './current-accreditation.js'
+import { fetchApprovedRegistration } from './current-registration.js'
 
 // Runs before auth, so a logged-out caller gets the same 404 as everyone else
 // rather than a redirect to sign in for a page that doesn't exist yet.
@@ -48,10 +49,11 @@ function serviceProblem(request, h, t) {
 
 /**
  * Everything an RA-425 page needs before it renders: the organisation access
- * check (before any data is read), then the current accreditation.
+ * check (before any data is read), then the current accreditation and the
+ * registration, which must be Approved.
  *
  * Returns { response } when the page must not render — the service-problem
- * page — otherwise { application, t, currentLocale }.
+ * page — otherwise { application, registration, t, currentLocale }.
  */
 export async function loadManagePage(request, h) {
   const { t, currentLocale } = getLocaleAndTranslator(request)
@@ -66,15 +68,18 @@ export async function loadManagePage(request, h) {
     throw Boom.forbidden('You do not have access to this organisation')
   }
 
-  const application = await fetchCurrentAccreditation({
-    organisationId,
-    registrationId,
-    materialType,
-    logger: request.logger
-  })
-  if (!application) {
+  const [application, registration] = await Promise.all([
+    fetchCurrentAccreditation({
+      organisationId,
+      registrationId,
+      materialType,
+      logger: request.logger
+    }),
+    fetchApprovedRegistration({ registrationId, logger: request.logger })
+  ])
+  if (!application || !registration) {
     return { response: serviceProblem(request, h, t) }
   }
 
-  return { application, t, currentLocale }
+  return { application, registration, t, currentLocale }
 }

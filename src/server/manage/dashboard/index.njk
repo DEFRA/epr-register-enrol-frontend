@@ -24,6 +24,17 @@
   <h1 class="govuk-heading-xl" data-testid="page-heading">{{ heading }}</h1>
 
   <div class="govuk-grid-row govuk-!-margin-bottom-6">
+    {# RA-425: loadManagePage only lets an Approved registration through. #}
+    <div class="govuk-grid-column-one-half" data-testid="registration-summary">
+      <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-2">
+        {{ t('pages.manageDashboard.registrationLabel') }}
+        <strong class="govuk-tag govuk-tag--green" data-testid="registration-status-tag">{{ t('pages.manageDashboard.registrationApproved') }}</strong>
+      </p>
+      <p class="govuk-body">
+        <span class="govuk-!-font-weight-bold">{{ t('pages.manageDashboard.registrationNumberLabel') }}</span>
+        <span data-testid="registration-number">{{ registrationNumber }}</span>
+      </p>
+    </div>
     <div class="govuk-grid-column-one-half" data-testid="accreditation-summary">
       <p class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-2">
         {{ t('pages.manageDashboard.accreditationLabel') }}

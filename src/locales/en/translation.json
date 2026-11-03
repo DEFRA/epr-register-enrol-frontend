@@ -939,6 +939,9 @@
       }
     },
     "manageDashboard": {
+      "registrationLabel": "Registration:",
+      "registrationApproved": "Approved",
+      "registrationNumberLabel": "Registration number:",
       "accreditationLabel": "Accreditation:",
       "accreditationNumberLabel": "Accreditation number:",
       "wasteBalanceNotAvailable": "Not available",

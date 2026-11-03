@@ -8,6 +8,10 @@ export const MANAGE_STUB_ORG_ID = 50018
 export const MANAGE_STUB_EXPORTER_REGISTRATION_ID = 'aaa000000000000000050018'
 export const MANAGE_STUB_REPROCESSOR_REGISTRATION_ID =
   'bbb000000000000000050018'
+// Error paths: Approved current-year accreditations whose registration is
+// Created, or has no registration record at all.
+export const MANAGE_STUB_CREATED_REGISTRATION_ID = 'ccc000000000000000050018'
+export const MANAGE_STUB_MISSING_REGISTRATION_ID = 'ddd000000000000000050018'
 
 const CURRENT_YEAR = new Date().getUTCFullYear()
 const YEAR_SUFFIX = String(CURRENT_YEAR).slice(-2)
@@ -69,6 +73,43 @@ export const MANAGE_STUB_ORG_DOC = {
         town: 'Doncaster',
         postcode: 'DN4 5HT'
       }
-    })
+    }),
+    ...[
+      ['app018created', MANAGE_STUB_CREATED_REGISTRATION_ID, '0003'],
+      ['app018missing', MANAGE_STUB_MISSING_REGISTRATION_ID, '0004']
+    ].map(([id, registrationId, sequence]) =>
+      approvedApplication({
+        id,
+        applicationReference: `APP${YEAR_SUFFIX}ER50018${sequence}WO`,
+        accreditationReference: `A${YEAR_SUFFIX}ER50018${sequence}WO`,
+        material: 'wood',
+        wasteProcessingType: 'reprocessor',
+        registrationId,
+        siteAddress: {
+          line1: 'Unit 18, Furnace Lane',
+          town: 'Doncaster',
+          postcode: 'DN4 5HT'
+        }
+      })
+    )
   ]
+}
+
+/**
+ * RA-425: what the backend's registration-status endpoint returns for the stub
+ * registrations. A registration missing from here has no record (404).
+ */
+export const MANAGE_STUB_REGISTRATION_STATUSES = {
+  [MANAGE_STUB_EXPORTER_REGISTRATION_ID]: {
+    registrationNumber: `R${YEAR_SUFFIX}EX500180001PL`,
+    status: 'Approved'
+  },
+  [MANAGE_STUB_REPROCESSOR_REGISTRATION_ID]: {
+    registrationNumber: `R${YEAR_SUFFIX}ER500180002GL`,
+    status: 'Approved'
+  },
+  [MANAGE_STUB_CREATED_REGISTRATION_ID]: {
+    registrationNumber: null,
+    status: 'Created'
+  }
 }
