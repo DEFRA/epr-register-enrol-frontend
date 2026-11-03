@@ -56,7 +56,7 @@ const REGISTRATION_STATUS_URL = `/api/v1/registrations/${REGISTRATION_ID}/status
 
 const approvedRegistration = {
   registrationId: REGISTRATION_ID,
-  registrationNumber: 'R26EX0500180001PL',
+  registrationNumber: 'R27EX0500180001PL',
   status: 'Approved'
 }
 
@@ -346,7 +346,7 @@ describe('#manageDashboardController', () => {
 
     test('shows the registration number', () => {
       expect(result).toMatch(
-        /data-testid="registration-number"[^>]*>\s*R26EX0500180001PL\s*</
+        /data-testid="registration-number"[^>]*>\s*R27EX0500180001PL\s*</
       )
     })
 
@@ -477,7 +477,9 @@ describe('#manageDashboardController', () => {
         )
       )
       expect(result).toMatch(
-        /data-testid="registration-number"[^>]*>\s*R26ER0500180002GR\s*</
+        new RegExp(
+          `data-testid="registration-number"[^>]*>\\s*R${yearSuffix()}ER0500180002GR\\s*<`
+        )
       )
       expect(result).toMatch(
         /data-testid="registration-status-tag"[^>]*>\s*Approved\s*</

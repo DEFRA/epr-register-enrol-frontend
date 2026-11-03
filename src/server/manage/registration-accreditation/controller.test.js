@@ -55,7 +55,7 @@ const makeApp = (overrides = {}) => ({
 
 const approvedRegistration = {
   registrationId: REGISTRATION_ID,
-  registrationNumber: 'R26EX0500180001PL',
+  registrationNumber: 'R27EX0500180001PL',
   status: 'Approved'
 }
 
@@ -192,7 +192,7 @@ describe('#manageRegistrationAccreditationController', () => {
         /data-testid="accreditation-number"[^>]*>\s*A27EX0500180001PL\s*</
       )
       expect(result).toMatch(
-        /data-testid="registration-number"[^>]*>\s*R26EX0500180001PL\s*</
+        /data-testid="registration-number"[^>]*>\s*R27EX0500180001PL\s*</
       )
     })
 

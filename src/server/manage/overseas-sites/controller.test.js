@@ -109,7 +109,7 @@ const makeApp = (overrides = {}) => ({
 
 const approvedRegistration = {
   registrationId: REGISTRATION_ID,
-  registrationNumber: 'R26EX0500180001PL',
+  registrationNumber: 'R27EX0500180001PL',
   status: 'Approved'
 }
 

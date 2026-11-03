@@ -18,13 +18,12 @@ const YEAR_SUFFIX = String(CURRENT_YEAR).slice(-2)
 
 // Real formats. Registration and accreditation numbers: R or A, 2-digit year,
 // agency letter, R (reprocessor) or X (exporter), 6-digit org id, 4-digit
-// sequence, material code. A registration keeps the year it was issued, which
-// matches the backend's fake registry (FakeOrganisationPersistence). Application
-// references (management-be's ApplicationReferenceGenerator): AP, 2-digit year,
+// sequence, material code. Both follow the clock, as the backend's dev seeds
+// and fake registry (FakeOrganisationPersistence) do. Application references (management-be's ApplicationReferenceGenerator): AP, 2-digit year,
 // agency code, 6-digit org id, last 3 characters of the postcode, first 2
 // letters of the material.
-const EXPORTER_REGISTRATION_NUMBER = 'R26EX0500180001PL'
-const REPROCESSOR_REGISTRATION_NUMBER = 'R26ER0500180002GR'
+const EXPORTER_REGISTRATION_NUMBER = `R${YEAR_SUFFIX}EX0500180001PL`
+const REPROCESSOR_REGISTRATION_NUMBER = `R${YEAR_SUFFIX}ER0500180002GR`
 
 function approvedApplication(overrides) {
   return {
