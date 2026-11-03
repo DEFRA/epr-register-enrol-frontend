@@ -127,12 +127,12 @@ describe('buildPaymentDetails - ORS vs interim site fee counting (RA-477)', () =
 describe('buildInYearOrsPaymentDetails (RA-492)', () => {
   const t = (key) => key
 
-  test('charges £328 per ORS with no tonnage fee', () => {
+  test('takes the amount from the backend charge, with no tonnage fee', () => {
     const details = buildInYearOrsPaymentDetails(
       { materialType: 'Plastic' },
       t,
       NATIONS.WALES,
-      3
+      { chargeableSites: 3, chargePerSitePence: 32800, totalPence: 98400 }
     )
     expect(details.amount).toBe(984)
     expect(details.amountOrsDue).toBe(984)

@@ -221,7 +221,9 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     vi.spyOn(apiClient, 'patch').mockRejectedValue(
       Object.assign(new Error('400'), {
         status: 400,
-        response: { errors: { coordinates: ['Coordinates are locked'] } }
+        response: JSON.stringify({
+          errors: { coordinates: ['Coordinates are locked'] }
+        })
       })
     )
     const { statusCode, result } = await server.inject({

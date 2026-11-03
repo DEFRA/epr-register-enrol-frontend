@@ -52,3 +52,20 @@ export const accreditationChangesService = {
     )
   }
 }
+
+/**
+ * The `errors` map of a 400/422 ValidationProblem. apiClient keeps the
+ * response body as text, so it is parsed here; anything unreadable gives an
+ * empty map.
+ */
+export function validationErrors(err) {
+  const body = err?.response
+  try {
+    const parsed = typeof body === 'string' ? JSON.parse(body) : body
+    return parsed?.errors && typeof parsed.errors === 'object'
+      ? parsed.errors
+      : {}
+  } catch {
+    return {}
+  }
+}

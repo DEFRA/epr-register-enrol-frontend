@@ -1066,6 +1066,7 @@
       "change": "Change",
       "addInformation": "Add information",
       "missingInformation": "Missing information",
+      "saveRefused": "This information could not be saved. Check it and try again.",
       "yes": "Yes",
       "no": "No",
       "summary": {

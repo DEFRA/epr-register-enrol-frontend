@@ -19,7 +19,7 @@ import {
   resolveBesEvidenceValidTo,
   validateFileExtension
 } from '../upload-bes-evidence/controller.js'
-import { accreditationChangesService } from './service.js'
+import { accreditationChangesService, validationErrors } from './service.js'
 import { loadView, organisationIdFrom, resolveDraftSite } from './controller.js'
 import {
   addToAccreditationUrl,
@@ -78,8 +78,9 @@ function stepUrls(request) {
 }
 
 /**
- * PATCHes the draft. Returns the backend's field errors on a 400 (a field
- * became locked, or failed its rules), otherwise null.
+ * PATCHes the draft. Returns null when it saved, or the backend's field
+ * errors (possibly none it can name) when it refused the answer with a 400
+ * - a field that became locked, or one that failed its rules.
  */
 async function patchSite(request, body) {
   const { applicationId, siteId } = request.params
@@ -93,14 +94,30 @@ async function patchSite(request, body) {
     return null
   } catch (err) {
     if (err.status === 400) {
-      return err.response?.errors ?? { form: [err.message] }
+      return validationErrors(err)
     }
     throw err
   }
 }
 
-const firstError = (errors, field) =>
-  [errors?.[field]].flat().find(Boolean) ?? null
+/**
+ * The message to show against one field after a PATCH: the backend's own
+ * message for it (keys matched case-insensitively, as ASP.NET may send
+ * them), a general one when the answer was refused without naming the
+ * field, or null when it saved.
+ */
+function refusal(t, errors, field) {
+  if (errors === null) {
+    return null
+  }
+  const key = Object.keys(errors).find(
+    (name) => name.toLowerCase() === field.toLowerCase()
+  )
+  return (
+    [key ? errors[key] : null].flat().find(Boolean) ??
+    t('pages.manageOverseasSites.saveRefused')
+  )
+}
 
 // --- Location: country and coordinates -------------------------------------
 
@@ -167,10 +184,17 @@ export const locationPostController = {
     )
     const apiErrors = await patchSite(request, body)
     if (apiErrors) {
+      const named = draft.open.filter((field) =>
+        Object.keys(apiErrors).some(
+          (name) => name.toLowerCase() === field.toLowerCase()
+        )
+      )
+      // A refusal that names neither field is shown against the first one.
       const shown = Object.fromEntries(
-        draft.open
-          .map((field) => [field, firstError(apiErrors, field)])
-          .filter(([, message]) => message)
+        (named.length > 0 ? named : draft.open.slice(0, 1)).map((field) => [
+          field,
+          refusal(t, apiErrors, field)
+        ])
       )
       return locationView(h, t, request, draft, fields, shown).code(400)
     }
@@ -225,7 +249,8 @@ export const recyclingOperationPostController = {
       .filter(Boolean)
     const error =
       validateRecyclingOperationCodes(t, codes, draft.materialType) ??
-      firstError(
+      refusal(
+        t,
         await patchSite(request, { operationCodes: codes }),
         'operationCodes'
       )
@@ -280,7 +305,8 @@ export const conditionsOfExportPostController = {
         t('pages.addOverseasSite.conditionsOfExport.validation.required')
       ).code(400)
     }
-    const error = firstError(
+    const error = refusal(
+      t,
       await patchSite(request, { conditionsOfExport: value === 'yes' }),
       'conditionsOfExport'
     )

@@ -59,6 +59,15 @@ function requestSite(overrides = {}) {
   }
 }
 
+// The backend's charge for n sites (pence).
+function chargeOf(n) {
+  return {
+    chargeableSites: n,
+    chargePerSitePence: 32800,
+    totalPence: n * 32800
+  }
+}
+
 function makeView({ sites, active, requests } = {}) {
   const activeRequest =
     active === null
@@ -67,7 +76,8 @@ function makeView({ sites, active, requests } = {}) {
           requestId: 'req-1',
           status: 'InProgress',
           sites: active ?? [requestSite()],
-          isComplete: (active ?? [requestSite()]).every((s) => s.isComplete)
+          isComplete: (active ?? [requestSite()]).every((s) => s.isComplete),
+          charge: chargeOf((active ?? [requestSite()]).length)
         }
   return {
     organisationId: '50018',
@@ -417,13 +427,32 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(statusCode).toBe(statusCodes.badRequest)
     })
 
+    test('conditions of export refused without a named field stays on the page with a general message', async () => {
+      mockGet(makeView())
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(
+        apiError(400, JSON.stringify({ title: 'Bad request' }))
+      )
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/conditions-of-export`,
+        payload: { conditionsOfExport: 'yes' }
+      })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(
+        'This information could not be saved. Check it and try again.'
+      )
+    })
+
     test('recycling operation shows the backend rejection on the page', async () => {
       const view = makeView({
         active: [requestSite({ siteId: 900184, orsId: '004' })]
       })
       mockGet(view)
       vi.spyOn(apiClient, 'patch').mockRejectedValue(
-        apiError(400, { errors: { operationCodes: ['Not allowed'] } })
+        apiError(
+          400,
+          JSON.stringify({ errors: { OperationCodes: ['Not allowed'] } })
+        )
       )
       const { statusCode, result } = await server.inject({
         method: 'POST',
@@ -593,7 +622,8 @@ describe('#manageOverseasSites (RA-492)', () => {
         requestId: 'req-1',
         status: 'Submitted',
         submittedBy: { fullName: 'Jane Smith', email: 'jane@example.com' },
-        sites: [requestSite(), requestSite({ siteId: 900184, orsId: '004' })]
+        sites: [requestSite(), requestSite({ siteId: 900184, orsId: '004' })],
+        charge: chargeOf(2)
       }
       mockGet(makeView({ active: null, requests: [submitted] }))
       const { statusCode, result } = await server.inject(`${BASE}/payment`)

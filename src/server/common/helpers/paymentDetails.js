@@ -128,15 +128,16 @@ export function buildPaymentDetails(application, t, nation) {
 }
 
 // RA-492: adding registered ORSs to a granted accreditation is an in-year
-// change, charged per ORS only - there is no tonnage fee, so tonnageDisplay
-// and amountTonnageDue are absent and the payment-details macro leaves the
-// tonnage line out.
-export function buildInYearOrsPaymentDetails(application, t, nation, count) {
-  const amountOrsDue = count * ORS_FEE
+// change, charged per ORS only. The backend's change request carries the
+// charge (in pence) and is the single source of the amount; there is no
+// tonnage fee, so tonnageDisplay and amountTonnageDue are absent and the
+// payment-details macro leaves the tonnage line out.
+export function buildInYearOrsPaymentDetails(application, t, nation, charge) {
+  const amountOrsDue = (charge?.totalPence ?? 0) / 100
   return {
     ...bankDetailsFor(nation),
     materialName: materialDisplayName(application, t),
-    numberOfORSs: count,
+    numberOfORSs: charge?.chargeableSites ?? 0,
     amountOrsDue,
     amount: amountOrsDue
   }

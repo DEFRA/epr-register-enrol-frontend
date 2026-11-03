@@ -7,7 +7,6 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { landingUrl } from '../../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
-  ORS_FEE,
   buildInYearOrsPaymentDetails,
   buildPaymentReference,
   resolveNation,
@@ -84,8 +83,13 @@ export function resolveDraftSite(view, siteId) {
   return { entry, requestSite }
 }
 
-function chargeFor(count) {
-  return { count, perSite: ORS_FEE, total: count * ORS_FEE }
+// AC03/AC04: the charge as the backend calculated it (pence -> pounds).
+function chargeFor(charge) {
+  return {
+    count: charge?.chargeableSites ?? 0,
+    perSite: (charge?.chargePerSitePence ?? 0) / 100,
+    total: (charge?.totalPence ?? 0) / 100
+  }
 }
 
 export const manageOverseasSitesController = {
@@ -213,7 +217,7 @@ function renderRequests(h, t, { applicationId, view, errors }) {
         viewUrl: addToAccreditationUrl(applicationId, site.siteId)
       }
     }),
-    charge: chargeFor(sites.length),
+    charge: chargeFor(view.activeRequest?.charge),
     errors: errors ?? []
   })
 }
@@ -347,7 +351,7 @@ export const paymentGetController = {
       application,
       t,
       nation,
-      submitted.sites?.length ?? 0
+      submitted.charge
     )
     return h.view(VIEWS.payment, {
       pageTitle: t('pages.viewPaymentDetails.title'),
