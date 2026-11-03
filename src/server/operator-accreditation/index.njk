@@ -74,6 +74,18 @@
           </tbody>
         </table>
 
+        {% if manageOverseasSitesUrl %}
+          <div class="govuk-summary-card" data-testid="manage-overseas-sites-card">
+            <div class="govuk-summary-card__title-wrapper">
+              <h2 class="govuk-summary-card__title">{{ t('pages.manageOverseasSites.title') }}</h2>
+            </div>
+            <div class="govuk-summary-card__content">
+              <p class="govuk-body">{{ t('pages.manageOverseasSites.entryLinkDescription') }}</p>
+              <p class="govuk-body govuk-!-margin-bottom-0"><a class="govuk-link" href="{{ manageOverseasSitesUrl }}" data-testid="manage-overseas-sites-link">{{ t('pages.manageOverseasSites.title') }}</a></p>
+            </div>
+          </div>
+        {% endif %}
+
         {% if currentAccreditation %}
           <h2 class="govuk-heading-m">{{ t('pages.operatorAccreditation.currentAccreditationHeading') }}</h2>
           <dl class="govuk-summary-list govuk-!-margin-bottom-6" data-testid="current-accreditation-summary">

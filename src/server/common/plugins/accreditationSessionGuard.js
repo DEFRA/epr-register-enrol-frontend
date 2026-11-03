@@ -36,6 +36,19 @@ function routeSegment(path) {
   return path.match(/^\/(?:[a-z]{2}\/)?accreditation\/([^/]+)\//)?.[1] ?? null
 }
 
+// RA-492: the in-year "add a registered ORS" journey is a change request
+// against a granted accreditation, so - unlike every other page under
+// /accreditation/ - it is reachable exactly when the application is
+// Approved. It never edits the application itself.
+const IN_YEAR_CHANGE_SEGMENT = 'manage-overseas-sites'
+
+export function isInYearChangeOnGrantedAccreditation(path, application) {
+  return (
+    routeSegment(path) === IN_YEAR_CHANGE_SEGMENT &&
+    application?.applicationStatus === 'Approved'
+  )
+}
+
 export function isEditRestrictedPath(path) {
   const segment = routeSegment(path)
   if (!segment) {
@@ -175,7 +188,8 @@ export const accreditationSessionGuard = {
 
         if (
           isEditRestrictedPath(request.path) &&
-          TERMINAL_STATUSES.has(application?.applicationStatus)
+          TERMINAL_STATUSES.has(application?.applicationStatus) &&
+          !isInYearChangeOnGrantedAccreditation(request.path, application)
         ) {
           return h.redirect(landingUrl(application)).takeover()
         }

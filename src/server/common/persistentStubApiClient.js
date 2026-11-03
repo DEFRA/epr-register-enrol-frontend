@@ -1,6 +1,7 @@
 import { config } from '../../config/config.js'
 import { stubApiClient, STUB_ORG_DOCS } from './stub-api-client.js'
 import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
+import { stubAccreditationChanges } from './stub-accreditation-changes.js'
 
 function overlayOrgName(items) {
   return items.map((item) => {
@@ -43,6 +44,45 @@ async function tryBackendPut(orgId, appId, data) {
   }
 }
 
+// RA-492: the in-year accreditation-changes API is stub-only here, read
+// from the stub application (shaped the way accreditationApiService
+// normalises it) so it never reaches the /submit or /files handlers below.
+const ACCREDITATION_CHANGES_PREFIX = '/api/v1/accreditation-changes/'
+
+const accreditationChangesDeps = {
+  async getApplication(orgId, appId) {
+    const raw = await stubApiClient.get(`${BASE}/${orgId}/${appId}`)
+    if (!raw?.applicationStatus) {
+      return null
+    }
+    return {
+      ...raw,
+      isExporter: raw.wasteProcessingType === 'exporter',
+      materialType: raw.material
+        ? raw.material.charAt(0).toUpperCase() + raw.material.slice(1)
+        : raw.materialType,
+      year: Number.parseInt(raw.yearlyMetrics?.year ?? raw.year, 10)
+    }
+  },
+  initiateUpload(orgId, appId, body) {
+    return stubApiClient.post(
+      `${BASE}/${orgId}/${appId}/files/bes-evidence/initiate`,
+      body
+    )
+  },
+  getUploadStatus(orgId, appId, fileUploadId) {
+    return stubApiClient.get(
+      `${BASE}/${orgId}/${appId}/files/${fileUploadId}/status`
+    )
+  }
+}
+
+function accreditationChanges(method, endpoint, body) {
+  return endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)
+    ? stubAccreditationChanges(method, endpoint, body, accreditationChangesDeps)
+    : undefined
+}
+
 function parseAppSegment(endpoint) {
   const m = endpoint.match(APP_SEGMENT_RE)
   return m ? { orgId: m[1], appId: m[2] } : null
@@ -50,6 +90,9 @@ function parseAppSegment(endpoint) {
 
 export const persistentStubApiClient = {
   async get(endpoint) {
+    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
+      return accreditationChanges('get', endpoint)
+    }
     // CDP upload status — always use the stub. /files/initiate (see post() below)
     // never calls the real backend, so every fileUploadId this client hands out is
     // stub-only; the real backend has no record of it and its status endpoint
@@ -131,6 +174,9 @@ export const persistentStubApiClient = {
   },
 
   async post(endpoint, body) {
+    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
+      return accreditationChanges('post', endpoint, body)
+    }
     if (/\/initiate$/.test(endpoint)) {
       return stubApiClient.post(endpoint, body)
     }
@@ -172,6 +218,9 @@ export const persistentStubApiClient = {
   },
 
   async patch(endpoint, body) {
+    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
+      return accreditationChanges('patch', endpoint, body)
+    }
     const stubResult = await stubApiClient.patch(endpoint, body)
     const parsed = parseAppSegment(endpoint)
     if (parsed) {
@@ -186,6 +235,9 @@ export const persistentStubApiClient = {
   },
 
   async delete(endpoint) {
+    if (endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)) {
+      return accreditationChanges('delete', endpoint)
+    }
     const stubResult = await stubApiClient.delete(endpoint)
     const m = endpoint.match(DELETE_FILE_RE)
     if (m) {

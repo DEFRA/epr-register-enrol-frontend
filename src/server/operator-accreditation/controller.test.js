@@ -53,6 +53,28 @@ function mockAccreditationGet(apps) {
 describe('#buildLandingViewModel', () => {
   const t = (key) => key.split('.').pop()
 
+  // RA-492: the in-year "add a registered ORS" entry point.
+  test.each([
+    ['Approved', true, true],
+    ['Approved', false, false],
+    ['Submitted', true, false]
+  ])(
+    'status %s, exporter %s -> manage overseas sites link %s',
+    (applicationStatus, isExporter, shown) => {
+      const vm = buildLandingViewModel(
+        makeApp({ applicationStatus, applicationId: 'app-1' }),
+        'Org Name',
+        'siteAddr',
+        2026,
+        t,
+        isExporter
+      )
+      expect(vm.manageOverseasSitesUrl).toBe(
+        shown ? '/accreditation/manage-overseas-sites/app-1' : null
+      )
+    }
+  )
+
   test('Saved maps to grey tag', () => {
     const vm = buildLandingViewModel(
       makeApp({ applicationStatus: 'Saved' }),

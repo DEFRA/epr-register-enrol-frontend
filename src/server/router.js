@@ -32,6 +32,7 @@ import { uploadMoreEvidence } from './accreditation/upload-more-evidence/index.j
 import { cyaEvidenceForOverseasSite } from './accreditation/cya-evidence-for-overseas-site/index.js'
 import { checkSiteConditions } from './accreditation/check-site-conditions/index.js'
 import { viewPaymentDetails } from './accreditation/view-payment-details/index.js'
+import { manageOverseasSites } from './accreditation/manage-overseas-sites/index.js'
 import { addOverseasSiteSiteName } from './accreditation/add-overseas-site/site-name/index.js'
 import { addOverseasSiteSiteLocation } from './accreditation/add-overseas-site/site-location/index.js'
 import { addOverseasSiteSiteContactDetails } from './accreditation/add-overseas-site/site-contact-details/index.js'
@@ -132,6 +133,7 @@ export const router = {
         cyaEvidenceForOverseasSite,
         checkSiteConditions,
         viewPaymentDetails,
+        manageOverseasSites,
         addOverseasSiteSiteName,
         addOverseasSiteSiteLocation,
         addOverseasSiteSiteContactDetails,

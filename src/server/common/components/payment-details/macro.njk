@@ -6,7 +6,9 @@
 
   Params:
     paymentDetails  (object, required to render) - see
-                    common/helpers/paymentDetails.js for shape
+                    common/helpers/paymentDetails.js for shape; without
+                    tonnageDisplay (in-year ORS additions) the tonnage line
+                    is left out
     paymentReference (string) - reference shown in the bank details list
     t               (function, required) - translator
 #}
@@ -22,9 +24,12 @@
       {{ params.t('pages.viewPaymentDetails.description') }}
     </h3>
     <p data-testid="description-body">
+    {# RA-492: an in-year ORS addition has no tonnage fee, so no tonnageDisplay. #}
+    {% if paymentDetails.tonnageDisplay %}
     {{ params.t('pages.viewPaymentDetails.descriptionTonnageLine').replace('{amount}', paymentDetails.amountTonnageDue | formatCurrency).replace('{tonnage}', paymentDetails.tonnageDisplay).replace('{material}', paymentDetails.materialName) }}
+    {% endif %}
     {% if paymentDetails.numberOfORSs > 0 %}
-      <br/>
+      {% if paymentDetails.tonnageDisplay %}<br/>{% endif %}
       {{ params.t('pages.viewPaymentDetails.descriptionOrsLine').replace('{amount}', paymentDetails.amountOrsDue | formatCurrency).replace('{count}', paymentDetails.numberOfORSs) }}
     {% endif %}
     </p>

@@ -11,6 +11,7 @@ import {
 } from '../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
+import { manageOverseasSitesUrl } from '../accreditation/manage-overseas-sites/urls.js'
 import {
   WITHDRAWN_STATUS,
   NON_WITHDRAWABLE_STATUSES,
@@ -137,6 +138,12 @@ export function buildLandingViewModel(
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',
+    // RA-492: a granted exporter accreditation can have registered ORSs
+    // added to it in-year.
+    manageOverseasSitesUrl:
+      isExporter && application.applicationStatus === 'Approved'
+        ? manageOverseasSitesUrl(application.applicationId)
+        : null,
     displayReapplyAccreditationText: !REAPPLY_TEXT_HIDDEN_STATUSES.has(
       application.applicationStatus
     )

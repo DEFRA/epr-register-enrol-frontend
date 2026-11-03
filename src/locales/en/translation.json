@@ -1029,6 +1029,86 @@
         "title": "Success",
         "body": "You've set your cookie preferences."
       }
+    },
+    "manageOverseasSites": {
+      "title": "Manage overseas reprocessing sites",
+      "entryLinkDescription": "Add, update and manage your overseas reprocessing sites.",
+      "tabs": {
+        "accredited": "Accredited",
+        "registered": "Registered"
+      },
+      "accredited": {
+        "heading": "Accredited overseas reprocessing sites",
+        "intro": "These are your accredited overseas reprocessing sites for {year}."
+      },
+      "registered": {
+        "heading": "Registered overseas reprocessing sites",
+        "intro": "These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {year}."
+      },
+      "requestsBanner": {
+        "title": "Accreditation requests",
+        "body": "You currently have {count} requests ready for submission.",
+        "link": "View requests"
+      },
+      "pendingBanner": {
+        "title": "Change pending",
+        "body": "You have a change pending. Your regulator is reviewing your request to add {count} overseas reprocessing site(s) to this accreditation. You cannot change these sites until your regulator has made a decision."
+      },
+      "status": {
+        "pending": "Pending",
+        "inProgress": "In progress"
+      },
+      "addToAccreditation": "Add to accreditation",
+      "view": "View",
+      "return": "Return",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "change": "Change",
+      "addInformation": "Add information",
+      "missingInformation": "Missing information",
+      "yes": "Yes",
+      "no": "No",
+      "summary": {
+        "headingPrefix": "Add to accreditation:"
+      },
+      "rows": {
+        "siteName": "Site name",
+        "location": "Location",
+        "coordinates": "Coordinates",
+        "contactName": "Contact name",
+        "contactEmail": "Contact email",
+        "contactPhone": "Contact phone number",
+        "recyclingOperation": "Recycling operation",
+        "baselCodes": "Basel convention codes",
+        "repatriatedLoads": "Arrangements for rejected or returned loads",
+        "conditionsOfExport": "Conditions of export",
+        "besEvidence": "Evidence of broadly equivalent standards"
+      },
+      "missing": {
+        "country": "Add the country",
+        "coordinates": "Add the coordinates",
+        "operationCodes": "Add the recycling operation",
+        "conditionsOfExport": "Add whether the site meets the conditions of export",
+        "besEvidence": "Upload evidence of broadly equivalent standards"
+      },
+      "requests": {
+        "title": "Accreditation requests",
+        "siteName": "Site name",
+        "type": "Type",
+        "status": "Status",
+        "action": "Action",
+        "newOrs": "New ORS",
+        "chargeIntro": "There will be a charge for this request and it will need to be approved by your regulator.",
+        "chargeCount": "Number of overseas reprocessing sites: {count}",
+        "chargePerOrs": "Charge per overseas reprocessing site: {amount}",
+        "totalAmount": "Total amount",
+        "addAnother": "Add another request",
+        "none": "You have no accreditation requests in progress.",
+        "incomplete": "{site} ({orsId}) is missing information"
+      },
+      "payment": {
+        "backLink": "Back to manage overseas reprocessing sites"
+      }
     }
   },
   "navigation": {

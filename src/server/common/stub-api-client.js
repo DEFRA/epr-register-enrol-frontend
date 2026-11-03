@@ -1003,6 +1003,129 @@ export const STUB_ORG_DOCS = [
         }
       }
     ]
+  },
+  // RA-492: granted (Approved) exporter accreditation with registered ORSs
+  // for the in-year add-ORS journey; mirrors the backend's dev seed for
+  // org 50018.
+  {
+    orgId: 50018,
+    companyDetails: { name: 'In-Year Change Exports Ltd' },
+    accreditations: [
+      {
+        id: 'a26000000000000000050018',
+        applicationId: 'a26000000000000000050018',
+        applicationStatus: 'Approved',
+        material: 'plastic',
+        wasteProcessingType: 'exporter',
+        registrationId: 'aaa000000000000000050018',
+        companyRegisteredAddress: {
+          line1: '18 Export Street',
+          town: 'London',
+          postcode: 'E1 6AN'
+        },
+        wasteRegistrationNumber: 'R25EX5001800018PL',
+        yearlyMetrics: { year: '2026' },
+        formSubmissionTime: '2025-09-01T10:00:00Z',
+        submitterContactDetails: null,
+        overseasSites: {
+          sectionStatus: 'Completed',
+          sites: [
+            {
+              siteId: 900181,
+              orsId: '001',
+              siteName: 'In-Year Accredited Site',
+              siteAddress: '1 Accredited Road',
+              country: 'Germany',
+              isEu: false,
+              isOecd: false,
+              selected: true,
+              isNewSite: false,
+              registeredNowAccredited: false,
+              contactName: 'Site Contact',
+              contactEmail: 'contact@example.com',
+              contactPhone: '+44 20 7946 0000',
+              code1: 'B3011',
+              repatriatedLoads: "Returned to the UK at the exporter's cost",
+              coordinates: '52.52, 13.405',
+              operationCodes: ['R3'],
+              conditionsOfExport: true,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900182,
+              orsId: '002',
+              siteName: 'In-Year Complete Site',
+              siteAddress: '2 Registered Road',
+              country: 'Germany',
+              isEu: false,
+              isOecd: false,
+              selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
+              contactName: 'Site Contact',
+              contactEmail: 'contact@example.com',
+              contactPhone: '+44 20 7946 0000',
+              code1: 'B3011',
+              repatriatedLoads: "Returned to the UK at the exporter's cost",
+              coordinates: '53.55, 9.993',
+              operationCodes: ['R3'],
+              conditionsOfExport: true,
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900183,
+              orsId: '003',
+              siteName: 'In-Year India Site',
+              siteAddress: '3 Registered Road',
+              country: 'India',
+              isEu: false,
+              isOecd: false,
+              selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
+              contactName: 'Site Contact',
+              contactEmail: 'contact@example.com',
+              contactPhone: '+44 20 7946 0000',
+              code1: 'B3011',
+              repatriatedLoads: "Returned to the UK at the exporter's cost",
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            },
+            {
+              siteId: 900184,
+              orsId: '004',
+              siteName: 'In-Year Turkey Site',
+              siteAddress: '4 Registered Road',
+              country: 'Turkey',
+              isEu: false,
+              isOecd: false,
+              selected: false,
+              isNewSite: false,
+              registeredNowAccredited: false,
+              contactName: 'Site Contact',
+              contactEmail: 'contact@example.com',
+              contactPhone: '+44 20 7946 0000',
+              code1: 'B3011',
+              repatriatedLoads: "Returned to the UK at the exporter's cost",
+              coordinates: '41.008, 28.978',
+              besEvidence: {
+                besEvidenceUploads: [],
+                doYouWantToUploadMoreEvidence: false
+              }
+            }
+          ]
+        },
+        besEvidence: { sectionStatus: 'Completed' }
+      }
+    ]
   }
 ]
 

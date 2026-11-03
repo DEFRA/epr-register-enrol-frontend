@@ -25,7 +25,7 @@ function renderPage(h, viewData) {
   )
 }
 
-function buildViewData(t, applicationId, selected, error) {
+export function buildViewData(t, applicationId, selected, error) {
   return {
     pageTitle: t('pages.addOverseasSite.conditionsOfExport.title'),
     heading: t('pages.addOverseasSite.conditionsOfExport.heading'),

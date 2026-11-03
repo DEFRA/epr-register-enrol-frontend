@@ -44,7 +44,7 @@ function buildBullets(t) {
   ]
 }
 
-function buildViewData(t, applicationId, fullName, jobTitle) {
+export function buildViewData(t, applicationId, fullName, jobTitle) {
   return {
     pageTitle: t('pages.submitDeclaration.title'),
     heading: t('pages.submitDeclaration.heading'),

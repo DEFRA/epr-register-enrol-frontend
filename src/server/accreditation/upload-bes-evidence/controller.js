@@ -146,7 +146,7 @@ function validateBesEvidenceFile(t, { filename, fileSize, application }) {
   return null
 }
 
-function buildViewData(
+export function buildViewData(
   t,
   applicationId,
   siteName,

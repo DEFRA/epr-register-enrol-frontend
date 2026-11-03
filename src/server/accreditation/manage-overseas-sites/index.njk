@@ -1,0 +1,104 @@
+{% extends 'layouts/page.njk' %}
+
+{#
+  RA-492: Manage overseas reprocessing sites for a granted accreditation
+  (Figma f02/f03/f12/f13). Interim sites are not part of RA-492.
+#}
+{% macro siteName(site) %}
+  <span class="govuk-!-margin-right-2">{{ site.orsId }}</span>
+  <strong>{{ site.siteName }}</strong>
+  <br><span class="govuk-hint govuk-!-font-size-16">{{ site.address }}</span>
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      {% if pendingCount > 0 %}
+        <div class="govuk-notification-banner" role="region" aria-labelledby="pending-change-title" data-module="govuk-notification-banner" data-testid="pending-change-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="pending-change-title">{{ t('pages.manageOverseasSites.pendingBanner.title') }}</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-body">{{ t('pages.manageOverseasSites.pendingBanner.body').replace('{count}', pendingCount) }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if readyForSubmissionCount > 0 %}
+        <div class="govuk-notification-banner" role="region" aria-labelledby="requests-banner-title" data-module="govuk-notification-banner" data-testid="requests-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="requests-banner-title">{{ t('pages.manageOverseasSites.requestsBanner.title') }}</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-body">
+              {{ t('pages.manageOverseasSites.requestsBanner.body').replace('{count}', readyForSubmissionCount) }}
+              <br><a class="govuk-notification-banner__link" href="{{ requestsUrl }}" data-testid="view-requests-link">{{ t('pages.manageOverseasSites.requestsBanner.link') }}</a>
+            </p>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="govuk-tabs" data-module="govuk-tabs">
+        <ul class="govuk-tabs__list">
+          <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
+            <a class="govuk-tabs__tab" href="#accredited" data-testid="tab-accredited">{{ t('pages.manageOverseasSites.tabs.accredited') }} ({{ accredited.length }})</a>
+          </li>
+          <li class="govuk-tabs__list-item">
+            <a class="govuk-tabs__tab" href="#registered" data-testid="tab-registered">{{ t('pages.manageOverseasSites.tabs.registered') }} ({{ registered.length }})</a>
+          </li>
+        </ul>
+
+        <div class="govuk-tabs__panel" id="accredited" data-testid="accredited-sites">
+          <h2 class="govuk-heading-m">{{ t('pages.manageOverseasSites.accredited.heading') }}</h2>
+          <p class="govuk-body">{{ t('pages.manageOverseasSites.accredited.intro').replace('{year}', year) }}</p>
+          <table class="govuk-table">
+            <tbody class="govuk-table__body">
+              {% for site in accredited %}
+                <tr class="govuk-table__row" data-testid="accredited-site-{{ site.orsId }}">
+                  <td class="govuk-table__cell">{{ siteName(site) }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">
+                    {% if site.pending %}
+                      <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag-{{ site.orsId }}">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="registered" data-testid="registered-sites">
+          <h2 class="govuk-heading-m">{{ t('pages.manageOverseasSites.registered.heading') }}</h2>
+          <p class="govuk-body">{{ t('pages.manageOverseasSites.registered.intro').replace('{year}', year) }}</p>
+          <table class="govuk-table">
+            <tbody class="govuk-table__body">
+              {% for site in registered %}
+                <tr class="govuk-table__row" data-testid="registered-site-{{ site.orsId }}">
+                  <td class="govuk-table__cell">{{ siteName(site) }}</td>
+                  <td class="govuk-table__cell govuk-table__cell--numeric">
+                    {% if site.inProgress %}
+                      <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-2" data-testid="site-status-tag-{{ site.orsId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
+                      <a class="govuk-link" href="/accreditation/manage-overseas-sites/{{ applicationId }}/add/{{ site.siteId }}" data-testid="view-request-{{ site.orsId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
+                    {% else %}
+                      {# Adding a site changes the draft request, so this is a
+                         crumb-protected POST styled as a link. #}
+                      <form method="post" action="/accreditation/manage-overseas-sites/{{ applicationId }}/sites/{{ site.siteId }}" class="govuk-!-display-inline">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--blue govuk-body" data-testid="add-to-accreditation-{{ site.orsId }}">{{ t('pages.manageOverseasSites.addToAccreditation') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></button>
+                      </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="govuk-body"><a class="govuk-link" href="{{ backLink }}" data-testid="return-link">{{ t('pages.manageOverseasSites.return') }}</a></p>
+    </div>
+  </div>
+{% endblock %}

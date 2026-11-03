@@ -4,6 +4,86 @@
     "language": "Iaith"
   },
   "pages": {
+    "manageOverseasSites": {
+      "title": "[Welsh] Manage overseas reprocessing sites",
+      "entryLinkDescription": "[Welsh] Add, update and manage your overseas reprocessing sites.",
+      "tabs": {
+        "accredited": "[Welsh] Accredited",
+        "registered": "[Welsh] Registered"
+      },
+      "accredited": {
+        "heading": "[Welsh] Accredited overseas reprocessing sites",
+        "intro": "[Welsh] These are your accredited overseas reprocessing sites for {year}."
+      },
+      "registered": {
+        "heading": "[Welsh] Registered overseas reprocessing sites",
+        "intro": "[Welsh] These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {year}."
+      },
+      "requestsBanner": {
+        "title": "[Welsh] Accreditation requests",
+        "body": "[Welsh] You currently have {count} requests ready for submission.",
+        "link": "[Welsh] View requests"
+      },
+      "pendingBanner": {
+        "title": "[Welsh] Change pending",
+        "body": "[Welsh] You have a change pending. Your regulator is reviewing your request to add {count} overseas reprocessing site(s) to this accreditation. You cannot change these sites until your regulator has made a decision."
+      },
+      "status": {
+        "pending": "[Welsh] Pending",
+        "inProgress": "[Welsh] In progress"
+      },
+      "addToAccreditation": "[Welsh] Add to accreditation",
+      "view": "[Welsh] View",
+      "return": "[Welsh] Return",
+      "continue": "[Welsh] Continue",
+      "cancel": "[Welsh] Cancel",
+      "change": "[Welsh] Change",
+      "addInformation": "[Welsh] Add information",
+      "missingInformation": "[Welsh] Missing information",
+      "yes": "[Welsh] Yes",
+      "no": "[Welsh] No",
+      "summary": {
+        "headingPrefix": "[Welsh] Add to accreditation:"
+      },
+      "rows": {
+        "siteName": "[Welsh] Site name",
+        "location": "[Welsh] Location",
+        "coordinates": "[Welsh] Coordinates",
+        "contactName": "[Welsh] Contact name",
+        "contactEmail": "[Welsh] Contact email",
+        "contactPhone": "[Welsh] Contact phone number",
+        "recyclingOperation": "[Welsh] Recycling operation",
+        "baselCodes": "[Welsh] Basel convention codes",
+        "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads",
+        "conditionsOfExport": "[Welsh] Conditions of export",
+        "besEvidence": "[Welsh] Evidence of broadly equivalent standards"
+      },
+      "missing": {
+        "country": "[Welsh] Add the country",
+        "coordinates": "[Welsh] Add the coordinates",
+        "operationCodes": "[Welsh] Add the recycling operation",
+        "conditionsOfExport": "[Welsh] Add whether the site meets the conditions of export",
+        "besEvidence": "[Welsh] Upload evidence of broadly equivalent standards"
+      },
+      "requests": {
+        "title": "[Welsh] Accreditation requests",
+        "siteName": "[Welsh] Site name",
+        "type": "[Welsh] Type",
+        "status": "[Welsh] Status",
+        "action": "[Welsh] Action",
+        "newOrs": "[Welsh] New ORS",
+        "chargeIntro": "[Welsh] There will be a charge for this request and it will need to be approved by your regulator.",
+        "chargeCount": "[Welsh] Number of overseas reprocessing sites: {count}",
+        "chargePerOrs": "[Welsh] Charge per overseas reprocessing site: {amount}",
+        "totalAmount": "[Welsh] Total amount",
+        "addAnother": "[Welsh] Add another request",
+        "none": "[Welsh] You have no accreditation requests in progress.",
+        "incomplete": "[Welsh] {site} ({orsId}) is missing information"
+      },
+      "payment": {
+        "backLink": "[Welsh] Back to manage overseas reprocessing sites"
+      }
+    },
     "home": {
       "title": "Hafan",
       "heading": "Hafan"

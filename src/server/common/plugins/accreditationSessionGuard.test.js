@@ -5,6 +5,7 @@ import {
   hasValidSession,
   hasOrganisationAccess,
   isEditRestrictedPath,
+  isInYearChangeOnGrantedAccreditation,
   isLockedSectionWrite,
   fetchApplication,
   accreditationSessionGuard
@@ -47,6 +48,19 @@ describe('shouldGuardPath', () => {
     expect(shouldGuardPath('/')).toBe(false)
     expect(shouldGuardPath('/operator-accreditation')).toBe(false)
     expect(shouldGuardPath('/health')).toBe(false)
+  })
+})
+
+describe('isInYearChangeOnGrantedAccreditation (RA-492)', () => {
+  test.each([
+    ['/accreditation/manage-overseas-sites/abc', 'Approved', true],
+    ['/cy/accreditation/manage-overseas-sites/abc/requests', 'Approved', true],
+    ['/accreditation/manage-overseas-sites/abc', 'Withdrawn', false],
+    ['/accreditation/task-list/abc', 'Approved', false]
+  ])('%s on %s -> %s', (path, applicationStatus, expected) => {
+    expect(
+      isInYearChangeOnGrantedAccreditation(path, { applicationStatus })
+    ).toBe(expected)
   })
 })
 
