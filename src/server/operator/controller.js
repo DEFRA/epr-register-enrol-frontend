@@ -9,9 +9,7 @@ export const operatorController = {
       pageTitle: t('pages.operator.title'),
       heading: t('pages.operator.heading'),
       notification,
-      manageOverseasSitesEnabled: config.get(
-        'featureFlags.manageOverseasSitesEnabled'
-      )
+      inYearChangesEnabled: config.get('featureFlags.inYearChangesEnabled')
     })
   }
 }

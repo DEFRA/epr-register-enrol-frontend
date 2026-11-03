@@ -12,7 +12,7 @@ import { fetchApprovedRegistration } from './current-registration.js'
 // Runs before auth, so a logged-out caller gets the same 404 as everyone else
 // rather than a redirect to sign in for a page that doesn't exist yet.
 function notFoundUnlessEnabled(_request, h) {
-  if (!config.get('featureFlags.manageOverseasSitesEnabled')) {
+  if (!config.get('featureFlags.inYearChangesEnabled')) {
     throw Boom.notFound()
   }
   return h.continue

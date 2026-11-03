@@ -17,10 +17,10 @@ export const featureFlagsSchema = {
     default: false,
     env: 'MULTIPLE_INTERIM_SITES_ENABLED'
   },
-  manageOverseasSitesEnabled: {
-    doc: 'RA-425. Show the material dashboard and the pages for viewing a current accreditation and its overseas reprocessing sites under /manage. Off by default; with it off every /manage route returns 404.',
+  inYearChangesEnabled: {
+    doc: 'In-year changes epic (from RA-425). Shows the operator in-year changes pages under /manage: so far the material dashboard and the pages for viewing a current accreditation and its overseas reprocessing sites. Off by default; with it off every /manage route returns 404.',
     format: Boolean,
     default: false,
-    env: 'MANAGE_OVERSEAS_SITES_ENABLED'
+    env: 'IN_YEAR_CHANGES_ENABLED'
   }
 }

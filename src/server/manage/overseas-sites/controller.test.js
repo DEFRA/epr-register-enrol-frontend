@@ -130,7 +130,7 @@ describe('#manageOverseasSitesController', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(`${CURRENT_YEAR}-06-15T12:00:00Z`))
-    configOverrides = { 'featureFlags.manageOverseasSitesEnabled': true }
+    configOverrides = { 'featureFlags.inYearChangesEnabled': true }
     operatorCanAccessOrganisation.mockImplementation(
       async (_user, orgId) => orgId === ORG_ID
     )
@@ -170,7 +170,7 @@ describe('#manageOverseasSitesController', () => {
   test.each([PAGE_URL, WELSH_PAGE_URL])(
     'GET %s returns 404 when the flag is off, without reading data',
     async (url) => {
-      configOverrides = { 'featureFlags.manageOverseasSitesEnabled': false }
+      configOverrides = { 'featureFlags.inYearChangesEnabled': false }
       const getSpy = mockManageGets([makeApp()], approvedRegistration)
 
       const { statusCode } = await get(url)

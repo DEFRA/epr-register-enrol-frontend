@@ -17,7 +17,7 @@ const ROUTES = [
 
 /**
  * RA-425: read-only pages for an operator's current accreditation, behind the
- * manageOverseasSitesEnabled flag. Registered in src/server/router.js, under
+ * inYearChangesEnabled flag. Registered in src/server/router.js, under
  * both the default and the /{language} path.
  */
 export const manage = {

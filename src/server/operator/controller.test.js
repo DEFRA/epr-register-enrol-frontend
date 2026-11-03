@@ -61,7 +61,7 @@ describe('#operatorController', () => {
     })
 
     test('lists the Delta Green reprocessor dashboard when the flag is on', async () => {
-      setFeatureFlag('manageOverseasSitesEnabled', true)
+      setFeatureFlag('inYearChangesEnabled', true)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -76,7 +76,7 @@ describe('#operatorController', () => {
     })
 
     test('lists the seeded exporter dashboard when the flag is on', async () => {
-      setFeatureFlag('manageOverseasSitesEnabled', true)
+      setFeatureFlag('inYearChangesEnabled', true)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -91,7 +91,7 @@ describe('#operatorController', () => {
     })
 
     test('does not list either dashboard when the flag is off', async () => {
-      setFeatureFlag('manageOverseasSitesEnabled', false)
+      setFeatureFlag('inYearChangesEnabled', false)
 
       const { result } = await server.inject({
         method: 'GET',

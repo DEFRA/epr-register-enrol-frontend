@@ -93,7 +93,7 @@ describe('#manageDashboardController', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date(`${CURRENT_YEAR}-06-15T12:00:00Z`))
-    configOverrides = { 'featureFlags.manageOverseasSitesEnabled': true }
+    configOverrides = { 'featureFlags.inYearChangesEnabled': true }
     operatorCanAccessOrganisation.mockImplementation(
       async (_user, orgId) => orgId === ORG_ID
     )
@@ -107,7 +107,7 @@ describe('#manageDashboardController', () => {
     test.each([DASHBOARD_URL, WELSH_DASHBOARD_URL])(
       'GET %s returns 404 when the flag is off, without reading data',
       async (url) => {
-        configOverrides = { 'featureFlags.manageOverseasSitesEnabled': false }
+        configOverrides = { 'featureFlags.inYearChangesEnabled': false }
         const getSpy = mockManageGets([makeApp()])
 
         const { statusCode } = await server.inject({ method: 'GET', url })
