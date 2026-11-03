@@ -1,13 +1,13 @@
-{#
-  RA-425: the "Choose a task" style cards on the /manage pages - a grey header
-  with title and description over a white body holding the card's links.
-  `columnClass` sets the card's width in its govuk-grid-row.
-#}
+{# RA-425: shared by the /manage dashboard and the manage registration and
+   accreditation page, so their cards stay identical. headingLevel keeps the
+   heading outline unbroken: the dashboard has an h2 above its cards, the
+   manage page does not. #}
 {% macro appTaskCard(params) %}
   <div class="{{ params.columnClass or 'govuk-grid-column-one-half' }} app-task-card__column">
     <div class="app-task-card" data-testid="task-card-{{ params.id }}">
       <div class="app-task-card__header">
-        <h3 class="govuk-heading-m">{{ params.title }}</h3>
+        {% set level = params.headingLevel or 3 %}
+        <h{{ level }} class="govuk-heading-m">{{ params.title }}</h{{ level }}>
         <p class="govuk-body-s govuk-!-margin-bottom-0">{{ params.description }}</p>
       </div>
       <div class="app-task-card__body">
@@ -17,8 +17,9 @@
   </div>
 {% endmacro %}
 
-{# A link with no destination yet: styled as a link, with no href, so it can't
-   be followed. #}
+{# RA-425: some card links have no destination yet (Summary log, PERNs,
+   Reports, Upgrade tonnage). Figma still shows them as links, so they look
+   like one but have no href. #}
 {% macro appInactiveLink(id, text) %}
   <p class="govuk-body"><a class="govuk-link app-inactive-link" aria-disabled="true" data-testid="{{ id }}">{{ text }}</a></p>
 {% endmacro %}

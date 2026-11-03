@@ -1,8 +1,8 @@
 import { vi } from 'vitest'
 
 import { createServer } from '../server.js'
-import { config } from '../../config/config.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { setFeatureFlag } from '../common/test-helpers/feature-flags.js'
 
 describe('#operatorController', () => {
   let server
@@ -54,21 +54,12 @@ describe('#operatorController', () => {
     const DELTA_GREEN_DASHBOARD =
       'href="/manage/50003/aaa000000000000000050003/Plastic"'
 
-    function setManageOverseasSitesEnabled(enabled) {
-      const realGet = config.get.bind(config)
-      vi.spyOn(config, 'get').mockImplementation((key) =>
-        key === 'featureFlags.manageOverseasSitesEnabled'
-          ? enabled
-          : realGet(key)
-      )
-    }
-
     afterEach(() => {
       vi.restoreAllMocks()
     })
 
     test('lists the Delta Green reprocessor dashboard when the flag is on', async () => {
-      setManageOverseasSitesEnabled(true)
+      setFeatureFlag('manageOverseasSitesEnabled', true)
 
       const { result } = await server.inject({
         method: 'GET',
@@ -83,7 +74,7 @@ describe('#operatorController', () => {
     })
 
     test('does not list it when the flag is off', async () => {
-      setManageOverseasSitesEnabled(false)
+      setFeatureFlag('manageOverseasSitesEnabled', false)
 
       const { result } = await server.inject({
         method: 'GET',

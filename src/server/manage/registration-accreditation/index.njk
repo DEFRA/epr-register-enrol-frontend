@@ -14,7 +14,8 @@
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
       <h1 class="govuk-heading-xl" data-testid="page-heading">{{ heading }}</h1>
-      {% if siteAddress %}
+      {# RA-425: per Figma, exporters are not shown an address. #}
+      {% if not isExporter and siteAddress %}
         <p class="govuk-heading-s" data-testid="site-address">{{ siteAddress }}</p>
       {% endif %}
     </div>
@@ -35,15 +36,17 @@
     {# RA-425: per Figma, a reprocessor's only card runs the full width. #}
     {% call appTaskCard({
       id: 'manage-accreditation',
+      headingLevel: 2,
       title: t('pages.manageRegistrationAccreditation.manageAccreditation.title'),
       description: t('pages.manageRegistrationAccreditation.manageAccreditation.description'),
-      columnClass: 'govuk-grid-column-one-half' if overseasSitesUrl else 'govuk-grid-column-full'
+      columnClass: 'govuk-grid-column-one-half' if isExporter else 'govuk-grid-column-full'
     }) %}
       {{ appInactiveLink('upgrade-tonnage-link', t('pages.manageRegistrationAccreditation.manageAccreditation.upgradeTonnageLink')) }}
     {% endcall %}
-    {% if overseasSitesUrl %}
+    {% if isExporter %}
       {% call appTaskCard({
         id: 'manage-overseas-sites',
+        headingLevel: 2,
         title: t('pages.manageRegistrationAccreditation.manageOverseasSites.title'),
         description: t('pages.manageRegistrationAccreditation.manageOverseasSites.description')
       }) %}

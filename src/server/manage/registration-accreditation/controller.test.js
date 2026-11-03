@@ -244,6 +244,19 @@ describe('#manageRegistrationAccreditationController', () => {
     )
   })
 
+  test('gives the card titles h2 headings, as nothing sits between them and the h1', async () => {
+    mockManageGets([makeApp()], approvedRegistration)
+
+    const { result } = await get(PAGE_URL)
+
+    expect(result).toMatch(
+      /<h2 class="govuk-heading-m">\s*Manage accreditation\s*<\/h2>/
+    )
+    expect(result).toMatch(
+      /<h2 class="govuk-heading-m">\s*Manage overseas reprocessing sites\s*<\/h2>/
+    )
+  })
+
   test('shows a reprocessor their site address, and only the Manage accreditation card', async () => {
     mockManageGets([reprocessorApp()], approvedRegistration)
 

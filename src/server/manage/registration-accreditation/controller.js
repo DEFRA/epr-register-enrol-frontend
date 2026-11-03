@@ -32,7 +32,8 @@ export const manageRegistrationAccreditationController = {
         materialType: materialDisplayName(application, t)
       }),
       backLink: dashboardUrl(request.params, currentLocale),
-      siteAddress: application.isExporter ? null : application.siteAddress,
+      isExporter: application.isExporter,
+      siteAddress: application.siteAddress,
       applicationStatusTag: applicationStatusTag(
         application.applicationStatus,
         t
@@ -40,9 +41,7 @@ export const manageRegistrationAccreditationController = {
       accreditationNumber: application.accreditationNumber,
       registrationNumber: registration.registrationNumber,
       expiryDate: expiryDate(application.year),
-      overseasSitesUrl: application.isExporter
-        ? overseasSitesUrl(request.params, currentLocale)
-        : null
+      overseasSitesUrl: overseasSitesUrl(request.params, currentLocale)
     })
   }
 }

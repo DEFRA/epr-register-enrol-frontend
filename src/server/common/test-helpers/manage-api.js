@@ -25,6 +25,5 @@ export function mockManageGets(apps, registration) {
   })
 }
 
-/** An API client error carrying an HTTP status, as apiClient throws. */
 export const apiError = (status) =>
   Object.assign(new Error(`API request failed: ${status}`), { status })
