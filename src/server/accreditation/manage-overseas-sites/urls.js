@@ -21,6 +21,14 @@ export function stepUrl(applicationId, siteId, step) {
   return `${addToAccreditationUrl(applicationId, siteId)}/${step}`
 }
 
+export function besEvidenceFileDeleteUrl(applicationId, siteId, fileId) {
+  return stepUrl(
+    applicationId,
+    siteId,
+    `bes-evidence/${encodeURIComponent(fileId)}/delete`
+  )
+}
+
 export function requestsUrl(applicationId) {
   return `${manageOverseasSitesUrl(applicationId)}/requests`
 }

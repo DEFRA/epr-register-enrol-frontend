@@ -187,6 +187,46 @@ export const addToAccreditationPostController = {
   }
 }
 
+// Removes one uploaded BES evidence file from the draft site, as the
+// reaccreditation journey's evidence page does. A file that has already
+// gone needs nothing more; any other failure stays on the summary with the
+// same error that page shows.
+export const removeBesEvidenceFileController = {
+  async handler(request, h) {
+    const { t } = getLocaleAndTranslator(request)
+    const { applicationId, siteId, fileId } = request.params
+    const draft = resolveDraftSite(await loadView(request), siteId)
+    if (!draft) {
+      return h.redirect(manageOverseasSitesUrl(applicationId))
+    }
+    try {
+      await accreditationChangesService.deleteBesEvidenceFile(
+        organisationIdFrom(request),
+        applicationId,
+        draft.entry.siteId,
+        fileId
+      )
+    } catch (err) {
+      if (err.status !== statusCodes.notFound) {
+        request.logger.error(
+          { err, applicationId, siteId, fileId },
+          'Error deleting in-year BES evidence file'
+        )
+        const errors = [
+          {
+            row: 'bes-evidence',
+            text: t('pages.cyaEvidenceForSite.validation.deleteError')
+          }
+        ]
+        return renderSummary(h, t, { applicationId, ...draft, errors }).code(
+          statusCodes.internalServerError
+        )
+      }
+    }
+    return h.redirect(addToAccreditationUrl(applicationId, siteId))
+  }
+}
+
 // Cancel on the summary: the operator no longer wants this site added, so
 // it leaves the draft (the backend deletes the draft with its last site).
 export const cancelAddToAccreditationController = {

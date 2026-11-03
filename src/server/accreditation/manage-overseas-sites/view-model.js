@@ -1,4 +1,9 @@
-import { addSiteToRequestUrl, addToAccreditationUrl, stepUrl } from './urls.js'
+import {
+  addSiteToRequestUrl,
+  addToAccreditationUrl,
+  besEvidenceFileDeleteUrl,
+  stepUrl
+} from './urls.js'
 
 // RA-492: view models for the in-year add-ORS pages, built from the
 // backend's AccreditationChangesView (see service.js).
@@ -166,16 +171,27 @@ export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
 
   const files = requestSite.besEvidence?.besEvidenceUploads ?? []
   if (requestSite.besEvidenceRequired || files.length > 0) {
-    rows.push(
-      editableRow({
+    rows.push({
+      ...editableRow({
         t,
         applicationId,
         siteId: entry.siteId,
         field: 'besEvidence',
         label: label('besEvidence'),
         value: files.map((file) => file.filename).join(', ')
-      })
-    )
+      }),
+      // Each uploaded file can be removed, as on the reaccreditation
+      // journey's evidence page.
+      files: files.map((file) => ({
+        fileId: file.fileId,
+        filename: file.filename,
+        deleteUrl: besEvidenceFileDeleteUrl(
+          applicationId,
+          entry.siteId,
+          file.fileId
+        )
+      }))
+    })
   }
   return rows
 }

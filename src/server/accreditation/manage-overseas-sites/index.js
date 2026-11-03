@@ -6,6 +6,7 @@ import {
   addToAccreditationGetController,
   addToAccreditationPostController,
   cancelAddToAccreditationController,
+  removeBesEvidenceFileController,
   declarationGetController,
   declarationPostController,
   manageOverseasSitesController,
@@ -73,6 +74,11 @@ const ROUTES = [
     conditionsOfExportPostController
   ),
   route('GET', `${SITE}/bes-evidence`, besEvidenceGetController),
+  route(
+    'POST',
+    `${SITE}/bes-evidence/{fileId}/delete`,
+    removeBesEvidenceFileController
+  ),
   route(
     'POST',
     `${SITE}/bes-evidence`,

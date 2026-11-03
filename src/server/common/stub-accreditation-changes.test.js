@@ -104,6 +104,17 @@ describe('stubAccreditationChanges (RA-492)', () => {
       { fileUploadId: 'up-1' }
     )
     expect(complete.isComplete).toBe(true)
+    await expect(
+      call('delete', '/requests/current/sites/2/bes-evidence/files/nope')
+    ).rejects.toMatchObject({ status: 404 })
+    const removed = await call(
+      'delete',
+      '/requests/current/sites/2/bes-evidence/files/up-1'
+    )
+    expect(removed.sites[0].missingFields).toEqual(['besEvidence'])
+    await call('post', '/requests/current/sites/2/bes-evidence/files', {
+      fileUploadId: 'up-1'
+    })
     expect(complete.charge.totalPence).toBe(32800)
 
     const submitted = await call('post', '/requests/current/submit', {

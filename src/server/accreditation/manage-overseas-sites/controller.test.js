@@ -123,6 +123,10 @@ function mockGet(view, application = {}) {
   })
 }
 
+const WITH_FILE = {
+  besEvidence: { besEvidenceUploads: [{ fileId: 'f1', filename: 'bes.pdf' }] }
+}
+
 function apiError(status, response) {
   return Object.assign(new Error(`HTTP ${status}`), { status, response })
 }
@@ -272,19 +276,67 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    test('summary: uploaded BES evidence is listed by filename with Change', async () => {
-      mockGet(
-        makeView({
-          active: [
-            requestSite({
-              besEvidence: { besEvidenceUploads: [{ filename: 'bes.pdf' }] }
-            })
-          ]
-        })
-      )
+    test('summary: each uploaded BES file is listed with a Delete button', async () => {
+      mockGet(makeView({ active: [requestSite(WITH_FILE)] }))
       const { result } = await server.inject(`${BASE}/add/900182`)
-      expect(result).toMatch(/data-testid="row-bes-evidence-value">\s*bes.pdf/)
+      expect(result).toMatch(/data-testid="filename-f1">bes.pdf/)
+      expect(result).toContain(
+        `action="${BASE}/add/900182/bes-evidence/f1/delete"`
+      )
+      expect(result).toContain('data-testid="delete-file-button-f1"')
       expect(result).toMatch(/data-testid="row-bes-evidence-action">Change/)
+    })
+
+    test('removing a BES file deletes it from the request and returns to the summary', async () => {
+      mockGet(makeView({ active: [requestSite(WITH_FILE)] }))
+      const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/bes-evidence/f1/delete`
+      })
+      expect(del).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /\/requests\/current\/sites\/900182\/bes-evidence\/files\/f1$/
+        )
+      )
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(`${BASE}/add/900182`)
+    })
+
+    test('removing a BES file that has already gone returns to the summary', async () => {
+      mockGet(makeView({ active: [requestSite(WITH_FILE)] }))
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(404))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/bes-evidence/f1/delete`
+      })
+      expect(headers.location).toBe(`${BASE}/add/900182`)
+    })
+
+    test('a failed BES file removal stays on the summary with the evidence page error', async () => {
+      mockGet(makeView({ active: [requestSite(WITH_FILE)] }))
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(500))
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/bes-evidence/f1/delete`
+      })
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="error-bes-evidence"')
+      expect(result).toContain(
+        'Sorry, there was a problem deleting the file. Please try again.'
+      )
+      expect(result).toContain('data-testid="delete-file-button-f1"')
+    })
+
+    test('removing a BES file for a site not in the draft returns to the list', async () => {
+      mockGet(makeView({ active: null }))
+      const del = vi.spyOn(apiClient, 'delete')
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/bes-evidence/f1/delete`
+      })
+      expect(del).not.toHaveBeenCalled()
+      expect(headers.location).toBe(BASE)
     })
 
     test('summary: a site without a country shows Missing information on the location row', async () => {

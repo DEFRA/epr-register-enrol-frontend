@@ -202,6 +202,18 @@ async function addBesEvidenceFile(ctx, siteId) {
   return currentRequest(ctx)
 }
 
+function deleteBesEvidenceFile(ctx, siteId, fileId) {
+  const entry = draftSite(ctx, siteId)
+  const remaining = entry.besEvidenceUploads.filter(
+    (file) => file.fileId !== fileId
+  )
+  if (remaining.length === entry.besEvidenceUploads.length) {
+    throw stubError(statusCodes.notFound, 'File not found')
+  }
+  entry.besEvidenceUploads = remaining
+  return currentRequest(ctx)
+}
+
 function submit(ctx) {
   const { store } = ctx
   if (!store.draft) {
@@ -234,6 +246,7 @@ const ROUTES = [
     (ctx) => ctx.deps.initiateUpload(ctx.orgId, ctx.appId, ctx.body)
   ],
   ['post', `${SITE_PATH}/bes-evidence/files`, addBesEvidenceFile],
+  ['delete', `${SITE_PATH}/bes-evidence/files/([^/]+)`, deleteBesEvidenceFile],
   ['post', '/requests/current/submit', submit]
 ].map(([method, path, handle]) => ({
   method,
@@ -278,7 +291,7 @@ export async function stubAccreditationChanges(method, endpoint, body, deps) {
   for (const route of ROUTES) {
     const match = route.method === method ? route.pattern.exec(rest) : null
     if (match) {
-      return route.handle(ctx, match[1])
+      return route.handle(ctx, ...match.slice(1))
     }
   }
   throw stubError(

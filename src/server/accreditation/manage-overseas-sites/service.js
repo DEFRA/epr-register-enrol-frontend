@@ -45,6 +45,12 @@ export const accreditationChangesService = {
     )
   },
 
+  deleteBesEvidenceFile(organisationId, applicationId, siteId, fileId) {
+    return apiClient.delete(
+      `${current(organisationId, applicationId)}/sites/${siteId}/bes-evidence/files/${encodeURIComponent(fileId)}`
+    )
+  },
+
   submit(organisationId, applicationId, body) {
     return apiClient.post(
       `${current(organisationId, applicationId)}/submit`,

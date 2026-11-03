@@ -37,7 +37,18 @@
               {% if row.error %}
                 <p class="govuk-error-message" data-testid="row-{{ row.id }}-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ row.error }}</p>
               {% endif %}
-              {% if row.missing %}
+              {% if row.files.length %}
+                {# Same content and testids as the reaccreditation evidence page. #}
+                {% for file in row.files %}
+                  <div class="govuk-!-margin-bottom-2" data-testid="evidence-row-{{ file.fileId }}">
+                    <span data-testid="filename-{{ file.fileId }}">{{ file.filename }}</span>
+                    <form method="post" action="{{ file.deleteUrl }}" novalidate class="govuk-!-display-inline" data-testid="delete-file-form-{{ file.fileId }}">
+                      <input type="hidden" name="crumb" value="{{ crumb }}">
+                      <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--red govuk-body govuk-!-margin-left-2" data-testid="delete-file-button-{{ file.fileId }}">{{ t('pages.cyaEvidenceForSite.deleteFile') }}<span class="govuk-visually-hidden"> {{ file.filename }}</span></button>
+                    </form>
+                  </div>
+                {% endfor %}
+              {% elif row.missing %}
                 <strong class="govuk-tag govuk-tag--red" data-testid="row-{{ row.id }}-missing">{{ t('pages.manageOverseasSites.missingInformation') }}</strong>
               {% else %}
                 {{ row.value }}
