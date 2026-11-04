@@ -228,6 +228,7 @@ function submit(ctx) {
     jobTitle: ctx.body.jobTitle,
     email: ctx.body.email ?? null
   }
+  store.draft.paymentReference = ctx.body.paymentReference ?? null
   store.submitted.push(store.draft)
   store.draft = null
   return ctx.view().requests[0]

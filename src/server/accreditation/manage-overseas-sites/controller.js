@@ -330,6 +330,17 @@ export const declarationGetController = {
   }
 }
 
+// RA-503: the bank payment reference the payment page shows. Sent with the
+// submission, as the application declaration sends it, so the regulator sees
+// the reference the operator was told to quote.
+function paymentReferenceFor(application) {
+  return buildPaymentReference(
+    resolveNation(application),
+    application.organisationNumber,
+    application.isExporter
+  )
+}
+
 export const declarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -350,12 +361,18 @@ export const declarationPostController = {
         .code(statusCodes.badRequest)
     }
     try {
-      // AC07: the backend moves the request to Submitted.
-      await accreditationChangesService.submit(
-        organisationIdFrom(request),
-        applicationId,
-        { fullName, jobTitle, email: getUser(request)?.email ?? null }
+      const organisationId = organisationIdFrom(request)
+      const application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
       )
+      // AC07: the backend moves the request to Submitted.
+      await accreditationChangesService.submit(organisationId, applicationId, {
+        fullName,
+        jobTitle,
+        email: getUser(request)?.email ?? null,
+        paymentReference: paymentReferenceFor(application)
+      })
     } catch (err) {
       if (err.status === statusCodes.notFound) {
         return h.redirect(manageOverseasSitesUrl(applicationId))
@@ -410,11 +427,7 @@ export const paymentGetController = {
       materialDisplay: materialDisplayName(application, t),
       submitterName: submitted.submittedBy.fullName,
       submitterEmail: submitted.submittedBy.email ?? '',
-      paymentReference: buildPaymentReference(
-        nation,
-        application.organisationNumber,
-        application.isExporter
-      ),
+      paymentReference: paymentReferenceFor(application),
       regulatorName: paymentDetails.companyName ?? paymentDetails.accountName,
       regulatorContact: resolveRegulatorContact(nation),
       paymentDetails

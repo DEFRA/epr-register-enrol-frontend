@@ -706,6 +706,7 @@ describe('#manageOverseasSites (RA-492)', () => {
     })
 
     test('AC07: confirming submits the request and shows the payment page', async () => {
+      mockGet(makeView())
       const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
       const { headers } = await server.inject({
         method: 'POST',
@@ -716,7 +717,9 @@ describe('#manageOverseasSites (RA-492)', () => {
         expect.stringMatching(/\/requests\/current\/submit$/),
         expect.objectContaining({
           fullName: 'Jane Smith',
-          jobTitle: 'Director'
+          jobTitle: 'Director',
+          // The reference the payment page shows (England exporter, org 50018).
+          paymentReference: 'PR/PK/EXP/50018'
         })
       )
       expect(headers.location).toBe(`${BASE}/payment`)
