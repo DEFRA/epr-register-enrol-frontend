@@ -36,7 +36,6 @@
     {# RA-425: per Figma, a reprocessor's only card runs the full width. #}
     {% call appTaskCard({
       id: 'manage-accreditation',
-      headingLevel: 2,
       title: t('pages.manageRegistrationAccreditation.manageAccreditation.title'),
       description: t('pages.manageRegistrationAccreditation.manageAccreditation.description'),
       columnClass: 'govuk-grid-column-one-half' if isExporter else 'govuk-grid-column-full'
@@ -46,7 +45,6 @@
     {% if isExporter %}
       {% call appTaskCard({
         id: 'manage-overseas-sites',
-        headingLevel: 2,
         title: t('pages.manageRegistrationAccreditation.manageOverseasSites.title'),
         description: t('pages.manageRegistrationAccreditation.manageOverseasSites.description')
       }) %}

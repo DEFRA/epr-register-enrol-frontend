@@ -50,12 +50,12 @@ describe('#operatorController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  describe('RA-425 material dashboard links', () => {
-    const DELTA_GREEN_DASHBOARD =
+  describe('RA-425 manage page links', () => {
+    const DELTA_GREEN_MANAGE =
       'href="/manage/50003/aaa000000000000000050003/Plastic"'
-    const STUB_REPROCESSOR_DASHBOARD =
+    const STUB_REPROCESSOR_MANAGE =
       'href="/manage/50018/bbb000000000000000050018/Glass"'
-    const EXPORTER_DASHBOARD =
+    const EXPORTER_MANAGE =
       'href="/manage/50018/aaa000000000000000050018/Plastic"'
 
     function setConfig({ inYearChangesEnabled, stubEnabled }) {
@@ -86,57 +86,51 @@ describe('#operatorController', () => {
       vi.restoreAllMocks()
     })
 
-    test('links to the Delta Green plastic reprocessor dashboard with the real backend', async () => {
+    test('links to the Delta Green plastic reprocessor manage page with the real backend', async () => {
       setConfig({ inYearChangesEnabled: true, stubEnabled: false })
 
       const result = await getOperatorPage()
 
       expect(result).toMatch(
-        linkWithTestId(
-          DELTA_GREEN_DASHBOARD,
-          'manage-dashboard-reprocessor-link'
-        )
+        linkWithTestId(DELTA_GREEN_MANAGE, 'manage-reprocessor-link')
       )
       expect(result).toContain(
-        'Reprocessor material dashboard for Delta Green Ltd, Plastic'
+        'Reprocessor manage registration and accreditation for Delta Green Ltd, Plastic'
       )
-      expect(result).not.toContain(STUB_REPROCESSOR_DASHBOARD)
+      expect(result).not.toContain(STUB_REPROCESSOR_MANAGE)
     })
 
-    test('links to a reprocessor dashboard the stub API serves when the stub is on', async () => {
+    test('links to a reprocessor manage page the stub API serves when the stub is on', async () => {
       setConfig({ inYearChangesEnabled: true, stubEnabled: true })
 
       const result = await getOperatorPage()
 
       expect(result).toMatch(
-        linkWithTestId(
-          STUB_REPROCESSOR_DASHBOARD,
-          'manage-dashboard-reprocessor-link'
-        )
+        linkWithTestId(STUB_REPROCESSOR_MANAGE, 'manage-reprocessor-link')
       )
       expect(result).toContain(
-        'Reprocessor material dashboard for Manage Accreditation Test Ltd, Glass'
+        'Reprocessor manage registration and accreditation for Manage Accreditation Test Ltd, Glass'
       )
-      expect(result).not.toContain(DELTA_GREEN_DASHBOARD)
+      expect(result).not.toContain(DELTA_GREEN_MANAGE)
     })
 
     test.each([true, false])(
-      'lists the seeded exporter dashboard when the flag is on (stub API %s)',
+      'lists the seeded exporter manage page when the flag is on (stub API %s)',
       async (stubEnabled) => {
         setConfig({ inYearChangesEnabled: true, stubEnabled })
 
         const result = await getOperatorPage()
 
         expect(result).toMatch(
-          linkWithTestId(EXPORTER_DASHBOARD, 'manage-dashboard-exporter-link')
+          linkWithTestId(EXPORTER_MANAGE, 'manage-exporter-link')
         )
         expect(result).toContain(
-          'Exporter material dashboard for Manage Accreditation Test Ltd, Plastic'
+          'Exporter manage registration and accreditation for Manage Accreditation Test Ltd, Plastic'
         )
       }
     )
 
-    test('does not list any dashboard when the flag is off', async () => {
+    test('does not list any manage page when the flag is off', async () => {
       setConfig({ inYearChangesEnabled: false, stubEnabled: true })
 
       const result = await getOperatorPage()

@@ -8,7 +8,8 @@ import {
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
   MANAGE_MATERIAL as MATERIAL,
   MANAGE_CURRENT_YEAR as CURRENT_YEAR,
-  MANAGE_DASHBOARD_URL as DASHBOARD_URL,
+  MANAGE_URL,
+  MANAGE_REEX_URL,
   apiError,
   approvedRegistration,
   makeManageApp,
@@ -24,7 +25,7 @@ vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
 }))
 
-const PAGE_URL = `${DASHBOARD_URL}/overseas-sites`
+const PAGE_URL = `${MANAGE_URL}/overseas-sites`
 const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
 const interimSite = (siteId, overrides = {}) => ({
@@ -344,15 +345,13 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toContain('<form')
     })
 
-    test('links back to the manage page and home to the dashboard', () => {
+    test('links back to the manage page and home to the Re/Ex material page', () => {
       expect(result).toMatch(
-        new RegExp(
-          `href="${DASHBOARD_URL}/registration-accreditation"[^>]*data-testid="back-link"`
-        )
+        new RegExp(`href="${MANAGE_URL}"[^>]*data-testid="back-link"`)
       )
       expect(result).toMatch(
         new RegExp(
-          `href="${DASHBOARD_URL}"[^>]*data-testid="return-to-home-link"[^>]*>\\s*Return to home\\s*<`
+          `href="${MANAGE_REEX_URL}"[^>]*data-testid="return-to-home-link"[^>]*>\\s*Return to home\\s*<`
         )
       )
     })
@@ -402,13 +401,11 @@ describe('#manageOverseasSitesController', () => {
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('[Welsh] Manage overseas reprocessing sites')
     expect(result).toMatch(
-      new RegExp(
-        `href="/cy${DASHBOARD_URL}/registration-accreditation"[^>]*data-testid="back-link"`
-      )
+      new RegExp(`href="/cy${MANAGE_URL}"[^>]*data-testid="back-link"`)
     )
     expect(result).toMatch(
       new RegExp(
-        `href="/cy${DASHBOARD_URL}"[^>]*data-testid="return-to-home-link"`
+        `href="${MANAGE_REEX_URL}"[^>]*data-testid="return-to-home-link"`
       )
     )
   })

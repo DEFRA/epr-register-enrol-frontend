@@ -1,18 +1,14 @@
 import { manageRouteOptions } from './helpers/manage-page.js'
-import { manageDashboardController } from './dashboard/controller.js'
 import { manageRegistrationAccreditationController } from './registration-accreditation/controller.js'
 import { manageOverseasSitesController } from './overseas-sites/controller.js'
 
-const DASHBOARD_PATH =
-  '/manage/{organisationId}/{registrationId}/{materialType}'
+// RA-425: Re/Ex's material page links to MANAGE_PATH, the manage registration
+// and accreditation page.
+const MANAGE_PATH = '/manage/{organisationId}/{registrationId}/{materialType}'
 
 const ROUTES = [
-  [DASHBOARD_PATH, manageDashboardController],
-  [
-    `${DASHBOARD_PATH}/registration-accreditation`,
-    manageRegistrationAccreditationController
-  ],
-  [`${DASHBOARD_PATH}/overseas-sites`, manageOverseasSitesController]
+  [MANAGE_PATH, manageRegistrationAccreditationController],
+  [`${MANAGE_PATH}/overseas-sites`, manageOverseasSitesController]
 ]
 
 export const manage = {

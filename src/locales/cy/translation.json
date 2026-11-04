@@ -924,40 +924,6 @@
         "body": "[Welsh] You can continue with your application."
       }
     },
-    "manageDashboard": {
-      "registrationLabel": "[Welsh] Registration:",
-      "registrationApproved": "[Welsh] Approved",
-      "registrationNumberLabel": "[Welsh] Registration number:",
-      "accreditationLabel": "[Welsh] Accreditation:",
-      "accreditationNumberLabel": "[Welsh] Accreditation number:",
-      "wasteBalanceNotAvailable": "[Welsh] Not available",
-      "wasteBalanceCaption": "[Welsh] Available waste balance",
-      "wasteBalanceHint": "[Welsh] This is the balance available for creating new PERNs",
-      "chooseATask": "[Welsh] Choose a task",
-      "summaryLog": {
-        "title": "[Welsh] Summary log",
-        "description": "[Welsh] Upload your summary log to record new packaging waste or adjust previously submitted data.",
-        "uploadLink": "[Welsh] Upload your summary log"
-      },
-      "perns": {
-        "title": "[Welsh] PERNs",
-        "description": "[Welsh] Create and manage PERNs.",
-        "createLink": "[Welsh] Create new PERN",
-        "manageLink": "[Welsh] Manage PERNs"
-      },
-      "reports": {
-        "title": "[Welsh] Reports",
-        "description": "[Welsh] Create and manage your reports.",
-        "manageLink": "[Welsh] Manage reports"
-      },
-      "registrationAccreditation": {
-        "title": "[Welsh] Registration and accreditation",
-        "description": "[Welsh] View and manage your registration and accreditation applications.",
-        "manageLink": "[Welsh] Manage your registration and accreditation",
-        "contactPrefix": "[Welsh] If you have any questions about a registration or accreditation,",
-        "contactLink": "[Welsh] contact your regulator"
-      }
-    },
     "manageRegistrationAccreditation": {
       "heading": "[Welsh] Manage your registration and accreditation",
       "applicationStatusLabel": "[Welsh] Application status:",

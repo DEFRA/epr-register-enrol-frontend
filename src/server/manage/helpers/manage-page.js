@@ -26,19 +26,16 @@ export const manageRouteOptions = {
   ext: { onPreAuth: { method: notFoundUnlessEnabled } }
 }
 
-export function dashboardUrl(
+// The manage registration and accreditation page, which Re/Ex links to.
+export function manageUrl(
   { organisationId, registrationId, materialType },
   currentLocale
 ) {
   return `${localePrefix(currentLocale)}/manage/${organisationId}/${registrationId}/${materialType}`
 }
 
-export function registrationAccreditationUrl(params, currentLocale) {
-  return `${dashboardUrl(params, currentLocale)}/registration-accreditation`
-}
-
 export function overseasSitesUrl(params, currentLocale) {
-  return `${dashboardUrl(params, currentLocale)}/overseas-sites`
+  return `${manageUrl(params, currentLocale)}/overseas-sites`
 }
 
 export function serviceProblem(request, h, t) {

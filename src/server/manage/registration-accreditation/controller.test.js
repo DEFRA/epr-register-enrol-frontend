@@ -1,36 +1,52 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
+import Boom from '@hapi/boom'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { stubApiClient } from '../../common/stub-api-client.js'
 import {
+  MANAGE_ORG_ID as ORG_ID,
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
   MANAGE_MATERIAL as MATERIAL,
   MANAGE_CURRENT_YEAR as CURRENT_YEAR,
-  MANAGE_DASHBOARD_URL as DASHBOARD_URL,
+  MANAGE_URL as PAGE_URL,
+  MANAGE_REEX_URL,
   apiError,
   approvedRegistration,
   makeManageApp as makeApp,
   mockManageGets
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
-import { currentYear } from '../../common/helpers/currentYear.js'
+import { currentYear, yearSuffix } from '../../common/helpers/currentYear.js'
 import {
   MANAGE_EXPORTER_ORG_ID,
   MANAGE_EXPORTER_REGISTRATION_ID,
   MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
-  MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
 }))
 
-const PAGE_URL = `${DASHBOARD_URL}/registration-accreditation`
 const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
+const REGISTRATION_STATUS_URL = `/api/v1/registrations/${REGISTRATION_ID}/status`
+
+const LIST_URL = `/api/v1/accreditation-applications/${ORG_ID}`
+
+const STUB_EXPORTER_URL = `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic`
+
 const reprocessorApp = () => makeApp({ wasteProcessingType: 'reprocessor' })
+
+function fetchedApplicationIds(getSpy) {
+  return getSpy.mock.calls
+    .map(([url]) => url)
+    .filter((url) => url.startsWith(`${LIST_URL}/`))
+    .map((url) => url.slice(LIST_URL.length + 1))
+}
 
 describe('#manageRegistrationAccreditationController', () => {
   const page = setupManagePageServer()
@@ -46,25 +62,107 @@ describe('#manageRegistrationAccreditationController', () => {
 
       expect(statusCode).toBe(statusCodes.notFound)
       expect(getSpy).not.toHaveBeenCalled()
+      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
     }
   )
 
-  test('returns 403 without reading data when the operator cannot access the organisation', async () => {
-    const getSpy = mockManageGets([makeApp()])
+  test('no longer serves the old /registration-accreditation path', async () => {
+    mockManageGets([makeApp()])
 
-    const { statusCode } = await get(
-      `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}/registration-accreditation`
-    )
+    const { statusCode } = await get(`${PAGE_URL}/registration-accreditation`)
 
-    expect(statusCode).toBe(statusCodes.forbidden)
-    expect(getSpy).not.toHaveBeenCalled()
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  describe('organisation access', () => {
+    test('returns 403 without reading data when the operator cannot access the organisation', async () => {
+      const getSpy = mockManageGets([makeApp()])
+
+      const { statusCode } = await get(
+        `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}`
+      )
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(getSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns the service-unavailable page when the access check is unavailable', async () => {
+      operatorCanAccessOrganisation.mockRejectedValueOnce(
+        Boom.serverUnavailable()
+      )
+      const getSpy = mockManageGets([makeApp()])
+
+      const { statusCode } = await get(PAGE_URL)
+
+      expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(getSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('choosing the current accreditation', () => {
+    test('chooses the Approved current-year application over other years, statuses, registrations and materials', async () => {
+      const getSpy = mockManageGets([
+        makeApp({ id: 'app-last-year', year: CURRENT_YEAR - 1 }),
+        makeApp({ id: 'app-next-year', year: CURRENT_YEAR + 1 }),
+        makeApp({ id: 'app-started', applicationStatus: 'Started' }),
+        makeApp({ id: 'app-withdrawn', applicationStatus: 'Withdrawn' }),
+        makeApp({ id: 'app-other-registration', registrationId: 'REG999' }),
+        makeApp({ id: 'app-other-material', material: 'glass' }),
+        makeApp({
+          id: 'app-current',
+          createdAt: '2020-01-01T00:00:00Z'
+        })
+      ])
+
+      const { statusCode } = await get(PAGE_URL)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(fetchedApplicationIds(getSpy)).toEqual(['app-current'])
+    })
+
+    test('chooses the most recent when several Approved current-year applications match', async () => {
+      const getSpy = mockManageGets([
+        makeApp({ id: 'app-older', createdAt: '2026-09-01T00:00:00Z' }),
+        makeApp({ id: 'app-newest', createdAt: '2026-11-01T00:00:00Z' }),
+        makeApp({ id: 'app-middle', createdAt: '2026-10-01T00:00:00Z' })
+      ])
+
+      await get(PAGE_URL)
+
+      expect(fetchedApplicationIds(getSpy)).toEqual(['app-newest'])
+    })
+
+    test('takes the year from the clock on the last moment of the year', async () => {
+      vi.setSystemTime(new Date(`${CURRENT_YEAR}-12-31T23:59:59.999Z`))
+      const getSpy = mockManageGets([
+        makeApp({ id: 'app-this-year' }),
+        makeApp({ id: 'app-next-year', year: CURRENT_YEAR + 1 })
+      ])
+
+      await get(PAGE_URL)
+
+      expect(fetchedApplicationIds(getSpy)).toEqual(['app-this-year'])
+    })
+
+    test('takes the year from the clock on the first moment of the next year', async () => {
+      vi.setSystemTime(new Date(`${CURRENT_YEAR + 1}-01-01T00:00:00Z`))
+      const getSpy = mockManageGets([
+        makeApp({ id: 'app-this-year' }),
+        makeApp({ id: 'app-next-year', year: CURRENT_YEAR + 1 })
+      ])
+
+      await get(PAGE_URL)
+
+      expect(fetchedApplicationIds(getSpy)).toEqual(['app-next-year'])
+    })
   })
 
   describe('service problem', () => {
-    function expectServiceProblem({ statusCode, result }) {
+    function expectServiceProblem({ statusCode, result }, url = PAGE_URL) {
       expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="service-problem-heading"')
       expect(result).toMatch(
-        new RegExp(`href="${PAGE_URL}"[^>]*data-testid="try-again-link"`)
+        new RegExp(`href="${url}"[^>]*data-testid="try-again-link"`)
       )
     }
 
@@ -75,6 +173,32 @@ describe('#manageRegistrationAccreditationController', () => {
       ])
 
       expectServiceProblem(await get(PAGE_URL))
+    })
+
+    test('when listing applications fails', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(
+        apiError(statusCodes.internalServerError)
+      )
+
+      expectServiceProblem(await get(PAGE_URL))
+    })
+
+    test('when fetching the chosen application fails', async () => {
+      const apps = [makeApp()]
+      vi.spyOn(apiClient, 'get').mockImplementation(async (url) => {
+        if (url.endsWith('/app-current')) {
+          throw apiError(502)
+        }
+        return apps
+      })
+
+      expectServiceProblem(await get(PAGE_URL))
+    })
+
+    test('keeps the Welsh path in the try-again link', async () => {
+      mockManageGets([])
+
+      expectServiceProblem(await get(WELSH_PAGE_URL), WELSH_PAGE_URL)
     })
 
     test.each(['Created', 'Rejected', 'Cancelled'])(
@@ -92,13 +216,29 @@ describe('#manageRegistrationAccreditationController', () => {
       expectServiceProblem(await get(PAGE_URL))
     })
 
-    test('when the API fails', async () => {
-      vi.spyOn(apiClient, 'get').mockRejectedValue(
-        apiError(statusCodes.internalServerError)
-      )
+    test('when the registration-status call fails', async () => {
+      mockManageGets([makeApp()], apiError(statusCodes.internalServerError))
 
       expectServiceProblem(await get(PAGE_URL))
     })
+  })
+
+  test('asks for the status of the registration in the URL', async () => {
+    const getSpy = mockManageGets([makeApp()])
+
+    await get(PAGE_URL)
+
+    expect(getSpy).toHaveBeenCalledWith(REGISTRATION_STATUS_URL)
+  })
+
+  test('accepts the lowercase material slug Re/Ex links with', async () => {
+    mockManageGets([makeApp()])
+
+    const { statusCode } = await get(
+      `/manage/${ORG_ID}/${REGISTRATION_ID}/plastic`
+    )
+
+    expect(statusCode).toBe(statusCodes.ok)
   })
 
   describe('content shared by exporters and reprocessors', () => {
@@ -150,9 +290,9 @@ describe('#manageRegistrationAccreditationController', () => {
       expect(anchor).not.toContain('href=')
     })
 
-    test('links back to the dashboard', () => {
+    test('links back to the Re/Ex material page', () => {
       expect(result).toMatch(
-        new RegExp(`href="${DASHBOARD_URL}"[^>]*data-testid="back-link"`)
+        new RegExp(`href="${MANAGE_REEX_URL}"[^>]*data-testid="back-link"`)
       )
     })
   })
@@ -177,7 +317,7 @@ describe('#manageRegistrationAccreditationController', () => {
     expect(result).toContain('data-testid="task-card-manage-accreditation"')
     expect(result).toMatch(
       new RegExp(
-        `href="${DASHBOARD_URL}/overseas-sites"[^>]*data-testid="manage-overseas-sites-link"`
+        `href="${PAGE_URL}/overseas-sites"[^>]*data-testid="manage-overseas-sites-link"`
       )
     )
   })
@@ -221,11 +361,11 @@ describe('#manageRegistrationAccreditationController', () => {
     )
     expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Rhag 2027\s*</)
     expect(result).toMatch(
-      new RegExp(`href="/cy${DASHBOARD_URL}"[^>]*data-testid="back-link"`)
+      new RegExp(`href="${MANAGE_REEX_URL}"[^>]*data-testid="back-link"`)
     )
     expect(result).toMatch(
       new RegExp(
-        `href="/cy${DASHBOARD_URL}/overseas-sites"[^>]*data-testid="manage-overseas-sites-link"`
+        `href="${WELSH_PAGE_URL}/overseas-sites"[^>]*data-testid="manage-overseas-sites-link"`
       )
     )
   })
@@ -240,12 +380,15 @@ describe('#manageRegistrationAccreditationController', () => {
     })
 
     test('shows the stub exporter', async () => {
-      const { statusCode, result } = await get(
-        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic/registration-accreditation`
-      )
+      const { statusCode, result } = await get(STUB_EXPORTER_URL)
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="manage-overseas-sites-link"')
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="accreditation-number"[^>]*>\\s*A${yearSuffix(currentYear())}EX0500180001PL\\s*<`
+        )
+      )
       expect(result).toMatch(
         new RegExp(
           `data-testid="expiry-date"[^>]*>\\s*31 Dec ${currentYear()}\\s*<`
@@ -253,9 +396,30 @@ describe('#manageRegistrationAccreditationController', () => {
       )
     })
 
+    test('rolls the stub accreditation over to the new year without a reload', async () => {
+      const accreditationNumber = (suffix) =>
+        new RegExp(
+          `data-testid="accreditation-number"[^>]*>\\s*A${suffix}EX0500180001PL\\s*<`
+        )
+      vi.useFakeTimers({ toFake: ['Date'] })
+
+      vi.setSystemTime(new Date(`${CURRENT_YEAR}-12-31T23:59:59.999Z`))
+      const before = await get(STUB_EXPORTER_URL)
+      vi.setSystemTime(new Date(`${CURRENT_YEAR + 1}-01-01T00:00:00Z`))
+      const after = await get(STUB_EXPORTER_URL)
+
+      expect(before.result).toMatch(
+        accreditationNumber(yearSuffix(CURRENT_YEAR))
+      )
+      expect(after.statusCode).toBe(statusCodes.ok)
+      expect(after.result).toMatch(
+        accreditationNumber(yearSuffix(CURRENT_YEAR + 1))
+      )
+    })
+
     test('shows the stub reprocessor with its site address', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID}/Glass/registration-accreditation`
+        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID}/Glass`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -267,14 +431,25 @@ describe('#manageRegistrationAccreditationController', () => {
       expect(result).toMatch(
         /data-testid="site-address"[^>]*>\s*Unit 18, Furnace Lane, Doncaster, DN4 5HT\s*</
       )
-    })
-
-    test('shows the service-problem page for the stub registration that is not Approved', async () => {
-      const { statusCode } = await get(
-        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID}/Wood/registration-accreditation`
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="registration-number"[^>]*>\\s*R${yearSuffix(currentYear())}ER0500180002GR\\s*<`
+        )
       )
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
     })
+
+    test.each([
+      ['not Approved', MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID],
+      ['missing', MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID]
+    ])(
+      'shows the service-problem page for the stub registration that is %s',
+      async (_case, registrationId) => {
+        const { statusCode } = await get(
+          `/manage/${MANAGE_EXPORTER_ORG_ID}/${registrationId}/Wood`
+        )
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      }
+    )
   })
 })

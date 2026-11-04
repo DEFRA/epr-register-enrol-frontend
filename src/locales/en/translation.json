@@ -925,40 +925,6 @@
         "body": "You can continue with your application."
       }
     },
-    "manageDashboard": {
-      "registrationLabel": "Registration:",
-      "registrationApproved": "Approved",
-      "registrationNumberLabel": "Registration number:",
-      "accreditationLabel": "Accreditation:",
-      "accreditationNumberLabel": "Accreditation number:",
-      "wasteBalanceNotAvailable": "Not available",
-      "wasteBalanceCaption": "Available waste balance",
-      "wasteBalanceHint": "This is the balance available for creating new PERNs",
-      "chooseATask": "Choose a task",
-      "summaryLog": {
-        "title": "Summary log",
-        "description": "Upload your summary log to record new packaging waste or adjust previously submitted data.",
-        "uploadLink": "Upload your summary log"
-      },
-      "perns": {
-        "title": "PERNs",
-        "description": "Create and manage PERNs.",
-        "createLink": "Create new PERN",
-        "manageLink": "Manage PERNs"
-      },
-      "reports": {
-        "title": "Reports",
-        "description": "Create and manage your reports.",
-        "manageLink": "Manage reports"
-      },
-      "registrationAccreditation": {
-        "title": "Registration and accreditation",
-        "description": "View and manage your registration and accreditation applications.",
-        "manageLink": "Manage your registration and accreditation",
-        "contactPrefix": "If you have any questions about a registration or accreditation,",
-        "contactLink": "contact your regulator"
-      }
-    },
     "manageRegistrationAccreditation": {
       "heading": "Manage your registration and accreditation",
       "applicationStatusLabel": "Application status:",

@@ -1,6 +1,6 @@
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
+import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
 import {
-  dashboardUrl,
   loadManagePage,
   manageCaption,
   overseasSitesUrl
@@ -20,13 +20,15 @@ export const manageRegistrationAccreditationController = {
       return response
     }
 
+    const { organisationId, registrationId } = request.params
     const heading = t('pages.manageRegistrationAccreditation.heading')
 
     return h.view('manage/registration-accreditation/index', {
       pageTitle: heading,
       heading,
       caption: manageCaption(application, t),
-      backLink: dashboardUrl(request.params, currentLocale),
+      // RA-425: back to the Re/Ex material page that links here.
+      backLink: reExBackLinkUrl(organisationId, registrationId),
       isExporter: application.isExporter,
       siteAddress: application.siteAddress,
       applicationStatusTag: applicationStatusTag(

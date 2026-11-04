@@ -12,9 +12,9 @@ import {
   MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
   MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID
 } from '../common/constants/test-orgs.js'
-import { dashboardUrl } from '../manage/helpers/manage-page.js'
+import { manageUrl } from '../manage/helpers/manage-page.js'
 
-function dashboardLink(
+function manageLink(
   organisationId,
   organisationName,
   registrationId,
@@ -22,7 +22,7 @@ function dashboardLink(
 ) {
   const materialType = material.charAt(0).toUpperCase() + material.slice(1)
   return {
-    href: dashboardUrl({ organisationId, registrationId, materialType }),
+    href: manageUrl({ organisationId, registrationId, materialType }),
     organisationName,
     materialType
   }
@@ -31,16 +31,16 @@ function dashboardLink(
 // The stub API has no plastic accreditation for Delta Green, and the backend's
 // dev seed has no reprocessor for the manage test org, so each mode links to
 // the reprocessor it can serve.
-function reprocessorDashboardLink() {
+function reprocessorManageLink() {
   if (config.get('api.stubEnabled')) {
-    return dashboardLink(
+    return manageLink(
       MANAGE_EXPORTER_ORG_ID,
       MANAGE_EXPORTER_ORG_NAME,
       MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
       MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL
     )
   }
-  return dashboardLink(
+  return manageLink(
     DELTA_GREEN_ORG_ID,
     DELTA_GREEN_SEEDED_ORG_NAME,
     DELTA_GREEN_REGISTRATION_ID,
@@ -48,10 +48,10 @@ function reprocessorDashboardLink() {
   )
 }
 
-function manageDashboardLinks() {
+function manageLinks() {
   return {
-    reprocessor: reprocessorDashboardLink(),
-    exporter: dashboardLink(
+    reprocessor: reprocessorManageLink(),
+    exporter: manageLink(
       MANAGE_EXPORTER_ORG_ID,
       MANAGE_EXPORTER_ORG_NAME,
       MANAGE_EXPORTER_REGISTRATION_ID,
@@ -70,7 +70,7 @@ export const operatorController = {
       heading: t('pages.operator.heading'),
       notification,
       inYearChangesEnabled,
-      manageDashboardLinks: inYearChangesEnabled ? manageDashboardLinks() : null
+      manageLinks: inYearChangesEnabled ? manageLinks() : null
     })
   }
 }

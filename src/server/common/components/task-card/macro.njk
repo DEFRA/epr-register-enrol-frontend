@@ -1,13 +1,9 @@
-{# RA-425: shared by the /manage dashboard and the manage registration and
-   accreditation page, so their cards stay identical. headingLevel keeps the
-   heading outline unbroken: the dashboard has an h2 above its cards, the
-   manage page does not. #}
+{# RA-425: the manage registration and accreditation page's cards. #}
 {% macro appTaskCard(params) %}
   <div class="{{ params.columnClass or 'govuk-grid-column-one-half' }} app-task-card__column">
     <div class="app-task-card" data-testid="task-card-{{ params.id }}">
       <div class="app-task-card__header">
-        {% set level = params.headingLevel or 3 %}
-        <h{{ level }} class="govuk-heading-m">{{ params.title }}</h{{ level }}>
+        <h2 class="govuk-heading-m">{{ params.title }}</h2>
         <p class="govuk-body-s govuk-!-margin-bottom-0">{{ params.description }}</p>
       </div>
       <div class="app-task-card__body">
@@ -17,9 +13,8 @@
   </div>
 {% endmacro %}
 
-{# RA-425: some card links have no destination yet (Summary log, PERNs,
-   Reports, Upgrade tonnage). Figma still shows them as links, so they look
-   like one but have no href. #}
+{# RA-425: some card links have no destination yet (Upgrade tonnage). Figma
+   still shows them as links, so they look like one but have no href. #}
 {% macro appInactiveLink(id, text) %}
   <p class="govuk-body"><a class="govuk-link app-inactive-link" aria-disabled="true" data-testid="{{ id }}">{{ text }}</a></p>
 {% endmacro %}

@@ -1,9 +1,9 @@
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
+import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
 import {
-  dashboardUrl,
   loadManagePage,
   manageCaption,
-  registrationAccreditationUrl,
+  manageUrl,
   serviceProblem
 } from '../helpers/manage-page.js'
 
@@ -65,6 +65,7 @@ export const manageOverseasSitesController = {
       return serviceProblem(request, h, t)
     }
 
+    const { organisationId, registrationId } = request.params
     const heading = t('pages.manageOverseasSites.heading')
     const { accredited, registered } = partitionSites(sites)
 
@@ -73,8 +74,9 @@ export const manageOverseasSitesController = {
       heading,
       caption: manageCaption(application, t),
       year: application.year,
-      backLink: registrationAccreditationUrl(request.params, currentLocale),
-      homeUrl: dashboardUrl(request.params, currentLocale),
+      backLink: manageUrl(request.params, currentLocale),
+      // RA-425: "home" is the Re/Ex material page.
+      homeUrl: reExBackLinkUrl(organisationId, registrationId),
       accreditedSites: accredited,
       registeredSites: registered
     })
