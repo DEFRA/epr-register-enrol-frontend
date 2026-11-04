@@ -15,13 +15,15 @@ function addressLine1(site) {
 
 // RA-425: withdrawn interim sites are filtered per ORS, so withdrawing a
 // shared interim site from one ORS leaves it showing under the others.
-function toOrsView(site) {
+// Interim sites belong to the accreditation, so a registered-only ORS shows
+// none, even if its registration lists some (Figma's Registered tab has none).
+function toOrsView(site, { withInterimSites }) {
   return {
     siteId: site.siteId,
     orsId: site.orsId,
     siteName: site.siteName,
     address: [addressLine1(site), site.country].filter(Boolean).join(', '),
-    interimSites: activeInterimSites(site)
+    interimSites: withInterimSites ? activeInterimSites(site) : []
   }
 }
 
@@ -34,9 +36,9 @@ function partitionSites(sites) {
   const registered = []
   for (const site of sites) {
     if (site.selected === true) {
-      accredited.push(toOrsView(site))
+      accredited.push(toOrsView(site, { withInterimSites: true }))
     } else if (!site.isNewSite) {
-      registered.push(toOrsView(site))
+      registered.push(toOrsView(site, { withInterimSites: false }))
     }
   }
   return { accredited, registered }

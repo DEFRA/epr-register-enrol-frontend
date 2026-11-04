@@ -77,7 +77,12 @@ const SITES = [
     // Withdrawn here only: still current under ORSs 1 and 2.
     interimSites: [sharedHub(52, { removedAt: '2027-04-01T00:00:00Z' })]
   }),
-  ors(4, { selected: false, siteName: 'Registered Only Ltd' }),
+  // Interim sites from its registration: not on the accreditation, so hidden.
+  ors(4, {
+    selected: false,
+    siteName: 'Registered Only Ltd',
+    interimSites: [interimSite(40, { siteName: 'Registration Interim' })]
+  }),
   ors(5, { selected: false }),
   // No selected value: only an explicit selection is accredited.
   ors(7, { selected: undefined }),
@@ -335,7 +340,15 @@ describe('#manageOverseasSitesController', () => {
 
     test('shows no disclosure for an ORS with no current interim sites', () => {
       expect(result).not.toContain('interim-sites-disclosure-3"')
-      expect(result).not.toContain('interim-sites-disclosure-4"')
+    })
+
+    test('never shows interim sites on the Registered tab, even for a registered ORS that has them', () => {
+      const registered = tabPanel(result, 'registered')
+
+      expect(registered).toContain('data-testid="registered-site-row-4"')
+      expect(registered).not.toContain('interim-sites-disclosure')
+      expect(registered).not.toContain('Show interim sites')
+      expect(result).not.toContain('Registration Interim')
     })
 
     test('is read-only: no change, withdraw or add actions', () => {
@@ -432,6 +445,11 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="registered-sites-tab"[^>]*>\s*Registered \(1\)\s*</
       )
       expect(result).toMatch(/Show interim sites \(2\)/)
+      // Dragon Recyclers is registered only, so its interim site stays hidden.
+      expect(tabPanel(result, 'registered')).not.toContain(
+        'interim-sites-disclosure'
+      )
+      expect(result).not.toContain('Saigon Port Storage')
     })
   })
 })

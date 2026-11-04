@@ -133,7 +133,13 @@ function exporterOrs(year) {
       'Dragon Recyclers',
       '8 Harbour Avenue',
       'Vietnam',
-      { selected: false }
+      // Registered only: the overseas-sites page must not show this.
+      {
+        selected: false,
+        interimSites: [
+          interimSite(901809, '005', 'Saigon Port Storage', 'Vietnam')
+        ]
+      }
     )
   ]
 }
