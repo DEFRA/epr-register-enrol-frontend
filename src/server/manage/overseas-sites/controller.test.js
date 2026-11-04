@@ -390,21 +390,35 @@ describe('#manageOverseasSitesController', () => {
     )
   })
 
-  test('says so when a tab has no ORSs', async () => {
-    const result = await getPage(
-      makeApp({ overseasSites: { sectionStatus: 'Completed', sites: [] } })
-    )
+  const TAB_LABELS = { accredited: 'Accredited', registered: 'Registered' }
 
-    expect(result).toMatch(
-      /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(0\)\s*</
-    )
-    expect(tabPanel(result, 'accredited')).toContain(
-      'data-testid="accredited-sites-empty"'
-    )
-    expect(tabPanel(result, 'registered')).toContain(
-      'data-testid="registered-sites-empty"'
-    )
-  })
+  test.each([
+    ['both tabs', [], ['accredited', 'registered']],
+    ['only Accredited', [ors(4, { selected: false })], ['accredited']],
+    ['only Registered', [ors(1)], ['registered']],
+    ['neither tab', SITES, []]
+  ])(
+    'shows the empty message on %s when it has no ORSs',
+    async (_case, sites, emptyTabs) => {
+      const result = await getPage(
+        makeApp({ overseasSites: { sectionStatus: 'Completed', sites } })
+      )
+
+      for (const [name, label] of Object.entries(TAB_LABELS)) {
+        const emptyTestId = `data-testid="${name}-sites-empty"`
+        if (emptyTabs.includes(name)) {
+          expect(result).toMatch(
+            new RegExp(
+              `data-testid="${name}-sites-tab"[^>]*>\\s*${label} \\(0\\)\\s*<`
+            )
+          )
+          expect(tabPanel(result, name)).toContain(emptyTestId)
+        } else {
+          expect(result).not.toContain(emptyTestId)
+        }
+      }
+    }
+  )
 
   test('renders under the Welsh path with Welsh-prefixed links', async () => {
     mockManageGets([makeApp()])
