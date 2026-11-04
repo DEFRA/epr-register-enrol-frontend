@@ -1,12 +1,11 @@
 import { config } from '../../config/config.js'
-import { stubApiClient, STUB_ORG_DOCS } from './stub-api-client.js'
+import { stubApiClient, stubOrgDocs } from './stub-api-client.js'
 import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
 
 function overlayOrgName(items) {
+  const docs = stubOrgDocs()
   return items.map((item) => {
-    const doc = STUB_ORG_DOCS.find(
-      (d) => String(d.orgId) === String(item.orgId)
-    )
+    const doc = docs.find((d) => String(d.orgId) === String(item.orgId))
     return doc ? { ...item, companyName: doc.companyDetails?.name } : item
   })
 }

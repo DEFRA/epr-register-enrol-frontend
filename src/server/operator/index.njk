@@ -41,8 +41,8 @@
         {% if inYearChangesEnabled %}
           <h2 class="govuk-heading-m">Material dashboards (RA-425)</h2>
           <ul class="govuk-list govuk-list--bullet">
-            <li><a href="/manage/50003/aaa000000000000000050003/Plastic" class="govuk-link" data-testid="manage-dashboard-delta-green-link">Reprocessor material dashboard for Delta Green Ltd, Plastic</a></li>
-            <li><a href="/manage/50018/aaa000000000000000050018/Plastic" class="govuk-link" data-testid="manage-dashboard-exporter-link">Exporter material dashboard for Manage Accreditation Test Ltd, Plastic</a></li>
+            <li><a href="{{ manageDashboardHrefs.deltaGreen }}" class="govuk-link" data-testid="manage-dashboard-delta-green-link">Reprocessor material dashboard for Delta Green Ltd, Plastic</a></li>
+            <li><a href="{{ manageDashboardHrefs.exporter }}" class="govuk-link" data-testid="manage-dashboard-exporter-link">Exporter material dashboard for Manage Accreditation Test Ltd, Plastic</a></li>
           </ul>
         {% endif %}
         <h2 class="govuk-heading-m">PerfTest Records</h2>

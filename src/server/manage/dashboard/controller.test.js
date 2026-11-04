@@ -403,6 +403,28 @@ describe('#manageDashboardController', () => {
       )
     })
 
+    test('rolls the stub accreditation over to the new year without a reload', async () => {
+      const url = `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_EXPORTER_REGISTRATION_ID}/Plastic`
+      const accreditationNumber = (suffix) =>
+        new RegExp(
+          `data-testid="accreditation-number"[^>]*>\\s*A${suffix}EX0500180001PL\\s*<`
+        )
+      vi.useFakeTimers({ toFake: ['Date'] })
+
+      vi.setSystemTime(new Date(`${CURRENT_YEAR}-12-31T23:59:59.999Z`))
+      const before = await page.server.inject({ method: 'GET', url })
+      vi.setSystemTime(new Date(`${CURRENT_YEAR + 1}-01-01T00:00:00Z`))
+      const after = await page.server.inject({ method: 'GET', url })
+
+      expect(before.result).toMatch(
+        accreditationNumber(String(CURRENT_YEAR).slice(-2))
+      )
+      expect(after.statusCode).toBe(statusCodes.ok)
+      expect(after.result).toMatch(
+        accreditationNumber(String(CURRENT_YEAR + 1).slice(-2))
+      )
+    })
+
     test('shows the stub reprocessor accreditation', async () => {
       const { statusCode, result } = await page.server.inject({
         method: 'GET',

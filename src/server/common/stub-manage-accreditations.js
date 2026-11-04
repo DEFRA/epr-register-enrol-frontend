@@ -2,8 +2,11 @@
  * RA-425: stub organisation for the /manage pages, which only show an Approved
  * accreditation for the current calendar year. Its own organisation, so no
  * other stub journey's data changes, with one exporter and one reprocessor
- * registration. The year is worked out when the stub loads.
+ * registration. The year is read from the clock whenever the stub is served,
+ * so a dev server running across 1 January rolls over.
  */
+// The backend's dev seed (DevExporterAccreditationSeedService.cs in
+// epr-register-enrol-backend) defines the same org: keep the two in step.
 export const MANAGE_STUB_ORG_ID = 50018
 export const MANAGE_STUB_EXPORTER_REGISTRATION_ID = 'aaa000000000000000050018'
 export const MANAGE_STUB_REPROCESSOR_REGISTRATION_ID =
@@ -13,8 +16,13 @@ export const MANAGE_STUB_REPROCESSOR_REGISTRATION_ID =
 export const MANAGE_STUB_CREATED_REGISTRATION_ID = 'ccc000000000000000050018'
 export const MANAGE_STUB_MISSING_REGISTRATION_ID = 'ddd000000000000000050018'
 
-const CURRENT_YEAR = new Date().getUTCFullYear()
-const YEAR_SUFFIX = String(CURRENT_YEAR).slice(-2)
+function currentYear() {
+  return new Date().getUTCFullYear()
+}
+
+function yearSuffix(year) {
+  return String(year).slice(-2)
+}
 
 // Real formats. Registration and accreditation numbers: R or A, 2-digit year,
 // agency letter, R (reprocessor) or X (exporter), 6-digit org id, 4-digit
@@ -22,15 +30,20 @@ const YEAR_SUFFIX = String(CURRENT_YEAR).slice(-2)
 // and fake registry (FakeOrganisationPersistence) do. Application references (management-be's ApplicationReferenceGenerator): AP, 2-digit year,
 // agency code, 6-digit org id, last 3 characters of the postcode, first 2
 // letters of the material.
-const EXPORTER_REGISTRATION_NUMBER = `R${YEAR_SUFFIX}EX0500180001PL`
-const REPROCESSOR_REGISTRATION_NUMBER = `R${YEAR_SUFFIX}ER0500180002GR`
+function exporterRegistrationNumber(year) {
+  return `R${yearSuffix(year)}EX0500180001PL`
+}
 
-function approvedApplication(overrides) {
+function reprocessorRegistrationNumber(year) {
+  return `R${yearSuffix(year)}ER0500180002GR`
+}
+
+function approvedApplication(year, overrides) {
   return {
     applicationStatus: 'Approved',
-    yearlyMetrics: { year: String(CURRENT_YEAR) },
-    createdAt: `${CURRENT_YEAR - 1}-09-01T09:00:00Z`,
-    formSubmissionTime: `${CURRENT_YEAR - 1}-09-15T09:00:00Z`,
+    yearlyMetrics: { year: String(year) },
+    createdAt: `${year - 1}-09-01T09:00:00Z`,
+    formSubmissionTime: `${year - 1}-09-15T09:00:00Z`,
     submitterContactDetails: {
       fullName: 'Sam Patel',
       email: 'sam.patel@example.com',
@@ -89,111 +102,150 @@ function overseasSite(siteId, orsId, siteName, addressLine1, country, extra) {
   }
 }
 
-const EXPORTER_ORS = [
-  overseasSite(
-    901801,
-    '001',
-    'Rotterdam Recycling BV',
-    'Industrieweg 44',
-    'Netherlands',
-    {
-      interimSites: [
-        interimSite(901802, '001', 'Calais Storage SARL', 'France', {
-          operationCodes: ['R13']
-        }),
-        antwerpInterimSite(901803, '002'),
-        interimSite(901804, '003', 'Old Depot GmbH', 'Germany', {
-          removedAt: `${CURRENT_YEAR}-02-01T09:00:00Z`
-        })
-      ]
-    }
-  ),
-  overseasSite(901805, '002', 'Bharat Recycling', '12 Ring Road', 'India', {
-    interimSites: [antwerpInterimSite(901808, '004')]
-  }),
-  overseasSite(901806, '003', 'Berlin Steel GmbH', 'Hafenstrasse 9', 'Germany'),
-  overseasSite(
-    901807,
-    '004',
-    'Dragon Recyclers',
-    '8 Harbour Avenue',
-    'Vietnam',
-    { selected: false }
-  )
-]
-
-export const MANAGE_STUB_ORG_DOC = {
-  orgId: MANAGE_STUB_ORG_ID,
-  companyDetails: { name: 'Manage Accreditation Test Ltd' },
-  accreditations: [
-    approvedApplication({
-      id: 'app018exp',
-      applicationReference: `AP${YEAR_SUFFIX}EA0500183ABPL`,
-      accreditationReference: `A${YEAR_SUFFIX}EX0500180001PL`,
-      material: 'plastic',
-      wasteProcessingType: 'exporter',
-      registrationId: MANAGE_STUB_EXPORTER_REGISTRATION_ID,
-      wasteRegistrationNumber: EXPORTER_REGISTRATION_NUMBER,
-      companyRegisteredAddress: {
-        line1: '18 Harbour Road',
-        town: 'Felixstowe',
-        postcode: 'IP11 3AB'
-      },
-      companyRegisterAddressPostcode: 'IP11 3AB',
-      overseasSites: { sectionStatus: 'Completed', sites: EXPORTER_ORS },
-      besEvidence: { sectionStatus: 'Completed' }
-    }),
-    approvedApplication({
-      id: 'app018rep',
-      applicationReference: `AP${YEAR_SUFFIX}EA0500185HTGL`,
-      accreditationReference: `A${YEAR_SUFFIX}ER0500180002GR`,
-      material: 'glass',
-      glassRecyclingProcess: ['glass_re_melt'],
-      wasteProcessingType: 'reprocessor',
-      registrationId: MANAGE_STUB_REPROCESSOR_REGISTRATION_ID,
-      wasteRegistrationNumber: REPROCESSOR_REGISTRATION_NUMBER,
-      siteAddress: {
-        line1: 'Unit 18, Furnace Lane',
-        town: 'Doncaster',
-        postcode: 'DN4 5HT'
+function exporterOrs(year) {
+  return [
+    overseasSite(
+      901801,
+      '001',
+      'Rotterdam Recycling BV',
+      'Industrieweg 44',
+      'Netherlands',
+      {
+        interimSites: [
+          interimSite(901802, '001', 'Calais Storage SARL', 'France', {
+            operationCodes: ['R13']
+          }),
+          antwerpInterimSite(901803, '002'),
+          interimSite(901804, '003', 'Old Depot GmbH', 'Germany', {
+            removedAt: `${year}-02-01T09:00:00Z`
+          })
+        ]
       }
+    ),
+    overseasSite(901805, '002', 'Bharat Recycling', '12 Ring Road', 'India', {
+      interimSites: [antwerpInterimSite(901808, '004')]
     }),
-    ...[
-      ['app018created', MANAGE_STUB_CREATED_REGISTRATION_ID, '0003', 'DN4 6HT'],
-      ['app018missing', MANAGE_STUB_MISSING_REGISTRATION_ID, '0004', 'DN4 7HT']
-    ].map(([id, registrationId, sequence, postcode]) =>
-      approvedApplication({
-        id,
-        applicationReference: `AP${YEAR_SUFFIX}EA050018${postcode.slice(-3)}WO`,
-        accreditationReference: `A${YEAR_SUFFIX}ER050018${sequence}WO`,
-        material: 'wood',
+    overseasSite(
+      901806,
+      '003',
+      'Berlin Steel GmbH',
+      'Hafenstrasse 9',
+      'Germany'
+    ),
+    overseasSite(
+      901807,
+      '004',
+      'Dragon Recyclers',
+      '8 Harbour Avenue',
+      'Vietnam',
+      { selected: false }
+    )
+  ]
+}
+
+function buildOrgDoc(year) {
+  const suffix = yearSuffix(year)
+  return {
+    orgId: MANAGE_STUB_ORG_ID,
+    companyDetails: { name: 'Manage Accreditation Test Ltd' },
+    accreditations: [
+      approvedApplication(year, {
+        id: 'app018exp',
+        applicationReference: `AP${suffix}EA0500183ABPL`,
+        accreditationReference: `A${suffix}EX0500180001PL`,
+        material: 'plastic',
+        wasteProcessingType: 'exporter',
+        registrationId: MANAGE_STUB_EXPORTER_REGISTRATION_ID,
+        wasteRegistrationNumber: exporterRegistrationNumber(year),
+        companyRegisteredAddress: {
+          line1: '18 Harbour Road',
+          town: 'Felixstowe',
+          postcode: 'IP11 3AB'
+        },
+        companyRegisterAddressPostcode: 'IP11 3AB',
+        overseasSites: { sectionStatus: 'Completed', sites: exporterOrs(year) },
+        besEvidence: { sectionStatus: 'Completed' }
+      }),
+      approvedApplication(year, {
+        id: 'app018rep',
+        applicationReference: `AP${suffix}EA0500185HTGL`,
+        accreditationReference: `A${suffix}ER0500180002GR`,
+        material: 'glass',
+        glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
-        registrationId,
+        registrationId: MANAGE_STUB_REPROCESSOR_REGISTRATION_ID,
+        wasteRegistrationNumber: reprocessorRegistrationNumber(year),
         siteAddress: {
           line1: 'Unit 18, Furnace Lane',
           town: 'Doncaster',
-          postcode
+          postcode: 'DN4 5HT'
         }
-      })
-    )
-  ]
+      }),
+      ...[
+        [
+          'app018created',
+          MANAGE_STUB_CREATED_REGISTRATION_ID,
+          '0003',
+          'DN4 6HT'
+        ],
+        [
+          'app018missing',
+          MANAGE_STUB_MISSING_REGISTRATION_ID,
+          '0004',
+          'DN4 7HT'
+        ]
+      ].map(([id, registrationId, sequence, postcode]) =>
+        approvedApplication(year, {
+          id,
+          applicationReference: `AP${suffix}EA050018${postcode.slice(-3)}WO`,
+          accreditationReference: `A${suffix}ER050018${sequence}WO`,
+          material: 'wood',
+          wasteProcessingType: 'reprocessor',
+          registrationId,
+          siteAddress: {
+            line1: 'Unit 18, Furnace Lane',
+            town: 'Doncaster',
+            postcode
+          }
+        })
+      )
+    ]
+  }
+}
+
+// Kept for the rest of the year because the stub API saves writes into the
+// doc it serves; rebuilt (dropping those writes) once the year changes.
+let cachedOrgDoc = null
+
+/**
+ * The stub org doc for the current year.
+ */
+export function manageStubOrgDoc() {
+  const year = currentYear()
+  if (cachedOrgDoc?.year !== year) {
+    cachedOrgDoc = { year, doc: buildOrgDoc(year) }
+  }
+  return cachedOrgDoc.doc
 }
 
 /**
  * RA-425: what the backend's registration-status endpoint returns for the stub
  * registrations. A registration missing from here has no record (404).
  */
-export const MANAGE_STUB_REGISTRATION_STATUSES = {
-  [MANAGE_STUB_EXPORTER_REGISTRATION_ID]: {
-    registrationNumber: EXPORTER_REGISTRATION_NUMBER,
-    status: 'Approved'
-  },
-  [MANAGE_STUB_REPROCESSOR_REGISTRATION_ID]: {
-    registrationNumber: REPROCESSOR_REGISTRATION_NUMBER,
-    status: 'Approved'
-  },
-  [MANAGE_STUB_CREATED_REGISTRATION_ID]: {
-    registrationNumber: null,
-    status: 'Created'
+export function manageStubRegistrationStatuses() {
+  const year = currentYear()
+  return {
+    [MANAGE_STUB_EXPORTER_REGISTRATION_ID]: {
+      registrationNumber: exporterRegistrationNumber(year),
+      status: 'Approved'
+    },
+    [MANAGE_STUB_REPROCESSOR_REGISTRATION_ID]: {
+      registrationNumber: reprocessorRegistrationNumber(year),
+      status: 'Approved'
+    },
+    [MANAGE_STUB_CREATED_REGISTRATION_ID]: {
+      registrationNumber: null,
+      status: 'Created'
+    }
   }
 }

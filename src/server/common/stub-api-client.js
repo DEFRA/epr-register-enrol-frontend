@@ -9,8 +9,8 @@ import {
 } from './constants/businessPlanCategories.js'
 import { allInterimSites } from './helpers/interimSites.js'
 import {
-  MANAGE_STUB_ORG_DOC,
-  MANAGE_STUB_REGISTRATION_STATUSES
+  manageStubOrgDoc,
+  manageStubRegistrationStatuses
 } from './stub-manage-accreditations.js'
 
 // RA-456: derived from the shared category map — see
@@ -199,7 +199,11 @@ const DEFAULT_BP_PERCENTS = {
   other: 10
 }
 
-export const STUB_ORG_DOCS = [
+// RA-425: the Delta Green reprocessor the operator page links to.
+export const DELTA_GREEN_STUB_ORG_ID = 50003
+export const DELTA_GREEN_STUB_REGISTRATION_ID = 'aaa000000000000000050003'
+
+const STATIC_STUB_ORG_DOCS = [
   {
     orgId: 50001,
     companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
@@ -317,7 +321,7 @@ export const STUB_ORG_DOCS = [
     ]
   },
   {
-    orgId: 50003,
+    orgId: DELTA_GREEN_STUB_ORG_ID,
     companyDetails: { name: 'Delta Green Recycling Co' },
     accreditations: [
       {
@@ -327,7 +331,7 @@ export const STUB_ORG_DOCS = [
         material: 'glass',
         glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
-        registrationId: 'aaa000000000000000050003',
+        registrationId: DELTA_GREEN_STUB_REGISTRATION_ID,
         siteAddress: {
           line1: 'The Laundry',
           town: 'Siteville',
@@ -1007,9 +1011,13 @@ export const STUB_ORG_DOCS = [
         }
       }
     ]
-  },
-  MANAGE_STUB_ORG_DOC
+  }
 ]
+
+// A function so the RA-425 org doc follows the clock's year.
+export function stubOrgDocs() {
+  return [...STATIC_STUB_ORG_DOCS, manageStubOrgDoc()]
+}
 
 // Matches /{orgId}/{itemId}[/{section}] at end of path
 // Does NOT match BES evidence paths (too many segments)
@@ -1031,7 +1039,7 @@ const BP_PERCENT_FIELD_CATEGORY = PERCENT_FIELD_TO_CATEGORY
 const BP_DETAIL_FIELD_CATEGORY = DETAIL_FIELD_TO_CATEGORY
 
 function findOrgDoc(orgId) {
-  return STUB_ORG_DOCS.find((d) => String(d.orgId) === String(orgId)) ?? null
+  return stubOrgDocs().find((d) => String(d.orgId) === String(orgId)) ?? null
 }
 
 function findAccreditation(orgId, itemId) {
@@ -1100,7 +1108,7 @@ const REGISTRATION_STATUS_RE = /^\/api\/v1\/registrations\/([^/]+)\/status$/
 // Rejects like the real API client does for a 404, so callers see the same
 // "no record" error with or without the stub.
 function stubRegistrationStatus(registrationId) {
-  const registration = MANAGE_STUB_REGISTRATION_STATUSES[registrationId]
+  const registration = manageStubRegistrationStatuses()[registrationId]
   if (!registration) {
     return Promise.reject(
       Object.assign(new Error('API request failed: 404 Not Found'), {
@@ -1621,7 +1629,7 @@ export const stubApiClient = {
     if (fileMatch) {
       const item =
         findAccreditation(fileMatch[1], fileMatch[2]) ??
-        STUB_ORG_DOCS[0].accreditations[0]
+        STATIC_STUB_ORG_DOCS[0].accreditations[0]
       if (item.samplingPlan?.files) {
         item.samplingPlan.files = item.samplingPlan.files.filter(
           (f) => f.fileId !== fileMatch[3]
