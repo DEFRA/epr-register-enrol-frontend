@@ -9,6 +9,10 @@ import {
 } from './constants/businessPlanCategories.js'
 import { allInterimSites } from './helpers/interimSites.js'
 import {
+  DELTA_GREEN_ORG_ID,
+  DELTA_GREEN_REGISTRATION_ID
+} from './constants/test-orgs.js'
+import {
   manageStubOrgDoc,
   manageStubRegistrationStatuses
 } from './stub-manage-accreditations.js'
@@ -199,10 +203,6 @@ const DEFAULT_BP_PERCENTS = {
   other: 10
 }
 
-// RA-425: the Delta Green reprocessor the operator page links to.
-export const DELTA_GREEN_STUB_ORG_ID = 50003
-export const DELTA_GREEN_STUB_REGISTRATION_ID = 'aaa000000000000000050003'
-
 const STATIC_STUB_ORG_DOCS = [
   {
     orgId: 50001,
@@ -321,7 +321,7 @@ const STATIC_STUB_ORG_DOCS = [
     ]
   },
   {
-    orgId: DELTA_GREEN_STUB_ORG_ID,
+    orgId: DELTA_GREEN_ORG_ID,
     companyDetails: { name: 'Delta Green Recycling Co' },
     accreditations: [
       {
@@ -331,7 +331,7 @@ const STATIC_STUB_ORG_DOCS = [
         material: 'glass',
         glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
-        registrationId: DELTA_GREEN_STUB_REGISTRATION_ID,
+        registrationId: DELTA_GREEN_REGISTRATION_ID,
         siteAddress: {
           line1: 'The Laundry',
           town: 'Siteville',

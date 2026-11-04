@@ -1,39 +1,60 @@
 import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import {
-  DELTA_GREEN_STUB_ORG_ID,
-  DELTA_GREEN_STUB_REGISTRATION_ID
-} from '../common/stub-api-client.js'
-import {
-  MANAGE_STUB_EXPORTER_REGISTRATION_ID,
-  manageStubOrgDoc
-} from '../common/stub-manage-accreditations.js'
+  DELTA_GREEN_ORG_ID,
+  DELTA_GREEN_REGISTRATION_ID,
+  DELTA_GREEN_SEEDED_MATERIAL,
+  MANAGE_TEST_EXPORTER_MATERIAL,
+  MANAGE_TEST_EXPORTER_REGISTRATION_ID,
+  MANAGE_TEST_ORG_ID,
+  MANAGE_TEST_ORG_NAME,
+  MANAGE_TEST_REPROCESSOR_MATERIAL,
+  MANAGE_TEST_REPROCESSOR_REGISTRATION_ID
+} from '../common/constants/test-orgs.js'
+import { dashboardUrl } from '../manage/helpers/manage-page.js'
 
-function dashboardHref(organisationId, registrationId, material) {
+function dashboardLink(
+  organisationId,
+  organisationName,
+  registrationId,
+  material
+) {
   const materialType = material.charAt(0).toUpperCase() + material.slice(1)
-  return `/manage/${organisationId}/${registrationId}/${materialType}`
+  return {
+    href: dashboardUrl({ organisationId, registrationId, materialType }),
+    organisationName,
+    materialType
+  }
 }
 
-// RA-425: test-only links, built from the stub entries so the ids live in one
-// place.
-function manageDashboardHrefs() {
-  const exporterDoc = manageStubOrgDoc()
-  const exporter = exporterDoc.accreditations.find(
-    (accreditation) =>
-      accreditation.registrationId === MANAGE_STUB_EXPORTER_REGISTRATION_ID
+// The stub API has no plastic accreditation for Delta Green, and the backend's
+// dev seed has no reprocessor for the manage test org, so each mode links to
+// the reprocessor it can serve.
+function reprocessorDashboardLink() {
+  if (config.get('api.stubEnabled')) {
+    return dashboardLink(
+      MANAGE_TEST_ORG_ID,
+      MANAGE_TEST_ORG_NAME,
+      MANAGE_TEST_REPROCESSOR_REGISTRATION_ID,
+      MANAGE_TEST_REPROCESSOR_MATERIAL
+    )
+  }
+  return dashboardLink(
+    DELTA_GREEN_ORG_ID,
+    'Delta Green Ltd',
+    DELTA_GREEN_REGISTRATION_ID,
+    DELTA_GREEN_SEEDED_MATERIAL
   )
+}
+
+function manageDashboardLinks() {
   return {
-    // Plastic, not the frontend stub's glass: the backend's
-    // DevAccreditationHistorySeedService approves Delta Green for plastic.
-    deltaGreen: dashboardHref(
-      DELTA_GREEN_STUB_ORG_ID,
-      DELTA_GREEN_STUB_REGISTRATION_ID,
-      'plastic'
-    ),
-    exporter: dashboardHref(
-      exporterDoc.orgId,
-      exporter.registrationId,
-      exporter.material
+    reprocessor: reprocessorDashboardLink(),
+    exporter: dashboardLink(
+      MANAGE_TEST_ORG_ID,
+      MANAGE_TEST_ORG_NAME,
+      MANAGE_TEST_EXPORTER_REGISTRATION_ID,
+      MANAGE_TEST_EXPORTER_MATERIAL
     )
   }
 }
@@ -48,7 +69,7 @@ export const operatorController = {
       heading: t('pages.operator.heading'),
       notification,
       inYearChangesEnabled,
-      manageDashboardHrefs: inYearChangesEnabled ? manageDashboardHrefs() : null
+      manageDashboardLinks: inYearChangesEnabled ? manageDashboardLinks() : null
     })
   }
 }

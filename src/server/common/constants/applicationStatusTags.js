@@ -16,7 +16,7 @@ export const APPLICATION_STATUS_TAGS = {
 
 export function applicationStatusTag(status, t) {
   return {
-    text: t(`pages.operatorAccreditation.statuses.${status}`),
+    text: t(`common.applicationStatuses.${status}`),
     classes: APPLICATION_STATUS_TAGS[status]?.tagClass ?? ''
   }
 }

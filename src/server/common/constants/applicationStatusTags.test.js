@@ -7,7 +7,7 @@ const t = (key) => key
 describe('#applicationStatusTag', () => {
   test('pairs the status label with its tag colour', () => {
     expect(applicationStatusTag('Approved', t)).toEqual({
-      text: 'pages.operatorAccreditation.statuses.Approved',
+      text: 'common.applicationStatuses.Approved',
       classes: 'govuk-tag--green'
     })
   })

@@ -1,6 +1,6 @@
 import { getRegistrationStatus } from '../../common/helpers/registrationApiService.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
-import { APPROVED_STATUS } from './constants.js'
+import { APPROVED_STATUS } from '../../common/constants/applicationStatuses.js'
 
 /**
  * No RA-425 page may show an accreditation view for a registration that isn't

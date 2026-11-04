@@ -1,9 +1,9 @@
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
+import { localePrefix } from '../../common/helpers/localePrefix.js'
 import {
   loadManagePage,
-  localePrefix,
   registrationAccreditationUrl
 } from '../helpers/manage-page.js'
 

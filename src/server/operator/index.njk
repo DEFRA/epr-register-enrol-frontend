@@ -41,8 +41,8 @@
         {% if inYearChangesEnabled %}
           <h2 class="govuk-heading-m">Material dashboards (RA-425)</h2>
           <ul class="govuk-list govuk-list--bullet">
-            <li><a href="{{ manageDashboardHrefs.deltaGreen }}" class="govuk-link" data-testid="manage-dashboard-delta-green-link">Reprocessor material dashboard for Delta Green Ltd, Plastic</a></li>
-            <li><a href="{{ manageDashboardHrefs.exporter }}" class="govuk-link" data-testid="manage-dashboard-exporter-link">Exporter material dashboard for Manage Accreditation Test Ltd, Plastic</a></li>
+            <li><a href="{{ manageDashboardLinks.reprocessor.href }}" class="govuk-link" data-testid="manage-dashboard-reprocessor-link">Reprocessor material dashboard for {{ manageDashboardLinks.reprocessor.organisationName }}, {{ manageDashboardLinks.reprocessor.materialType }}</a></li>
+            <li><a href="{{ manageDashboardLinks.exporter.href }}" class="govuk-link" data-testid="manage-dashboard-exporter-link">Exporter material dashboard for {{ manageDashboardLinks.exporter.organisationName }}, {{ manageDashboardLinks.exporter.materialType }}</a></li>
           </ul>
         {% endif %}
         <h2 class="govuk-heading-m">PerfTest Records</h2>

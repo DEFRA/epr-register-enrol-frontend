@@ -13,6 +13,7 @@ import {
   APPLICATION_STATUS_TAGS,
   applicationStatusTag
 } from '../common/constants/applicationStatusTags.js'
+import { APPROVED_STATUS } from '../common/constants/applicationStatuses.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
 import {
@@ -35,7 +36,7 @@ const REAPPLY_TEXT_HIDDEN_STATUSES = new Set([
   'Saved',
   'Started',
   'NotStarted',
-  'Approved',
+  APPROVED_STATUS,
   'Withdrawn',
   'Cancelled',
   'Refused',
@@ -52,8 +53,8 @@ function buildCurrentAccreditation(application, siteName, priorYear) {
   return {
     accreditationNumber: accreditation.accreditationNumber,
     regulator: accreditation.regulator,
-    status: 'Approved',
-    statusTagClass: APPLICATION_STATUS_TAGS.Approved.tagClass,
+    status: APPROVED_STATUS,
+    statusTagClass: APPLICATION_STATUS_TAGS[APPROVED_STATUS].tagClass,
     expiryDate: `31 December ${priorYear}`,
     siteAddress: siteName,
     tonnage: accreditation.tonnage,

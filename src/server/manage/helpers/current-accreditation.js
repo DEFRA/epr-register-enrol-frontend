@@ -1,14 +1,8 @@
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { latestByCreatedAt } from '../../common/helpers/accreditationSelection.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
-import { APPROVED_STATUS } from './constants.js'
-
-// RA-425: the compliance period is always the current calendar year, never a
-// URL parameter. Read from the clock on every request so a long-running
-// process rolls over at midnight on 1 January.
-function currentYear() {
-  return new Date().getUTCFullYear()
-}
+import { APPROVED_STATUS } from '../../common/constants/applicationStatuses.js'
+import { currentYear } from '../../common/helpers/currentYear.js'
 
 function selectCurrentAccreditation(
   applications,
@@ -41,6 +35,8 @@ export async function fetchCurrentAccreditation({
   try {
     const applications =
       await accreditationApiService.listApplications(organisationId)
+    // RA-425: the compliance period is always the current calendar year,
+    // never a URL parameter.
     const chosen = selectCurrentAccreditation(applications, {
       registrationId,
       materialType,

@@ -74,19 +74,6 @@
       "authorisedUsersLabel": "Authorised users",
       "overseasSitesLabel": "Overseas reprocessing sites",
       "withdrawLink": "Withdraw application",
-      "statuses": {
-        "Saved": "NOT STARTED",
-        "Started": "IN PROGRESS",
-        "NotStarted": "NOT STARTED",
-        "Submitted": "SUBMITTED",
-        "DulyMade": "DULY MADE",
-        "Queried": "QUERIED",
-        "Updated": "UPDATED",
-        "AwaitingDecision": "AWAITING DECISION",
-        "Approved": "GRANTED",
-        "Rejected": "REFUSED",
-        "Withdrawn": "WITHDRAWN"
-      },
       "materials": {
         "Steel": "Steel",
         "Wood": "Wood",
@@ -1121,6 +1108,19 @@
       "materialLabel": "Material:",
       "siteLabel": "Site:",
       "yearLabel": "Year:"
+    },
+    "applicationStatuses": {
+      "Saved": "NOT STARTED",
+      "Started": "IN PROGRESS",
+      "NotStarted": "NOT STARTED",
+      "Submitted": "SUBMITTED",
+      "DulyMade": "DULY MADE",
+      "Queried": "QUERIED",
+      "Updated": "UPDATED",
+      "AwaitingDecision": "AWAITING DECISION",
+      "Approved": "GRANTED",
+      "Rejected": "REFUSED",
+      "Withdrawn": "WITHDRAWN"
     },
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",

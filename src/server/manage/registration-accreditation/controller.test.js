@@ -15,12 +15,13 @@ import {
   mockManageGets
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
+import { currentYear } from '../../common/helpers/currentYear.js'
 import {
-  MANAGE_STUB_ORG_ID,
-  MANAGE_STUB_EXPORTER_REGISTRATION_ID,
-  MANAGE_STUB_REPROCESSOR_REGISTRATION_ID,
-  MANAGE_STUB_CREATED_REGISTRATION_ID
-} from '../../common/stub-manage-accreditations.js'
+  MANAGE_TEST_ORG_ID,
+  MANAGE_TEST_EXPORTER_REGISTRATION_ID,
+  MANAGE_TEST_REPROCESSOR_REGISTRATION_ID,
+  MANAGE_TEST_CREATED_REGISTRATION_ID
+} from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
@@ -238,29 +239,29 @@ describe('#manageRegistrationAccreditationController', () => {
       operatorCanAccessOrganisation.mockResolvedValue(true)
     })
 
-    const year = () => new Date().getUTCFullYear()
-
     test('shows the stub exporter', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_EXPORTER_REGISTRATION_ID}/Plastic/registration-accreditation`
+        `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_EXPORTER_REGISTRATION_ID}/Plastic/registration-accreditation`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('data-testid="manage-overseas-sites-link"')
       expect(result).toMatch(
-        new RegExp(`data-testid="expiry-date"[^>]*>\\s*31 Dec ${year()}\\s*<`)
+        new RegExp(
+          `data-testid="expiry-date"[^>]*>\\s*31 Dec ${currentYear()}\\s*<`
+        )
       )
     })
 
     test('shows the stub reprocessor with its site address', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_REPROCESSOR_REGISTRATION_ID}/Glass/registration-accreditation`
+        `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_REPROCESSOR_REGISTRATION_ID}/Glass/registration-accreditation`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toMatch(
         new RegExp(
-          `data-testid="page-caption"[^>]*>\\s*Manage Accreditation Test Ltd \\(${year()}, Glass - Remelt\\)\\s*<`
+          `data-testid="page-caption"[^>]*>\\s*Manage Accreditation Test Ltd \\(${currentYear()}, Glass - Remelt\\)\\s*<`
         )
       )
       expect(result).toMatch(
@@ -270,7 +271,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the service-problem page for the stub registration that is not Approved', async () => {
       const { statusCode } = await get(
-        `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_CREATED_REGISTRATION_ID}/Wood/registration-accreditation`
+        `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_CREATED_REGISTRATION_ID}/Wood/registration-accreditation`
       )
 
       expect(statusCode).toBe(statusCodes.internalServerError)

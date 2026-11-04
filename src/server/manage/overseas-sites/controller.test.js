@@ -16,9 +16,9 @@ import {
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import {
-  MANAGE_STUB_ORG_ID,
-  MANAGE_STUB_EXPORTER_REGISTRATION_ID
-} from '../../common/stub-manage-accreditations.js'
+  MANAGE_TEST_ORG_ID,
+  MANAGE_TEST_EXPORTER_REGISTRATION_ID
+} from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
@@ -424,7 +424,7 @@ describe('#manageOverseasSitesController', () => {
 
     test('shows the stub exporter with accredited and registered ORSs and interim sites', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_EXPORTER_REGISTRATION_ID}/Plastic/overseas-sites`
+        `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_EXPORTER_REGISTRATION_ID}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)

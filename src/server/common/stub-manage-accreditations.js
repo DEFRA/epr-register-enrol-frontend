@@ -1,3 +1,15 @@
+import { currentYear, yearSuffix } from './helpers/currentYear.js'
+import {
+  MANAGE_TEST_CREATED_REGISTRATION_ID,
+  MANAGE_TEST_EXPORTER_MATERIAL,
+  MANAGE_TEST_EXPORTER_REGISTRATION_ID,
+  MANAGE_TEST_ORG_ID,
+  MANAGE_TEST_ORG_NAME,
+  MANAGE_TEST_MISSING_REGISTRATION_ID,
+  MANAGE_TEST_REPROCESSOR_MATERIAL,
+  MANAGE_TEST_REPROCESSOR_REGISTRATION_ID
+} from './constants/test-orgs.js'
+
 /**
  * RA-425: stub organisation for the /manage pages, which only show an Approved
  * accreditation for the current calendar year. Its own organisation, so no
@@ -5,31 +17,14 @@
  * registration. The year is read from the clock whenever the stub is served,
  * so a dev server running across 1 January rolls over.
  */
-// The backend's dev seed (DevExporterAccreditationSeedService.cs in
-// epr-register-enrol-backend) defines the same org: keep the two in step.
-export const MANAGE_STUB_ORG_ID = 50018
-export const MANAGE_STUB_EXPORTER_REGISTRATION_ID = 'aaa000000000000000050018'
-export const MANAGE_STUB_REPROCESSOR_REGISTRATION_ID =
-  'bbb000000000000000050018'
-// Error paths: Approved current-year accreditations whose registration is
-// Created, or has no registration record at all.
-export const MANAGE_STUB_CREATED_REGISTRATION_ID = 'ccc000000000000000050018'
-export const MANAGE_STUB_MISSING_REGISTRATION_ID = 'ddd000000000000000050018'
-
-function currentYear() {
-  return new Date().getUTCFullYear()
-}
-
-function yearSuffix(year) {
-  return String(year).slice(-2)
-}
 
 // Real formats. Registration and accreditation numbers: R or A, 2-digit year,
 // agency letter, R (reprocessor) or X (exporter), 6-digit org id, 4-digit
 // sequence, material code. Both follow the clock, as the backend's dev seeds
-// and fake registry (FakeOrganisationPersistence) do. Application references (management-be's ApplicationReferenceGenerator): AP, 2-digit year,
-// agency code, 6-digit org id, last 3 characters of the postcode, first 2
-// letters of the material.
+// and fake registry (FakeOrganisationPersistence) do. Application references
+// (management-be's ApplicationReferenceGenerator): AP, 2-digit year, agency
+// code, 6-digit org id, last 3 characters of the postcode, first 2 letters of
+// the material.
 function exporterRegistrationNumber(year) {
   return `R${yearSuffix(year)}EX0500180001PL`
 }
@@ -146,16 +141,16 @@ function exporterOrs(year) {
 function buildOrgDoc(year) {
   const suffix = yearSuffix(year)
   return {
-    orgId: MANAGE_STUB_ORG_ID,
-    companyDetails: { name: 'Manage Accreditation Test Ltd' },
+    orgId: MANAGE_TEST_ORG_ID,
+    companyDetails: { name: MANAGE_TEST_ORG_NAME },
     accreditations: [
       approvedApplication(year, {
         id: 'app018exp',
         applicationReference: `AP${suffix}EA0500183ABPL`,
         accreditationReference: `A${suffix}EX0500180001PL`,
-        material: 'plastic',
+        material: MANAGE_TEST_EXPORTER_MATERIAL,
         wasteProcessingType: 'exporter',
-        registrationId: MANAGE_STUB_EXPORTER_REGISTRATION_ID,
+        registrationId: MANAGE_TEST_EXPORTER_REGISTRATION_ID,
         wasteRegistrationNumber: exporterRegistrationNumber(year),
         companyRegisteredAddress: {
           line1: '18 Harbour Road',
@@ -170,10 +165,10 @@ function buildOrgDoc(year) {
         id: 'app018rep',
         applicationReference: `AP${suffix}EA0500185HTGL`,
         accreditationReference: `A${suffix}ER0500180002GR`,
-        material: 'glass',
+        material: MANAGE_TEST_REPROCESSOR_MATERIAL,
         glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
-        registrationId: MANAGE_STUB_REPROCESSOR_REGISTRATION_ID,
+        registrationId: MANAGE_TEST_REPROCESSOR_REGISTRATION_ID,
         wasteRegistrationNumber: reprocessorRegistrationNumber(year),
         siteAddress: {
           line1: 'Unit 18, Furnace Lane',
@@ -184,13 +179,13 @@ function buildOrgDoc(year) {
       ...[
         [
           'app018created',
-          MANAGE_STUB_CREATED_REGISTRATION_ID,
+          MANAGE_TEST_CREATED_REGISTRATION_ID,
           '0003',
           'DN4 6HT'
         ],
         [
           'app018missing',
-          MANAGE_STUB_MISSING_REGISTRATION_ID,
+          MANAGE_TEST_MISSING_REGISTRATION_ID,
           '0004',
           'DN4 7HT'
         ]
@@ -217,9 +212,6 @@ function buildOrgDoc(year) {
 // doc it serves; rebuilt (dropping those writes) once the year changes.
 let cachedOrgDoc = null
 
-/**
- * The stub org doc for the current year.
- */
 export function manageStubOrgDoc() {
   const year = currentYear()
   if (cachedOrgDoc?.year !== year) {
@@ -235,15 +227,15 @@ export function manageStubOrgDoc() {
 export function manageStubRegistrationStatuses() {
   const year = currentYear()
   return {
-    [MANAGE_STUB_EXPORTER_REGISTRATION_ID]: {
+    [MANAGE_TEST_EXPORTER_REGISTRATION_ID]: {
       registrationNumber: exporterRegistrationNumber(year),
       status: 'Approved'
     },
-    [MANAGE_STUB_REPROCESSOR_REGISTRATION_ID]: {
+    [MANAGE_TEST_REPROCESSOR_REGISTRATION_ID]: {
       registrationNumber: reprocessorRegistrationNumber(year),
       status: 'Approved'
     },
-    [MANAGE_STUB_CREATED_REGISTRATION_ID]: {
+    [MANAGE_TEST_CREATED_REGISTRATION_ID]: {
       registrationNumber: null,
       status: 'Created'
     }

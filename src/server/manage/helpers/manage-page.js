@@ -6,6 +6,7 @@ import { materialDisplayName } from '../../common/helpers/materialDisplayName.js
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
+import { localePrefix } from '../../common/helpers/localePrefix.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { fetchCurrentAccreditation } from './current-accreditation.js'
@@ -23,10 +24,6 @@ function notFoundUnlessEnabled(_request, h) {
 export const manageRouteOptions = {
   ...requireOperator,
   ext: { onPreAuth: { method: notFoundUnlessEnabled } }
-}
-
-export function localePrefix(currentLocale) {
-  return currentLocale === 'cy' ? '/cy' : ''
 }
 
 export function dashboardUrl(

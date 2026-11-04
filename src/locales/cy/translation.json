@@ -72,18 +72,6 @@
       "authorisedUsersLabel": "[Welsh] Authorised users",
       "overseasSitesLabel": "[Welsh] Overseas reprocessing sites",
       "withdrawLink": "[Welsh] Withdraw application",
-      "statuses": {
-        "Saved": "[Welsh] NOT STARTED",
-        "Started": "[Welsh] IN PROGRESS",
-        "Submitted": "[Welsh] SUBMITTED",
-        "DulyMade": "[Welsh] DULY MADE",
-        "Queried": "[Welsh] QUERIED",
-        "Updated": "[Welsh] UPDATED",
-        "AwaitingDecision": "[Welsh] AWAITING DECISION",
-        "Approved": "[Welsh] GRANTED",
-        "Rejected": "[Welsh] REFUSED",
-        "Withdrawn": "[Welsh] WITHDRAWN"
-      },
       "materials": {
         "Steel": "Dur",
         "Wood": "Pren",
@@ -1119,6 +1107,18 @@
       "materialLabel": "[Welsh] Material:",
       "siteLabel": "[Welsh] Site:",
       "yearLabel": "[Welsh] Year:"
+    },
+    "applicationStatuses": {
+      "Saved": "[Welsh] NOT STARTED",
+      "Started": "[Welsh] IN PROGRESS",
+      "Submitted": "[Welsh] SUBMITTED",
+      "DulyMade": "[Welsh] DULY MADE",
+      "Queried": "[Welsh] QUERIED",
+      "Updated": "[Welsh] UPDATED",
+      "AwaitingDecision": "[Welsh] AWAITING DECISION",
+      "Approved": "[Welsh] GRANTED",
+      "Rejected": "[Welsh] REFUSED",
+      "Withdrawn": "[Welsh] WITHDRAWN"
     },
     "regulatorQuery": {
       "heading": "[Welsh] Regulator query",
