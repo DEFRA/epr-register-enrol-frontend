@@ -76,3 +76,15 @@
     border-left: 5px solid $govuk-border-colour;
   }
 }
+
+// RA-425: per Figma, the ORS tab panels have no side or bottom border and no
+// side padding: only the rule under the tab list frames them. Matches the
+// JS-enabled tablet-up rule it overrides.
+.govuk-frontend-supported .app-ors-tabs .govuk-tabs__panel {
+  @media #{govuk-from-breakpoint(tablet)} {
+    @include govuk-responsive-margin(6, 'bottom');
+
+    padding: govuk-spacing(6) 0 0;
+    border: 0;
+  }
+}

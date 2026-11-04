@@ -30,7 +30,11 @@ export const manageRegistrationAccreditationController = {
       // RA-425: back to the Re/Ex material page that links here.
       backLink: reExBackLinkUrl(organisationId, registrationId),
       isExporter: application.isExporter,
-      siteAddress: application.siteAddress,
+      // Exporters have no reprocessing site, so they see their registered
+      // address, as on the rest of the accreditation journey.
+      address: application.isExporter
+        ? application.companyRegisteredAddress
+        : application.siteAddress,
       applicationStatusTag: applicationStatusTag(
         application.applicationStatus,
         t
