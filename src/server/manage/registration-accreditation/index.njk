@@ -14,8 +14,9 @@
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
       <h1 class="govuk-heading-xl" data-testid="page-heading">{{ heading }}</h1>
-      {% if address %}
-        <p class="govuk-heading-s" data-testid="address">{{ address }}</p>
+      {# RA-425: per Figma, exporters are not shown an address. #}
+      {% if not isExporter and siteAddress %}
+        <p class="govuk-heading-s" data-testid="site-address">{{ siteAddress }}</p>
       {% endif %}
     </div>
   </div>

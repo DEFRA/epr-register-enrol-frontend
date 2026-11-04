@@ -308,22 +308,12 @@ describe('#manageRegistrationAccreditationController', () => {
     expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Dec 2028\s*</)
   })
 
-  test('shows an exporter their registered address, and both cards', async () => {
-    mockManageGets([
-      makeApp({
-        companyRegisteredAddress: {
-          line1: '1 Dock Street',
-          town: 'Hull',
-          postcode: 'HU1 1AA'
-        }
-      })
-    ])
+  test('shows an exporter no site address, and both cards', async () => {
+    mockManageGets([makeApp()])
 
     const { result } = await get(PAGE_URL)
 
-    expect(result).toMatch(
-      /data-testid="address"[^>]*>\s*1 Dock Street, Hull, HU1 1AA\s*</
-    )
+    expect(result).not.toContain('data-testid="site-address"')
     expect(result).toContain('data-testid="task-card-manage-accreditation"')
     expect(result).toMatch(
       new RegExp(
@@ -351,21 +341,13 @@ describe('#manageRegistrationAccreditationController', () => {
     const { result } = await get(PAGE_URL)
 
     expect(result).toMatch(
-      /data-testid="address"[^>]*>\s*Unit 5, Bolton, BL4 7AQ\s*</
+      /data-testid="site-address"[^>]*>\s*Unit 5, Bolton, BL4 7AQ\s*</
     )
     expect(result).toContain('data-testid="task-card-manage-accreditation"')
     expect(result).not.toContain(
       'data-testid="task-card-manage-overseas-sites"'
     )
     expect(result).not.toContain('manage-overseas-sites-link')
-  })
-
-  test('shows no address line when the address is missing', async () => {
-    mockManageGets([makeApp()])
-
-    const { result } = await get(PAGE_URL)
-
-    expect(result).not.toContain('data-testid="address"')
   })
 
   test('renders under the Welsh path with Welsh-prefixed links', async () => {
@@ -412,9 +394,6 @@ describe('#manageRegistrationAccreditationController', () => {
           `data-testid="expiry-date"[^>]*>\\s*31 Dec ${currentYear()}\\s*<`
         )
       )
-      expect(result).toMatch(
-        /data-testid="address"[^>]*>\s*18 Harbour Road, Felixstowe, IP11 3AB\s*</
-      )
     })
 
     test('rolls the stub accreditation over to the new year without a reload', async () => {
@@ -450,7 +429,7 @@ describe('#manageRegistrationAccreditationController', () => {
         )
       )
       expect(result).toMatch(
-        /data-testid="address"[^>]*>\s*Unit 18, Furnace Lane, Doncaster, DN4 5HT\s*</
+        /data-testid="site-address"[^>]*>\s*Unit 18, Furnace Lane, Doncaster, DN4 5HT\s*</
       )
       expect(result).toMatch(
         new RegExp(
