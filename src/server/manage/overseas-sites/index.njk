@@ -5,7 +5,7 @@
 
 {% macro orsList(name, sites) %}
   <h2 class="govuk-heading-m">{{ t('pages.manageOverseasSites.' + name + '.heading') }}</h2>
-  <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro') | replace('{year}', year) }}</p>
+  <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro', { year: year }) }}</p>
   {% if sites.length %}
     <ul class="govuk-list app-ors-list" data-testid="{{ name }}-sites-list">
       {% for site in sites %}
@@ -42,7 +42,7 @@
     attributes: { 'data-testid': 'overseas-sites-tabs' },
     items: [
       {
-        label: t('pages.manageOverseasSites.accredited.tab') | replace('{count}', accreditedSites.length),
+        label: t('pages.manageOverseasSites.accredited.tab', { count: accreditedSites.length }),
         id: 'accredited',
         attributes: { 'data-testid': 'accredited-sites-tab' },
         panel: {
@@ -51,7 +51,7 @@
         }
       },
       {
-        label: t('pages.manageOverseasSites.registered.tab') | replace('{count}', registeredSites.length),
+        label: t('pages.manageOverseasSites.registered.tab', { count: registeredSites.length }),
         id: 'registered',
         attributes: { 'data-testid': 'registered-sites-tab' },
         panel: {

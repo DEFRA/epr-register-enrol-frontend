@@ -2,17 +2,49 @@ import { vi } from 'vitest'
 
 import { apiClient } from '../api-client.js'
 
+export const MANAGE_ORG_ID = 'org-123'
+export const MANAGE_REGISTRATION_ID = 'REG001'
+export const MANAGE_MATERIAL = 'Plastic'
+export const MANAGE_CURRENT_YEAR = 2027
+export const MANAGE_DASHBOARD_URL = `/manage/${MANAGE_ORG_ID}/${MANAGE_REGISTRATION_ID}/${MANAGE_MATERIAL}`
+
+export const approvedRegistration = {
+  registrationId: MANAGE_REGISTRATION_ID,
+  registrationNumber: 'R27EX0500180001PL',
+  status: 'Approved'
+}
+
 /**
- * RA-425: stubs the API calls behind the /manage pages. listApplications,
- * getApplication and getRegistrationStatus all go through apiClient.get, so
- * route by URL shape: the registration-status URL gets `registration` (thrown
- * when it is an Error), a last path segment matching an application id is the
- * single-application fetch, anything else is the list.
+ * A raw application that the /manage pages accept as the current
+ * accreditation for MANAGE_REGISTRATION_ID and MANAGE_MATERIAL.
+ *
+ * @param {object} [overrides]
+ */
+export const makeManageApp = (overrides = {}) => ({
+  id: 'app-current',
+  applicationStatus: 'Approved',
+  material: 'plastic',
+  wasteProcessingType: 'exporter',
+  registrationId: MANAGE_REGISTRATION_ID,
+  year: MANAGE_CURRENT_YEAR,
+  createdAt: '2026-10-01T09:00:00Z',
+  companyName: 'Acme Recycling Ltd',
+  applicationReference: 'AP27EA0500183ABPL',
+  accreditationReference: 'A27EX0500180001PL',
+  siteAddress: { line1: 'Unit 5', town: 'Bolton', postcode: 'BL4 7AQ' },
+  ...overrides
+})
+
+/**
+ * listApplications, getApplication and getRegistrationStatus all go through
+ * apiClient.get, so route by URL shape: the registration-status URL gets
+ * `registration` (thrown when it is an Error), a last path segment matching an
+ * application id is the single-application fetch, anything else is the list.
  *
  * @param {object[]} apps - raw applications, each with an `id`
- * @param {object|Error} registration - the registration-status response
+ * @param {object|Error} [registration] - the registration-status response
  */
-export function mockManageGets(apps, registration) {
+export function mockManageGets(apps, registration = approvedRegistration) {
   return vi.spyOn(apiClient, 'get').mockImplementation(async (url) => {
     if (url.startsWith('/api/v1/registrations/')) {
       if (registration instanceof Error) {

@@ -139,10 +139,10 @@ run under stub auth.
 
 ### Feature flags
 
-| Variable                         | Default | Description                                                                                                                                                                         |
-| -------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MULTIPLE_INTERIM_SITES_ENABLED` | `false` | RA-603. Lets an overseas reprocessing site carry more than one interim site                                                                                                         |
-| `IN_YEAR_CHANGES_ENABLED`        | `false` | In-year changes epic (from RA-425). The material dashboard at `/manage/{organisationId}/{registrationId}/{materialType}` and its current-accreditation pages. Off, every route 404s |
+| Variable                         | Default | Description                                                                                                                                                                                                                                                             |
+| -------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MULTIPLE_INTERIM_SITES_ENABLED` | `false` | RA-603. Lets an overseas reprocessing site carry more than one interim site                                                                                                                                                                                             |
+| `IN_YEAR_CHANGES_ENABLED`        | `false` | In-year changes epic (from RA-425). The material dashboard at `/manage/{organisationId}/{registrationId}/{materialType}` and its current-accreditation pages. Off, every route 404s. Against the real backend, also needs its `FeatureFlags__InYearChangesEnabled=true` |
 
 ### Analytics and cookie consent
 

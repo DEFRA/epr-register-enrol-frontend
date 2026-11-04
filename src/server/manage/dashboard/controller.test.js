@@ -1,25 +1,22 @@
-import {
-  describe,
-  test,
-  expect,
-  beforeAll,
-  afterAll,
-  afterEach,
-  beforeEach,
-  vi
-} from 'vitest'
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 import Boom from '@hapi/boom'
 
-import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { stubApiClient } from '../../common/stub-api-client.js'
 import {
+  MANAGE_ORG_ID as ORG_ID,
+  MANAGE_REGISTRATION_ID as REGISTRATION_ID,
+  MANAGE_MATERIAL as MATERIAL,
+  MANAGE_CURRENT_YEAR as CURRENT_YEAR,
+  MANAGE_DASHBOARD_URL as DASHBOARD_URL,
   apiError,
-  mockManageGets as mockApiGets
+  approvedRegistration,
+  makeManageApp as makeApp,
+  mockManageGets
 } from '../../common/test-helpers/manage-api.js'
+import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import {
   MANAGE_STUB_ORG_ID,
   MANAGE_STUB_EXPORTER_REGISTRATION_ID,
@@ -32,36 +29,9 @@ vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
 }))
 
-const ORG_ID = 'org-123'
-const REGISTRATION_ID = 'REG001'
-const MATERIAL = 'Plastic'
-const CURRENT_YEAR = 2027
-const DASHBOARD_URL = `/manage/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}`
 const WELSH_DASHBOARD_URL = `/cy${DASHBOARD_URL}`
 
-const makeApp = (overrides = {}) => ({
-  id: 'app-current',
-  applicationStatus: 'Approved',
-  material: 'plastic',
-  wasteProcessingType: 'exporter',
-  registrationId: REGISTRATION_ID,
-  year: CURRENT_YEAR,
-  createdAt: '2026-10-01T09:00:00Z',
-  applicationReference: 'AP27EA0500183ABPL',
-  accreditationReference: 'A27EX0500180001PL',
-  ...overrides
-})
-
 const REGISTRATION_STATUS_URL = `/api/v1/registrations/${REGISTRATION_ID}/status`
-
-const approvedRegistration = {
-  registrationId: REGISTRATION_ID,
-  registrationNumber: 'R27EX0500180001PL',
-  status: 'Approved'
-}
-
-const mockManageGets = (apps, registration = approvedRegistration) =>
-  mockApiGets(apps, registration)
 
 const LIST_URL = `/api/v1/accreditation-applications/${ORG_ID}`
 
@@ -73,44 +43,16 @@ function fetchedApplicationIds(getSpy) {
 }
 
 describe('#manageDashboardController', () => {
-  let server
-  let configOverrides = {}
-
-  beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) =>
-      key in configOverrides ? configOverrides[key] : originalGet(key)
-    )
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-    vi.restoreAllMocks()
-  })
-
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date(`${CURRENT_YEAR}-06-15T12:00:00Z`))
-    configOverrides = { 'featureFlags.inYearChangesEnabled': true }
-    operatorCanAccessOrganisation.mockImplementation(
-      async (_user, orgId) => orgId === ORG_ID
-    )
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
+  const page = setupManagePageServer()
 
   describe('feature flag', () => {
     test.each([DASHBOARD_URL, WELSH_DASHBOARD_URL])(
       'GET %s returns 404 when the flag is off, without reading data',
       async (url) => {
-        configOverrides = { 'featureFlags.inYearChangesEnabled': false }
+        page.setInYearChangesEnabled(false)
         const getSpy = mockManageGets([makeApp()])
 
-        const { statusCode } = await server.inject({ method: 'GET', url })
+        const { statusCode } = await page.server.inject({ method: 'GET', url })
 
         expect(statusCode).toBe(statusCodes.notFound)
         expect(getSpy).not.toHaveBeenCalled()
@@ -123,7 +65,7 @@ describe('#manageDashboardController', () => {
     test('returns 403 without reading data when the operator cannot access the organisation', async () => {
       const getSpy = mockManageGets([makeApp()])
 
-      const { statusCode } = await server.inject({
+      const { statusCode } = await page.server.inject({
         method: 'GET',
         url: `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}`
       })
@@ -138,7 +80,7 @@ describe('#manageDashboardController', () => {
       )
       const getSpy = mockManageGets([makeApp()])
 
-      const { statusCode } = await server.inject({
+      const { statusCode } = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -163,7 +105,7 @@ describe('#manageDashboardController', () => {
         })
       ])
 
-      const { statusCode } = await server.inject({
+      const { statusCode } = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -179,7 +121,7 @@ describe('#manageDashboardController', () => {
         makeApp({ id: 'app-middle', createdAt: '2026-10-01T00:00:00Z' })
       ])
 
-      await server.inject({ method: 'GET', url: DASHBOARD_URL })
+      await page.server.inject({ method: 'GET', url: DASHBOARD_URL })
 
       expect(fetchedApplicationIds(getSpy)).toEqual(['app-newest'])
     })
@@ -191,7 +133,7 @@ describe('#manageDashboardController', () => {
         makeApp({ id: 'app-next-year', year: CURRENT_YEAR + 1 })
       ])
 
-      await server.inject({ method: 'GET', url: DASHBOARD_URL })
+      await page.server.inject({ method: 'GET', url: DASHBOARD_URL })
 
       expect(fetchedApplicationIds(getSpy)).toEqual(['app-this-year'])
     })
@@ -203,7 +145,7 @@ describe('#manageDashboardController', () => {
         makeApp({ id: 'app-next-year', year: CURRENT_YEAR + 1 })
       ])
 
-      await server.inject({ method: 'GET', url: DASHBOARD_URL })
+      await page.server.inject({ method: 'GET', url: DASHBOARD_URL })
 
       expect(fetchedApplicationIds(getSpy)).toEqual(['app-next-year'])
     })
@@ -211,7 +153,7 @@ describe('#manageDashboardController', () => {
 
   describe('service problem', () => {
     function expectServiceProblem({ statusCode, result }, url) {
-      expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="service-problem-heading"')
       expect(result).toMatch(
         new RegExp(`href="${url}"[^>]*data-testid="try-again-link"`)
@@ -221,7 +163,7 @@ describe('#manageDashboardController', () => {
     test('shows the service-problem page with a try-again link when no application matches', async () => {
       mockManageGets([makeApp({ year: CURRENT_YEAR - 1 })])
 
-      const response = await server.inject({
+      const response = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -234,7 +176,7 @@ describe('#manageDashboardController', () => {
         Object.assign(new Error('boom'), { status: 500 })
       )
 
-      const response = await server.inject({
+      const response = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -251,7 +193,7 @@ describe('#manageDashboardController', () => {
         return apps
       })
 
-      const response = await server.inject({
+      const response = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -262,7 +204,7 @@ describe('#manageDashboardController', () => {
     test('keeps the Welsh path in the try-again link', async () => {
       mockManageGets([])
 
-      const response = await server.inject({
+      const response = await page.server.inject({
         method: 'GET',
         url: WELSH_DASHBOARD_URL
       })
@@ -275,7 +217,7 @@ describe('#manageDashboardController', () => {
       async (status) => {
         mockManageGets([makeApp()], { ...approvedRegistration, status })
 
-        const response = await server.inject({
+        const response = await page.server.inject({
           method: 'GET',
           url: DASHBOARD_URL
         })
@@ -287,7 +229,7 @@ describe('#manageDashboardController', () => {
     test('shows the service-problem page when the registration has no record', async () => {
       mockManageGets([makeApp()], apiError(statusCodes.notFound))
 
-      const response = await server.inject({
+      const response = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -298,7 +240,7 @@ describe('#manageDashboardController', () => {
     test('shows the service-problem page when the registration-status call fails', async () => {
       mockManageGets([makeApp()], apiError(statusCodes.internalServerError))
 
-      const response = await server.inject({
+      const response = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -310,7 +252,7 @@ describe('#manageDashboardController', () => {
   test('asks for the status of the registration in the URL', async () => {
     const getSpy = mockManageGets([makeApp()])
 
-    await server.inject({ method: 'GET', url: DASHBOARD_URL })
+    await page.server.inject({ method: 'GET', url: DASHBOARD_URL })
 
     expect(getSpy).toHaveBeenCalledWith(REGISTRATION_STATUS_URL)
   })
@@ -320,7 +262,7 @@ describe('#manageDashboardController', () => {
 
     beforeEach(async () => {
       mockManageGets([makeApp()])
-      const response = await server.inject({
+      const response = await page.server.inject({
         method: 'GET',
         url: DASHBOARD_URL
       })
@@ -413,7 +355,7 @@ describe('#manageDashboardController', () => {
   test('shows the same dashboard for a reprocessor', async () => {
     mockManageGets([makeApp({ wasteProcessingType: 'reprocessor' })])
 
-    const { statusCode, result } = await server.inject({
+    const { statusCode, result } = await page.server.inject({
       method: 'GET',
       url: DASHBOARD_URL
     })
@@ -428,7 +370,7 @@ describe('#manageDashboardController', () => {
   test('accepts the lowercase material slug Re/Ex links with', async () => {
     mockManageGets([makeApp()])
 
-    const { statusCode } = await server.inject({
+    const { statusCode } = await page.server.inject({
       method: 'GET',
       url: `/manage/${ORG_ID}/${REGISTRATION_ID}/plastic`
     })
@@ -448,7 +390,7 @@ describe('#manageDashboardController', () => {
     const yearSuffix = () => String(new Date().getUTCFullYear()).slice(-2)
 
     test('shows the stub exporter accreditation', async () => {
-      const { statusCode, result } = await server.inject({
+      const { statusCode, result } = await page.server.inject({
         method: 'GET',
         url: `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_EXPORTER_REGISTRATION_ID}/Plastic`
       })
@@ -462,7 +404,7 @@ describe('#manageDashboardController', () => {
     })
 
     test('shows the stub reprocessor accreditation', async () => {
-      const { statusCode, result } = await server.inject({
+      const { statusCode, result } = await page.server.inject({
         method: 'GET',
         url: `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_REPROCESSOR_REGISTRATION_ID}/Glass`
       })
@@ -492,12 +434,12 @@ describe('#manageDashboardController', () => {
     ])(
       'shows the service-problem page for the stub registration that is %s',
       async (_case, registrationId) => {
-        const { statusCode } = await server.inject({
+        const { statusCode } = await page.server.inject({
           method: 'GET',
           url: `/manage/${MANAGE_STUB_ORG_ID}/${registrationId}/Wood`
         })
 
-        expect(statusCode).toBe(statusCodes.serviceUnavailable)
+        expect(statusCode).toBe(statusCodes.internalServerError)
       }
     )
   })
@@ -505,7 +447,7 @@ describe('#manageDashboardController', () => {
   test('renders under the Welsh path with Welsh-prefixed links', async () => {
     mockManageGets([makeApp()])
 
-    const { statusCode, result } = await server.inject({
+    const { statusCode, result } = await page.server.inject({
       method: 'GET',
       url: WELSH_DASHBOARD_URL
     })

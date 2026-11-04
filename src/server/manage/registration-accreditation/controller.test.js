@@ -1,24 +1,20 @@
-import {
-  describe,
-  test,
-  expect,
-  beforeAll,
-  afterAll,
-  afterEach,
-  beforeEach,
-  vi
-} from 'vitest'
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 
-import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { stubApiClient } from '../../common/stub-api-client.js'
 import {
+  MANAGE_REGISTRATION_ID as REGISTRATION_ID,
+  MANAGE_MATERIAL as MATERIAL,
+  MANAGE_CURRENT_YEAR as CURRENT_YEAR,
+  MANAGE_DASHBOARD_URL as DASHBOARD_URL,
   apiError,
+  approvedRegistration,
+  makeManageApp as makeApp,
   mockManageGets
 } from '../../common/test-helpers/manage-api.js'
+import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import {
   MANAGE_STUB_ORG_ID,
   MANAGE_STUB_EXPORTER_REGISTRATION_ID,
@@ -30,75 +26,20 @@ vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
 }))
 
-const ORG_ID = 'org-123'
-const REGISTRATION_ID = 'REG001'
-const MATERIAL = 'Plastic'
-const CURRENT_YEAR = 2027
-const DASHBOARD_URL = `/manage/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}`
 const PAGE_URL = `${DASHBOARD_URL}/registration-accreditation`
 const WELSH_PAGE_URL = `/cy${PAGE_URL}`
-
-const makeApp = (overrides = {}) => ({
-  id: 'app-current',
-  applicationStatus: 'Approved',
-  material: 'plastic',
-  wasteProcessingType: 'exporter',
-  registrationId: REGISTRATION_ID,
-  year: CURRENT_YEAR,
-  createdAt: '2026-10-01T09:00:00Z',
-  companyName: 'Acme Recycling Ltd',
-  applicationReference: 'AP27EA0500183ABPL',
-  accreditationReference: 'A27EX0500180001PL',
-  siteAddress: { line1: 'Unit 5', town: 'Bolton', postcode: 'BL4 7AQ' },
-  ...overrides
-})
-
-const approvedRegistration = {
-  registrationId: REGISTRATION_ID,
-  registrationNumber: 'R27EX0500180001PL',
-  status: 'Approved'
-}
 
 const reprocessorApp = () => makeApp({ wasteProcessingType: 'reprocessor' })
 
 describe('#manageRegistrationAccreditationController', () => {
-  let server
-  let configOverrides = {}
-
-  beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) =>
-      key in configOverrides ? configOverrides[key] : originalGet(key)
-    )
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-    vi.restoreAllMocks()
-  })
-
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date(`${CURRENT_YEAR}-06-15T12:00:00Z`))
-    configOverrides = { 'featureFlags.inYearChangesEnabled': true }
-    operatorCanAccessOrganisation.mockImplementation(
-      async (_user, orgId) => orgId === ORG_ID
-    )
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  const get = (url) => server.inject({ method: 'GET', url })
+  const page = setupManagePageServer()
+  const { get } = page
 
   test.each([PAGE_URL, WELSH_PAGE_URL])(
     'GET %s returns 404 when the flag is off, without reading data',
     async (url) => {
-      configOverrides = { 'featureFlags.inYearChangesEnabled': false }
-      const getSpy = mockManageGets([makeApp()], approvedRegistration)
+      page.setInYearChangesEnabled(false)
+      const getSpy = mockManageGets([makeApp()])
 
       const { statusCode } = await get(url)
 
@@ -108,7 +49,7 @@ describe('#manageRegistrationAccreditationController', () => {
   )
 
   test('returns 403 without reading data when the operator cannot access the organisation', async () => {
-    const getSpy = mockManageGets([makeApp()], approvedRegistration)
+    const getSpy = mockManageGets([makeApp()])
 
     const { statusCode } = await get(
       `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}/registration-accreditation`
@@ -120,20 +61,17 @@ describe('#manageRegistrationAccreditationController', () => {
 
   describe('service problem', () => {
     function expectServiceProblem({ statusCode, result }) {
-      expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toMatch(
         new RegExp(`href="${PAGE_URL}"[^>]*data-testid="try-again-link"`)
       )
     }
 
     test('when there is no Approved current-year accreditation', async () => {
-      mockManageGets(
-        [
-          makeApp({ year: CURRENT_YEAR - 1 }),
-          makeApp({ id: 'app-started', applicationStatus: 'Started' })
-        ],
-        approvedRegistration
-      )
+      mockManageGets([
+        makeApp({ year: CURRENT_YEAR - 1 }),
+        makeApp({ id: 'app-started', applicationStatus: 'Started' })
+      ])
 
       expectServiceProblem(await get(PAGE_URL))
     })
@@ -166,7 +104,7 @@ describe('#manageRegistrationAccreditationController', () => {
     let result
 
     beforeEach(async () => {
-      mockManageGets([makeApp()], approvedRegistration)
+      mockManageGets([makeApp()])
       const response = await get(PAGE_URL)
       expect(response.statusCode).toBe(statusCodes.ok)
       result = response.result
@@ -220,10 +158,9 @@ describe('#manageRegistrationAccreditationController', () => {
 
   test('takes the expiry year from the accreditation, not the clock', async () => {
     vi.setSystemTime(new Date(`${CURRENT_YEAR + 1}-01-01T00:00:00Z`))
-    mockManageGets(
-      [makeApp({ year: CURRENT_YEAR + 1, yearlyMetrics: { year: '2028' } })],
-      approvedRegistration
-    )
+    mockManageGets([
+      makeApp({ year: CURRENT_YEAR + 1, yearlyMetrics: { year: '2028' } })
+    ])
 
     const { result } = await get(PAGE_URL)
 
@@ -231,7 +168,7 @@ describe('#manageRegistrationAccreditationController', () => {
   })
 
   test('shows an exporter no site address, and both cards', async () => {
-    mockManageGets([makeApp()], approvedRegistration)
+    mockManageGets([makeApp()])
 
     const { result } = await get(PAGE_URL)
 
@@ -245,7 +182,7 @@ describe('#manageRegistrationAccreditationController', () => {
   })
 
   test('gives the card titles h2 headings, as nothing sits between them and the h1', async () => {
-    mockManageGets([makeApp()], approvedRegistration)
+    mockManageGets([makeApp()])
 
     const { result } = await get(PAGE_URL)
 
@@ -258,7 +195,7 @@ describe('#manageRegistrationAccreditationController', () => {
   })
 
   test('shows a reprocessor their site address, and only the Manage accreditation card', async () => {
-    mockManageGets([reprocessorApp()], approvedRegistration)
+    mockManageGets([reprocessorApp()])
 
     const { result } = await get(PAGE_URL)
 
@@ -273,7 +210,7 @@ describe('#manageRegistrationAccreditationController', () => {
   })
 
   test('renders under the Welsh path with Welsh-prefixed links', async () => {
-    mockManageGets([makeApp()], approvedRegistration)
+    mockManageGets([makeApp()])
 
     const { statusCode, result } = await get(WELSH_PAGE_URL)
 
@@ -336,7 +273,7 @@ describe('#manageRegistrationAccreditationController', () => {
         `/manage/${MANAGE_STUB_ORG_ID}/${MANAGE_STUB_CREATED_REGISTRATION_ID}/Wood/registration-accreditation`
       )
 
-      expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(statusCode).toBe(statusCodes.internalServerError)
     })
   })
 })

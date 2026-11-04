@@ -1,24 +1,20 @@
-import {
-  describe,
-  test,
-  expect,
-  beforeAll,
-  afterAll,
-  afterEach,
-  beforeEach,
-  vi
-} from 'vitest'
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 
-import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { config } from '../../../config/config.js'
 import { apiClient } from '../../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { stubApiClient } from '../../common/stub-api-client.js'
 import {
+  MANAGE_REGISTRATION_ID as REGISTRATION_ID,
+  MANAGE_MATERIAL as MATERIAL,
+  MANAGE_CURRENT_YEAR as CURRENT_YEAR,
+  MANAGE_DASHBOARD_URL as DASHBOARD_URL,
   apiError,
+  approvedRegistration,
+  makeManageApp,
   mockManageGets
 } from '../../common/test-helpers/manage-api.js'
+import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import {
   MANAGE_STUB_ORG_ID,
   MANAGE_STUB_EXPORTER_REGISTRATION_ID
@@ -28,11 +24,6 @@ vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
 }))
 
-const ORG_ID = 'org-123'
-const REGISTRATION_ID = 'REG001'
-const MATERIAL = 'Plastic'
-const CURRENT_YEAR = 2027
-const DASHBOARD_URL = `/manage/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}`
 const PAGE_URL = `${DASHBOARD_URL}/overseas-sites`
 const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
@@ -93,61 +84,18 @@ const SITES = [
   ors(6, { selected: false, isNewSite: true })
 ]
 
-const makeApp = (overrides = {}) => ({
-  id: 'app-current',
-  applicationStatus: 'Approved',
-  material: 'plastic',
-  wasteProcessingType: 'exporter',
-  registrationId: REGISTRATION_ID,
-  year: CURRENT_YEAR,
-  createdAt: '2026-10-01T09:00:00Z',
-  companyName: 'Acme Recycling Ltd',
-  accreditationReference: 'A27EX0500180001PL',
-  overseasSites: { sectionStatus: 'Completed', sites: SITES },
-  ...overrides
-})
-
-const approvedRegistration = {
-  registrationId: REGISTRATION_ID,
-  registrationNumber: 'R27EX0500180001PL',
-  status: 'Approved'
-}
+const makeApp = (overrides = {}) =>
+  makeManageApp({
+    overseasSites: { sectionStatus: 'Completed', sites: SITES },
+    ...overrides
+  })
 
 describe('#manageOverseasSitesController', () => {
-  let server
-  let configOverrides = {}
-
-  beforeAll(async () => {
-    const originalGet = config.get.bind(config)
-    vi.spyOn(config, 'get').mockImplementation((key) =>
-      key in configOverrides ? configOverrides[key] : originalGet(key)
-    )
-    server = await createServer()
-    await server.initialize()
-  })
-
-  afterAll(async () => {
-    await server.stop({ timeout: 0 })
-    vi.restoreAllMocks()
-  })
-
-  beforeEach(() => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date(`${CURRENT_YEAR}-06-15T12:00:00Z`))
-    configOverrides = { 'featureFlags.inYearChangesEnabled': true }
-    operatorCanAccessOrganisation.mockImplementation(
-      async (_user, orgId) => orgId === ORG_ID
-    )
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  const get = (url) => server.inject({ method: 'GET', url })
+  const page = setupManagePageServer()
+  const { get } = page
 
   async function getPage(app = makeApp()) {
-    mockManageGets([app], approvedRegistration)
+    mockManageGets([app])
     const response = await get(PAGE_URL)
     expect(response.statusCode).toBe(statusCodes.ok)
     return response.result
@@ -174,8 +122,8 @@ describe('#manageOverseasSitesController', () => {
   test.each([PAGE_URL, WELSH_PAGE_URL])(
     'GET %s returns 404 when the flag is off, without reading data',
     async (url) => {
-      configOverrides = { 'featureFlags.inYearChangesEnabled': false }
-      const getSpy = mockManageGets([makeApp()], approvedRegistration)
+      page.setInYearChangesEnabled(false)
+      const getSpy = mockManageGets([makeApp()])
 
       const { statusCode } = await get(url)
 
@@ -185,7 +133,7 @@ describe('#manageOverseasSitesController', () => {
   )
 
   test('returns 403 without reading data when the operator cannot access the organisation', async () => {
-    const getSpy = mockManageGets([makeApp()], approvedRegistration)
+    const getSpy = mockManageGets([makeApp()])
 
     const { statusCode } = await get(
       `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}/overseas-sites`
@@ -196,10 +144,7 @@ describe('#manageOverseasSitesController', () => {
   })
 
   test('returns 404 for a reprocessor accreditation', async () => {
-    mockManageGets(
-      [makeApp({ wasteProcessingType: 'reprocessor' })],
-      approvedRegistration
-    )
+    mockManageGets([makeApp({ wasteProcessingType: 'reprocessor' })])
 
     const { statusCode } = await get(PAGE_URL)
 
@@ -230,20 +175,17 @@ describe('#manageOverseasSitesController', () => {
 
   describe('service problem', () => {
     function expectServiceProblem({ statusCode, result }) {
-      expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toMatch(
         new RegExp(`href="${PAGE_URL}"[^>]*data-testid="try-again-link"`)
       )
     }
 
     test('when there is no Approved current-year accreditation', async () => {
-      mockManageGets(
-        [
-          makeApp({ year: CURRENT_YEAR - 1 }),
-          makeApp({ id: 'app-started', applicationStatus: 'Started' })
-        ],
-        approvedRegistration
-      )
+      mockManageGets([
+        makeApp({ year: CURRENT_YEAR - 1 }),
+        makeApp({ id: 'app-started', applicationStatus: 'Started' })
+      ])
 
       expectServiceProblem(await get(PAGE_URL))
     })
@@ -270,6 +212,25 @@ describe('#manageOverseasSitesController', () => {
 
       expectServiceProblem(await get(PAGE_URL))
     })
+
+    test.each([
+      ['has no overseasSites', { overseasSites: undefined }],
+      ['has null overseasSites', { overseasSites: null }],
+      [
+        'has overseasSites without a sites list',
+        { overseasSites: { sectionStatus: 'Completed' } }
+      ]
+    ])(
+      'rather than empty tabs when the accreditation %s',
+      async (_case, overrides) => {
+        mockManageGets([makeApp(overrides)])
+
+        const response = await get(PAGE_URL)
+
+        expectServiceProblem(response)
+        expect(response.result).not.toContain('accredited-sites-tab')
+      }
+    )
   })
 
   describe('page content', () => {
@@ -418,7 +379,9 @@ describe('#manageOverseasSitesController', () => {
   })
 
   test('says so when a tab has no ORSs', async () => {
-    const result = await getPage(makeApp({ overseasSites: null }))
+    const result = await getPage(
+      makeApp({ overseasSites: { sectionStatus: 'Completed', sites: [] } })
+    )
 
     expect(result).toMatch(
       /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(0\)\s*</
@@ -432,7 +395,7 @@ describe('#manageOverseasSitesController', () => {
   })
 
   test('renders under the Welsh path with Welsh-prefixed links', async () => {
-    mockManageGets([makeApp()], approvedRegistration)
+    mockManageGets([makeApp()])
 
     const { statusCode, result } = await get(WELSH_PAGE_URL)
 

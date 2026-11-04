@@ -990,15 +990,15 @@
     "manageOverseasSites": {
       "heading": "[Welsh] Manage overseas reprocessing sites",
       "accredited": {
-        "tab": "[Welsh] Accredited ({count})",
+        "tab": "[Welsh] Accredited ({{count}})",
         "heading": "[Welsh] Accredited overseas reprocessing sites",
-        "intro": "[Welsh] These are your accredited overseas reprocessing sites for {year}.",
+        "intro": "[Welsh] These are your accredited overseas reprocessing sites for {{year}}.",
         "empty": "[Welsh] You have no accredited overseas reprocessing sites."
       },
       "registered": {
-        "tab": "[Welsh] Registered ({count})",
+        "tab": "[Welsh] Registered ({{count}})",
         "heading": "[Welsh] Registered overseas reprocessing sites",
-        "intro": "[Welsh] These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {year}.",
+        "intro": "[Welsh] These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {{year}}.",
         "empty": "[Welsh] You have no other registered overseas reprocessing sites."
       },
       "interimDisclosure": "[Welsh] Show interim sites",

@@ -44,13 +44,13 @@ export function overseasSitesUrl(params, currentLocale) {
   return `${dashboardUrl(params, currentLocale)}/overseas-sites`
 }
 
-function serviceProblem(request, h, t) {
+export function serviceProblem(request, h, t) {
   return h
     .view('errors/service-problem', {
       pageTitle: t('common.errors.serviceTitle'),
       retryUrl: request.path
     })
-    .code(statusCodes.serviceUnavailable)
+    .code(statusCodes.internalServerError)
 }
 
 export function manageCaption(application, t) {
@@ -62,10 +62,6 @@ export function manageCaption(application, t) {
 }
 
 /**
- * Everything an RA-425 page needs before it renders: the organisation access
- * check (before any data is read), then the current accreditation and the
- * registration, which must be Approved.
- *
  * With exportersOnly, a reprocessor's accreditation is a 404 whatever state
  * its registration is in: the page doesn't exist for them, so that answer
  * shouldn't depend on whether the registration happens to be Approved.

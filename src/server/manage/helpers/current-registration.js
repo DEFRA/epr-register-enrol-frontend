@@ -3,9 +3,8 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { APPROVED_STATUS } from './constants.js'
 
 /**
- * The registration, provided it is Approved. Shared by every RA-425 page
- * alongside fetchCurrentAccreditation: none of them may show an accreditation
- * view for a registration that isn't in good standing.
+ * No RA-425 page may show an accreditation view for a registration that isn't
+ * in good standing.
  *
  * Returns null when the status is Created, Rejected or Cancelled, when the
  * registration has no record, or when the call fails; the caller shows the

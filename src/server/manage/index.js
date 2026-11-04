@@ -15,7 +15,6 @@ const ROUTES = [
   [`${DASHBOARD_PATH}/overseas-sites`, manageOverseasSitesController]
 ]
 
-// RA-425: every route 404s until inYearChangesEnabled is on (manageRouteOptions).
 export const manage = {
   plugin: {
     name: 'manage',

@@ -26,9 +26,8 @@ function selectCurrentAccreditation(
 }
 
 /**
- * The Approved application for this registration and material in the current
- * calendar year, fetched in full. Shared by every RA-425 page so they always
- * agree on which accreditation they show.
+ * Shared by every RA-425 page so they always agree on which accreditation they
+ * show.
  *
  * Returns null when nothing matches or when any API call fails; the caller
  * shows the service-problem page rather than partial information.

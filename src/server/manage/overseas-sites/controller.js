@@ -3,7 +3,8 @@ import {
   dashboardUrl,
   loadManagePage,
   manageCaption,
-  registrationAccreditationUrl
+  registrationAccreditationUrl,
+  serviceProblem
 } from '../helpers/manage-page.js'
 
 // Older ORS records carry only the flattened siteAddress, whose first part is
@@ -52,10 +53,20 @@ export const manageOverseasSitesController = {
       return response
     }
 
+    // The backend always sends overseasSites for an Approved exporter
+    // accreditation, so without it the data is incomplete, and empty tabs
+    // would pass that off as a complete list.
+    const sites = application.overseasSites?.sites
+    if (!Array.isArray(sites)) {
+      request.logger.warn(
+        { applicationId: application.applicationId },
+        'Current accreditation has no overseas sites'
+      )
+      return serviceProblem(request, h, t)
+    }
+
     const heading = t('pages.manageOverseasSites.heading')
-    const { accredited, registered } = partitionSites(
-      application.overseasSites?.sites ?? []
-    )
+    const { accredited, registered } = partitionSites(sites)
 
     return h.view('manage/overseas-sites/index', {
       pageTitle: heading,
