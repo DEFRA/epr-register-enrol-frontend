@@ -1,13 +1,13 @@
 import { currentYear, yearSuffix } from './helpers/currentYear.js'
 import {
-  MANAGE_TEST_CREATED_REGISTRATION_ID,
-  MANAGE_TEST_EXPORTER_MATERIAL,
-  MANAGE_TEST_EXPORTER_REGISTRATION_ID,
-  MANAGE_TEST_ORG_ID,
-  MANAGE_TEST_ORG_NAME,
-  MANAGE_TEST_MISSING_REGISTRATION_ID,
-  MANAGE_TEST_REPROCESSOR_MATERIAL,
-  MANAGE_TEST_REPROCESSOR_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
+  MANAGE_EXPORTER_MATERIAL,
+  MANAGE_EXPORTER_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_ID,
+  MANAGE_EXPORTER_ORG_NAME,
+  MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
+  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID
 } from './constants/test-orgs.js'
 
 /**
@@ -141,16 +141,16 @@ function exporterOrs(year) {
 function buildOrgDoc(year) {
   const suffix = yearSuffix(year)
   return {
-    orgId: MANAGE_TEST_ORG_ID,
-    companyDetails: { name: MANAGE_TEST_ORG_NAME },
+    orgId: MANAGE_EXPORTER_ORG_ID,
+    companyDetails: { name: MANAGE_EXPORTER_ORG_NAME },
     accreditations: [
       approvedApplication(year, {
         id: 'app018exp',
         applicationReference: `AP${suffix}EA0500183ABPL`,
         accreditationReference: `A${suffix}EX0500180001PL`,
-        material: MANAGE_TEST_EXPORTER_MATERIAL,
+        material: MANAGE_EXPORTER_MATERIAL,
         wasteProcessingType: 'exporter',
-        registrationId: MANAGE_TEST_EXPORTER_REGISTRATION_ID,
+        registrationId: MANAGE_EXPORTER_REGISTRATION_ID,
         wasteRegistrationNumber: exporterRegistrationNumber(year),
         companyRegisteredAddress: {
           line1: '18 Harbour Road',
@@ -165,10 +165,10 @@ function buildOrgDoc(year) {
         id: 'app018rep',
         applicationReference: `AP${suffix}EA0500185HTGL`,
         accreditationReference: `A${suffix}ER0500180002GR`,
-        material: MANAGE_TEST_REPROCESSOR_MATERIAL,
+        material: MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
         glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
-        registrationId: MANAGE_TEST_REPROCESSOR_REGISTRATION_ID,
+        registrationId: MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
         wasteRegistrationNumber: reprocessorRegistrationNumber(year),
         siteAddress: {
           line1: 'Unit 18, Furnace Lane',
@@ -179,13 +179,13 @@ function buildOrgDoc(year) {
       ...[
         [
           'app018created',
-          MANAGE_TEST_CREATED_REGISTRATION_ID,
+          MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
           '0003',
           'DN4 6HT'
         ],
         [
           'app018missing',
-          MANAGE_TEST_MISSING_REGISTRATION_ID,
+          MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID,
           '0004',
           'DN4 7HT'
         ]
@@ -227,15 +227,15 @@ export function manageStubOrgDoc() {
 export function manageStubRegistrationStatuses() {
   const year = currentYear()
   return {
-    [MANAGE_TEST_EXPORTER_REGISTRATION_ID]: {
+    [MANAGE_EXPORTER_REGISTRATION_ID]: {
       registrationNumber: exporterRegistrationNumber(year),
       status: 'Approved'
     },
-    [MANAGE_TEST_REPROCESSOR_REGISTRATION_ID]: {
+    [MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID]: {
       registrationNumber: reprocessorRegistrationNumber(year),
       status: 'Approved'
     },
-    [MANAGE_TEST_CREATED_REGISTRATION_ID]: {
+    [MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID]: {
       registrationNumber: null,
       status: 'Created'
     }

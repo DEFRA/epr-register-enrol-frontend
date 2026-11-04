@@ -19,11 +19,11 @@ import {
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import { currentYear, yearSuffix } from '../../common/helpers/currentYear.js'
 import {
-  MANAGE_TEST_ORG_ID,
-  MANAGE_TEST_EXPORTER_REGISTRATION_ID,
-  MANAGE_TEST_REPROCESSOR_REGISTRATION_ID,
-  MANAGE_TEST_CREATED_REGISTRATION_ID,
-  MANAGE_TEST_MISSING_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_ID,
+  MANAGE_EXPORTER_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
@@ -391,7 +391,7 @@ describe('#manageDashboardController', () => {
     test('shows the stub exporter accreditation', async () => {
       const { statusCode, result } = await page.server.inject({
         method: 'GET',
-        url: `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_EXPORTER_REGISTRATION_ID}/Plastic`
+        url: `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -403,7 +403,7 @@ describe('#manageDashboardController', () => {
     })
 
     test('rolls the stub accreditation over to the new year without a reload', async () => {
-      const url = `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_EXPORTER_REGISTRATION_ID}/Plastic`
+      const url = `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic`
       const accreditationNumber = (suffix) =>
         new RegExp(
           `data-testid="accreditation-number"[^>]*>\\s*A${suffix}EX0500180001PL\\s*<`
@@ -427,7 +427,7 @@ describe('#manageDashboardController', () => {
     test('shows the stub reprocessor accreditation', async () => {
       const { statusCode, result } = await page.server.inject({
         method: 'GET',
-        url: `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_REPROCESSOR_REGISTRATION_ID}/Glass`
+        url: `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID}/Glass`
       })
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -450,14 +450,14 @@ describe('#manageDashboardController', () => {
     })
 
     test.each([
-      ['not Approved', MANAGE_TEST_CREATED_REGISTRATION_ID],
-      ['missing', MANAGE_TEST_MISSING_REGISTRATION_ID]
+      ['not Approved', MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID],
+      ['missing', MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID]
     ])(
       'shows the service-problem page for the stub registration that is %s',
       async (_case, registrationId) => {
         const { statusCode } = await page.server.inject({
           method: 'GET',
-          url: `/manage/${MANAGE_TEST_ORG_ID}/${registrationId}/Wood`
+          url: `/manage/${MANAGE_EXPORTER_ORG_ID}/${registrationId}/Wood`
         })
 
         expect(statusCode).toBe(statusCodes.internalServerError)

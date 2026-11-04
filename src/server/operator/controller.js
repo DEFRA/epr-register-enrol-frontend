@@ -2,14 +2,15 @@ import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import {
   DELTA_GREEN_ORG_ID,
+  DELTA_GREEN_SEEDED_ORG_NAME,
   DELTA_GREEN_REGISTRATION_ID,
   DELTA_GREEN_SEEDED_MATERIAL,
-  MANAGE_TEST_EXPORTER_MATERIAL,
-  MANAGE_TEST_EXPORTER_REGISTRATION_ID,
-  MANAGE_TEST_ORG_ID,
-  MANAGE_TEST_ORG_NAME,
-  MANAGE_TEST_REPROCESSOR_MATERIAL,
-  MANAGE_TEST_REPROCESSOR_REGISTRATION_ID
+  MANAGE_EXPORTER_MATERIAL,
+  MANAGE_EXPORTER_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_ID,
+  MANAGE_EXPORTER_ORG_NAME,
+  MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
+  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID
 } from '../common/constants/test-orgs.js'
 import { dashboardUrl } from '../manage/helpers/manage-page.js'
 
@@ -33,15 +34,15 @@ function dashboardLink(
 function reprocessorDashboardLink() {
   if (config.get('api.stubEnabled')) {
     return dashboardLink(
-      MANAGE_TEST_ORG_ID,
-      MANAGE_TEST_ORG_NAME,
-      MANAGE_TEST_REPROCESSOR_REGISTRATION_ID,
-      MANAGE_TEST_REPROCESSOR_MATERIAL
+      MANAGE_EXPORTER_ORG_ID,
+      MANAGE_EXPORTER_ORG_NAME,
+      MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
+      MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL
     )
   }
   return dashboardLink(
     DELTA_GREEN_ORG_ID,
-    'Delta Green Ltd',
+    DELTA_GREEN_SEEDED_ORG_NAME,
     DELTA_GREEN_REGISTRATION_ID,
     DELTA_GREEN_SEEDED_MATERIAL
   )
@@ -51,10 +52,10 @@ function manageDashboardLinks() {
   return {
     reprocessor: reprocessorDashboardLink(),
     exporter: dashboardLink(
-      MANAGE_TEST_ORG_ID,
-      MANAGE_TEST_ORG_NAME,
-      MANAGE_TEST_EXPORTER_REGISTRATION_ID,
-      MANAGE_TEST_EXPORTER_MATERIAL
+      MANAGE_EXPORTER_ORG_ID,
+      MANAGE_EXPORTER_ORG_NAME,
+      MANAGE_EXPORTER_REGISTRATION_ID,
+      MANAGE_EXPORTER_MATERIAL
     )
   }
 }

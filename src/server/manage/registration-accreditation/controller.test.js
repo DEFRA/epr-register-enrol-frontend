@@ -17,10 +17,10 @@ import {
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import { currentYear } from '../../common/helpers/currentYear.js'
 import {
-  MANAGE_TEST_ORG_ID,
-  MANAGE_TEST_EXPORTER_REGISTRATION_ID,
-  MANAGE_TEST_REPROCESSOR_REGISTRATION_ID,
-  MANAGE_TEST_CREATED_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_ID,
+  MANAGE_EXPORTER_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
@@ -241,7 +241,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the stub exporter', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_EXPORTER_REGISTRATION_ID}/Plastic/registration-accreditation`
+        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic/registration-accreditation`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -255,7 +255,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the stub reprocessor with its site address', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_REPROCESSOR_REGISTRATION_ID}/Glass/registration-accreditation`
+        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID}/Glass/registration-accreditation`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -271,7 +271,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the service-problem page for the stub registration that is not Approved', async () => {
       const { statusCode } = await get(
-        `/manage/${MANAGE_TEST_ORG_ID}/${MANAGE_TEST_CREATED_REGISTRATION_ID}/Wood/registration-accreditation`
+        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID}/Wood/registration-accreditation`
       )
 
       expect(statusCode).toBe(statusCodes.internalServerError)
