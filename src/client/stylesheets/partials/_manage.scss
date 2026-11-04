@@ -53,6 +53,12 @@
 }
 
 // Collapses with the intro's 20px margin: 30px, plus the first ORS's 10px.
+// Figma's tab intro text box is 571px wide, so the Registered intro wraps
+// after "(ORSs) that".
+.app-ors-list__intro {
+  max-width: 571px;
+}
+
 .app-ors-list {
   margin-top: govuk-spacing(6);
 }
