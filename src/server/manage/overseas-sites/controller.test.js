@@ -262,7 +262,7 @@ describe('#manageOverseasSitesController', () => {
     test('gives each tab its heading and intro, with the year filled in', () => {
       const accredited = tabPanel(result, 'accredited')
       expect(accredited).toMatch(
-        /<h2 class="govuk-heading-m">\s*Accredited overseas reprocessing sites\s*<\/h2>/
+        /<h2 class="govuk-heading-m[^"]*">\s*Accredited overseas reprocessing sites\s*<\/h2>/
       )
       expect(accredited).toContain(
         'These are your accredited overseas reprocessing sites for 2027.'
@@ -270,7 +270,7 @@ describe('#manageOverseasSitesController', () => {
 
       const registered = tabPanel(result, 'registered')
       expect(registered).toMatch(
-        /<h2 class="govuk-heading-m">\s*Registered overseas reprocessing sites\s*<\/h2>/
+        /<h2 class="govuk-heading-m[^"]*">\s*Registered overseas reprocessing sites\s*<\/h2>/
       )
       expect(registered).toContain(
         'These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for 2027.'

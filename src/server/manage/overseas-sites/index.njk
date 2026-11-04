@@ -4,24 +4,27 @@
 {% from "overseas-site-row/macro.njk" import interimSiteDisclosure %}
 
 {% macro orsList(name, sites) %}
-  <h2 class="govuk-heading-m">{{ t('pages.manageOverseasSites.' + name + '.heading') }}</h2>
+  <h2 class="govuk-heading-m govuk-!-margin-bottom-2">{{ t('pages.manageOverseasSites.' + name + '.heading') }}</h2>
   <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro', { year: year }) }}</p>
   {% if sites.length %}
     <ul class="govuk-list app-ors-list" data-testid="{{ name }}-sites-list">
       {% for site in sites %}
         <li class="app-ors-list__item" data-testid="{{ name }}-site-row-{{ site.siteId }}">
-          <span class="app-ors-list__number" data-testid="{{ name }}-site-orsid-{{ site.siteId }}">{{ site.orsId }}</span>
-          <div class="app-ors-list__details">
-            <strong class="govuk-!-font-weight-bold" data-testid="{{ name }}-site-name-{{ site.siteId }}">{{ site.siteName }}</strong>
-            <span class="app-ors-list__address" data-testid="{{ name }}-site-address-{{ site.siteId }}">{{ site.address }}</span>
-            {% if site.interimSites.length %}
-              {{ interimSiteDisclosure({
-                site: site,
-                readOnly: true,
-                labels: { interimDisclosure: t('pages.manageOverseasSites.interimDisclosure') }
-              }) }}
-            {% endif %}
+          <div class="app-ors-list__site">
+            <span class="app-ors-list__number" data-testid="{{ name }}-site-orsid-{{ site.siteId }}">{{ site.orsId }}</span>
+            <div class="app-ors-list__details">
+              <strong class="govuk-!-font-weight-bold" data-testid="{{ name }}-site-name-{{ site.siteId }}">{{ site.siteName }}</strong>
+              <span class="app-ors-list__address" data-testid="{{ name }}-site-address-{{ site.siteId }}">{{ site.address }}</span>
+            </div>
           </div>
+          {# Per Figma, the disclosure sits under the ORS number, not the name. #}
+          {% if site.interimSites.length %}
+            {{ interimSiteDisclosure({
+              site: site,
+              readOnly: true,
+              labels: { interimDisclosure: t('pages.manageOverseasSites.interimDisclosure') }
+            }) }}
+          {% endif %}
         </li>
       {% endfor %}
     </ul>
@@ -32,9 +35,13 @@
 
 {% block content %}
   <div class="govuk-grid-row">
-    <div class="govuk-grid-column-two-thirds">
-      <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
-      <h1 class="govuk-heading-xl" data-testid="page-heading">{{ heading }}</h1>
+    <div class="govuk-grid-column-full">
+      {# RA-425: per Figma this heading block is wider than two-thirds, so the
+         title wraps after "reprocessing". #}
+      <div class="app-ors-heading">
+        <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
+        <h1 class="govuk-heading-xl govuk-!-margin-bottom-6" data-testid="page-heading">{{ heading }}</h1>
+      </div>
     </div>
   </div>
 
