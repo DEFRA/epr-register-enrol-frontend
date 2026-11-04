@@ -32,16 +32,15 @@ function toOrsView(site, { withInterimSites }) {
 // application journey, an ORS with no selected value is not accredited: on an
 // issued accreditation only an explicit selection counts.
 function partitionSites(sites) {
-  const accredited = []
-  const registered = []
-  for (const site of sites) {
-    if (site.selected === true) {
-      accredited.push(toOrsView(site, { withInterimSites: true }))
-    } else if (!site.isNewSite) {
-      registered.push(toOrsView(site, { withInterimSites: false }))
-    }
+  const isAccredited = (site) => site.selected === true
+  return {
+    accredited: sites
+      .filter(isAccredited)
+      .map((site) => toOrsView(site, { withInterimSites: true })),
+    registered: sites
+      .filter((site) => !isAccredited(site) && !site.isNewSite)
+      .map((site) => toOrsView(site, { withInterimSites: false }))
   }
-  return { accredited, registered }
 }
 
 export const manageOverseasSitesController = {

@@ -8,8 +8,11 @@ import {
 
 // An accreditation runs to the end of the calendar year it is for. Local time,
 // because the formatDate filter formats in local time.
+const DECEMBER = 11 // Date months count from 0
+const LAST_DAY_OF_DECEMBER = 31
+
 function expiryDate(year) {
-  return new Date(year, 11, 31)
+  return new Date(year, DECEMBER, LAST_DAY_OF_DECEMBER)
 }
 
 export const manageRegistrationAccreditationController = {

@@ -48,7 +48,7 @@ export function setupManagePageServer() {
   afterEach(() => {
     vi.useRealTimers()
     flag?.mockRestore()
-    flag = undefined
+    flag = null
   })
 
   return page

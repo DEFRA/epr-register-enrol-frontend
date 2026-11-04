@@ -7,8 +7,11 @@ import { manageOverseasSitesController } from './overseas-sites/controller.js'
 const MANAGE_PATH = '/manage/{organisationId}/{registrationId}/{materialType}'
 
 const ROUTES = [
-  [MANAGE_PATH, manageRegistrationAccreditationController],
-  [`${MANAGE_PATH}/overseas-sites`, manageOverseasSitesController]
+  { path: MANAGE_PATH, controller: manageRegistrationAccreditationController },
+  {
+    path: `${MANAGE_PATH}/overseas-sites`,
+    controller: manageOverseasSitesController
+  }
 ]
 
 export const manage = {
@@ -16,7 +19,7 @@ export const manage = {
     name: 'manage',
     register(server) {
       server.route(
-        ROUTES.flatMap(([path, controller]) =>
+        ROUTES.flatMap(({ path, controller }) =>
           [path, `/{language}${path}`].map((routePath) => ({
             method: 'GET',
             path: routePath,

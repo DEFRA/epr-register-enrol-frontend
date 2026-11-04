@@ -4,6 +4,8 @@ export function currentYear() {
   return new Date().getUTCFullYear()
 }
 
+const YEAR_SUFFIX_LENGTH = 2
+
 export function yearSuffix(year) {
-  return String(year).slice(-2)
+  return String(year).slice(-YEAR_SUFFIX_LENGTH)
 }

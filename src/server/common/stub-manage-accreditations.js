@@ -97,38 +97,57 @@ function overseasSite(siteId, orsId, siteName, addressLine1, country, extra) {
   }
 }
 
+const SITE_IDS = {
+  ROTTERDAM: 901801,
+  CALAIS: 901802,
+  ANTWERP_FOR_ROTTERDAM: 901803,
+  OLD_DEPOT: 901804,
+  BHARAT: 901805,
+  BERLIN: 901806,
+  DRAGON: 901807,
+  ANTWERP_FOR_BHARAT: 901808,
+  SAIGON: 901809
+}
+
 function exporterOrs(year) {
   return [
     overseasSite(
-      901801,
+      SITE_IDS.ROTTERDAM,
       '001',
       'Rotterdam Recycling BV',
       'Industrieweg 44',
       'Netherlands',
       {
         interimSites: [
-          interimSite(901802, '001', 'Calais Storage SARL', 'France', {
+          interimSite(SITE_IDS.CALAIS, '001', 'Calais Storage SARL', 'France', {
             operationCodes: ['R13']
           }),
-          antwerpInterimSite(901803, '002'),
-          interimSite(901804, '003', 'Old Depot GmbH', 'Germany', {
+          antwerpInterimSite(SITE_IDS.ANTWERP_FOR_ROTTERDAM, '002'),
+          interimSite(SITE_IDS.OLD_DEPOT, '003', 'Old Depot GmbH', 'Germany', {
             removedAt: `${year}-02-01T09:00:00Z`
           })
         ]
       }
     ),
-    overseasSite(901805, '002', 'Bharat Recycling', '12 Ring Road', 'India', {
-      interimSites: [antwerpInterimSite(901808, '004')]
-    }),
     overseasSite(
-      901806,
+      SITE_IDS.BHARAT,
+      '002',
+      'Bharat Recycling',
+      '12 Ring Road',
+      'India',
+      {
+        interimSites: [antwerpInterimSite(SITE_IDS.ANTWERP_FOR_BHARAT, '004')]
+      }
+    ),
+    overseasSite(
+      SITE_IDS.BERLIN,
       '003',
       'Berlin Steel GmbH',
       'Hafenstrasse 9',
       'Germany'
     ),
     overseasSite(
-      901807,
+      SITE_IDS.DRAGON,
       '004',
       'Dragon Recyclers',
       '8 Harbour Avenue',
@@ -137,12 +156,15 @@ function exporterOrs(year) {
       {
         selected: false,
         interimSites: [
-          interimSite(901809, '005', 'Saigon Port Storage', 'Vietnam')
+          interimSite(SITE_IDS.SAIGON, '005', 'Saigon Port Storage', 'Vietnam')
         ]
       }
     )
   ]
 }
+
+// Application references end with the last 3 characters of the postcode.
+const POSTCODE_SUFFIX_LENGTH = 3
 
 function buildOrgDoc(year) {
   const suffix = yearSuffix(year)
@@ -198,7 +220,7 @@ function buildOrgDoc(year) {
       ].map(([id, registrationId, sequence, postcode]) =>
         approvedApplication(year, {
           id,
-          applicationReference: `AP${suffix}EA050018${postcode.slice(-3)}WO`,
+          applicationReference: `AP${suffix}EA050018${postcode.slice(-POSTCODE_SUFFIX_LENGTH)}WO`,
           accreditationReference: `A${suffix}ER050018${sequence}WO`,
           material: 'wood',
           wasteProcessingType: 'reprocessor',
