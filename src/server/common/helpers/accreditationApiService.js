@@ -124,6 +124,10 @@ function normalizeApplication(item) {
     // legacy/stub data: item.accreditationReference holds it instead.
     accreditationReference:
       item.applicationReference ?? item.accreditationReference ?? null,
+    // RA-425: the issued accreditation number. The raw accreditationReference
+    // is overwritten above by the application reference whenever both are set,
+    // so it is kept here under its own name.
+    accreditationNumber: item.accreditationReference ?? null,
     organisationId: item.organisationId,
     // RA-503: item.orgId is the operator/regulator-safe numeric organisation
     // number - distinct from organisationId (ReEx's internal ObjectId) and

@@ -72,18 +72,6 @@
       "authorisedUsersLabel": "[Welsh] Authorised users",
       "overseasSitesLabel": "[Welsh] Overseas reprocessing sites",
       "withdrawLink": "[Welsh] Withdraw application",
-      "statuses": {
-        "Saved": "[Welsh] NOT STARTED",
-        "Started": "[Welsh] IN PROGRESS",
-        "Submitted": "[Welsh] SUBMITTED",
-        "DulyMade": "[Welsh] DULY MADE",
-        "Queried": "[Welsh] QUERIED",
-        "Updated": "[Welsh] UPDATED",
-        "AwaitingDecision": "[Welsh] AWAITING DECISION",
-        "Approved": "[Welsh] GRANTED",
-        "Rejected": "[Welsh] REFUSED",
-        "Withdrawn": "[Welsh] WITHDRAWN"
-      },
       "materials": {
         "Steel": "Dur",
         "Wood": "Pren",
@@ -936,6 +924,40 @@
         "body": "[Welsh] You can continue with your application."
       }
     },
+    "manageRegistrationAccreditation": {
+      "heading": "[Welsh] Manage your registration and accreditation",
+      "applicationStatusLabel": "[Welsh] Application status:",
+      "accreditationNumberLabel": "[Welsh] Accreditation number:",
+      "registrationNumberLabel": "[Welsh] Registration number:",
+      "expiryDateLabel": "[Welsh] Expiry date:",
+      "manageAccreditation": {
+        "title": "[Welsh] Manage accreditation",
+        "description": "[Welsh] View and upgrade your tonnage band.",
+        "upgradeTonnageLink": "[Welsh] Upgrade tonnage"
+      },
+      "manageOverseasSites": {
+        "title": "[Welsh] Manage overseas reprocessing sites",
+        "description": "[Welsh] Add, update and manage your overseas reprocessing sites.",
+        "link": "[Welsh] Manage overseas reprocessing sites"
+      }
+    },
+    "manageOverseasSites": {
+      "heading": "[Welsh] Manage overseas reprocessing sites",
+      "accredited": {
+        "tab": "[Welsh] Accredited ({{count}})",
+        "heading": "[Welsh] Accredited overseas reprocessing sites",
+        "intro": "[Welsh] These are your accredited overseas reprocessing sites for {{year}}.",
+        "empty": "[Welsh] You have no accredited overseas reprocessing sites."
+      },
+      "registered": {
+        "tab": "[Welsh] Registered ({{count}})",
+        "heading": "[Welsh] Registered overseas reprocessing sites",
+        "intro": "[Welsh] These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {{year}}.",
+        "empty": "[Welsh] You have no registered overseas reprocessing sites."
+      },
+      "interimDisclosure": "[Welsh] Show interim sites",
+      "returnToHome": "[Welsh] Return to home"
+    },
     "contact": {
       "title": "[Welsh] Contact",
       "heading": "[Welsh] Contact",
@@ -1051,6 +1073,18 @@
       "materialLabel": "[Welsh] Material:",
       "siteLabel": "[Welsh] Site:",
       "yearLabel": "[Welsh] Year:"
+    },
+    "applicationStatuses": {
+      "Saved": "[Welsh] NOT STARTED",
+      "Started": "[Welsh] IN PROGRESS",
+      "Submitted": "[Welsh] SUBMITTED",
+      "DulyMade": "[Welsh] DULY MADE",
+      "Queried": "[Welsh] QUERIED",
+      "Updated": "[Welsh] UPDATED",
+      "AwaitingDecision": "[Welsh] AWAITING DECISION",
+      "Approved": "[Welsh] GRANTED",
+      "Rejected": "[Welsh] REFUSED",
+      "Withdrawn": "[Welsh] WITHDRAWN"
     },
     "regulatorQuery": {
       "heading": "[Welsh] Regulator query",

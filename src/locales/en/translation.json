@@ -74,19 +74,6 @@
       "authorisedUsersLabel": "Authorised users",
       "overseasSitesLabel": "Overseas reprocessing sites",
       "withdrawLink": "Withdraw application",
-      "statuses": {
-        "Saved": "NOT STARTED",
-        "Started": "IN PROGRESS",
-        "NotStarted": "NOT STARTED",
-        "Submitted": "SUBMITTED",
-        "DulyMade": "DULY MADE",
-        "Queried": "QUERIED",
-        "Updated": "UPDATED",
-        "AwaitingDecision": "AWAITING DECISION",
-        "Approved": "GRANTED",
-        "Rejected": "REFUSED",
-        "Withdrawn": "WITHDRAWN"
-      },
       "materials": {
         "Steel": "Steel",
         "Wood": "Wood",
@@ -938,6 +925,40 @@
         "body": "You can continue with your application."
       }
     },
+    "manageRegistrationAccreditation": {
+      "heading": "Manage your registration and accreditation",
+      "applicationStatusLabel": "Application status:",
+      "accreditationNumberLabel": "Accreditation number:",
+      "registrationNumberLabel": "Registration number:",
+      "expiryDateLabel": "Expiry date:",
+      "manageAccreditation": {
+        "title": "Manage accreditation",
+        "description": "View and upgrade your tonnage band.",
+        "upgradeTonnageLink": "Upgrade tonnage"
+      },
+      "manageOverseasSites": {
+        "title": "Manage overseas reprocessing sites",
+        "description": "Add, update and manage your overseas reprocessing sites.",
+        "link": "Manage overseas reprocessing sites"
+      }
+    },
+    "manageOverseasSites": {
+      "heading": "Manage overseas reprocessing sites",
+      "accredited": {
+        "tab": "Accredited ({{count}})",
+        "heading": "Accredited overseas reprocessing sites",
+        "intro": "These are your accredited overseas reprocessing sites for {{year}}.",
+        "empty": "You have no accredited overseas reprocessing sites."
+      },
+      "registered": {
+        "tab": "Registered ({{count}})",
+        "heading": "Registered overseas reprocessing sites",
+        "intro": "These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {{year}}.",
+        "empty": "You have no registered overseas reprocessing sites."
+      },
+      "interimDisclosure": "Show interim sites",
+      "returnToHome": "Return to home"
+    },
     "contact": {
       "title": "Contact",
       "heading": "Contact",
@@ -1053,6 +1074,19 @@
       "materialLabel": "Material:",
       "siteLabel": "Site:",
       "yearLabel": "Year:"
+    },
+    "applicationStatuses": {
+      "Saved": "NOT STARTED",
+      "Started": "IN PROGRESS",
+      "NotStarted": "NOT STARTED",
+      "Submitted": "SUBMITTED",
+      "DulyMade": "DULY MADE",
+      "Queried": "QUERIED",
+      "Updated": "UPDATED",
+      "AwaitingDecision": "AWAITING DECISION",
+      "Approved": "GRANTED",
+      "Rejected": "REFUSED",
+      "Withdrawn": "WITHDRAWN"
     },
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",

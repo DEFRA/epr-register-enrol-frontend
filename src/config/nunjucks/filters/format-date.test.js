@@ -37,4 +37,18 @@ describe('#formatDate', () => {
       ).toBe('11:40 am on Wednesday 1st February 2023')
     })
   })
+
+  describe('With a locale', () => {
+    test('Welsh uses Welsh day and month names', () => {
+      expect(formatDate('2023-02-01T11:40:02.242Z', undefined, 'cy')).toBe(
+        'Mer 1af Chwefror 2023'
+      )
+    })
+
+    test('English is the default for any other locale', () => {
+      expect(formatDate('2023-02-01T11:40:02.242Z', 'd MMM yyyy', 'en')).toBe(
+        '1 Feb 2023'
+      )
+    })
+  })
 })

@@ -1,4 +1,5 @@
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
+import { localePrefix } from '../common/helpers/localePrefix.js'
 
 export const cookiesController = {
   handler(request, h) {
@@ -15,7 +16,7 @@ export const cookiesController = {
       breadcrumbs: [
         {
           text: t('navigation.home'),
-          href: currentLocale === 'cy' ? '/cy' : '/'
+          href: localePrefix(currentLocale) || '/'
         },
         {
           text: heading

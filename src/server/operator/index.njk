@@ -38,6 +38,13 @@
           <li><a href="/operator-accreditation/6a2fcd74e16883c137d01188/6a2fcd75e16883c137d011ad/Glass/2027" class="govuk-link">Test Environment Only| Exporter | Re-Accreditation for Bednar - Frami Limited xTklApuT, Glass, 2027</a></li>
           <li><a href="/operator-accreditation/6a2fcd74e16883c137d01188/6a2fcd75e16883c137d011b3/Plastic/2027" class="govuk-link">Test Environment Only| Exporter | Re-Accreditation for Bednar - Frami Limited xTklApuT, Plastic, 2027</a></li>
         </ul>
+        {% if inYearChangesEnabled %}
+          <h2 class="govuk-heading-m">Manage registration and accreditation (RA-425)</h2>
+          <ul class="govuk-list govuk-list--bullet">
+            <li><a href="{{ manageLinks.reprocessor.href }}" class="govuk-link" data-testid="manage-reprocessor-link">Reprocessor manage registration and accreditation for {{ manageLinks.reprocessor.organisationName }}, {{ manageLinks.reprocessor.materialType }}</a></li>
+            <li><a href="{{ manageLinks.exporter.href }}" class="govuk-link" data-testid="manage-exporter-link">Exporter manage registration and accreditation for {{ manageLinks.exporter.organisationName }}, {{ manageLinks.exporter.materialType }}</a></li>
+          </ul>
+        {% endif %}
         <h2 class="govuk-heading-m">PerfTest Records</h2>
         <h3 class="govuk-heading-s">Reprocessors</h3>
         <ul class="govuk-list govuk-list--bullet">
