@@ -13,7 +13,7 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
-      <h1 class="govuk-heading-xl govuk-!-margin-bottom-6" data-testid="page-heading">{{ heading }}</h1>
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-6 app-manage-heading" data-testid="page-heading">{{ heading }}</h1>
       {# RA-425: per Figma, exporters are not shown an address. #}
       {% if not isExporter and siteAddress %}
         <p class="govuk-heading-s govuk-!-margin-bottom-2" data-testid="site-address">{{ siteAddress }}</p>

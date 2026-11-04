@@ -44,21 +44,30 @@
   cursor: default;
 }
 
+// RA-425: page titles break where Figma breaks them. Measured in GDS
+// Transport, which renders narrower than Figma: "reprocessing" ends at 674px
+// and "sites" at 756px; "registration" ends at 538px and "and" at 627px.
+.app-ors-heading {
+  max-width: 715px;
+}
+
+.app-manage-heading {
+  max-width: 580px;
+}
+
 // RA-425: the overseas-sites page's ORS list, per Figma "Viewing ORSs for an
 // existing Accreditation - EXPORTER": the ORS number beside a bold name, the
 // address beneath it, and a rule between ORSs. Figma spaces each ORS 20px
 // above and below its rule, except 10px above the first, 40px under the intro.
-.app-ors-heading {
-  max-width: 836px;
+
+// Wraps the Registered intro after "(ORSs) that", as in Figma. Figma's box is
+// 571px, but GDS Transport renders narrower in the browser, where "that" ends
+// at 526px and "you" at 559px.
+.app-ors-list__intro {
+  max-width: 545px;
 }
 
 // Collapses with the intro's 20px margin: 30px, plus the first ORS's 10px.
-// Figma's tab intro text box is 571px wide, so the Registered intro wraps
-// after "(ORSs) that".
-.app-ors-list__intro {
-  max-width: 571px;
-}
-
 .app-ors-list {
   margin-top: govuk-spacing(6);
 }
