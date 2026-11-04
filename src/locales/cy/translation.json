@@ -953,7 +953,7 @@
         "tab": "[Welsh] Registered ({{count}})",
         "heading": "[Welsh] Registered overseas reprocessing sites",
         "intro": "[Welsh] These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {{year}}.",
-        "empty": "[Welsh] You have no other registered overseas reprocessing sites."
+        "empty": "[Welsh] You have no registered overseas reprocessing sites."
       },
       "interimDisclosure": "[Welsh] Show interim sites",
       "returnToHome": "[Welsh] Return to home"
