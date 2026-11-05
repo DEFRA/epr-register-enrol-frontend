@@ -113,6 +113,13 @@ const SITE_IDS = {
   SAIGON: 901809
 }
 
+const IN_YEAR_CHANGE_SITE_IDS = {
+  HAMBURG: 901901,
+  LYON: 901910,
+  DELHI: 901911,
+  IZMIR: 901912
+}
+
 function exporterOrs(year) {
   return [
     overseasSite(
@@ -299,7 +306,7 @@ function buildInYearChangeOrgDoc(year) {
           sectionStatus: 'Completed',
           sites: [
             inYearChangeOrs(
-              901901,
+              IN_YEAR_CHANGE_SITE_IDS.HAMBURG,
               '001',
               'Hamburg Kunststoff GmbH',
               'Germany',
@@ -313,18 +320,35 @@ function buildInYearChangeOrgDoc(year) {
                 conditionsOfExport: true
               }
             ),
-            inYearChangeOrs(901910, '005', 'Lyon Plastiques SA', 'France', {
-              isEu: true,
-              isOecd: true,
-              coordinates: '45.7640, 4.8357',
-              operationCodes: ['R3'],
-              conditionsOfExport: true
-            }),
-            inYearChangeOrs(901911, '006', 'Delhi Polymers Pvt', 'India'),
-            inYearChangeOrs(901912, '007', 'Izmir Recycling AS', 'Turkey', {
-              isOecd: true,
-              coordinates: '38.4237, 27.1428'
-            })
+            inYearChangeOrs(
+              IN_YEAR_CHANGE_SITE_IDS.LYON,
+              '005',
+              'Lyon Plastiques SA',
+              'France',
+              {
+                isEu: true,
+                isOecd: true,
+                coordinates: '45.7640, 4.8357',
+                operationCodes: ['R3'],
+                conditionsOfExport: true
+              }
+            ),
+            inYearChangeOrs(
+              IN_YEAR_CHANGE_SITE_IDS.DELHI,
+              '006',
+              'Delhi Polymers Pvt',
+              'India'
+            ),
+            inYearChangeOrs(
+              IN_YEAR_CHANGE_SITE_IDS.IZMIR,
+              '007',
+              'Izmir Recycling AS',
+              'Turkey',
+              {
+                isOecd: true,
+                coordinates: '38.4237, 27.1428'
+              }
+            )
           ]
         },
         besEvidence: { sectionStatus: 'Completed' }
