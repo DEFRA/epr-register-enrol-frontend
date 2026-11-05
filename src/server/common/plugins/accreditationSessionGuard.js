@@ -44,6 +44,7 @@ const IN_YEAR_CHANGE_SEGMENT = 'manage-overseas-sites'
 
 export function isInYearChangeOnGrantedAccreditation(path, application) {
   return (
+    config.get('featureFlags.inYearChangesEnabled') &&
     routeSegment(path) === IN_YEAR_CHANGE_SEGMENT &&
     application?.applicationStatus === 'Approved'
   )

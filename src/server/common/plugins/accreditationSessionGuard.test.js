@@ -13,6 +13,7 @@ import {
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
 import { config } from '../../../config/config.js'
+import { setFeatureFlag } from '../test-helpers/feature-flags.js'
 import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
 import { accreditationApiService } from '../helpers/accreditationApiService.js'
 
@@ -60,6 +61,25 @@ describe('editRestrictionRedirect', () => {
     materialType: 'Plastic',
     year: 2026
   }
+
+  beforeEach(() => {
+    setFeatureFlag('inYearChangesEnabled', true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('an in-year change on a granted accreditation goes to its landing page with the flag off', () => {
+    setFeatureFlag('inYearChangesEnabled', false)
+    expect(
+      editRestrictionRedirect(
+        { path: '/accreditation/manage-overseas-sites/a', method: 'post' },
+        approved
+      )
+    ).toBe('/operator-accreditation/o/r/Plastic/2026')
+  })
+
   test.each([
     ['/operator', 'get', approved, null],
     [
@@ -84,6 +104,24 @@ describe('editRestrictionRedirect', () => {
 })
 
 describe('isInYearChangeOnGrantedAccreditation (RA-492)', () => {
+  beforeEach(() => {
+    setFeatureFlag('inYearChangesEnabled', true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('is false with the in-year changes flag off', () => {
+    setFeatureFlag('inYearChangesEnabled', false)
+    expect(
+      isInYearChangeOnGrantedAccreditation(
+        '/accreditation/manage-overseas-sites/abc',
+        { applicationStatus: 'Approved' }
+      )
+    ).toBe(false)
+  })
+
   test.each([
     ['/accreditation/manage-overseas-sites/abc', 'Approved', true],
     ['/cy/accreditation/manage-overseas-sites/abc/requests', 'Approved', true],
