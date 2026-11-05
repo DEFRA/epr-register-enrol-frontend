@@ -514,6 +514,77 @@ describe('#uploadBesEvidenceController', () => {
       expect(result).toContain('already been uploaded')
     })
 
+    describe('RA-605 max files per site', () => {
+      const MAX_MESSAGE =
+        'You can only upload a maximum of 10 files as evidence of broadly equivalent standards.'
+
+      function appWithUploads(count, infected = 0) {
+        return makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [
+              {
+                siteId: 900001,
+                siteName: 'Site Alpha',
+                besEvidence: {
+                  besEvidenceUploads: Array.from({ length: count }, (_, i) => ({
+                    fileId: `file-${i}`,
+                    filename: `existing-${i}.pdf`,
+                    scanStatus: i < infected ? 'Infected' : 'Clean'
+                  }))
+                }
+              }
+            ]
+          }
+        })
+      }
+
+      function postFile() {
+        return server.inject({
+          method: 'POST',
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}`,
+          headers: { 'Content-Type': multipartContentType },
+          payload: buildMultipartPayload()
+        })
+      }
+
+      test('accepts the 10th file', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(appWithUploads(9))
+
+        const { statusCode } = await postFile()
+
+        expect(statusCode).toBe(statusCodes.redirect)
+      })
+
+      test('rejects the 11th file with the max files message', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(appWithUploads(10))
+
+        const { statusCode, result } = await postFile()
+
+        expect(statusCode).toBe(statusCodes.badRequest)
+        expect(result).toContain(MAX_MESSAGE)
+      })
+
+      test('does not count infected files towards the cap', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(appWithUploads(10, 1))
+
+        const { statusCode } = await postFile()
+
+        expect(statusCode).toBe(statusCodes.redirect)
+      })
+
+      test('GET shows the max files message when reason=maxFiles', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+        const { result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}?reason=maxFiles`
+        })
+
+        expect(result).toContain(MAX_MESSAGE)
+      })
+    })
+
     test('returns 400 for missing valid-from date', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
 
@@ -927,6 +998,32 @@ describe('#uploadBesEvidenceController', () => {
         expect.objectContaining({
           fileUploadId: expect.any(String)
         })
+      )
+    })
+
+    test('redirects back to the upload form with reason=maxFiles when the backend rejects with MaxFilesExceeded', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: { file: { filename: 'evidence.pdf', fileId: 'file-validated' } }
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        Object.assign(new Error('Rejected'), {
+          status: 422,
+          response: JSON.stringify({ code: 'MaxFilesExceeded' })
+        })
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}?reason=maxFiles`
       )
     })
 

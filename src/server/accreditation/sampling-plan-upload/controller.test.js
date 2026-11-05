@@ -890,7 +890,7 @@ describe('#samplingPlanUploadController', () => {
         expect(statusCode).toBe(statusCodes.badRequest)
         expect(result).toContain('data-testid="file-error"')
         expect(result).toContain(
-          'The maximum number of files permitted to be uploaded is ten'
+          'You can only upload a maximum of 10 &#39;sampling and inspection plan&#39; and &#39;supporting information&#39; files.'
         )
         expect(initUpload).not.toHaveBeenCalled()
       })
@@ -1355,7 +1355,7 @@ describe('#samplingPlanUploadController', () => {
           response: JSON.stringify({
             status: 422,
             detail:
-              'The maximum number of files permitted to be uploaded is ten',
+              "You can only upload a maximum of 10 'sampling and inspection plan' and 'supporting information' files.",
             code: 'MaxFilesExceeded'
           })
         },
@@ -1709,7 +1709,7 @@ describe('#samplingPlanUploadController', () => {
       })
 
       expect(result).toContain(
-        'The maximum number of files permitted to be uploaded is ten'
+        'You can only upload a maximum of 10 &#39;sampling and inspection plan&#39; and &#39;supporting information&#39; files.'
       )
       expect(result).not.toContain('problem uploading your file')
     })
