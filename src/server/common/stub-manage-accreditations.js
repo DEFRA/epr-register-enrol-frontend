@@ -275,8 +275,57 @@ function inYearChangeOrs(siteId, orsId, siteName, country, extra) {
 }
 
 // RA-492: one accredited ORS and three registered-only ones, each missing a
-// different set of the fields the in-year add journey asks for. Matches the
-// backend's dev seed for org 50019.
+// different set of the fields the in-year add journey asks for.
+function inYearChangeSites(year) {
+  return [
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.HAMBURG,
+      '001',
+      'Hamburg Kunststoff GmbH',
+      'Germany',
+      {
+        selected: true,
+        validFrom: `${year}-01-01T00:00:00Z`,
+        isEu: true,
+        isOecd: true,
+        coordinates: '53.5511, 9.9937',
+        operationCodes: ['R3'],
+        conditionsOfExport: true
+      }
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.LYON,
+      '005',
+      'Lyon Plastiques SA',
+      'France',
+      {
+        isEu: true,
+        isOecd: true,
+        coordinates: '45.7640, 4.8357',
+        operationCodes: ['R3'],
+        conditionsOfExport: true
+      }
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.DELHI,
+      '006',
+      'Delhi Polymers Pvt',
+      'India'
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.IZMIR,
+      '007',
+      'Izmir Recycling AS',
+      'Turkey',
+      {
+        isOecd: true,
+        coordinates: '38.4237, 27.1428'
+      }
+    )
+  ]
+}
+
+// RA-492: org 50019's accreditation. Matches the backend's dev seed.
 function buildInYearChangeOrgDoc(year) {
   const suffix = yearSuffix(year)
   // The backend's id for it.
@@ -304,52 +353,7 @@ function buildInYearChangeOrgDoc(year) {
         companyRegisterAddressPostcode: 'HU1 1AA',
         overseasSites: {
           sectionStatus: 'Completed',
-          sites: [
-            inYearChangeOrs(
-              IN_YEAR_CHANGE_SITE_IDS.HAMBURG,
-              '001',
-              'Hamburg Kunststoff GmbH',
-              'Germany',
-              {
-                selected: true,
-                validFrom: `${year}-01-01T00:00:00Z`,
-                isEu: true,
-                isOecd: true,
-                coordinates: '53.5511, 9.9937',
-                operationCodes: ['R3'],
-                conditionsOfExport: true
-              }
-            ),
-            inYearChangeOrs(
-              IN_YEAR_CHANGE_SITE_IDS.LYON,
-              '005',
-              'Lyon Plastiques SA',
-              'France',
-              {
-                isEu: true,
-                isOecd: true,
-                coordinates: '45.7640, 4.8357',
-                operationCodes: ['R3'],
-                conditionsOfExport: true
-              }
-            ),
-            inYearChangeOrs(
-              IN_YEAR_CHANGE_SITE_IDS.DELHI,
-              '006',
-              'Delhi Polymers Pvt',
-              'India'
-            ),
-            inYearChangeOrs(
-              IN_YEAR_CHANGE_SITE_IDS.IZMIR,
-              '007',
-              'Izmir Recycling AS',
-              'Turkey',
-              {
-                isOecd: true,
-                coordinates: '38.4237, 27.1428'
-              }
-            )
-          ]
+          sites: inYearChangeSites(year)
         },
         besEvidence: { sectionStatus: 'Completed' }
       })
