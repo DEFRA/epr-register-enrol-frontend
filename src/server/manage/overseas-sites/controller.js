@@ -39,11 +39,12 @@ function toOrsView(site, { withInterimSites }) {
 // ORS. A new site that was never selected is on neither. Unlike the
 // application journey, an ORS with no selected value is not accredited: on an
 // issued accreditation only an explicit selection counts.
-// RA-492: each registered ORS offers "Add to accreditation"; one in the
-// draft request shows "In progress" and View, and one in a submitted request
-// shows "Pending" and no action (AC09). It stays on the Registered tab until
-// the regulator approves it.
-function partitionSites(sites, { applicationId, pendingRequestStatus }) {
+// RA-492: with the change requests, each registered ORS offers "Add to
+// accreditation"; one in the draft request shows "In progress" and View, and
+// one in a submitted request shows "Pending" and no action (AC09). It stays on
+// the Registered tab until the regulator approves it. Without them the rows
+// are RA-425's alone.
+function partitionSites(sites, application, changeRequests) {
   const isAccredited = (site) => site.selected === true
   return {
     accredited: sites
@@ -53,18 +54,20 @@ function partitionSites(sites, { applicationId, pendingRequestStatus }) {
       .filter((site) => !isAccredited(site) && !site.isNewSite)
       .map((site) => ({
         ...toOrsView(site, { withInterimSites: false }),
-        ...registeredSiteActions(
-          applicationId,
-          site.siteId,
-          pendingRequestStatus(site.siteId)
-        )
+        ...(changeRequests &&
+          registeredSiteActions(
+            application.applicationId,
+            site.siteId,
+            changeRequests.pendingRequestStatus(site.siteId)
+          ))
       }))
   }
 }
 
 // RA-492: the operator's in-year change requests for the accreditation.
-// Null when they cannot be retrieved, so the page shows the service-problem
-// page rather than offering actions it cannot vouch for.
+// Null when they cannot be retrieved: the page then shows RA-425's view
+// without RA-492's actions, tags or banners, so an outage of the change
+// requests never takes down the list of sites.
 async function fetchChangeRequests(request, application) {
   const { organisationId } = request.params
   try {
@@ -124,17 +127,16 @@ export const manageOverseasSitesController = {
     }
 
     const changeRequests = await fetchChangeRequests(request, application)
-    if (!changeRequests) {
-      return serviceProblem(request, h, t)
-    }
+    // Set either way: the RA-492 pages handle their own errors.
     enterAccreditationSession(request, application)
 
     const { organisationId, registrationId } = request.params
     const heading = t('pages.manageOverseasSites.heading')
-    const { accredited, registered } = partitionSites(sites, {
-      applicationId: application.applicationId,
-      pendingRequestStatus: changeRequests.pendingRequestStatus
-    })
+    const { accredited, registered } = partitionSites(
+      sites,
+      application,
+      changeRequests
+    )
 
     return h.view('manage/overseas-sites/index', {
       pageTitle: heading,
@@ -148,7 +150,7 @@ export const manageOverseasSitesController = {
       registeredSites: registered,
       // RA-492 banners: AC09 pending change, AC10 requests to resume.
       pendingCount: registered.filter((site) => site.pending).length,
-      readyForSubmissionCount: changeRequests.readyForSubmissionCount,
+      readyForSubmissionCount: changeRequests?.readyForSubmissionCount ?? 0,
       requestsUrl: requestsUrl(application.applicationId)
     })
   }

@@ -563,18 +563,21 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toContain('data-testid="requests-banner"')
     })
 
-    test('shows the service-problem page when the requests cannot be retrieved', async () => {
-      mockManageGets(
-        [makeApp()],
-        approvedRegistration,
+    test("renders RA-425's page without RA-492 actions when the requests cannot be retrieved", async () => {
+      const { result } = await getWithChanges(
         apiError(statusCodes.internalServerError)
       )
 
-      const { statusCode, result } = await get(PAGE_URL)
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain('data-testid="try-again-link"')
-      expect(result).not.toContain('accredited-sites-tab')
+      expect(result).toMatch(
+        /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(3\)\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(3\)\s*</
+      )
+      expect(result).toContain('data-testid="registered-site-row-4"')
+      expect(result).not.toMatch(
+        /add-to-accreditation-|site-status-tag-|view-request-|pending-change-banner|requests-banner|<form /
+      )
     })
   })
 })
