@@ -13,6 +13,7 @@ import {
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
+import { isMaxFilesRejection } from '../../common/helpers/isMaxFilesRejection.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -41,6 +42,11 @@ export const ALLOWED_MIME_TYPES = [
 ]
 
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
+
+// RA-605: per overseas site; infected files don't count, matching the
+// backend's AddBesEvidenceFile check.
+export const MAX_FILES = 10
+const MAX_FILES_REASON = 'maxFiles'
 
 export const FETCH_ERROR_KEY = 'pages.uploadBesEvidence.validation.fetchError'
 
@@ -130,7 +136,11 @@ function renderPage(h, viewData) {
 // if-blocks each rendering the page — the duplicate-filename rule
 // (AC01-AC04) is a fourth check on the same file, and one function keeps
 // the handler itself a plain sequence of guards.
-function validateBesEvidenceFile(t, { filename, fileSize, application }) {
+function validateBesEvidenceFile(t, { filename, fileSize, application, site }) {
+  const uploads = site?.besEvidence?.besEvidenceUploads ?? []
+  if (uploads.filter((f) => f.scanStatus !== 'Infected').length >= MAX_FILES) {
+    return t('pages.uploadBesEvidence.validation.maxFiles')
+  }
   if (!filename) {
     return t('pages.uploadBesEvidence.validation.noFile')
   }
@@ -215,6 +225,10 @@ export const uploadBesEvidenceGetController = {
       (s) => s.siteId === siteIdInt
     )
     const siteName = site?.siteName ?? ''
+    const fileError =
+      request.query?.reason === MAX_FILES_REASON
+        ? t('pages.uploadBesEvidence.validation.maxFiles')
+        : undefined
 
     return renderPage(
       h,
@@ -223,7 +237,7 @@ export const uploadBesEvidenceGetController = {
         applicationId,
         siteName,
         {},
-        {},
+        { fileError },
         {
           readOnly,
           isQueriedApplication: application.applicationStatus === 'Queried'
@@ -289,7 +303,8 @@ export const uploadBesEvidencePostController = {
     const fileError = validateBesEvidenceFile(t, {
       filename,
       fileSize,
-      application
+      application,
+      site
     })
     if (fileError) {
       return renderPage(
@@ -437,6 +452,11 @@ export const besEvidenceCdpStatusController = {
         { siteId, applicationId },
         `Error saving BES evidence file for site ${siteId}, application ${applicationId}`
       )
+      if (isMaxFilesRejection(err)) {
+        return h.redirect(
+          `/accreditation/upload-bes-evidence/${applicationId}/${siteId}?reason=${MAX_FILES_REASON}`
+        )
+      }
     }
 
     return h.redirect(uploadMoreUrl(applicationId, siteId))
