@@ -95,6 +95,10 @@ function effectiveValue(draft, field) {
   return draft.requestSite.effective?.[field] ?? draft.entry.site?.[field]
 }
 
+function besEvidenceUrl(applicationId, siteId) {
+  return stepUrl(applicationId, siteId, 'bes-evidence')
+}
+
 function stepUrls(request) {
   const { applicationId, siteId } = request.params
   const summary = addToAccreditationUrl(applicationId, siteId)
@@ -482,7 +486,7 @@ export const requireUploadForSite = {
     if (upload?.statusUrl && upload.siteId === siteId) {
       return h.continue
     }
-    return h.redirect(stepUrl(applicationId, siteId, 'bes-evidence')).takeover()
+    return h.redirect(besEvidenceUrl(applicationId, siteId)).takeover()
   }
 }
 
@@ -503,7 +507,7 @@ export const besEvidenceStatusController = stepHandler(
     const upload = request.yar.get(IN_YEAR_BES_UPLOAD_SESSION_KEY)
     request.yar.clear(IN_YEAR_BES_UPLOAD_SESSION_KEY)
     if (uploadStatus.form?.file?.hasError) {
-      return h.redirect(stepUrl(applicationId, siteId, 'bes-evidence'))
+      return h.redirect(besEvidenceUrl(applicationId, siteId))
     }
     try {
       await accreditationChangesService.addBesEvidenceFile(
@@ -528,7 +532,7 @@ export const besEvidenceStatusController = stepHandler(
       )
       if (isMaxFilesRejection(err)) {
         return h.redirect(
-          `${stepUrl(applicationId, siteId, 'bes-evidence')}?${MAX_FILES_QUERY}`
+          `${besEvidenceUrl(applicationId, siteId)}?${MAX_FILES_QUERY}`
         )
       }
     }
