@@ -25,7 +25,7 @@ function leafKeys(node, prefix = '') {
 const KNOWN_MISSING_IN_WELSH = [
   'pages.organisationList.description',
   'pages.operatorAccreditation.yearLabel',
-  'pages.operatorAccreditation.statuses.NotStarted'
+  'common.applicationStatuses.NotStarted'
 ]
 const KNOWN_MISSING_IN_ENGLISH = ['pages.businessPlanDetail.hint']
 

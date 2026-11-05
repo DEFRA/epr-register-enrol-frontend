@@ -991,9 +991,10 @@ describe('character-count live error clearing', () => {
   })
 })
 
-// RA-492: govuk-frontend hides every tab panel but the first once the page
-// is govuk-frontend-supported, so without createAll(Tabs) a second tab's
-// panel could never be shown.
+// govuk-frontend hides every tab panel but the first once the page is
+// govuk-frontend-supported, so without createAll(Tabs) the Manage overseas
+// reprocessing sites page's Registered tab, where RA-492's "Add to
+// accreditation" actions are, could never be shown.
 describe('govuk-frontend Tabs', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
@@ -1020,10 +1021,10 @@ describe('govuk-frontend Tabs', () => {
       <div class="govuk-tabs" data-module="govuk-tabs">
         <ul class="govuk-tabs__list">
           <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
-            <a class="govuk-tabs__tab" href="#accredited" data-testid="tab-accredited">Accredited</a>
+            <a class="govuk-tabs__tab" href="#accredited" data-testid="accredited-sites-tab">Accredited</a>
           </li>
           <li class="govuk-tabs__list-item">
-            <a class="govuk-tabs__tab" href="#registered" data-testid="tab-registered">Registered</a>
+            <a class="govuk-tabs__tab" href="#registered" data-testid="registered-sites-tab">Registered</a>
           </li>
         </ul>
         <div class="govuk-tabs__panel" id="accredited"></div>
@@ -1032,7 +1033,7 @@ describe('govuk-frontend Tabs', () => {
     `
     await loadApplication()
 
-    document.querySelector('[data-testid="tab-registered"]').click()
+    document.querySelector('[data-testid="registered-sites-tab"]').click()
 
     expect(
       document

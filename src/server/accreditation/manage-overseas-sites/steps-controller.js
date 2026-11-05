@@ -21,12 +21,13 @@ import {
   validateFileExtension
 } from '../upload-bes-evidence/controller.js'
 import { accreditationChangesService, validationErrors } from './service.js'
-import { loadView, organisationIdFrom, resolveDraftSite } from './controller.js'
 import {
-  addToAccreditationUrl,
-  manageOverseasSitesUrl,
-  stepUrl
-} from './urls.js'
+  loadView,
+  organisationIdFrom,
+  redirectToManageSites,
+  resolveDraftSite
+} from './controller.js'
+import { addToAccreditationUrl, stepUrl } from './urls.js'
 
 // RA-492: the "Add information" / "Change" steps behind the Add to
 // accreditation summary. Each captures one of the fields the backend lets
@@ -56,7 +57,7 @@ async function loadStep(request, h, fields) {
   const view = await loadView(request)
   const draft = resolveDraftSite(view, siteId)
   if (!draft) {
-    return { redirect: h.redirect(manageOverseasSitesUrl(applicationId)) }
+    return { redirect: await redirectToManageSites(request, h, view) }
   }
   const locked = new Set(draft.entry.lockedFields)
   const open = fields.filter((field) => !locked.has(field))

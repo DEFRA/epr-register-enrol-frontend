@@ -3,7 +3,7 @@
 // following the backend contract: one InProgress draft per approved
 // application holding many sites, Submitted on declaration, £328 per site.
 // Sites come from the stub application itself, so any Approved exporter in
-// STUB_ORG_DOCS (org 50018 is seeded for it) can be used locally.
+// the stub org docs (org 50019 is seeded for it) can be used locally.
 
 import { statusCodes } from './constants/status-codes.js'
 

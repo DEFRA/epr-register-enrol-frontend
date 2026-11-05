@@ -137,6 +137,13 @@ run under stub auth.
 | `API_TIMEOUT`      | No      | Backend request timeout (ms)                                                                                                                                                           |
 | `API_STUB_ENABLED` | No      | Replaces all backend API calls with in-memory fixture data — see [Development without a backend](#development-without-a-backend). Boot fails loudly if `true` while `ENVIRONMENT=prod` |
 
+### Feature flags
+
+| Variable                         | Default | Description                                                                                                                                                                                                                                                           |
+| -------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MULTIPLE_INTERIM_SITES_ENABLED` | `false` | RA-603. Lets an overseas reprocessing site carry more than one interim site                                                                                                                                                                                           |
+| `IN_YEAR_CHANGES_ENABLED`        | `false` | In-year changes epic (from RA-425). The current-accreditation pages under `/manage/{organisationId}/{registrationId}/{materialType}`, which Re/Ex links to. Off, every route 404s. Against the real backend, also needs its `FeatureFlags__InYearChangesEnabled=true` |
+
 ### Analytics and cookie consent
 
 | Variable                     | Default   | Description                                                                                     |

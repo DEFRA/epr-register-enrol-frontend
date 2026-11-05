@@ -123,6 +123,20 @@ describe('accreditationApiService', () => {
         APP_ID
       )
       expect(result.accreditationReference).toBeNull()
+      expect(result.accreditationNumber).toBeNull()
+    })
+
+    test('accreditationNumber keeps the issued accreditation reference when an application reference is also set', async () => {
+      apiClient.get.mockResolvedValue({
+        applicationReference: 'APP2027ER5000390GL',
+        accreditationReference: 'A27ER5000390001GL'
+      })
+      const result = await accreditationApiService.getApplication(
+        ORG_ID,
+        APP_ID
+      )
+      expect(result.accreditationNumber).toBe('A27ER5000390001GL')
+      expect(result.accreditationReference).toBe('APP2027ER5000390GL')
     })
 
     // RA-519: organisationId is ReEx's internal ObjectId, used to build

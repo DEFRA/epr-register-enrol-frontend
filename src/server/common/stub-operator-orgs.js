@@ -1,3 +1,10 @@
+import {
+  IN_YEAR_CHANGE_ORG_ID,
+  IN_YEAR_CHANGE_ORG_NAME,
+  MANAGE_EXPORTER_ORG_ID,
+  MANAGE_EXPORTER_ORG_NAME
+} from './constants/test-orgs.js'
+
 /**
  * Single source of truth for the stub operator's organisations.
  *
@@ -51,9 +58,9 @@ const NUMBERED_TEST_ORGS = [
   ['50015', 'Exporter Accreditation Test Exports Ltd'],
   ['50016', 'Section Lock Test Recycling Ltd'],
   ['50017', 'Coordinate Precision Test Exports Ltd'],
-  // RA-492: granted (Approved) exporter accreditation with registered ORSs,
-  // seeded by the backend for the in-year add-ORS journey tests.
-  ['50018', 'In-Year Change Exports Ltd']
+  [String(MANAGE_EXPORTER_ORG_ID), MANAGE_EXPORTER_ORG_NAME],
+  // RA-492: in-year add-ORS journey tests.
+  [String(IN_YEAR_CHANGE_ORG_ID), IN_YEAR_CHANGE_ORG_NAME]
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).

@@ -10,6 +10,7 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { setFeatureFlag } from '../../common/test-helpers/feature-flags.js'
 import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 
@@ -24,6 +25,8 @@ const APP = 'a26000000000000000050018'
 const SITE = `/accreditation/manage-overseas-sites/${APP}/add/900183`
 
 const view = {
+  organisationId: '50018',
+  registrationId: 'aaa000000000000000050018',
   materialType: 'Plastic',
   sites: [
     {
@@ -88,6 +91,7 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks()
+    setFeatureFlag('inYearChangesEnabled', true)
     vi.mocked(initUpload).mockReset()
     vi.mocked(proxyUploadToCdp).mockReset()
   })
@@ -275,7 +279,9 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
       activeRequest: null
     })
     const { headers } = await server.inject(`${SITE}/location`)
-    expect(headers.location).toBe(`/accreditation/manage-overseas-sites/${APP}`)
+    expect(headers.location).toBe(
+      '/manage/50018/aaa000000000000000050018/Plastic/overseas-sites'
+    )
   })
 
   test('location: a site with neither value asks for both', async () => {

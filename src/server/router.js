@@ -10,6 +10,7 @@ import { health } from './health/index.js'
 import { authRoutes } from './auth/index.js'
 import { operator } from './operator/index.js'
 import { operatorAccreditation } from './operator-accreditation/index.js'
+import { manage } from './manage/index.js'
 import { serveStaticFiles } from './common/helpers/serve-static-files.js'
 import { taskList } from './accreditation/task-list/index.js'
 import { queryTaskList } from './accreditation/query-task-list/index.js'
@@ -112,6 +113,7 @@ export const router = {
         cookies,
         operator,
         operatorAccreditation,
+        manage,
         taskList,
         queryTaskList,
         queryDeclaration,

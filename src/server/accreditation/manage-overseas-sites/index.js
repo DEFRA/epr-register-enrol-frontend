@@ -1,4 +1,4 @@
-import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
+import { manageRouteOptions } from '../../manage/helpers/manage-page.js'
 import { MAX_FILE_BYTES } from '../upload-bes-evidence/controller.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
 import {
@@ -9,7 +9,6 @@ import {
   removeBesEvidenceFileController,
   declarationGetController,
   declarationPostController,
-  manageOverseasSitesController,
   paymentGetController,
   requestsGetController,
   requestsPostController
@@ -32,8 +31,10 @@ const SITE = `${BASE}/add/{siteId}`
 
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
+// RA-492: in-year change pages, so behind RA-425's inYearChangesEnabled flag
+// (404 before auth when off) and for operators only, as the /manage pages.
 const uploadOptions = {
-  ...requireOperator,
+  ...manageRouteOptions,
   payload: {
     // The file plus the form's other fields, as the upload-bes-evidence route.
     maxBytes: MAX_FILE_BYTES + MULTIPART_OVERHEAD_BYTES,
@@ -44,17 +45,16 @@ const uploadOptions = {
 }
 
 const statusOptions = {
-  ...requireOperator,
+  ...manageRouteOptions,
   pre: [provideUploadStatusFromSession(IN_YEAR_BES_UPLOAD_SESSION_KEY)]
 }
 
 // RA-492: in-year request to add registered ORSs to a granted accreditation.
-function route(method, path, controller, options = requireOperator) {
+function route(method, path, controller, options = manageRouteOptions) {
   return { method, path, options, ...controller }
 }
 
 const ROUTES = [
-  route('GET', BASE, manageOverseasSitesController),
   route('POST', `${BASE}/sites/{siteId}`, addSiteToRequestController),
   route('GET', SITE, addToAccreditationGetController),
   route('POST', SITE, addToAccreditationPostController),

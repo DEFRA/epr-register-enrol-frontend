@@ -1,20 +1,32 @@
-// RA-492: in-year "add a registered ORS to a granted accreditation" journey.
-// Every page is keyed by the APPROVED application's id.
+import { overseasSitesUrl } from '../../manage/helpers/manage-page.js'
 
-export function manageOverseasSitesUrl(applicationId) {
+// RA-492: in-year "add a registered ORS to a granted accreditation" journey.
+// Every page is keyed by the APPROVED application's id. The journey starts
+// from, and returns to, RA-425's Manage overseas reprocessing sites page.
+
+function journeyUrl(applicationId) {
   return `/accreditation/manage-overseas-sites/${applicationId}`
 }
 
-export function registeredSitesUrl(applicationId) {
-  return `${manageOverseasSitesUrl(applicationId)}#registered`
+/**
+ * RA-425's Manage overseas reprocessing sites page for the accreditation in
+ * the backend's change view, optionally on its Registered tab.
+ */
+export function manageSitesUrl(
+  view,
+  currentLocale,
+  { registered = false } = {}
+) {
+  const url = overseasSitesUrl(view, currentLocale)
+  return registered ? `${url}#registered` : url
 }
 
 export function addSiteToRequestUrl(applicationId, siteId) {
-  return `${manageOverseasSitesUrl(applicationId)}/sites/${siteId}`
+  return `${journeyUrl(applicationId)}/sites/${siteId}`
 }
 
 export function addToAccreditationUrl(applicationId, siteId) {
-  return `${manageOverseasSitesUrl(applicationId)}/add/${siteId}`
+  return `${journeyUrl(applicationId)}/add/${siteId}`
 }
 
 export function stepUrl(applicationId, siteId, step) {
@@ -30,13 +42,13 @@ export function besEvidenceFileDeleteUrl(applicationId, siteId, fileId) {
 }
 
 export function requestsUrl(applicationId) {
-  return `${manageOverseasSitesUrl(applicationId)}/requests`
+  return `${journeyUrl(applicationId)}/requests`
 }
 
 export function declarationUrl(applicationId) {
-  return `${manageOverseasSitesUrl(applicationId)}/declaration`
+  return `${journeyUrl(applicationId)}/declaration`
 }
 
 export function paymentUrl(applicationId) {
-  return `${manageOverseasSitesUrl(applicationId)}/payment`
+  return `${journeyUrl(applicationId)}/payment`
 }

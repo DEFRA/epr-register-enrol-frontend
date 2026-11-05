@@ -16,5 +16,11 @@ export const featureFlagsSchema = {
     format: Boolean,
     default: false,
     env: 'MULTIPLE_INTERIM_SITES_ENABLED'
+  },
+  inYearChangesEnabled: {
+    doc: 'In-year changes epic (from RA-425). Shows the operator in-year changes pages under /manage: so far the pages for viewing a current accreditation and its overseas reprocessing sites. Off by default; with it off every /manage route returns 404.',
+    format: Boolean,
+    default: false,
+    env: 'IN_YEAR_CHANGES_ENABLED'
   }
 }

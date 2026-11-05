@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach } from 'vitest'
 import { stubAccreditationChanges } from './stub-accreditation-changes.js'
+import { currentYear } from './helpers/currentYear.js'
 
 const BASE = '/api/v1/accreditation-changes/50018'
 
@@ -136,21 +137,21 @@ describe('stubAccreditationChanges (RA-492)', () => {
 })
 
 describe('persistentStubApiClient accreditation-changes routing (RA-492)', () => {
-  test('serves the org 50018 seed from the stub without reaching the backend', async () => {
+  test('serves the org 50019 stub from the stub without reaching the backend', async () => {
     const { persistentStubApiClient: client } =
       await import('./persistentStubApiClient.js')
-    const base = '/api/v1/accreditation-changes/50018/a26000000000000000050018'
+    const base = `/api/v1/accreditation-changes/50019/a${currentYear()}0000000000000050019`
     const view = await client.get(base)
-    expect(view.sites.map((s) => s.orsId)).toEqual(['001', '002', '003', '004'])
+    expect(view.sites.map((s) => s.orsId)).toEqual(['001', '005', '006', '007'])
     expect(view.sites[1].lockedFields).toEqual([
       'country',
       'coordinates',
       'operationCodes',
       'conditionsOfExport'
     ])
-    await client.post(`${base}/requests/current/sites`, { siteId: 900184 })
+    await client.post(`${base}/requests/current/sites`, { siteId: 901912 })
     const patched = await client.patch(
-      `${base}/requests/current/sites/900184`,
+      `${base}/requests/current/sites/901912`,
       { conditionsOfExport: true }
     )
     expect(patched.sites[0].missingFields).toEqual(['operationCodes'])
@@ -160,7 +161,7 @@ describe('persistentStubApiClient accreditation-changes routing (RA-492)', () =>
     )
     expect(initiated.statusUrl).toMatch(/\/files\/[^/]+\/status$/)
     expect(
-      await client.delete(`${base}/requests/current/sites/900184`)
+      await client.delete(`${base}/requests/current/sites/901912`)
     ).toBeNull()
     await expect(
       client.get('/api/v1/accreditation-changes/50018/no-such-app')

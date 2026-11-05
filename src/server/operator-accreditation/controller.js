@@ -9,9 +9,13 @@ import {
   landingUrl,
   reExBackLinkUrl
 } from '../common/helpers/accreditationUrls.js'
+import {
+  APPLICATION_STATUS_TAGS,
+  applicationStatusTag
+} from '../common/constants/applicationStatusTags.js'
+import { APPROVED_STATUS } from '../common/constants/applicationStatuses.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
-import { manageOverseasSitesUrl } from '../accreditation/manage-overseas-sites/urls.js'
 import {
   WITHDRAWN_STATUS,
   NON_WITHDRAWABLE_STATUSES,
@@ -25,21 +29,6 @@ import {
 // silently creating an application every time it was re-visited.
 const START_NEW_SEGMENT = '/start-new'
 
-const STATUS_CONFIG = {
-  Saved: { tagClass: 'govuk-tag--grey' },
-  Started: { tagClass: 'govuk-tag--blue' },
-  NotStarted: { tagClass: 'govuk-tag--grey' },
-  InProgress: { tagClass: 'govuk-tag--blue' },
-  Submitted: { tagClass: 'govuk-tag--green' },
-  DulyMade: { tagClass: 'govuk-tag--turquoise' },
-  Queried: { tagClass: 'govuk-tag--orange' },
-  Updated: { tagClass: 'govuk-tag--turquoise' },
-  AwaitingDecision: { tagClass: 'govuk-tag--purple' },
-  Approved: { tagClass: 'govuk-tag--green' },
-  Rejected: { tagClass: 'govuk-tag--red' },
-  Withdrawn: { tagClass: 'govuk-tag--grey' }
-}
-
 // The reapply prompt only makes sense while an application is still live —
 // once it's been decided (approved/refused) or dropped (withdrawn/cancelled)
 // there's nothing left to reapply for.
@@ -47,7 +36,7 @@ const REAPPLY_TEXT_HIDDEN_STATUSES = new Set([
   'Saved',
   'Started',
   'NotStarted',
-  'Approved',
+  APPROVED_STATUS,
   'Withdrawn',
   'Cancelled',
   'Refused',
@@ -64,22 +53,14 @@ function buildCurrentAccreditation(application, siteName, priorYear) {
   return {
     accreditationNumber: accreditation.accreditationNumber,
     regulator: accreditation.regulator,
-    status: 'Approved',
-    statusTagClass: STATUS_CONFIG.Approved.tagClass,
+    status: APPROVED_STATUS,
+    statusTagClass: APPLICATION_STATUS_TAGS[APPROVED_STATUS].tagClass,
     expiryDate: `31 December ${priorYear}`,
     siteAddress: siteName,
     tonnage: accreditation.tonnage,
     authorisedUsers: accreditation.authorisedUsers ?? [],
     overseasSites: accreditation.overseasSites ?? []
   }
-}
-
-// RA-492: a granted exporter accreditation can have registered ORSs added
-// to it in-year.
-function manageOverseasSitesLink(application, isExporter) {
-  return isExporter && application.applicationStatus === 'Approved'
-    ? manageOverseasSitesUrl(application.applicationId)
-    : null
 }
 
 export function buildLandingViewModel(
@@ -90,9 +71,7 @@ export function buildLandingViewModel(
   t,
   isExporter = false
 ) {
-  const config = STATUS_CONFIG[application.applicationStatus] ?? {
-    tagClass: ''
-  }
+  const statusTag = applicationStatusTag(application.applicationStatus, t)
   const matDisp = materialDisplayName(application, t)
   const siteName = isExporter
     ? (application.companyRegisteredAddress ?? t('pages.taskList.siteNotSet'))
@@ -106,10 +85,8 @@ export function buildLandingViewModel(
     siteName,
     pageHeading: t('pages.operatorAccreditation.reapplyHeading'),
     materialDisplay: matDisp,
-    statusLabel: t(
-      `pages.operatorAccreditation.statuses.${application.applicationStatus}`
-    ),
-    statusTagClass: config.tagClass,
+    statusLabel: statusTag.text,
+    statusTagClass: statusTag.classes,
     // RA-415: sourced from CM's SLA due date (OJ-BE's WorkItemDetailResponseDto
     // -> AccreditationApplicationModel.DueDate), null until the application has
     // a linked CM work item — see dueDateNotAvailable fallback in the template.
@@ -146,7 +123,6 @@ export function buildLandingViewModel(
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',
-    manageOverseasSitesUrl: manageOverseasSitesLink(application, isExporter),
     displayReapplyAccreditationText: !REAPPLY_TEXT_HIDDEN_STATUSES.has(
       application.applicationStatus
     )

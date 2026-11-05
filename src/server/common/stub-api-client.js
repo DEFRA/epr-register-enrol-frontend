@@ -8,6 +8,14 @@ import {
   DETAIL_FIELD_TO_CATEGORY
 } from './constants/businessPlanCategories.js'
 import { allInterimSites } from './helpers/interimSites.js'
+import {
+  DELTA_GREEN_ORG_ID,
+  DELTA_GREEN_REGISTRATION_ID
+} from './constants/test-orgs.js'
+import {
+  manageStubOrgDocs,
+  manageStubRegistrationStatuses
+} from './stub-manage-accreditations.js'
 
 // RA-456: derived from the shared category map — see
 // common/constants/businessPlanCategories.js
@@ -195,29 +203,7 @@ const DEFAULT_BP_PERCENTS = {
   other: 10
 }
 
-// RA-492: an ORS on org 50018's granted accreditation (registered unless
-// `selected`), with the details every one of them shares.
-function inYearSite(details) {
-  return {
-    isEu: false,
-    isOecd: false,
-    selected: false,
-    isNewSite: false,
-    registeredNowAccredited: false,
-    contactName: 'Site Contact',
-    contactEmail: 'contact@example.com',
-    contactPhone: '+44 20 7946 0000',
-    code1: 'B3011',
-    repatriatedLoads: "Returned to the UK at the exporter's cost",
-    besEvidence: {
-      besEvidenceUploads: [],
-      doYouWantToUploadMoreEvidence: false
-    },
-    ...details
-  }
-}
-
-export const STUB_ORG_DOCS = [
+const STATIC_STUB_ORG_DOCS = [
   {
     orgId: 50001,
     companyDetails: { name: 'NEWDEV RECYCLING LIMITED' },
@@ -335,7 +321,7 @@ export const STUB_ORG_DOCS = [
     ]
   },
   {
-    orgId: 50003,
+    orgId: DELTA_GREEN_ORG_ID,
     companyDetails: { name: 'Delta Green Recycling Co' },
     accreditations: [
       {
@@ -345,7 +331,7 @@ export const STUB_ORG_DOCS = [
         material: 'glass',
         glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
-        registrationId: 'aaa000000000000000050003',
+        registrationId: DELTA_GREEN_REGISTRATION_ID,
         siteAddress: {
           line1: 'The Laundry',
           town: 'Siteville',
@@ -1025,76 +1011,13 @@ export const STUB_ORG_DOCS = [
         }
       }
     ]
-  },
-  // RA-492: granted (Approved) exporter accreditation with registered ORSs
-  // for the in-year add-ORS journey; mirrors the backend's dev seed for
-  // org 50018.
-  {
-    orgId: 50018,
-    companyDetails: { name: 'In-Year Change Exports Ltd' },
-    accreditations: [
-      {
-        id: 'a26000000000000000050018',
-        applicationId: 'a26000000000000000050018',
-        applicationStatus: 'Approved',
-        material: 'plastic',
-        wasteProcessingType: 'exporter',
-        registrationId: 'aaa000000000000000050018',
-        companyRegisteredAddress: {
-          line1: '18 Export Street',
-          town: 'London',
-          postcode: 'E1 6AN'
-        },
-        wasteRegistrationNumber: 'R25EX5001800018PL',
-        yearlyMetrics: { year: '2026' },
-        formSubmissionTime: '2025-09-01T10:00:00Z',
-        submitterContactDetails: null,
-        overseasSites: {
-          sectionStatus: 'Completed',
-          sites: [
-            inYearSite({
-              siteId: 900181,
-              orsId: '001',
-              siteName: 'In-Year Accredited Site',
-              siteAddress: '1 Accredited Road',
-              country: 'Germany',
-              selected: true,
-              coordinates: '52.5200, 13.4050',
-              operationCodes: ['R3'],
-              conditionsOfExport: true
-            }),
-            inYearSite({
-              siteId: 900182,
-              orsId: '002',
-              siteName: 'In-Year Complete Site',
-              siteAddress: '2 Registered Road',
-              country: 'Germany',
-              coordinates: '53.5500, 9.9930',
-              operationCodes: ['R3'],
-              conditionsOfExport: true
-            }),
-            inYearSite({
-              siteId: 900183,
-              orsId: '003',
-              siteName: 'In-Year India Site',
-              siteAddress: '3 Registered Road',
-              country: 'India'
-            }),
-            inYearSite({
-              siteId: 900184,
-              orsId: '004',
-              siteName: 'In-Year Turkey Site',
-              siteAddress: '4 Registered Road',
-              country: 'Turkey',
-              coordinates: '41.0080, 28.9780'
-            })
-          ]
-        },
-        besEvidence: { sectionStatus: 'Completed' }
-      }
-    ]
   }
 ]
+
+// A function so the RA-425 and RA-492 org docs follow the clock's year.
+export function stubOrgDocs() {
+  return [...STATIC_STUB_ORG_DOCS, ...manageStubOrgDocs()]
+}
 
 // Matches /{orgId}/{itemId}[/{section}] at end of path
 // Does NOT match BES evidence paths (too many segments)
@@ -1116,7 +1039,7 @@ const BP_PERCENT_FIELD_CATEGORY = PERCENT_FIELD_TO_CATEGORY
 const BP_DETAIL_FIELD_CATEGORY = DETAIL_FIELD_TO_CATEGORY
 
 function findOrgDoc(orgId) {
-  return STUB_ORG_DOCS.find((d) => String(d.orgId) === String(orgId)) ?? null
+  return stubOrgDocs().find((d) => String(d.orgId) === String(orgId)) ?? null
 }
 
 function findAccreditation(orgId, itemId) {
@@ -1180,6 +1103,22 @@ function mergeBpItems(existing, incoming) {
   return merged
 }
 
+const REGISTRATION_STATUS_RE = /^\/api\/v1\/registrations\/([^/]+)\/status$/
+
+// Rejects like the real API client does for a 404, so callers see the same
+// "no record" error with or without the stub.
+function stubRegistrationStatus(registrationId) {
+  const registration = manageStubRegistrationStatuses()[registrationId]
+  if (!registration) {
+    return Promise.reject(
+      Object.assign(new Error('API request failed: 404 Not Found'), {
+        status: 404
+      })
+    )
+  }
+  return Promise.resolve({ registrationId, ...registration })
+}
+
 // In-memory store for stub CDP upload sessions (fileUploadId → scan result)
 const stubPendingUploads = new Map()
 
@@ -1212,6 +1151,13 @@ export const stubApiClient = {
           }
         }
       })
+    }
+
+    const registrationStatusMatch = endpoint.match(REGISTRATION_STATUS_RE)
+    if (registrationStatusMatch) {
+      return stubRegistrationStatus(
+        decodeURIComponent(registrationStatusMatch[1])
+      )
     }
 
     if (/\/api\/v1\/accreditation-applications\/[^/]+$/.test(endpoint)) {
@@ -1683,7 +1629,7 @@ export const stubApiClient = {
     if (fileMatch) {
       const item =
         findAccreditation(fileMatch[1], fileMatch[2]) ??
-        STUB_ORG_DOCS[0].accreditations[0]
+        STATIC_STUB_ORG_DOCS[0].accreditations[0]
       if (item.samplingPlan?.files) {
         item.samplingPlan.files = item.samplingPlan.files.filter(
           (f) => f.fileId !== fileMatch[3]

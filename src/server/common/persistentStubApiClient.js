@@ -1,13 +1,12 @@
 import { config } from '../../config/config.js'
-import { stubApiClient, STUB_ORG_DOCS } from './stub-api-client.js'
+import { stubApiClient, stubOrgDocs } from './stub-api-client.js'
 import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
 import { stubAccreditationChanges } from './stub-accreditation-changes.js'
 
 function overlayOrgName(items) {
+  const docs = stubOrgDocs()
   return items.map((item) => {
-    const doc = STUB_ORG_DOCS.find(
-      (d) => String(d.orgId) === String(item.orgId)
-    )
+    const doc = docs.find((d) => String(d.orgId) === String(item.orgId))
     return doc ? { ...item, companyName: doc.companyDetails?.name } : item
   })
 }
@@ -53,8 +52,9 @@ const accreditationChangesDeps = {
   async getApplication(orgId, appId) {
     const raw = await stubApiClient.get(`${BASE}/${orgId}/${appId}`)
     // The application stub falls back to another application rather than
-    // failing for an unknown id; this journey needs that one exactly.
-    if (raw?.applicationId !== appId) {
+    // failing for an unknown id; this journey needs that one exactly. Stub
+    // applications are looked up, and listed, by id.
+    if (String(raw?.id) !== appId) {
       return null
     }
     return {

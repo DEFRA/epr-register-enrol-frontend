@@ -5,7 +5,6 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
-import { landingUrl } from '../../common/helpers/accreditationUrls.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
   PENCE_PER_POUND,
@@ -21,7 +20,6 @@ import {
 import { accreditationChangesService } from './service.js'
 import {
   SUBMITTED,
-  buildManageViewModel,
   buildMissingFieldErrors,
   buildSummaryRows,
   findRequestSite,
@@ -31,14 +29,12 @@ import {
 import {
   addToAccreditationUrl,
   declarationUrl,
-  manageOverseasSitesUrl,
+  manageSitesUrl,
   paymentUrl,
-  registeredSitesUrl,
   requestsUrl
 } from './urls.js'
 
 const VIEWS = {
-  manage: 'accreditation/manage-overseas-sites/index',
   summary: 'accreditation/manage-overseas-sites/add-to-accreditation',
   requests: 'accreditation/manage-overseas-sites/requests',
   declaration: 'accreditation/submit-declaration/index',
@@ -76,6 +72,17 @@ export async function loadView(request) {
 }
 
 /**
+ * Back to RA-425's Manage overseas reprocessing sites page, for the
+ * accreditation in `view` (loaded when the caller has not already).
+ */
+export async function redirectToManageSites(request, h, view) {
+  const { currentLocale } = getLocaleAndTranslator(request)
+  return h.redirect(
+    manageSitesUrl(view ?? (await loadView(request)), currentLocale)
+  )
+}
+
+/**
  * The registered site being added, with its draft entry. Null (the caller
  * redirects to Manage ORS) when the site is not in the in-progress request -
  * including when it is in a submitted one, which the operator may not
@@ -99,22 +106,6 @@ function chargeFor(charge) {
   }
 }
 
-export const manageOverseasSitesController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
-    const view = await loadView(request)
-    const { applicationId } = request.params
-    return h.view(VIEWS.manage, {
-      pageTitle: t2(t, 'title'),
-      heading: t2(t, 'title'),
-      backLink: landingUrl({ ...view, year: view.year }),
-      year: view.year,
-      requestsUrl: requestsUrl(applicationId),
-      ...buildManageViewModel(view, applicationId)
-    })
-  }
-}
-
 // "Add to accreditation" (f03): a crumb-protected POST, because it creates
 // or changes the draft request.
 export const addSiteToRequestController = {
@@ -130,7 +121,7 @@ export const addSiteToRequestController = {
       // 404 unknown site, 409 already accredited or in a submitted request
       // (AC09): nothing to add, so back to the list that offered it.
       if (NOTHING_TO_DO.has(err.status)) {
-        return h.redirect(manageOverseasSitesUrl(applicationId))
+        return redirectToManageSites(request, h)
       }
       throw err
     }
@@ -138,7 +129,11 @@ export const addSiteToRequestController = {
   }
 }
 
-function renderSummary(h, t, { applicationId, entry, requestSite, errors }) {
+function renderSummary(
+  h,
+  { t, currentLocale },
+  { view, applicationId, entry, requestSite, errors }
+) {
   const siteName = entry.site.siteName
   const rows = buildSummaryRows({ t, applicationId, entry, requestSite })
   const errorByRow = Object.fromEntries(
@@ -148,7 +143,7 @@ function renderSummary(h, t, { applicationId, entry, requestSite, errors }) {
   return h.view(VIEWS.summary, {
     pageTitle: heading,
     heading,
-    backLink: manageOverseasSitesUrl(applicationId),
+    backLink: manageSitesUrl(view, currentLocale),
     cancelUrl: `${addToAccreditationUrl(applicationId, entry.siteId)}/cancel`,
     rows: rows.map((row) => ({ ...row, error: errorByRow[row.id] ?? null })),
     errors: errors ?? []
@@ -157,13 +152,17 @@ function renderSummary(h, t, { applicationId, entry, requestSite, errors }) {
 
 export const addToAccreditationGetController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const { applicationId, siteId } = request.params
-    const draft = resolveDraftSite(await loadView(request), siteId)
+    const view = await loadView(request)
+    const draft = resolveDraftSite(view, siteId)
     if (!draft) {
-      return h.redirect(manageOverseasSitesUrl(applicationId))
+      return redirectToManageSites(request, h, view)
     }
-    return renderSummary(h, t, { applicationId, ...draft })
+    return renderSummary(h, getLocaleAndTranslator(request), {
+      view,
+      applicationId,
+      ...draft
+    })
   }
 }
 
@@ -171,17 +170,21 @@ export const addToAccreditationGetController = {
 // left keeps the operator on the summary with each one identified.
 export const addToAccreditationPostController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
+    const locale = getLocaleAndTranslator(request)
     const { applicationId, siteId } = request.params
-    const draft = resolveDraftSite(await loadView(request), siteId)
+    const view = await loadView(request)
+    const draft = resolveDraftSite(view, siteId)
     if (!draft) {
-      return h.redirect(manageOverseasSitesUrl(applicationId))
+      return redirectToManageSites(request, h, view)
     }
-    const errors = buildMissingFieldErrors(t, draft.requestSite)
+    const errors = buildMissingFieldErrors(locale.t, draft.requestSite)
     if (errors.length > 0) {
-      return renderSummary(h, t, { applicationId, ...draft, errors }).code(
-        statusCodes.badRequest
-      )
+      return renderSummary(h, locale, {
+        view,
+        applicationId,
+        ...draft,
+        errors
+      }).code(statusCodes.badRequest)
     }
     return h.redirect(requestsUrl(applicationId))
   }
@@ -193,11 +196,12 @@ export const addToAccreditationPostController = {
 // same error that page shows.
 export const removeBesEvidenceFileController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
+    const locale = getLocaleAndTranslator(request)
     const { applicationId, siteId, fileId } = request.params
-    const draft = resolveDraftSite(await loadView(request), siteId)
+    const view = await loadView(request)
+    const draft = resolveDraftSite(view, siteId)
     if (!draft) {
-      return h.redirect(manageOverseasSitesUrl(applicationId))
+      return redirectToManageSites(request, h, view)
     }
     try {
       await accreditationChangesService.deleteBesEvidenceFile(
@@ -215,12 +219,15 @@ export const removeBesEvidenceFileController = {
         const errors = [
           {
             row: 'bes-evidence',
-            text: t('pages.cyaEvidenceForSite.validation.deleteError')
+            text: locale.t('pages.cyaEvidenceForSite.validation.deleteError')
           }
         ]
-        return renderSummary(h, t, { applicationId, ...draft, errors }).code(
-          statusCodes.internalServerError
-        )
+        return renderSummary(h, locale, {
+          view,
+          applicationId,
+          ...draft,
+          errors
+        }).code(statusCodes.internalServerError)
       }
     }
     return h.redirect(addToAccreditationUrl(applicationId, siteId))
@@ -243,18 +250,24 @@ export const cancelAddToAccreditationController = {
         throw err
       }
     }
-    return h.redirect(manageOverseasSitesUrl(applicationId))
+    return redirectToManageSites(request, h)
   }
 }
 
-function renderRequests(h, t, { applicationId, view, errors }) {
+function renderRequests(
+  h,
+  { t, currentLocale },
+  { applicationId, view, errors }
+) {
   const sites = view.activeRequest?.sites ?? []
+  const manageUrl = manageSitesUrl(view, currentLocale)
   return h.view(VIEWS.requests, {
     pageTitle: t2(t, 'requests.title'),
     heading: t2(t, 'requests.title'),
-    backLink: manageOverseasSitesUrl(applicationId),
-    cancelUrl: manageOverseasSitesUrl(applicationId),
-    addAnotherUrl: registeredSitesUrl(applicationId),
+    backLink: manageUrl,
+    cancelUrl: manageUrl,
+    // AC10: "Add another request" goes to the registered ORS list.
+    addAnotherUrl: manageSitesUrl(view, currentLocale, { registered: true }),
     requests: sites.map((site) => {
       const entry = findSite(view, site.siteId)
       return {
@@ -272,9 +285,8 @@ function renderRequests(h, t, { applicationId, view, errors }) {
 
 export const requestsGetController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
     const view = await loadView(request)
-    return renderRequests(h, t, {
+    return renderRequests(h, getLocaleAndTranslator(request), {
       applicationId: request.params.applicationId,
       view
     })
@@ -283,12 +295,13 @@ export const requestsGetController = {
 
 export const requestsPostController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
+    const locale = getLocaleAndTranslator(request)
+    const { t } = locale
     const { applicationId } = request.params
     const view = await loadView(request)
     const sites = view.activeRequest?.sites ?? []
     if (sites.length === 0) {
-      return h.redirect(manageOverseasSitesUrl(applicationId))
+      return redirectToManageSites(request, h, view)
     }
     const incomplete = sites.filter((site) => site.isComplete === false)
     if (incomplete.length > 0) {
@@ -299,7 +312,7 @@ export const requestsPostController = {
           .replace('{site}', site.siteName)
           .replace('{orsId}', site.orsId)
       }))
-      return renderRequests(h, t, { applicationId, view, errors }).code(
+      return renderRequests(h, locale, { applicationId, view, errors }).code(
         statusCodes.badRequest
       )
     }
@@ -347,7 +360,7 @@ export const declarationPostController = {
     const { applicationId } = request.params
     const payload = request.payload ?? {}
     if (payload.submitAction === 'saveAndComeLater') {
-      return h.redirect(manageOverseasSitesUrl(applicationId))
+      return redirectToManageSites(request, h)
     }
     const fullName = (payload.fullName ?? '').trim()
     const jobTitle = (payload.jobTitle ?? '').trim()
@@ -375,7 +388,7 @@ export const declarationPostController = {
       })
     } catch (err) {
       if (err.status === statusCodes.notFound) {
-        return h.redirect(manageOverseasSitesUrl(applicationId))
+        return redirectToManageSites(request, h)
       }
       if (err.status === statusCodes.unprocessableEntity) {
         return h.redirect(requestsUrl(applicationId))
@@ -399,7 +412,7 @@ export const declarationPostController = {
 // (AC03/AC04) for the most recently submitted request.
 export const paymentGetController = {
   async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
+    const { t, currentLocale } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
     const organisationId = organisationIdFrom(request)
     const view = await loadView(request)
@@ -407,7 +420,7 @@ export const paymentGetController = {
       (changeRequest) => changeRequest.status === SUBMITTED
     )
     if (!submitted) {
-      return h.redirect(manageOverseasSitesUrl(applicationId))
+      return redirectToManageSites(request, h, view)
     }
     const application = await accreditationApiService.getApplication(
       organisationId,
@@ -422,7 +435,7 @@ export const paymentGetController = {
     )
     return h.view(VIEWS.payment, {
       pageTitle: t('pages.viewPaymentDetails.title'),
-      backLink: manageOverseasSitesUrl(applicationId),
+      backLink: manageSitesUrl(view, currentLocale),
       backLinkText: t2(t, 'payment.backLink'),
       materialDisplay: materialDisplayName(application, t),
       submitterName: submitted.submittedBy.fullName,

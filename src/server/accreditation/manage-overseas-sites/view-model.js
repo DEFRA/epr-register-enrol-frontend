@@ -8,8 +8,6 @@ import {
 // RA-492: view models for the in-year add-ORS pages, built from the
 // backend's AccreditationChangesView (see service.js).
 
-export const ACCREDITED = 'Accredited'
-export const REGISTERED = 'Registered'
 export const IN_PROGRESS = 'InProgress'
 export const SUBMITTED = 'Submitted'
 
@@ -53,40 +51,35 @@ export function findRequestSite(view, siteId) {
 }
 
 /**
- * Manage overseas reprocessing sites (f02/f03/f12/f13). A site whose add
- * request has been submitted moves to the Accredited tab with a Pending tag
- * (AC08) and loses its actions (AC09); one in the draft shows In progress.
+ * RA-492's part of RA-425's Manage overseas reprocessing sites page
+ * (f02/f03/f12/f13): where each ORS stands in the operator's in-year change
+ * requests, and how many sites the in-progress request holds (AC10 banner).
  */
-export function buildManageViewModel(view, applicationId) {
-  const toRow = (entry) => ({
-    orsId: entry.orsId,
-    addUrl: addSiteToRequestUrl(applicationId, entry.siteId),
-    viewUrl: addToAccreditationUrl(applicationId, entry.siteId),
-    siteName: entry.site.siteName,
-    address: siteAddressLine(entry.site),
-    pending: entry.pendingRequestStatus === SUBMITTED,
-    inProgress: entry.pendingRequestStatus === IN_PROGRESS
-  })
-  const sites = view.sites
-  const accredited = sites
-    .filter(
-      (entry) =>
-        entry.accreditationStatus === ACCREDITED ||
-        entry.pendingRequestStatus === SUBMITTED
-    )
-    .map(toRow)
-  const registered = sites
-    .filter(
-      (entry) =>
-        entry.accreditationStatus === REGISTERED &&
-        entry.pendingRequestStatus !== SUBMITTED
-    )
-    .map(toRow)
+export function changeRequestsSummary(view) {
+  const statusBySiteId = new Map(
+    view.sites.map((entry) => [
+      String(entry.siteId),
+      entry.pendingRequestStatus ?? null
+    ])
+  )
   return {
-    accredited,
-    registered,
-    readyForSubmissionCount: view.activeRequest?.sites?.length ?? 0,
-    pendingCount: accredited.filter((row) => row.pending).length
+    pendingRequestStatus: (siteId) =>
+      statusBySiteId.get(String(siteId)) ?? null,
+    readyForSubmissionCount: view.activeRequest?.sites?.length ?? 0
+  }
+}
+
+/**
+ * RA-492's actions for an ORS on RA-425's Registered tab: "Pending" and no
+ * action while it is in a submitted request (AC09), "In progress" and a View
+ * link while it is in the draft request, otherwise "Add to accreditation".
+ */
+export function registeredSiteActions(applicationId, siteId, status) {
+  return {
+    pending: status === SUBMITTED,
+    inProgress: status === IN_PROGRESS,
+    addUrl: addSiteToRequestUrl(applicationId, siteId),
+    viewUrl: addToAccreditationUrl(applicationId, siteId)
   }
 }
 

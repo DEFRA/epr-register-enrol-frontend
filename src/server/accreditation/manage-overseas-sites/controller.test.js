@@ -10,9 +10,13 @@ import {
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
+import { setFeatureFlag } from '../../common/test-helpers/feature-flags.js'
 
 const APP = 'a26000000000000000050018'
 const BASE = `/accreditation/manage-overseas-sites/${APP}`
+// RA-425's Manage overseas reprocessing sites page for makeView()'s
+// accreditation, where the journey starts and returns.
+const MANAGE = '/manage/50018/aaa000000000000000050018/Plastic/overseas-sites'
 
 function siteEntry(overrides = {}) {
   return {
@@ -145,73 +149,21 @@ describe('#manageOverseasSites (RA-492)', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks()
+    setFeatureFlag('inYearChangesEnabled', true)
   })
 
-  describe('Manage overseas reprocessing sites', () => {
-    test('lists accredited and registered sites in tabs, with Add to accreditation on registered rows', async () => {
-      mockGet(makeView({ active: null }))
-      const { statusCode, result } = await server.inject(BASE)
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('Manage overseas reprocessing sites')
-      expect(result).toContain('data-testid="tab-accredited"')
-      expect(result).toContain('Accredited (1)')
-      expect(result).toContain('Registered (2)')
-      expect(result).toContain('data-testid="accredited-site-001"')
-      expect(result).toContain('data-testid="registered-site-002"')
-      expect(result).toContain(`action="${BASE}/sites/900182"`)
-      expect(result).toContain('data-testid="add-to-accreditation-002"')
-      expect(result).not.toContain('data-testid="requests-banner"')
-      expect(result).not.toContain('data-testid="pending-change-banner"')
-    })
-
-    test('shows the requests banner and an In progress tag for a site in the draft (save and come back)', async () => {
-      mockGet(makeView())
-      const { result } = await server.inject(BASE)
-
-      expect(result).toContain('data-testid="requests-banner"')
-      expect(result).toContain(
-        'You currently have 1 requests ready for submission.'
-      )
-      expect(result).toContain(`href="${BASE}/requests"`)
-      expect(result).toContain('data-testid="site-status-tag-002"')
-      expect(result).toContain('In progress')
-      expect(result).toContain('data-testid="view-request-002"')
-      expect(result).not.toContain('data-testid="add-to-accreditation-002"')
-    })
-
-    test('AC08/AC09: a submitted site shows Pending on the accredited list, no actions, and the pending banner', async () => {
-      mockGet(
-        makeView({
-          active: null,
-          sites: [
-            siteEntry({ pendingRequestStatus: 'Submitted' }),
-            siteEntry({ siteId: 900184, orsId: '004', lockedFields: [] })
-          ]
-        })
-      )
-      const { result } = await server.inject(BASE)
-
-      expect(result).toContain('data-testid="pending-change-banner"')
-      expect(result).toContain('data-testid="accredited-site-002"')
-      expect(result).toContain('data-testid="site-status-tag-002"')
-      expect(result).toContain('Pending')
-      expect(result).not.toContain('data-testid="registered-site-002"')
-      expect(result).not.toContain('data-testid="add-to-accreditation-002"')
-      expect(result).toContain('data-testid="add-to-accreditation-004"')
-    })
-
-    test('a backend failure is not hidden', async () => {
-      vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(500))
-      const { statusCode } = await server.inject(BASE)
-      expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
-    test('returns 404 when the application is not a granted exporter accreditation', async () => {
-      vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(409))
-      const { statusCode } = await server.inject(BASE)
-      expect(statusCode).toBe(statusCodes.notFound)
-    })
+  // RA-492 pages are in-year changes, so behind RA-425's flag.
+  test.each([
+    ['GET', `${BASE}/requests`],
+    ['POST', `${BASE}/sites/900182`],
+    ['GET', `/cy${BASE}/add/900182`]
+  ])('%s %s is 404 while in-year changes are off', async (method, url) => {
+    vi.restoreAllMocks()
+    setFeatureFlag('inYearChangesEnabled', false)
+    const get = vi.spyOn(apiClient, 'get')
+    const { statusCode } = await server.inject({ method, url })
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(get).not.toHaveBeenCalled()
   })
 
   describe('Add to accreditation', () => {
@@ -235,12 +187,13 @@ describe('#manageOverseasSites (RA-492)', () => {
     })
 
     test('AC09: a site the backend refuses (accredited or submitted) goes back to the list', async () => {
+      mockGet(makeView())
       vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(409))
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/sites/900182`
       })
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('summary: locked fields have no action, never-filled fields say Add information', async () => {
@@ -336,7 +289,7 @@ describe('#manageOverseasSites (RA-492)', () => {
         url: `${BASE}/add/900182/bes-evidence/f1/delete`
       })
       expect(del).not.toHaveBeenCalled()
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('summary: a site without a country shows Missing information on the location row', async () => {
@@ -423,16 +376,17 @@ describe('#manageOverseasSites (RA-492)', () => {
       )
       const { statusCode, headers } = await server.inject(`${BASE}/add/900182`)
       expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('Cancel of a site already gone from the draft still returns to the list', async () => {
+      mockGet(makeView())
       vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(404))
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/add/900182/cancel`
       })
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('a backend failure on Cancel is not hidden', async () => {
@@ -450,10 +404,11 @@ describe('#manageOverseasSites (RA-492)', () => {
         method: 'POST',
         url: `${BASE}/add/900182`
       })
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('Cancel removes the site from the draft', async () => {
+      mockGet(makeView())
       const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
       const { headers } = await server.inject({
         method: 'POST',
@@ -462,7 +417,7 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(del).toHaveBeenCalledWith(
         expect.stringMatching(/\/requests\/current\/sites\/900182$/)
       )
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
   })
 
@@ -615,6 +570,18 @@ describe('#manageOverseasSites (RA-492)', () => {
   })
 
   describe('Accreditation requests', () => {
+    test('returns 404 when the application is not a granted exporter accreditation', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(409))
+      const { statusCode } = await server.inject(`${BASE}/requests`)
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('a backend failure loading the request is not hidden', async () => {
+      vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(500))
+      const { statusCode } = await server.inject(`${BASE}/requests`)
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
     test('AC03/AC04/AC10: lists the draft sites, the per-ORS charge and total, and Add another request', async () => {
       mockGet(
         makeView({
@@ -639,7 +606,7 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('Number of overseas reprocessing sites: 2')
       expect(result).toContain('£328.00')
       expect(result).toMatch(/data-testid="charge-total">£656.00/)
-      expect(result).toContain(`href="${BASE}#registered"`)
+      expect(result).toContain(`href="${MANAGE}#registered"`)
       expect(result).toContain(`href="${BASE}/add/900184"`)
     })
 
@@ -669,7 +636,7 @@ describe('#manageOverseasSites (RA-492)', () => {
         method: 'POST',
         url: `${BASE}/requests`
       })
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('with no draft there is nothing to continue', async () => {
@@ -726,13 +693,14 @@ describe('#manageOverseasSites (RA-492)', () => {
     })
 
     test('a submit with no draft (already submitted) returns to the list', async () => {
+      mockGet(makeView())
       vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(404))
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/declaration`,
         payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
       })
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('an incomplete request at submit goes back to the requests page', async () => {
@@ -756,12 +724,13 @@ describe('#manageOverseasSites (RA-492)', () => {
     })
 
     test('save and come back later returns to the manage page', async () => {
+      mockGet(makeView())
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/declaration`,
         payload: { submitAction: 'saveAndComeLater' }
       })
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
 
     test('AC03/AC04: the payment page charges £328 per submitted ORS and no tonnage fee', async () => {
@@ -785,7 +754,7 @@ describe('#manageOverseasSites (RA-492)', () => {
     test('the payment page redirects when nothing has been submitted', async () => {
       mockGet(makeView())
       const { headers } = await server.inject(`${BASE}/payment`)
-      expect(headers.location).toBe(BASE)
+      expect(headers.location).toBe(MANAGE)
     })
   })
 })

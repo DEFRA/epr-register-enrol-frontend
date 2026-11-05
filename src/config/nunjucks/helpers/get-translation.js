@@ -29,11 +29,24 @@ function getNestedValue(obj, keyPath) {
   }, obj)
 }
 
+function interpolate(text, params) {
+  if (
+    typeof text !== 'string' ||
+    params === null ||
+    typeof params !== 'object'
+  ) {
+    return text
+  }
+  return text.replaceAll(/{{\s*(\w+)\s*}}/g, (placeholder, name) =>
+    Object.hasOwn(params, name) ? String(params[name]) : placeholder
+  )
+}
+
 export function getTranslator(locale = 'en') {
   const allTranslations = loadTranslations()
   const localeTranslations = allTranslations[locale] || allTranslations.en
 
-  return (key) => {
-    return getNestedValue(localeTranslations, key)
+  return (key, params) => {
+    return interpolate(getNestedValue(localeTranslations, key), params)
   }
 }
