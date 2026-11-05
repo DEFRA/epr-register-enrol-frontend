@@ -48,6 +48,25 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 export const MAX_FILES = 10
 const MAX_FILES_REASON = 'maxFiles'
 
+// RA-492: shared with the in-year add-ORS journey's BES step, which applies
+// the same cap to a change request's site.
+export function hasMaxBesEvidenceFiles(uploads) {
+  return (
+    (uploads ?? []).filter((f) => f.scanStatus !== 'Infected').length >=
+    MAX_FILES
+  )
+}
+
+// The upload page's URL query after the backend refused a file over the cap.
+export const MAX_FILES_QUERY = `reason=${MAX_FILES_REASON}`
+
+// The cap's error for an upload page the backend's refusal redirected to.
+export function maxFilesErrorFromQuery(request, t) {
+  return request.query?.reason === MAX_FILES_REASON
+    ? t('pages.uploadBesEvidence.validation.maxFiles')
+    : undefined
+}
+
 export const FETCH_ERROR_KEY = 'pages.uploadBesEvidence.validation.fetchError'
 
 export function validateFileExtension(filename) {
@@ -137,8 +156,7 @@ function renderPage(h, viewData) {
 // (AC01-AC04) is a fourth check on the same file, and one function keeps
 // the handler itself a plain sequence of guards.
 function validateBesEvidenceFile(t, { filename, fileSize, application, site }) {
-  const uploads = site?.besEvidence?.besEvidenceUploads ?? []
-  if (uploads.filter((f) => f.scanStatus !== 'Infected').length >= MAX_FILES) {
+  if (hasMaxBesEvidenceFiles(site?.besEvidence?.besEvidenceUploads)) {
     return t('pages.uploadBesEvidence.validation.maxFiles')
   }
   if (!filename) {
@@ -225,10 +243,7 @@ export const uploadBesEvidenceGetController = {
       (s) => s.siteId === siteIdInt
     )
     const siteName = site?.siteName ?? ''
-    const fileError =
-      request.query?.reason === MAX_FILES_REASON
-        ? t('pages.uploadBesEvidence.validation.maxFiles')
-        : undefined
+    const fileError = maxFilesErrorFromQuery(request, t)
 
     return renderPage(
       h,
@@ -454,7 +469,7 @@ export const besEvidenceCdpStatusController = {
       )
       if (isMaxFilesRejection(err)) {
         return h.redirect(
-          `/accreditation/upload-bes-evidence/${applicationId}/${siteId}?reason=${MAX_FILES_REASON}`
+          `/accreditation/upload-bes-evidence/${applicationId}/${siteId}?${MAX_FILES_QUERY}`
         )
       }
     }

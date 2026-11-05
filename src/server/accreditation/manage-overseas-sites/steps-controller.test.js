@@ -280,6 +280,79 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     expect(headers.location).toBe(SITE)
   })
 
+  // RA-605's 10-file cap, applied to the change request's site.
+  function viewWithUploads(scanStatuses) {
+    const [requestSite] = view.activeRequest.sites
+    return {
+      ...view,
+      activeRequest: {
+        ...view.activeRequest,
+        sites: [
+          {
+            ...requestSite,
+            besEvidence: {
+              besEvidenceUploads: scanStatuses.map((scanStatus, i) => ({
+                fileId: `f${i}`,
+                filename: `bes-${i}.pdf`,
+                scanStatus
+              }))
+            }
+          }
+        ]
+      }
+    }
+  }
+
+  test('a site that already has 10 files is refused before uploading', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(
+      viewWithUploads(Array(10).fill('Clean'))
+    )
+    const { statusCode, result } = await postUpload()
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain(
+      'You can only upload a maximum of 10 files as evidence of broadly equivalent standards.'
+    )
+    expect(initUpload).not.toHaveBeenCalled()
+  })
+
+  test('an infected file does not count towards the cap, so a site under it can upload', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(
+      viewWithUploads([...Array(9).fill('Clean'), 'Infected'])
+    )
+    vi.mocked(initUpload).mockResolvedValue({
+      fileUploadId: 'up-1',
+      uploadUrl: 'http://cdp/upload',
+      statusUrl:
+        'http://backend/api/v1/accreditation-applications/o/a/files/up-1/status'
+    })
+    const { headers } = await postUpload()
+    expect(headers.location).toBe(`${SITE}/bes-evidence/status`)
+    expect(initUpload).toHaveBeenCalled()
+  })
+
+  test("status: the backend's max-files 422 shows the cap's message on the upload page", async () => {
+    const { cookie } = await uploadCookie()
+    mockStatusGets({ uploadStatus: 'ready', form: {} })
+    vi.spyOn(apiClient, 'post').mockRejectedValue(
+      Object.assign(new Error('422'), {
+        status: 422,
+        response: JSON.stringify({ code: 'MaxFilesExceeded' })
+      })
+    )
+    const { headers } = await server.inject({
+      url: `${SITE}/bes-evidence/status`,
+      headers: { Cookie: cookie }
+    })
+    expect(headers.location).toBe(`${SITE}/bes-evidence?reason=maxFiles`)
+
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    const page = await server.inject(headers.location)
+    expect(page.statusCode).toBe(statusCodes.ok)
+    expect(page.result).toContain(
+      'You can only upload a maximum of 10 files as evidence of broadly equivalent standards.'
+    )
+  })
+
   test('status: with no upload in the session, nothing is attached and the operator goes back to the upload page', async () => {
     const get = vi.spyOn(apiClient, 'get')
     const post = vi.spyOn(apiClient, 'post')

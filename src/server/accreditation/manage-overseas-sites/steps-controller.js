@@ -12,9 +12,13 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { buildViewData as buildRecyclingViewData } from '../add-overseas-site/recycling-operation-details/controller.js'
 import { buildViewData as buildConditionsViewData } from '../add-overseas-site/conditions-of-export/controller.js'
+import { isMaxFilesRejection } from '../../common/helpers/isMaxFilesRejection.js'
 import {
   ALLOWED_MIME_TYPES,
+  MAX_FILES_QUERY,
   MAX_FILE_BYTES,
+  hasMaxBesEvidenceFiles,
+  maxFilesErrorFromQuery,
   buildViewData as buildBesViewData,
   parseDate,
   resolveBesEvidenceValidTo,
@@ -342,7 +346,12 @@ function besView(h, t, request, draft, payload, errors) {
   })
 }
 
-function validateBesFile(t, uploadedFile) {
+// RA-605's cap comes first, as on the application's upload page: a site
+// already at the cap gets that message whatever file was chosen.
+function validateBesFile(t, uploadedFile, requestSite) {
+  if (hasMaxBesEvidenceFiles(requestSite.besEvidence?.besEvidenceUploads)) {
+    return t('pages.uploadBesEvidence.validation.maxFiles')
+  }
   const filename = uploadedFile?.filename ?? ''
   if (!filename) {
     return t('pages.uploadBesEvidence.validation.noFile')
@@ -359,7 +368,16 @@ function validateBesFile(t, uploadedFile) {
 export const besEvidenceGetController = stepHandler(
   ['besEvidence'],
   async (request, h, t, draft) => {
-    return besView(h, t, request, draft, {}, {})
+    return besView(
+      h,
+      t,
+      request,
+      draft,
+      {},
+      {
+        fileError: maxFilesErrorFromQuery(request, t)
+      }
+    )
   }
 )
 
@@ -406,7 +424,7 @@ export const besEvidencePostController = stepHandler(
     if (payload.action === 'saveAndComeLater') {
       return h.redirect(stepUrls(request).summary)
     }
-    const fileError = validateBesFile(t, payload.file)
+    const fileError = validateBesFile(t, payload.file, draft.requestSite)
     if (fileError) {
       return besView(h, t, request, draft, payload, { fileError }).code(
         statusCodes.badRequest
@@ -499,14 +517,20 @@ export const besEvidenceStatusController = stepHandler(
         }
       )
     } catch (err) {
-      // 422: not scanned clean, or a duplicate filename. The summary still
-      // shows the evidence as missing, so the operator can try again.
+      // 422: not scanned clean, a duplicate filename, or (RA-605) the site
+      // already has the most files allowed. The summary still shows the
+      // evidence as missing, so the operator can try again.
       logStructuredError(
         request.server.logger,
         err,
         { siteId, applicationId },
         `Error saving in-year BES evidence for site ${siteId}, application ${applicationId}`
       )
+      if (isMaxFilesRejection(err)) {
+        return h.redirect(
+          `${stepUrl(applicationId, siteId, 'bes-evidence')}?${MAX_FILES_QUERY}`
+        )
+      }
     }
     return h.redirect(addToAccreditationUrl(applicationId, siteId))
   }
