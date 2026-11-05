@@ -389,7 +389,9 @@ export const declarationPostController = {
         paymentReference: paymentReferenceFor(application)
       })
     } catch (err) {
-      if (err.status === statusCodes.notFound) {
+      // 404: no draft to submit. 409: a concurrent submit (another tab) won,
+      // so this one has nothing left to submit either.
+      if (NOTHING_TO_DO.has(err.status)) {
         return redirectToManageSites(request, h)
       }
       if (err.status === statusCodes.unprocessableEntity) {

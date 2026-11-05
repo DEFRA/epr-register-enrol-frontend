@@ -692,6 +692,17 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(`${BASE}/payment`)
     })
 
+    test('a submit that lost to a concurrent submit (409) returns to the list', async () => {
+      mockGet(makeView())
+      vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(409))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/declaration`,
+        payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+      })
+      expect(headers.location).toBe(MANAGE)
+    })
+
     test('a submit with no draft (already submitted) returns to the list', async () => {
       mockGet(makeView())
       vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(404))
