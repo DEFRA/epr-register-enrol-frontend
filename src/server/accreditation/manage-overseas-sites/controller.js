@@ -3,6 +3,7 @@ import Boom from '@hapi/boom'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
@@ -21,6 +22,7 @@ import { accreditationChangesService } from './service.js'
 import {
   SUBMITTED,
   buildMissingFieldErrors,
+  manageSitesText,
   buildSummaryRows,
   findRequestSite,
   findSite,
@@ -40,8 +42,6 @@ const VIEWS = {
   declaration: 'accreditation/submit-declaration/index',
   payment: 'accreditation/view-payment-details/index'
 }
-
-const t2 = (t, key) => t(`pages.manageOverseasSites.${key}`)
 
 // 404 (no such application or site) and 409 (not a granted exporter
 // accreditation, or a site that cannot be added) mean the same thing to
@@ -115,7 +115,7 @@ export const addSiteToRequestController = {
       await accreditationChangesService.addSite(
         organisationIdFrom(request),
         applicationId,
-        Number.parseInt(siteId, 10)
+        siteId
       )
     } catch (err) {
       // 404 unknown site, 409 already accredited or in a submitted request
@@ -139,7 +139,7 @@ function renderSummary(
   const errorByRow = Object.fromEntries(
     (errors ?? []).map((error) => [error.row, error.text])
   )
-  const heading = `${t2(t, 'summary.headingPrefix')} ${siteName} (${entry.orsId})`
+  const heading = `${manageSitesText(t, 'summary.headingPrefix')} ${siteName} (${entry.orsId})`
   return h.view(VIEWS.summary, {
     pageTitle: heading,
     heading,
@@ -212,8 +212,10 @@ export const removeBesEvidenceFileController = {
       )
     } catch (err) {
       if (err.status !== statusCodes.notFound) {
-        request.logger.error(
-          { err, applicationId, siteId, fileId },
+        logStructuredError(
+          request.logger,
+          err,
+          { applicationId, siteId, fileId },
           'Error deleting in-year BES evidence file'
         )
         const errors = [
@@ -243,7 +245,7 @@ export const cancelAddToAccreditationController = {
       await accreditationChangesService.removeSite(
         organisationIdFrom(request),
         applicationId,
-        Number.parseInt(siteId, 10)
+        siteId
       )
     } catch (err) {
       if (err.status !== statusCodes.notFound) {
@@ -262,8 +264,8 @@ function renderRequests(
   const sites = view.activeRequest?.sites ?? []
   const manageUrl = manageSitesUrl(view, currentLocale)
   return h.view(VIEWS.requests, {
-    pageTitle: t2(t, 'requests.title'),
-    heading: t2(t, 'requests.title'),
+    pageTitle: manageSitesText(t, 'requests.title'),
+    heading: manageSitesText(t, 'requests.title'),
     backLink: manageUrl,
     cancelUrl: manageUrl,
     // AC10: "Add another request" goes to the registered ORS list.
@@ -308,9 +310,10 @@ export const requestsPostController = {
       const errors = incomplete.map((site) => ({
         href: addToAccreditationUrl(applicationId, site.siteId),
         orsId: site.orsId,
-        text: t2(t, 'requests.incomplete')
-          .replace('{site}', site.siteName)
-          .replace('{orsId}', site.orsId)
+        text: manageSitesText(t, 'requests.incomplete', {
+          site: site.siteName,
+          orsId: site.orsId
+        })
       }))
       return renderRequests(h, locale, { applicationId, view, errors }).code(
         statusCodes.badRequest
@@ -379,7 +382,6 @@ export const declarationPostController = {
         organisationId,
         applicationId
       )
-      // AC07: the backend moves the request to Submitted.
       await accreditationChangesService.submit(organisationId, applicationId, {
         fullName,
         jobTitle,
@@ -393,8 +395,10 @@ export const declarationPostController = {
       if (err.status === statusCodes.unprocessableEntity) {
         return h.redirect(requestsUrl(applicationId))
       }
-      request.logger.error(
-        { err, applicationId },
+      logStructuredError(
+        request.logger,
+        err,
+        { applicationId },
         'Error submitting in-year accreditation change request'
       )
       return h
@@ -436,7 +440,7 @@ export const paymentGetController = {
     return h.view(VIEWS.payment, {
       pageTitle: t('pages.viewPaymentDetails.title'),
       backLink: manageSitesUrl(view, currentLocale),
-      backLinkText: t2(t, 'payment.backLink'),
+      backLinkText: manageSitesText(t, 'payment.backLink'),
       materialDisplay: materialDisplayName(application, t),
       submitterName: submitted.submittedBy.fullName,
       submitterEmail: submitted.submittedBy.email ?? '',

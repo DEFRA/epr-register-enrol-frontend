@@ -1,11 +1,14 @@
 // RA-492: API_STUB_ENABLED stand-in for the backend's accreditation-changes
 // API (in-year requests to add registered ORSs to a granted accreditation),
 // following the backend contract: one InProgress draft per approved
-// application holding many sites, Submitted on declaration, £328 per site.
+// application holding many sites, Submitted on declaration, charged the ORS
+// fee per site.
 // Sites come from the stub application itself, so any Approved exporter in
 // the stub org docs (org 50019 is seeded for it) can be used locally.
 
 import { statusCodes } from './constants/status-codes.js'
+import { hasValue } from './helpers/hasValue.js'
+import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
 
 const CHANGES_RE = /^\/api\/v1\/accreditation-changes\/([^/]+)\/([^/]+)(\/.*)?$/
 const LOCKABLE = [
@@ -14,16 +17,13 @@ const LOCKABLE = [
   'operationCodes',
   'conditionsOfExport'
 ]
-const CHARGE_PER_SITE_PENCE = 32800
+const CHARGE_PER_SITE_PENCE = ORS_FEE * PENCE_PER_POUND
 
 const state = new Map()
 
 function stubError(status, message, response) {
   return Object.assign(new Error(message), { status, response })
 }
-
-const hasValue = (value) =>
-  Array.isArray(value) ? value.length > 0 : value != null && value !== ''
 
 function stateFor(key) {
   if (!state.has(key)) {

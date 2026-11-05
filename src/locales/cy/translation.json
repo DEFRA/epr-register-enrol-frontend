@@ -959,12 +959,18 @@
       "returnToHome": "[Welsh] Return to home",
       "requestsBanner": {
         "title": "[Welsh] Accreditation requests",
-        "body": "[Welsh] You currently have {{count}} requests ready for submission.",
+        "body": {
+          "one": "[Welsh] You currently have 1 request ready for submission.",
+          "other": "[Welsh] You currently have {{count}} requests ready for submission."
+        },
         "link": "[Welsh] View requests"
       },
       "pendingBanner": {
         "title": "[Welsh] Change pending",
-        "body": "[Welsh] You have a change pending. Your regulator is reviewing your request to add {{count}} overseas reprocessing site(s) to this accreditation. You cannot change these sites until your regulator has made a decision."
+        "body": {
+          "one": "[Welsh] You have a change pending. Your regulator is reviewing your request to add 1 overseas reprocessing site to this accreditation. You cannot change this site until your regulator has made a decision.",
+          "other": "[Welsh] You have a change pending. Your regulator is reviewing your request to add {{count}} overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision."
+        }
       },
       "status": {
         "pending": "[Welsh] Pending",
@@ -972,14 +978,11 @@
       },
       "addToAccreditation": "[Welsh] Add to accreditation",
       "view": "[Welsh] View",
-      "continue": "[Welsh] Continue",
       "cancel": "[Welsh] Cancel",
       "change": "[Welsh] Change",
       "addInformation": "[Welsh] Add information",
       "missingInformation": "[Welsh] Missing information",
       "saveRefused": "[Welsh] This information could not be saved. Check it and try again.",
-      "yes": "[Welsh] Yes",
-      "no": "[Welsh] No",
       "summary": {
         "headingPrefix": "[Welsh] Add to accreditation:"
       },
@@ -1011,12 +1014,12 @@
         "action": "[Welsh] Action",
         "newOrs": "[Welsh] New ORS",
         "chargeIntro": "[Welsh] There will be a charge for this request and it will need to be approved by your regulator.",
-        "chargeCount": "[Welsh] Number of overseas reprocessing sites: {count}",
-        "chargePerOrs": "[Welsh] Charge per overseas reprocessing site: {amount}",
+        "chargeCount": "[Welsh] Number of overseas reprocessing sites: {{count}}",
+        "chargePerOrs": "[Welsh] Charge per overseas reprocessing site: {{amount}}",
         "totalAmount": "[Welsh] Total amount",
         "addAnother": "[Welsh] Add another request",
         "none": "[Welsh] You have no accreditation requests in progress.",
-        "incomplete": "[Welsh] {site} ({orsId}) is missing information"
+        "incomplete": "[Welsh] {{site}} ({{orsId}}) is missing information"
       },
       "payment": {
         "backLink": "[Welsh] Back to manage overseas reprocessing sites"

@@ -108,7 +108,7 @@ async function patchSite(request, body) {
     await accreditationChangesService.patchSite(
       organisationIdFrom(request),
       applicationId,
-      Number.parseInt(siteId, 10),
+      siteId,
       body
     )
     return null
@@ -120,19 +120,23 @@ async function patchSite(request, body) {
   }
 }
 
+// ASP.NET may send a ValidationProblem's error keys in either case.
+function errorKeyFor(errors, field) {
+  return Object.keys(errors).find(
+    (name) => name.toLowerCase() === field.toLowerCase()
+  )
+}
+
 /**
  * The message to show against one field after a PATCH: the backend's own
- * message for it (keys matched case-insensitively, as ASP.NET may send
- * them), a general one when the answer was refused without naming the
- * field, or null when it saved.
+ * message for it, a general one when the answer was refused without naming
+ * the field, or null when it saved.
  */
 function refusal(t, errors, field) {
   if (errors === null) {
     return null
   }
-  const key = Object.keys(errors).find(
-    (name) => name.toLowerCase() === field.toLowerCase()
-  )
+  const key = errorKeyFor(errors, field)
   return (
     [key ? errors[key] : null].flat().find(Boolean) ??
     t('pages.manageOverseasSites.saveRefused')
@@ -198,11 +202,7 @@ export const locationPostController = stepHandler(
     )
     const apiErrors = await patchSite(request, body)
     if (apiErrors) {
-      const named = draft.open.filter((field) =>
-        Object.keys(apiErrors).some(
-          (name) => name.toLowerCase() === field.toLowerCase()
-        )
-      )
+      const named = draft.open.filter((field) => errorKeyFor(apiErrors, field))
       // A refusal that names neither field is shown against the first one.
       const shown = Object.fromEntries(
         (named.length > 0 ? named : draft.open.slice(0, 1)).map((field) => [
@@ -392,7 +392,7 @@ async function uploadToRequest(request, file, { validFrom, validTo }) {
   request.yar.set(IN_YEAR_BES_UPLOAD_SESSION_KEY, {
     statusUrl: uploadDetail.statusUrl,
     fileUploadId: uploadDetail.fileUploadId,
-    siteId: Number.parseInt(siteId, 10),
+    siteId,
     besEvidenceValidFromDate,
     besEvidenceExpiryDate
   })
@@ -451,9 +451,28 @@ export const besEvidencePostController = stepHandler(
   }
 )
 
-export const besEvidenceStatusController = {
-  async handler(request, h) {
-    const { t } = getLocaleAndTranslator(request)
+/**
+ * Runs before the upload-status lookup on the status page: an upload this
+ * session did not start for this site (expired, another tab, or another
+ * site) is never attached here, so the operator goes back to that site's
+ * upload page instead.
+ */
+export const requireUploadForSite = {
+  method(request, h) {
+    const { applicationId, siteId } = request.params
+    const upload = request.yar.get(IN_YEAR_BES_UPLOAD_SESSION_KEY)
+    if (upload?.statusUrl && upload.siteId === siteId) {
+      return h.continue
+    }
+    return h.redirect(stepUrl(applicationId, siteId, 'bes-evidence')).takeover()
+  }
+}
+
+// The file is attached to the route's site only, and only while that site
+// is still in the draft with BES evidence open to it (see loadStep).
+export const besEvidenceStatusController = stepHandler(
+  ['besEvidence'],
+  async (request, h, t) => {
     const { applicationId, siteId } = request.params
     const uploadStatus = request.pre.uploadStatus
     if (uploadStatus?.uploadStatus !== 'ready') {
@@ -463,7 +482,7 @@ export const besEvidenceStatusController = {
         processingStatus: uploadStatus.processingStatus ?? 'preprocessing'
       })
     }
-    const session = request.yar.get(IN_YEAR_BES_UPLOAD_SESSION_KEY)
+    const upload = request.yar.get(IN_YEAR_BES_UPLOAD_SESSION_KEY)
     request.yar.clear(IN_YEAR_BES_UPLOAD_SESSION_KEY)
     if (uploadStatus.form?.file?.hasError) {
       return h.redirect(stepUrl(applicationId, siteId, 'bes-evidence'))
@@ -472,11 +491,11 @@ export const besEvidenceStatusController = {
       await accreditationChangesService.addBesEvidenceFile(
         organisationIdFrom(request),
         applicationId,
-        session.siteId,
+        siteId,
         {
-          fileUploadId: session.fileUploadId,
-          besEvidenceValidFromDate: session.besEvidenceValidFromDate,
-          besEvidenceExpiryDate: session.besEvidenceExpiryDate
+          fileUploadId: upload.fileUploadId,
+          besEvidenceValidFromDate: upload.besEvidenceValidFromDate,
+          besEvidenceExpiryDate: upload.besEvidenceExpiryDate
         }
       )
     } catch (err) {
@@ -491,4 +510,4 @@ export const besEvidenceStatusController = {
     }
     return h.redirect(addToAccreditationUrl(applicationId, siteId))
   }
-}
+)

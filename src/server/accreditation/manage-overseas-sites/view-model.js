@@ -1,3 +1,4 @@
+import { hasValue } from '../../common/helpers/hasValue.js'
 import {
   addSiteToRequestUrl,
   addToAccreditationUrl,
@@ -25,10 +26,10 @@ export const EDITABLE_FIELDS = {
   besEvidence: { row: 'bes-evidence', step: 'bes-evidence' }
 }
 
-const hasValue = (value) =>
-  Array.isArray(value) ? value.length > 0 : value != null && value !== ''
-
-const t2 = (t, key) => t(`pages.manageOverseasSites.${key}`)
+/** A translation from this journey's `pages.manageOverseasSites` keys. */
+export function manageSitesText(t, key, params) {
+  return t(`pages.manageOverseasSites.${key}`, params)
+}
 
 export function siteAddressLine(site) {
   const address =
@@ -88,7 +89,7 @@ function displayValue(t, field, value) {
     return ''
   }
   if (field === 'conditionsOfExport') {
-    return t2(t, value ? 'yes' : 'no')
+    return t(value ? 'common.yes' : 'common.no')
   }
   return Array.isArray(value) ? value.join(', ') : String(value)
 }
@@ -105,7 +106,7 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
     missing: !hasValue(value),
     action: {
       href: stepUrl(applicationId, siteId, EDITABLE_FIELDS[field].step),
-      text: t2(t, hasValue(value) ? 'change' : 'addInformation')
+      text: manageSitesText(t, hasValue(value) ? 'change' : 'addInformation')
     }
   }
 }
@@ -118,7 +119,6 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
  */
 export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
   const site = entry.site
-  // The backend's effective value: the ORS's own, or the operator's answer.
   const effective = requestSite.effective
   const locked = new Set(entry.lockedFields)
   const lockable = (field, rowLabel) => {
@@ -135,7 +135,7 @@ export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
       value
     })
   }
-  const label = (key) => t2(t, `rows.${key}`)
+  const label = (key) => manageSitesText(t, `rows.${key}`)
   const rows = [
     fixedRow('site-name', label('siteName'), site.siteName),
     {
@@ -159,8 +159,6 @@ export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
     ),
     lockable('conditionsOfExport', label('conditionsOfExport'))
   ]
-  // The location row is only "missing" when the country is.
-  rows[1].missing = !hasValue(effective.country)
 
   const files = requestSite.besEvidence?.besEvidenceUploads ?? []
   if (requestSite.besEvidenceRequired || files.length > 0) {
@@ -198,6 +196,6 @@ export function buildMissingFieldErrors(t, requestSite) {
     .filter((field) => EDITABLE_FIELDS[field])
     .map((field) => ({
       row: EDITABLE_FIELDS[field].row,
-      text: t2(t, `missing.${field}`)
+      text: manageSitesText(t, `missing.${field}`)
     }))
 }

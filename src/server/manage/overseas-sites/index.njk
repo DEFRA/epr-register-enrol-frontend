@@ -7,19 +7,19 @@
 {% macro siteActions(site) %}
   {% if site.pending %}
     <div class="app-ors-list__actions">
-      <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag-{{ site.orsId }}">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
+      <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
     </div>
   {% elif site.inProgress %}
     <div class="app-ors-list__actions">
-      <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-2" data-testid="site-status-tag-{{ site.orsId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
-      <a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.orsId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
+      <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-2" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
+      <a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.siteId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
     </div>
   {% elif site.addUrl %}
     {# Adding a site changes the draft request, so this is a crumb-protected
        POST styled as a link. #}
     <form method="post" action="{{ site.addUrl }}" class="app-ors-list__actions">
       <input type="hidden" name="crumb" value="{{ crumb }}">
-      <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--blue govuk-body govuk-!-margin-bottom-0" data-testid="add-to-accreditation-{{ site.orsId }}">{{ t('pages.manageOverseasSites.addToAccreditation') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></button>
+      <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--blue govuk-body govuk-!-margin-bottom-0" data-testid="add-to-accreditation-{{ site.siteId }}">{{ t('pages.manageOverseasSites.addToAccreditation') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></button>
     </form>
   {% endif %}
 {% endmacro %}

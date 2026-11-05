@@ -42,11 +42,25 @@ function interpolate(text, params) {
   )
 }
 
+// docs/i18n.md: a key with nested plural forms (`one` / `other`, and any
+// other CLDR category the language uses) takes the form for `count`, falling
+// back to `other`.
+function pluralForm(value, locale, params) {
+  if (typeof value?.other !== 'string' || typeof params?.count !== 'number') {
+    return value
+  }
+  const category = new Intl.PluralRules(locale).select(params.count)
+  return value[category] ?? value.other
+}
+
 export function getTranslator(locale = 'en') {
   const allTranslations = loadTranslations()
   const localeTranslations = allTranslations[locale] || allTranslations.en
 
   return (key, params) => {
-    return interpolate(getNestedValue(localeTranslations, key), params)
+    return interpolate(
+      pluralForm(getNestedValue(localeTranslations, key), locale, params),
+      params
+    )
   }
 }

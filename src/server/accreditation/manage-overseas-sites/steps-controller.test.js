@@ -105,6 +105,18 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     })
   }
 
+  // The status page reads the change view (its draft site) and the upload
+  // status, both through apiClient.get.
+  function mockStatusGets(uploadStatus, changeView = view) {
+    return vi
+      .spyOn(apiClient, 'get')
+      .mockImplementation(async (url) =>
+        url.startsWith('/api/v1/accreditation-changes/')
+          ? changeView
+          : uploadStatus
+      )
+  }
+
   async function uploadCookie() {
     vi.spyOn(apiClient, 'get').mockResolvedValue(view)
     vi.mocked(initUpload).mockResolvedValue({
@@ -217,16 +229,14 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
 
   test('status: polls until ready, then adds the file to the request and returns to the summary', async () => {
     const { cookie } = await uploadCookie()
-    vi.spyOn(apiClient, 'get').mockResolvedValueOnce({
-      uploadStatus: 'pending'
-    })
+    mockStatusGets({ uploadStatus: 'pending' })
     const pending = await server.inject({
       url: `${SITE}/bes-evidence/status`,
       headers: { Cookie: cookie }
     })
     expect(pending.statusCode).toBe(statusCodes.ok)
 
-    vi.spyOn(apiClient, 'get').mockResolvedValue({
+    mockStatusGets({
       uploadStatus: 'ready',
       form: { file: { filename: 'bes.pdf' } }
     })
@@ -246,7 +256,7 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
 
   test('status: a rejected file goes back to the upload page', async () => {
     const { cookie } = await uploadCookie()
-    vi.spyOn(apiClient, 'get').mockResolvedValue({
+    mockStatusGets({
       uploadStatus: 'ready',
       form: { file: { hasError: true } }
     })
@@ -259,10 +269,7 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
 
   test('status: a backend refusal still returns to the summary, which shows the evidence as missing', async () => {
     const { cookie } = await uploadCookie()
-    vi.spyOn(apiClient, 'get').mockResolvedValue({
-      uploadStatus: 'ready',
-      form: {}
-    })
+    mockStatusGets({ uploadStatus: 'ready', form: {} })
     vi.spyOn(apiClient, 'post').mockRejectedValue(
       Object.assign(new Error('422'), { status: 422 })
     )
@@ -271,6 +278,54 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
       headers: { Cookie: cookie }
     })
     expect(headers.location).toBe(SITE)
+  })
+
+  test('status: with no upload in the session, nothing is attached and the operator goes back to the upload page', async () => {
+    const get = vi.spyOn(apiClient, 'get')
+    const post = vi.spyOn(apiClient, 'post')
+    const { headers } = await server.inject(`${SITE}/bes-evidence/status`)
+    expect(headers.location).toBe(`${SITE}/bes-evidence`)
+    expect(get).not.toHaveBeenCalled()
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  test('status: an upload started for another site is not attached to this one', async () => {
+    const { cookie } = await uploadCookie()
+    const otherSite = SITE.replace('/add/900183', '/add/900184')
+    const post = vi.spyOn(apiClient, 'post')
+    const { headers } = await server.inject({
+      url: `${otherSite}/bes-evidence/status`,
+      headers: { Cookie: cookie }
+    })
+    expect(headers.location).toBe(`${otherSite}/bes-evidence`)
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  test('status: a site no longer in the draft is not attached, and goes back to the list', async () => {
+    const { cookie } = await uploadCookie()
+    mockStatusGets(
+      { uploadStatus: 'ready', form: { file: { filename: 'bes.pdf' } } },
+      { ...view, activeRequest: null }
+    )
+    const post = vi.spyOn(apiClient, 'post')
+    const { headers } = await server.inject({
+      url: `${SITE}/bes-evidence/status`,
+      headers: { Cookie: cookie }
+    })
+    expect(headers.location).toBe(
+      '/manage/50018/aaa000000000000000050018/Plastic/overseas-sites'
+    )
+    expect(post).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    `/accreditation/manage-overseas-sites/${APP}/add/not-a-number`,
+    `/accreditation/manage-overseas-sites/${APP}/add/0/location`
+  ])('%s is a bad request', async (url) => {
+    const get = vi.spyOn(apiClient, 'get')
+    const { statusCode } = await server.inject(url)
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(get).not.toHaveBeenCalled()
   })
 
   test('a step for a site that is not in the draft goes back to the list', async () => {

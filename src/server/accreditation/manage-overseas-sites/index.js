@@ -1,3 +1,5 @@
+import Joi from 'joi'
+
 import { manageRouteOptions } from '../../manage/helpers/manage-page.js'
 import { MAX_FILE_BYTES } from '../upload-bes-evidence/controller.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
@@ -15,6 +17,7 @@ import {
 } from './controller.js'
 import {
   IN_YEAR_BES_UPLOAD_SESSION_KEY,
+  requireUploadForSite,
   besEvidenceGetController,
   besEvidencePostController,
   besEvidenceStatusController,
@@ -31,10 +34,24 @@ const SITE = `${BASE}/add/{siteId}`
 
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
+// A malformed id in the URL is a bad request (Hapi's default for invalid
+// params). siteId is converted to the integer the backend uses.
+const routeOptions = {
+  ...manageRouteOptions,
+  validate: {
+    params: Joi.object({
+      language: Joi.string(),
+      applicationId: Joi.string().required(),
+      siteId: Joi.number().integer().positive(),
+      fileId: Joi.string()
+    })
+  }
+}
+
 // RA-492: in-year change pages, so behind RA-425's inYearChangesEnabled flag
 // (404 before auth when off) and for operators only, as the /manage pages.
 const uploadOptions = {
-  ...manageRouteOptions,
+  ...routeOptions,
   payload: {
     // The file plus the form's other fields, as the upload-bes-evidence route.
     maxBytes: MAX_FILE_BYTES + MULTIPART_OVERHEAD_BYTES,
@@ -45,12 +62,15 @@ const uploadOptions = {
 }
 
 const statusOptions = {
-  ...manageRouteOptions,
-  pre: [provideUploadStatusFromSession(IN_YEAR_BES_UPLOAD_SESSION_KEY)]
+  ...routeOptions,
+  pre: [
+    requireUploadForSite,
+    provideUploadStatusFromSession(IN_YEAR_BES_UPLOAD_SESSION_KEY)
+  ]
 }
 
 // RA-492: in-year request to add registered ORSs to a granted accreditation.
-function route(method, path, controller, options = manageRouteOptions) {
+function route(method, path, controller, options = routeOptions) {
   return { method, path, options, ...controller }
 }
 

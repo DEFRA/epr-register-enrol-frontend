@@ -48,8 +48,8 @@
 
         <div class="govuk-inset-text" data-testid="charge-inset">
           <p class="govuk-body">{{ t('pages.manageOverseasSites.requests.chargeIntro') }}</p>
-          <p class="govuk-body" data-testid="charge-count">{{ t('pages.manageOverseasSites.requests.chargeCount').replace('{count}', charge.count) }}</p>
-          <p class="govuk-body" data-testid="charge-per-ors">{{ t('pages.manageOverseasSites.requests.chargePerOrs').replace('{amount}', charge.perSite | formatCurrency) }}</p>
+          <p class="govuk-body" data-testid="charge-count">{{ t('pages.manageOverseasSites.requests.chargeCount', { count: charge.count }) }}</p>
+          <p class="govuk-body" data-testid="charge-per-ors">{{ t('pages.manageOverseasSites.requests.chargePerOrs', { amount: charge.perSite | formatCurrency }) }}</p>
           <p class="govuk-body govuk-!-margin-bottom-0"><strong>{{ t('pages.manageOverseasSites.requests.totalAmount') }}</strong></p>
           <p class="govuk-heading-m govuk-!-margin-bottom-0" data-testid="charge-total">{{ charge.total | formatCurrency }}</p>
         </div>
@@ -62,7 +62,7 @@
       {% if requests.length %}
         <form method="post" novalidate>
           <input type="hidden" name="crumb" value="{{ crumb }}">
-          <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">{{ t('pages.manageOverseasSites.continue') }}</button>
+          <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">{{ t('common.continue') }}</button>
         </form>
       {% endif %}
       <p class="govuk-body"><a class="govuk-link" href="{{ cancelUrl }}" data-testid="cancel-link">{{ t('pages.manageOverseasSites.cancel') }}</a></p>

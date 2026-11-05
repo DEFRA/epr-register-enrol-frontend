@@ -514,9 +514,9 @@ describe('#manageOverseasSitesController', () => {
       const registered = tabPanel(result, 'registered')
 
       expect(registered).toMatch(
-        /action="\/accreditation\/manage-overseas-sites\/app-current\/sites\/4"[\s\S]*?name="crumb"[\s\S]*?data-testid="add-to-accreditation-004"/
+        /action="\/accreditation\/manage-overseas-sites\/app-current\/sites\/4"[\s\S]*?name="crumb"[\s\S]*?data-testid="add-to-accreditation-4"/
       )
-      expect(registered).toContain('data-testid="add-to-accreditation-005"')
+      expect(registered).toContain('data-testid="add-to-accreditation-5"')
       expect(tabPanel(result, 'accredited')).not.toContain(
         'add-to-accreditation-'
       )
@@ -531,15 +531,15 @@ describe('#manageOverseasSitesController', () => {
       const registered = tabPanel(result, 'registered')
 
       expect(registered).toMatch(
-        /data-testid="site-status-tag-004"[^>]*>\s*In progress\s*</
+        /data-testid="site-status-tag-4"[^>]*>\s*In progress\s*</
       )
       expect(registered).toContain(
-        'href="/accreditation/manage-overseas-sites/app-current/add/4" data-testid="view-request-004"'
+        'href="/accreditation/manage-overseas-sites/app-current/add/4" data-testid="view-request-4"'
       )
-      expect(registered).not.toContain('add-to-accreditation-004')
-      expect(registered).toContain('data-testid="add-to-accreditation-005"')
+      expect(registered).not.toContain('add-to-accreditation-4')
+      expect(registered).toContain('data-testid="add-to-accreditation-5"')
       expect(result).toMatch(
-        /data-testid="requests-banner"[\s\S]*You currently have 1 requests ready for submission\.[\s\S]*href="\/accreditation\/manage-overseas-sites\/app-current\/requests" data-testid="view-requests-link"/
+        /data-testid="requests-banner"[\s\S]*You currently have 1 request ready for submission\.[\s\S]*href="\/accreditation\/manage-overseas-sites\/app-current\/requests" data-testid="view-requests-link"/
       )
       expect(result).toContain(REQUESTS_URL)
     })
@@ -549,18 +549,34 @@ describe('#manageOverseasSitesController', () => {
       const registered = tabPanel(result, 'registered')
 
       expect(registered).toMatch(
-        /data-testid="site-status-tag-005"[^>]*>\s*Pending\s*</
+        /data-testid="site-status-tag-5"[^>]*>\s*Pending\s*</
       )
-      expect(registered).not.toContain('add-to-accreditation-005')
-      expect(registered).not.toContain('view-request-005')
+      expect(registered).not.toContain('add-to-accreditation-5')
+      expect(registered).not.toContain('view-request-5')
       expect(tabPanel(result, 'accredited')).not.toContain(
         'registered-site-row-5'
       )
       expect(result).toMatch(/Registered \(3\)/)
       expect(result).toMatch(
-        /data-testid="pending-change-banner"[\s\S]*request to add 1 overseas reprocessing site\(s\)/
+        /data-testid="pending-change-banner"[\s\S]*request to add 1 overseas reprocessing site to this accreditation\. You cannot change this site /
       )
       expect(result).not.toContain('data-testid="requests-banner"')
+    })
+
+    test('both banners count several sites in the plural', async () => {
+      const { result } = await getWithChanges(
+        changes({ 4: 'Submitted', 5: 'Submitted', 7: 'InProgress' }, [
+          { siteId: 7 },
+          { siteId: 8 }
+        ])
+      )
+
+      expect(result).toContain(
+        'You currently have 2 requests ready for submission.'
+      )
+      expect(result).toContain(
+        'request to add 2 overseas reprocessing sites to this accreditation. You cannot change these sites '
+      )
     })
 
     test("renders RA-425's page without RA-492 actions when the requests cannot be retrieved", async () => {
