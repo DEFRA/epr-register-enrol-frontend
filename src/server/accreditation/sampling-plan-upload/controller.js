@@ -17,8 +17,8 @@ import {
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
-import { statusCodes } from '../../common/constants/status-codes.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
+import { isMaxFilesRejection } from '../../common/helpers/isMaxFilesRejection.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -52,10 +52,6 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 // files don't count, matching the backend's AddFile check.
 export const MAX_FILES = 10
 
-// The backend answers 422 for several reasons (duplicate filename, disallowed
-// content type), so the file cap is recognised by the error code in its
-// problem+json body rather than by status or wording.
-const MAX_FILES_API_ERROR_CODE = 'MaxFilesExceeded'
 const MAX_FILES_REASON = 'maxFiles'
 
 export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
@@ -392,17 +388,6 @@ function buildResultsFiles(files, t) {
     ...f,
     documentTypeLabel: documentTypeLabel(t, f.documentType)
   }))
-}
-
-function isMaxFilesRejection(err) {
-  if (err.status !== statusCodes.unprocessableEntity) {
-    return false
-  }
-  try {
-    return JSON.parse(err.response)?.code === MAX_FILES_API_ERROR_CODE
-  } catch {
-    return false
-  }
 }
 
 function uploadErrorMessage(t, { uploadFailed, maxFilesReached }) {
