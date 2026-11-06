@@ -1049,7 +1049,14 @@
         "body": "Improve your search results by removing one or more of your selected filters.",
         "clearFilters": "Clear filters"
       },
-      "returnToHome": "Return to home"
+      "returnToHome": "Return to home",
+      "showing": "Showing {{start}}-{{end}} of {{total}}",
+      "pagination": {
+        "landmarkLabel": "Pagination",
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{number}}"
+      }
     },
     "contact": {
       "title": "Contact",

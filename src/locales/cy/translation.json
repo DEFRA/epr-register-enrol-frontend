@@ -1048,7 +1048,14 @@
         "body": "[Welsh] Improve your search results by removing one or more of your selected filters.",
         "clearFilters": "[Welsh] Clear filters"
       },
-      "returnToHome": "[Welsh] Return to home"
+      "returnToHome": "[Welsh] Return to home",
+      "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}",
+      "pagination": {
+        "landmarkLabel": "[Welsh] Pagination",
+        "previous": "[Welsh] Previous",
+        "next": "[Welsh] Next",
+        "page": "[Welsh] Page {{number}}"
+      }
     },
     "contact": {
       "title": "[Welsh] Contact",

@@ -1,4 +1,5 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
 
 {% block content %}
   <div class="govuk-grid-row">
@@ -7,6 +8,10 @@
       <h1 class="govuk-heading-xl govuk-!-margin-bottom-6" data-testid="page-heading">{{ heading }}</h1>
     </div>
   </div>
+
+  {% if countText %}
+    <p class="govuk-body" data-testid="change-requests-count"><strong>{{ countText }}</strong></p>
+  {% endif %}
 
   {% if rows.length %}
     <table class="govuk-table" data-testid="change-requests-table">
@@ -42,6 +47,9 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if pagination %}
+      {{ govukPagination(pagination) }}
+    {% endif %}
   {% else %}
     {# RA-697: Figma 773:25912's no-results copy, as-is, also for no requests at all. #}
     <div data-testid="no-results">

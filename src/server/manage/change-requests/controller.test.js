@@ -437,6 +437,138 @@ describe('#manageChangeRequestsController', () => {
         )
       )
     })
+
+    test('shows no count line or pagination', async () => {
+      const result = await getPage(noChangeRequests)
+
+      expect(result).not.toContain('data-testid="change-requests-count"')
+      expect(result).not.toContain('govuk-pagination')
+    })
+  })
+
+  describe('count line and pagination', () => {
+    const MANY_VIEW = {
+      ...noChangeRequests,
+      sites: CURRENT_VIEW.sites,
+      requests: Array.from({ length: 23 }, (_, index) => {
+        const number = String(index + 1).padStart(2, '0')
+        // Newest first, so the list order follows the item number.
+        const submittedAt = new Date(
+          Date.UTC(2027, 3, 30 - index, 9)
+        ).toISOString()
+        return submittedRequest(`many-${number}`, submittedAt, {
+          sites: [
+            orsItem(
+              `item-${number}`,
+              1,
+              'Bharat Recycling',
+              'update-overseas-site',
+              'Submitted'
+            )
+          ]
+        })
+      })
+    }
+    const itemIds = (from, to) =>
+      Array.from(
+        { length: to - from + 1 },
+        (_, index) => `item-${String(from + index).padStart(2, '0')}`
+      )
+
+    async function getListPage(query, changes = MANY_VIEW, url = PAGE_URL) {
+      mockManageGets([currentApp], undefined, changes)
+      const response = await get(`${url}${query}`)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      return response.result
+    }
+
+    const countLine = (html) =>
+      html.match(
+        /<p[^>]*data-testid="change-requests-count"[^>]*>\s*<strong[^>]*>\s*([^<]+?)\s*<\/strong>/
+      )?.[1]
+
+    const paginationLinks = (html) =>
+      [
+        ...html.matchAll(
+          /class="govuk-link govuk-pagination__link" href="([^"]+)"(?: rel="(prev|next)")?/g
+        )
+      ].map(([, href, rel]) => [rel ?? 'page', href.replaceAll('&amp;', '&')])
+
+    test('shows all the items, a bold count and no pagination for 10 or fewer', async () => {
+      const result = await getPage()
+
+      expect(rowIds(result)).toEqual(EXPECTED_ORDER)
+      expect(countLine(result)).toBe('Showing 1-8 of 8')
+      expect(result).not.toContain('govuk-pagination')
+    })
+
+    test('shows the first 10 items with pagination when there are more', async () => {
+      const result = await getListPage('')
+
+      expect(rowIds(result)).toEqual(itemIds(1, 10))
+      expect(countLine(result)).toBe('Showing 1-10 of 23')
+      expect(paginationLinks(result)).toEqual([
+        ['page', `${PAGE_URL}?page=1`],
+        ['page', `${PAGE_URL}?page=2`],
+        ['page', `${PAGE_URL}?page=3`],
+        ['next', `${PAGE_URL}?page=2`]
+      ])
+      expect(result).toMatch(
+        new RegExp(
+          `href="${PAGE_URL}\\?page=1" aria-label="Page 1" aria-current="page"`
+        )
+      )
+    })
+
+    test('shows the page from the query string', async () => {
+      const result = await getListPage('?page=2')
+
+      expect(rowIds(result)).toEqual(itemIds(11, 20))
+      expect(countLine(result)).toBe('Showing 11-20 of 23')
+      expect(paginationLinks(result)).toEqual([
+        ['prev', `${PAGE_URL}?page=1`],
+        ['page', `${PAGE_URL}?page=1`],
+        ['page', `${PAGE_URL}?page=2`],
+        ['page', `${PAGE_URL}?page=3`],
+        ['next', `${PAGE_URL}?page=3`]
+      ])
+    })
+
+    test('shows the remaining items on the last page', async () => {
+      const result = await getListPage('?page=3')
+
+      expect(rowIds(result)).toEqual(itemIds(21, 23))
+      expect(countLine(result)).toBe('Showing 21-23 of 23')
+      expect(paginationLinks(result).at(-1)).toEqual([
+        'page',
+        `${PAGE_URL}?page=3`
+      ])
+    })
+
+    test.each([
+      ['a page past the last', '?page=99', 21, 23],
+      ['page 0', '?page=0', 1, 10],
+      ['a page that is not a number', '?page=last', 1, 10]
+    ])('clamps %s to a valid page', async (_, query, from, to) => {
+      const result = await getListPage(query)
+
+      expect(rowIds(result)).toEqual(itemIds(from, to))
+      expect(countLine(result)).toBe(`Showing ${from}-${to} of 23`)
+    })
+
+    test('keeps the Welsh prefix and labels in the pagination', async () => {
+      const result = await getListPage('?page=2', MANY_VIEW, WELSH_PAGE_URL)
+
+      expect(countLine(result)).toBe('[Welsh] Showing 11-20 of 23')
+      expect(paginationLinks(result)[0]).toEqual([
+        'prev',
+        `${WELSH_PAGE_URL}?page=1`
+      ])
+      expect(result).toContain('aria-label="[Welsh] Pagination"')
+      expect(result).toContain('aria-label="[Welsh] Page 3"')
+      expect(result).toMatch(/rel="prev"[\s\S]*?\[Welsh\] Previous/)
+      expect(result).toMatch(/rel="next"[\s\S]*?\[Welsh\] Next/)
+    })
   })
 
   describe('year scoping', () => {
@@ -510,17 +642,18 @@ describe('#manageChangeRequestsController', () => {
       ].map((match) => match[1])
     const statuses = (html) => cellTexts(html, 'status')
 
-    test('lists the seeded exporter’s items, most urgent first', async () => {
-      const { statusCode, result } = await get(
-        listUrl(
-          MANAGE_EXPORTER_ORG_ID,
-          MANAGE_EXPORTER_REGISTRATION_ID,
-          'Plastic'
-        )
+    test('lists the seeded exporter’s items over two pages, most urgent first', async () => {
+      const exporterUrl = listUrl(
+        MANAGE_EXPORTER_ORG_ID,
+        MANAGE_EXPORTER_REGISTRATION_ID,
+        'Plastic'
       )
+      const first = await get(exporterUrl)
+      const second = await get(`${exporterUrl}?page=2`)
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(statuses(result)).toEqual([
+      expect(first.statusCode).toBe(statusCodes.ok)
+      expect(second.statusCode).toBe(statusCodes.ok)
+      expect([...statuses(first.result), ...statuses(second.result)]).toEqual([
         'QUERIED',
         'IN PROGRESS',
         'SUBMITTED',
@@ -535,6 +668,8 @@ describe('#manageChangeRequestsController', () => {
         'WITHDRAWN',
         'WITHDRAWN'
       ])
+      expect(statuses(second.result)).toHaveLength(3)
+      expect(second.result).toContain('Showing 11-13 of 13')
     })
 
     test('lists the seeded reprocessor’s tonnage band upgrades', async () => {

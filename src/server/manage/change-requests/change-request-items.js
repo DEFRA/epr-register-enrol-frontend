@@ -85,3 +85,67 @@ export function changeTypeLabel(changeType, t) {
     : 'other'
   return t(`pages.manageChangeRequests.types.${key}`)
 }
+
+export const PAGE_SIZE = 10
+
+// `?page=` isn't validated by the route, so anything that isn't a whole
+// number in range lands on the nearest valid page instead of erroring.
+function clampPage(requested, totalPages) {
+  const page = /^\d+$/.test(String(requested)) ? Number(requested) : 1
+  return Math.min(Math.max(page, 1), totalPages)
+}
+
+export function paginate(rows, requestedPage, pageSize = PAGE_SIZE) {
+  const totalCount = rows.length
+  const totalPages = Math.max(Math.ceil(totalCount / pageSize), 1)
+  const page = clampPage(requestedPage, totalPages)
+  const offset = (page - 1) * pageSize
+  const pageRows = rows.slice(offset, offset + pageSize)
+  return {
+    rows: pageRows,
+    page,
+    totalPages,
+    totalCount,
+    rangeStart: pageRows.length ? offset + 1 : 0,
+    rangeEnd: offset + pageRows.length
+  }
+}
+
+const PAGINATION_KEYS = 'pages.manageChangeRequests.pagination'
+
+// Ported from case management's work-items list. The labels are passed in
+// because the GOV.UK macro's defaults are English only.
+export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {
+  if (totalPages <= 1) {
+    return null
+  }
+
+  const hrefFor = (target) => {
+    const params = new URLSearchParams()
+    for (const [name, value] of Object.entries(query)) {
+      if (value) {
+        params.append(name, value)
+      }
+    }
+    params.append('page', String(target))
+    return `${baseUrl}?${params}`
+  }
+
+  return {
+    landmarkLabel: t(`${PAGINATION_KEYS}.landmarkLabel`),
+    previous:
+      page > 1
+        ? { href: hrefFor(page - 1), text: t(`${PAGINATION_KEYS}.previous`) }
+        : null,
+    next:
+      page < totalPages
+        ? { href: hrefFor(page + 1), text: t(`${PAGINATION_KEYS}.next`) }
+        : null,
+    items: Array.from({ length: totalPages }, (_, index) => ({
+      number: index + 1,
+      href: hrefFor(index + 1),
+      current: index + 1 === page,
+      visuallyHiddenText: t(`${PAGINATION_KEYS}.page`, { number: index + 1 })
+    }))
+  }
+}
