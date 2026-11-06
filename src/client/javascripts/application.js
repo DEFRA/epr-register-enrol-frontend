@@ -11,7 +11,7 @@ import {
 import accessibleAutocomplete from 'accessible-autocomplete'
 
 import { initAutoSubmit } from './auto-submit.js'
-import './session-notice.js'
+import { initSessionNotice } from './session-notice.js'
 
 // Shared across the client-side validation below (Basel/OECD codes, the
 // sampling-plan file upload and the govuk-character-count error clearing
@@ -35,8 +35,9 @@ createAll(Tabs)
 
 // Called here, not on import: webpack treats this app's modules as side
 // effect free, so a bare `import './auto-submit.js'` is dropped from the
-// production bundle.
+// production bundle. RA-462: the same for session-notice.js.
 initAutoSubmit()
+initSessionNotice()
 
 const countrySelect = document.getElementById('country')
 if (countrySelect) {

@@ -1076,3 +1076,25 @@ describe('#country field enhancement', () => {
     expect(visibleInput.getAttribute('data-testid')).toBe('country-input')
   })
 })
+
+// RA-462: webpack treats this app's modules as side effect free, so a module
+// that only runs itself on import is dropped from the production bundle.
+// application.js has to call it.
+describe('session notice', () => {
+  beforeEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  afterEach(() => {
+    vi.doUnmock('./session-notice.js')
+  })
+
+  it('is started by application.js, not by importing session-notice.js', async () => {
+    const initSessionNotice = vi.fn()
+    vi.doMock('./session-notice.js', () => ({ initSessionNotice }))
+
+    await loadApplication()
+
+    expect(initSessionNotice).toHaveBeenCalledOnce()
+  })
+})
