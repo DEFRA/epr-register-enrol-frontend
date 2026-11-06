@@ -44,7 +44,8 @@ const band = (requestedBand, status, validFrom = null) => ({
 })
 
 // [changeType, [month, day] created, items], oldest first. Dates are
-// [month, day] in the accreditation's year.
+// [month, day] in the accreditation's year. RA-697: Dragon's withdrawn New ORS
+// accreditation has no validFrom, as its site is registered only.
 const EXPORTER_REQUESTS = [
   [
     UPDATE,
@@ -53,7 +54,7 @@ const EXPORTER_REQUESTS = [
   ],
   [ADD, [2, 20], [ors('004', 'Rejected')]],
   [TONNAGE, [3, 10], [band('UpTo5000', 'Approved', [4, 1])]],
-  [ADD, [4, 6], [ors('004', 'Withdrawn', [5, 4], [6, 15])]],
+  [ADD, [4, 6], [ors('004', 'Withdrawn', null, [6, 15])]],
   [UPDATE, [5, 12], [ors('003', 'Rejected')]],
   [UPDATE, [6, 2], [ors('001', 'Withdrawn', [6, 22], [7, 10])]],
   [TONNAGE, [6, 25], [band('Over10000', 'Rejected')]],

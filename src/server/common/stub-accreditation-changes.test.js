@@ -409,9 +409,10 @@ describe('seeded stub change requests (RA-697)', () => {
     const withdrawn = itemsOf(requests).find(
       (i) => i.status === 'Withdrawn' && i.orsId === '004'
     )
+    // RA-697: Dragon's site is registered only, so this was never granted.
     expect(withdrawn).toMatchObject({
       changeType: 'add-overseas-site',
-      validFrom: `${year}-05-04T09:00:00.000Z`,
+      validFrom: null,
       withdrawnAt: `${year}-06-15T09:00:00.000Z`
     })
     const tonnage = requests.find(
