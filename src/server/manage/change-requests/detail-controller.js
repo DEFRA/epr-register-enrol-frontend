@@ -16,6 +16,7 @@ import {
   serviceProblem
 } from '../helpers/manage-page.js'
 import { orsAddressLine } from '../helpers/ors-address.js'
+import { TONNAGE_OPTIONS } from '../../accreditation/tonnage/controller.js'
 import { changeTypeLabel, findItem } from './change-request-items.js'
 
 const DATE_FORMAT = 'd MMM yyyy'
@@ -157,6 +158,42 @@ function orsDetail({ view, found, application, t, currentLocale }) {
   }
 }
 
+// RA-697: the bands and their labels are the accreditation journey's, which
+// also says PERNs to an exporter.
+function requestedBandRow(item, application, t) {
+  const band = item.requestedBand
+  return {
+    id: 'requested-band',
+    label: text(
+      t,
+      application.isExporter
+        ? 'tonnage.requestedBandExporter'
+        : 'tonnage.requestedBand'
+    ),
+    value: TONNAGE_OPTIONS.includes(band)
+      ? t(`pages.tonnage.options.${band}`)
+      : text(t, 'notProvided')
+  }
+}
+
+function tonnageDetail({ found, application, t, currentLocale }) {
+  const { request, item } = found
+  return {
+    isTonnage: true,
+    heading: changeTypeLabel(item.changeType, t),
+    header: { statusTag: applicationStatusTag(item.status, t) },
+    rows: [requestedBandRow(item, application, t)],
+    isQueried: item.status === 'Queried',
+    requestDetails: requestDetails({
+      request,
+      item,
+      application,
+      t,
+      currentLocale
+    })
+  }
+}
+
 export const manageChangeRequestDetailController = {
   async handler(request, h) {
     const { application, t, currentLocale, response } = await loadManagePage(
@@ -173,12 +210,17 @@ export const manageChangeRequestDetailController = {
     }
 
     const found = findItem(view.requests ?? [], request.params.itemId)
-    // RA-697 task 008 adds the tonnage band upgrade's layout.
-    if (!found || found.isTonnage) {
+    if (!found) {
       throw Boom.notFound()
     }
 
-    const detail = orsDetail({ view, found, application, t, currentLocale })
+    const detail = (found.isTonnage ? tonnageDetail : orsDetail)({
+      view,
+      found,
+      application,
+      t,
+      currentLocale
+    })
     return h.view('manage/change-requests/detail', {
       pageTitle: detail.heading,
       caption: manageCaption(application, t),

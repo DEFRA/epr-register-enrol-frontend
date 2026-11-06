@@ -2,8 +2,9 @@
 
 {#
   RA-697: a read-only version of Figma 604:137479, the site details landing
-  page. Nothing here changes the request: no buttons, and no Change, Remove
-  or Add links. Responding to a query comes with RA-698.
+  page, and a tonnage band upgrade's equivalent. Nothing here changes the
+  request: no buttons, and no Change, Remove or Add links. Responding to a
+  query comes with RA-698.
 #}
 
 {% macro headerItem(label, testId) %}
@@ -17,7 +18,7 @@
   <dl class="govuk-summary-list" data-testid="{{ testId }}">
     {% for row in rows %}
       <div class="govuk-summary-list__row" data-testid="row-{{ row.id }}">
-        <dt class="govuk-summary-list__key">{{ row.label }}</dt>
+        <dt class="govuk-summary-list__key" data-testid="row-{{ row.id }}-label">{{ row.label }}</dt>
         <dd class="govuk-summary-list__value" data-testid="row-{{ row.id }}-value">{{ row.value }}</dd>
       </div>
     {% endfor %}
@@ -45,6 +46,13 @@
 
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
 
+  {% if isTonnage %}
+  <dl class="app-detail-header govuk-!-margin-bottom-6" data-testid="detail-header">
+    {% call headerItem(t('pages.manageChangeRequests.detail.header.status'), 'header-status-item') %}<strong class="govuk-tag {{ header.statusTag.classes }}" data-testid="header-status">{{ header.statusTag.text }}</strong>{% endcall %}
+  </dl>
+
+  {{ readOnlySummary(rows, 'tonnage-summary') }}
+  {% else %}
   <dl class="app-detail-header govuk-!-margin-bottom-6" data-testid="detail-header">
     {% call headerItem(t('pages.manageChangeRequests.detail.header.location'), 'header-location') %}{{ header.location }}{% endcall %}
     {% call headerItem(t('pages.manageChangeRequests.detail.header.siteId'), 'header-site-id') %}{{ header.siteId }}{% endcall %}
@@ -64,6 +72,7 @@
     </ul>
   {% else %}
     <p class="govuk-body" data-testid="no-interim-sites">{{ t('pages.manageChangeRequests.detail.noInterimSites') }}</p>
+  {% endif %}
   {% endif %}
 
   <h2 class="govuk-heading-m govuk-!-margin-top-8" data-testid="request-details-heading">{{ t('pages.manageChangeRequests.detail.requestDetails.heading') }}</h2>

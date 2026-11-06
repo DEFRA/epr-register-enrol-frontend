@@ -200,7 +200,23 @@ const CURRENT_VIEW = {
   ]
 }
 
+const TONNAGE_ITEM = CURRENT_VIEW.requests.at(-1).tonnageBandUpgrade
+
+// The current view with its tonnage item, and the request holding it, changed.
+const tonnageView = (itemChanges, requestChanges = {}) => ({
+  ...CURRENT_VIEW,
+  requests: [
+    submittedRequest(
+      'R000',
+      '2027-01-20T09:00:00Z',
+      { tonnage: { ...TONNAGE_ITEM, ...itemChanges } },
+      requestChanges
+    )
+  ]
+})
+
 const currentApp = makeManageApp()
+const reprocessorApp = makeManageApp({ wasteProcessingType: 'reprocessor' })
 
 describe('#manageChangeRequestDetailController', () => {
   const page = setupManagePageServer()
@@ -313,15 +329,6 @@ describe('#manageChangeRequestDetailController', () => {
       const { statusCode } = await get(detailUrl(ITEM.granted))
 
       expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
-    // RA-697 task 008 builds the tonnage band upgrade's layout.
-    test('returns 404 for a tonnage band upgrade item for now', async () => {
-      mockManageGets([currentApp], undefined, CURRENT_VIEW)
-
-      const { statusCode } = await get(detailUrl(ITEM.tonnage))
-
-      expect(statusCode).toBe(statusCodes.notFound)
     })
   })
 
@@ -458,6 +465,164 @@ describe('#manageChangeRequestDetailController', () => {
       const result = await getPage(ITEM.granted.toUpperCase())
 
       expect(valueOf(result, 'page-heading')).toBe('Rotterdam Recycling BV')
+    })
+  })
+
+  describe('tonnage layout', () => {
+    test('is headed "Tonnage band upgrade" with the caption and a Status tag', async () => {
+      const result = await getPage(ITEM.tonnage)
+
+      expect(valueOf(result, 'page-heading')).toBe('Tonnage band upgrade')
+      expect(valueOf(result, 'page-caption')).toBe(
+        'Acme Recycling Ltd (2027, Plastic)'
+      )
+      expect(result).toMatch(/<title>\s*Tonnage band upgrade/)
+      expect(result).toMatch(
+        /class="govuk-tag govuk-tag--green"[^>]*data-testid="header-status"[^>]*>\s*SUBMITTED\s*</
+      )
+    })
+
+    test('shows no site details, interim sites or site header', async () => {
+      const result = await getPage(ITEM.tonnage)
+
+      expect(result).not.toMatch(
+        /data-testid="(site-summary|interim-sites-heading|header-location|header-site-id|header-bes-expiry)"/
+      )
+    })
+
+    test.each([
+      ['UpTo500', 'Up to 500 tonnes'],
+      ['UpTo5000', 'Up to 5,000 tonnes'],
+      ['UpTo10000', 'Up to 10,000 tonnes'],
+      ['Over10000', 'More than 10,000 tonnes']
+    ])('shows the requested band %s as "%s"', async (requestedBand, label) => {
+      const result = await getPage(
+        ITEM.tonnage,
+        tonnageView({ requestedBand }),
+        [reprocessorApp]
+      )
+
+      expect(valueOf(result, 'row-requested-band-label')).toBe(
+        'PRNs you plan to issue'
+      )
+      expect(valueOf(result, 'row-requested-band-value')).toBe(label)
+    })
+
+    test('says PERNs rather than PRNs to an exporter', async () => {
+      const result = await getPage(ITEM.tonnage)
+
+      expect(valueOf(result, 'row-requested-band-label')).toBe(
+        'PERNs you plan to issue'
+      )
+    })
+
+    test('shows "Not provided" for a band the page does not know', async () => {
+      const result = await getPage(
+        ITEM.tonnage,
+        tonnageView({ requestedBand: 'UpTo99999' })
+      )
+
+      expect(valueOf(result, 'row-requested-band-value')).toBe('Not provided')
+    })
+
+    test('has no actions and links back to the list', async () => {
+      const result = await getPage(ITEM.tonnage)
+
+      const content = result.slice(result.indexOf('<main'))
+      expect(content).not.toMatch(/<button|<form|govuk-summary-list__actions/)
+      expect(content).not.toMatch(/>\s*(Change|Remove|Add)\b/)
+      expect(result).toMatch(
+        new RegExp(`href="${LIST_URL}"[^>]*data-testid="back-link"`)
+      )
+    })
+
+    test('shows the request details of a submitted item', async () => {
+      const result = await getPage(ITEM.tonnage)
+
+      expect(valueOf(result, 'request-details-heading')).toBe('Request details')
+      expect(valueOf(result, 'request-type')).toBe('Tonnage band upgrade')
+      expect(valueOf(result, 'request-sent')).toBe('20 Jan 2027')
+      expect(valueOf(result, 'request-submitted-by')).toBe('Sam Patel')
+      expect(valueOf(result, 'request-valid-from')).toBe('Not applicable')
+      expect(valueOf(result, 'request-valid-to')).toBe('Not applicable')
+      expect(valueOf(result, 'request-reference')).toBe('CR27R000')
+    })
+
+    test('shows "Not submitted" and no reference for an In progress item', async () => {
+      const result = await getPage(
+        ITEM.tonnage,
+        tonnageView(
+          { status: 'InProgress' },
+          {
+            status: 'InProgress',
+            submittedAt: null,
+            submittedBy: null,
+            caseManagementReference: null
+          }
+        )
+      )
+
+      expect(valueOf(result, 'request-sent')).toBe('Not submitted')
+      expect(valueOf(result, 'request-submitted-by')).toBe('Not submitted')
+      expect(valueOf(result, 'request-reference')).toBe('Not applicable')
+    })
+
+    test('a granted item is valid from its approval date to 31 Dec of the compliance year', async () => {
+      const result = await getPage(
+        ITEM.tonnage,
+        tonnageView({ status: 'Approved', validFrom: '2027-04-01T09:00:00Z' })
+      )
+
+      expect(valueOf(result, 'header-status')).toBe('GRANTED')
+      expect(valueOf(result, 'request-valid-from')).toBe('1 Apr 2027')
+      expect(valueOf(result, 'request-valid-to')).toBe('31 Dec 2027')
+    })
+
+    test('a withdrawn item is valid from its approval date to its withdrawal date', async () => {
+      const result = await getPage(
+        ITEM.tonnage,
+        tonnageView({
+          status: 'Withdrawn',
+          validFrom: '2027-04-01T09:00:00Z',
+          withdrawnAt: '2027-08-15T09:00:00Z'
+        })
+      )
+
+      expect(valueOf(result, 'request-valid-from')).toBe('1 Apr 2027')
+      expect(valueOf(result, 'request-valid-to')).toBe('15 Aug 2027')
+    })
+
+    test('a Queried item shows the query notice, with no action', async () => {
+      const result = await getPage(
+        ITEM.tonnage,
+        tonnageView({ status: 'Queried' })
+      )
+
+      const start = result.indexOf('data-testid="query-raised-banner"')
+      expect(start).toBeGreaterThan(-1)
+      const banner = result.slice(
+        start,
+        result.indexOf('data-testid="page-caption"', start)
+      )
+      expect(banner).toContain('A query has been raised on this request')
+      expect(banner).not.toMatch(/<a |<button/)
+    })
+
+    test('is shown in Welsh under /cy', async () => {
+      mockManageGets([currentApp], undefined, CURRENT_VIEW)
+
+      const { statusCode, result } = await get(`/cy${detailUrl(ITEM.tonnage)}`)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(valueOf(result, 'page-heading')).toBe(
+        '[Welsh] Tonnage band upgrade'
+      )
+      expect(valueOf(result, 'row-requested-band-label')).toBe(
+        '[Welsh] PERNs you plan to issue'
+      )
+      expect(valueOf(result, 'row-requested-band-value')).toBe(
+        '[Welsh] Up to 10,000 tonnes'
+      )
     })
   })
 

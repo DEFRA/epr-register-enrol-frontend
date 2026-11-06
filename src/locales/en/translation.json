@@ -1103,6 +1103,10 @@
         "queried": {
           "title": "Important",
           "body": "A query has been raised on this request"
+        },
+        "tonnage": {
+          "requestedBand": "PRNs you plan to issue",
+          "requestedBandExporter": "PERNs you plan to issue"
         }
       }
     },
