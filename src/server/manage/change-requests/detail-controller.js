@@ -164,18 +164,12 @@ function orsDetail({ view, found, application, t, currentLocale }) {
   }
 }
 
-// RA-697: the bands and their labels are the accreditation journey's, which
-// also says PERNs to an exporter.
-function requestedBandRow(item, application, t) {
+// RA-697: the bands and their labels are the accreditation journey's.
+function requestedBandRow(item, t) {
   const band = item.requestedBand
   return {
     id: 'requested-band',
-    label: text(
-      t,
-      application.isExporter
-        ? 'tonnage.requestedBandExporter'
-        : 'tonnage.requestedBand'
-    ),
+    label: text(t, 'tonnage.requestedBand'),
     value: TONNAGE_OPTIONS.includes(band)
       ? t(`pages.tonnage.options.${band}`)
       : text(t, 'notProvided')
@@ -188,7 +182,7 @@ function tonnageDetail({ found, application, t, currentLocale }) {
     isTonnage: true,
     heading: changeTypeLabel(item.changeType, t),
     header: { statusTag: applicationStatusTag(item.status, t) },
-    rows: [requestedBandRow(item, application, t)],
+    rows: [requestedBandRow(item, t)],
     isQueried: item.status === 'Queried',
     requestDetails: requestDetails({
       request,

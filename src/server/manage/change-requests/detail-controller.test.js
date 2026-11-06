@@ -524,18 +524,14 @@ describe('#manageChangeRequestDetailController', () => {
         [reprocessorApp]
       )
 
-      expect(valueOf(result, 'row-requested-band-label')).toBe(
-        'PRNs you plan to issue'
-      )
+      expect(valueOf(result, 'row-requested-band-label')).toBe('Tonnage band')
       expect(valueOf(result, 'row-requested-band-value')).toBe(label)
     })
 
-    test('says PERNs rather than PRNs to an exporter', async () => {
+    test('labels the row "Tonnage band" for an exporter too', async () => {
       const result = await getPage(ITEM.tonnage)
 
-      expect(valueOf(result, 'row-requested-band-label')).toBe(
-        'PERNs you plan to issue'
-      )
+      expect(valueOf(result, 'row-requested-band-label')).toBe('Tonnage band')
     })
 
     test('shows "Not provided" for a band the page does not know', async () => {
@@ -640,7 +636,7 @@ describe('#manageChangeRequestDetailController', () => {
         '[Welsh] Tonnage band upgrade'
       )
       expect(valueOf(result, 'row-requested-band-label')).toBe(
-        '[Welsh] PERNs you plan to issue'
+        '[Welsh] Tonnage band'
       )
       expect(valueOf(result, 'row-requested-band-value')).toBe(
         '[Welsh] Up to 10,000 tonnes'

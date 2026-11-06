@@ -1105,8 +1105,7 @@
           "body": "[Welsh] A query has been raised on this request"
         },
         "tonnage": {
-          "requestedBand": "[Welsh] PRNs you plan to issue",
-          "requestedBandExporter": "[Welsh] PERNs you plan to issue"
+          "requestedBand": "[Welsh] Tonnage band"
         }
       }
     },
