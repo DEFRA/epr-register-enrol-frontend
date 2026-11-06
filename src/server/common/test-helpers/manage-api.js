@@ -39,7 +39,12 @@ export const makeManageApp = (overrides = {}) => ({
 
 // RA-492: the accreditation-changes view when the operator has made no
 // in-year change requests.
-export const noChangeRequests = { sites: [], activeRequest: null, requests: [] }
+export const noChangeRequests = {
+  sites: [],
+  activeRequest: null,
+  requests: [],
+  pendingOrsIds: []
+}
 
 const responseOrThrow = (response) => {
   if (response instanceof Error) {

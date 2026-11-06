@@ -1,5 +1,8 @@
 import { describe, test, expect, beforeEach } from 'vitest'
-import { stubAccreditationChanges } from './stub-accreditation-changes.js'
+import {
+  seedStubChangeRequest,
+  stubAccreditationChanges
+} from './stub-accreditation-changes.js'
 import { currentYear } from './helpers/currentYear.js'
 
 const BASE = '/api/v1/accreditation-changes/50018'
@@ -133,6 +136,179 @@ describe('stubAccreditationChanges (RA-492)', () => {
   test('removing the last site deletes the draft', async () => {
     await call('post', '/requests/current/sites', { siteId: 2 })
     expect(await call('delete', '/requests/current/sites/2')).toBeNull()
+  })
+})
+
+// RA-697: mirrors the backend so the journey behaves the same in stub mode.
+describe('stubAccreditationChanges items (RA-697)', () => {
+  let base
+  let d
+
+  beforeEach(() => {
+    appSeq += 1
+    base = `${BASE}/app-${appSeq}`
+    d = deps(application())
+  })
+
+  const call = (method, rest, body) =>
+    stubAccreditationChanges(method, `${base}${rest}`, body, d)
+
+  const completeSite2 = async () => {
+    await call('post', '/requests/current/sites', { siteId: 2 })
+    await call('patch', '/requests/current/sites/2', {
+      coordinates: '1.000000, 2.000000',
+      operationCodes: ['R3'],
+      conditionsOfExport: true
+    })
+  }
+
+  test('adding a site creates an In progress add-overseas-site item', async () => {
+    const draft = await call('post', '/requests/current/sites', { siteId: 2 })
+
+    expect(draft.sites[0]).toMatchObject({
+      itemId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      changeType: 'add-overseas-site',
+      status: 'InProgress',
+      validFrom: null,
+      withdrawnAt: null
+    })
+    expect(draft.tonnageBandUpgrade).toBeNull()
+    const view = await call('get', '')
+    expect(view.sites[1]).toMatchObject({
+      pendingRequestId: draft.requestId,
+      pendingRequestStatus: 'InProgress'
+    })
+    expect(view.pendingOrsIds).toEqual(['002'])
+  })
+
+  test('submit sets every item to Submitted, keeping its id', async () => {
+    await completeSite2()
+    const { itemId } = (await call('get', '')).activeRequest.sites[0]
+
+    const submitted = await call('post', '/requests/current/submit', {
+      fullName: 'Jane'
+    })
+
+    expect(submitted.sites[0]).toMatchObject({ itemId, status: 'Submitted' })
+    expect(submitted.submittedAt).toEqual(expect.any(String))
+  })
+
+  const seedSubmitted = (requestId, sites, extra = {}) =>
+    seedStubChangeRequest(`50018/app-${appSeq}`, {
+      requestId,
+      status: 'Submitted',
+      createdAt: '2026-03-01T00:00:00.000Z',
+      submittedAt: '2026-03-01T00:00:00.000Z',
+      sites,
+      ...extra
+    })
+
+  const seededSite = (status, extra = {}) => ({
+    siteId: 2,
+    itemId: `item-${status}`,
+    status,
+    ...extra
+  })
+
+  test('a seeded request shows its items, validity and tonnage item', async () => {
+    seedSubmitted('granted', [
+      seededSite('Approved', { validFrom: '2026-03-01T00:00:00.000Z' })
+    ])
+    seedSubmitted('tonnage', [], {
+      changeType: 'upgrade-tonnage-band',
+      caseManagementReference: 'CHG-1',
+      tonnageBandUpgrade: {
+        itemId: 'item-tonnage',
+        status: 'Queried',
+        requestedBand: 'UpTo10000'
+      }
+    })
+
+    const { requests } = await call('get', '')
+
+    const granted = requests.find((r) => r.requestId === 'granted')
+    expect(granted.sites[0]).toMatchObject({
+      itemId: 'item-Approved',
+      changeType: 'add-overseas-site',
+      status: 'Approved',
+      validFrom: '2026-03-01T00:00:00.000Z',
+      withdrawnAt: null
+    })
+    const tonnage = requests.find((r) => r.requestId === 'tonnage')
+    expect(tonnage).toMatchObject({
+      changeType: 'upgrade-tonnage-band',
+      caseManagementReference: 'CHG-1',
+      sites: [],
+      tonnageBandUpgrade: {
+        itemId: 'item-tonnage',
+        changeType: 'upgrade-tonnage-band',
+        status: 'Queried',
+        requestedBand: 'UpTo10000',
+        validFrom: null,
+        withdrawnAt: null
+      }
+    })
+  })
+
+  test('a site whose items are all final is not pending and can be added again', async () => {
+    seedSubmitted('granted', [seededSite('Approved')])
+    seedSubmitted('withdrawn', [seededSite('Withdrawn')])
+
+    const view = await call('get', '')
+
+    expect(view.sites[1]).toMatchObject({
+      pendingRequestId: null,
+      pendingRequestStatus: null
+    })
+    expect(view.pendingOrsIds).toEqual([])
+    const draft = await call('post', '/requests/current/sites', { siteId: 2 })
+    expect(draft.sites[0].status).toBe('InProgress')
+  })
+
+  test('a site with an active item in a submitted request is pending and cannot be added', async () => {
+    seedSubmitted('queried', [seededSite('Queried')])
+    seedSubmitted('refused', [seededSite('Rejected')])
+
+    const view = await call('get', '')
+
+    expect(view.sites[1]).toMatchObject({
+      pendingRequestId: 'queried',
+      pendingRequestStatus: 'Submitted'
+    })
+    expect(view.pendingOrsIds).toEqual(['002'])
+    await expect(
+      call('post', '/requests/current/sites', { siteId: 2 })
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
+  test('add-site is 409 while any submitted request has an active item for the site, even under a newer draft', async () => {
+    seedSubmitted('queried', [seededSite('Queried')])
+    seedStubChangeRequest(`50018/app-${appSeq}`, {
+      requestId: 'draft',
+      status: 'InProgress',
+      createdAt: '2026-06-01T00:00:00.000Z',
+      sites: [{ siteId: 2 }]
+    })
+
+    await expect(
+      call('post', '/requests/current/sites', { siteId: 2 })
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
+  test('a granted reprocessor is listed with no sites, but every write is 409', async () => {
+    d = deps(application({ isExporter: false }))
+
+    const view = await call('get', '')
+
+    expect(view.sites).toEqual([])
+    expect(view.pendingOrsIds).toEqual([])
+    expect(view.requests).toEqual([])
+    await expect(
+      call('post', '/requests/current/sites', { siteId: 2 })
+    ).rejects.toMatchObject({ status: 409 })
+    await expect(
+      call('post', '/requests/current/submit', {})
+    ).rejects.toMatchObject({ status: 409 })
   })
 })
 

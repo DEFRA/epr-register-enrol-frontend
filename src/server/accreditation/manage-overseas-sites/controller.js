@@ -5,6 +5,7 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { CHANGE_TYPES } from '../../common/constants/changeRequests.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
@@ -54,12 +55,14 @@ export function organisationIdFrom(request) {
 
 /**
  * The backend's view of the granted accreditation. 404 (no such
- * application) and 409 (not Approved, or not an exporter) both mean this
- * journey does not exist for the application.
+ * application) and 409 (not Approved) both mean this journey does not exist
+ * for the application, as does a view with no sites: RA-697's view of a
+ * granted reprocessor, which has no overseas sites to add.
  */
 export async function loadView(request) {
+  let view
   try {
-    return await accreditationChangesService.getView(
+    view = await accreditationChangesService.getView(
       organisationIdFrom(request),
       request.params.applicationId
     )
@@ -69,6 +72,10 @@ export async function loadView(request) {
     }
     throw err
   }
+  if (view.sites.length === 0) {
+    throw Boom.notFound()
+  }
+  return view
 }
 
 /**
@@ -423,7 +430,9 @@ export const paymentGetController = {
     const organisationId = organisationIdFrom(request)
     const view = await loadView(request)
     const submitted = view.requests.find(
-      (changeRequest) => changeRequest.status === SUBMITTED
+      (changeRequest) =>
+        changeRequest.status === SUBMITTED &&
+        changeRequest.changeType === CHANGE_TYPES.addOverseasSite
     )
     if (!submitted) {
       return redirectToManageSites(request, h, view)
