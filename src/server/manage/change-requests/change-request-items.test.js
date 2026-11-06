@@ -7,6 +7,7 @@ import {
   changeTypeLabel,
   filterItems,
   filterOptions,
+  findItem,
   flattenItems,
   paginate,
   readFilters,
@@ -637,5 +638,40 @@ describe('summariseByType', () => {
       { changeType: 'upgrade-tonnage-band', status: 'Submitted' },
       { changeType: 'remove-overseas-site', status: 'Submitted' }
     ])
+  })
+})
+
+describe('findItem', () => {
+  const ors = { itemId: 'aaaaaaaa-0000-4000-8000-000000000001', siteId: 1 }
+  const tonnage = { itemId: 'aaaaaaaa-0000-4000-8000-000000000002' }
+  const requests = [
+    { requestId: 'r2', sites: [], tonnageBandUpgrade: tonnage },
+    { requestId: 'r1', sites: [ors], tonnageBandUpgrade: null }
+  ]
+
+  test('finds an ORS item and its request', () => {
+    expect(findItem(requests, ors.itemId)).toEqual({
+      request: requests[1],
+      item: ors,
+      isTonnage: false
+    })
+  })
+
+  test('finds a tonnage band upgrade item and its request', () => {
+    expect(findItem(requests, tonnage.itemId)).toEqual({
+      request: requests[0],
+      item: tonnage,
+      isTonnage: true
+    })
+  })
+
+  test('ignores the case of the id', () => {
+    expect(findItem(requests, ors.itemId.toUpperCase())?.item).toBe(ors)
+  })
+
+  test('returns null for an unknown id', () => {
+    expect(
+      findItem(requests, 'aaaaaaaa-0000-4000-8000-000000000009')
+    ).toBeNull()
   })
 })

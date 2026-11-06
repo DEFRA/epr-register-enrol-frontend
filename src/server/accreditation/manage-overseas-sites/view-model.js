@@ -111,6 +111,63 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
   }
 }
 
+// The site's rows, each with the backend field that edits it (if any) and
+// that field's own answer, which decides whether the row is missing: the
+// location row shows the whole address but is missing only without a country.
+function siteDetailRows(t, site, effective) {
+  const label = (key) => manageSitesText(t, `rows.${key}`)
+  const answer = (field, key) => {
+    const value = displayValue(t, field, effective[field])
+    return {
+      id: EDITABLE_FIELDS[field].row,
+      field,
+      label: label(key),
+      value,
+      answer: value
+    }
+  }
+  const fixed = (id, key, value) => ({
+    id,
+    field: null,
+    label: label(key),
+    value,
+    answer: value
+  })
+  return [
+    fixed('site-name', 'siteName', site.siteName),
+    {
+      ...answer('country', 'location'),
+      value: siteAddressLine({ ...site, country: effective.country })
+    },
+    answer('coordinates', 'coordinates'),
+    fixed('contact-name', 'contactName', site.contactName),
+    fixed('contact-email', 'contactEmail', site.contactEmail),
+    fixed('contact-phone', 'contactPhone', site.contactPhone),
+    answer('operationCodes', 'recyclingOperation'),
+    fixed(
+      'basel-codes',
+      'baselCodes',
+      [site.code1, site.code2, site.code3].filter(Boolean).join(', ')
+    ),
+    fixed('repatriated-loads', 'repatriatedLoads', site.repatriatedLoads),
+    answer('conditionsOfExport', 'conditionsOfExport')
+  ]
+}
+
+const readOnlyRow = ({ id, label, value, answer }) => ({
+  ...fixedRow(id, label, answer),
+  value
+})
+
+/**
+ * RA-697: the add-to-accreditation summary's site rows, with the request
+ * site's effective answers, but never an action, for a read-only page. BES
+ * evidence is left to the caller.
+ */
+export function buildSiteDetailRows({ t, entry, requestSite }) {
+  return siteDetailRows(t, entry.site, requestSite.effective).map(readOnlyRow)
+}
+
 /**
  * Add to accreditation summary rows (f04/f09). "Add information" for a
  * field that has never been filled, "Change" for one the operator filled in
@@ -118,47 +175,24 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
  * ORS (locked) or one the backend cannot change.
  */
 export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
-  const site = entry.site
-  const effective = requestSite.effective
   const locked = new Set(entry.lockedFields)
-  const lockable = (field, rowLabel) => {
-    const value = displayValue(t, field, effective[field])
-    if (locked.has(field)) {
-      return fixedRow(EDITABLE_FIELDS[field].row, rowLabel, value)
-    }
-    return editableRow({
-      t,
-      applicationId,
-      siteId: entry.siteId,
-      field,
-      label: rowLabel,
-      value
-    })
-  }
+  const rows = siteDetailRows(t, entry.site, requestSite.effective).map(
+    (row) =>
+      row.field && !locked.has(row.field)
+        ? {
+            ...editableRow({
+              t,
+              applicationId,
+              siteId: entry.siteId,
+              field: row.field,
+              label: row.label,
+              value: row.answer
+            }),
+            value: row.value
+          }
+        : readOnlyRow(row)
+  )
   const label = (key) => manageSitesText(t, `rows.${key}`)
-  const rows = [
-    fixedRow('site-name', label('siteName'), site.siteName),
-    {
-      ...lockable('country', label('location')),
-      value: siteAddressLine({ ...site, country: effective.country })
-    },
-    lockable('coordinates', label('coordinates')),
-    fixedRow('contact-name', label('contactName'), site.contactName),
-    fixedRow('contact-email', label('contactEmail'), site.contactEmail),
-    fixedRow('contact-phone', label('contactPhone'), site.contactPhone),
-    lockable('operationCodes', label('recyclingOperation')),
-    fixedRow(
-      'basel-codes',
-      label('baselCodes'),
-      [site.code1, site.code2, site.code3].filter(Boolean).join(', ')
-    ),
-    fixedRow(
-      'repatriated-loads',
-      label('repatriatedLoads'),
-      site.repatriatedLoads
-    ),
-    lockable('conditionsOfExport', label('conditionsOfExport'))
-  ]
 
   const files = requestSite.besEvidence?.besEvidenceUploads ?? []
   if (requestSite.besEvidenceRequired || files.length > 0) {

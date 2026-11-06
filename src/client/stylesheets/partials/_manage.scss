@@ -164,3 +164,19 @@
   margin-bottom: govuk-spacing(6);
   padding-bottom: govuk-spacing(2);
 }
+
+// RA-697: the change request detail page's header row, per Figma 604:137479:
+// five label and value pairs in a row, wrapping on narrow screens.
+.app-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: govuk-spacing(6);
+  margin-top: 0;
+}
+
+// The interim sites, one per line between rules, with no actions.
+.app-detail-interim-list__item {
+  margin-bottom: 0;
+  padding: govuk-spacing(3) 0;
+  border-bottom: 1px solid $govuk-border-colour;
+}

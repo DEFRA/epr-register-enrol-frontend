@@ -225,3 +225,23 @@ export function summariseByType(rows) {
     .map(([changeType, status]) => ({ changeType, status }))
     .sort((a, b) => typeRank(a.changeType) - typeRank(b.changeType))
 }
+
+/**
+ * RA-697: the item with `itemId` (in any case) and the request holding it,
+ * or null. `requests` must be the current-year accreditation's only, so a
+ * previous year's item is never found.
+ */
+export function findItem(requests, itemId) {
+  const wanted = String(itemId).toLowerCase()
+  const matches = (item) => String(item?.itemId).toLowerCase() === wanted
+  for (const request of requests) {
+    const site = (request.sites ?? []).find(matches)
+    if (site) {
+      return { request, item: site, isTonnage: false }
+    }
+    if (matches(request.tonnageBandUpgrade)) {
+      return { request, item: request.tonnageBandUpgrade, isTonnage: true }
+    }
+  }
+  return null
+}

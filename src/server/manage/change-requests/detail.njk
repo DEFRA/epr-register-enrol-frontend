@@ -1,0 +1,85 @@
+{% extends 'layouts/page.njk' %}
+
+{#
+  RA-697: a read-only version of Figma 604:137479, the site details landing
+  page. Nothing here changes the request: no buttons, and no Change, Remove
+  or Add links. Responding to a query comes with RA-698.
+#}
+
+{% macro headerItem(label, testId) %}
+  <div class="app-detail-header__item">
+    <dt class="govuk-body govuk-!-font-weight-bold govuk-!-margin-bottom-1">{{ label }}</dt>
+    <dd class="govuk-body govuk-!-margin-left-0" data-testid="{{ testId }}">{{ caller() }}</dd>
+  </div>
+{% endmacro %}
+
+{% macro readOnlySummary(rows, testId) %}
+  <dl class="govuk-summary-list" data-testid="{{ testId }}">
+    {% for row in rows %}
+      <div class="govuk-summary-list__row" data-testid="row-{{ row.id }}">
+        <dt class="govuk-summary-list__key">{{ row.label }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="row-{{ row.id }}-value">{{ row.value }}</dd>
+      </div>
+    {% endfor %}
+  </dl>
+{% endmacro %}
+
+{% block content %}
+  {% if isQueried %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="query-raised-banner-title" data-module="govuk-notification-banner" data-testid="query-raised-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="query-raised-banner-title">{{ t('pages.manageChangeRequests.detail.queried.title') }}</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-notification-banner__heading">{{ t('pages.manageChangeRequests.detail.queried.body') }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-6" data-testid="page-heading">{{ heading }}</h1>
+    </div>
+  </div>
+
+  <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible">
+
+  <dl class="app-detail-header govuk-!-margin-bottom-6" data-testid="detail-header">
+    {% call headerItem(t('pages.manageChangeRequests.detail.header.location'), 'header-location') %}{{ header.location }}{% endcall %}
+    {% call headerItem(t('pages.manageChangeRequests.detail.header.siteId'), 'header-site-id') %}{{ header.siteId }}{% endcall %}
+    {% call headerItem(t('pages.manageChangeRequests.detail.header.status'), 'header-status-item') %}<strong class="govuk-tag {{ header.statusTag.classes }}" data-testid="header-status">{{ header.statusTag.text }}</strong>{% endcall %}
+    {% call headerItem(t('pages.manageChangeRequests.detail.header.dateAdded'), 'header-date-added') %}{{ header.dateAdded }}{% endcall %}
+    {% call headerItem(t('pages.manageChangeRequests.detail.header.besExpiry'), 'header-bes-expiry') %}{{ header.besExpiry }}{% endcall %}
+  </dl>
+
+  {{ readOnlySummary(rows, 'site-summary') }}
+
+  <h2 class="govuk-heading-m govuk-!-margin-top-8" data-testid="interim-sites-heading">{{ t('pages.manageChangeRequests.detail.interimSites', { count: interimSites.length }) }}</h2>
+  {% if interimSites.length %}
+    <ul class="govuk-list app-detail-interim-list" data-testid="interim-sites">
+      {% for interimSite in interimSites %}
+        <li class="app-detail-interim-list__item" data-testid="interim-site-{{ interimSite.siteId }}">{{ interimSite.line }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="govuk-body" data-testid="no-interim-sites">{{ t('pages.manageChangeRequests.detail.noInterimSites') }}</p>
+  {% endif %}
+
+  <h2 class="govuk-heading-m govuk-!-margin-top-8" data-testid="request-details-heading">{{ t('pages.manageChangeRequests.detail.requestDetails.heading') }}</h2>
+  <dl class="govuk-summary-list" data-testid="request-details">
+    {% for key, testId in [
+      ['type', 'request-type'],
+      ['sent', 'request-sent'],
+      ['submittedBy', 'request-submitted-by'],
+      ['validFrom', 'request-valid-from'],
+      ['validTo', 'request-valid-to'],
+      ['reference', 'request-reference']
+    ] %}
+      <div class="govuk-summary-list__row">
+        <dt class="govuk-summary-list__key">{{ t('pages.manageChangeRequests.detail.requestDetails.' + key) }}</dt>
+        <dd class="govuk-summary-list__value" data-testid="{{ testId }}">{{ requestDetails[key] }}</dd>
+      </div>
+    {% endfor %}
+  </dl>
+{% endblock %}

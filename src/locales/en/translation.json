@@ -1078,6 +1078,32 @@
         "previous": "Previous",
         "next": "Next",
         "page": "Page {{number}}"
+      },
+      "detail": {
+        "header": {
+          "location": "Location",
+          "siteId": "Site ID",
+          "status": "Status",
+          "dateAdded": "Date added",
+          "besExpiry": "BES expiry date"
+        },
+        "notProvided": "Not provided",
+        "notSubmitted": "Not submitted",
+        "interimSites": "Interim sites ({{count}})",
+        "noInterimSites": "None",
+        "requestDetails": {
+          "heading": "Request details",
+          "type": "Type",
+          "sent": "Request sent",
+          "submittedBy": "Submitted by",
+          "validFrom": "Valid from",
+          "validTo": "Valid to",
+          "reference": "Reference"
+        },
+        "queried": {
+          "title": "Important",
+          "body": "A query has been raised on this request"
+        }
       }
     },
     "contact": {

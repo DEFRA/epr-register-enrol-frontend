@@ -1077,6 +1077,32 @@
         "previous": "[Welsh] Previous",
         "next": "[Welsh] Next",
         "page": "[Welsh] Page {{number}}"
+      },
+      "detail": {
+        "header": {
+          "location": "[Welsh] Location",
+          "siteId": "[Welsh] Site ID",
+          "status": "[Welsh] Status",
+          "dateAdded": "[Welsh] Date added",
+          "besExpiry": "[Welsh] BES expiry date"
+        },
+        "notProvided": "[Welsh] Not provided",
+        "notSubmitted": "[Welsh] Not submitted",
+        "interimSites": "[Welsh] Interim sites ({{count}})",
+        "noInterimSites": "[Welsh] None",
+        "requestDetails": {
+          "heading": "[Welsh] Request details",
+          "type": "[Welsh] Type",
+          "sent": "[Welsh] Request sent",
+          "submittedBy": "[Welsh] Submitted by",
+          "validFrom": "[Welsh] Valid from",
+          "validTo": "[Welsh] Valid to",
+          "reference": "[Welsh] Reference"
+        },
+        "queried": {
+          "title": "[Welsh] Important",
+          "body": "[Welsh] A query has been raised on this request"
+        }
       }
     },
     "contact": {
