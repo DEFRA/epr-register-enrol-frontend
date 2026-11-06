@@ -138,3 +138,9 @@
     border: 0;
   }
 }
+
+// RA-492: an ORS's in-year change status or action, at the end of its row.
+.app-ors-list__actions {
+  margin-left: auto;
+  text-align: right;
+}

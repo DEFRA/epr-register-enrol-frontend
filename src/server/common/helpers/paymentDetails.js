@@ -58,6 +58,8 @@ export function resolveRegulatorContact(nation) {
 
 export const ORS_FEE = 328
 
+export const PENCE_PER_POUND = 100
+
 export const TONNAGE_FEES = {
   UpTo500: 546,
   UpTo5000: 2184,
@@ -101,6 +103,12 @@ export function tonnageFeeCalculator(tonnage) {
   return fee
 }
 
+function bankDetailsFor(nation) {
+  return (
+    BANK_DETAILS_BY_NATION[nation] ?? BANK_DETAILS_BY_NATION[NATIONS.ENGLAND]
+  )
+}
+
 export function buildPaymentDetails(application, t, nation) {
   const tonnage = application.prns?.plannedTonnageBand
   const selectedSites = (application.overseasSites?.sites ?? []).filter(
@@ -109,16 +117,30 @@ export function buildPaymentDetails(application, t, nation) {
   const numberOfORSs = selectedSites?.length ?? 0
   const amountTonnageDue = tonnageFeeCalculator(tonnage)
   const amountOrsDue = numberOfORSs * ORS_FEE
-  const bankDetails =
-    BANK_DETAILS_BY_NATION[nation] ?? BANK_DETAILS_BY_NATION[NATIONS.ENGLAND]
 
   return {
-    ...bankDetails,
+    ...bankDetailsFor(nation),
     materialName: materialDisplayName(application, t),
     tonnageDisplay: t(`pages.tonnage.options.${tonnage}`),
     numberOfORSs,
     amountTonnageDue,
     amountOrsDue,
     amount: amountTonnageDue + amountOrsDue
+  }
+}
+
+// RA-492: adding registered ORSs to a granted accreditation is an in-year
+// change, charged per ORS only. The backend's change request carries the
+// charge (in pence) and is the single source of the amount; there is no
+// tonnage fee, so tonnageDisplay and amountTonnageDue are absent and the
+// payment-details macro leaves the tonnage line out.
+export function buildInYearOrsPaymentDetails(application, t, nation, charge) {
+  const amountOrsDue = charge.totalPence / PENCE_PER_POUND
+  return {
+    ...bankDetailsFor(nation),
+    materialName: materialDisplayName(application, t),
+    numberOfORSs: charge.chargeableSites,
+    amountOrsDue,
+    amount: amountOrsDue
   }
 }

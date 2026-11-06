@@ -37,22 +37,40 @@ export const makeManageApp = (overrides = {}) => ({
   ...overrides
 })
 
+// RA-492: the accreditation-changes view when the operator has made no
+// in-year change requests.
+export const noChangeRequests = { sites: [], activeRequest: null, requests: [] }
+
+const responseOrThrow = (response) => {
+  if (response instanceof Error) {
+    throw response
+  }
+  return response
+}
+
 /**
- * listApplications, getApplication and getRegistrationStatus all go through
- * apiClient.get, so route by URL shape: the registration-status URL gets
- * `registration` (thrown when it is an Error), a last path segment matching an
- * application id is the single-application fetch, anything else is the list.
+ * listApplications, getApplication, getRegistrationStatus and the RA-492
+ * accreditation-changes view all go through apiClient.get, so route by URL
+ * shape: the registration-status URL gets `registration` and the
+ * accreditation-changes URL gets `changes` (each thrown when it is an Error),
+ * a last path segment matching an application id is the single-application
+ * fetch, anything else is the list.
  *
  * @param {object[]} apps - raw applications, each with an `id`
  * @param {object|Error} [registration] - the registration-status response
+ * @param {object|Error} [changes] - the accreditation-changes view
  */
-export function mockManageGets(apps, registration = approvedRegistration) {
+export function mockManageGets(
+  apps,
+  registration = approvedRegistration,
+  changes = noChangeRequests
+) {
   return vi.spyOn(apiClient, 'get').mockImplementation(async (url) => {
     if (url.startsWith('/api/v1/registrations/')) {
-      if (registration instanceof Error) {
-        throw registration
-      }
-      return registration
+      return responseOrThrow(registration)
+    }
+    if (url.startsWith('/api/v1/accreditation-changes/')) {
+      return responseOrThrow(changes)
     }
     const lastSegment = url.split('/').pop()
     return apps.find((app) => app.id === lastSegment) ?? apps

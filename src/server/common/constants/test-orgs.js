@@ -25,3 +25,11 @@ export const MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID =
   'ccc000000000000000050018'
 export const MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID =
   'ddd000000000000000050018'
+
+// RA-492: the in-year "add a registered ORS" journey's own exporter, so
+// RA-425's org above keeps its data. The backend's dev seed defines the same
+// org and registration: keep the two in step.
+export const IN_YEAR_CHANGE_ORG_ID = 50019
+export const IN_YEAR_CHANGE_ORG_NAME = 'In-Year Change Exports Ltd'
+export const IN_YEAR_CHANGE_REGISTRATION_ID = 'aaa000000000000000050019'
+export const IN_YEAR_CHANGE_MATERIAL = 'plastic'

@@ -4,13 +4,16 @@ import {
   shouldGuardPath,
   hasValidSession,
   hasOrganisationAccess,
+  editRestrictionRedirect,
   isEditRestrictedPath,
+  isInYearChangeOnGrantedAccreditation,
   isLockedSectionWrite,
   fetchApplication,
   accreditationSessionGuard
 } from './accreditationSessionGuard.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
 import { config } from '../../../config/config.js'
+import { setFeatureFlag } from '../test-helpers/feature-flags.js'
 import { operatorCanAccessOrganisation } from '../helpers/reex-organisation-service.js'
 import { accreditationApiService } from '../helpers/accreditationApiService.js'
 
@@ -47,6 +50,87 @@ describe('shouldGuardPath', () => {
     expect(shouldGuardPath('/')).toBe(false)
     expect(shouldGuardPath('/operator-accreditation')).toBe(false)
     expect(shouldGuardPath('/health')).toBe(false)
+  })
+})
+
+describe('editRestrictionRedirect', () => {
+  const approved = {
+    applicationStatus: 'Approved',
+    organisationId: 'o',
+    registrationId: 'r',
+    materialType: 'Plastic',
+    year: 2026
+  }
+
+  beforeEach(() => {
+    setFeatureFlag('inYearChangesEnabled', true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('an in-year change on a granted accreditation goes to its landing page with the flag off', () => {
+    setFeatureFlag('inYearChangesEnabled', false)
+    expect(
+      editRestrictionRedirect(
+        { path: '/accreditation/manage-overseas-sites/a', method: 'post' },
+        approved
+      )
+    ).toBe('/operator-accreditation/o/r/Plastic/2026')
+  })
+
+  test.each([
+    ['/operator', 'get', approved, null],
+    [
+      '/accreditation/task-list/a',
+      'get',
+      approved,
+      '/operator-accreditation/o/r/Plastic/2026'
+    ],
+    ['/accreditation/manage-overseas-sites/a', 'post', approved, null],
+    [
+      '/accreditation/tonnage/a',
+      'post',
+      { applicationStatus: 'Submitted', prns: {} },
+      '/accreditation/tonnage/a'
+    ],
+    ['/accreditation/tonnage/a', 'get', { applicationStatus: 'Started' }, null]
+  ])('%s %s -> %s', (path, method, application, expected) => {
+    expect(editRestrictionRedirect({ path, method }, application)).toBe(
+      expected
+    )
+  })
+})
+
+describe('isInYearChangeOnGrantedAccreditation (RA-492)', () => {
+  beforeEach(() => {
+    setFeatureFlag('inYearChangesEnabled', true)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('is false with the in-year changes flag off', () => {
+    setFeatureFlag('inYearChangesEnabled', false)
+    expect(
+      isInYearChangeOnGrantedAccreditation(
+        '/accreditation/manage-overseas-sites/abc',
+        { applicationStatus: 'Approved' }
+      )
+    ).toBe(false)
+  })
+
+  test.each([
+    ['/accreditation/manage-overseas-sites/abc', 'Approved', true],
+    ['/cy/accreditation/manage-overseas-sites/abc/requests', 'Approved', true],
+    ['/accreditation/manage-overseas-sites/abc', 'Withdrawn', false],
+    ['/accreditation/task-list/abc', 'Approved', false]
+  ])('%s on %s -> %s', (path, applicationStatus, expected) => {
+    expect(
+      isInYearChangeOnGrantedAccreditation(path, { applicationStatus })
+    ).toBe(expected)
   })
 })
 

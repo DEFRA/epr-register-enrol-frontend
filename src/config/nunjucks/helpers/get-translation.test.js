@@ -70,6 +70,31 @@ describe('#getTranslator', () => {
     ).toBe('These are the sites that you used in {year}.')
   })
 
+  // docs/i18n.md pluralisation, on a key with `one` / `other` forms.
+  test.each([
+    [1, 'You currently have 1 request ready for submission.'],
+    [2, 'You currently have 2 requests ready for submission.'],
+    [0, 'You currently have 0 requests ready for submission.']
+  ])('takes the plural form for count %s', (count, expected) => {
+    expect(t('pages.manageOverseasSites.requestsBanner.body', { count })).toBe(
+      expected
+    )
+  })
+
+  test('Welsh falls back to the other form for a category it has no key for', () => {
+    expect(
+      getTranslator('cy')('pages.manageOverseasSites.requestsBanner.body', {
+        count: 2
+      })
+    ).toBe('[Welsh] You currently have 2 requests ready for submission.')
+  })
+
+  test('without a count, a plural key is returned unchanged', () => {
+    expect(t('pages.manageOverseasSites.requestsBanner.body')).toEqual(
+      expect.objectContaining({ one: expect.any(String) })
+    )
+  })
+
   test('returns non-string values unchanged', () => {
     expect(t('pages.manageOverseasSites.accredited', { count: 1 })).toEqual(
       expect.objectContaining({

@@ -39,7 +39,7 @@ function buildOptions(t, applicableCodes, selectedCodes) {
   }))
 }
 
-function buildViewData(
+export function buildViewData(
   t,
   applicationId,
   applicableCodes,

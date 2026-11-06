@@ -1,5 +1,9 @@
 import { currentYear, yearSuffix } from './helpers/currentYear.js'
 import {
+  IN_YEAR_CHANGE_MATERIAL,
+  IN_YEAR_CHANGE_ORG_ID,
+  IN_YEAR_CHANGE_ORG_NAME,
+  IN_YEAR_CHANGE_REGISTRATION_ID,
   MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
   MANAGE_EXPORTER_MATERIAL,
   MANAGE_EXPORTER_REGISTRATION_ID,
@@ -25,8 +29,8 @@ import {
 // (management-be's ApplicationReferenceGenerator): AP, 2-digit year, agency
 // code, 6-digit org id, last 3 characters of the postcode, first 2 letters of
 // the material.
-function exporterRegistrationNumber(year) {
-  return `R${yearSuffix(year)}EX0500180001PL`
+function exporterRegistrationNumber(year, orgId = MANAGE_EXPORTER_ORG_ID) {
+  return `R${yearSuffix(year)}EX0${orgId}0001PL`
 }
 
 function reprocessorRegistrationNumber(year) {
@@ -107,6 +111,13 @@ const SITE_IDS = {
   DRAGON: 901807,
   ANTWERP_FOR_BHARAT: 901808,
   SAIGON: 901809
+}
+
+const IN_YEAR_CHANGE_SITE_IDS = {
+  HAMBURG: 901901,
+  LYON: 901910,
+  DELHI: 901911,
+  IZMIR: 901912
 }
 
 function exporterOrs(year) {
@@ -236,16 +247,133 @@ function buildOrgDoc(year) {
   }
 }
 
-// Kept for the rest of the year because the stub API saves writes into the
-// doc it serves; rebuilt (dropping those writes) once the year changes.
-let cachedOrgDoc = null
+// RA-492: an ORS on org 50019, registered only unless `selected`, with the
+// details the backend's dev seed gives each of them.
+function inYearChangeOrs(siteId, orsId, siteName, country, extra) {
+  return overseasSite(
+    siteId,
+    orsId,
+    siteName,
+    `${siteId} Industrial Estate`,
+    country,
+    {
+      townOrCity: 'Port',
+      selected: false,
+      isEu: false,
+      isOecd: false,
+      coordinates: null,
+      operationCodes: [],
+      conditionsOfExport: null,
+      contactName: 'Site Manager',
+      contactEmail: `site${siteId}@example.com`,
+      contactPhone: '+44 1234 567890',
+      code1: 'B3011',
+      repatriatedLoads: 'Rejected loads are returned to the UK exporter.',
+      ...extra
+    }
+  )
+}
 
-export function manageStubOrgDoc() {
-  const year = currentYear()
-  if (cachedOrgDoc?.year !== year) {
-    cachedOrgDoc = { year, doc: buildOrgDoc(year) }
+// RA-492: one accredited ORS and three registered-only ones, each missing a
+// different set of the fields the in-year add journey asks for.
+function inYearChangeSites(year) {
+  return [
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.HAMBURG,
+      '001',
+      'Hamburg Kunststoff GmbH',
+      'Germany',
+      {
+        selected: true,
+        validFrom: `${year}-01-01T00:00:00Z`,
+        isEu: true,
+        isOecd: true,
+        coordinates: '53.5511, 9.9937',
+        operationCodes: ['R3'],
+        conditionsOfExport: true
+      }
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.LYON,
+      '005',
+      'Lyon Plastiques SA',
+      'France',
+      {
+        isEu: true,
+        isOecd: true,
+        coordinates: '45.7640, 4.8357',
+        operationCodes: ['R3'],
+        conditionsOfExport: true
+      }
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.DELHI,
+      '006',
+      'Delhi Polymers Pvt',
+      'India'
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.IZMIR,
+      '007',
+      'Izmir Recycling AS',
+      'Turkey',
+      {
+        isOecd: true,
+        coordinates: '38.4237, 27.1428'
+      }
+    )
+  ]
+}
+
+// RA-492: org 50019's accreditation. Matches the backend's dev seed.
+function buildInYearChangeOrgDoc(year) {
+  const suffix = yearSuffix(year)
+  // The backend's id for it.
+  const id = `a${year}0000000000000050019`
+  return {
+    orgId: IN_YEAR_CHANGE_ORG_ID,
+    companyDetails: { name: IN_YEAR_CHANGE_ORG_NAME },
+    accreditations: [
+      approvedApplication(year, {
+        id,
+        applicationReference: `AP${suffix}EA0500191AAPL`,
+        accreditationReference: `A${suffix}EX0500190001PL`,
+        material: IN_YEAR_CHANGE_MATERIAL,
+        wasteProcessingType: 'exporter',
+        registrationId: IN_YEAR_CHANGE_REGISTRATION_ID,
+        wasteRegistrationNumber: exporterRegistrationNumber(
+          year,
+          IN_YEAR_CHANGE_ORG_ID
+        ),
+        companyRegisteredAddress: {
+          line1: 'Change House',
+          town: 'Hull',
+          postcode: 'HU1 1AA'
+        },
+        companyRegisterAddressPostcode: 'HU1 1AA',
+        overseasSites: {
+          sectionStatus: 'Completed',
+          sites: inYearChangeSites(year)
+        },
+        besEvidence: { sectionStatus: 'Completed' }
+      })
+    ]
   }
-  return cachedOrgDoc.doc
+}
+
+// Kept for the rest of the year because the stub API saves writes into the
+// docs it serves; rebuilt (dropping those writes) once the year changes.
+let cachedOrgDocs = null
+
+export function manageStubOrgDocs() {
+  const year = currentYear()
+  if (cachedOrgDocs?.year !== year) {
+    cachedOrgDocs = {
+      year,
+      docs: [buildOrgDoc(year), buildInYearChangeOrgDoc(year)]
+    }
+  }
+  return cachedOrgDocs.docs
 }
 
 /**
@@ -261,6 +389,13 @@ export function manageStubRegistrationStatuses() {
     },
     [MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID]: {
       registrationNumber: reprocessorRegistrationNumber(year),
+      status: 'Approved'
+    },
+    [IN_YEAR_CHANGE_REGISTRATION_ID]: {
+      registrationNumber: exporterRegistrationNumber(
+        year,
+        IN_YEAR_CHANGE_ORG_ID
+      ),
       status: 'Approved'
     },
     [MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID]: {

@@ -13,7 +13,7 @@ import {
   DELTA_GREEN_REGISTRATION_ID
 } from './constants/test-orgs.js'
 import {
-  manageStubOrgDoc,
+  manageStubOrgDocs,
   manageStubRegistrationStatuses
 } from './stub-manage-accreditations.js'
 
@@ -1014,9 +1014,9 @@ const STATIC_STUB_ORG_DOCS = [
   }
 ]
 
-// A function so the RA-425 org doc follows the clock's year.
+// A function so the RA-425 and RA-492 org docs follow the clock's year.
 export function stubOrgDocs() {
-  return [...STATIC_STUB_ORG_DOCS, manageStubOrgDoc()]
+  return [...STATIC_STUB_ORG_DOCS, ...manageStubOrgDocs()]
 }
 
 // Matches /{orgId}/{itemId}[/{section}] at end of path

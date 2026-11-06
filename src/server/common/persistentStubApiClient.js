@@ -1,6 +1,7 @@
 import { config } from '../../config/config.js'
 import { stubApiClient, stubOrgDocs } from './stub-api-client.js'
 import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
+import { stubAccreditationChanges } from './stub-accreditation-changes.js'
 
 function overlayOrgName(items) {
   const docs = stubOrgDocs()
@@ -42,12 +43,47 @@ async function tryBackendPut(orgId, appId, data) {
   }
 }
 
+// RA-492: the in-year accreditation-changes API is stub-only here, read
+// from the stub application (shaped the way accreditationApiService
+// normalises it) so it never reaches the /submit or /files handlers below.
+const ACCREDITATION_CHANGES_PREFIX = '/api/v1/accreditation-changes/'
+
+const accreditationChangesDeps = {
+  async getApplication(orgId, appId) {
+    const raw = await stubApiClient.get(`${BASE}/${orgId}/${appId}`)
+    // The application stub falls back to another application rather than
+    // failing for an unknown id; this journey needs that one exactly. Stub
+    // applications are looked up, and listed, by id.
+    if (String(raw?.id) !== appId) {
+      return null
+    }
+    return {
+      ...raw,
+      isExporter: raw.wasteProcessingType === 'exporter',
+      materialType:
+        raw.material.charAt(0).toUpperCase() + raw.material.slice(1),
+      year: Number.parseInt(raw.yearlyMetrics.year, 10)
+    }
+  },
+  initiateUpload(orgId, appId, body) {
+    return stubApiClient.post(
+      `${BASE}/${orgId}/${appId}/files/bes-evidence/initiate`,
+      body
+    )
+  },
+  getUploadStatus(orgId, appId, fileUploadId) {
+    return stubApiClient.get(
+      `${BASE}/${orgId}/${appId}/files/${fileUploadId}/status`
+    )
+  }
+}
+
 function parseAppSegment(endpoint) {
   const m = endpoint.match(APP_SEGMENT_RE)
   return m ? { orgId: m[1], appId: m[2] } : null
 }
 
-export const persistentStubApiClient = {
+const persistentStubClient = {
   async get(endpoint) {
     // CDP upload status — always use the stub. /files/initiate (see post() below)
     // never calls the real backend, so every fileUploadId this client hands out is
@@ -195,3 +231,19 @@ export const persistentStubApiClient = {
     return stubResult
   }
 }
+
+// Every method first offers the call to the accreditation-changes stub.
+export const persistentStubApiClient = Object.fromEntries(
+  Object.entries(persistentStubClient).map(([method, call]) => [
+    method,
+    (endpoint, body) =>
+      endpoint.startsWith(ACCREDITATION_CHANGES_PREFIX)
+        ? stubAccreditationChanges(
+            method,
+            endpoint,
+            body,
+            accreditationChangesDeps
+          )
+        : call(endpoint, body)
+  ])
+)

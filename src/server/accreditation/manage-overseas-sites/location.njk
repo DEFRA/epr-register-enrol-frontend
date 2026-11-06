@@ -1,0 +1,68 @@
+{% extends 'layouts/page.njk' %}
+
+{#
+  RA-492: country and coordinates for an in-year add-ORS request. The
+  inputs, ids and testids are the add-overseas-site location page's; a value
+  already recorded on the ORS is locked and shown as text instead.
+#}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errors.country or errors.coordinates %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% if errors.country %}<li><a href="#country">{{ errors.country }}</a></li>{% endif %}
+                {% if errors.coordinates %}<li><a href="#coordinates">{{ errors.coordinates }}</a></li>{% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+
+        {% if locked.country %}
+          <h2 class="govuk-heading-s">{{ t('pages.addOverseasSite.siteLocation.countryLabel') }}</h2>
+          <p class="govuk-body" data-testid="locked-country">{{ locked.country }}</p>
+        {% else %}
+          <div class="govuk-form-group{% if errors.country %} govuk-form-group--error{% endif %}">
+            <label class="govuk-label" for="country">{{ t('pages.addOverseasSite.siteLocation.countryLabel') }}</label>
+            {% if errors.country %}
+              <p class="govuk-error-message"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.country }}</p>
+            {% endif %}
+            <select class="govuk-select{% if errors.country %} govuk-select--error{% endif %}" id="country" name="country" data-testid="country-input">
+              <option value=""></option>
+              {% for country in countries %}
+                <option value="{{ country }}"{% if country == fields.country %} selected{% endif %}>{{ country }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
+
+        {% if locked.coordinates %}
+          <h2 class="govuk-heading-s">{{ t('pages.addOverseasSite.siteLocation.coordinatesLabel') }}</h2>
+          <p class="govuk-body" data-testid="locked-coordinates">{{ locked.coordinates }}</p>
+        {% else %}
+          <div class="govuk-form-group{% if errors.coordinates %} govuk-form-group--error{% endif %}">
+            <label class="govuk-label" for="coordinates">{{ t('pages.addOverseasSite.siteLocation.coordinatesLabel') }}</label>
+            <div class="govuk-hint">{{ t('pages.addOverseasSite.siteLocation.coordinatesHint') }}</div>
+            {% if errors.coordinates %}
+              <p class="govuk-error-message"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.coordinates }}</p>
+            {% endif %}
+            <input class="govuk-input{% if errors.coordinates %} govuk-input--error{% endif %}" id="coordinates" name="coordinates" type="text" value="{{ fields.coordinates }}" data-testid="coordinates-input">
+          </div>
+        {% endif %}
+
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">{{ continueButton }}</button>
+      </form>
+      <a href="{{ cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ cancelLink }}</a>
+    </div>
+  </div>
+{% endblock %}

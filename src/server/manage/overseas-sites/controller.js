@@ -1,5 +1,13 @@
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { accreditationChangesService } from '../../accreditation/manage-overseas-sites/service.js'
+import {
+  changeRequestsSummary,
+  registeredSiteActions
+} from '../../accreditation/manage-overseas-sites/view-model.js'
+import { requestsUrl } from '../../accreditation/manage-overseas-sites/urls.js'
 import {
   loadManagePage,
   manageCaption,
@@ -31,7 +39,12 @@ function toOrsView(site, { withInterimSites }) {
 // ORS. A new site that was never selected is on neither. Unlike the
 // application journey, an ORS with no selected value is not accredited: on an
 // issued accreditation only an explicit selection counts.
-function partitionSites(sites) {
+// RA-492: with the change requests, each registered ORS offers "Add to
+// accreditation"; one in the draft request shows "In progress" and View, and
+// one in a submitted request shows "Pending" and no action (AC09). It stays on
+// the Registered tab until the regulator approves it. Without them the rows
+// are RA-425's alone.
+function partitionSites(sites, application, changeRequests) {
   const isAccredited = (site) => site.selected === true
   return {
     accredited: sites
@@ -39,8 +52,55 @@ function partitionSites(sites) {
       .map((site) => toOrsView(site, { withInterimSites: true })),
     registered: sites
       .filter((site) => !isAccredited(site) && !site.isNewSite)
-      .map((site) => toOrsView(site, { withInterimSites: false }))
+      .map((site) => ({
+        ...toOrsView(site, { withInterimSites: false }),
+        ...(changeRequests &&
+          registeredSiteActions(
+            application.applicationId,
+            site.siteId,
+            changeRequests.pendingRequestStatus(site.siteId)
+          ))
+      }))
   }
+}
+
+// RA-492: the operator's in-year change requests for the accreditation.
+// Null when they cannot be retrieved: the page then shows RA-425's view
+// without RA-492's actions, tags or banners, so an outage of the change
+// requests never takes down the list of sites.
+async function fetchChangeRequests(request, application) {
+  const { organisationId } = request.params
+  try {
+    return changeRequestsSummary(
+      await accreditationChangesService.getView(
+        organisationId,
+        application.applicationId
+      )
+    )
+  } catch (error) {
+    logStructuredError(
+      request.logger,
+      error,
+      { organisationId, applicationId: application.applicationId },
+      'Error fetching the accreditation change requests'
+    )
+    return null
+  }
+}
+
+// RA-492: the in-year change pages under /accreditation/ read the
+// accreditation from the session, as they do after the operator-accreditation
+// landing page, which this page's journey does not pass through.
+function enterAccreditationSession(request, application) {
+  const { organisationId, registrationId, materialType } = request.params
+  request.yar.set(
+    ACCREDITATION_SESSION_KEYS.accreditationId,
+    application.applicationId
+  )
+  request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
+  request.yar.set(ACCREDITATION_SESSION_KEYS.registrationId, registrationId)
+  request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
+  request.yar.set(ACCREDITATION_SESSION_KEYS.year, application.year)
 }
 
 export const manageOverseasSitesController = {
@@ -66,9 +126,17 @@ export const manageOverseasSitesController = {
       return serviceProblem(request, h, t)
     }
 
+    const changeRequests = await fetchChangeRequests(request, application)
+    // Set either way: the RA-492 pages handle their own errors.
+    enterAccreditationSession(request, application)
+
     const { organisationId, registrationId } = request.params
     const heading = t('pages.manageOverseasSites.heading')
-    const { accredited, registered } = partitionSites(sites)
+    const { accredited, registered } = partitionSites(
+      sites,
+      application,
+      changeRequests
+    )
 
     return h.view('manage/overseas-sites/index', {
       pageTitle: heading,
@@ -79,7 +147,11 @@ export const manageOverseasSitesController = {
       // RA-425: "home" is the Re/Ex material page.
       homeUrl: reExBackLinkUrl(organisationId, registrationId),
       accreditedSites: accredited,
-      registeredSites: registered
+      registeredSites: registered,
+      // RA-492 banners: AC09 pending change, AC10 requests to resume.
+      pendingCount: registered.filter((site) => site.pending).length,
+      readyForSubmissionCount: changeRequests?.readyForSubmissionCount ?? 0,
+      requestsUrl: requestsUrl(application.applicationId)
     })
   }
 }

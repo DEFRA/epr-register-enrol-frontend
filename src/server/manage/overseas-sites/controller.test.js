@@ -4,6 +4,7 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
 import { stubApiClient } from '../../common/stub-api-client.js'
+import { persistentStubApiClient } from '../../common/persistentStubApiClient.js'
 import {
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
   MANAGE_MATERIAL as MATERIAL,
@@ -13,7 +14,8 @@ import {
   apiError,
   approvedRegistration,
   makeManageApp,
-  mockManageGets
+  mockManageGets,
+  noChangeRequests
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import {
@@ -26,6 +28,9 @@ vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
 }))
 
 const PAGE_URL = `${MANAGE_URL}/overseas-sites`
+// RA-492: read before any test spies on apiClient, which in tests is this
+// same client.
+const persistentGet = persistentStubApiClient.get
 const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
 const interimSite = (siteId, overrides = {}) => ({
@@ -351,11 +356,14 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toContain('Registration Interim')
     })
 
-    test('is read-only: no change, withdraw or add actions', () => {
+    // RA-492's "Add to accreditation" on registered ORSs is the only action.
+    test('has no change, withdraw or interim-site actions', () => {
       expect(result).not.toMatch(
         /change-interim-site|remove-button|add-interim-site/
       )
-      expect(result).not.toContain('<form')
+      expect(result.match(/<form /g)).toHaveLength(
+        (result.match(/data-testid="add-to-accreditation-/g) ?? []).length
+      )
     })
 
     test('links back to the manage page and home to the Re/Ex material page', () => {
@@ -440,8 +448,12 @@ describe('#manageOverseasSitesController', () => {
   describe('with the frontend stub API', () => {
     beforeEach(() => {
       vi.useRealTimers()
+      // RA-492: the accreditation-changes API is served by the persistent
+      // stub only.
       vi.spyOn(apiClient, 'get').mockImplementation((url) =>
-        stubApiClient.get(url)
+        url.startsWith('/api/v1/accreditation-changes/')
+          ? persistentGet(url)
+          : stubApiClient.get(url)
       )
       operatorCanAccessOrganisation.mockResolvedValue(true)
     })
@@ -464,6 +476,124 @@ describe('#manageOverseasSitesController', () => {
         'interim-sites-disclosure'
       )
       expect(result).not.toContain('Saigon Port Storage')
+    })
+  })
+
+  // RA-492: the operator's in-year requests to add registered ORSs.
+  describe('in-year change requests', () => {
+    const REQUESTS_URL =
+      '/accreditation/manage-overseas-sites/app-current/requests'
+    const changes = (statusBySiteId, activeSites = []) => ({
+      ...noChangeRequests,
+      sites: Object.entries(statusBySiteId).map(([siteId, status]) => ({
+        siteId: Number(siteId),
+        pendingRequestStatus: status
+      })),
+      activeRequest: activeSites.length
+        ? { status: 'InProgress', sites: activeSites }
+        : null
+    })
+
+    async function getWithChanges(view) {
+      const spy = mockManageGets([makeApp()], approvedRegistration, view)
+      const response = await get(PAGE_URL)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      return { result: response.result, spy }
+    }
+
+    test('reads the requests for the accreditation on the page', async () => {
+      const { spy } = await getWithChanges(noChangeRequests)
+
+      expect(spy).toHaveBeenCalledWith(
+        '/api/v1/accreditation-changes/org-123/app-current'
+      )
+    })
+
+    test('a registered ORS in no request offers Add to accreditation as a crumb-protected POST', async () => {
+      const { result } = await getWithChanges(noChangeRequests)
+      const registered = tabPanel(result, 'registered')
+
+      expect(registered).toMatch(
+        /action="\/accreditation\/manage-overseas-sites\/app-current\/sites\/4"[\s\S]*?name="crumb"[\s\S]*?data-testid="add-to-accreditation-4"/
+      )
+      expect(registered).toContain('data-testid="add-to-accreditation-5"')
+      expect(tabPanel(result, 'accredited')).not.toContain(
+        'add-to-accreditation-'
+      )
+      expect(result).not.toContain('data-testid="pending-change-banner"')
+      expect(result).not.toContain('data-testid="requests-banner"')
+    })
+
+    test('AC10: a site in the in-progress request shows In progress and View, with the requests banner', async () => {
+      const { result } = await getWithChanges(
+        changes({ 4: 'InProgress' }, [{ siteId: 4 }])
+      )
+      const registered = tabPanel(result, 'registered')
+
+      expect(registered).toMatch(
+        /data-testid="site-status-tag-4"[^>]*>\s*In progress\s*</
+      )
+      expect(registered).toContain(
+        'href="/accreditation/manage-overseas-sites/app-current/add/4" data-testid="view-request-4"'
+      )
+      expect(registered).not.toContain('add-to-accreditation-4')
+      expect(registered).toContain('data-testid="add-to-accreditation-5"')
+      expect(result).toMatch(
+        /data-testid="requests-banner"[\s\S]*You currently have 1 request ready for submission\.[\s\S]*href="\/accreditation\/manage-overseas-sites\/app-current\/requests" data-testid="view-requests-link"/
+      )
+      expect(result).toContain(REQUESTS_URL)
+    })
+
+    test('AC09: a site in a submitted request stays on the Registered tab as Pending, with no action, and the pending banner', async () => {
+      const { result } = await getWithChanges(changes({ 5: 'Submitted' }))
+      const registered = tabPanel(result, 'registered')
+
+      expect(registered).toMatch(
+        /data-testid="site-status-tag-5"[^>]*>\s*Pending\s*</
+      )
+      expect(registered).not.toContain('add-to-accreditation-5')
+      expect(registered).not.toContain('view-request-5')
+      expect(tabPanel(result, 'accredited')).not.toContain(
+        'registered-site-row-5'
+      )
+      expect(result).toMatch(/Registered \(3\)/)
+      expect(result).toMatch(
+        /data-testid="pending-change-banner"[\s\S]*request to add 1 overseas reprocessing site to this accreditation\. You cannot change this site /
+      )
+      expect(result).not.toContain('data-testid="requests-banner"')
+    })
+
+    test('both banners count several sites in the plural', async () => {
+      const { result } = await getWithChanges(
+        changes({ 4: 'Submitted', 5: 'Submitted', 7: 'InProgress' }, [
+          { siteId: 7 },
+          { siteId: 8 }
+        ])
+      )
+
+      expect(result).toContain(
+        'You currently have 2 requests ready for submission.'
+      )
+      expect(result).toContain(
+        'request to add 2 overseas reprocessing sites to this accreditation. You cannot change these sites '
+      )
+    })
+
+    test("renders RA-425's page without RA-492 actions when the requests cannot be retrieved", async () => {
+      const { result } = await getWithChanges(
+        apiError(statusCodes.internalServerError)
+      )
+
+      expect(result).toMatch(
+        /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(3\)\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(3\)\s*</
+      )
+      expect(result).toContain('data-testid="registered-site-row-4"')
+      expect(result).not.toMatch(
+        /add-to-accreditation-|site-status-tag-|view-request-|pending-change-banner|requests-banner|<form /
+      )
     })
   })
 })

@@ -1,5 +1,9 @@
 import { describe, test, expect } from 'vitest'
-import { buildPaymentDetails, buildPaymentReference } from './paymentDetails.js'
+import {
+  buildInYearOrsPaymentDetails,
+  buildPaymentDetails,
+  buildPaymentReference
+} from './paymentDetails.js'
 import { NATIONS } from './nation-from-postcode.js'
 
 const identityTranslator = (key) => key
@@ -117,5 +121,34 @@ describe('buildPaymentDetails - ORS vs interim site fee counting (RA-477)', () =
 
     expect(result.numberOfORSs).toBe(1)
     expect(result.amountOrsDue).toBe(328)
+  })
+})
+
+describe('buildInYearOrsPaymentDetails (RA-492)', () => {
+  const t = (key) => key
+
+  test('takes the amount from the backend charge, with no tonnage fee', () => {
+    const details = buildInYearOrsPaymentDetails(
+      { materialType: 'Plastic' },
+      t,
+      NATIONS.WALES,
+      { chargeableSites: 3, chargePerSitePence: 32800, totalPence: 98400 }
+    )
+    expect(details.amount).toBe(984)
+    expect(details.amountOrsDue).toBe(984)
+    expect(details.numberOfORSs).toBe(3)
+    expect(details.tonnageDisplay).toBeUndefined()
+    expect(details.companyName).toBe('Natural Resources Wales')
+  })
+
+  test('uses the England bank details for an unknown nation', () => {
+    const details = buildInYearOrsPaymentDetails(
+      { materialType: 'Plastic' },
+      t,
+      'Atlantis',
+      { chargeableSites: 1, chargePerSitePence: 32800, totalPence: 32800 }
+    )
+    expect(details.companyName).toBe('Environment Agency')
+    expect(details.amount).toBe(328)
   })
 })

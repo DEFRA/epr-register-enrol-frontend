@@ -1,0 +1,77 @@
+{% extends 'layouts/page.njk' %}
+
+{#
+  RA-492: Add to accreditation summary (Figma f04/f09). Rows with no
+  action are locked (already on the ORS) or not changeable in an in-year
+  request. Interim sites are not part of RA-492.
+#}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errors.length %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in errors %}
+                  <li><a href="#row-{{ error.row }}" data-testid="error-{{ error.row }}">{{ error.text }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <dl class="govuk-summary-list" data-testid="site-summary">
+        {% for row in rows %}
+          <div class="govuk-summary-list__row{% if not row.action %} govuk-summary-list__row--no-actions{% endif %}" id="row-{{ row.id }}" data-testid="row-{{ row.id }}">
+            <dt class="govuk-summary-list__key">{{ row.label }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="row-{{ row.id }}-value">
+              {% if row.error %}
+                <p class="govuk-error-message" data-testid="row-{{ row.id }}-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ row.error }}</p>
+              {% endif %}
+              {% if row.files.length %}
+                {# Same content and testids as the reaccreditation evidence page. #}
+                {% for file in row.files %}
+                  <div class="govuk-!-margin-bottom-2" data-testid="evidence-row-{{ file.fileId }}">
+                    <span data-testid="filename-{{ file.fileId }}">{{ file.filename }}</span>
+                    <form method="post" action="{{ file.deleteUrl }}" novalidate class="govuk-!-display-inline" data-testid="delete-file-form-{{ file.fileId }}">
+                      <input type="hidden" name="crumb" value="{{ crumb }}">
+                      <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--red govuk-body govuk-!-margin-left-2" data-testid="delete-file-button-{{ file.fileId }}">{{ t('pages.cyaEvidenceForSite.deleteFile') }}<span class="govuk-visually-hidden"> {{ file.filename }}</span></button>
+                    </form>
+                  </div>
+                {% endfor %}
+              {% elif row.missing %}
+                <strong class="govuk-tag govuk-tag--red" data-testid="row-{{ row.id }}-missing">{{ t('pages.manageOverseasSites.missingInformation') }}</strong>
+              {% else %}
+                {{ row.value }}
+              {% endif %}
+            </dd>
+            {% if row.action %}
+              <dd class="govuk-summary-list__actions">
+                <a class="govuk-link" href="{{ row.action.href }}" data-testid="row-{{ row.id }}-action">{{ row.action.text }}<span class="govuk-visually-hidden"> {{ row.label | lower }}</span></a>
+              </dd>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </dl>
+
+      <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">{{ t('common.continue') }}</button>
+      </form>
+      {# Cancel takes the site back out of the draft request: a POST. #}
+      <form method="post" action="{{ cancelUrl }}">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--blue govuk-body" data-testid="cancel-link">{{ t('pages.manageOverseasSites.cancel') }}</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

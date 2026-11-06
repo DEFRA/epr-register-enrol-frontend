@@ -127,6 +127,13 @@ describe('#operatorController', () => {
         expect(result).toContain(
           'Exporter manage registration and accreditation for Manage Accreditation Test Ltd, Plastic'
         )
+        // RA-492: the in-year add-ORS journey's own exporter.
+        expect(result).toMatch(
+          linkWithTestId(
+            'href="/manage/50019/aaa000000000000000050019/Plastic"',
+            'manage-in-year-change-link'
+          )
+        )
       }
     )
 

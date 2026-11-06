@@ -3,6 +3,27 @@
 {% from "govuk/components/tabs/macro.njk" import govukTabs %}
 {% from "overseas-site-row/macro.njk" import interimSiteDisclosure %}
 
+{# RA-492: where the ORS stands in the operator's in-year change requests. #}
+{% macro siteActions(site) %}
+  {% if site.pending %}
+    <div class="app-ors-list__actions">
+      <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
+    </div>
+  {% elif site.inProgress %}
+    <div class="app-ors-list__actions">
+      <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-2" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
+      <a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.siteId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
+    </div>
+  {% elif site.addUrl %}
+    {# Adding a site changes the draft request, so this is a crumb-protected
+       POST styled as a link. #}
+    <form method="post" action="{{ site.addUrl }}" class="app-ors-list__actions">
+      <input type="hidden" name="crumb" value="{{ crumb }}">
+      <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--blue govuk-body govuk-!-margin-bottom-0" data-testid="add-to-accreditation-{{ site.siteId }}">{{ t('pages.manageOverseasSites.addToAccreditation') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></button>
+    </form>
+  {% endif %}
+{% endmacro %}
+
 {% macro orsList(name, sites) %}
   <h2 class="govuk-heading-m govuk-!-margin-bottom-2">{{ t('pages.manageOverseasSites.' + name + '.heading') }}</h2>
   <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro', { year: year }) }}</p>
@@ -16,6 +37,7 @@
               <strong class="govuk-!-font-weight-bold" data-testid="{{ name }}-site-name-{{ site.siteId }}">{{ site.siteName }}</strong>
               <span class="app-ors-list__address" data-testid="{{ name }}-site-address-{{ site.siteId }}">{{ site.address }}</span>
             </div>
+            {{ siteActions(site) }}
           </div>
           {# Per Figma, the disclosure sits under the ORS number, not the name. #}
           {% if site.interimSites.length %}
@@ -44,6 +66,31 @@
       </div>
     </div>
   </div>
+
+  {% if pendingCount > 0 %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="pending-change-title" data-module="govuk-notification-banner" data-testid="pending-change-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="pending-change-title">{{ t('pages.manageOverseasSites.pendingBanner.title') }}</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">{{ t('pages.manageOverseasSites.pendingBanner.body', { count: pendingCount }) }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if readyForSubmissionCount > 0 %}
+    <div class="govuk-notification-banner" role="region" aria-labelledby="requests-banner-title" data-module="govuk-notification-banner" data-testid="requests-banner">
+      <div class="govuk-notification-banner__header">
+        <h2 class="govuk-notification-banner__title" id="requests-banner-title">{{ t('pages.manageOverseasSites.requestsBanner.title') }}</h2>
+      </div>
+      <div class="govuk-notification-banner__content">
+        <p class="govuk-body">
+          {{ t('pages.manageOverseasSites.requestsBanner.body', { count: readyForSubmissionCount }) }}
+          <br><a class="govuk-notification-banner__link" href="{{ requestsUrl }}" data-testid="view-requests-link">{{ t('pages.manageOverseasSites.requestsBanner.link') }}</a>
+        </p>
+      </div>
+    </div>
+  {% endif %}
 
   {{ govukTabs({
     classes: 'app-ors-tabs',

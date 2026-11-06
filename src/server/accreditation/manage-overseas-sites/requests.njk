@@ -1,0 +1,71 @@
+{% extends 'layouts/page.njk' %}
+
+{# RA-492: Accreditation requests (Figma f05/f08), the in-progress request's sites. #}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if errors.length %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% for error in errors %}
+                  <li><a href="{{ error.href }}" data-testid="error-request-{{ error.orsId }}">{{ error.text }}</a></li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+    </div>
+  </div>
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      {% if requests.length %}
+        <table class="govuk-table" data-testid="requests-table">
+          <thead class="govuk-table__head">
+            <tr class="govuk-table__row">
+              <th scope="col" class="govuk-table__header">{{ t('pages.manageOverseasSites.requests.siteName') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.manageOverseasSites.requests.type') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.manageOverseasSites.requests.status') }}</th>
+              <th scope="col" class="govuk-table__header">{{ t('pages.manageOverseasSites.requests.action') }}</th>
+            </tr>
+          </thead>
+          <tbody class="govuk-table__body">
+            {% for item in requests %}
+              <tr class="govuk-table__row" data-testid="request-row-{{ item.orsId }}">
+                <td class="govuk-table__cell" data-testid="request-site-name-{{ item.orsId }}"><strong>{{ item.siteName }} ({{ item.orsId }})</strong><br><span class="govuk-!-font-size-16">{{ item.address }}</span></td>
+                <td class="govuk-table__cell" data-testid="request-type-{{ item.orsId }}">{{ t('pages.manageOverseasSites.requests.newOrs') }}</td>
+                <td class="govuk-table__cell"><strong class="govuk-tag govuk-tag--blue" data-testid="request-status-{{ item.orsId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong></td>
+                <td class="govuk-table__cell"><a class="govuk-link" href="{{ item.viewUrl }}" data-testid="request-view-{{ item.orsId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ item.siteName }}</span></a></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="govuk-inset-text" data-testid="charge-inset">
+          <p class="govuk-body">{{ t('pages.manageOverseasSites.requests.chargeIntro') }}</p>
+          <p class="govuk-body" data-testid="charge-count">{{ t('pages.manageOverseasSites.requests.chargeCount', { count: charge.count }) }}</p>
+          <p class="govuk-body" data-testid="charge-per-ors">{{ t('pages.manageOverseasSites.requests.chargePerOrs', { amount: charge.perSite | formatCurrency }) }}</p>
+          <p class="govuk-body govuk-!-margin-bottom-0"><strong>{{ t('pages.manageOverseasSites.requests.totalAmount') }}</strong></p>
+          <p class="govuk-heading-m govuk-!-margin-bottom-0" data-testid="charge-total">{{ charge.total | formatCurrency }}</p>
+        </div>
+      {% else %}
+        <p class="govuk-body" data-testid="no-requests">{{ t('pages.manageOverseasSites.requests.none') }}</p>
+      {% endif %}
+
+      <p class="govuk-body"><a class="govuk-button govuk-button--secondary" href="{{ addAnotherUrl }}" data-testid="add-another-request">{{ t('pages.manageOverseasSites.requests.addAnother') }}</a></p>
+
+      {% if requests.length %}
+        <form method="post" novalidate>
+          <input type="hidden" name="crumb" value="{{ crumb }}">
+          <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">{{ t('common.continue') }}</button>
+        </form>
+      {% endif %}
+      <p class="govuk-body"><a class="govuk-link" href="{{ cancelUrl }}" data-testid="cancel-link">{{ t('pages.manageOverseasSites.cancel') }}</a></p>
+    </div>
+  </div>
+{% endblock %}
