@@ -1,4 +1,5 @@
 import {
+  ACTIVE_ITEM_STATUSES,
   CHANGE_TYPES,
   ITEM_STATUS_ORDER
 } from '../../common/constants/changeRequests.js'
@@ -200,4 +201,27 @@ export function filterOptions({ status, type }, t) {
       (value) => changeTypeLabel(value, t)
     )
   }
+}
+
+const typeRank = (changeType) => {
+  const rank = TYPE_ORDER.indexOf(changeType)
+  return rank === -1 ? TYPE_ORDER.length : rank
+}
+
+// RA-697: the dashboard shows only work in progress, so final items count for
+// nothing, and a type with only final items gets no entry.
+export function summariseByType(rows) {
+  const byType = new Map()
+  for (const row of rows) {
+    if (!ACTIVE_ITEM_STATUSES.has(row.status)) {
+      continue
+    }
+    const current = byType.get(row.changeType)
+    if (!current || statusRank(row.status) < statusRank(current)) {
+      byType.set(row.changeType, row.status)
+    }
+  }
+  return [...byType]
+    .map(([changeType, status]) => ({ changeType, status }))
+    .sort((a, b) => typeRank(a.changeType) - typeRank(b.changeType))
 }

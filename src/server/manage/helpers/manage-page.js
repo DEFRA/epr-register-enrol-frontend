@@ -8,7 +8,9 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { localePrefix } from '../../common/helpers/localePrefix.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
+import { accreditationChangesService } from '../../accreditation/manage-overseas-sites/service.js'
 import { fetchCurrentAccreditation } from './current-accreditation.js'
 import { fetchApprovedRegistration } from './current-registration.js'
 
@@ -105,4 +107,30 @@ export function changeRequestsUrl(params, currentLocale) {
 
 export function changeRequestItemUrl(params, itemId, currentLocale) {
   return `${changeRequestsUrl(params, currentLocale)}/${encodeURIComponent(itemId)}`
+}
+
+/**
+ * RA-697: change requests are read only for the current-year accreditation
+ * that loadManagePage resolves, so a previous year's unapplied requests, kept
+ * against that year's accreditation, drop off the pages at year end.
+ *
+ * Returns null, having logged why, when they cannot be read; each page
+ * decides what that means for it.
+ */
+export async function fetchChangeRequestsView(request, application) {
+  const { organisationId } = request.params
+  try {
+    return await accreditationChangesService.getView(
+      organisationId,
+      application.applicationId
+    )
+  } catch (error) {
+    logStructuredError(
+      request.logger,
+      error,
+      { organisationId, applicationId: application.applicationId },
+      'Error fetching the accreditation change requests'
+    )
+    return null
+  }
 }

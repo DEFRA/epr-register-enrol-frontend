@@ -10,7 +10,8 @@ import {
   flattenItems,
   paginate,
   readFilters,
-  sortItems
+  sortItems,
+  summariseByType
 } from './change-request-items.js'
 
 const english = JSON.parse(
@@ -570,5 +571,71 @@ describe('filterOptions', () => {
 
     expect(selected(status)).toEqual(['DulyMade'])
     expect(selected(type)).toEqual(['update-overseas-site'])
+  })
+})
+
+describe('summariseByType', () => {
+  const row = (changeType, status) => ({ changeType, status })
+
+  test('gives each type its highest-priority active status, in type order', () => {
+    expect(
+      summariseByType([
+        row('upgrade-tonnage-band', 'DulyMade'),
+        row('update-overseas-site', 'Submitted'),
+        row('update-overseas-site', 'Updated'),
+        row('update-overseas-site', 'Queried'),
+        row('add-overseas-site', 'Submitted'),
+        row('add-overseas-site', 'InProgress'),
+        row('upgrade-tonnage-band', 'Updated')
+      ])
+    ).toEqual([
+      { changeType: 'add-overseas-site', status: 'InProgress' },
+      { changeType: 'update-overseas-site', status: 'Queried' },
+      { changeType: 'upgrade-tonnage-band', status: 'Updated' }
+    ])
+  })
+
+  test('ignores final items, even when they outnumber the active ones', () => {
+    expect(
+      summariseByType([
+        row('update-overseas-site', 'Approved'),
+        row('update-overseas-site', 'Rejected'),
+        row('update-overseas-site', 'DulyMade'),
+        row('update-overseas-site', 'Withdrawn')
+      ])
+    ).toEqual([{ changeType: 'update-overseas-site', status: 'DulyMade' }])
+  })
+
+  test('gives no entry to a type whose items are all final', () => {
+    expect(
+      summariseByType([
+        row('add-overseas-site', 'Approved'),
+        row('add-overseas-site', 'Rejected'),
+        row('upgrade-tonnage-band', 'Withdrawn'),
+        row('update-overseas-site', 'Submitted')
+      ])
+    ).toEqual([{ changeType: 'update-overseas-site', status: 'Submitted' }])
+  })
+
+  test('is empty with no items, or only final ones', () => {
+    expect(summariseByType([])).toEqual([])
+    expect(
+      summariseByType([
+        row('add-overseas-site', 'Approved'),
+        row('upgrade-tonnage-band', 'Rejected')
+      ])
+    ).toEqual([])
+  })
+
+  test('lists a type it does not know after the known ones', () => {
+    expect(
+      summariseByType([
+        row('remove-overseas-site', 'Submitted'),
+        row('upgrade-tonnage-band', 'Submitted')
+      ])
+    ).toEqual([
+      { changeType: 'upgrade-tonnage-band', status: 'Submitted' },
+      { changeType: 'remove-overseas-site', status: 'Submitted' }
+    ])
   })
 })

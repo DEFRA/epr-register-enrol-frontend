@@ -1,10 +1,9 @@
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
-import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
-import { accreditationChangesService } from '../../accreditation/manage-overseas-sites/service.js'
 import {
   changeRequestItemUrl,
   changeRequestsUrl,
+  fetchChangeRequestsView,
   loadManagePage,
   manageCaption,
   manageUrl,
@@ -20,27 +19,6 @@ import {
   readFilters,
   sortItems
 } from './change-request-items.js'
-
-// RA-697: change requests are read only for the current-year accreditation
-// that loadManagePage resolves, so a previous year's unapplied requests, kept
-// against that year's accreditation, drop off the list at year end.
-async function fetchChangeView(request, application) {
-  const { organisationId } = request.params
-  try {
-    return await accreditationChangesService.getView(
-      organisationId,
-      application.applicationId
-    )
-  } catch (error) {
-    logStructuredError(
-      request.logger,
-      error,
-      { organisationId, applicationId: application.applicationId },
-      'Error fetching the accreditation change requests'
-    )
-    return null
-  }
-}
 
 function toRowView(row, { t, params, currentLocale }) {
   const typeLabel = changeTypeLabel(row.changeType, t)
@@ -72,7 +50,7 @@ export const manageChangeRequestsController = {
       return response
     }
 
-    const view = await fetchChangeView(request, application)
+    const view = await fetchChangeRequestsView(request, application)
     if (!view) {
       return serviceProblem(request, h, t)
     }

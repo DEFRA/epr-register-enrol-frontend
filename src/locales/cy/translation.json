@@ -940,6 +940,11 @@
         "title": "[Welsh] Manage overseas reprocessing sites",
         "description": "[Welsh] Add, update and manage your overseas reprocessing sites.",
         "link": "[Welsh] Manage overseas reprocessing sites"
+      },
+      "changeRequests": {
+        "title": "[Welsh] In year change requests",
+        "noActive": "[Welsh] You currently have no active change requests.",
+        "viewAll": "[Welsh] View change requests"
       }
     },
     "manageOverseasSites": {

@@ -941,6 +941,11 @@
         "title": "Manage overseas reprocessing sites",
         "description": "Add, update and manage your overseas reprocessing sites.",
         "link": "Manage overseas reprocessing sites"
+      },
+      "changeRequests": {
+        "title": "In year change requests",
+        "noActive": "You currently have no active change requests.",
+        "viewAll": "View change requests"
       }
     },
     "manageOverseasSites": {
