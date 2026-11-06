@@ -322,15 +322,6 @@ describe('#manageChangeRequestDetailController', () => {
       )
     })
 
-    // RA-697: until task 013 shows a registration-only operator's items.
-    test('shows the service-problem page for a registration-only operator', async () => {
-      mockManageGets([], registrationOnlyExporter, CURRENT_VIEW)
-
-      const { statusCode } = await get(detailUrl(ITEM.granted))
-
-      expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
     test('shows the service-problem page when the API fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(
         apiError(statusCodes.internalServerError)
@@ -708,6 +699,231 @@ describe('#manageChangeRequestDetailController', () => {
         expect(valueOf(result, 'request-valid-to')).toBe('Not applicable')
       }
     )
+  })
+
+  // RA-697 task 013: an exporter with an Approved registration and no
+  // Approved current-year accreditation.
+  describe('registration only', () => {
+    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
+    // The registration view keys each ORS by its ORS id's integer value, and
+    // its items carry the same siteId and orsId.
+    const PORTO = {
+      ...ROTTERDAM,
+      siteId: 7,
+      orsId: '007',
+      siteName: 'Porto Plasticos Lda',
+      addressLine1: 'Rua do Porto 12',
+      country: 'Portugal',
+      interimSites: [
+        interimSite(70, 'Leixoes Store', 'Portugal', {
+          operationCodes: ['R13']
+        })
+      ]
+    }
+    const portoItem = (itemId, status, extra = {}) =>
+      orsItem(itemId, status, {
+        siteId: PORTO.siteId,
+        orsId: PORTO.orsId,
+        siteName: PORTO.siteName,
+        effective: { ...orsItem().effective, country: 'Portugal' },
+        ...extra
+      })
+    const REGISTRATION_VIEW = {
+      ...noChangeRequests,
+      applicationId: null,
+      accreditationReference: null,
+      sites: [
+        { ...accreditationSite(PORTO), accreditationStatus: 'Registered' }
+      ],
+      requests: [
+        submittedRequest('Q001', '2027-04-01T09:00:00Z', {
+          sites: [portoItem(ITEM.queried, 'Queried')]
+        }),
+        submittedRequest('G001', '2027-02-03T09:00:00Z', {
+          sites: [
+            portoItem(ITEM.granted, 'Approved', {
+              validFrom: '2027-03-02T09:00:00Z'
+            })
+          ]
+        })
+      ]
+    }
+
+    async function getRegistrationOnly(itemId, view = REGISTRATION_VIEW) {
+      const spy = mockManageGets([], registrationOnlyExporter, view)
+      const response = await get(detailUrl(itemId))
+      expect(response.statusCode).toBe(statusCodes.ok)
+      return { result: response.result, spy }
+    }
+
+    test('reads the item from the registration view', async () => {
+      const { spy } = await getRegistrationOnly(ITEM.granted)
+
+      expect(spy).toHaveBeenCalledWith(REGISTRATION_VIEW_URL)
+    })
+
+    test('is headed with the site name and the registration’s caption', async () => {
+      const { result } = await getRegistrationOnly(ITEM.granted)
+
+      expect(valueOf(result, 'page-heading')).toBe('Porto Plasticos Lda')
+      expect(valueOf(result, 'page-caption')).toBe(
+        'Reg Only Exports Ltd (2027, Plastic)'
+      )
+    })
+
+    test('shows the header, the site rows and the interim sites', async () => {
+      const { result } = await getRegistrationOnly(ITEM.queried)
+
+      expect({
+        location: valueOf(result, 'header-location'),
+        siteId: valueOf(result, 'header-site-id'),
+        status: valueOf(result, 'header-status'),
+        dateAdded: valueOf(result, 'header-date-added'),
+        besExpiry: valueOf(result, 'header-bes-expiry'),
+        siteName: valueOf(result, 'row-site-name-value'),
+        rowLocation: valueOf(result, 'row-location-value'),
+        contactName: valueOf(result, 'row-contact-name-value'),
+        operation: valueOf(result, 'row-recycling-operation-value'),
+        interimHeading: valueOf(result, 'interim-sites-heading'),
+        interim: valueOf(result, 'interim-site-70')
+      }).toEqual({
+        location: 'Rua do Porto 12, Portugal',
+        siteId: '007',
+        status: 'QUERIED',
+        dateAdded: '1 Apr 2027',
+        besExpiry: '30 Nov 2027',
+        siteName: 'Porto Plasticos Lda',
+        rowLocation: 'Rua do Porto 12, Portugal',
+        contactName: 'Jan de Vries',
+        operation: 'R3, R4',
+        interimHeading: 'Interim sites (1)',
+        interim: 'Leixoes Store, Portugal, R13'
+      })
+    })
+
+    test('shows the request details, valid to 31 Dec of the current year', async () => {
+      const { result } = await getRegistrationOnly(ITEM.granted)
+
+      expect({
+        type: valueOf(result, 'request-type'),
+        sent: valueOf(result, 'request-sent'),
+        submittedBy: valueOf(result, 'request-submitted-by'),
+        validFrom: valueOf(result, 'request-valid-from'),
+        validTo: valueOf(result, 'request-valid-to'),
+        reference: valueOf(result, 'request-reference')
+      }).toEqual({
+        type: 'ORS update',
+        sent: '3 Feb 2027',
+        submittedBy: 'Sam Patel',
+        validFrom: '2 Mar 2027',
+        validTo: '31 Dec 2027',
+        reference: 'CR27G001'
+      })
+    })
+
+    test('returns 404 for an item that is not one of the registration’s', async () => {
+      mockManageGets([], registrationOnlyExporter, REGISTRATION_VIEW)
+
+      const { statusCode } = await get(detailUrl(ITEM.submitted))
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('shows the service-problem page when the registration view cannot be read', async () => {
+      mockManageGets(
+        [],
+        registrationOnlyExporter,
+        apiError(statusCodes.internalServerError)
+      )
+
+      const { statusCode } = await get(detailUrl(ITEM.granted))
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+  })
+
+  // RA-697 task 013: an accredited view also lists registration-only items,
+  // whose numeric site key may not be the accreditation's.
+  describe('site lookup', () => {
+    test('finds the item’s site by ORS id when the numeric keys differ', async () => {
+      const view = {
+        ...CURRENT_VIEW,
+        requests: [
+          submittedRequest('REG1', '2027-04-01T09:00:00Z', {
+            sites: [orsItem(ITEM.submitted, 'Submitted', { siteId: 1 })]
+          })
+        ]
+      }
+
+      const result = await getPage(ITEM.submitted, view)
+
+      expect(valueOf(result, 'row-contact-name-value')).toBe('Jan de Vries')
+      expect(valueOf(result, 'interim-site-901802')).toBe(
+        'Calais Storage SARL, France, R13'
+      )
+    })
+
+    test('falls back to the site key when the item has no ORS id', async () => {
+      const view = {
+        ...CURRENT_VIEW,
+        requests: [
+          submittedRequest('R010', '2027-04-01T09:00:00Z', {
+            sites: [orsItem(ITEM.submitted, 'Submitted', { orsId: null })]
+          })
+        ]
+      }
+
+      const result = await getPage(ITEM.submitted, view)
+
+      expect(valueOf(result, 'header-site-id')).toBe('001')
+      expect(valueOf(result, 'row-contact-name-value')).toBe('Jan de Vries')
+    })
+
+    test('prefers the ORS id over a site key that names another site', async () => {
+      const other = {
+        ...ROTTERDAM,
+        siteId: 5,
+        orsId: '005',
+        siteName: 'Other Site',
+        contactName: 'Someone Else'
+      }
+      const view = {
+        ...CURRENT_VIEW,
+        sites: [accreditationSite(ROTTERDAM), accreditationSite(other)],
+        requests: [
+          submittedRequest('REG2', '2027-04-01T09:00:00Z', {
+            sites: [orsItem(ITEM.submitted, 'Submitted', { siteId: 5 })]
+          })
+        ]
+      }
+
+      const result = await getPage(ITEM.submitted, view)
+
+      expect(valueOf(result, 'row-contact-name-value')).toBe('Jan de Vries')
+    })
+
+    test('does not take a site with another ORS id, so an unlisted ORS keeps the item’s own name', async () => {
+      const view = {
+        ...CURRENT_VIEW,
+        requests: [
+          submittedRequest('REG3', '2027-04-01T09:00:00Z', {
+            sites: [
+              orsItem(ITEM.submitted, 'Submitted', {
+                siteId: ROTTERDAM.siteId,
+                orsId: '009',
+                siteName: 'Unlisted ORS'
+              })
+            ]
+          })
+        ]
+      }
+
+      const result = await getPage(ITEM.submitted, view)
+
+      expect(valueOf(result, 'page-heading')).toBe('Unlisted ORS')
+      expect(valueOf(result, 'header-site-id')).toBe('009')
+      expect(valueOf(result, 'row-contact-name-value')).toBe('Not provided')
+    })
   })
 
   describe('queried notice', () => {

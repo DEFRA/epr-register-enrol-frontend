@@ -5,7 +5,6 @@ import { applicationStatusTag } from '../../common/constants/applicationStatusTa
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
 import {
   buildSiteDetailRows,
-  findSite,
   manageSitesText
 } from '../../accreditation/manage-overseas-sites/view-model.js'
 import {
@@ -52,7 +51,7 @@ function validity(item, year, notApplicable, currentLocale) {
   }
 }
 
-function requestDetails({ request, item, application, t, currentLocale }) {
+function requestDetails({ request, item, year, t, currentLocale }) {
   const notApplicable = t('pages.manageChangeRequests.notApplicable')
   const notSubmitted = text(t, 'notSubmitted')
   return {
@@ -61,7 +60,7 @@ function requestDetails({ request, item, application, t, currentLocale }) {
     submittedBy: request.submittedAt
       ? (request.submittedBy?.fullName ?? notSubmitted)
       : notSubmitted,
-    ...validity(item, application.year, notApplicable, currentLocale),
+    ...validity(item, year, notApplicable, currentLocale),
     // Null while In progress, and whenever Case Management submission is off.
     reference: request.caseManagementReference ?? notApplicable
   }
@@ -120,10 +119,21 @@ function interimSiteLine(interimSite) {
     .join(', ')
 }
 
-function orsDetail({ view, found, application, t, currentLocale }) {
+// RA-697: a registration-only item's siteId is its ORS id's integer value,
+// which need not be the accreditation's key for the same ORS, so the ORS id
+// is the match whenever the item and the site both have one.
+function findItemSite(view, item) {
+  return view.sites?.find((entry) =>
+    item.orsId && entry.orsId
+      ? String(entry.orsId) === String(item.orsId)
+      : String(entry.siteId) === String(item.siteId)
+  )
+}
+
+function orsDetail({ view, found, year, t, currentLocale }) {
   const { request, item } = found
   // A site the accreditation no longer lists still has the item's own name.
-  const entry = findSite(view, item.siteId) ?? {
+  const entry = findItemSite(view, item) ?? {
     siteId: item.siteId,
     site: { siteId: item.siteId, orsId: item.orsId, siteName: item.siteName }
   }
@@ -157,7 +167,7 @@ function orsDetail({ view, found, application, t, currentLocale }) {
     requestDetails: requestDetails({
       request,
       item,
-      application,
+      year,
       t,
       currentLocale
     })
@@ -176,7 +186,7 @@ function requestedBandRow(item, t) {
   }
 }
 
-function tonnageDetail({ found, application, t, currentLocale }) {
+function tonnageDetail({ found, year, t, currentLocale }) {
   const { request, item } = found
   return {
     isTonnage: true,
@@ -187,7 +197,7 @@ function tonnageDetail({ found, application, t, currentLocale }) {
     requestDetails: requestDetails({
       request,
       item,
-      application,
+      year,
       t,
       currentLocale
     })
@@ -196,8 +206,11 @@ function tonnageDetail({ found, application, t, currentLocale }) {
 
 export const manageChangeRequestDetailController = {
   async handler(request, h) {
-    const { context, application, t, currentLocale, response } =
-      await loadManagePage(request, h)
+    const { context, t, currentLocale, response } = await loadManagePage(
+      request,
+      h,
+      { allowRegistrationOnly: true }
+    )
     if (response) {
       return response
     }
@@ -215,13 +228,13 @@ export const manageChangeRequestDetailController = {
     const detail = (found.isTonnage ? tonnageDetail : orsDetail)({
       view,
       found,
-      application,
+      year: context.year,
       t,
       currentLocale
     })
     return h.view('manage/change-requests/detail', {
       pageTitle: detail.heading,
-      caption: manageCaption(application, t),
+      caption: manageCaption(context, t),
       backLink: changeRequestsUrl(request.params, currentLocale),
       ...detail
     })
