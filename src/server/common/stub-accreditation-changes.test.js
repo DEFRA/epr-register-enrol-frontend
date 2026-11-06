@@ -312,6 +312,97 @@ describe('stubAccreditationChanges items (RA-697)', () => {
   })
 })
 
+// RA-697 task 014: an accredited operator's view also shows its registration's
+// registration-only requests for the accreditation's material and year. They
+// count towards pending, but never become the active request.
+describe('stubAccreditationChanges merges registration-only requests (RA-697)', () => {
+  const year = currentYear()
+  let registrationId
+  let base
+  let d
+
+  beforeEach(() => {
+    appSeq += 1
+    registrationId = `reg-${appSeq}`
+    base = `${BASE}/app-${appSeq}`
+    d = deps(application({ registrationId, materialType: 'Plastic', year }))
+  })
+
+  const registrationKey = (material = 'Plastic', y = year) =>
+    `50018/registrations/${registrationId}/${material}/${y}`
+  const get = () => stubAccreditationChanges('get', base, undefined, d)
+  const seedRegistrationOnly = (key, request) =>
+    seedStubChangeRequest(key, {
+      changeType: 'update-overseas-site',
+      status: 'Submitted',
+      sites: [
+        { siteId: 2, changeType: 'update-overseas-site', status: 'Queried' }
+      ],
+      ...request
+    })
+
+  test('lists the same registration, material and year’s requests, newest first', async () => {
+    seedStubChangeRequest(`50018/app-${appSeq}`, {
+      requestId: 'own-old',
+      status: 'Submitted',
+      createdAt: `${year}-02-01T09:00:00.000Z`,
+      sites: [{ siteId: 1, status: 'Approved' }]
+    })
+    seedRegistrationOnly(registrationKey(), {
+      requestId: 'registration-only',
+      createdAt: `${year}-03-01T09:00:00.000Z`
+    })
+    seedStubChangeRequest(`50018/app-${appSeq}`, {
+      requestId: 'own-new',
+      status: 'Submitted',
+      createdAt: `${year}-04-01T09:00:00.000Z`,
+      sites: [{ siteId: 1, status: 'Rejected' }]
+    })
+    seedRegistrationOnly(registrationKey('Glass'), {
+      requestId: 'other-material'
+    })
+    seedRegistrationOnly(registrationKey('Plastic', year - 1), {
+      requestId: 'last-year'
+    })
+
+    const view = await get()
+
+    expect(view.requests.map((r) => r.requestId)).toEqual([
+      'own-new',
+      'registration-only',
+      'own-old'
+    ])
+    expect(view.requests[1].sites).toMatchObject([
+      { siteId: 2, orsId: '002', changeType: 'update-overseas-site' }
+    ])
+    expect(view.sites[1]).toMatchObject({
+      orsId: '002',
+      pendingRequestId: 'registration-only',
+      pendingRequestStatus: 'Submitted'
+    })
+    expect(view.pendingOrsIds).toEqual(['002'])
+  })
+
+  test('a registration-only draft never becomes the active request', async () => {
+    seedRegistrationOnly(registrationKey(), {
+      requestId: 'registration-draft',
+      status: 'InProgress',
+      createdAt: `${year}-03-01T09:00:00.000Z`,
+      sites: [{ siteId: 2, status: 'InProgress' }]
+    })
+
+    expect((await get()).activeRequest).toBeNull()
+
+    const draft = await stubAccreditationChanges(
+      'post',
+      `${base}/requests/current/sites`,
+      { siteId: 2 },
+      d
+    )
+    expect(draft.requestId).not.toBe('registration-draft')
+    expect((await get()).activeRequest.requestId).toBe(draft.requestId)
+  })
+})
 describe('persistentStubApiClient accreditation-changes routing (RA-492)', () => {
   test('serves the org 50019 stub from the stub without reaching the backend', async () => {
     const { persistentStubApiClient: client } =
@@ -390,7 +481,7 @@ describe('seeded stub change requests (RA-697)', () => {
   test("the exporter's ids, references and dates match the backend seed", async () => {
     const { requests } = await changesFor(50018, exporterApp)
 
-    expect(requests).toHaveLength(11)
+    expect(requests).toHaveLength(12)
     const first = requests.at(-1)
     expect(first).toMatchObject({
       requestId: `0000${year}-0000-0000-a000-050018000001`,
@@ -425,7 +516,7 @@ describe('seeded stub change requests (RA-697)', () => {
     })
   })
 
-  test("Dragon's new ORS accreditation is the one draft, and every ORS is pending once", async () => {
+  test("Dragon's new ORS accreditation is the one draft, and every ORS is pending", async () => {
     const view = await changesFor(50018, exporterApp)
 
     expect(view.activeRequest.sites).toMatchObject([
@@ -453,12 +544,43 @@ describe('seeded stub change requests (RA-697)', () => {
         i.status
       )
     )
+    // RA-697 task 014: Dragon also has the registration-only ORS update.
     expect(
       active
         .filter((i) => i.orsId)
         .map((i) => i.orsId)
         .sort()
-    ).toEqual(['001', '002', '003', '004'])
+    ).toEqual(['001', '002', '003', '004', '004'])
+  })
+
+  // RA-697 task 014: as the backend's seed, numbered after the exporter's
+  // requests and older than Dragon's draft, so Dragon stays In progress.
+  test("the exporter's registration-only ORS update on Dragon is merged in, 14 items", async () => {
+    const view = await changesFor(50018, exporterApp)
+
+    expect(itemsOf(view.requests)).toHaveLength(14)
+    const registrationOnly = view.requests.find(
+      (r) => r.requestId === `0000${year}-0000-0000-a000-050018000012`
+    )
+    expect(registrationOnly).toMatchObject({
+      changeType: 'update-overseas-site',
+      status: 'Submitted',
+      createdAt: `${year}-09-15T09:00:00.000Z`,
+      caseManagementReference: `CR${yy}050018A012`,
+      sites: [
+        {
+          itemId: `0000${year}-0000-0001-a000-050018000012`,
+          siteId: 901807,
+          orsId: '004',
+          siteName: 'Dragon Recyclers',
+          changeType: 'update-overseas-site',
+          status: 'Submitted'
+        }
+      ]
+    })
+    expect(view.requests.indexOf(registrationOnly)).toBe(1)
+    expect(view.activeRequest.sites[0].changeType).toBe('add-overseas-site')
+    expect(view.sites[3].pendingRequestId).toBe(view.activeRequest.requestId)
   })
 
   test('the reprocessor has tonnage band upgrades only', async () => {

@@ -14,6 +14,9 @@
 // RA-697: a registration-only operator's view is read by organisation,
 // registration and material (GET only), with the registration's ORSs as
 // Registered sites; org 50021 starts with the backend dev seed's requests.
+// RA-697 task 014: an accreditation's GET also lists its registration's
+// registration-only requests for its material and year (pending counts them),
+// but its active request is only ever its own draft.
 
 import { randomUUID } from 'node:crypto'
 
@@ -175,12 +178,17 @@ function requestView(request, sitesById) {
 
 const isActive = (item) => ACTIVE_ITEM_STATUSES.has(item.status)
 
-function buildView(orgId, appId, application, store) {
+function buildView(orgId, appId, application, store, registrationOnly = null) {
   const sites = application.isExporter
     ? (application.overseasSites?.sites ?? [])
     : []
   const sitesById = new Map(sites.map((site) => [site.siteId, site]))
-  const requests = [store.draft, ...store.submitted]
+  const requests = [
+    store.draft,
+    ...store.submitted,
+    registrationOnly?.draft,
+    ...(registrationOnly?.submitted ?? [])
+  ]
     .filter(Boolean)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const activeSiteItems = requests.flatMap((request) =>
@@ -353,7 +361,7 @@ function submit(ctx) {
 const SITE_PATH = String.raw`/requests/current/sites/(\d+)`
 
 const ROUTES = [
-  ['get', '', (ctx) => ctx.view()],
+  ['get', '', (ctx) => ctx.mergedView()],
   ['post', '/requests/current/sites', addSite],
   ['delete', SITE_PATH, removeSite],
   ['patch', SITE_PATH, patchSite],
@@ -391,6 +399,15 @@ async function grantedApplication(deps, orgId, appId, method) {
   return application
 }
 
+// Read by the registration GET and merged into the accreditation GET.
+function registrationState(orgId, registrationId, materialType, year, sites) {
+  return stateFor(
+    `${orgId}/registrations/${registrationId}/${materialType}/${year}`,
+    () =>
+      seededStubRegistrationChangeRequests(orgId, registrationId, sites, year)
+  )
+}
+
 async function registrationChanges(method, endpoint, deps) {
   const [, orgId, registrationId, material, rest = ''] =
     REGISTRATION_RE.exec(endpoint)
@@ -412,10 +429,12 @@ async function registrationChanges(method, endpoint, deps) {
   }
   const year = currentYear()
   const sites = registration.isExporter ? registration.sites : []
-  const store = stateFor(
-    `${orgId}/registrations/${registrationId}/${registration.materialType}/${year}`,
-    () =>
-      seededStubRegistrationChangeRequests(orgId, registrationId, sites, year)
+  const store = registrationState(
+    orgId,
+    registrationId,
+    registration.materialType,
+    year,
+    sites
   )
   return buildView(
     orgId,
@@ -430,6 +449,20 @@ async function registrationChanges(method, endpoint, deps) {
       year
     },
     store
+  )
+}
+
+function registrationStore(orgId, application) {
+  const { registrationId, materialType, year } = application
+  if (!registrationId) {
+    return null
+  }
+  return registrationState(
+    orgId,
+    registrationId,
+    materialType,
+    year,
+    application.overseasSites?.sites ?? []
   )
 }
 
@@ -459,7 +492,16 @@ export async function stubAccreditationChanges(method, endpoint, body, deps) {
     store,
     body,
     deps,
-    view: () => buildView(orgId, appId, application, store)
+    view: () => buildView(orgId, appId, application, store),
+    // Only the GET merges: every write acts on the accreditation's own requests.
+    mergedView: () =>
+      buildView(
+        orgId,
+        appId,
+        application,
+        store,
+        registrationStore(orgId, application)
+      )
   }
   for (const route of ROUTES) {
     const match = route.method === method ? route.pattern.exec(rest) : null

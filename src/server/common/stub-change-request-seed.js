@@ -5,11 +5,14 @@
 // backend's, so the pages read the same in stub mode; keep the two in step.
 // Org 50019 (RA-492's) and org 50020 (the empty states') have none. Org 50021
 // (registration only) has five registration-only ORS updates on its registered
-// ORSs, one item each and none In progress.
+// ORSs, one item each and none In progress. Org 50018's exporter registration
+// also has one registration-only ORS update, which its accreditation's view
+// merges in.
 
 import { CHANGE_TYPES } from './constants/changeRequests.js'
 import {
   MANAGE_EXPORTER_ORG_ID,
+  MANAGE_EXPORTER_REGISTRATION_ID,
   REGISTRATION_ONLY_ORG_ID,
   REGISTRATION_ONLY_REGISTRATION_ID,
   seededApplicationId
@@ -80,6 +83,14 @@ const REGISTRATION_ONLY_REQUESTS = [
   [UPDATE, [5, 6], [ors('003', 'DulyMade')]],
   [UPDATE, [6, 18], [ors('002', 'Queried')]],
   [UPDATE, [8, 25], [ors('001', 'Submitted')]]
+]
+
+// RA-697 task 014: org 50018's exporter registration's, on Dragon (registered
+// only), keyed by the accreditation's site id and ORS id. Older than Dragon's
+// draft, so it stays In progress. Numbered after the exporter's requests.
+const DRAGON = { siteId: 901807, orsId: '004', siteName: 'Dragon Recyclers' }
+const ACCREDITED_EXPORTER_REGISTRATION_ONLY_REQUESTS = [
+  [UPDATE, [9, 15], [ors('004', 'Submitted')]]
 ]
 
 const pad = (value, digits) => String(value).padStart(digits, '0')
@@ -179,7 +190,8 @@ export function seededStubChangeRequests(orgId, appId, application) {
 
 /**
  * RA-697: the seeded registration-only requests for org 50021's registration
- * in `year`, on its registered ORSs (`sites`), or none for any other.
+ * in `year`, on its registered ORSs (`sites`), or (task 014) org 50018's
+ * exporter registration, or none for any other.
  */
 export function seededStubRegistrationChangeRequests(
   orgId,
@@ -187,6 +199,16 @@ export function seededStubRegistrationChangeRequests(
   sites,
   year
 ) {
+  if (
+    String(orgId) === String(MANAGE_EXPORTER_ORG_ID) &&
+    registrationId === MANAGE_EXPORTER_REGISTRATION_ID
+  ) {
+    const target = { year, orgId: MANAGE_EXPORTER_ORG_ID, sites: [DRAGON] }
+    return ACCREDITED_EXPORTER_REGISTRATION_ONLY_REQUESTS.map(
+      (request, index) =>
+        buildRequest(target, 'a', EXPORTER_REQUESTS.length + index + 1, request)
+    )
+  }
   if (
     String(orgId) !== String(REGISTRATION_ONLY_ORG_ID) ||
     registrationId !== REGISTRATION_ONLY_REGISTRATION_ID

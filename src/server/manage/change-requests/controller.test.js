@@ -29,6 +29,7 @@ import {
   registrationOnlyExporter
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
+import { currentYear } from '../../common/helpers/currentYear.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
@@ -1008,6 +1009,8 @@ describe('#manageChangeRequestsController', () => {
       ].map((match) => match[1])
     const statuses = (html) => cellTexts(html, 'status')
 
+    // RA-697 task 014: including its registration's registration-only ORS
+    // update on Dragon, the newer of the two Submitted items.
     test('lists the seeded exporter’s items over two pages, most urgent first', async () => {
       const exporterUrl = listUrl(
         MANAGE_EXPORTER_ORG_ID,
@@ -1023,6 +1026,7 @@ describe('#manageChangeRequestsController', () => {
         'QUERIED',
         'IN PROGRESS',
         'SUBMITTED',
+        'SUBMITTED',
         'UPDATED',
         'DULY MADE',
         'GRANTED',
@@ -1034,8 +1038,15 @@ describe('#manageChangeRequestsController', () => {
         'WITHDRAWN',
         'WITHDRAWN'
       ])
-      expect(statuses(second.result)).toHaveLength(3)
-      expect(second.result).toContain('Showing 11-13 of 13')
+      expect(statuses(second.result)).toHaveLength(4)
+      expect(second.result).toContain('Showing 11-14 of 14')
+      expect(cellTexts(first.result, 'type').slice(2, 4)).toEqual([
+        'ORS update',
+        'ORS update'
+      ])
+      expect(first.result).toMatch(
+        /data-testid="change-request-status-0000\d{4}-0000-0001-a000-050018000012"/
+      )
     })
 
     test('lists the seeded reprocessor’s tonnage band upgrades', async () => {
@@ -1086,6 +1097,22 @@ describe('#manageChangeRequestsController', () => {
       expect(
         [...typeSelect.matchAll(/<option value="([^"]*)"/g)].map((m) => m[1])
       ).toEqual(['', 'update-overseas-site'])
+    })
+
+    // RA-697 task 014: its row on the accredited exporter's list leads to it.
+    test('opens the seeded exporter’s registration-only ORS update on Dragon', async () => {
+      const itemId = `0000${currentYear()}-0000-0001-a000-050018000012`
+      const { statusCode, result } = await get(
+        `${listUrl(MANAGE_EXPORTER_ORG_ID, MANAGE_EXPORTER_REGISTRATION_ID, 'Plastic')}/${itemId}`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        /data-testid="page-heading"[^>]*>\s*Dragon Recyclers\s*</
+      )
+      expect(result).toMatch(/data-testid="header-status"[\s\S]*?SUBMITTED/)
+      expect(result).toContain('Saigon Port Storage')
+      expect(result).toContain(`CR${String(currentYear()).slice(-2)}050018A012`)
     })
 
     test('shows the no-results message for the org with no change requests', async () => {
