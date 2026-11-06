@@ -344,3 +344,149 @@ describe('persistentStubApiClient accreditation-changes routing (RA-492)', () =>
     ).rejects.toMatchObject({ status: 404 })
   })
 })
+
+// RA-697: the stub starts with the backend dev seed's change requests
+// (DevChangeRequestSeedService) on org 50018's accreditations, so the change
+// request pages show every status and type in stub mode too.
+describe('seeded stub change requests (RA-697)', () => {
+  const year = currentYear()
+  const yy = String(year).slice(-2)
+  const changesFor = async (orgId, appId) => {
+    const { persistentStubApiClient: client } =
+      await import('./persistentStubApiClient.js')
+    return client.get(`/api/v1/accreditation-changes/${orgId}/${appId}`)
+  }
+  const exporterApp = `a${year}0000000000000050018`
+  const reprocessorApp = `b${year}0000000000000050018`
+  const itemsOf = (requests) =>
+    requests.flatMap((r) => [...r.sites, r.tonnageBandUpgrade].filter(Boolean))
+
+  test("the exporter's requests cover every status and type, in more than a page", async () => {
+    const view = await changesFor(50018, exporterApp)
+
+    const items = itemsOf(view.requests)
+    expect(items.length).toBeGreaterThan(10)
+    expect(new Set(items.map((i) => i.status))).toEqual(
+      new Set([
+        'Queried',
+        'InProgress',
+        'Submitted',
+        'Updated',
+        'DulyMade',
+        'Approved',
+        'Rejected',
+        'Withdrawn'
+      ])
+    )
+    expect(new Set(items.map((i) => i.changeType))).toEqual(
+      new Set([
+        'add-overseas-site',
+        'update-overseas-site',
+        'upgrade-tonnage-band'
+      ])
+    )
+  })
+
+  test("the exporter's ids, references and dates match the backend seed", async () => {
+    const { requests } = await changesFor(50018, exporterApp)
+
+    expect(requests).toHaveLength(11)
+    const first = requests.at(-1)
+    expect(first).toMatchObject({
+      requestId: `0000${year}-0000-0000-a000-050018000001`,
+      changeType: 'update-overseas-site',
+      status: 'Submitted',
+      createdAt: `${year}-02-03T09:00:00.000Z`,
+      submittedAt: `${year}-02-03T11:00:00.000Z`,
+      submittedBy: { fullName: 'Sam Patel', jobTitle: 'Director' },
+      caseManagementReference: `CR${yy}050018A001`
+    })
+    expect(first.sites.map((s) => [s.itemId, s.orsId, s.status])).toEqual([
+      [`0000${year}-0000-0001-a000-050018000001`, '001', 'Approved'],
+      [`0000${year}-0000-0002-a000-050018000001`, '002', 'Approved']
+    ])
+    expect(first.sites[0].validFrom).toBe(`${year}-03-02T09:00:00.000Z`)
+    const withdrawn = itemsOf(requests).find(
+      (i) => i.status === 'Withdrawn' && i.orsId === '004'
+    )
+    expect(withdrawn).toMatchObject({
+      changeType: 'add-overseas-site',
+      validFrom: `${year}-05-04T09:00:00.000Z`,
+      withdrawnAt: `${year}-06-15T09:00:00.000Z`
+    })
+    const tonnage = requests.find(
+      (r) => r.tonnageBandUpgrade?.status === 'DulyMade'
+    )
+    expect(tonnage).toMatchObject({
+      changeType: 'upgrade-tonnage-band',
+      sites: [],
+      tonnageBandUpgrade: { requestedBand: 'UpTo10000' }
+    })
+  })
+
+  test("Dragon's new ORS accreditation is the one draft, and every ORS is pending once", async () => {
+    const view = await changesFor(50018, exporterApp)
+
+    expect(view.activeRequest.sites).toMatchObject([
+      { orsId: '004', changeType: 'add-overseas-site', status: 'InProgress' }
+    ])
+    expect(view.activeRequest.caseManagementReference).toBeNull()
+    expect(view.requests.filter((r) => r.status === 'InProgress')).toHaveLength(
+      1
+    )
+    expect(
+      view.sites.map((s) => [
+        s.orsId,
+        s.accreditationStatus,
+        s.pendingRequestStatus
+      ])
+    ).toEqual([
+      ['001', 'Accredited', 'Submitted'],
+      ['002', 'Accredited', 'Submitted'],
+      ['003', 'Accredited', 'Submitted'],
+      ['004', 'Registered', 'InProgress']
+    ])
+    expect([...view.pendingOrsIds].sort()).toEqual(['001', '002', '003', '004'])
+    const active = itemsOf(view.requests).filter((i) =>
+      ['Queried', 'InProgress', 'Submitted', 'Updated', 'DulyMade'].includes(
+        i.status
+      )
+    )
+    expect(
+      active
+        .filter((i) => i.orsId)
+        .map((i) => i.orsId)
+        .sort()
+    ).toEqual(['001', '002', '003', '004'])
+  })
+
+  test('the reprocessor has tonnage band upgrades only', async () => {
+    const view = await changesFor(50018, reprocessorApp)
+
+    expect(view.sites).toEqual([])
+    expect(view.requests).toHaveLength(3)
+    expect(view.requests).toEqual(
+      view.requests.map(() =>
+        expect.objectContaining({
+          changeType: 'upgrade-tonnage-band',
+          sites: [],
+          tonnageBandUpgrade: expect.objectContaining({
+            changeType: 'upgrade-tonnage-band'
+          })
+        })
+      )
+    )
+    expect(view.requests[0].caseManagementReference).toBe(`CR${yy}050018B003`)
+  })
+
+  test('the empty org has its sites and no requests', async () => {
+    const view = await changesFor(50020, `a${year}0000000000000050020`)
+
+    expect(view.sites.map((s) => [s.orsId, s.accreditationStatus])).toEqual([
+      ['001', 'Accredited'],
+      ['002', 'Registered']
+    ])
+    expect(view.requests).toEqual([])
+    expect(view.activeRequest).toBeNull()
+  })
+})

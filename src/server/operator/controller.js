@@ -1,10 +1,6 @@
 import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import {
-  DELTA_GREEN_ORG_ID,
-  DELTA_GREEN_SEEDED_ORG_NAME,
-  DELTA_GREEN_REGISTRATION_ID,
-  DELTA_GREEN_SEEDED_MATERIAL,
   IN_YEAR_CHANGE_MATERIAL,
   IN_YEAR_CHANGE_ORG_ID,
   IN_YEAR_CHANGE_ORG_NAME,
@@ -14,7 +10,11 @@ import {
   MANAGE_EXPORTER_ORG_ID,
   MANAGE_EXPORTER_ORG_NAME,
   MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
-  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
+  NO_CHANGE_REQUESTS_MATERIAL,
+  NO_CHANGE_REQUESTS_ORG_ID,
+  NO_CHANGE_REQUESTS_ORG_NAME,
+  NO_CHANGE_REQUESTS_REGISTRATION_ID
 } from '../common/constants/test-orgs.js'
 import { manageUrl } from '../manage/helpers/manage-page.js'
 
@@ -32,29 +32,15 @@ function manageLink(
   }
 }
 
-// The stub API has no plastic accreditation for Delta Green, and the backend's
-// dev seed has no reprocessor for the manage test org, so each mode links to
-// the reprocessor it can serve.
-function reprocessorManageLink() {
-  if (config.get('api.stubEnabled')) {
-    return manageLink(
+function manageLinks() {
+  return {
+    // RA-697: the stub API and the backend's dev seed both have it.
+    reprocessor: manageLink(
       MANAGE_EXPORTER_ORG_ID,
       MANAGE_EXPORTER_ORG_NAME,
       MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
       MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL
-    )
-  }
-  return manageLink(
-    DELTA_GREEN_ORG_ID,
-    DELTA_GREEN_SEEDED_ORG_NAME,
-    DELTA_GREEN_REGISTRATION_ID,
-    DELTA_GREEN_SEEDED_MATERIAL
-  )
-}
-
-function manageLinks() {
-  return {
-    reprocessor: reprocessorManageLink(),
+    ),
     exporter: manageLink(
       MANAGE_EXPORTER_ORG_ID,
       MANAGE_EXPORTER_ORG_NAME,
@@ -67,6 +53,12 @@ function manageLinks() {
       IN_YEAR_CHANGE_ORG_NAME,
       IN_YEAR_CHANGE_REGISTRATION_ID,
       IN_YEAR_CHANGE_MATERIAL
+    ),
+    noChangeRequests: manageLink(
+      NO_CHANGE_REQUESTS_ORG_ID,
+      NO_CHANGE_REQUESTS_ORG_NAME,
+      NO_CHANGE_REQUESTS_REGISTRATION_ID,
+      NO_CHANGE_REQUESTS_MATERIAL
     )
   }
 }

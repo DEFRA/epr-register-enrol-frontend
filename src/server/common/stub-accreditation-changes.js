@@ -8,7 +8,9 @@
 // RA-697: each site on a request is an item with its own id, type and
 // status; a tonnage band upgrade request has one tonnageBandUpgrade item and
 // no sites. A site is pending only while an item for it is active, and a
-// granted reprocessor's view lists its requests but no sites.
+// granted reprocessor's view lists its requests but no sites. Org 50018's
+// accreditations start with the backend dev seed's requests
+// (stub-change-request-seed.js).
 
 import { randomUUID } from 'node:crypto'
 
@@ -19,6 +21,7 @@ import {
 import { statusCodes } from './constants/status-codes.js'
 import { hasValue } from './helpers/hasValue.js'
 import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
+import { seededStubChangeRequests } from './stub-change-request-seed.js'
 
 const CHANGES_RE = /^\/api\/v1\/accreditation-changes\/([^/]+)\/([^/]+)(\/.*)?$/
 const LOCKABLE = [
@@ -35,9 +38,13 @@ function stubError(status, message, response) {
   return Object.assign(new Error(message), { status, response })
 }
 
-function stateFor(key) {
+function stateFor(key, initialRequests = () => []) {
   if (!state.has(key)) {
-    state.set(key, { draft: null, submitted: [] })
+    const store = { draft: null, submitted: [] }
+    for (const request of initialRequests()) {
+      storeRequest(store, request)
+    }
+    state.set(key, store)
   }
   return state.get(key)
 }
@@ -383,7 +390,9 @@ export async function stubAccreditationChanges(method, endpoint, body, deps) {
   const [, orgId, appId, rest = ''] = CHANGES_RE.exec(endpoint)
   const application = await grantedApplication(deps, orgId, appId, method)
   const key = `${orgId}/${appId}`
-  const store = stateFor(key)
+  const store = stateFor(key, () =>
+    seededStubChangeRequests(orgId, appId, application)
+  )
   const ctx = {
     orgId,
     appId,

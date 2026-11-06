@@ -24,7 +24,9 @@ import {
   MANAGE_EXPORTER_REGISTRATION_ID,
   MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
   MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
-  MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID,
+  NO_CHANGE_REQUESTS_ORG_ID,
+  NO_CHANGE_REQUESTS_REGISTRATION_ID
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
@@ -434,6 +436,19 @@ describe('#manageRegistrationAccreditationController', () => {
       expect(result).toMatch(
         new RegExp(
           `data-testid="registration-number"[^>]*>\\s*R${yearSuffix(currentYear())}ER0500180002GR\\s*<`
+        )
+      )
+    })
+
+    test('shows the stub exporter with no change requests', async () => {
+      const { statusCode, result } = await get(
+        `/manage/${NO_CHANGE_REQUESTS_ORG_ID}/${NO_CHANGE_REQUESTS_REGISTRATION_ID}/Plastic`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="accreditation-number"[^>]*>\\s*A${yearSuffix(currentYear())}EX0500200001PL\\s*<`
         )
       )
     })

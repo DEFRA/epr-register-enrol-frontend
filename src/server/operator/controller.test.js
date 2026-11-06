@@ -53,7 +53,7 @@ describe('#operatorController', () => {
   describe('RA-425 manage page links', () => {
     const DELTA_GREEN_MANAGE =
       'href="/manage/50003/aaa000000000000000050003/Plastic"'
-    const STUB_REPROCESSOR_MANAGE =
+    const REPROCESSOR_MANAGE =
       'href="/manage/50018/bbb000000000000000050018/Glass"'
     const EXPORTER_MANAGE =
       'href="/manage/50018/aaa000000000000000050018/Plastic"'
@@ -86,33 +86,23 @@ describe('#operatorController', () => {
       vi.restoreAllMocks()
     })
 
-    test('links to the Delta Green plastic reprocessor manage page with the real backend', async () => {
-      setConfig({ inYearChangesEnabled: true, stubEnabled: false })
+    // RA-697: the backend's dev seed now has the manage test org's reprocessor too.
+    test.each([true, false])(
+      "links to the manage test org's glass reprocessor (stub API %s)",
+      async (stubEnabled) => {
+        setConfig({ inYearChangesEnabled: true, stubEnabled })
 
-      const result = await getOperatorPage()
+        const result = await getOperatorPage()
 
-      expect(result).toMatch(
-        linkWithTestId(DELTA_GREEN_MANAGE, 'manage-reprocessor-link')
-      )
-      expect(result).toContain(
-        'Reprocessor manage registration and accreditation for Delta Green Ltd, Plastic'
-      )
-      expect(result).not.toContain(STUB_REPROCESSOR_MANAGE)
-    })
-
-    test('links to a reprocessor manage page the stub API serves when the stub is on', async () => {
-      setConfig({ inYearChangesEnabled: true, stubEnabled: true })
-
-      const result = await getOperatorPage()
-
-      expect(result).toMatch(
-        linkWithTestId(STUB_REPROCESSOR_MANAGE, 'manage-reprocessor-link')
-      )
-      expect(result).toContain(
-        'Reprocessor manage registration and accreditation for Manage Accreditation Test Ltd, Glass'
-      )
-      expect(result).not.toContain(DELTA_GREEN_MANAGE)
-    })
+        expect(result).toMatch(
+          linkWithTestId(REPROCESSOR_MANAGE, 'manage-reprocessor-link')
+        )
+        expect(result).toContain(
+          'Reprocessor manage registration and accreditation for Manage Accreditation Test Ltd, Glass'
+        )
+        expect(result).not.toContain(DELTA_GREEN_MANAGE)
+      }
+    )
 
     test.each([true, false])(
       'lists the seeded exporter manage page when the flag is on (stub API %s)',
@@ -133,6 +123,15 @@ describe('#operatorController', () => {
             'href="/manage/50019/aaa000000000000000050019/Plastic"',
             'manage-in-year-change-link'
           )
+        )
+        expect(result).toMatch(
+          linkWithTestId(
+            'href="/manage/50020/aaa000000000000000050020/Plastic"',
+            'manage-no-change-requests-link'
+          )
+        )
+        expect(result).toContain(
+          'Exporter manage registration and accreditation for No Change Requests Ltd, Plastic'
         )
       }
     )

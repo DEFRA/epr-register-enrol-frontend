@@ -2,7 +2,9 @@ import {
   IN_YEAR_CHANGE_ORG_ID,
   IN_YEAR_CHANGE_ORG_NAME,
   MANAGE_EXPORTER_ORG_ID,
-  MANAGE_EXPORTER_ORG_NAME
+  MANAGE_EXPORTER_ORG_NAME,
+  NO_CHANGE_REQUESTS_ORG_ID,
+  NO_CHANGE_REQUESTS_ORG_NAME
 } from './constants/test-orgs.js'
 
 /**
@@ -60,7 +62,9 @@ const NUMBERED_TEST_ORGS = [
   ['50017', 'Coordinate Precision Test Exports Ltd'],
   [String(MANAGE_EXPORTER_ORG_ID), MANAGE_EXPORTER_ORG_NAME],
   // RA-492: in-year add-ORS journey tests.
-  [String(IN_YEAR_CHANGE_ORG_ID), IN_YEAR_CHANGE_ORG_NAME]
+  [String(IN_YEAR_CHANGE_ORG_ID), IN_YEAR_CHANGE_ORG_NAME],
+  // RA-697: the in-year change request pages' empty states.
+  [String(NO_CHANGE_REQUESTS_ORG_ID), NO_CHANGE_REQUESTS_ORG_NAME]
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).

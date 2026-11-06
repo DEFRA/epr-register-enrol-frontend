@@ -11,7 +11,12 @@ import {
   MANAGE_EXPORTER_ORG_NAME,
   MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID,
   MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
-  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
+  NO_CHANGE_REQUESTS_MATERIAL,
+  NO_CHANGE_REQUESTS_ORG_ID,
+  NO_CHANGE_REQUESTS_ORG_NAME,
+  NO_CHANGE_REQUESTS_REGISTRATION_ID,
+  seededApplicationId
 } from './constants/test-orgs.js'
 
 /**
@@ -184,7 +189,9 @@ function buildOrgDoc(year) {
     companyDetails: { name: MANAGE_EXPORTER_ORG_NAME },
     accreditations: [
       approvedApplication(year, {
-        id: 'app018exp',
+        // The backend's ids, which the change-request stub keys its seeded
+        // requests on (stub-change-request-seed.js).
+        id: seededApplicationId('a', year, MANAGE_EXPORTER_ORG_ID),
         applicationReference: `AP${suffix}EA0500183ABPL`,
         accreditationReference: `A${suffix}EX0500180001PL`,
         material: MANAGE_EXPORTER_MATERIAL,
@@ -201,7 +208,7 @@ function buildOrgDoc(year) {
         besEvidence: { sectionStatus: 'Completed' }
       }),
       approvedApplication(year, {
-        id: 'app018rep',
+        id: seededApplicationId('b', year, MANAGE_EXPORTER_ORG_ID),
         applicationReference: `AP${suffix}EA0500185HTGL`,
         accreditationReference: `A${suffix}ER0500180002GR`,
         material: MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
@@ -328,8 +335,7 @@ function inYearChangeSites(year) {
 // RA-492: org 50019's accreditation. Matches the backend's dev seed.
 function buildInYearChangeOrgDoc(year) {
   const suffix = yearSuffix(year)
-  // The backend's id for it.
-  const id = `a${year}0000000000000050019`
+  const id = seededApplicationId('a', year, IN_YEAR_CHANGE_ORG_ID)
   return {
     orgId: IN_YEAR_CHANGE_ORG_ID,
     companyDetails: { name: IN_YEAR_CHANGE_ORG_NAME },
@@ -361,6 +367,58 @@ function buildInYearChangeOrgDoc(year) {
   }
 }
 
+// RA-697: org 50020, an exporter with no change requests. Matches the
+// backend's dev seed.
+function buildNoChangeRequestsOrgDoc(year) {
+  const suffix = yearSuffix(year)
+  return {
+    orgId: NO_CHANGE_REQUESTS_ORG_ID,
+    companyDetails: { name: NO_CHANGE_REQUESTS_ORG_NAME },
+    accreditations: [
+      approvedApplication(year, {
+        id: seededApplicationId('a', year, NO_CHANGE_REQUESTS_ORG_ID),
+        applicationReference: `AP${suffix}EA0500203AAPL`,
+        accreditationReference: `A${suffix}EX0500200001PL`,
+        material: NO_CHANGE_REQUESTS_MATERIAL,
+        wasteProcessingType: 'exporter',
+        registrationId: NO_CHANGE_REQUESTS_REGISTRATION_ID,
+        wasteRegistrationNumber: exporterRegistrationNumber(
+          year,
+          NO_CHANGE_REQUESTS_ORG_ID
+        ),
+        companyRegisteredAddress: {
+          line1: '20 Dock Street',
+          town: 'Grimsby',
+          postcode: 'DN31 3AA'
+        },
+        companyRegisterAddressPostcode: 'DN31 3AA',
+        overseasSites: {
+          sectionStatus: 'Completed',
+          sites: [
+            overseasSite(
+              902001,
+              '001',
+              'Gdansk Recykling Sp. z o.o.',
+              'ul. Portowa 20',
+              'Poland',
+              { validFrom: `${year}-01-01T00:00:00Z` }
+            ),
+            overseasSite(
+              902002,
+              '002',
+              'Ghent Recycling NV',
+              'Havenlaan 5',
+              'Belgium',
+              { selected: false }
+            )
+          ]
+        },
+        besEvidence: { sectionStatus: 'Completed' }
+      })
+    ]
+  }
+}
+
 // Kept for the rest of the year because the stub API saves writes into the
 // docs it serves; rebuilt (dropping those writes) once the year changes.
 let cachedOrgDocs = null
@@ -370,7 +428,11 @@ export function manageStubOrgDocs() {
   if (cachedOrgDocs?.year !== year) {
     cachedOrgDocs = {
       year,
-      docs: [buildOrgDoc(year), buildInYearChangeOrgDoc(year)]
+      docs: [
+        buildOrgDoc(year),
+        buildInYearChangeOrgDoc(year),
+        buildNoChangeRequestsOrgDoc(year)
+      ]
     }
   }
   return cachedOrgDocs.docs
@@ -395,6 +457,13 @@ export function manageStubRegistrationStatuses() {
       registrationNumber: exporterRegistrationNumber(
         year,
         IN_YEAR_CHANGE_ORG_ID
+      ),
+      status: 'Approved'
+    },
+    [NO_CHANGE_REQUESTS_REGISTRATION_ID]: {
+      registrationNumber: exporterRegistrationNumber(
+        year,
+        NO_CHANGE_REQUESTS_ORG_ID
       ),
       status: 'Approved'
     },
