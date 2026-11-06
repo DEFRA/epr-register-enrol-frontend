@@ -107,7 +107,8 @@ const sameMaterial = (a, b) =>
 /**
  * With exportersOnly, a reprocessor's accreditation is a 404 whatever state
  * its registration is in: the page doesn't exist for them, so that answer
- * shouldn't depend on whether the registration happens to be Approved.
+ * shouldn't depend on whether the registration happens to be Approved. A
+ * registration-only reprocessor is a 404 too.
  *
  * RA-697: an Approved registration with no Approved current-year
  * accreditation is registration only. Pages opt in with allowRegistrationOnly
@@ -175,6 +176,11 @@ export async function loadManagePage(
     !sameMaterial(registration.materialType, materialType)
   ) {
     return { response: serviceProblem(request, h, t) }
+  }
+  // As for an accredited reprocessor; once the registration is known to be
+  // the URL's, since only then is this registration only.
+  if (exportersOnly && !registration.isExporter) {
+    throw Boom.notFound()
   }
 
   return {
