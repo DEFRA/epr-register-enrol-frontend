@@ -63,7 +63,9 @@ const responseOrThrow = (response) => {
  *
  * @param {object[]} apps - raw applications, each with an `id`
  * @param {object|Error} [registration] - the registration-status response
- * @param {object|Error} [changes] - the accreditation-changes view
+ * @param {object|Error|function(string): (object|Error)} [changes] - the
+ *   accreditation-changes view, or a function of the application id giving
+ *   each application's own view
  */
 export function mockManageGets(
   apps,
@@ -75,7 +77,10 @@ export function mockManageGets(
       return responseOrThrow(registration)
     }
     if (url.startsWith('/api/v1/accreditation-changes/')) {
-      return responseOrThrow(changes)
+      const applicationId = decodeURIComponent(url.split('/').pop())
+      return responseOrThrow(
+        typeof changes === 'function' ? changes(applicationId) : changes
+      )
     }
     const lastSegment = url.split('/').pop()
     return apps.find((app) => app.id === lastSegment) ?? apps

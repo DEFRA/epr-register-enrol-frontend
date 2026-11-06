@@ -98,3 +98,11 @@ export async function loadManagePage(
 
   return { application, registration, t, currentLocale }
 }
+
+export function changeRequestsUrl(params, currentLocale) {
+  return `${manageUrl(params, currentLocale)}/change-requests`
+}
+
+export function changeRequestItemUrl(params, itemId, currentLocale) {
+  return `${changeRequestsUrl(params, currentLocale)}/${encodeURIComponent(itemId)}`
+}

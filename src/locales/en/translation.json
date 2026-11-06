@@ -1027,6 +1027,30 @@
         "backLink": "Back to manage overseas reprocessing sites"
       }
     },
+    "manageChangeRequests": {
+      "heading": "In year change requests",
+      "table": {
+        "siteName": "Site name",
+        "type": "Type",
+        "status": "Status",
+        "action": "Action"
+      },
+      "notApplicable": "Not applicable",
+      "view": "View",
+      "viewHidden": "{{type}} for {{site}}",
+      "types": {
+        "addOverseasSite": "New ORS accreditation",
+        "updateOverseasSite": "ORS update",
+        "upgradeTonnageBand": "Tonnage band upgrade",
+        "other": "Change request"
+      },
+      "noResults": {
+        "title": "There are no matching results",
+        "body": "Improve your search results by removing one or more of your selected filters.",
+        "clearFilters": "Clear filters"
+      },
+      "returnToHome": "Return to home"
+    },
     "contact": {
       "title": "Contact",
       "heading": "Contact",
@@ -1146,6 +1170,7 @@
     "applicationStatuses": {
       "Saved": "NOT STARTED",
       "Started": "IN PROGRESS",
+      "InProgress": "IN PROGRESS",
       "NotStarted": "NOT STARTED",
       "Submitted": "SUBMITTED",
       "DulyMade": "DULY MADE",

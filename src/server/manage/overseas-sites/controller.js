@@ -14,12 +14,7 @@ import {
   manageUrl,
   serviceProblem
 } from '../helpers/manage-page.js'
-
-// Older ORS records carry only the flattened siteAddress, whose first part is
-// address line 1.
-function addressLine1(site) {
-  return site.addressLine1 || site.siteAddress?.split(',')[0].trim() || null
-}
+import { orsAddressLine } from '../helpers/ors-address.js'
 
 // RA-425: withdrawn interim sites are filtered per ORS, so withdrawing a
 // shared interim site from one ORS leaves it showing under the others.
@@ -30,7 +25,7 @@ function toOrsView(site, { withInterimSites }) {
     siteId: site.siteId,
     orsId: site.orsId,
     siteName: site.siteName,
-    address: [addressLine1(site), site.country].filter(Boolean).join(', '),
+    address: orsAddressLine(site),
     interimSites: withInterimSites ? activeInterimSites(site) : []
   }
 }

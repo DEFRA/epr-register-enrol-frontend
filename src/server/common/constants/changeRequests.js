@@ -15,3 +15,15 @@ export const ACTIVE_ITEM_STATUSES = new Set([
   'Updated',
   'DulyMade'
 ])
+
+// RA-697: most urgent first, so items needing the operator's input lead.
+export const ITEM_STATUS_ORDER = [
+  'Queried',
+  'InProgress',
+  'Submitted',
+  'Updated',
+  'DulyMade',
+  'Approved',
+  'Rejected',
+  'Withdrawn'
+]

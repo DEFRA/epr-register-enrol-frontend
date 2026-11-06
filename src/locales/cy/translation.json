@@ -1026,6 +1026,30 @@
         "backLink": "[Welsh] Back to manage overseas reprocessing sites"
       }
     },
+    "manageChangeRequests": {
+      "heading": "[Welsh] In year change requests",
+      "table": {
+        "siteName": "[Welsh] Site name",
+        "type": "[Welsh] Type",
+        "status": "[Welsh] Status",
+        "action": "[Welsh] Action"
+      },
+      "notApplicable": "[Welsh] Not applicable",
+      "view": "[Welsh] View",
+      "viewHidden": "[Welsh] {{type}} for {{site}}",
+      "types": {
+        "addOverseasSite": "[Welsh] New ORS accreditation",
+        "updateOverseasSite": "[Welsh] ORS update",
+        "upgradeTonnageBand": "[Welsh] Tonnage band upgrade",
+        "other": "[Welsh] Change request"
+      },
+      "noResults": {
+        "title": "[Welsh] There are no matching results",
+        "body": "[Welsh] Improve your search results by removing one or more of your selected filters.",
+        "clearFilters": "[Welsh] Clear filters"
+      },
+      "returnToHome": "[Welsh] Return to home"
+    },
     "contact": {
       "title": "[Welsh] Contact",
       "heading": "[Welsh] Contact",
@@ -1145,6 +1169,7 @@
     "applicationStatuses": {
       "Saved": "[Welsh] NOT STARTED",
       "Started": "[Welsh] IN PROGRESS",
+      "InProgress": "[Welsh] IN PROGRESS",
       "Submitted": "[Welsh] SUBMITTED",
       "DulyMade": "[Welsh] DULY MADE",
       "Queried": "[Welsh] QUERIED",
