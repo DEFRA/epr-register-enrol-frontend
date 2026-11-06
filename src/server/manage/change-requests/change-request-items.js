@@ -149,3 +149,55 @@ export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {
     }))
   }
 }
+
+const FILTER_KEYS = 'pages.manageChangeRequests.filters'
+const TYPE_ORDER = Object.values(CHANGE_TYPES)
+const FILTER_STATUSES = new Set(ITEM_STATUS_ORDER)
+const FILTER_TYPES = new Set(TYPE_ORDER)
+
+const knownOrNull = (value, known) =>
+  typeof value === 'string' && known.has(value) ? value : null
+
+// `?status=` and `?type=` aren't validated by the route, so an unknown value,
+// or the placeholder's empty one, just means no filter.
+export function readFilters(query = {}) {
+  return {
+    status: knownOrNull(query.status, FILTER_STATUSES),
+    type: knownOrNull(query.type, FILTER_TYPES)
+  }
+}
+
+export function filterItems(rows, filters) {
+  const { status, type } = readFilters(filters)
+  return rows.filter(
+    (row) =>
+      (!status || row.status === status) && (!type || row.changeType === type)
+  )
+}
+
+const optionsFor = (values, selected, placeholder, labelFor) => [
+  { value: '', text: placeholder, selected: !selected },
+  ...values.map((value) => ({
+    value,
+    text: labelFor(value),
+    selected: value === selected
+  }))
+]
+
+// Status options are sentence case, as in Figma, not the upper-case tag labels.
+export function filterOptions({ status, type }, t) {
+  return {
+    status: optionsFor(
+      ITEM_STATUS_ORDER,
+      status,
+      t(`${FILTER_KEYS}.statusPlaceholder`),
+      (value) => t(`${FILTER_KEYS}.statuses.${value}`)
+    ),
+    type: optionsFor(
+      TYPE_ORDER,
+      type,
+      t(`${FILTER_KEYS}.typePlaceholder`),
+      (value) => changeTypeLabel(value, t)
+    )
+  }
+}

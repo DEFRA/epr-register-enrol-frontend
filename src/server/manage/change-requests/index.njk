@@ -9,6 +9,35 @@
     </div>
   </div>
 
+  {# RA-732: no Apply button and no no-JS fallback, as agreed. With no page
+     field, a filter change always lands on page 1. #}
+  <form method="get" action="{{ listUrl }}" data-module="app-auto-submit" data-testid="change-requests-filters">
+    <fieldset class="govuk-fieldset">
+      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">{{ t('pages.manageChangeRequests.filters.heading') }}</legend>
+      <div class="app-filters">
+        <div class="govuk-form-group app-filters__field">
+          <label class="govuk-label" for="status">{{ t('pages.manageChangeRequests.filters.status') }}</label>
+          <select class="govuk-select" id="status" name="status" data-testid="status-filter">
+            {% for option in filterOptions.status %}
+              <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.text }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="govuk-form-group app-filters__field">
+          <label class="govuk-label" for="type">{{ t('pages.manageChangeRequests.filters.type') }}</label>
+          <select class="govuk-select" id="type" name="type" data-testid="type-filter">
+            {% for option in filterOptions.type %}
+              <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.text }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <p class="govuk-body app-filters__clear">
+          <a href="{{ listUrl }}" class="govuk-link" data-testid="clear-filters-link">{{ t('pages.manageChangeRequests.filters.clearFilters') }}</a>
+        </p>
+      </div>
+    </fieldset>
+  </form>
+
   {% if countText %}
     <p class="govuk-body" data-testid="change-requests-count"><strong>{{ countText }}</strong></p>
   {% endif %}
@@ -51,13 +80,11 @@
       {{ govukPagination(pagination) }}
     {% endif %}
   {% else %}
-    {# RA-697: Figma 773:25912's no-results copy, as-is, also for no requests at all. #}
+    {# RA-697: Figma 773:25912's no-results copy, as-is, also for no requests
+       at all. Its Clear filters link is the one in the filter block above. #}
     <div data-testid="no-results">
-      <h2 class="govuk-heading-m" data-testid="no-results-title">{{ t('pages.manageChangeRequests.noResults.title') }}</h2>
+      <h2 class="govuk-heading-s" data-testid="no-results-title">{{ t('pages.manageChangeRequests.noResults.title') }}</h2>
       <p class="govuk-body" data-testid="no-results-body">{{ t('pages.manageChangeRequests.noResults.body') }}</p>
-      <p class="govuk-body">
-        <a href="{{ clearFiltersUrl }}" class="govuk-link" data-testid="clear-filters-link">{{ t('pages.manageChangeRequests.noResults.clearFilters') }}</a>
-      </p>
     </div>
   {% endif %}
 

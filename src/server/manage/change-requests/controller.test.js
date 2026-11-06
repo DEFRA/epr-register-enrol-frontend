@@ -556,6 +556,49 @@ describe('#manageChangeRequestsController', () => {
       expect(countLine(result)).toBe(`Showing ${from}-${to} of 23`)
     })
 
+    test('pages the filtered items and keeps the filters in the links', async () => {
+      const filteredView = {
+        ...MANY_VIEW,
+        requests: [
+          ...MANY_VIEW.requests,
+          submittedRequest('tonnage', '2027-05-01T09:00:00Z', {
+            tonnage: tonnageItem('item-tonnage', 'Submitted')
+          })
+        ]
+      }
+      const result = await getListPage(
+        '?status=Submitted&type=update-overseas-site&page=2',
+        filteredView
+      )
+      const filtered = `${PAGE_URL}?status=Submitted&type=update-overseas-site`
+
+      expect(rowIds(result)).toEqual(itemIds(11, 20))
+      expect(countLine(result)).toBe('Showing 11-20 of 23')
+      expect(paginationLinks(result)).toEqual([
+        ['prev', `${filtered}&page=1`],
+        ['page', `${filtered}&page=1`],
+        ['page', `${filtered}&page=2`],
+        ['page', `${filtered}&page=3`],
+        ['next', `${filtered}&page=3`]
+      ])
+    })
+
+    test('shows no pagination when the filtered items fit on one page', async () => {
+      const result = await getListPage('?type=upgrade-tonnage-band', {
+        ...MANY_VIEW,
+        requests: [
+          ...MANY_VIEW.requests,
+          submittedRequest('tonnage', '2027-05-01T09:00:00Z', {
+            tonnage: tonnageItem('item-tonnage', 'Submitted')
+          })
+        ]
+      })
+
+      expect(rowIds(result)).toEqual(['item-tonnage'])
+      expect(countLine(result)).toBe('Showing 1-1 of 1')
+      expect(result).not.toContain('govuk-pagination')
+    })
+
     test('keeps the Welsh prefix and labels in the pagination', async () => {
       const result = await getListPage('?page=2', MANY_VIEW, WELSH_PAGE_URL)
 
@@ -568,6 +611,207 @@ describe('#manageChangeRequestsController', () => {
       expect(result).toContain('aria-label="[Welsh] Page 3"')
       expect(result).toMatch(/rel="prev"[\s\S]*?\[Welsh\] Previous/)
       expect(result).toMatch(/rel="next"[\s\S]*?\[Welsh\] Next/)
+    })
+  })
+
+  describe('filters', () => {
+    async function getFiltered(query, changes = CURRENT_VIEW, url = PAGE_URL) {
+      mockManageGets([currentApp], undefined, changes)
+      const response = await get(`${url}${query}`)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      return response.result
+    }
+
+    const filterForm = (html) => {
+      const start = html.indexOf('data-testid="change-requests-filters"')
+      expect(start).toBeGreaterThan(-1)
+      return html.slice(
+        html.lastIndexOf('<form', start),
+        html.indexOf('</form>', start)
+      )
+    }
+
+    const options = (html, name) => {
+      const start = html.indexOf(`name="${name}"`)
+      expect(start).toBeGreaterThan(-1)
+      const select = html.slice(start, html.indexOf('</select>', start))
+      return [
+        ...select.matchAll(
+          /<option value="([^"]*)"( selected)?[^>]*>\s*([^<]+?)\s*</g
+        )
+      ].map(([, value, selected, text]) => ({
+        value,
+        text,
+        selected: Boolean(selected)
+      }))
+    }
+    const selectedValue = (html, name) =>
+      options(html, name).find((option) => option.selected)?.value
+
+    const countLine = (html) =>
+      html.match(
+        /data-testid="change-requests-count"[^>]*>\s*<strong[^>]*>\s*([^<]+?)\s*</
+      )?.[1]
+
+    test('shows a GET form that submits itself when a select changes, with no Apply button', async () => {
+      const form = filterForm(await getFiltered(''))
+
+      expect(form).toMatch(/<form[^>]*method="get"/)
+      expect(form).toMatch(new RegExp(`<form[^>]*action="${PAGE_URL}"`))
+      expect(form).toMatch(/<form[^>]*data-module="app-auto-submit"/)
+      expect(form).toMatch(/<legend[^>]*>\s*Filter by\s*</)
+      expect(form).toMatch(/<label[^>]*for="status"[^>]*>\s*Status\s*</)
+      expect(form).toMatch(/<label[^>]*for="type"[^>]*>\s*Type\s*</)
+      expect(form).not.toMatch(/<button|type="submit"/)
+      // A filter change always lands on page 1.
+      expect(form).not.toContain('name="page"')
+    })
+
+    test('offers a placeholder and all 8 statuses in sort order', async () => {
+      const result = await getFiltered('')
+
+      expect(options(result, 'status').map((option) => option.text)).toEqual([
+        'Select status',
+        'Queried',
+        'In progress',
+        'Submitted',
+        'Updated',
+        'Duly made',
+        'Granted',
+        'Refused',
+        'Withdrawn'
+      ])
+      expect(selectedValue(result, 'status')).toBe('')
+    })
+
+    test('offers a placeholder and all 3 types', async () => {
+      const result = await getFiltered('')
+
+      expect(options(result, 'type')).toEqual([
+        { value: '', text: 'Select type', selected: true },
+        {
+          value: 'add-overseas-site',
+          text: 'New ORS accreditation',
+          selected: false
+        },
+        { value: 'update-overseas-site', text: 'ORS update', selected: false },
+        {
+          value: 'upgrade-tonnage-band',
+          text: 'Tonnage band upgrade',
+          selected: false
+        }
+      ])
+    })
+
+    test('has a Clear filters link to the unfiltered list', async () => {
+      const result = await getFiltered('?status=Queried')
+
+      expect(filterForm(result)).toMatch(
+        new RegExp(
+          `href="${PAGE_URL}"[^>]*data-testid="clear-filters-link"[^>]*>\\s*Clear filters\\s*<`
+        )
+      )
+    })
+
+    test('brings back the full list from Clear filters', async () => {
+      const filtered = await getFiltered(
+        '?status=Queried&type=add-overseas-site'
+      )
+      const clearHref = filtered.match(
+        /href="([^"]+)"[^>]*data-testid="clear-filters-link"/
+      )[1]
+
+      const result = await getFiltered('', CURRENT_VIEW, clearHref)
+
+      expect(rowIds(result)).toEqual(EXPECTED_ORDER)
+      expect(selectedValue(result, 'status')).toBe('')
+      expect(selectedValue(result, 'type')).toBe('')
+    })
+
+    test('filters by status', async () => {
+      const result = await getFiltered('?status=Queried')
+
+      expect(rowIds(result)).toEqual(['item-queried'])
+      expect(selectedValue(result, 'status')).toBe('Queried')
+      expect(countLine(result)).toBe('Showing 1-1 of 1')
+    })
+
+    test('filters by type', async () => {
+      const result = await getFiltered('?type=update-overseas-site')
+
+      expect(rowIds(result)).toEqual([
+        'item-queried',
+        'item-submitted',
+        'item-updated',
+        'item-granted'
+      ])
+      expect(selectedValue(result, 'type')).toBe('update-overseas-site')
+      expect(countLine(result)).toBe('Showing 1-4 of 4')
+    })
+
+    test('filters by status and type together', async () => {
+      const result = await getFiltered(
+        '?status=Submitted&type=update-overseas-site'
+      )
+
+      expect(rowIds(result)).toEqual(['item-submitted'])
+      expect(selectedValue(result, 'status')).toBe('Submitted')
+      expect(selectedValue(result, 'type')).toBe('update-overseas-site')
+    })
+
+    test('treats a placeholder as no filter for that select only', async () => {
+      const result = await getFiltered('?status=&type=add-overseas-site')
+
+      expect(rowIds(result)).toEqual(['item-in-progress', 'item-withdrawn'])
+      expect(selectedValue(result, 'status')).toBe('')
+    })
+
+    test('ignores unknown filter values', async () => {
+      const result = await getFiltered(
+        '?status=Expired&type=remove-overseas-site'
+      )
+
+      expect(rowIds(result)).toEqual(EXPECTED_ORDER)
+      expect(selectedValue(result, 'status')).toBe('')
+      expect(selectedValue(result, 'type')).toBe('')
+    })
+
+    test('shows the no-results message with the filters still set when nothing matches', async () => {
+      const result = await getFiltered(
+        '?status=Withdrawn&type=update-overseas-site'
+      )
+
+      expect(result).not.toContain('data-testid="change-requests-table"')
+      expect(result).toMatch(
+        /data-testid="no-results-title"[^>]*>\s*There are no matching results\s*</
+      )
+      expect(selectedValue(result, 'status')).toBe('Withdrawn')
+      expect(selectedValue(result, 'type')).toBe('update-overseas-site')
+      expect(result).toContain('data-testid="clear-filters-link"')
+      expect(result).not.toContain('data-testid="change-requests-count"')
+      expect(result).not.toContain('govuk-pagination')
+    })
+
+    test('shows the filters when there are no change requests at all', async () => {
+      const result = await getFiltered('', noChangeRequests)
+
+      expect(result).toContain('data-testid="no-results-title"')
+      expect(filterForm(result)).toContain('name="status"')
+    })
+
+    test('keeps the Welsh prefix and labels in the filters', async () => {
+      const form = filterForm(
+        await getFiltered('?status=Queried', CURRENT_VIEW, WELSH_PAGE_URL)
+      )
+
+      expect(form).toMatch(new RegExp(`<form[^>]*action="${WELSH_PAGE_URL}"`))
+      expect(form).toContain('[Welsh] Filter by')
+      expect(form).toContain('[Welsh] Select status')
+      expect(form).toMatch(
+        new RegExp(
+          `href="${WELSH_PAGE_URL}"[^>]*data-testid="clear-filters-link"`
+        )
+      )
     })
   })
 

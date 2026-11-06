@@ -144,3 +144,23 @@
   margin-left: auto;
   text-align: right;
 }
+
+// RA-732: the change requests filters, per Figma 773:25074.
+.app-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  column-gap: govuk-spacing(6);
+}
+
+// Figma's 304px selects, from tablet up so they never overflow a phone.
+.app-filters__field .govuk-select {
+  @media #{govuk-from-breakpoint(tablet)} {
+    min-width: 304px;
+  }
+}
+
+.app-filters__clear {
+  margin-bottom: govuk-spacing(6);
+  padding-bottom: govuk-spacing(2);
+}

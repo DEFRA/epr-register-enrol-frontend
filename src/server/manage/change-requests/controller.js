@@ -13,8 +13,11 @@ import {
 import {
   buildPagination,
   changeTypeLabel,
+  filterItems,
+  filterOptions,
   flattenItems,
   paginate,
+  readFilters,
   sortItems
 } from './change-request-items.js'
 
@@ -77,9 +80,13 @@ export const manageChangeRequestsController = {
     const { params } = request
     const heading = t('pages.manageChangeRequests.heading')
     const listUrl = changeRequestsUrl(params, currentLocale)
+    const filters = readFilters(request.query)
     const { rows, page, totalPages, totalCount, rangeStart, rangeEnd } =
       paginate(
-        sortItems(flattenItems(view.requests ?? [], view.sites ?? [])),
+        filterItems(
+          sortItems(flattenItems(view.requests ?? [], view.sites ?? [])),
+          filters
+        ),
         request.query.page
       )
 
@@ -90,7 +97,8 @@ export const manageChangeRequestsController = {
       backLink: manageUrl(params, currentLocale),
       // RA-425: "home" is the Re/Ex material page.
       homeUrl: reExBackLinkUrl(params.organisationId, params.registrationId),
-      clearFiltersUrl: listUrl,
+      listUrl,
+      filterOptions: filterOptions(filters, t),
       rows: rows.map((row) => toRowView(row, { t, params, currentLocale })),
       // RA-697: the wording copies case management's count line and still
       // needs design or content confirmation.
@@ -102,7 +110,13 @@ export const manageChangeRequestsController = {
               total: totalCount
             })
           : null,
-      pagination: buildPagination({ page, totalPages, baseUrl: listUrl, t })
+      pagination: buildPagination({
+        page,
+        totalPages,
+        baseUrl: listUrl,
+        query: filters,
+        t
+      })
     })
   }
 }

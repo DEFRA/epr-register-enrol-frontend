@@ -5,8 +5,11 @@ import { applicationStatusTag } from '../../common/constants/applicationStatusTa
 import {
   buildPagination,
   changeTypeLabel,
+  filterItems,
+  filterOptions,
   flattenItems,
   paginate,
+  readFilters,
   sortItems
 } from './change-request-items.js'
 
@@ -382,6 +385,22 @@ describe('buildPagination', () => {
     expect(last.next).toBeNull()
   })
 
+  test('keeps both filters in every link', () => {
+    const pagination = build({
+      page: 2,
+      totalPages: 2,
+      query: { status: 'Queried', type: 'add-overseas-site' }
+    })
+
+    expect(pagination.items.map((item) => item.href)).toEqual([
+      `${BASE_URL}?status=Queried&type=add-overseas-site&page=1`,
+      `${BASE_URL}?status=Queried&type=add-overseas-site&page=2`
+    ])
+    expect(pagination.previous.href).toBe(
+      `${BASE_URL}?status=Queried&type=add-overseas-site&page=1`
+    )
+  })
+
   test('keeps the filter values in every link, leaving out empty ones', () => {
     const pagination = build({
       page: 1,
@@ -394,5 +413,162 @@ describe('buildPagination', () => {
       `${BASE_URL}?status=Queried&page=2`
     ])
     expect(pagination.next.href).toBe(`${BASE_URL}?status=Queried&page=2`)
+  })
+})
+
+describe('readFilters', () => {
+  test('keeps a known status and type', () => {
+    expect(
+      readFilters({ status: 'Queried', type: 'upgrade-tonnage-band' })
+    ).toEqual({ status: 'Queried', type: 'upgrade-tonnage-band' })
+  })
+
+  test.each([
+    ['no query values', {}],
+    ['the placeholders', { status: '', type: '' }],
+    ['unknown values', { status: 'Expired', type: 'remove-overseas-site' }],
+    ['the wrong case', { status: 'queried', type: 'UPGRADE-TONNAGE-BAND' }],
+    ['repeated values', { status: ['Queried', 'Submitted'], type: ['a', 'b'] }]
+  ])('ignores %s', (_, query) => {
+    expect(readFilters(query)).toEqual({ status: null, type: null })
+  })
+
+  test('ignores an unknown value without dropping the other filter', () => {
+    expect(
+      readFilters({ status: 'Expired', type: 'add-overseas-site' })
+    ).toEqual({ status: null, type: 'add-overseas-site' })
+  })
+})
+
+describe('filterItems', () => {
+  const rows = [
+    {
+      itemId: 'queried-add',
+      status: 'Queried',
+      changeType: 'add-overseas-site'
+    },
+    {
+      itemId: 'queried-update',
+      status: 'Queried',
+      changeType: 'update-overseas-site'
+    },
+    {
+      itemId: 'submitted-add',
+      status: 'Submitted',
+      changeType: 'add-overseas-site'
+    },
+    {
+      itemId: 'granted-tonnage',
+      status: 'Approved',
+      changeType: 'upgrade-tonnage-band'
+    }
+  ]
+  const ids = (filtered) => filtered.map((row) => row.itemId)
+
+  test('keeps every row with no filters', () => {
+    expect(ids(filterItems(rows, { status: null, type: null }))).toEqual(
+      ids(rows)
+    )
+  })
+
+  test('filters by status', () => {
+    expect(ids(filterItems(rows, { status: 'Queried', type: null }))).toEqual([
+      'queried-add',
+      'queried-update'
+    ])
+  })
+
+  test('filters by type', () => {
+    expect(
+      ids(filterItems(rows, { status: null, type: 'add-overseas-site' }))
+    ).toEqual(['queried-add', 'submitted-add'])
+  })
+
+  test('filters by status and type together', () => {
+    expect(
+      ids(filterItems(rows, { status: 'Queried', type: 'add-overseas-site' }))
+    ).toEqual(['queried-add'])
+  })
+
+  test('gives no rows when nothing matches', () => {
+    expect(
+      filterItems(rows, { status: 'Withdrawn', type: 'add-overseas-site' })
+    ).toEqual([])
+  })
+
+  test('ignores unknown filter values', () => {
+    expect(
+      ids(
+        filterItems(rows, { status: 'Expired', type: 'remove-overseas-site' })
+      )
+    ).toEqual(ids(rows))
+  })
+
+  test('leaves its input unchanged', () => {
+    const input = [...rows]
+    filterItems(input, { status: 'Queried', type: null })
+    expect(input).toEqual(rows)
+  })
+})
+
+describe('filterOptions', () => {
+  const texts = (options) => options.map((option) => option.text)
+
+  test('offers a placeholder then every status in sort order', () => {
+    const { status } = filterOptions({ status: null, type: null }, t)
+
+    expect(texts(status)).toEqual([
+      'Select status',
+      'Queried',
+      'In progress',
+      'Submitted',
+      'Updated',
+      'Duly made',
+      'Granted',
+      'Refused',
+      'Withdrawn'
+    ])
+    expect(status.map((option) => option.value)).toEqual([
+      '',
+      'Queried',
+      'InProgress',
+      'Submitted',
+      'Updated',
+      'DulyMade',
+      'Approved',
+      'Rejected',
+      'Withdrawn'
+    ])
+  })
+
+  test('offers a placeholder then every type', () => {
+    const { type } = filterOptions({ status: null, type: null }, t)
+
+    expect(type).toEqual([
+      { value: '', text: 'Select type', selected: true },
+      {
+        value: 'add-overseas-site',
+        text: 'New ORS accreditation',
+        selected: false
+      },
+      { value: 'update-overseas-site', text: 'ORS update', selected: false },
+      {
+        value: 'upgrade-tonnage-band',
+        text: 'Tonnage band upgrade',
+        selected: false
+      }
+    ])
+  })
+
+  test('selects the active filters', () => {
+    const { status, type } = filterOptions(
+      { status: 'DulyMade', type: 'update-overseas-site' },
+      t
+    )
+    const selected = (options) =>
+      options.filter((option) => option.selected).map((option) => option.value)
+
+    expect(selected(status)).toEqual(['DulyMade'])
+    expect(selected(type)).toEqual(['update-overseas-site'])
   })
 })

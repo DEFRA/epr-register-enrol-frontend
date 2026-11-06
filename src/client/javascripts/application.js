@@ -10,6 +10,7 @@ import {
 } from 'govuk-frontend'
 import accessibleAutocomplete from 'accessible-autocomplete'
 
+import './auto-submit.js'
 import './session-notice.js'
 
 // Shared across the client-side validation below (Basel/OECD codes, the

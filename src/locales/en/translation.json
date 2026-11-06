@@ -1029,6 +1029,24 @@
     },
     "manageChangeRequests": {
       "heading": "In year change requests",
+      "filters": {
+        "heading": "Filter by",
+        "status": "Status",
+        "statusPlaceholder": "Select status",
+        "type": "Type",
+        "typePlaceholder": "Select type",
+        "clearFilters": "Clear filters",
+        "statuses": {
+          "Queried": "Queried",
+          "InProgress": "In progress",
+          "Submitted": "Submitted",
+          "Updated": "Updated",
+          "DulyMade": "Duly made",
+          "Approved": "Granted",
+          "Rejected": "Refused",
+          "Withdrawn": "Withdrawn"
+        }
+      },
       "table": {
         "siteName": "Site name",
         "type": "Type",
@@ -1046,8 +1064,7 @@
       },
       "noResults": {
         "title": "There are no matching results",
-        "body": "Improve your search results by removing one or more of your selected filters.",
-        "clearFilters": "Clear filters"
+        "body": "Improve your search results by removing one or more of your selected filters."
       },
       "returnToHome": "Return to home",
       "showing": "Showing {{start}}-{{end}} of {{total}}",

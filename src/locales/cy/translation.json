@@ -1028,6 +1028,24 @@
     },
     "manageChangeRequests": {
       "heading": "[Welsh] In year change requests",
+      "filters": {
+        "heading": "[Welsh] Filter by",
+        "status": "[Welsh] Status",
+        "statusPlaceholder": "[Welsh] Select status",
+        "type": "[Welsh] Type",
+        "typePlaceholder": "[Welsh] Select type",
+        "clearFilters": "[Welsh] Clear filters",
+        "statuses": {
+          "Queried": "[Welsh] Queried",
+          "InProgress": "[Welsh] In progress",
+          "Submitted": "[Welsh] Submitted",
+          "Updated": "[Welsh] Updated",
+          "DulyMade": "[Welsh] Duly made",
+          "Approved": "[Welsh] Granted",
+          "Rejected": "[Welsh] Refused",
+          "Withdrawn": "[Welsh] Withdrawn"
+        }
+      },
       "table": {
         "siteName": "[Welsh] Site name",
         "type": "[Welsh] Type",
@@ -1045,8 +1063,7 @@
       },
       "noResults": {
         "title": "[Welsh] There are no matching results",
-        "body": "[Welsh] Improve your search results by removing one or more of your selected filters.",
-        "clearFilters": "[Welsh] Clear filters"
+        "body": "[Welsh] Improve your search results by removing one or more of your selected filters."
       },
       "returnToHome": "[Welsh] Return to home",
       "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}",
