@@ -86,10 +86,15 @@ function latestExpiry(files) {
   )
 }
 
-function siteRows({ t, entry, item, files }) {
-  const rows = buildSiteDetailRows({ t, entry, requestSite: item }).filter(
-    (row) => !HIDDEN_ROWS.has(row.id)
-  )
+// The location is the header's one-line address: the add-to-accreditation
+// row's would name the country twice for an ORS whose flattened siteAddress
+// already ends with it.
+function siteRows({ t, entry, site, item, files }) {
+  const rows = buildSiteDetailRows({ t, entry, requestSite: item })
+    .filter((row) => !HIDDEN_ROWS.has(row.id))
+    .map((row) =>
+      row.id === 'location' ? { ...row, value: orsAddressLine(site) } : row
+    )
   const bes = files.map((file) => file.filename).join(', ')
   return [
     ...rows,
@@ -140,6 +145,7 @@ function orsDetail({ view, found, application, t, currentLocale }) {
     rows: siteRows({
       t,
       entry,
+      site,
       item: { ...item, effective: item.effective ?? {} },
       files
     }),

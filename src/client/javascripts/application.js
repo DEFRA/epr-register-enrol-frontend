@@ -10,7 +10,7 @@ import {
 } from 'govuk-frontend'
 import accessibleAutocomplete from 'accessible-autocomplete'
 
-import './auto-submit.js'
+import { initAutoSubmit } from './auto-submit.js'
 import './session-notice.js'
 
 // Shared across the client-side validation below (Basel/OECD codes, the
@@ -32,6 +32,11 @@ createAll(ErrorSummary)
 createAll(Radios)
 createAll(SkipLink)
 createAll(Tabs)
+
+// Called here, not on import: webpack treats this app's modules as side
+// effect free, so a bare `import './auto-submit.js'` is dropped from the
+// production bundle.
+initAutoSubmit()
 
 const countrySelect = document.getElementById('country')
 if (countrySelect) {

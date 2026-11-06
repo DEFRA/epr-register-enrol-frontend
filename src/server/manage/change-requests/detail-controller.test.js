@@ -411,6 +411,28 @@ describe('#manageChangeRequestDetailController', () => {
       )
     })
 
+    // Found by RA-697's e2e spec: the backend's ORS records also carry the
+    // flattened siteAddress, which already ends with the country.
+    test('names the country once when the ORS’s flattened address includes it', async () => {
+      const site = {
+        ...ROTTERDAM,
+        siteAddress: 'Industrieweg 44, Netherlands'
+      }
+      const view = {
+        ...CURRENT_VIEW,
+        sites: [accreditationSite(site)]
+      }
+
+      const result = await getPage(ITEM.queried, view)
+
+      expect(valueOf(result, 'row-location-value')).toBe(
+        'Industrieweg 44, Netherlands'
+      )
+      expect(valueOf(result, 'header-location')).toBe(
+        'Industrieweg 44, Netherlands'
+      )
+    })
+
     test('lists the ORS’s current interim sites', async () => {
       const result = await getPage(ITEM.queried)
 

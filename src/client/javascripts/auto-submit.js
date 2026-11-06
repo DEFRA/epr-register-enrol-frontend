@@ -30,5 +30,3 @@ export function initAutoSubmit(doc = document) {
     })
   })
 }
-
-initAutoSubmit()
