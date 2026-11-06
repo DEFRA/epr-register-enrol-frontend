@@ -1103,7 +1103,10 @@ function mergeBpItems(existing, incoming) {
   return merged
 }
 
-const REGISTRATION_STATUS_RE = /^\/api\/v1\/registrations\/([^/]+)\/status$/
+// RA-697: the organisationId query names the organisation, which the stub's
+// statuses already carry.
+const REGISTRATION_STATUS_RE =
+  /^\/api\/v1\/registrations\/([^/?]+)\/status(?:\?.*)?$/
 
 // Rejects like the real API client does for a 404, so callers see the same
 // "no record" error with or without the stub.

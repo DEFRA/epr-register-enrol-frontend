@@ -136,12 +136,33 @@ describe('#operatorController', () => {
       }
     )
 
+    // RA-697: org 50021, registered and never accredited.
+    test.each([true, false])(
+      'lists the registration-only exporter manage page when the flag is on (stub API %s)',
+      async (stubEnabled) => {
+        setConfig({ inYearChangesEnabled: true, stubEnabled })
+
+        const result = await getOperatorPage()
+
+        expect(result).toMatch(
+          linkWithTestId(
+            'href="/manage/50021/aaa000000000000000050021/Plastic"',
+            'manage-registration-only-link'
+          )
+        )
+        expect(result).toContain(
+          'Exporter manage registration for Registration Only Exports Ltd, Plastic (RA-697 registration only)'
+        )
+      }
+    )
+
     test('does not list any manage page when the flag is off', async () => {
       setConfig({ inYearChangesEnabled: false, stubEnabled: true })
 
       const result = await getOperatorPage()
 
       expect(result).not.toContain('/manage/')
+      expect(result).not.toContain('manage-registration-only-link')
     })
   })
 })

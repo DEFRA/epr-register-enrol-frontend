@@ -45,10 +45,36 @@ async function changeRequestsSection(request, application, t, currentLocale) {
   }
 }
 
+// RA-697: a registration-only operator has no accreditation number, expiry
+// date or change requests, so their status is the registration's.
+async function statusSummary(request, context, t, currentLocale) {
+  const { application } = context
+  if (context.isRegistrationOnly) {
+    return {
+      statusTag: applicationStatusTag(context.registrationStatus, t),
+      changeRequests: null
+    }
+  }
+  return {
+    statusTag: applicationStatusTag(application.applicationStatus, t),
+    accreditationNumber: application.accreditationNumber,
+    expiryDate: expiryDate(application.year),
+    changeRequests: await changeRequestsSection(
+      request,
+      application,
+      t,
+      currentLocale
+    )
+  }
+}
+
 export const manageRegistrationAccreditationController = {
   async handler(request, h) {
-    const { application, registration, t, currentLocale, response } =
-      await loadManagePage(request, h)
+    const { context, t, currentLocale, response } = await loadManagePage(
+      request,
+      h,
+      { allowRegistrationOnly: true }
+    )
     if (response) {
       return response
     }
@@ -59,24 +85,14 @@ export const manageRegistrationAccreditationController = {
     return h.view('manage/registration-accreditation/index', {
       pageTitle: heading,
       heading,
-      caption: manageCaption(application, t),
+      caption: manageCaption(context, t),
       // RA-425: back to the Re/Ex material page that links here.
       backLink: reExBackLinkUrl(organisationId, registrationId),
-      isExporter: application.isExporter,
-      siteAddress: application.siteAddress,
-      applicationStatusTag: applicationStatusTag(
-        application.applicationStatus,
-        t
-      ),
-      accreditationNumber: application.accreditationNumber,
-      registrationNumber: registration.registrationNumber,
-      expiryDate: expiryDate(application.year),
-      changeRequests: await changeRequestsSection(
-        request,
-        application,
-        t,
-        currentLocale
-      ),
+      isRegistrationOnly: context.isRegistrationOnly,
+      isExporter: context.isExporter,
+      siteAddress: context.siteAddress,
+      registrationNumber: context.registrationNumber,
+      ...(await statusSummary(request, context, t, currentLocale)),
       overseasSitesUrl: overseasSitesUrl(request.params, currentLocale)
     })
   }

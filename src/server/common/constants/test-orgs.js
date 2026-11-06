@@ -40,6 +40,13 @@ export const NO_CHANGE_REQUESTS_ORG_NAME = 'No Change Requests Ltd'
 export const NO_CHANGE_REQUESTS_REGISTRATION_ID = 'aaa000000000000000050020'
 export const NO_CHANGE_REQUESTS_MATERIAL = 'plastic'
 
+// RA-697: an Approved exporter registration with no accreditation in any year,
+// for the registration-only manage pages. Same material as org 50020.
+export const REGISTRATION_ONLY_ORG_ID = 50021
+export const REGISTRATION_ONLY_ORG_NAME = 'Registration Only Exports Ltd'
+export const REGISTRATION_ONLY_REGISTRATION_ID = 'aaa000000000000000050021'
+export const REGISTRATION_ONLY_MATERIAL = 'plastic'
+
 // The backend dev seed's accreditation application id for the year: "a" for
 // an exporter or "b" for org 50018's reprocessor, the year, then the org id
 // padded to 19 digits (DevExporterAccreditationSeedService.ApplicationIdFor).

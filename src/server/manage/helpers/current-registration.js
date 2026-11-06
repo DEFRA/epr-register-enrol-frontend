@@ -10,9 +10,16 @@ import { APPROVED_STATUS } from '../../common/constants/applicationStatuses.js'
  * registration has no record, or when the call fails; the caller shows the
  * service-problem page.
  */
-export async function fetchApprovedRegistration({ registrationId, logger }) {
+export async function fetchApprovedRegistration({
+  organisationId,
+  registrationId,
+  logger
+}) {
   try {
-    const registration = await getRegistrationStatus(registrationId)
+    const registration = await getRegistrationStatus(
+      registrationId,
+      organisationId
+    )
     if (registration?.status !== APPROVED_STATUS) {
       logger.warn(
         { registrationId, registrationStatus: registration?.status },

@@ -15,7 +15,8 @@ import {
   approvedRegistration,
   makeManageApp,
   mockManageGets,
-  noChangeRequests
+  noChangeRequests,
+  registrationOnlyExporter
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import {
@@ -192,11 +193,15 @@ describe('#manageOverseasSitesController', () => {
       )
     }
 
-    test('when there is no Approved current-year accreditation', async () => {
-      mockManageGets([
-        makeApp({ year: CURRENT_YEAR - 1 }),
-        makeApp({ id: 'app-started', applicationStatus: 'Started' })
-      ])
+    // RA-697: until task 012 shows this page to registration-only exporters.
+    test('for a registration-only exporter', async () => {
+      mockManageGets(
+        [
+          makeApp({ year: CURRENT_YEAR - 1 }),
+          makeApp({ id: 'app-started', applicationStatus: 'Started' })
+        ],
+        registrationOnlyExporter
+      )
 
       expectServiceProblem(await get(PAGE_URL))
     })

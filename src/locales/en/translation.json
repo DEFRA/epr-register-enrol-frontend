@@ -929,6 +929,7 @@
     "manageRegistrationAccreditation": {
       "heading": "Manage your registration and accreditation",
       "applicationStatusLabel": "Application status:",
+      "registrationStatusLabel": "Status:",
       "accreditationNumberLabel": "Accreditation number:",
       "registrationNumberLabel": "Registration number:",
       "expiryDateLabel": "Expiry date:",

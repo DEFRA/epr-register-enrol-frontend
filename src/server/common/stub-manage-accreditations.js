@@ -16,6 +16,9 @@ import {
   NO_CHANGE_REQUESTS_ORG_ID,
   NO_CHANGE_REQUESTS_ORG_NAME,
   NO_CHANGE_REQUESTS_REGISTRATION_ID,
+  REGISTRATION_ONLY_ORG_ID,
+  REGISTRATION_ONLY_ORG_NAME,
+  REGISTRATION_ONLY_REGISTRATION_ID,
   seededApplicationId
 } from './constants/test-orgs.js'
 
@@ -438,38 +441,62 @@ export function manageStubOrgDocs() {
   return cachedOrgDocs.docs
 }
 
+// RA-697: the backend's registration-status fields, as for its
+// RegistrationStatusResponse.
+function approvedExporterRegistration(organisationName, registrationNumber) {
+  return {
+    registrationNumber,
+    status: 'Approved',
+    organisationName,
+    materialType: 'Plastic',
+    glassRecyclingProcess: null,
+    isExporter: true,
+    siteAddress: null
+  }
+}
+
 /**
  * RA-425: what the backend's registration-status endpoint returns for the stub
  * registrations. A registration missing from here has no record (404).
+ * RA-697: org 50021's registration has no accreditation, so it is
+ * registration only.
  */
 export function manageStubRegistrationStatuses() {
   const year = currentYear()
   return {
-    [MANAGE_EXPORTER_REGISTRATION_ID]: {
-      registrationNumber: exporterRegistrationNumber(year),
-      status: 'Approved'
-    },
+    [MANAGE_EXPORTER_REGISTRATION_ID]: approvedExporterRegistration(
+      MANAGE_EXPORTER_ORG_NAME,
+      exporterRegistrationNumber(year)
+    ),
     [MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID]: {
       registrationNumber: reprocessorRegistrationNumber(year),
-      status: 'Approved'
+      status: 'Approved',
+      organisationName: MANAGE_EXPORTER_ORG_NAME,
+      materialType: 'Glass',
+      glassRecyclingProcess: 'glass_re_melt',
+      isExporter: false,
+      siteAddress: 'Unit 18, Furnace Lane, Doncaster, DN4 5HT'
     },
-    [IN_YEAR_CHANGE_REGISTRATION_ID]: {
-      registrationNumber: exporterRegistrationNumber(
-        year,
-        IN_YEAR_CHANGE_ORG_ID
-      ),
-      status: 'Approved'
-    },
-    [NO_CHANGE_REQUESTS_REGISTRATION_ID]: {
-      registrationNumber: exporterRegistrationNumber(
-        year,
-        NO_CHANGE_REQUESTS_ORG_ID
-      ),
-      status: 'Approved'
-    },
+    [IN_YEAR_CHANGE_REGISTRATION_ID]: approvedExporterRegistration(
+      IN_YEAR_CHANGE_ORG_NAME,
+      exporterRegistrationNumber(year, IN_YEAR_CHANGE_ORG_ID)
+    ),
+    [NO_CHANGE_REQUESTS_REGISTRATION_ID]: approvedExporterRegistration(
+      NO_CHANGE_REQUESTS_ORG_NAME,
+      exporterRegistrationNumber(year, NO_CHANGE_REQUESTS_ORG_ID)
+    ),
+    [REGISTRATION_ONLY_REGISTRATION_ID]: approvedExporterRegistration(
+      REGISTRATION_ONLY_ORG_NAME,
+      exporterRegistrationNumber(year, REGISTRATION_ONLY_ORG_ID)
+    ),
     [MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID]: {
       registrationNumber: null,
-      status: 'Created'
+      status: 'Created',
+      organisationName: MANAGE_EXPORTER_ORG_NAME,
+      materialType: 'Wood',
+      glassRecyclingProcess: null,
+      isExporter: false,
+      siteAddress: 'Unit 18, Furnace Lane, Doncaster, DN4 6HT'
     }
   }
 }

@@ -16,6 +16,27 @@ export const approvedRegistration = {
   status: 'Approved'
 }
 
+// RA-697: the registration-status response also names the organisation,
+// material, exporter flag and site address, from which a registration-only
+// operator's pages are built.
+export const registrationOnlyExporter = {
+  ...approvedRegistration,
+  organisationName: 'Reg Only Exports Ltd',
+  materialType: 'Plastic',
+  glassRecyclingProcess: null,
+  isExporter: true,
+  siteAddress: null
+}
+
+export const registrationOnlyReprocessor = {
+  ...registrationOnlyExporter,
+  registrationNumber: 'R27ER0500180002GR',
+  materialType: 'Glass',
+  glassRecyclingProcess: 'glass_re_melt',
+  isExporter: false,
+  siteAddress: 'Unit 9, Furnace Lane, Doncaster, DN4 5HT'
+}
+
 /**
  * A raw application that the /manage pages accept as the current
  * accreditation for MANAGE_REGISTRATION_ID and MANAGE_MATERIAL.

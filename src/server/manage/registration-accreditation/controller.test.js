@@ -17,7 +17,9 @@ import {
   approvedRegistration,
   makeManageApp as makeApp,
   mockManageGets,
-  noChangeRequests
+  noChangeRequests,
+  registrationOnlyExporter,
+  registrationOnlyReprocessor
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import { currentYear, yearSuffix } from '../../common/helpers/currentYear.js'
@@ -28,7 +30,9 @@ import {
   MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
   MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID,
   NO_CHANGE_REQUESTS_ORG_ID,
-  NO_CHANGE_REQUESTS_REGISTRATION_ID
+  NO_CHANGE_REQUESTS_REGISTRATION_ID,
+  REGISTRATION_ONLY_ORG_ID,
+  REGISTRATION_ONLY_REGISTRATION_ID
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
@@ -39,7 +43,7 @@ vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
 const persistentGet = persistentStubApiClient.get
 const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
-const REGISTRATION_STATUS_URL = `/api/v1/registrations/${REGISTRATION_ID}/status`
+const REGISTRATION_STATUS_URL = `/api/v1/registrations/${REGISTRATION_ID}/status?organisationId=${ORG_ID}`
 
 const LIST_URL = `/api/v1/accreditation-applications/${ORG_ID}`
 
@@ -172,14 +176,37 @@ describe('#manageRegistrationAccreditationController', () => {
       )
     }
 
-    test('when there is no Approved current-year accreditation', async () => {
-      mockManageGets([
-        makeApp({ year: CURRENT_YEAR - 1 }),
-        makeApp({ id: 'app-started', applicationStatus: 'Started' })
-      ])
+    // RA-697: an outage never passes for "you have no accreditation".
+    test('when listing applications fails, even for a registration-only operator', async () => {
+      vi.spyOn(apiClient, 'get').mockImplementation(async (url) => {
+        if (url.startsWith('/api/v1/registrations/')) {
+          return registrationOnlyExporter
+        }
+        throw apiError(statusCodes.internalServerError)
+      })
 
       expectServiceProblem(await get(PAGE_URL))
     })
+
+    // The backend names the organisation only once ReEx says it holds the
+    // registration, which nothing else ties to the URL's organisation.
+    test('when there is no accreditation and ReEx did not name the organisation', async () => {
+      mockManageGets([], {
+        ...registrationOnlyExporter,
+        organisationName: null
+      })
+
+      expectServiceProblem(await get(PAGE_URL))
+    })
+
+    test.each(['Created', 'Rejected', 'Cancelled'])(
+      'when there is no accreditation and the registration is %s',
+      async (status) => {
+        mockManageGets([], { ...registrationOnlyExporter, status })
+
+        expectServiceProblem(await get(PAGE_URL))
+      }
+    )
 
     test('when listing applications fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(
@@ -229,12 +256,143 @@ describe('#manageRegistrationAccreditationController', () => {
     })
   })
 
-  test('asks for the status of the registration in the URL', async () => {
+  test('asks for the status of the registration in the URL, naming its organisation', async () => {
     const getSpy = mockManageGets([makeApp()])
 
     await get(PAGE_URL)
 
     expect(getSpy).toHaveBeenCalledWith(REGISTRATION_STATUS_URL)
+  })
+
+  // RA-697: an Approved registration with no Approved current-year
+  // accreditation, whether never applied for, not yet granted or granted only
+  // in an earlier year.
+  describe('registration only', () => {
+    test.each([
+      ['no application at all', []],
+      [
+        'an application not yet granted and one from last year',
+        [
+          makeApp({ id: 'app-started', applicationStatus: 'Started' }),
+          makeApp({ id: 'app-last-year', year: CURRENT_YEAR - 1 })
+        ]
+      ]
+    ])('loads the dashboard with %s', async (_label, apps) => {
+      mockManageGets(apps, registrationOnlyExporter)
+
+      const { statusCode, result } = await get(PAGE_URL)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        /data-testid="page-heading"[^>]*>\s*Manage your registration and accreditation\s*</
+      )
+    })
+
+    describe('for an exporter', () => {
+      let result
+      let getSpy
+
+      beforeEach(async () => {
+        getSpy = mockManageGets([], registrationOnlyExporter)
+        const response = await get(PAGE_URL)
+        expect(response.statusCode).toBe(statusCodes.ok)
+        result = response.result
+      })
+
+      test('captions the page with the organisation, the current year and the material', () => {
+        expect(result).toMatch(
+          /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2027, Plastic\)\s*</
+        )
+      })
+
+      test("shows the registration's status as a green GRANTED tag", () => {
+        expect(result).toMatch(
+          /<p[^>]*>\s*Status:\s*<\/p>\s*<div class="govuk-body" data-testid="registration-status">/
+        )
+        expect(result).toMatch(
+          /class="govuk-tag govuk-tag--green"[^>]*data-testid="registration-status-tag"[^>]*>\s*GRANTED\s*</
+        )
+        expect(result).not.toContain('data-testid="application-status"')
+      })
+
+      test('shows the registration number', () => {
+        expect(result).toMatch(
+          /data-testid="registration-number"[^>]*>\s*R27EX0500180001PL\s*</
+        )
+      })
+
+      test('shows no accreditation number or expiry date', () => {
+        expect(result).not.toContain('data-testid="accreditation-number"')
+        expect(result).not.toContain('data-testid="expiry-date"')
+      })
+
+      test('hides the Manage accreditation card and runs the overseas-sites card the full width', () => {
+        expect(result).not.toContain(
+          'data-testid="task-card-manage-accreditation"'
+        )
+        expect(result).toMatch(
+          /<div class="govuk-grid-column-full app-task-card__column">\s*<div class="app-task-card" data-testid="task-card-manage-overseas-sites">/
+        )
+        expect(result).toMatch(
+          new RegExp(
+            `href="${PAGE_URL}/overseas-sites"[^>]*data-testid="manage-overseas-sites-link"`
+          )
+        )
+      })
+
+      test('shows no site address', () => {
+        expect(result).not.toContain('data-testid="site-address"')
+      })
+
+      // Task 011 adds the registration's change requests.
+      test('leaves out the change requests section without reading them', () => {
+        expect(result).not.toContain('data-testid="change-requests-section"')
+        expect(
+          getSpy.mock.calls.filter(([url]) =>
+            url.startsWith('/api/v1/accreditation-changes/')
+          )
+        ).toEqual([])
+      })
+    })
+
+    // The URL's material must be the registration's, as it must be the
+    // accreditation's for an accredited operator.
+    test('shows the service-problem page for another material', async () => {
+      mockManageGets([], registrationOnlyReprocessor)
+
+      const { statusCode, result } = await get(PAGE_URL)
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="service-problem-heading"')
+    })
+
+    test('shows a reprocessor their site address, a glass caption and no cards', async () => {
+      mockManageGets([], registrationOnlyReprocessor)
+
+      const { statusCode, result } = await get(
+        `/manage/${ORG_ID}/${REGISTRATION_ID}/glass`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2027, Glass - Remelt\)\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="site-address"[^>]*>\s*Unit 9, Furnace Lane, Doncaster, DN4 5HT\s*</
+      )
+      expect(result).not.toContain('app-task-card')
+    })
+
+    test('takes the caption year from the clock', async () => {
+      vi.setSystemTime(new Date(`${CURRENT_YEAR + 1}-01-01T00:00:00Z`))
+      mockManageGets([], registrationOnlyExporter)
+
+      const { result } = await get(PAGE_URL)
+
+      expect(result).toMatch(
+        /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2028, Plastic\)\s*</
+      )
+    })
   })
 
   test('accepts the lowercase material slug Re/Ex links with', async () => {
@@ -715,6 +873,30 @@ describe('#manageRegistrationAccreditationController', () => {
           `data-testid="registration-number"[^>]*>\\s*R${yearSuffix(currentYear())}ER0500180002GR\\s*<`
         )
       )
+    })
+
+    // RA-697: org 50021 has an Approved registration and no accreditation.
+    test('shows the stub registration-only exporter', async () => {
+      const { statusCode, result } = await get(
+        `/manage/${REGISTRATION_ONLY_ORG_ID}/${REGISTRATION_ONLY_REGISTRATION_ID}/Plastic`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="page-caption"[^>]*>\\s*Registration Only Exports Ltd \\(${currentYear()}, Plastic\\)\\s*<`
+        )
+      )
+      expect(result).toMatch(
+        /data-testid="registration-status-tag"[^>]*>\s*GRANTED\s*</
+      )
+      expect(result).toMatch(
+        new RegExp(
+          `data-testid="registration-number"[^>]*>\\s*R${yearSuffix(currentYear())}EX0500210001PL\\s*<`
+        )
+      )
+      expect(result).not.toContain('data-testid="accreditation-number"')
+      expect(result).toContain('data-testid="manage-overseas-sites-link"')
     })
 
     test('shows the stub exporter with no change requests', async () => {

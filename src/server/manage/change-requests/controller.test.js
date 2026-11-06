@@ -22,7 +22,8 @@ import {
   apiError,
   makeManageApp,
   mockManageGets,
-  noChangeRequests
+  noChangeRequests,
+  registrationOnlyExporter
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 
@@ -252,10 +253,11 @@ describe('#manageChangeRequestsController', () => {
       expectServiceProblem(await get(PAGE_URL))
     })
 
-    test('when there is no Approved current-year accreditation', async () => {
+    // RA-697: until task 011 lists a registration-only operator's requests.
+    test('for a registration-only operator', async () => {
       mockManageGets(
         [makeManageApp({ year: CURRENT_YEAR - 1 })],
-        undefined,
+        registrationOnlyExporter,
         CURRENT_VIEW
       )
 

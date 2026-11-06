@@ -928,6 +928,7 @@
     "manageRegistrationAccreditation": {
       "heading": "[Welsh] Manage your registration and accreditation",
       "applicationStatusLabel": "[Welsh] Application status:",
+      "registrationStatusLabel": "[Welsh] Status:",
       "accreditationNumberLabel": "[Welsh] Accreditation number:",
       "registrationNumberLabel": "[Welsh] Registration number:",
       "expiryDateLabel": "[Welsh] Expiry date:",

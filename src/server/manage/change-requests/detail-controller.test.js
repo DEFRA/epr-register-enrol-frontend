@@ -10,7 +10,8 @@ import {
   apiError,
   makeManageApp,
   mockManageGets,
-  noChangeRequests
+  noChangeRequests,
+  registrationOnlyExporter
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 
@@ -319,6 +320,15 @@ describe('#manageChangeRequestDetailController', () => {
           `href="${detailUrl(ITEM.granted)}"[^>]*data-testid="try-again-link"`
         )
       )
+    })
+
+    // RA-697: until task 013 shows a registration-only operator's items.
+    test('shows the service-problem page for a registration-only operator', async () => {
+      mockManageGets([], registrationOnlyExporter, CURRENT_VIEW)
+
+      const { statusCode } = await get(detailUrl(ITEM.granted))
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
     test('shows the service-problem page when the API fails', async () => {
