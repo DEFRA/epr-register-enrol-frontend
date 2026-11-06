@@ -25,8 +25,8 @@ function expiryDate(year) {
 // RA-697: null leaves the section out. Following RA-492's overseas-sites
 // page, an outage of the change requests never takes the dashboard down, and
 // an empty state then would wrongly say nothing is in flight.
-async function changeRequestsSection(request, application, t, currentLocale) {
-  const view = await fetchChangeRequestsView(request, application)
+async function changeRequestsSection(request, context, t, currentLocale) {
+  const view = await fetchChangeRequestsView(request, context)
   if (!view) {
     return null
   }
@@ -45,26 +45,17 @@ async function changeRequestsSection(request, application, t, currentLocale) {
   }
 }
 
-// RA-697: a registration-only operator has no accreditation number, expiry
-// date or change requests, so their status is the registration's.
-async function statusSummary(request, context, t, currentLocale) {
+// RA-697: a registration-only operator has no accreditation number or expiry
+// date, so their status is the registration's.
+function statusSummary(context, t) {
   const { application } = context
   if (context.isRegistrationOnly) {
-    return {
-      statusTag: applicationStatusTag(context.registrationStatus, t),
-      changeRequests: null
-    }
+    return { statusTag: applicationStatusTag(context.registrationStatus, t) }
   }
   return {
     statusTag: applicationStatusTag(application.applicationStatus, t),
     accreditationNumber: application.accreditationNumber,
-    expiryDate: expiryDate(application.year),
-    changeRequests: await changeRequestsSection(
-      request,
-      application,
-      t,
-      currentLocale
-    )
+    expiryDate: expiryDate(application.year)
   }
 }
 
@@ -92,7 +83,13 @@ export const manageRegistrationAccreditationController = {
       isExporter: context.isExporter,
       siteAddress: context.siteAddress,
       registrationNumber: context.registrationNumber,
-      ...(await statusSummary(request, context, t, currentLocale)),
+      ...statusSummary(context, t),
+      changeRequests: await changeRequestsSection(
+        request,
+        context,
+        t,
+        currentLocale
+      ),
       overseasSitesUrl: overseasSitesUrl(request.params, currentLocale)
     })
   }

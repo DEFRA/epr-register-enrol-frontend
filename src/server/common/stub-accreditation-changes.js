@@ -11,6 +11,9 @@
 // granted reprocessor's view lists its requests but no sites. Org 50018's
 // accreditations start with the backend dev seed's requests
 // (stub-change-request-seed.js).
+// RA-697: a registration-only operator's view is read by organisation,
+// registration and material (GET only), with the registration's ORSs as
+// Registered sites; org 50021 starts with the backend dev seed's requests.
 
 import { randomUUID } from 'node:crypto'
 
@@ -19,10 +22,16 @@ import {
   CHANGE_TYPES
 } from './constants/changeRequests.js'
 import { statusCodes } from './constants/status-codes.js'
+import { currentYear } from './helpers/currentYear.js'
 import { hasValue } from './helpers/hasValue.js'
 import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
-import { seededStubChangeRequests } from './stub-change-request-seed.js'
+import {
+  seededStubChangeRequests,
+  seededStubRegistrationChangeRequests
+} from './stub-change-request-seed.js'
 
+const REGISTRATION_RE =
+  /^\/api\/v1\/accreditation-changes\/([^/]+)\/registrations\/([^/]+)\/([^/]+)(\/.*)?$/
 const CHANGES_RE = /^\/api\/v1\/accreditation-changes\/([^/]+)\/([^/]+)(\/.*)?$/
 const LOCKABLE = [
   'country',
@@ -197,9 +206,12 @@ function buildView(orgId, appId, application, store) {
   return {
     organisationId: orgId,
     applicationId: appId,
+    organisationName: application.organisationName ?? null,
     registrationId: application.registrationId,
     materialType: application.materialType,
     year: application.year,
+    accreditationReference: application.accreditationReference ?? null,
+    registrationReference: application.registrationReference ?? null,
     sites: sites.map(siteView),
     activeRequest: store.draft ? requestView(store.draft, sitesById) : null,
     requests: requests.map((r) => requestView(r, sitesById)),
@@ -379,14 +391,60 @@ async function grantedApplication(deps, orgId, appId, method) {
   return application
 }
 
+async function registrationChanges(method, endpoint, deps) {
+  const [, orgId, registrationId, material, rest = ''] =
+    REGISTRATION_RE.exec(endpoint)
+  if (method !== 'get' || rest !== '') {
+    throw stubError(
+      statusCodes.notFound,
+      `No stub for ${method.toUpperCase()} ${endpoint}`
+    )
+  }
+  const registration = await deps.getRegistration(orgId, registrationId)
+  if (
+    !registration ||
+    registration.materialType.toLowerCase() !== material.toLowerCase()
+  ) {
+    throw stubError(statusCodes.notFound, 'Registration not found')
+  }
+  if (registration.status !== 'Approved') {
+    throw stubError(statusCodes.conflict, 'Registration is not Approved')
+  }
+  const year = currentYear()
+  const sites = registration.isExporter ? registration.sites : []
+  const store = stateFor(
+    `${orgId}/registrations/${registrationId}/${registration.materialType}/${year}`,
+    () =>
+      seededStubRegistrationChangeRequests(orgId, registrationId, sites, year)
+  )
+  return buildView(
+    orgId,
+    null,
+    {
+      isExporter: registration.isExporter,
+      overseasSites: { sites },
+      organisationName: registration.organisationName,
+      registrationId,
+      registrationReference: registration.registrationNumber,
+      materialType: registration.materialType,
+      year
+    },
+    store
+  )
+}
+
 /**
  * Handles one accreditation-changes call.
  *
  * @param {object} deps - { getApplication(orgId, appId) -> application or
  *   null, initiateUpload(orgId, appId, body), getUploadStatus(orgId, appId,
- *   fileUploadId) }
+ *   fileUploadId), getRegistration(orgId, registrationId) -> the
+ *   registration status with its registered ORSs (`sites`), or null }
  */
 export async function stubAccreditationChanges(method, endpoint, body, deps) {
+  if (REGISTRATION_RE.test(endpoint)) {
+    return registrationChanges(method, endpoint, deps)
+  }
   const [, orgId, appId, rest = ''] = CHANGES_RE.exec(endpoint)
   const application = await grantedApplication(deps, orgId, appId, method)
   const key = `${orgId}/${appId}`

@@ -11,9 +11,12 @@ import {
   MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
   MANAGE_EXPORTER_REGISTRATION_ID,
   NO_CHANGE_REQUESTS_ORG_ID,
-  NO_CHANGE_REQUESTS_REGISTRATION_ID
+  NO_CHANGE_REQUESTS_REGISTRATION_ID,
+  REGISTRATION_ONLY_ORG_ID,
+  REGISTRATION_ONLY_REGISTRATION_ID
 } from '../../common/constants/test-orgs.js'
 import {
+  MANAGE_ORG_ID as ORG_ID,
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
   MANAGE_MATERIAL as MATERIAL,
   MANAGE_CURRENT_YEAR as CURRENT_YEAR,
@@ -248,17 +251,6 @@ describe('#manageChangeRequestsController', () => {
         [currentApp],
         undefined,
         apiError(statusCodes.internalServerError)
-      )
-
-      expectServiceProblem(await get(PAGE_URL))
-    })
-
-    // RA-697: until task 011 lists a registration-only operator's requests.
-    test('for a registration-only operator', async () => {
-      mockManageGets(
-        [makeManageApp({ year: CURRENT_YEAR - 1 })],
-        registrationOnlyExporter,
-        CURRENT_VIEW
       )
 
       expectServiceProblem(await get(PAGE_URL))
@@ -830,6 +822,119 @@ describe('#manageChangeRequestsController', () => {
         )
       )
     })
+
+    // RA-697 task 011: with no accreditation, the operator can only have ORS
+    // updates.
+    describe('for a registration-only operator', () => {
+      const REGISTRATION_VIEW = {
+        ...CURRENT_VIEW,
+        applicationId: null,
+        accreditationReference: null,
+        sites: CURRENT_VIEW.sites.map((entry) => ({
+          ...entry,
+          accreditationStatus: 'Registered'
+        })),
+        requests: [
+          submittedRequest('r2', '2027-03-01T09:00:00Z', {
+            sites: [
+              orsItem(
+                'item-queried',
+                1,
+                'Bharat Recycling',
+                'update-overseas-site',
+                'Queried'
+              )
+            ]
+          }),
+          submittedRequest('r1', '2027-02-01T09:00:00Z', {
+            sites: [
+              orsItem(
+                'item-granted',
+                2,
+                'Paris Paper',
+                'update-overseas-site',
+                'Approved'
+              )
+            ]
+          })
+        ]
+      }
+
+      async function getRegistrationOnly(query = '') {
+        const getSpy = mockManageGets(
+          [],
+          registrationOnlyExporter,
+          REGISTRATION_VIEW
+        )
+        const response = await get(`${PAGE_URL}${query}`)
+        expect(response.statusCode).toBe(statusCodes.ok)
+        return { result: response.result, getSpy }
+      }
+
+      test('lists the registration’s items, read by organisation, registration and material', async () => {
+        const { result, getSpy } = await getRegistrationOnly()
+
+        expect(rowIds(result)).toEqual(['item-queried', 'item-granted'])
+        expect(row(result, 'item-queried')).toContain('1 Industrial Road')
+        expect(getSpy).toHaveBeenCalledWith(
+          `/api/v1/accreditation-changes/${ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
+        )
+        expect(result).toMatch(
+          /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2027, Plastic\)\s*</
+        )
+        expect(countLine(result)).toBe('Showing 1-2 of 2')
+      })
+
+      test('offers a placeholder and only the ORS update type', async () => {
+        const { result } = await getRegistrationOnly()
+
+        expect(options(result, 'type')).toEqual([
+          { value: '', text: 'Select type', selected: true },
+          { value: 'update-overseas-site', text: 'ORS update', selected: false }
+        ])
+        expect(options(result, 'status')).toHaveLength(9)
+      })
+
+      test('filters by ORS update and status', async () => {
+        const { result } = await getRegistrationOnly(
+          '?status=Approved&type=update-overseas-site'
+        )
+
+        expect(rowIds(result)).toEqual(['item-granted'])
+        expect(selectedValue(result, 'type')).toBe('update-overseas-site')
+      })
+
+      test.each(['add-overseas-site', 'upgrade-tonnage-band'])(
+        'treats type %s like an unknown filter value',
+        async (type) => {
+          const { result } = await getRegistrationOnly(`?type=${type}`)
+
+          expect(rowIds(result)).toEqual(['item-queried', 'item-granted'])
+          expect(selectedValue(result, 'type')).toBe('')
+        }
+      )
+
+      test('shows the no-results message with no change requests', async () => {
+        mockManageGets([], registrationOnlyExporter, noChangeRequests)
+
+        const { statusCode, result } = await get(PAGE_URL)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="no-results-title"')
+      })
+
+      test('shows the service-problem page when the change requests cannot be read', async () => {
+        mockManageGets(
+          [],
+          registrationOnlyExporter,
+          apiError(statusCodes.internalServerError)
+        )
+
+        const { statusCode } = await get(PAGE_URL)
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+      })
+    })
   })
 
   describe('year scoping', () => {
@@ -949,6 +1054,38 @@ describe('#manageChangeRequestsController', () => {
         'Tonnage band upgrade',
         'Tonnage band upgrade'
       ])
+    })
+
+    // RA-697 task 011: org 50021 has a registration and no accreditation.
+    test('lists the seeded registration-only exporter’s ORS updates, with the one type option', async () => {
+      const { statusCode, result } = await get(
+        listUrl(
+          REGISTRATION_ONLY_ORG_ID,
+          REGISTRATION_ONLY_REGISTRATION_ID,
+          'Plastic'
+        )
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(statuses(result)).toEqual([
+        'QUERIED',
+        'SUBMITTED',
+        'DULY MADE',
+        'GRANTED',
+        'REFUSED'
+      ])
+      expect(new Set(cellTexts(result, 'type'))).toEqual(
+        new Set(['ORS update'])
+      )
+      expect(result).toContain('Porto Plasticos Lda')
+      expect(result).toContain('Showing 1-5 of 5')
+      const typeSelect = result.slice(
+        result.indexOf('name="type"'),
+        result.indexOf('</select>', result.indexOf('name="type"'))
+      )
+      expect(
+        [...typeSelect.matchAll(/<option value="([^"]*)"/g)].map((m) => m[1])
+      ).toEqual(['', 'update-overseas-site'])
     })
 
     test('shows the no-results message for the org with no change requests', async () => {

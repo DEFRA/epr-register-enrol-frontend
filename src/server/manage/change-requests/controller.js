@@ -12,6 +12,7 @@ import {
 import {
   buildPagination,
   changeTypeLabel,
+  changeTypesFor,
   filterItems,
   filterOptions,
   flattenItems,
@@ -42,15 +43,16 @@ function toRowView(row, { t, params, currentLocale }) {
 
 export const manageChangeRequestsController = {
   async handler(request, h) {
-    const { application, t, currentLocale, response } = await loadManagePage(
+    const { context, t, currentLocale, response } = await loadManagePage(
       request,
-      h
+      h,
+      { allowRegistrationOnly: true }
     )
     if (response) {
       return response
     }
 
-    const view = await fetchChangeRequestsView(request, application)
+    const view = await fetchChangeRequestsView(request, context)
     if (!view) {
       return serviceProblem(request, h, t)
     }
@@ -58,12 +60,14 @@ export const manageChangeRequestsController = {
     const { params } = request
     const heading = t('pages.manageChangeRequests.heading')
     const listUrl = changeRequestsUrl(params, currentLocale)
-    const filters = readFilters(request.query)
+    const types = changeTypesFor(context)
+    const filters = readFilters(request.query, types)
     const { rows, page, totalPages, totalCount, rangeStart, rangeEnd } =
       paginate(
         filterItems(
           sortItems(flattenItems(view.requests ?? [], view.sites ?? [])),
-          filters
+          filters,
+          types
         ),
         request.query.page
       )
@@ -71,12 +75,12 @@ export const manageChangeRequestsController = {
     return h.view('manage/change-requests/index', {
       pageTitle: heading,
       heading,
-      caption: manageCaption(application, t),
+      caption: manageCaption(context, t),
       backLink: manageUrl(params, currentLocale),
       // RA-425: "home" is the Re/Ex material page.
       homeUrl: reExBackLinkUrl(params.organisationId, params.registrationId),
       listUrl,
-      filterOptions: filterOptions(filters, t),
+      filterOptions: filterOptions(filters, t, types),
       rows: rows.map((row) => toRowView(row, { t, params, currentLocale })),
       // RA-697: the wording copies case management's count line and still
       // needs design or content confirmation.

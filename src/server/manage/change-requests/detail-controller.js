@@ -196,15 +196,13 @@ function tonnageDetail({ found, application, t, currentLocale }) {
 
 export const manageChangeRequestDetailController = {
   async handler(request, h) {
-    const { application, t, currentLocale, response } = await loadManagePage(
-      request,
-      h
-    )
+    const { context, application, t, currentLocale, response } =
+      await loadManagePage(request, h)
     if (response) {
       return response
     }
 
-    const view = await fetchChangeRequestsView(request, application)
+    const view = await fetchChangeRequestsView(request, context)
     if (!view) {
       return serviceProblem(request, h, t)
     }

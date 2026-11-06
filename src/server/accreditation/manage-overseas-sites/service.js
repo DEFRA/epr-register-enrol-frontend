@@ -37,6 +37,18 @@ export const accreditationChangesService = {
     return apiClient.get(base(organisationId, applicationId))
   },
 
+  /**
+   * RA-697: a registration-only operator's view, in the same shape with a
+   * null applicationId and accreditationReference: the registration's
+   * registered ORSs (none for a reprocessor) and its registration-only
+   * requests for the current year. Read only.
+   */
+  getRegistrationView(organisationId, registrationId, materialType) {
+    return apiClient.get(
+      `/api/v1/accreditation-changes/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/${encodeURIComponent(materialType)}`
+    )
+  },
+
   addSite(organisationId, applicationId, siteId) {
     return apiClient.post(`${current(organisationId, applicationId)}/sites`, {
       siteId

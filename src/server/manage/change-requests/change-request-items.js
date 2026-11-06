@@ -161,22 +161,29 @@ export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {
 const FILTER_KEYS = 'pages.manageChangeRequests.filters'
 const TYPE_ORDER = Object.values(CHANGE_TYPES)
 const FILTER_STATUSES = new Set(ITEM_STATUS_ORDER)
-const FILTER_TYPES = new Set(TYPE_ORDER)
+
+/**
+ * RA-697: a registration-only operator, with no accreditation, can only have
+ * ORS updates.
+ */
+export function changeTypesFor({ isRegistrationOnly }) {
+  return isRegistrationOnly ? [CHANGE_TYPES.updateOverseasSite] : TYPE_ORDER
+}
 
 const knownOrNull = (value, known) =>
   typeof value === 'string' && known.has(value) ? value : null
 
 // `?status=` and `?type=` aren't validated by the route, so an unknown value,
 // or the placeholder's empty one, just means no filter.
-export function readFilters(query = {}) {
+export function readFilters(query = {}, types = TYPE_ORDER) {
   return {
     status: knownOrNull(query.status, FILTER_STATUSES),
-    type: knownOrNull(query.type, FILTER_TYPES)
+    type: knownOrNull(query.type, new Set(types))
   }
 }
 
-export function filterItems(rows, filters) {
-  const { status, type } = readFilters(filters)
+export function filterItems(rows, filters, types = TYPE_ORDER) {
+  const { status, type } = readFilters(filters, types)
   return rows.filter(
     (row) =>
       (!status || row.status === status) && (!type || row.changeType === type)
@@ -193,7 +200,7 @@ const optionsFor = (values, selected, placeholder, labelFor) => [
 ]
 
 // Status options are sentence case, as in Figma, not the upper-case tag labels.
-export function filterOptions({ status, type }, t) {
+export function filterOptions({ status, type }, t, types = TYPE_ORDER) {
   return {
     status: optionsFor(
       ITEM_STATUS_ORDER,
@@ -202,7 +209,7 @@ export function filterOptions({ status, type }, t) {
       (value) => t(`${FILTER_KEYS}.statuses.${value}`)
     ),
     type: optionsFor(
-      TYPE_ORDER,
+      types,
       type,
       t(`${FILTER_KEYS}.typePlaceholder`),
       (value) => changeTypeLabel(value, t)

@@ -3,11 +3,15 @@
 // starts with: every item status and type for the exporter, and tonnage band
 // upgrades only for the reprocessor. Same ids, references and dates as the
 // backend's, so the pages read the same in stub mode; keep the two in step.
-// Org 50019 (RA-492's) and org 50020 (the empty states') have none.
+// Org 50019 (RA-492's) and org 50020 (the empty states') have none. Org 50021
+// (registration only) has five registration-only ORS updates on its registered
+// ORSs, one item each and none In progress.
 
 import { CHANGE_TYPES } from './constants/changeRequests.js'
 import {
   MANAGE_EXPORTER_ORG_ID,
+  REGISTRATION_ONLY_ORG_ID,
+  REGISTRATION_ONLY_REGISTRATION_ID,
   seededApplicationId
 } from './constants/test-orgs.js'
 
@@ -70,6 +74,14 @@ const REPROCESSOR_REQUESTS = [
   [TONNAGE, [8, 4], [band('UpTo10000', 'Submitted')]]
 ]
 
+const REGISTRATION_ONLY_REQUESTS = [
+  [UPDATE, [2, 10], [ors('001', 'Rejected')]],
+  [UPDATE, [3, 15], [ors('004', 'Approved', [4, 20])]],
+  [UPDATE, [5, 6], [ors('003', 'DulyMade')]],
+  [UPDATE, [6, 18], [ors('002', 'Queried')]],
+  [UPDATE, [8, 25], [ors('001', 'Submitted')]]
+]
+
 const pad = (value, digits) => String(value).padStart(digits, '0')
 
 // As the backend's FixedId, e.g. 00002026-0000-0001-a000-050018000001.
@@ -77,16 +89,13 @@ function fixedId(year, orgId, side, request, item) {
   return `0000${year}-0000-${pad(item, ID_ITEM_DIGITS)}-${side}000-${pad(orgId, ID_ORG_DIGITS)}${pad(request, ID_REQUEST_DIGITS)}`
 }
 
-function buildRequest(application, side, number, [changeType, created, items]) {
-  const { year } = application
-  const orgId = MANAGE_EXPORTER_ORG_ID
+function buildRequest(target, side, number, [changeType, created, items]) {
+  const { year, orgId } = target
   const on = (date) =>
     date
       ? new Date(Date.UTC(year, date[0] - 1, date[1], 9)).toISOString()
       : null
-  const sitesByOrsId = new Map(
-    (application.overseasSites?.sites ?? []).map((site) => [site.orsId, site])
-  )
+  const sitesByOrsId = new Map(target.sites.map((site) => [site.orsId, site]))
   const seeded = items.map((item, index) => {
     const fields = {
       itemId: fixedId(year, orgId, side, number, index + 1),
@@ -158,7 +167,34 @@ export function seededStubChangeRequests(orgId, appId, application) {
     return []
   }
   const [side, requests] = seeds
+  const target = {
+    year: application.year,
+    orgId: MANAGE_EXPORTER_ORG_ID,
+    sites: application.overseasSites?.sites ?? []
+  }
   return requests.map((request, index) =>
-    buildRequest(application, side, index + 1, request)
+    buildRequest(target, side, index + 1, request)
+  )
+}
+
+/**
+ * RA-697: the seeded registration-only requests for org 50021's registration
+ * in `year`, on its registered ORSs (`sites`), or none for any other.
+ */
+export function seededStubRegistrationChangeRequests(
+  orgId,
+  registrationId,
+  sites,
+  year
+) {
+  if (
+    String(orgId) !== String(REGISTRATION_ONLY_ORG_ID) ||
+    registrationId !== REGISTRATION_ONLY_REGISTRATION_ID
+  ) {
+    return []
+  }
+  const target = { year, orgId: REGISTRATION_ONLY_ORG_ID, sites }
+  return REGISTRATION_ONLY_REQUESTS.map((request, index) =>
+    buildRequest(target, 'a', index + 1, request)
   )
 }

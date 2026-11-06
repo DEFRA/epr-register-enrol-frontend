@@ -344,15 +344,83 @@ describe('#manageRegistrationAccreditationController', () => {
         expect(result).not.toContain('data-testid="site-address"')
       })
 
-      // Task 011 adds the registration's change requests.
-      test('leaves out the change requests section without reading them', () => {
-        expect(result).not.toContain('data-testid="change-requests-section"')
+      // RA-697 task 011: there is no accreditation to read them by.
+      test("reads the registration's change requests by organisation, registration and material", () => {
         expect(
-          getSpy.mock.calls.filter(([url]) =>
-            url.startsWith('/api/v1/accreditation-changes/')
-          )
-        ).toEqual([])
+          getSpy.mock.calls
+            .map(([url]) => url)
+            .filter((url) => url.startsWith('/api/v1/accreditation-changes/'))
+        ).toEqual([
+          `/api/v1/accreditation-changes/${ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
+        ])
       })
+
+      test('shows the change requests empty state, linking to the list', () => {
+        expect(result).toContain('data-testid="change-requests-section"')
+        expect(result).toMatch(
+          new RegExp(
+            `data-testid="no-active-change-requests"[^]*href="${PAGE_URL}/change-requests"[^>]*data-testid="view-change-requests-link"`
+          )
+        )
+      })
+    })
+
+    test('summarises the registration’s active ORS updates', async () => {
+      const ors = (itemId, status) => ({
+        siteId: 1,
+        orsId: '001',
+        siteName: 'Porto Plasticos Lda',
+        itemId,
+        changeType: 'update-overseas-site',
+        status,
+        validFrom: null,
+        withdrawnAt: null
+      })
+      const submitted = (requestId, item) => ({
+        requestId,
+        changeType: 'update-overseas-site',
+        status: 'Submitted',
+        createdAt: '2027-03-01T09:00:00Z',
+        updatedAt: '2027-03-01T09:00:00Z',
+        submittedAt: '2027-03-01T09:00:00Z',
+        submittedBy: null,
+        caseManagementReference: `CR-${requestId}`,
+        sites: [item],
+        tonnageBandUpgrade: null
+      })
+      mockManageGets([], registrationOnlyExporter, {
+        ...noChangeRequests,
+        applicationId: null,
+        requests: [
+          submitted('r2', ors('u2', 'Submitted')),
+          submitted('r1', ors('u1', 'Queried'))
+        ]
+      })
+
+      const { statusCode, result } = await get(PAGE_URL)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        /data-testid="change-requests-summary-status-update-overseas-site"[^>]*>\s*QUERIED\s*</
+      )
+      expect(result).not.toContain(
+        'data-testid="change-requests-summary-row-add-overseas-site"'
+      )
+    })
+
+    test('leaves the section out, and the rest of the page up, when the change requests cannot be read', async () => {
+      mockManageGets(
+        [],
+        registrationOnlyExporter,
+        apiError(statusCodes.internalServerError)
+      )
+
+      const { statusCode, result } = await get(PAGE_URL)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('data-testid="change-requests-section"')
+      expect(result).toContain('data-testid="registration-number"')
+      expect(result).toContain('data-testid="manage-overseas-sites-link"')
     })
 
     // The URL's material must be the registration's, as it must be the
@@ -897,6 +965,12 @@ describe('#manageRegistrationAccreditationController', () => {
       )
       expect(result).not.toContain('data-testid="accreditation-number"')
       expect(result).toContain('data-testid="manage-overseas-sites-link"')
+      const statuses = [
+        ...result.matchAll(
+          /data-testid="change-requests-summary-status-([^"]+)"[^>]*>\s*([^<]+?)\s*</g
+        )
+      ].map(([, type, status]) => [type, status])
+      expect(statuses).toEqual([['update-overseas-site', 'QUERIED']])
     })
 
     test('shows the stub exporter with no change requests', async () => {

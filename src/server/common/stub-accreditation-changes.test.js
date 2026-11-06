@@ -491,3 +491,129 @@ describe('seeded stub change requests (RA-697)', () => {
     expect(view.activeRequest).toBeNull()
   })
 })
+
+// RA-697 task 011: a registration-only operator's change requests, read by
+// organisation, registration and material, with the registration's ORSs as
+// Registered sites. Org 50021 starts with the backend dev seed's.
+describe('registration-only stub change requests (RA-697)', () => {
+  const year = currentYear()
+  const yy = String(year).slice(-2)
+  const registrationUrl = (
+    orgId = 50021,
+    registrationId = 'aaa000000000000000050021',
+    material = 'plastic'
+  ) =>
+    `/api/v1/accreditation-changes/${orgId}/registrations/${registrationId}/${material}`
+  const getView = async (url = registrationUrl()) => {
+    const { persistentStubApiClient: client } =
+      await import('./persistentStubApiClient.js')
+    return client.get(url)
+  }
+
+  test('lists org 50021’s four ORSs as Registered sites, with their interim sites', async () => {
+    const view = await getView()
+
+    expect(view).toMatchObject({
+      organisationId: '50021',
+      applicationId: null,
+      accreditationReference: null,
+      registrationId: 'aaa000000000000000050021',
+      materialType: 'Plastic',
+      year
+    })
+    expect(
+      view.sites.map((s) => [
+        s.siteId,
+        s.orsId,
+        s.accreditationStatus,
+        s.site.siteName,
+        s.site.interimSites.length
+      ])
+    ).toEqual([
+      [1, '001', 'Registered', 'Porto Plasticos Lda', 2],
+      [2, '002', 'Registered', 'Milano Riciclo SpA', 1],
+      [3, '003', 'Registered', 'Penang Polymers Sdn Bhd', 0],
+      [4, '004', 'Registered', 'Jakarta Daur Ulang PT', 0]
+    ])
+    expect(view.sites[0].site).toMatchObject({
+      siteAddress: 'Rua do Porto 21, Porto, Portugal',
+      country: 'Portugal',
+      selected: false
+    })
+  })
+
+  test('has the backend seed’s five ORS updates, one item each, none In progress', async () => {
+    const view = await getView()
+
+    expect(view.requests).toHaveLength(5)
+    expect(view.activeRequest).toBeNull()
+    expect(
+      view.requests.map((r) => [
+        r.changeType,
+        r.status,
+        r.sites.map((s) => [s.orsId, s.status])
+      ])
+    ).toEqual([
+      ['update-overseas-site', 'Submitted', [['001', 'Submitted']]],
+      ['update-overseas-site', 'Submitted', [['002', 'Queried']]],
+      ['update-overseas-site', 'Submitted', [['003', 'DulyMade']]],
+      ['update-overseas-site', 'Submitted', [['004', 'Approved']]],
+      ['update-overseas-site', 'Submitted', [['001', 'Rejected']]]
+    ])
+    const first = view.requests.at(-1)
+    expect(first).toMatchObject({
+      requestId: `0000${year}-0000-0000-a000-050021000001`,
+      createdAt: `${year}-02-10T09:00:00.000Z`,
+      caseManagementReference: `CR${yy}050021A001`
+    })
+    expect(first.sites[0].itemId).toBe(
+      `0000${year}-0000-0001-a000-050021000001`
+    )
+    expect(view.requests[3].sites[0].validFrom).toBe(
+      `${year}-04-20T09:00:00.000Z`
+    )
+  })
+
+  test('marks the sites with an active item pending', async () => {
+    const view = await getView()
+
+    expect(view.sites.map((s) => [s.orsId, s.pendingRequestStatus])).toEqual([
+      ['001', 'Submitted'],
+      ['002', 'Submitted'],
+      ['003', 'Submitted'],
+      ['004', null]
+    ])
+    expect([...view.pendingOrsIds].sort()).toEqual(['001', '002', '003'])
+  })
+
+  test('404 for an unknown registration or another material, 409 for one not Approved', async () => {
+    await expect(
+      getView(registrationUrl(50021, 'no-such-registration'))
+    ).rejects.toMatchObject({ status: 404 })
+    await expect(
+      getView(registrationUrl(50021, undefined, 'glass'))
+    ).rejects.toMatchObject({ status: 404 })
+    await expect(
+      getView(registrationUrl(50018, 'ccc000000000000000050018', 'wood'))
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
+  test('an accredited exporter’s registration has no registration-only requests or ORS records', async () => {
+    const view = await getView(
+      registrationUrl(50020, 'aaa000000000000000050020')
+    )
+
+    expect(view.sites).toEqual([])
+    expect(view.requests).toEqual([])
+  })
+
+  test('writes are not served', async () => {
+    const { persistentStubApiClient: client } =
+      await import('./persistentStubApiClient.js')
+    await expect(
+      client.post(`${registrationUrl()}/requests/current/sites`, {
+        siteId: 1
+      })
+    ).rejects.toMatchObject({ status: 404 })
+  })
+})
