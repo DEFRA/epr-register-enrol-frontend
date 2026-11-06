@@ -314,6 +314,21 @@ describe('#manageOverseasSites (RA-492)', () => {
       )
     })
 
+    // RA-697: an operator-entered ORS's siteAddress already ends with its
+    // country.
+    test('summary: the location row names the request country once', async () => {
+      const view = makeView({
+        active: [requestSite({ effective: { country: 'Germany' } })]
+      })
+      view.sites[1].site.siteAddress = 'Ejbyvvej, Denmark'
+      mockGet(view)
+      const { result } = await server.inject(`${BASE}/add/900182`)
+
+      expect(result).toMatch(
+        /data-testid="row-location-value">\s*Ejbyvvej, Germany\s*</
+      )
+    })
+
     test('summary: a field the operator filled in this request says Change', async () => {
       mockGet(
         makeView({
@@ -625,6 +640,17 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toMatch(/data-testid="charge-total">£656.00/)
       expect(result).toContain(`href="${MANAGE}#registered"`)
       expect(result).toContain(`href="${BASE}/add/900184"`)
+    })
+
+    test('names each site country once in its address line', async () => {
+      const view = makeView()
+      view.sites[1].site.siteAddress = 'Ejbyvvej, Denmark'
+      mockGet(view)
+      const { result } = await server.inject(`${BASE}/requests`)
+
+      expect(result).toMatch(
+        /data-testid="request-site-name-002">[\s\S]*?<span[^>]*>Ejbyvvej, Denmark<\/span>/
+      )
     })
 
     test('Continue with an incomplete site stays on the page and names it', async () => {

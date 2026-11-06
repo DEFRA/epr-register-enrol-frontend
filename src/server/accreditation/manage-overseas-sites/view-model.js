@@ -1,4 +1,5 @@
 import { hasValue } from '../../common/helpers/hasValue.js'
+import { orsAddressLine } from '../../manage/helpers/ors-address.js'
 import {
   addSiteToRequestUrl,
   addToAccreditationUrl,
@@ -29,16 +30,6 @@ export const EDITABLE_FIELDS = {
 /** A translation from this journey's `pages.manageOverseasSites` keys. */
 export function manageSitesText(t, key, params) {
   return t(`pages.manageOverseasSites.${key}`, params)
-}
-
-export function siteAddressLine(site) {
-  const address =
-    typeof site?.siteAddress === 'string'
-      ? site.siteAddress
-      : [site?.addressLine1, site?.addressLine2, site?.townOrCity]
-          .filter(Boolean)
-          .join(', ')
-  return [address, site?.country].filter(Boolean).join(', ')
 }
 
 export function findSite(view, siteId) {
@@ -137,7 +128,10 @@ function siteDetailRows(t, site, effective) {
     fixed('site-name', 'siteName', site.siteName),
     {
       ...answer('country', 'location'),
-      value: siteAddressLine({ ...site, country: effective.country })
+      // RA-697: an operator-entered ORS's siteAddress already ends with its
+      // country, so use the /manage one-line address, with the request's
+      // country, rather than appending a second one.
+      value: orsAddressLine({ ...site, country: effective.country })
     },
     answer('coordinates', 'coordinates'),
     fixed('contact-name', 'contactName', site.contactName),

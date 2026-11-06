@@ -19,6 +19,7 @@ import {
   buildViewData as buildDeclarationViewData,
   validateDeclaration
 } from '../submit-declaration/controller.js'
+import { orsAddressLine } from '../../manage/helpers/ors-address.js'
 import { accreditationChangesService } from './service.js'
 import {
   SUBMITTED,
@@ -26,8 +27,7 @@ import {
   manageSitesText,
   buildSummaryRows,
   findRequestSite,
-  findSite,
-  siteAddressLine
+  findSite
 } from './view-model.js'
 import {
   addToAccreditationUrl,
@@ -283,7 +283,7 @@ function renderRequests(
         siteId: site.siteId,
         orsId: site.orsId,
         siteName: site.siteName,
-        address: siteAddressLine(entry.site),
+        address: orsAddressLine(entry.site),
         viewUrl: addToAccreditationUrl(applicationId, site.siteId)
       }
     }),
