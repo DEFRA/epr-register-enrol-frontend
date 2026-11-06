@@ -1,3 +1,5 @@
+import nunjucks from 'nunjucks'
+
 import {
   ACTIVE_ITEM_STATUSES,
   CHANGE_TYPES,
@@ -132,15 +134,20 @@ export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {
     return `${baseUrl}?${params}`
   }
 
+  // RA-697: passing our own label drops the macro's visually hidden " page",
+  // so screen readers would hear just "Next". Put it back.
+  const { escape } = nunjucks.lib
+  const hiddenPage = escape(t(`${PAGINATION_KEYS}.visuallyHiddenPage`))
+  const linkHtml = (key) =>
+    `${escape(t(`${PAGINATION_KEYS}.${key}`))}<span class="govuk-visually-hidden"> ${hiddenPage}</span>`
+
   return {
     landmarkLabel: t(`${PAGINATION_KEYS}.landmarkLabel`),
     previous:
-      page > 1
-        ? { href: hrefFor(page - 1), text: t(`${PAGINATION_KEYS}.previous`) }
-        : null,
+      page > 1 ? { href: hrefFor(page - 1), html: linkHtml('previous') } : null,
     next:
       page < totalPages
-        ? { href: hrefFor(page + 1), text: t(`${PAGINATION_KEYS}.next`) }
+        ? { href: hrefFor(page + 1), html: linkHtml('next') }
         : null,
     items: Array.from({ length: totalPages }, (_, index) => ({
       number: index + 1,

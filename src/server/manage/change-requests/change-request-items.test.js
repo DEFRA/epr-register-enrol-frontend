@@ -368,11 +368,11 @@ describe('buildPagination', () => {
     )
     expect(pagination.previous).toEqual({
       href: `${BASE_URL}?page=1`,
-      text: 'Previous'
+      html: 'Previous<span class="govuk-visually-hidden"> page</span>'
     })
     expect(pagination.next).toEqual({
       href: `${BASE_URL}?page=3`,
-      text: 'Next'
+      html: 'Next<span class="govuk-visually-hidden"> page</span>'
     })
     expect(pagination.landmarkLabel).toBe('Pagination')
   })

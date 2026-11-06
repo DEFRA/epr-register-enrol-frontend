@@ -1077,6 +1077,7 @@
         "landmarkLabel": "Pagination",
         "previous": "Previous",
         "next": "Next",
+        "visuallyHiddenPage": "page",
         "page": "Page {{number}}"
       },
       "detail": {

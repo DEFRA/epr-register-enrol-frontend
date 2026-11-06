@@ -534,6 +534,17 @@ describe('#manageChangeRequestsController', () => {
       ])
     })
 
+    test('keeps the visually hidden " page" on the Previous and Next links', async () => {
+      const result = await getListPage('?page=2')
+
+      expect(result).toMatch(
+        /rel="prev"[\s\S]*?Previous<span class="govuk-visually-hidden"> page<\/span>/
+      )
+      expect(result).toMatch(
+        /rel="next"[\s\S]*?Next<span class="govuk-visually-hidden"> page<\/span>/
+      )
+    })
+
     test('shows the remaining items on the last page', async () => {
       const result = await getListPage('?page=3')
 
@@ -609,8 +620,12 @@ describe('#manageChangeRequestsController', () => {
       ])
       expect(result).toContain('aria-label="[Welsh] Pagination"')
       expect(result).toContain('aria-label="[Welsh] Page 3"')
-      expect(result).toMatch(/rel="prev"[\s\S]*?\[Welsh\] Previous/)
-      expect(result).toMatch(/rel="next"[\s\S]*?\[Welsh\] Next/)
+      expect(result).toMatch(
+        /rel="prev"[\s\S]*?\[Welsh\] Previous<span class="govuk-visually-hidden"> \[Welsh\] page<\/span>/
+      )
+      expect(result).toMatch(
+        /rel="next"[\s\S]*?\[Welsh\] Next<span class="govuk-visually-hidden"> \[Welsh\] page<\/span>/
+      )
     })
   })
 

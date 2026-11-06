@@ -1076,6 +1076,7 @@
         "landmarkLabel": "[Welsh] Pagination",
         "previous": "[Welsh] Previous",
         "next": "[Welsh] Next",
+        "visuallyHiddenPage": "[Welsh] page",
         "page": "[Welsh] Page {{number}}"
       },
       "detail": {
