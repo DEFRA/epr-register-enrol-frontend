@@ -296,7 +296,7 @@ describe('#manageOverseasSitesController', () => {
         /<h2 class="govuk-heading-m[^"]*">\s*Registered overseas reprocessing sites\s*<\/h2>/
       )
       expect(registered).toContain(
-        'These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for 2027.'
+        'These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for 2027.'
       )
     })
 

@@ -960,7 +960,7 @@
       "registered": {
         "tab": "Registered ({{count}})",
         "heading": "Registered overseas reprocessing sites",
-        "intro": "These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {{year}}.",
+        "intro": "These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for {{year}}.",
         "empty": "You have no registered overseas reprocessing sites for {{year}}."
       },
       "interimDisclosure": "Show interim sites",
