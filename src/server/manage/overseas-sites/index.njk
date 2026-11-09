@@ -26,8 +26,8 @@
 
 {% macro orsList(name, sites) %}
   <h2 class="govuk-heading-m govuk-!-margin-bottom-2">{{ t('pages.manageOverseasSites.' + name + '.heading') }}</h2>
-  <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro', { year: year }) }}</p>
   {% if sites.length %}
+    <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro', { year: year }) }}</p>
     <ul class="govuk-list app-ors-list" data-testid="{{ name }}-sites-list">
       {% for site in sites %}
         <li class="app-ors-list__item" data-testid="{{ name }}-site-row-{{ site.siteId }}">
@@ -51,7 +51,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="govuk-body" data-testid="{{ name }}-sites-empty">{{ t('pages.manageOverseasSites.' + name + '.empty') }}</p>
+    <p class="govuk-body" data-testid="{{ name }}-sites-empty">{{ t('pages.manageOverseasSites.' + name + '.empty', { year: year }) }}</p>
   {% endif %}
 {% endmacro %}
 

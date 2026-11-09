@@ -47,6 +47,13 @@ export const REGISTRATION_ONLY_ORG_NAME = 'Registration Only Exports Ltd'
 export const REGISTRATION_ONLY_REGISTRATION_ID = 'aaa000000000000000050021'
 export const REGISTRATION_ONLY_MATERIAL = 'plastic'
 
+// RA-697: registered with no accreditation and no registered ORSs, for the
+// overseas-sites page's empty Accredited and Registered tabs.
+export const NO_OVERSEAS_SITES_ORG_ID = 50022
+export const NO_OVERSEAS_SITES_ORG_NAME = 'No Overseas Sites Exports Ltd'
+export const NO_OVERSEAS_SITES_REGISTRATION_ID = 'aaa000000000000000050022'
+export const NO_OVERSEAS_SITES_MATERIAL = 'plastic'
+
 // The backend dev seed's accreditation application id for the year: "a" for
 // an exporter or "b" for org 50018's reprocessor, the year, then the org id
 // padded to 19 digits (DevExporterAccreditationSeedService.ApplicationIdFor).

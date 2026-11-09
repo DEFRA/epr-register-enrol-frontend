@@ -156,6 +156,26 @@ describe('#operatorController', () => {
       }
     )
 
+    // RA-697: org 50022, registered with no accreditation and no ORSs.
+    test.each([true, false])(
+      'lists the no-overseas-sites exporter manage page when the flag is on (stub API %s)',
+      async (stubEnabled) => {
+        setConfig({ inYearChangesEnabled: true, stubEnabled })
+
+        const result = await getOperatorPage()
+
+        expect(result).toMatch(
+          linkWithTestId(
+            'href="/manage/50022/aaa000000000000000050022/Plastic"',
+            'manage-no-overseas-sites-link'
+          )
+        )
+        expect(result).toContain(
+          'Exporter manage registration for No Overseas Sites Exports Ltd, Plastic (no accredited or registered sites)'
+        )
+      }
+    )
+
     test('does not list any manage page when the flag is off', async () => {
       setConfig({ inYearChangesEnabled: false, stubEnabled: true })
 

@@ -16,6 +16,9 @@ import {
   NO_CHANGE_REQUESTS_ORG_ID,
   NO_CHANGE_REQUESTS_ORG_NAME,
   NO_CHANGE_REQUESTS_REGISTRATION_ID,
+  NO_OVERSEAS_SITES_ORG_ID,
+  NO_OVERSEAS_SITES_ORG_NAME,
+  NO_OVERSEAS_SITES_REGISTRATION_ID,
   REGISTRATION_ONLY_ORG_ID,
   REGISTRATION_ONLY_ORG_NAME,
   REGISTRATION_ONLY_REGISTRATION_ID,
@@ -597,8 +600,8 @@ function approvedExporterRegistration(organisationName, registrationNumber) {
 /**
  * RA-425: what the backend's registration-status endpoint returns for the stub
  * registrations. A registration missing from here has no record (404).
- * RA-697: org 50021's registration has no accreditation, so it is
- * registration only.
+ * RA-697: orgs 50021's and 50022's registrations have no accreditation, so
+ * they are registration only; 50022's has no registered ORSs either.
  */
 export function manageStubRegistrationStatuses() {
   const year = currentYear()
@@ -627,6 +630,10 @@ export function manageStubRegistrationStatuses() {
     [REGISTRATION_ONLY_REGISTRATION_ID]: approvedExporterRegistration(
       REGISTRATION_ONLY_ORG_NAME,
       exporterRegistrationNumber(year, REGISTRATION_ONLY_ORG_ID)
+    ),
+    [NO_OVERSEAS_SITES_REGISTRATION_ID]: approvedExporterRegistration(
+      NO_OVERSEAS_SITES_ORG_NAME,
+      exporterRegistrationNumber(year, NO_OVERSEAS_SITES_ORG_ID)
     ),
     [MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID]: {
       registrationNumber: null,

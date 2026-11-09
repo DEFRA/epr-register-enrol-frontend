@@ -5,6 +5,8 @@ import {
   MANAGE_EXPORTER_ORG_NAME,
   NO_CHANGE_REQUESTS_ORG_ID,
   NO_CHANGE_REQUESTS_ORG_NAME,
+  NO_OVERSEAS_SITES_ORG_ID,
+  NO_OVERSEAS_SITES_ORG_NAME,
   REGISTRATION_ONLY_ORG_ID,
   REGISTRATION_ONLY_ORG_NAME
 } from './constants/test-orgs.js'
@@ -68,7 +70,9 @@ const NUMBERED_TEST_ORGS = [
   // RA-697: the in-year change request pages' empty states.
   [String(NO_CHANGE_REQUESTS_ORG_ID), NO_CHANGE_REQUESTS_ORG_NAME],
   // RA-697: the registration-only manage pages.
-  [String(REGISTRATION_ONLY_ORG_ID), REGISTRATION_ONLY_ORG_NAME]
+  [String(REGISTRATION_ONLY_ORG_ID), REGISTRATION_ONLY_ORG_NAME],
+  // RA-697: the overseas-sites page's empty tabs.
+  [String(NO_OVERSEAS_SITES_ORG_ID), NO_OVERSEAS_SITES_ORG_NAME]
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).

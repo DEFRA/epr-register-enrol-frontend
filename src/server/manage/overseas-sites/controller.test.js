@@ -24,6 +24,8 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import {
   MANAGE_EXPORTER_ORG_ID,
   MANAGE_EXPORTER_REGISTRATION_ID,
+  NO_OVERSEAS_SITES_ORG_ID,
+  NO_OVERSEAS_SITES_REGISTRATION_ID,
   REGISTRATION_ONLY_ORG_ID,
   REGISTRATION_ONLY_REGISTRATION_ID
 } from '../../common/constants/test-orgs.js'
@@ -417,7 +419,7 @@ describe('#manageOverseasSitesController', () => {
     ['only Registered', [ors(1)], ['registered']],
     ['neither tab', SITES, []]
   ])(
-    'shows the empty message on %s when it has no ORSs',
+    'shows the empty message, naming the year, without the intro, on %s when it has no ORSs',
     async (_case, sites, emptyTabs) => {
       const result = await getPage(
         makeApp({ overseasSites: { sectionStatus: 'Completed', sites } })
@@ -431,9 +433,16 @@ describe('#manageOverseasSitesController', () => {
               `data-testid="${name}-sites-tab"[^>]*>\\s*${label} \\(0\\)\\s*<`
             )
           )
-          expect(tabPanel(result, name)).toContain(emptyTestId)
+          const panel = tabPanel(result, name)
+          expect(panel).toMatch(
+            new RegExp(
+              `${emptyTestId}[^>]*>\\s*You have no ${label.toLowerCase()} overseas reprocessing sites for 2027\\.\\s*<`
+            )
+          )
+          expect(panel).not.toContain('app-ors-list__intro')
         } else {
           expect(result).not.toContain(emptyTestId)
+          expect(tabPanel(result, name)).toContain('app-ors-list__intro')
         }
       }
     }
@@ -516,6 +525,23 @@ describe('#manageOverseasSitesController', () => {
       }
       expect(result).not.toMatch(/add-to-accreditation-|view-request-|<form /)
       expect(result).not.toContain('Leixoes Port Storage')
+    })
+
+    // Org 50022: registered, with no accreditation and no registered ORSs.
+    test('shows both tabs empty for the exporter with no overseas sites', async () => {
+      const { statusCode, result } = await get(
+        `/manage/${NO_OVERSEAS_SITES_ORG_ID}/${NO_OVERSEAS_SITES_REGISTRATION_ID}/Plastic/overseas-sites`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      for (const name of ['accredited', 'registered']) {
+        expect(tabPanel(result, name)).toContain(
+          `data-testid="${name}-sites-empty"`
+        )
+      }
+      expect(result).toMatch(
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(0\)\s*</
+      )
     })
   })
 
