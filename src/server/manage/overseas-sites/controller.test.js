@@ -626,6 +626,9 @@ describe('#manageOverseasSitesController', () => {
       expect(result).toMatch(
         /data-testid="pending-change-banner"[\s\S]*request to add 1 overseas reprocessing site to this accreditation\. You cannot change this site /
       )
+      expect(result).toMatch(
+        /class="govuk-notification-banner app-notification-banner--full-width"[^>]*data-testid="pending-change-banner"/
+      )
       expect(result).not.toContain('data-testid="requests-banner"')
     })
 
