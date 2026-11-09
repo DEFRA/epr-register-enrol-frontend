@@ -154,11 +154,40 @@ describe('flattenItems', () => {
 
   test('still lists an ORS item whose site is no longer on the accreditation, without an address', () => {
     const [row] = flattenItems(
-      [request('r1', { sites: [siteItem('item-9', { siteId: 99 })] })],
+      [
+        request('r1', {
+          sites: [siteItem('item-9', { siteId: 99, orsId: '099' })]
+        })
+      ],
       accreditationSites
     )
 
     expect(row).toMatchObject({ itemId: 'item-9', siteAddress: null })
+  })
+
+  // RA-697: a registration-only item's siteId is its ORS id's integer value,
+  // not the accreditation's key for the same ORS.
+  test('finds a registration-only item’s site by ORS id', () => {
+    const [row] = flattenItems(
+      [
+        request('r1', {
+          sites: [
+            siteItem('item-4', {
+              siteId: 7,
+              orsId: '002',
+              siteName: 'Paris Paper'
+            })
+          ]
+        })
+      ],
+      accreditationSites
+    )
+
+    expect(row).toMatchObject({
+      itemId: 'item-4',
+      siteId: 7,
+      siteAddress: '2 Rue du Port, France'
+    })
   })
 })
 

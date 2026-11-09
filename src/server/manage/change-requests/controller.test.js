@@ -1010,7 +1010,7 @@ describe('#manageChangeRequestsController', () => {
     const statuses = (html) => cellTexts(html, 'status')
 
     // RA-697 task 014: including its registration's registration-only ORS
-    // update on Dragon, the newer of the two Submitted items.
+    // update on Dragon, the newest of the four Refused items.
     test('lists the seeded exporter’s items over two pages, most urgent first', async () => {
       const exporterUrl = listUrl(
         MANAGE_EXPORTER_ORG_ID,
@@ -1026,12 +1026,12 @@ describe('#manageChangeRequestsController', () => {
         'QUERIED',
         'IN PROGRESS',
         'SUBMITTED',
-        'SUBMITTED',
         'UPDATED',
         'DULY MADE',
         'GRANTED',
         'GRANTED',
         'GRANTED',
+        'REFUSED',
         'REFUSED',
         'REFUSED',
         'REFUSED',
@@ -1110,7 +1110,7 @@ describe('#manageChangeRequestsController', () => {
       expect(result).toMatch(
         /data-testid="page-heading"[^>]*>\s*Dragon Recyclers \(004\)\s*</
       )
-      expect(result).toMatch(/data-testid="header-status"[\s\S]*?SUBMITTED/)
+      expect(result).toMatch(/data-testid="header-status"[\s\S]*?REFUSED/)
       expect(result).toContain('Saigon Port Storage')
       expect(result).toContain(`CR${String(currentYear()).slice(-2)}050018A012`)
     })

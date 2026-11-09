@@ -88,11 +88,12 @@ const REGISTRATION_ONLY_REQUESTS = [
 ]
 
 // RA-697 task 014: org 50018's exporter registration's, on Dragon (registered
-// only), keyed by the accreditation's site id and ORS id. Older than Dragon's
-// draft, so it stays In progress. Numbered after the exporter's requests.
-const DRAGON = { siteId: 901807, orsId: '004', siteName: 'Dragon Recyclers' }
+// only). Keyed by the ORS id's integer value, as every registration-only item
+// is, and Refused, as Dragon's draft is its one active item. Numbered after
+// the exporter's requests.
+const DRAGON = { siteId: 4, orsId: '004', siteName: 'Dragon Recyclers' }
 const ACCREDITED_EXPORTER_REGISTRATION_ONLY_REQUESTS = [
-  [UPDATE, '09-15', [ors('004', 'Submitted')]]
+  [UPDATE, '09-15', [ors('004', 'Rejected')]]
 ]
 
 const pad = (value, digits) => String(value).padStart(digits, '0')

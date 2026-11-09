@@ -383,6 +383,70 @@ describe('stubAccreditationChanges merges registration-only requests (RA-697)', 
     expect(view.pendingOrsIds).toEqual(['002'])
   })
 
+  // As the backend: a registration-only item is keyed by its ORS id's integer
+  // value, not the accreditation's site key, so it is matched by ORS id.
+  const orsKeyedItem = (status) => ({
+    siteId: 99,
+    orsId: '002',
+    siteName: 'India site',
+    changeType: 'update-overseas-site',
+    status
+  })
+
+  test('matches a registration-only item keyed by its ORS number to its site by ORS id', async () => {
+    seedRegistrationOnly(registrationKey(), {
+      requestId: 'registration-only',
+      createdAt: `${year}-03-01T09:00:00.000Z`,
+      sites: [orsKeyedItem('Queried')]
+    })
+
+    const view = await get()
+
+    expect(view.sites[1]).toMatchObject({
+      orsId: '002',
+      pendingRequestId: 'registration-only',
+      pendingRequestStatus: 'Submitted'
+    })
+    expect(view.pendingOrsIds).toEqual(['002'])
+    expect(view.requests[0].sites[0]).toMatchObject({
+      siteId: 99,
+      orsId: '002',
+      effective: expect.objectContaining({ country: 'India' })
+    })
+  })
+
+  test('a site a submitted registration-only request holds an active item for cannot be added', async () => {
+    seedRegistrationOnly(registrationKey(), {
+      requestId: 'registration-only',
+      sites: [orsKeyedItem('Submitted')]
+    })
+
+    await expect(
+      stubAccreditationChanges(
+        'post',
+        `${base}/requests/current/sites`,
+        { siteId: 2 },
+        d
+      )
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
+  test('a site whose registration-only item is final can be added', async () => {
+    seedRegistrationOnly(registrationKey(), {
+      requestId: 'registration-only',
+      sites: [orsKeyedItem('Rejected')]
+    })
+
+    const draft = await stubAccreditationChanges(
+      'post',
+      `${base}/requests/current/sites`,
+      { siteId: 2 },
+      d
+    )
+
+    expect(draft.sites[0]).toMatchObject({ siteId: 2, status: 'InProgress' })
+  })
+
   test('a registration-only draft never becomes the active request', async () => {
     seedRegistrationOnly(registrationKey(), {
       requestId: 'registration-draft',
@@ -544,17 +608,19 @@ describe('seeded stub change requests (RA-697)', () => {
         i.status
       )
     )
-    // RA-697 task 014: Dragon also has the registration-only ORS update.
+    // Only one change per ORS can be active, the registration-only ORS
+    // update on Dragon (RA-697 task 014) included.
     expect(
       active
         .filter((i) => i.orsId)
         .map((i) => i.orsId)
         .sort()
-    ).toEqual(['001', '002', '003', '004', '004'])
+    ).toEqual(['001', '002', '003', '004'])
   })
 
   // RA-697 task 014: as the backend's seed, numbered after the exporter's
-  // requests and older than Dragon's draft, so Dragon stays In progress.
+  // requests, keyed by the ORS id's integer value as every registration-only
+  // item is, and Refused, as Dragon's draft is its one active item.
   test("the exporter's registration-only ORS update on Dragon is merged in, 14 items", async () => {
     const view = await changesFor(50018, exporterApp)
 
@@ -570,11 +636,12 @@ describe('seeded stub change requests (RA-697)', () => {
       sites: [
         {
           itemId: `0000${year}-0000-0001-a000-050018000012`,
-          siteId: 901807,
+          siteId: 4,
           orsId: '004',
           siteName: 'Dragon Recyclers',
           changeType: 'update-overseas-site',
-          status: 'Submitted'
+          status: 'Rejected',
+          effective: expect.objectContaining({ country: 'Vietnam' })
         }
       ]
     })

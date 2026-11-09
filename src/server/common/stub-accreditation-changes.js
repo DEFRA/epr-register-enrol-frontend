@@ -25,6 +25,7 @@ import {
   CHANGE_TYPES
 } from './constants/changeRequests.js'
 import { statusCodes } from './constants/status-codes.js'
+import { isItemForSite } from './helpers/changeRequestSite.js'
 import { currentYear } from './helpers/currentYear.js'
 import { hasValue } from './helpers/hasValue.js'
 import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
@@ -122,7 +123,8 @@ function besRequired(site, effective) {
   return !site.isEu && !site.isOecd && effective.conditionsOfExport !== true
 }
 
-function requestSiteView(site, entry) {
+// site is undefined for an item whose site the view doesn't list.
+function requestSiteView(site = {}, entry) {
   const effective = Object.fromEntries(
     LOCKABLE.map((field) => [
       field,
@@ -135,9 +137,9 @@ function requestSiteView(site, entry) {
     missingFields.push('besEvidence')
   }
   return {
-    siteId: site.siteId,
-    orsId: site.orsId,
-    siteName: site.siteName,
+    siteId: entry.siteId,
+    orsId: entry.orsId ?? site.orsId ?? null,
+    siteName: entry.siteName ?? site.siteName,
     answers: entry.answers,
     effective,
     besEvidenceRequired: required,
@@ -152,9 +154,11 @@ function requestSiteView(site, entry) {
   }
 }
 
-function requestView(request, sitesById) {
+const siteFor = (sites, item) => sites.find((site) => isItemForSite(item, site))
+
+function requestView(request, siteList) {
   const sites = request.sites.map((entry) =>
-    requestSiteView(sitesById.get(entry.siteId), entry)
+    requestSiteView(siteFor(siteList, entry), entry)
   )
   return {
     requestId: request.requestId,
@@ -182,7 +186,6 @@ function buildView(orgId, appId, application, store, registrationOnly = null) {
   const sites = application.isExporter
     ? (application.overseasSites?.sites ?? [])
     : []
-  const sitesById = new Map(sites.map((site) => [site.siteId, site]))
   const requests = [
     store.draft,
     ...store.submitted,
@@ -192,13 +195,11 @@ function buildView(orgId, appId, application, store, registrationOnly = null) {
     .filter(Boolean)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const activeSiteItems = requests.flatMap((request) =>
-    request.sites
-      .filter(isActive)
-      .map((item) => ({ request, siteId: item.siteId }))
+    request.sites.filter(isActive).map((item) => ({ request, item }))
   )
   const siteView = (site) => {
-    const pending = activeSiteItems.find(
-      (item) => item.siteId === site.siteId
+    const pending = activeSiteItems.find(({ item }) =>
+      isItemForSite(item, site)
     )?.request
     return {
       siteId: site.siteId,
@@ -221,12 +222,12 @@ function buildView(orgId, appId, application, store, registrationOnly = null) {
     accreditationReference: application.accreditationReference ?? null,
     registrationReference: application.registrationReference ?? null,
     sites: sites.map(siteView),
-    activeRequest: store.draft ? requestView(store.draft, sitesById) : null,
-    requests: requests.map((r) => requestView(r, sitesById)),
+    activeRequest: store.draft ? requestView(store.draft, sites) : null,
+    requests: requests.map((r) => requestView(r, sites)),
     pendingOrsIds: [
       ...new Set(
         activeSiteItems
-          .map((item) => sitesById.get(item.siteId)?.orsId)
+          .map(({ item }) => item.orsId ?? siteFor(sites, item)?.orsId)
           .filter(Boolean)
       )
     ]
@@ -257,10 +258,13 @@ function addSite(ctx) {
     throw stubError(statusCodes.notFound, 'Site not found')
   }
   const listed = ctx.view().sites.find((s) => s.siteId === target.siteId)
-  const awaitingDecision = ctx.store.submitted.some((request) =>
-    request.sites.some(
-      (item) => item.siteId === target.siteId && isActive(item)
-    )
+  // RA-697: only one change per ORS can be active, so a submitted
+  // registration-only request counts too.
+  const awaitingDecision = [
+    ...ctx.store.submitted,
+    ...(registrationStore(ctx.orgId, ctx.application)?.submitted ?? [])
+  ].some((request) =>
+    request.sites.some((item) => isActive(item) && isItemForSite(item, target))
   )
   if (listed.accreditationStatus === 'Accredited' || awaitingDecision) {
     throw stubError(statusCodes.conflict, 'Site cannot be added')

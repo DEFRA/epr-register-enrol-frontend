@@ -5,6 +5,7 @@ import {
   CHANGE_TYPES,
   ITEM_STATUS_ORDER
 } from '../../common/constants/changeRequests.js'
+import { isItemForSite } from '../../common/helpers/changeRequestSite.js'
 import { orsAddressLine } from '../helpers/ors-address.js'
 
 // RA-697: screens read each item's own type and status, never the request's,
@@ -35,11 +36,10 @@ const TONNAGE_ROW_SITE = {
  * because the items don't copy it.
  */
 export function flattenItems(requests, accreditationSites = []) {
-  const sitesById = new Map(
-    accreditationSites.map((entry) => [String(entry.siteId), entry.site])
-  )
   const orsRowSite = (item) => {
-    const site = sitesById.get(String(item.siteId))
+    const site = accreditationSites.find((entry) =>
+      isItemForSite(item, entry)
+    )?.site
     return {
       isTonnage: false,
       siteId: item.siteId,
