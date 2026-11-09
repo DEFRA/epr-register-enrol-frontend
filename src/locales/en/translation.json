@@ -927,7 +927,7 @@
       }
     },
     "manageRegistrationAccreditation": {
-      "heading": "Manage your registration and accreditation",
+      "heading": "Manage registration and accreditation",
       "applicationStatusLabel": "Application status:",
       "registrationStatusLabel": "Status:",
       "accreditationNumberLabel": "Accreditation number:",

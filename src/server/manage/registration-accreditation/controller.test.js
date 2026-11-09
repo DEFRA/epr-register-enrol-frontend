@@ -284,7 +284,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toMatch(
-        /data-testid="page-heading"[^>]*>\s*Manage your registration and accreditation\s*</
+        /data-testid="page-heading"[^>]*>\s*Manage registration and accreditation\s*</
       )
     })
 
@@ -485,7 +485,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the heading with an "orgName (year, material)" caption', () => {
       expect(result).toMatch(
-        /data-testid="page-heading"[^>]*>\s*Manage your registration and accreditation\s*</
+        /data-testid="page-heading"[^>]*>\s*Manage registration and accreditation\s*</
       )
       expect(result).toMatch(
         /data-testid="page-caption"[^>]*>\s*Acme Recycling Ltd \(2027, Plastic\)\s*</
@@ -591,9 +591,7 @@ describe('#manageRegistrationAccreditationController', () => {
     const { statusCode, result } = await get(WELSH_PAGE_URL)
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain(
-      '[Welsh] Manage your registration and accreditation'
-    )
+    expect(result).toContain('[Welsh] Manage registration and accreditation')
     expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Rhag 2027\s*</)
     expect(result).toMatch(
       new RegExp(`href="${MANAGE_REEX_URL}"[^>]*data-testid="back-link"`)
