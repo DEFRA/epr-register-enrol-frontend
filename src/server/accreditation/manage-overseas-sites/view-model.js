@@ -1,3 +1,4 @@
+import { ITEM_STATUSES } from '../../common/constants/changeRequests.js'
 import { hasValue } from '../../common/helpers/hasValue.js'
 import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 import {
@@ -9,9 +10,6 @@ import {
 
 // RA-492: view models for the in-year add-ORS pages, built from the
 // backend's AccreditationChangesView (see accreditationChangesService.js).
-
-export const IN_PROGRESS = 'InProgress'
-export const SUBMITTED = 'Submitted'
 
 // Backend field (lockedFields / missingFields / PATCH body) -> summary row
 // and the step that edits it. Country and coordinates share the location
@@ -57,6 +55,7 @@ export function changeRequestsSummary(view) {
   return {
     pendingRequestStatus: (siteId) =>
       statusBySiteId.get(String(siteId)) ?? null,
+    isInDraftRequest: (siteId) => Boolean(findRequestSite(view, siteId)),
     readyForSubmissionCount: view.activeRequest?.sites?.length ?? 0
   }
 }
@@ -69,18 +68,27 @@ export function changeRequestsSummary(view) {
  * RA-697: with no accreditation (a null applicationId, for registration only)
  * there is nothing to add the ORS to, and RA-492's View link has no
  * registration-only page yet, so neither link; the tag still follows the data.
+ * View is also left out for an ORS In progress in a draft other than the
+ * accreditation's own (a registration-only one), which this journey can't
+ * open.
  */
-export function registeredSiteActions(applicationId, siteId, status) {
+export function registeredSiteActions(
+  applicationId,
+  siteId,
+  status,
+  isInDraftRequest
+) {
   const hasAccreditation = Boolean(applicationId)
   return {
-    pending: status === SUBMITTED,
-    inProgress: status === IN_PROGRESS,
+    pending: status === ITEM_STATUSES.submitted,
+    inProgress: status === ITEM_STATUSES.inProgress,
     addUrl: hasAccreditation
       ? addSiteToRequestUrl(applicationId, siteId)
       : null,
-    viewUrl: hasAccreditation
-      ? addToAccreditationUrl(applicationId, siteId)
-      : null
+    viewUrl:
+      hasAccreditation && isInDraftRequest
+        ? addToAccreditationUrl(applicationId, siteId)
+        : null
   }
 }
 

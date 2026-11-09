@@ -260,14 +260,21 @@ function addSite(ctx) {
     throw stubError(statusCodes.notFound, 'Site not found')
   }
   const listed = ctx.view().sites.find((s) => s.siteId === target.siteId)
-  // RA-697: only one change per ORS can be active, so a submitted
-  // registration-only request counts too.
+  // RA-697: only one change per ORS can be active, so a registration-only
+  // request counts too, its draft included: that draft is never this
+  // accreditation's own, so the site can't join it here.
+  const registrationOnly = registrationStore(ctx.orgId, ctx.application)
   const awaitingDecision = [
     ...ctx.store.submitted,
-    ...(registrationStore(ctx.orgId, ctx.application)?.submitted ?? [])
-  ].some((request) =>
-    request.sites.some((item) => isActive(item) && isItemForSite(item, target))
-  )
+    ...(registrationOnly?.submitted ?? []),
+    registrationOnly?.draft
+  ]
+    .filter(Boolean)
+    .some((request) =>
+      request.sites.some(
+        (item) => isActive(item) && isItemForSite(item, target)
+      )
+    )
   if (listed.accreditationStatus === 'Accredited' || awaitingDecision) {
     throw stubError(statusCodes.conflict, 'Site cannot be added')
   }

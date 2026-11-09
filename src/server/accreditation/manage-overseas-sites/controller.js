@@ -5,7 +5,10 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
-import { CHANGE_TYPES } from '../../common/constants/changeRequests.js'
+import {
+  CHANGE_TYPES,
+  ITEM_STATUSES
+} from '../../common/constants/changeRequests.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
@@ -22,7 +25,6 @@ import {
 import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 import { accreditationChangesService } from '../../common/helpers/accreditationChangesService.js'
 import {
-  SUBMITTED,
   buildMissingFieldErrors,
   manageSitesText,
   buildSummaryRows,
@@ -98,7 +100,11 @@ export async function redirectToManageSites(request, h, view) {
 export function resolveDraftSite(view, siteId) {
   const entry = findSite(view, siteId)
   const requestSite = findRequestSite(view, siteId)
-  if (!entry || !requestSite || entry.pendingRequestStatus === SUBMITTED) {
+  if (
+    !entry ||
+    !requestSite ||
+    entry.pendingRequestStatus === ITEM_STATUSES.submitted
+  ) {
     return null
   }
   return { entry, requestSite }
@@ -431,7 +437,7 @@ export const paymentGetController = {
     const view = await loadView(request)
     const submitted = view.requests.find(
       (changeRequest) =>
-        changeRequest.status === SUBMITTED &&
+        changeRequest.status === ITEM_STATUSES.submitted &&
         changeRequest.changeType === CHANGE_TYPES.addOverseasSite
     )
     if (!submitted) {

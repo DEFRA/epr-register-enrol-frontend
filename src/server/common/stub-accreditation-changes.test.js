@@ -431,6 +431,23 @@ describe('stubAccreditationChanges merges registration-only requests (RA-697)', 
     ).rejects.toMatchObject({ status: 409 })
   })
 
+  test('a site in a registration-only draft cannot be added', async () => {
+    seedRegistrationOnly(registrationKey(), {
+      requestId: 'registration-draft',
+      status: 'InProgress',
+      sites: [orsKeyedItem('InProgress')]
+    })
+
+    await expect(
+      stubAccreditationChanges(
+        'post',
+        `${base}/requests/current/sites`,
+        { siteId: 2 },
+        d
+      )
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
   test('a site whose registration-only item is final can be added', async () => {
     seedRegistrationOnly(registrationKey(), {
       requestId: 'registration-only',
@@ -448,6 +465,20 @@ describe('stubAccreditationChanges merges registration-only requests (RA-697)', 
   })
 
   test('a registration-only draft never becomes the active request', async () => {
+    // A second registered ORS, as the draft holds the first.
+    d = deps(
+      application({
+        registrationId,
+        materialType: 'Plastic',
+        year,
+        overseasSites: {
+          sites: [
+            ...application().overseasSites.sites,
+            { siteId: 3, orsId: '003', selected: false, country: 'France' }
+          ]
+        }
+      })
+    )
     seedRegistrationOnly(registrationKey(), {
       requestId: 'registration-draft',
       status: 'InProgress',
@@ -460,7 +491,7 @@ describe('stubAccreditationChanges merges registration-only requests (RA-697)', 
     const draft = await stubAccreditationChanges(
       'post',
       `${base}/requests/current/sites`,
-      { siteId: 2 },
+      { siteId: 3 },
       d
     )
     expect(draft.requestId).not.toBe('registration-draft')

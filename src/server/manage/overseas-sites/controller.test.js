@@ -607,6 +607,19 @@ describe('#manageOverseasSitesController', () => {
       expect(result).toContain(REQUESTS_URL)
     })
 
+    // RA-697: e.g. a registration-only draft, which the accreditation's
+    // journey can't open, so there's nothing to View.
+    test('a site in progress in another draft shows In progress, with no View or Add to accreditation', async () => {
+      const { result } = await getWithChanges(changes({ 4: 'InProgress' }))
+      const registered = tabPanel(result, 'registered')
+
+      expect(registered).toMatch(
+        /data-testid="site-status-tag-4"[^>]*>\s*In progress\s*</
+      )
+      expect(registered).not.toContain('view-request-4')
+      expect(registered).not.toContain('add-to-accreditation-4')
+    })
+
     test('AC09: a site in a submitted request stays on the Registered tab as Pending, with no action, and the pending banner', async () => {
       const { result } = await getWithChanges(changes({ 5: 'Submitted' }))
       const registered = tabPanel(result, 'registered')

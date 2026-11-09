@@ -39,7 +39,12 @@ function registeredSiteView(site, applicationId, changeRequests) {
   const status = changeRequests.pendingRequestStatus(site.siteId)
   return {
     ...view,
-    ...registeredSiteActions(applicationId, site.siteId, status)
+    ...registeredSiteActions(
+      applicationId,
+      site.siteId,
+      status,
+      changeRequests.isInDraftRequest(site.siteId)
+    )
   }
 }
 
