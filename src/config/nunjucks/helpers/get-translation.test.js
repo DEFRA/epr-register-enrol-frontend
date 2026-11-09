@@ -72,25 +72,36 @@ describe('#getTranslator', () => {
 
   // docs/i18n.md pluralisation, on a key with `one` / `other` forms.
   test.each([
-    [1, 'You currently have 1 request ready for submission.'],
-    [2, 'You currently have 2 requests ready for submission.'],
-    [0, 'You currently have 0 requests ready for submission.']
+    [
+      1,
+      'You have a change pending. Your regulator is reviewing your request to add 1 overseas reprocessing site to this accreditation. You cannot change this site until your regulator has made a decision.'
+    ],
+    [
+      2,
+      'You have a change pending. Your regulator is reviewing your request to add 2 overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision.'
+    ],
+    [
+      0,
+      'You have a change pending. Your regulator is reviewing your request to add 0 overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision.'
+    ]
   ])('takes the plural form for count %s', (count, expected) => {
-    expect(t('pages.manageOverseasSites.requestsBanner.body', { count })).toBe(
+    expect(t('pages.manageOverseasSites.pendingBanner.body', { count })).toBe(
       expected
     )
   })
 
   test('Welsh falls back to the other form for a category it has no key for', () => {
     expect(
-      getTranslator('cy')('pages.manageOverseasSites.requestsBanner.body', {
+      getTranslator('cy')('pages.manageOverseasSites.pendingBanner.body', {
         count: 2
       })
-    ).toBe('[Welsh] You currently have 2 requests ready for submission.')
+    ).toBe(
+      '[Welsh] You have a change pending. Your regulator is reviewing your request to add 2 overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision.'
+    )
   })
 
   test('without a count, a plural key is returned unchanged', () => {
-    expect(t('pages.manageOverseasSites.requestsBanner.body')).toEqual(
+    expect(t('pages.manageOverseasSites.pendingBanner.body')).toEqual(
       expect.objectContaining({ one: expect.any(String) })
     )
   })

@@ -452,8 +452,10 @@ describe('#manageChangeRequestDetailController', () => {
 
       const result = await getPage(ITEM.queried, view)
 
-      expect(valueOf(result, 'interim-sites-heading')).toBe('Interim sites (0)')
-      expect(valueOf(result, 'no-interim-sites')).toBe('None')
+      expect(valueOf(result, 'interim-sites-heading')).toBe('Interim sites')
+      expect(valueOf(result, 'no-interim-sites')).toBe(
+        'No interim sites have been added.'
+      )
     })
 
     test('has no actions: no buttons, forms, or Change, Remove or Add links', async () => {

@@ -63,7 +63,7 @@
 
   {{ readOnlySummary(rows, 'site-summary') }}
 
-  <h2 class="govuk-heading-m govuk-!-margin-top-8" data-testid="interim-sites-heading">{{ t('pages.manageChangeRequests.detail.interimSites', { count: interimSites.length }) }}</h2>
+  <h2 class="govuk-heading-m govuk-!-margin-top-8" data-testid="interim-sites-heading">{% if interimSites.length %}{{ t('pages.manageChangeRequests.detail.interimSites', { count: interimSites.length }) }}{% else %}{{ t('pages.manageChangeRequests.detail.interimSitesNone') }}{% endif %}</h2>
   {% if interimSites.length %}
     <ul class="govuk-list app-detail-interim-list" data-testid="interim-sites">
       {% for interimSite in interimSites %}

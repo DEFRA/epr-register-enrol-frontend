@@ -966,12 +966,12 @@
       "interimDisclosure": "Show interim sites",
       "returnToHome": "Return to home",
       "requestsBanner": {
-        "title": "Accreditation requests",
+        "title": "In year change request",
         "body": {
-          "one": "You currently have 1 request ready for submission.",
-          "other": "You currently have {{count}} requests ready for submission."
+          "one": "You currently have 1 change request ready for submission.",
+          "other": "You currently have {{count}} change requests ready for submission."
         },
-        "link": "View requests"
+        "link": "View change request"
       },
       "pendingBanner": {
         "title": "Change pending",
@@ -1092,7 +1092,8 @@
         "notProvided": "Not provided",
         "notSubmitted": "Not submitted",
         "interimSites": "Interim sites ({{count}})",
-        "noInterimSites": "None",
+        "interimSitesNone": "Interim sites",
+        "noInterimSites": "No interim sites have been added.",
         "requestDetails": {
           "heading": "Request details",
           "type": "Type",

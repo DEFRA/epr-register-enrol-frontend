@@ -605,7 +605,7 @@ describe('#manageOverseasSitesController', () => {
       expect(registered).not.toContain('add-to-accreditation-4')
       expect(registered).toContain('data-testid="add-to-accreditation-5"')
       expect(result).toMatch(
-        /data-testid="requests-banner"[\s\S]*You currently have 1 request ready for submission\.[\s\S]*href="\/accreditation\/manage-overseas-sites\/app-current\/requests" data-testid="view-requests-link"/
+        /data-testid="requests-banner"[\s\S]*In year change request[\s\S]*You currently have 1 change request ready for submission\.[\s\S]*href="\/accreditation\/manage-overseas-sites\/app-current\/requests" data-testid="view-requests-link">View change request</
       )
       expect(result).toContain(REQUESTS_URL)
     })
@@ -638,7 +638,7 @@ describe('#manageOverseasSitesController', () => {
       )
 
       expect(result).toContain(
-        'You currently have 2 requests ready for submission.'
+        'You currently have 2 change requests ready for submission.'
       )
       expect(result).toContain(
         'request to add 2 overseas reprocessing sites to this accreditation. You cannot change these sites '
