@@ -136,10 +136,12 @@ export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {
 
   // RA-697: passing our own label drops the macro's visually hidden " page",
   // so screen readers would hear just "Next". Put it back.
-  const { escape } = nunjucks.lib
-  const hiddenPage = escape(t(`${PAGINATION_KEYS}.visuallyHiddenPage`))
-  const linkHtml = (key) =>
-    `${escape(t(`${PAGINATION_KEYS}.${key}`))}<span class="govuk-visually-hidden"> ${hiddenPage}</span>`
+  const escapeHtml = nunjucks.lib.escape
+  const hiddenPage = escapeHtml(t(`${PAGINATION_KEYS}.visuallyHiddenPage`))
+  const linkHtml = (key) => {
+    const label = escapeHtml(t(`${PAGINATION_KEYS}.${key}`))
+    return `${label}<span class="govuk-visually-hidden"> ${hiddenPage}</span>`
+  }
 
   return {
     landmarkLabel: t(`${PAGINATION_KEYS}.landmarkLabel`),

@@ -104,6 +104,13 @@ const sameMaterial = (a, b) =>
   typeof b === 'string' &&
   a.toLowerCase() === b.toLowerCase()
 
+// Throws a 404 for a reprocessor when the page is for exporters only.
+function assertExporterIfRequired(exportersOnly, operator) {
+  if (exportersOnly && !operator.isExporter) {
+    throw Boom.notFound()
+  }
+}
+
 /**
  * With exportersOnly, a reprocessor's accreditation is a 404 whatever state
  * its registration is in: the page doesn't exist for them, so that answer
@@ -150,8 +157,8 @@ export async function loadManagePage(
     })
   ])
   const application = accreditation.application ?? null
-  if (exportersOnly && application && !application.isExporter) {
-    throw Boom.notFound()
+  if (application) {
+    assertExporterIfRequired(exportersOnly, application)
   }
   if (accreditation.failed || !registration) {
     return { response: serviceProblem(request, h, t) }
@@ -179,9 +186,7 @@ export async function loadManagePage(
   }
   // As for an accredited reprocessor; once the registration is known to be
   // the URL's, since only then is this registration only.
-  if (exportersOnly && !registration.isExporter) {
-    throw Boom.notFound()
-  }
+  assertExporterIfRequired(exportersOnly, registration)
 
   return {
     context: registrationOnlyContext(registration),

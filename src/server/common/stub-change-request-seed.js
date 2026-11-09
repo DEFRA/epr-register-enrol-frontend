@@ -10,6 +10,7 @@
 // merges in.
 
 import { CHANGE_TYPES } from './constants/changeRequests.js'
+import { yearSuffix } from './helpers/currentYear.js'
 import {
   MANAGE_EXPORTER_ORG_ID,
   MANAGE_EXPORTER_REGISTRATION_ID,
@@ -25,6 +26,7 @@ const {
 } = CHANGE_TYPES
 
 const SUBMITTED_HOURS_AFTER_CREATION = 2
+const MS_PER_HOUR = 3_600_000
 const ID_ORG_DIGITS = 6
 const ID_REQUEST_DIGITS = 6
 const ID_ITEM_DIGITS = 4
@@ -50,39 +52,39 @@ const band = (requestedBand, status, validFrom = null) => ({
   withdrawnAt: null
 })
 
-// [changeType, [month, day] created, items], oldest first. Dates are
-// [month, day] in the accreditation's year. RA-697: Dragon's withdrawn New ORS
+// [changeType, 'MM-DD' created, items], oldest first. Dates are 'MM-DD' in
+// the accreditation's year, at 09:00 UTC. RA-697: Dragon's withdrawn New ORS
 // accreditation has no validFrom, as its site is registered only.
 const EXPORTER_REQUESTS = [
   [
     UPDATE,
-    [2, 3],
-    [ors('001', 'Approved', [3, 2]), ors('002', 'Approved', [3, 2])]
+    '02-03',
+    [ors('001', 'Approved', '03-02'), ors('002', 'Approved', '03-02')]
   ],
-  [ADD, [2, 20], [ors('004', 'Rejected')]],
-  [TONNAGE, [3, 10], [band('UpTo5000', 'Approved', [4, 1])]],
-  [ADD, [4, 6], [ors('004', 'Withdrawn', null, [6, 15])]],
-  [UPDATE, [5, 12], [ors('003', 'Rejected')]],
-  [UPDATE, [6, 2], [ors('001', 'Withdrawn', [6, 22], [7, 10])]],
-  [TONNAGE, [6, 25], [band('Over10000', 'Rejected')]],
-  [UPDATE, [7, 14], [ors('001', 'Queried'), ors('002', 'Submitted')]],
-  [UPDATE, [8, 20], [ors('003', 'Updated')]],
-  [TONNAGE, [9, 8], [band('UpTo10000', 'DulyMade')]],
-  [ADD, [10, 1], [ors('004', 'InProgress')]]
+  [ADD, '02-20', [ors('004', 'Rejected')]],
+  [TONNAGE, '03-10', [band('UpTo5000', 'Approved', '04-01')]],
+  [ADD, '04-06', [ors('004', 'Withdrawn', null, '06-15')]],
+  [UPDATE, '05-12', [ors('003', 'Rejected')]],
+  [UPDATE, '06-02', [ors('001', 'Withdrawn', '06-22', '07-10')]],
+  [TONNAGE, '06-25', [band('Over10000', 'Rejected')]],
+  [UPDATE, '07-14', [ors('001', 'Queried'), ors('002', 'Submitted')]],
+  [UPDATE, '08-20', [ors('003', 'Updated')]],
+  [TONNAGE, '09-08', [band('UpTo10000', 'DulyMade')]],
+  [ADD, '10-01', [ors('004', 'InProgress')]]
 ]
 
 const REPROCESSOR_REQUESTS = [
-  [TONNAGE, [3, 3], [band('UpTo5000', 'Approved', [4, 1])]],
-  [TONNAGE, [5, 19], [band('Over10000', 'Rejected')]],
-  [TONNAGE, [8, 4], [band('UpTo10000', 'Submitted')]]
+  [TONNAGE, '03-03', [band('UpTo5000', 'Approved', '04-01')]],
+  [TONNAGE, '05-19', [band('Over10000', 'Rejected')]],
+  [TONNAGE, '08-04', [band('UpTo10000', 'Submitted')]]
 ]
 
 const REGISTRATION_ONLY_REQUESTS = [
-  [UPDATE, [2, 10], [ors('001', 'Rejected')]],
-  [UPDATE, [3, 15], [ors('004', 'Approved', [4, 20])]],
-  [UPDATE, [5, 6], [ors('003', 'DulyMade')]],
-  [UPDATE, [6, 18], [ors('002', 'Queried')]],
-  [UPDATE, [8, 25], [ors('001', 'Submitted')]]
+  [UPDATE, '02-10', [ors('001', 'Rejected')]],
+  [UPDATE, '03-15', [ors('004', 'Approved', '04-20')]],
+  [UPDATE, '05-06', [ors('003', 'DulyMade')]],
+  [UPDATE, '06-18', [ors('002', 'Queried')]],
+  [UPDATE, '08-25', [ors('001', 'Submitted')]]
 ]
 
 // RA-697 task 014: org 50018's exporter registration's, on Dragon (registered
@@ -90,7 +92,7 @@ const REGISTRATION_ONLY_REQUESTS = [
 // draft, so it stays In progress. Numbered after the exporter's requests.
 const DRAGON = { siteId: 901807, orsId: '004', siteName: 'Dragon Recyclers' }
 const ACCREDITED_EXPORTER_REGISTRATION_ONLY_REQUESTS = [
-  [UPDATE, [9, 15], [ors('004', 'Submitted')]]
+  [UPDATE, '09-15', [ors('004', 'Submitted')]]
 ]
 
 const pad = (value, digits) => String(value).padStart(digits, '0')
@@ -103,9 +105,7 @@ function fixedId(year, orgId, side, request, item) {
 function buildRequest(target, side, number, [changeType, created, items]) {
   const { year, orgId } = target
   const on = (date) =>
-    date
-      ? new Date(Date.UTC(year, date[0] - 1, date[1], 9)).toISOString()
-      : null
+    date ? new Date(`${year}-${date}T09:00:00Z`).toISOString() : null
   const sitesByOrsId = new Map(target.sites.map((site) => [site.orsId, site]))
   const seeded = items.map((item, index) => {
     const fields = {
@@ -131,14 +131,14 @@ function buildRequest(target, side, number, [changeType, created, items]) {
   const submittedAt = draft
     ? null
     : new Date(
-        Date.parse(createdAt) + SUBMITTED_HOURS_AFTER_CREATION * 3_600_000
+        Date.parse(createdAt) + SUBMITTED_HOURS_AFTER_CREATION * MS_PER_HOUR
       ).toISOString()
   const updatedAt = [
     submittedAt,
     ...seeded.flatMap((item) => [item.validFrom, item.withdrawnAt])
   ]
     .filter(Boolean)
-    .sort()
+    .sort((a, b) => a.localeCompare(b))
     .at(-1)
   return {
     requestId: fixedId(year, orgId, side, number, 0),
@@ -150,7 +150,7 @@ function buildRequest(target, side, number, [changeType, created, items]) {
     submittedBy: draft ? null : SUBMITTER,
     caseManagementReference: draft
       ? null
-      : `CR${String(year).slice(-2)}${pad(orgId, ID_ORG_DIGITS)}${side.toUpperCase()}${pad(number, REFERENCE_REQUEST_DIGITS)}`,
+      : `CR${yearSuffix(year)}${pad(orgId, ID_ORG_DIGITS)}${side.toUpperCase()}${pad(number, REFERENCE_REQUEST_DIGITS)}`,
     sites: seeded.filter((item) => item.siteId),
     tonnageBandUpgrade: seeded.find((item) => item.requestedBand) ?? null
   }
@@ -203,10 +203,19 @@ export function seededStubRegistrationChangeRequests(
     String(orgId) === String(MANAGE_EXPORTER_ORG_ID) &&
     registrationId === MANAGE_EXPORTER_REGISTRATION_ID
   ) {
-    const target = { year, orgId: MANAGE_EXPORTER_ORG_ID, sites: [DRAGON] }
+    const exporterTarget = {
+      year,
+      orgId: MANAGE_EXPORTER_ORG_ID,
+      sites: [DRAGON]
+    }
     return ACCREDITED_EXPORTER_REGISTRATION_ONLY_REQUESTS.map(
       (request, index) =>
-        buildRequest(target, 'a', EXPORTER_REQUESTS.length + index + 1, request)
+        buildRequest(
+          exporterTarget,
+          'a',
+          EXPORTER_REQUESTS.length + index + 1,
+          request
+        )
     )
   }
   if (

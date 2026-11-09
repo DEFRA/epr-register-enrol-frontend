@@ -418,10 +418,7 @@ async function registrationChanges(method, endpoint, deps) {
     )
   }
   const registration = await deps.getRegistration(orgId, registrationId)
-  if (
-    !registration ||
-    registration.materialType.toLowerCase() !== material.toLowerCase()
-  ) {
+  if (registration?.materialType.toLowerCase() !== material.toLowerCase()) {
     throw stubError(statusCodes.notFound, 'Registration not found')
   }
   if (registration.status !== 'Approved') {

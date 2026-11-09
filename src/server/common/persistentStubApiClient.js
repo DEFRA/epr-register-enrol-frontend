@@ -2,10 +2,8 @@ import { config } from '../../config/config.js'
 import { stubApiClient, stubOrgDocs } from './stub-api-client.js'
 import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
 import { stubAccreditationChanges } from './stub-accreditation-changes.js'
-import {
-  manageStubRegistrationStatuses,
-  registeredOverseasSites
-} from './stub-manage-accreditations.js'
+import { manageStubRegistrationStatuses } from './stub-manage-accreditations.js'
+import { registeredOverseasSites } from './stub-registered-ors.js'
 
 function overlayOrgName(items) {
   const docs = stubOrgDocs()
