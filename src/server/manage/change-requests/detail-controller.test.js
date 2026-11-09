@@ -954,6 +954,9 @@ describe('#manageChangeRequestDetailController', () => {
       )
       expect(banner).toContain('A query has been raised on this request')
       expect(banner).not.toMatch(/<a |<button/)
+      expect(result).toMatch(
+        /class="govuk-notification-banner app-notification-banner--full-width"[^>]*data-testid="query-raised-banner"/
+      )
     })
 
     test.each([ITEM.inProgress, ITEM.submitted, ITEM.granted])(
