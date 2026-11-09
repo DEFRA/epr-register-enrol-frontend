@@ -180,9 +180,3 @@
   padding: govuk-spacing(3) 0;
   border-bottom: 1px solid $govuk-border-colour;
 }
-
-// The change pending and query raised banners' text runs the full width of
-// the banner, not GOV.UK's two-thirds line length.
-.app-notification-banner--full-width .govuk-notification-banner__content > * {
-  max-width: none;
-}
