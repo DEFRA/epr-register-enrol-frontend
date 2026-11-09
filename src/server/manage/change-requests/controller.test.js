@@ -1108,7 +1108,7 @@ describe('#manageChangeRequestsController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toMatch(
-        /data-testid="page-heading"[^>]*>\s*Dragon Recyclers\s*</
+        /data-testid="page-heading"[^>]*>\s*Dragon Recyclers \(004\)\s*</
       )
       expect(result).toMatch(/data-testid="header-status"[\s\S]*?SUBMITTED/)
       expect(result).toContain('Saigon Port Storage')

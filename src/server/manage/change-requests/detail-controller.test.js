@@ -337,7 +337,9 @@ describe('#manageChangeRequestDetailController', () => {
     test('is headed with the site name and the "orgName (year, material)" caption', async () => {
       const result = await getPage(ITEM.queried)
 
-      expect(valueOf(result, 'page-heading')).toBe('Rotterdam Recycling BV')
+      expect(valueOf(result, 'page-heading')).toBe(
+        'Rotterdam Recycling BV (001)'
+      )
       expect(valueOf(result, 'page-caption')).toBe(
         'Acme Recycling Ltd (2027, Plastic)'
       )
@@ -489,7 +491,9 @@ describe('#manageChangeRequestDetailController', () => {
     test('finds the item whatever the case of its id in the URL', async () => {
       const result = await getPage(ITEM.granted.toUpperCase())
 
-      expect(valueOf(result, 'page-heading')).toBe('Rotterdam Recycling BV')
+      expect(valueOf(result, 'page-heading')).toBe(
+        'Rotterdam Recycling BV (001)'
+      )
     })
   })
 
@@ -767,7 +771,7 @@ describe('#manageChangeRequestDetailController', () => {
     test('is headed with the site name and the registration’s caption', async () => {
       const { result } = await getRegistrationOnly(ITEM.granted)
 
-      expect(valueOf(result, 'page-heading')).toBe('Porto Plasticos Lda')
+      expect(valueOf(result, 'page-heading')).toBe('Porto Plasticos Lda (007)')
       expect(valueOf(result, 'page-caption')).toBe(
         'Reg Only Exports Ltd (2027, Plastic)'
       )
@@ -922,7 +926,7 @@ describe('#manageChangeRequestDetailController', () => {
 
       const result = await getPage(ITEM.submitted, view)
 
-      expect(valueOf(result, 'page-heading')).toBe('Unlisted ORS')
+      expect(valueOf(result, 'page-heading')).toBe('Unlisted ORS (009)')
       expect(valueOf(result, 'header-site-id')).toBe('009')
       expect(valueOf(result, 'row-contact-name-value')).toBe('Not provided')
     })

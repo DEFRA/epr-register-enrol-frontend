@@ -600,7 +600,7 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="site-status-tag-4"[^>]*>\s*In progress\s*</
       )
       expect(registered).toContain(
-        'href="/accreditation/manage-overseas-sites/app-current/add/4" data-testid="view-request-4"'
+        'href="/accreditation/manage-overseas-sites/app-current/add/4" data-testid="view-request-4">View change requests<'
       )
       expect(registered).not.toContain('add-to-accreditation-4')
       expect(registered).toContain('data-testid="add-to-accreditation-5"')

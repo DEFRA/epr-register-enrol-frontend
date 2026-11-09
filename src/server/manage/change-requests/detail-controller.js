@@ -143,11 +143,13 @@ function orsDetail({ view, found, year, t, currentLocale }) {
   }
   const files = besEvidenceFiles(entry.site, item)
   const notApplicable = t('pages.manageChangeRequests.notApplicable')
+  const siteName = item.siteName ?? site.siteName
+  const orsId = item.orsId ?? site.orsId
   return {
-    heading: item.siteName ?? site.siteName,
+    heading: orsId ? `${siteName} (${orsId})` : siteName,
     header: {
       location: orsAddressLine(site),
-      siteId: item.orsId ?? site.orsId,
+      siteId: orsId,
       statusTag: applicationStatusTag(item.status, t),
       dateAdded: dateOr(request.createdAt, notApplicable, currentLocale),
       besExpiry: dateOr(latestExpiry(files), notApplicable, currentLocale)

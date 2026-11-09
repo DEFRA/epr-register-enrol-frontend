@@ -963,6 +963,7 @@
         "empty": "[Welsh] You have no registered overseas reprocessing sites for {{year}}."
       },
       "interimDisclosure": "[Welsh] Show interim sites",
+      "viewChangeRequests": "[Welsh] View change requests",
       "returnToHome": "[Welsh] Return to home",
       "requestsBanner": {
         "title": "[Welsh] In year change request",

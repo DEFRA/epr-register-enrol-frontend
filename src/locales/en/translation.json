@@ -964,6 +964,7 @@
         "empty": "You have no registered overseas reprocessing sites for {{year}}."
       },
       "interimDisclosure": "Show interim sites",
+      "viewChangeRequests": "View change requests",
       "returnToHome": "Return to home",
       "requestsBanner": {
         "title": "In year change request",
