@@ -151,7 +151,7 @@ describe('#operatorController', () => {
           )
         )
         expect(result).toContain(
-          'Exporter manage registration for Registration Only Exports Ltd, Plastic (RA-697 registration only)'
+          'Exporter manage registration for Registration Only Exports Ltd, Plastic (registration only)'
         )
       }
     )
