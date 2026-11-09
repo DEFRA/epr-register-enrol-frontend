@@ -2,26 +2,26 @@ import Boom from '@hapi/boom'
 
 import { formatDate } from '../../../config/nunjucks/filters/format-date.js'
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
+import { ITEM_STATUSES } from '../../common/constants/changeRequests.js'
+import { TONNAGE_OPTIONS } from '../../common/constants/tonnageBands.js'
 import { isItemForSite } from '../../common/helpers/changeRequestSite.js'
+import { endOfYear } from '../../common/helpers/currentYear.js'
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
+import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 import {
   buildSiteDetailRows,
   manageSitesText
 } from '../../accreditation/manage-overseas-sites/view-model.js'
+import { fetchChangeRequestsView } from '../helpers/change-requests-view.js'
 import {
-  changeRequestsUrl,
-  fetchChangeRequestsView,
   loadManagePage,
   manageCaption,
   serviceProblem
 } from '../helpers/manage-page.js'
-import { orsAddressLine } from '../helpers/ors-address.js'
-import { TONNAGE_OPTIONS } from '../../accreditation/tonnage/controller.js'
+import { changeRequestsUrl } from '../helpers/manage-urls.js'
 import { changeTypeLabel, findItem } from './change-request-items.js'
 
 const DATE_FORMAT = 'd MMM yyyy'
-const DECEMBER = 11 // Date months count from 0
-const LAST_DAY_OF_DECEMBER = 31
 
 // Rows not shown on Figma 604:137479's site details.
 const HIDDEN_ROWS = new Set(['coordinates'])
@@ -40,8 +40,8 @@ function dateOr(value, fallback, currentLocale) {
  */
 function validity(item, year, notApplicable, currentLocale) {
   const until = {
-    Approved: new Date(year, DECEMBER, LAST_DAY_OF_DECEMBER),
-    Withdrawn: item.withdrawnAt
+    [ITEM_STATUSES.approved]: endOfYear(year),
+    [ITEM_STATUSES.withdrawn]: item.withdrawnAt
   }[item.status]
   if (!until) {
     return { validFrom: notApplicable, validTo: notApplicable }
@@ -67,6 +67,15 @@ function requestDetails({ request, item, year, t, currentLocale }) {
   }
 }
 
+// The parts of the page that are the same for every type of item.
+function itemDetail({ found, year, t, currentLocale }) {
+  const { request, item } = found
+  return {
+    isQueried: item.status === ITEM_STATUSES.queried,
+    requestDetails: requestDetails({ request, item, year, t, currentLocale })
+  }
+}
+
 // An ORS update may leave the ORS's evidence as it is, so the item's own
 // uploads win but the ORS's stand in for them.
 function besEvidenceFiles(site, item) {
@@ -86,15 +95,10 @@ function latestExpiry(files) {
   )
 }
 
-// The location is the header's one-line address: the add-to-accreditation
-// row's would name the country twice for an ORS whose flattened siteAddress
-// already ends with it.
-function siteRows({ t, entry, site, item, files }) {
-  const rows = buildSiteDetailRows({ t, entry, requestSite: item })
-    .filter((row) => !HIDDEN_ROWS.has(row.id))
-    .map((row) =>
-      row.id === 'location' ? { ...row, value: orsAddressLine(site) } : row
-    )
+function siteRows({ t, entry, item, files }) {
+  const rows = buildSiteDetailRows({ t, entry, requestSite: item }).filter(
+    (row) => !HIDDEN_ROWS.has(row.id)
+  )
   const bes = files.map((file) => file.filename).join(', ')
   return [
     ...rows,
@@ -151,7 +155,6 @@ function orsDetail({ view, found, year, t, currentLocale }) {
     rows: siteRows({
       t,
       entry,
-      site,
       item: { ...item, effective: item.effective ?? {} },
       files
     }),
@@ -159,14 +162,7 @@ function orsDetail({ view, found, year, t, currentLocale }) {
       siteId: interimSite.siteId,
       line: interimSiteLine(interimSite)
     })),
-    isQueried: item.status === 'Queried',
-    requestDetails: requestDetails({
-      request,
-      item,
-      year,
-      t,
-      currentLocale
-    })
+    ...itemDetail({ found, year, t, currentLocale })
   }
 }
 
@@ -183,20 +179,13 @@ function requestedBandRow(item, t) {
 }
 
 function tonnageDetail({ found, year, t, currentLocale }) {
-  const { request, item } = found
+  const { item } = found
   return {
     isTonnage: true,
     heading: changeTypeLabel(item.changeType, t),
     header: { statusTag: applicationStatusTag(item.status, t) },
     rows: [requestedBandRow(item, t)],
-    isQueried: item.status === 'Queried',
-    requestDetails: requestDetails({
-      request,
-      item,
-      year,
-      t,
-      currentLocale
-    })
+    ...itemDetail({ found, year, t, currentLocale })
   }
 }
 

@@ -22,8 +22,10 @@ import { randomUUID } from 'node:crypto'
 
 import {
   ACTIVE_ITEM_STATUSES,
-  CHANGE_TYPES
+  CHANGE_TYPES,
+  ITEM_STATUSES
 } from './constants/changeRequests.js'
+import { APPROVED_STATUS } from './constants/applicationStatuses.js'
 import { statusCodes } from './constants/status-codes.js'
 import { isItemForSite } from './helpers/changeRequestSite.js'
 import { currentYear } from './helpers/currentYear.js'
@@ -66,7 +68,7 @@ function newItem(changeType, item = {}) {
   return {
     itemId: randomUUID(),
     changeType,
-    status: 'InProgress',
+    status: ITEM_STATUSES.inProgress,
     validFrom: null,
     withdrawnAt: null,
     ...item
@@ -104,7 +106,7 @@ function storeRequest(store, request) {
       ? newItem(CHANGE_TYPES.upgradeTonnageBand, request.tonnageBandUpgrade)
       : null
   }
-  if (seeded.status === 'InProgress') {
+  if (seeded.status === ITEM_STATUSES.inProgress) {
     store.draft = seeded
   } else {
     store.submitted.push(seeded)
@@ -123,8 +125,8 @@ function besRequired(site, effective) {
   return !site.isEu && !site.isOecd && effective.conditionsOfExport !== true
 }
 
-// site is undefined for an item whose site the view doesn't list.
-function requestSiteView(site = {}, entry) {
+// site is empty for an item whose site the view doesn't list.
+function requestSiteView(site, entry) {
   const effective = Object.fromEntries(
     LOCKABLE.map((field) => [
       field,
@@ -158,7 +160,7 @@ const siteFor = (sites, item) => sites.find((site) => isItemForSite(item, site))
 
 function requestView(request, siteList) {
   const sites = request.sites.map((entry) =>
-    requestSiteView(siteFor(siteList, entry), entry)
+    requestSiteView(siteFor(siteList, entry) ?? {}, entry)
   )
   return {
     requestId: request.requestId,
@@ -272,7 +274,7 @@ function addSite(ctx) {
   if (!ctx.store.draft) {
     storeRequest(ctx.store, {
       requestId: `stub-request-${Date.now()}`,
-      status: 'InProgress'
+      status: ITEM_STATUSES.inProgress
     })
   }
   if (!ctx.store.draft.sites.some((s) => s.siteId === target.siteId)) {
@@ -348,8 +350,8 @@ function submit(ctx) {
   if (!currentRequest(ctx).isComplete) {
     throw stubError(statusCodes.unprocessableEntity, 'Incomplete')
   }
-  store.draft.status = 'Submitted'
-  setItemStatuses(store.draft, 'Submitted')
+  store.draft.status = ITEM_STATUSES.submitted
+  setItemStatuses(store.draft, ITEM_STATUSES.submitted)
   store.draft.submittedAt = new Date().toISOString()
   store.draft.submittedBy = {
     fullName: ctx.body.fullName,
@@ -388,7 +390,7 @@ async function grantedApplication(deps, orgId, appId, method) {
   if (!application) {
     throw stubError(statusCodes.notFound, 'Application not found')
   }
-  if (application.applicationStatus !== 'Approved') {
+  if (application.applicationStatus !== APPROVED_STATUS) {
     throw stubError(
       statusCodes.conflict,
       'Application is not a granted accreditation'
@@ -425,7 +427,7 @@ async function registrationChanges(method, endpoint, deps) {
   if (registration?.materialType.toLowerCase() !== material.toLowerCase()) {
     throw stubError(statusCodes.notFound, 'Registration not found')
   }
-  if (registration.status !== 'Approved') {
+  if (registration.status !== APPROVED_STATUS) {
     throw stubError(statusCodes.conflict, 'Registration is not Approved')
   }
   const year = currentYear()

@@ -9,10 +9,10 @@ import {
   STUB_OPERATOR_CURRENT_RELATIONSHIP_ID
 } from './stub-operator-orgs.js'
 import {
-  IN_YEAR_CHANGE_ORG_ID,
-  MANAGE_EXPORTER_ORG_ID,
-  NO_CHANGE_REQUESTS_ORG_ID,
-  REGISTRATION_ONLY_ORG_ID
+  IN_YEAR_CHANGE_ORG,
+  MANAGE_EXPORTER_ORG,
+  NO_CHANGE_REQUESTS_ORG,
+  REGISTRATION_ONLY_ORG
 } from './constants/test-orgs.js'
 
 describe('STUB_DEFRA_LINKS', () => {
@@ -81,10 +81,10 @@ describe('operator page drift guard', () => {
 // the template, so the guard above can't see them.
 describe('manage org drift guard', () => {
   test.each([
-    MANAGE_EXPORTER_ORG_ID,
-    IN_YEAR_CHANGE_ORG_ID,
-    NO_CHANGE_REQUESTS_ORG_ID,
-    REGISTRATION_ONLY_ORG_ID
+    MANAGE_EXPORTER_ORG.orgId,
+    IN_YEAR_CHANGE_ORG.orgId,
+    NO_CHANGE_REQUESTS_ORG.orgId,
+    REGISTRATION_ONLY_ORG.orgId
   ])('authorises the stub operator for manage org %s', (orgId) => {
     expect(STUB_DEFRA_LINKS).toHaveProperty(String(orgId))
   })

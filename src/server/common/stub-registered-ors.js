@@ -1,4 +1,4 @@
-import { REGISTRATION_ONLY_REGISTRATION_ID } from './constants/test-orgs.js'
+import { REGISTRATION_ONLY_ORG } from './constants/test-orgs.js'
 
 // RA-697: org 50021's registered ORSs, which have no accreditation: the
 // backend dev seed's domain-model ORS records
@@ -135,7 +135,7 @@ function registrationOnlyOrs() {
 
 // RA-697: an accredited registration's ORSs come from its accreditation.
 export function registeredOverseasSites(registrationId) {
-  return registrationId === REGISTRATION_ONLY_REGISTRATION_ID
+  return registrationId === REGISTRATION_ONLY_ORG.registrationId
     ? registrationOnlyOrs()
     : []
 }

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { validationErrors } from './service.js'
+import { validationErrors } from './accreditationChangesService.js'
 
 describe('validationErrors (RA-492)', () => {
   test.each([

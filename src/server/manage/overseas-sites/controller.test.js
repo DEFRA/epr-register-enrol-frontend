@@ -22,12 +22,9 @@ import {
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
-  MANAGE_EXPORTER_ORG_ID,
-  MANAGE_EXPORTER_REGISTRATION_ID,
-  NO_OVERSEAS_SITES_ORG_ID,
-  NO_OVERSEAS_SITES_REGISTRATION_ID,
-  REGISTRATION_ONLY_ORG_ID,
-  REGISTRATION_ONLY_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG,
+  NO_OVERSEAS_SITES_ORG,
+  REGISTRATION_ONLY_ORG
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
@@ -480,7 +477,7 @@ describe('#manageOverseasSitesController', () => {
 
     test('shows the stub exporter with accredited and registered ORSs and interim sites', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic/overseas-sites`
+        `/manage/${MANAGE_EXPORTER_ORG.orgId}/${MANAGE_EXPORTER_ORG.registrationId}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -501,7 +498,7 @@ describe('#manageOverseasSitesController', () => {
     // RA-697 task 012: org 50021 has a registration and no accreditation.
     test('shows the registration-only exporter’s four registered ORSs, none accredited', async () => {
       const { statusCode, result } = await get(
-        `/manage/${REGISTRATION_ONLY_ORG_ID}/${REGISTRATION_ONLY_REGISTRATION_ID}/Plastic/overseas-sites`
+        `/manage/${REGISTRATION_ONLY_ORG.orgId}/${REGISTRATION_ONLY_ORG.registrationId}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -530,7 +527,7 @@ describe('#manageOverseasSitesController', () => {
     // Org 50022: registered, with no accreditation and no registered ORSs.
     test('shows both tabs empty for the exporter with no overseas sites', async () => {
       const { statusCode, result } = await get(
-        `/manage/${NO_OVERSEAS_SITES_ORG_ID}/${NO_OVERSEAS_SITES_REGISTRATION_ID}/Plastic/overseas-sites`
+        `/manage/${NO_OVERSEAS_SITES_ORG.orgId}/${NO_OVERSEAS_SITES_ORG.registrationId}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)

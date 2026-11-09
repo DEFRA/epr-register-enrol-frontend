@@ -1,4 +1,4 @@
-import { apiClient } from '../../common/api-client.js'
+import { apiClient } from '../api-client.js'
 
 // RA-492: client for the backend's accreditation-changes API (see the
 // backend's AccreditationChanges endpoints). apiClient throws on a non-OK

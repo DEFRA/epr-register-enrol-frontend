@@ -24,15 +24,12 @@ import {
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import { currentYear, yearSuffix } from '../../common/helpers/currentYear.js'
 import {
-  MANAGE_EXPORTER_ORG_ID,
-  MANAGE_EXPORTER_REGISTRATION_ID,
-  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG,
   MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
   MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID,
-  NO_CHANGE_REQUESTS_ORG_ID,
-  NO_CHANGE_REQUESTS_REGISTRATION_ID,
-  REGISTRATION_ONLY_ORG_ID,
-  REGISTRATION_ONLY_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG_REPROCESSOR,
+  NO_CHANGE_REQUESTS_ORG,
+  REGISTRATION_ONLY_ORG
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
@@ -47,7 +44,7 @@ const REGISTRATION_STATUS_URL = `/api/v1/registrations/${REGISTRATION_ID}/status
 
 const LIST_URL = `/api/v1/accreditation-applications/${ORG_ID}`
 
-const STUB_EXPORTER_URL = `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic`
+const STUB_EXPORTER_URL = `/manage/${MANAGE_EXPORTER_ORG.orgId}/${MANAGE_EXPORTER_ORG.registrationId}/Plastic`
 
 const reprocessorApp = () => makeApp({ wasteProcessingType: 'reprocessor' })
 
@@ -876,7 +873,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the empty state for the stub org with no change requests', async () => {
       const { result } = await get(
-        `/manage/${NO_CHANGE_REQUESTS_ORG_ID}/${NO_CHANGE_REQUESTS_REGISTRATION_ID}/Plastic`
+        `/manage/${NO_CHANGE_REQUESTS_ORG.orgId}/${NO_CHANGE_REQUESTS_ORG.registrationId}/Plastic`
       )
 
       expect(result).toContain('data-testid="no-active-change-requests"')
@@ -922,7 +919,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the stub reprocessor with its site address', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID}/Glass`
+        `/manage/${MANAGE_EXPORTER_ORG.orgId}/${MANAGE_EXPORTER_ORG_REPROCESSOR.registrationId}/Glass`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -944,7 +941,7 @@ describe('#manageRegistrationAccreditationController', () => {
     // RA-697: org 50021 has an Approved registration and no accreditation.
     test('shows the stub registration-only exporter', async () => {
       const { statusCode, result } = await get(
-        `/manage/${REGISTRATION_ONLY_ORG_ID}/${REGISTRATION_ONLY_REGISTRATION_ID}/Plastic`
+        `/manage/${REGISTRATION_ONLY_ORG.orgId}/${REGISTRATION_ONLY_ORG.registrationId}/Plastic`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -973,7 +970,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the stub exporter with no change requests', async () => {
       const { statusCode, result } = await get(
-        `/manage/${NO_CHANGE_REQUESTS_ORG_ID}/${NO_CHANGE_REQUESTS_REGISTRATION_ID}/Plastic`
+        `/manage/${NO_CHANGE_REQUESTS_ORG.orgId}/${NO_CHANGE_REQUESTS_ORG.registrationId}/Plastic`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -991,7 +988,7 @@ describe('#manageRegistrationAccreditationController', () => {
       'shows the service-problem page for the stub registration that is %s',
       async (_case, registrationId) => {
         const { statusCode } = await get(
-          `/manage/${MANAGE_EXPORTER_ORG_ID}/${registrationId}/Wood`
+          `/manage/${MANAGE_EXPORTER_ORG.orgId}/${registrationId}/Wood`
         )
 
         expect(statusCode).toBe(statusCodes.internalServerError)

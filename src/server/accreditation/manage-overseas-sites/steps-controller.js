@@ -24,7 +24,10 @@ import {
   resolveBesEvidenceValidTo,
   validateFileExtension
 } from '../upload-bes-evidence/controller.js'
-import { accreditationChangesService, validationErrors } from './service.js'
+import {
+  accreditationChangesService,
+  validationErrors
+} from '../../common/helpers/accreditationChangesService.js'
 import {
   loadView,
   organisationIdFrom,

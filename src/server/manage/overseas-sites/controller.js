@@ -6,14 +6,14 @@ import {
   registeredSiteActions
 } from '../../accreditation/manage-overseas-sites/view-model.js'
 import { requestsUrl } from '../../accreditation/manage-overseas-sites/urls.js'
+import { fetchChangeRequestsView } from '../helpers/change-requests-view.js'
 import {
-  fetchChangeRequestsView,
   loadManagePage,
   manageCaption,
-  manageUrl,
   serviceProblem
 } from '../helpers/manage-page.js'
-import { orsAddressLine } from '../helpers/ors-address.js'
+import { manageUrl } from '../helpers/manage-urls.js'
+import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 
 // RA-425: withdrawn interim sites are filtered per ORS, so withdrawing a
 // shared interim site from one ORS leaves it showing under the others.
@@ -30,23 +30,17 @@ function toOrsView(site, { withInterimSites }) {
 }
 
 // RA-492: where a registered ORS stands in the in-year change requests.
-// RA-697: with no accreditation to add it to, a registration-only ORS has no
-// "Add to accreditation", and RA-492's View link has no registration-only
-// page yet, though its tag still follows the data.
-function registeredSiteView(site, application, changeRequests) {
+// RA-697: applicationId is null for registration only.
+function registeredSiteView(site, applicationId, changeRequests) {
   const view = toOrsView(site, { withInterimSites: false })
   if (!changeRequests) {
     return view
   }
   const status = changeRequests.pendingRequestStatus(site.siteId)
-  const actions = application
-    ? registeredSiteActions(application.applicationId, site.siteId, status)
-    : {
-        ...registeredSiteActions(null, site.siteId, status),
-        addUrl: null,
-        viewUrl: null
-      }
-  return { ...view, ...actions }
+  return {
+    ...view,
+    ...registeredSiteActions(applicationId, site.siteId, status)
+  }
 }
 
 // Accredited: selected on the accreditation. Registered: every other existing
@@ -58,7 +52,7 @@ function registeredSiteView(site, application, changeRequests) {
 // one in a submitted request shows "Pending" and no action (AC09). It stays on
 // the Registered tab until the regulator approves it. Without them the rows
 // are RA-425's alone.
-function partitionSites(sites, application, changeRequests) {
+function partitionSites(sites, applicationId, changeRequests) {
   const isAccredited = (site) => site.selected === true
   return {
     accredited: sites
@@ -66,7 +60,7 @@ function partitionSites(sites, application, changeRequests) {
       .map((site) => toOrsView(site, { withInterimSites: true })),
     registered: sites
       .filter((site) => !isAccredited(site) && !site.isNewSite)
-      .map((site) => registeredSiteView(site, application, changeRequests))
+      .map((site) => registeredSiteView(site, applicationId, changeRequests))
   }
 }
 
@@ -90,15 +84,26 @@ function enterAccreditationSession(request, application) {
 // never takes down the list of sites.
 async function accreditedSites(request, context) {
   const { application } = context
+  // The backend always sends overseasSites for an Approved exporter
+  // accreditation, so without it the data is incomplete, and empty tabs
+  // would pass that off as a complete list.
+  if (!Array.isArray(application.overseasSites?.sites)) {
+    request.logger.warn(
+      { applicationId: application.applicationId },
+      'Current accreditation has no overseas sites'
+    )
+    return null
+  }
   const view = await fetchChangeRequestsView(request, context)
   // Set either way: the RA-492 pages handle their own errors.
   enterAccreditationSession(request, application)
   const changeRequests = view && changeRequestsSummary(view)
   return {
     changeRequests,
+    requestsUrl: requestsUrl(application.applicationId),
     ...partitionSites(
       application.overseasSites.sites,
-      application,
+      application.applicationId,
       changeRequests
     )
   }
@@ -116,6 +121,7 @@ async function registrationOnlySites(request, context) {
   const changeRequests = changeRequestsSummary(view)
   return {
     changeRequests,
+    requestsUrl: null,
     accredited: [],
     registered: view.sites.map((entry) =>
       registeredSiteView(entry.site, null, changeRequests)
@@ -125,24 +131,13 @@ async function registrationOnlySites(request, context) {
 
 export const manageOverseasSitesController = {
   async handler(request, h) {
-    const { context, application, t, currentLocale, response } =
-      await loadManagePage(request, h, {
-        exportersOnly: true,
-        allowRegistrationOnly: true
-      })
+    const { context, t, currentLocale, response } = await loadManagePage(
+      request,
+      h,
+      { exportersOnly: true, allowRegistrationOnly: true }
+    )
     if (response) {
       return response
-    }
-
-    // The backend always sends overseasSites for an Approved exporter
-    // accreditation, so without it the data is incomplete, and empty tabs
-    // would pass that off as a complete list.
-    if (application && !Array.isArray(application.overseasSites?.sites)) {
-      request.logger.warn(
-        { applicationId: application.applicationId },
-        'Current accreditation has no overseas sites'
-      )
-      return serviceProblem(request, h, t)
     }
 
     const sites = context.isRegistrationOnly
@@ -169,7 +164,7 @@ export const manageOverseasSitesController = {
       // RA-492 banners: AC09 pending change, AC10 requests to resume.
       pendingCount: registered.filter((site) => site.pending).length,
       readyForSubmissionCount: changeRequests?.readyForSubmissionCount ?? 0,
-      requestsUrl: application ? requestsUrl(application.applicationId) : null
+      requestsUrl: sites.requestsUrl
     })
   }
 }

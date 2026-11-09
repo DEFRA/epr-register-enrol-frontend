@@ -6,12 +6,9 @@ import { materialDisplayName } from '../../common/helpers/materialDisplayName.js
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 import { getUser } from '../../common/helpers/auth/get-user.js'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
-import { localePrefix } from '../../common/helpers/localePrefix.js'
 import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organisation-service.js'
-import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { currentYear } from '../../common/helpers/currentYear.js'
-import { accreditationChangesService } from '../../accreditation/manage-overseas-sites/service.js'
 import { fetchCurrentAccreditation } from './current-accreditation.js'
 import { fetchApprovedRegistration } from './current-registration.js'
 
@@ -27,18 +24,6 @@ function notFoundUnlessEnabled(_request, h) {
 export const manageRouteOptions = {
   ...requireOperator,
   ext: { onPreAuth: { method: notFoundUnlessEnabled } }
-}
-
-// The manage registration and accreditation page, which Re/Ex links to.
-export function manageUrl(
-  { organisationId, registrationId, materialType },
-  currentLocale
-) {
-  return `${localePrefix(currentLocale)}/manage/${organisationId}/${registrationId}/${materialType}`
-}
-
-export function overseasSitesUrl(params, currentLocale) {
-  return `${manageUrl(params, currentLocale)}/overseas-sites`
 }
 
 export function serviceProblem(request, h, t) {
@@ -194,53 +179,5 @@ export async function loadManagePage(
     registration,
     t,
     currentLocale
-  }
-}
-
-export function changeRequestsUrl(params, currentLocale) {
-  return `${manageUrl(params, currentLocale)}/change-requests`
-}
-
-export function changeRequestItemUrl(params, itemId, currentLocale) {
-  return `${changeRequestsUrl(params, currentLocale)}/${encodeURIComponent(itemId)}`
-}
-
-/**
- * RA-697: change requests are read only for the current-year accreditation
- * that loadManagePage resolves, so a previous year's unapplied requests, kept
- * against that year's accreditation, drop off the pages at year end. For a
- * registration-only context they are the registration's own, which the
- * backend reads for the current year.
- *
- * Returns null, having logged why, when they cannot be read; each page
- * decides what that means for it.
- *
- * @param {object} context - loadManagePage's context
- */
-export async function fetchChangeRequestsView(request, context) {
-  const { organisationId, registrationId, materialType } = request.params
-  try {
-    return context.isRegistrationOnly
-      ? await accreditationChangesService.getRegistrationView(
-          organisationId,
-          registrationId,
-          materialType
-        )
-      : await accreditationChangesService.getView(
-          organisationId,
-          context.application.applicationId
-        )
-  } catch (error) {
-    logStructuredError(
-      request.logger,
-      error,
-      {
-        organisationId,
-        registrationId,
-        applicationId: context.application?.applicationId ?? null
-      },
-      'Error fetching the accreditation change requests'
-    )
-    return null
   }
 }

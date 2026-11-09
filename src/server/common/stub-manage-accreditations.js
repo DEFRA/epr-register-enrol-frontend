@@ -1,27 +1,13 @@
 import { currentYear, yearSuffix } from './helpers/currentYear.js'
 import {
-  IN_YEAR_CHANGE_MATERIAL,
-  IN_YEAR_CHANGE_ORG_ID,
-  IN_YEAR_CHANGE_ORG_NAME,
-  IN_YEAR_CHANGE_REGISTRATION_ID,
+  IN_YEAR_CHANGE_ORG,
+  MANAGE_EXPORTER_ORG,
   MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID,
-  MANAGE_EXPORTER_MATERIAL,
-  MANAGE_EXPORTER_REGISTRATION_ID,
-  MANAGE_EXPORTER_ORG_ID,
-  MANAGE_EXPORTER_ORG_NAME,
   MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID,
-  MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
-  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
-  NO_CHANGE_REQUESTS_MATERIAL,
-  NO_CHANGE_REQUESTS_ORG_ID,
-  NO_CHANGE_REQUESTS_ORG_NAME,
-  NO_CHANGE_REQUESTS_REGISTRATION_ID,
-  NO_OVERSEAS_SITES_ORG_ID,
-  NO_OVERSEAS_SITES_ORG_NAME,
-  NO_OVERSEAS_SITES_REGISTRATION_ID,
-  REGISTRATION_ONLY_ORG_ID,
-  REGISTRATION_ONLY_ORG_NAME,
-  REGISTRATION_ONLY_REGISTRATION_ID,
+  MANAGE_EXPORTER_ORG_REPROCESSOR,
+  NO_CHANGE_REQUESTS_ORG,
+  NO_OVERSEAS_SITES_ORG,
+  REGISTRATION_ONLY_ORG,
   seededApplicationId
 } from './constants/test-orgs.js'
 
@@ -40,7 +26,7 @@ import {
 // (management-be's ApplicationReferenceGenerator): AP, 2-digit year, agency
 // code, 6-digit org id, last 3 characters of the postcode, first 2 letters of
 // the material.
-function exporterRegistrationNumber(year, orgId = MANAGE_EXPORTER_ORG_ID) {
+function exporterRegistrationNumber(year, orgId = MANAGE_EXPORTER_ORG.orgId) {
   return `R${yearSuffix(year)}EX0${orgId}0001PL`
 }
 
@@ -196,18 +182,18 @@ const POSTCODE_SUFFIX_LENGTH = 3
 function buildOrgDoc(year) {
   const suffix = yearSuffix(year)
   return {
-    orgId: MANAGE_EXPORTER_ORG_ID,
-    companyDetails: { name: MANAGE_EXPORTER_ORG_NAME },
+    orgId: MANAGE_EXPORTER_ORG.orgId,
+    companyDetails: { name: MANAGE_EXPORTER_ORG.orgName },
     accreditations: [
       approvedApplication(year, {
         // The backend's ids, which the change-request stub keys its seeded
         // requests on (stub-change-request-seed.js).
-        id: seededApplicationId('a', year, MANAGE_EXPORTER_ORG_ID),
+        id: seededApplicationId('a', year, MANAGE_EXPORTER_ORG.orgId),
         applicationReference: `AP${suffix}EA0500183ABPL`,
         accreditationReference: `A${suffix}EX0500180001PL`,
-        material: MANAGE_EXPORTER_MATERIAL,
+        material: MANAGE_EXPORTER_ORG.material,
         wasteProcessingType: 'exporter',
-        registrationId: MANAGE_EXPORTER_REGISTRATION_ID,
+        registrationId: MANAGE_EXPORTER_ORG.registrationId,
         wasteRegistrationNumber: exporterRegistrationNumber(year),
         companyRegisteredAddress: {
           line1: '18 Harbour Road',
@@ -219,13 +205,13 @@ function buildOrgDoc(year) {
         besEvidence: { sectionStatus: 'Completed' }
       }),
       approvedApplication(year, {
-        id: seededApplicationId('b', year, MANAGE_EXPORTER_ORG_ID),
+        id: seededApplicationId('b', year, MANAGE_EXPORTER_ORG.orgId),
         applicationReference: `AP${suffix}EA0500185HTGL`,
         accreditationReference: `A${suffix}ER0500180002GR`,
-        material: MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
+        material: MANAGE_EXPORTER_ORG_REPROCESSOR.material,
         glassRecyclingProcess: ['glass_re_melt'],
         wasteProcessingType: 'reprocessor',
-        registrationId: MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
+        registrationId: MANAGE_EXPORTER_ORG_REPROCESSOR.registrationId,
         wasteRegistrationNumber: reprocessorRegistrationNumber(year),
         siteAddress: {
           line1: 'Unit 18, Furnace Lane',
@@ -346,21 +332,21 @@ function inYearChangeSites(year) {
 // RA-492: org 50019's accreditation. Matches the backend's dev seed.
 function buildInYearChangeOrgDoc(year) {
   const suffix = yearSuffix(year)
-  const id = seededApplicationId('a', year, IN_YEAR_CHANGE_ORG_ID)
+  const id = seededApplicationId('a', year, IN_YEAR_CHANGE_ORG.orgId)
   return {
-    orgId: IN_YEAR_CHANGE_ORG_ID,
-    companyDetails: { name: IN_YEAR_CHANGE_ORG_NAME },
+    orgId: IN_YEAR_CHANGE_ORG.orgId,
+    companyDetails: { name: IN_YEAR_CHANGE_ORG.orgName },
     accreditations: [
       approvedApplication(year, {
         id,
         applicationReference: `AP${suffix}EA0500191AAPL`,
         accreditationReference: `A${suffix}EX0500190001PL`,
-        material: IN_YEAR_CHANGE_MATERIAL,
+        material: IN_YEAR_CHANGE_ORG.material,
         wasteProcessingType: 'exporter',
-        registrationId: IN_YEAR_CHANGE_REGISTRATION_ID,
+        registrationId: IN_YEAR_CHANGE_ORG.registrationId,
         wasteRegistrationNumber: exporterRegistrationNumber(
           year,
-          IN_YEAR_CHANGE_ORG_ID
+          IN_YEAR_CHANGE_ORG.orgId
         ),
         companyRegisteredAddress: {
           line1: 'Change House',
@@ -383,19 +369,19 @@ function buildInYearChangeOrgDoc(year) {
 function buildNoChangeRequestsOrgDoc(year) {
   const suffix = yearSuffix(year)
   return {
-    orgId: NO_CHANGE_REQUESTS_ORG_ID,
-    companyDetails: { name: NO_CHANGE_REQUESTS_ORG_NAME },
+    orgId: NO_CHANGE_REQUESTS_ORG.orgId,
+    companyDetails: { name: NO_CHANGE_REQUESTS_ORG.orgName },
     accreditations: [
       approvedApplication(year, {
-        id: seededApplicationId('a', year, NO_CHANGE_REQUESTS_ORG_ID),
+        id: seededApplicationId('a', year, NO_CHANGE_REQUESTS_ORG.orgId),
         applicationReference: `AP${suffix}EA0500203AAPL`,
         accreditationReference: `A${suffix}EX0500200001PL`,
-        material: NO_CHANGE_REQUESTS_MATERIAL,
+        material: NO_CHANGE_REQUESTS_ORG.material,
         wasteProcessingType: 'exporter',
-        registrationId: NO_CHANGE_REQUESTS_REGISTRATION_ID,
+        registrationId: NO_CHANGE_REQUESTS_ORG.registrationId,
         wasteRegistrationNumber: exporterRegistrationNumber(
           year,
-          NO_CHANGE_REQUESTS_ORG_ID
+          NO_CHANGE_REQUESTS_ORG.orgId
         ),
         companyRegisteredAddress: {
           line1: '20 Dock Street',
@@ -472,39 +458,39 @@ function approvedExporterRegistration(organisationName, registrationNumber) {
 export function manageStubRegistrationStatuses() {
   const year = currentYear()
   return {
-    [MANAGE_EXPORTER_REGISTRATION_ID]: approvedExporterRegistration(
-      MANAGE_EXPORTER_ORG_NAME,
+    [MANAGE_EXPORTER_ORG.registrationId]: approvedExporterRegistration(
+      MANAGE_EXPORTER_ORG.orgName,
       exporterRegistrationNumber(year)
     ),
-    [MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID]: {
+    [MANAGE_EXPORTER_ORG_REPROCESSOR.registrationId]: {
       registrationNumber: reprocessorRegistrationNumber(year),
       status: 'Approved',
-      organisationName: MANAGE_EXPORTER_ORG_NAME,
+      organisationName: MANAGE_EXPORTER_ORG.orgName,
       materialType: 'Glass',
       glassRecyclingProcess: 'glass_re_melt',
       isExporter: false,
       siteAddress: 'Unit 18, Furnace Lane, Doncaster, DN4 5HT'
     },
-    [IN_YEAR_CHANGE_REGISTRATION_ID]: approvedExporterRegistration(
-      IN_YEAR_CHANGE_ORG_NAME,
-      exporterRegistrationNumber(year, IN_YEAR_CHANGE_ORG_ID)
+    [IN_YEAR_CHANGE_ORG.registrationId]: approvedExporterRegistration(
+      IN_YEAR_CHANGE_ORG.orgName,
+      exporterRegistrationNumber(year, IN_YEAR_CHANGE_ORG.orgId)
     ),
-    [NO_CHANGE_REQUESTS_REGISTRATION_ID]: approvedExporterRegistration(
-      NO_CHANGE_REQUESTS_ORG_NAME,
-      exporterRegistrationNumber(year, NO_CHANGE_REQUESTS_ORG_ID)
+    [NO_CHANGE_REQUESTS_ORG.registrationId]: approvedExporterRegistration(
+      NO_CHANGE_REQUESTS_ORG.orgName,
+      exporterRegistrationNumber(year, NO_CHANGE_REQUESTS_ORG.orgId)
     ),
-    [REGISTRATION_ONLY_REGISTRATION_ID]: approvedExporterRegistration(
-      REGISTRATION_ONLY_ORG_NAME,
-      exporterRegistrationNumber(year, REGISTRATION_ONLY_ORG_ID)
+    [REGISTRATION_ONLY_ORG.registrationId]: approvedExporterRegistration(
+      REGISTRATION_ONLY_ORG.orgName,
+      exporterRegistrationNumber(year, REGISTRATION_ONLY_ORG.orgId)
     ),
-    [NO_OVERSEAS_SITES_REGISTRATION_ID]: approvedExporterRegistration(
-      NO_OVERSEAS_SITES_ORG_NAME,
-      exporterRegistrationNumber(year, NO_OVERSEAS_SITES_ORG_ID)
+    [NO_OVERSEAS_SITES_ORG.registrationId]: approvedExporterRegistration(
+      NO_OVERSEAS_SITES_ORG.orgName,
+      exporterRegistrationNumber(year, NO_OVERSEAS_SITES_ORG.orgId)
     ),
     [MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID]: {
       registrationNumber: null,
       status: 'Created',
-      organisationName: MANAGE_EXPORTER_ORG_NAME,
+      organisationName: MANAGE_EXPORTER_ORG.orgName,
       materialType: 'Wood',
       glassRecyclingProcess: null,
       isExporter: false,

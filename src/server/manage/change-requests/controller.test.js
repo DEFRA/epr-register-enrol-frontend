@@ -6,14 +6,10 @@ import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organis
 import { stubApiClient } from '../../common/stub-api-client.js'
 import { persistentStubApiClient } from '../../common/persistentStubApiClient.js'
 import {
-  MANAGE_EXPORTER_ORG_ID,
-  MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL,
-  MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
-  MANAGE_EXPORTER_REGISTRATION_ID,
-  NO_CHANGE_REQUESTS_ORG_ID,
-  NO_CHANGE_REQUESTS_REGISTRATION_ID,
-  REGISTRATION_ONLY_ORG_ID,
-  REGISTRATION_ONLY_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG,
+  MANAGE_EXPORTER_ORG_REPROCESSOR,
+  NO_CHANGE_REQUESTS_ORG,
+  REGISTRATION_ONLY_ORG
 } from '../../common/constants/test-orgs.js'
 import {
   MANAGE_ORG_ID as ORG_ID,
@@ -1013,8 +1009,8 @@ describe('#manageChangeRequestsController', () => {
     // update on Dragon, the newest of the four Refused items.
     test('lists the seeded exporter’s items over two pages, most urgent first', async () => {
       const exporterUrl = listUrl(
-        MANAGE_EXPORTER_ORG_ID,
-        MANAGE_EXPORTER_REGISTRATION_ID,
+        MANAGE_EXPORTER_ORG.orgId,
+        MANAGE_EXPORTER_ORG.registrationId,
         'Plastic'
       )
       const first = await get(exporterUrl)
@@ -1052,9 +1048,9 @@ describe('#manageChangeRequestsController', () => {
     test('lists the seeded reprocessor’s tonnage band upgrades', async () => {
       const { statusCode, result } = await get(
         listUrl(
-          MANAGE_EXPORTER_ORG_ID,
-          MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID,
-          MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL
+          MANAGE_EXPORTER_ORG.orgId,
+          MANAGE_EXPORTER_ORG_REPROCESSOR.registrationId,
+          MANAGE_EXPORTER_ORG_REPROCESSOR.material
         )
       )
 
@@ -1071,8 +1067,8 @@ describe('#manageChangeRequestsController', () => {
     test('lists the seeded registration-only exporter’s ORS updates, with the one type option', async () => {
       const { statusCode, result } = await get(
         listUrl(
-          REGISTRATION_ONLY_ORG_ID,
-          REGISTRATION_ONLY_REGISTRATION_ID,
+          REGISTRATION_ONLY_ORG.orgId,
+          REGISTRATION_ONLY_ORG.registrationId,
           'Plastic'
         )
       )
@@ -1103,7 +1099,7 @@ describe('#manageChangeRequestsController', () => {
     test('opens the seeded exporter’s registration-only ORS update on Dragon', async () => {
       const itemId = `0000${currentYear()}-0000-0001-a000-050018000012`
       const { statusCode, result } = await get(
-        `${listUrl(MANAGE_EXPORTER_ORG_ID, MANAGE_EXPORTER_REGISTRATION_ID, 'Plastic')}/${itemId}`
+        `${listUrl(MANAGE_EXPORTER_ORG.orgId, MANAGE_EXPORTER_ORG.registrationId, 'Plastic')}/${itemId}`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1118,8 +1114,8 @@ describe('#manageChangeRequestsController', () => {
     test('shows the no-results message for the org with no change requests', async () => {
       const { statusCode, result } = await get(
         listUrl(
-          NO_CHANGE_REQUESTS_ORG_ID,
-          NO_CHANGE_REQUESTS_REGISTRATION_ID,
+          NO_CHANGE_REQUESTS_ORG.orgId,
+          NO_CHANGE_REQUESTS_ORG.registrationId,
           'Plastic'
         )
       )

@@ -19,8 +19,8 @@ import {
   buildViewData as buildDeclarationViewData,
   validateDeclaration
 } from '../submit-declaration/controller.js'
-import { orsAddressLine } from '../../manage/helpers/ors-address.js'
-import { accreditationChangesService } from './service.js'
+import { orsAddressLine } from '../../common/helpers/orsAddress.js'
+import { accreditationChangesService } from '../../common/helpers/accreditationChangesService.js'
 import {
   SUBMITTED,
   buildMissingFieldErrors,

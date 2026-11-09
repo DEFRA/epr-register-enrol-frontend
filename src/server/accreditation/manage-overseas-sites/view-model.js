@@ -1,5 +1,5 @@
 import { hasValue } from '../../common/helpers/hasValue.js'
-import { orsAddressLine } from '../../manage/helpers/ors-address.js'
+import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 import {
   addSiteToRequestUrl,
   addToAccreditationUrl,
@@ -8,7 +8,7 @@ import {
 } from './urls.js'
 
 // RA-492: view models for the in-year add-ORS pages, built from the
-// backend's AccreditationChangesView (see service.js).
+// backend's AccreditationChangesView (see accreditationChangesService.js).
 
 export const IN_PROGRESS = 'InProgress'
 export const SUBMITTED = 'Submitted'
@@ -65,13 +65,22 @@ export function changeRequestsSummary(view) {
  * RA-492's actions for an ORS on RA-425's Registered tab: "Pending" and no
  * action while it is in a submitted request (AC09), "In progress" and a View
  * link while it is in the draft request, otherwise "Add to accreditation".
+ *
+ * RA-697: with no accreditation (a null applicationId, for registration only)
+ * there is nothing to add the ORS to, and RA-492's View link has no
+ * registration-only page yet, so neither link; the tag still follows the data.
  */
 export function registeredSiteActions(applicationId, siteId, status) {
+  const hasAccreditation = Boolean(applicationId)
   return {
     pending: status === SUBMITTED,
     inProgress: status === IN_PROGRESS,
-    addUrl: addSiteToRequestUrl(applicationId, siteId),
-    viewUrl: addToAccreditationUrl(applicationId, siteId)
+    addUrl: hasAccreditation
+      ? addSiteToRequestUrl(applicationId, siteId)
+      : null,
+    viewUrl: hasAccreditation
+      ? addToAccreditationUrl(applicationId, siteId)
+      : null
   }
 }
 

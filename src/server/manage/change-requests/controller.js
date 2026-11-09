@@ -1,14 +1,16 @@
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
+import { fetchChangeRequestsView } from '../helpers/change-requests-view.js'
+import {
+  loadManagePage,
+  manageCaption,
+  serviceProblem
+} from '../helpers/manage-page.js'
 import {
   changeRequestItemUrl,
   changeRequestsUrl,
-  fetchChangeRequestsView,
-  loadManagePage,
-  manageCaption,
-  manageUrl,
-  serviceProblem
-} from '../helpers/manage-page.js'
+  manageUrl
+} from '../helpers/manage-urls.js'
 import {
   buildPagination,
   changeTypeLabel,

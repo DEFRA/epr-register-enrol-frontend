@@ -1,4 +1,4 @@
-import { overseasSitesUrl } from '../../manage/helpers/manage-page.js'
+import { overseasSitesUrl } from '../../manage/helpers/manage-urls.js'
 
 // RA-492: in-year "add a registered ORS to a granted accreditation" journey.
 // Every page is keyed by the APPROVED application's id. The journey starts

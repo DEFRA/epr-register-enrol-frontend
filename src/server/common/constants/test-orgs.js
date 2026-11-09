@@ -11,13 +11,18 @@ export const DELTA_GREEN_REGISTRATION_ID = 'aaa000000000000000050003'
 // registration, and the fe-tests fixtures (test/fixtures/manage-exporter-org.js
 // and in-year-change-org.js) use the same ids: keep all three in step. The
 // other registrations are stub-only.
-export const MANAGE_EXPORTER_ORG_ID = 50018
-export const MANAGE_EXPORTER_ORG_NAME = 'Manage Accreditation Test Ltd'
-export const MANAGE_EXPORTER_REGISTRATION_ID = 'aaa000000000000000050018'
-export const MANAGE_EXPORTER_MATERIAL = 'plastic'
-export const MANAGE_EXPORTER_ORG_REPROCESSOR_REGISTRATION_ID =
-  'bbb000000000000000050018'
-export const MANAGE_EXPORTER_ORG_REPROCESSOR_MATERIAL = 'glass'
+export const MANAGE_EXPORTER_ORG = {
+  orgId: 50018,
+  orgName: 'Manage Accreditation Test Ltd',
+  registrationId: 'aaa000000000000000050018',
+  material: 'plastic'
+}
+// The same org's reprocessor registration.
+export const MANAGE_EXPORTER_ORG_REPROCESSOR = {
+  ...MANAGE_EXPORTER_ORG,
+  registrationId: 'bbb000000000000000050018',
+  material: 'glass'
+}
 // Error paths: Approved current-year accreditations whose registration is
 // Created, or has no registration record at all.
 export const MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID =
@@ -28,31 +33,39 @@ export const MANAGE_EXPORTER_ORG_MISSING_REGISTRATION_ID =
 // RA-492: the in-year "add a registered ORS" journey's own exporter, so
 // RA-425's org above keeps its data. The backend's dev seed defines the same
 // org and registration: keep the two in step.
-export const IN_YEAR_CHANGE_ORG_ID = 50019
-export const IN_YEAR_CHANGE_ORG_NAME = 'In-Year Change Exports Ltd'
-export const IN_YEAR_CHANGE_REGISTRATION_ID = 'aaa000000000000000050019'
-export const IN_YEAR_CHANGE_MATERIAL = 'plastic'
+export const IN_YEAR_CHANGE_ORG = {
+  orgId: 50019,
+  orgName: 'In-Year Change Exports Ltd',
+  registrationId: 'aaa000000000000000050019',
+  material: 'plastic'
+}
 
 // RA-697: an Approved exporter with no in-year change requests, for the
 // change request pages' empty states.
-export const NO_CHANGE_REQUESTS_ORG_ID = 50020
-export const NO_CHANGE_REQUESTS_ORG_NAME = 'No Change Requests Ltd'
-export const NO_CHANGE_REQUESTS_REGISTRATION_ID = 'aaa000000000000000050020'
-export const NO_CHANGE_REQUESTS_MATERIAL = 'plastic'
+export const NO_CHANGE_REQUESTS_ORG = {
+  orgId: 50020,
+  orgName: 'No Change Requests Ltd',
+  registrationId: 'aaa000000000000000050020',
+  material: 'plastic'
+}
 
 // RA-697: an Approved exporter registration with no accreditation in any year,
 // for the registration-only manage pages. Same material as org 50020.
-export const REGISTRATION_ONLY_ORG_ID = 50021
-export const REGISTRATION_ONLY_ORG_NAME = 'Registration Only Exports Ltd'
-export const REGISTRATION_ONLY_REGISTRATION_ID = 'aaa000000000000000050021'
-export const REGISTRATION_ONLY_MATERIAL = 'plastic'
+export const REGISTRATION_ONLY_ORG = {
+  orgId: 50021,
+  orgName: 'Registration Only Exports Ltd',
+  registrationId: 'aaa000000000000000050021',
+  material: 'plastic'
+}
 
 // RA-697: registered with no accreditation and no registered ORSs, for the
 // overseas-sites page's empty Accredited and Registered tabs.
-export const NO_OVERSEAS_SITES_ORG_ID = 50022
-export const NO_OVERSEAS_SITES_ORG_NAME = 'No Overseas Sites Exports Ltd'
-export const NO_OVERSEAS_SITES_REGISTRATION_ID = 'aaa000000000000000050022'
-export const NO_OVERSEAS_SITES_MATERIAL = 'plastic'
+export const NO_OVERSEAS_SITES_ORG = {
+  orgId: 50022,
+  orgName: 'No Overseas Sites Exports Ltd',
+  registrationId: 'aaa000000000000000050022',
+  material: 'plastic'
+}
 
 // The backend dev seed's accreditation application id for the year: "a" for
 // an exporter or "b" for org 50018's reprocessor, the year, then the org id

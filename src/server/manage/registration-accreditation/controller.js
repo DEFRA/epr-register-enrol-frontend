@@ -1,26 +1,14 @@
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
-import {
-  changeRequestsUrl,
-  fetchChangeRequestsView,
-  loadManagePage,
-  manageCaption,
-  overseasSitesUrl
-} from '../helpers/manage-page.js'
+import { endOfYear } from '../../common/helpers/currentYear.js'
+import { fetchChangeRequestsView } from '../helpers/change-requests-view.js'
+import { loadManagePage, manageCaption } from '../helpers/manage-page.js'
+import { changeRequestsUrl, overseasSitesUrl } from '../helpers/manage-urls.js'
 import {
   changeTypeLabel,
   flattenItems,
   summariseByType
 } from '../change-requests/change-request-items.js'
-
-// An accreditation runs to the end of the calendar year it is for. Local time,
-// because the formatDate filter formats in local time.
-const DECEMBER = 11 // Date months count from 0
-const LAST_DAY_OF_DECEMBER = 31
-
-function expiryDate(year) {
-  return new Date(year, DECEMBER, LAST_DAY_OF_DECEMBER)
-}
 
 // RA-697: null leaves the section out. Following RA-492's overseas-sites
 // page, an outage of the change requests never takes the dashboard down, and
@@ -55,7 +43,7 @@ function statusSummary(context, t) {
   return {
     statusTag: applicationStatusTag(application.applicationStatus, t),
     accreditationNumber: application.accreditationNumber,
-    expiryDate: expiryDate(application.year)
+    expiryDate: endOfYear(application.year)
   }
 }
 

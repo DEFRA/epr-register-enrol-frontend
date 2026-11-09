@@ -6,7 +6,7 @@ import {
   ITEM_STATUS_ORDER
 } from '../../common/constants/changeRequests.js'
 import { isItemForSite } from '../../common/helpers/changeRequestSite.js'
-import { orsAddressLine } from '../helpers/ors-address.js'
+import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 
 // RA-697: screens read each item's own type and status, never the request's,
 // because one request's ORS items are decided separately.
@@ -57,12 +57,14 @@ export function flattenItems(requests, accreditationSites = []) {
   ])
 }
 
-// An unknown status sorts last rather than first, so it never pushes a
-// status needing attention down the list.
-const statusRank = (status) => {
-  const rank = ITEM_STATUS_ORDER.indexOf(status)
-  return rank === -1 ? ITEM_STATUS_ORDER.length : rank
+// An unknown value sorts last rather than first, so it never pushes a
+// status needing attention, or a known type, down the list.
+const rankIn = (order) => (value) => {
+  const rank = order.indexOf(value)
+  return rank === -1 ? order.length : rank
 }
+
+const statusRank = rankIn(ITEM_STATUS_ORDER)
 
 // In progress items have never been submitted, so they go by last updated.
 const sortTime = (row) => Date.parse(row.submittedAt ?? row.updatedAt) || 0
@@ -219,10 +221,7 @@ export function filterOptions({ status, type }, t, types = TYPE_ORDER) {
   }
 }
 
-const typeRank = (changeType) => {
-  const rank = TYPE_ORDER.indexOf(changeType)
-  return rank === -1 ? TYPE_ORDER.length : rank
-}
+const typeRank = rankIn(TYPE_ORDER)
 
 // RA-697: the dashboard shows only work in progress, so final items count for
 // nothing, and a type with only final items gets no entry.
