@@ -349,6 +349,16 @@ describe('#manageChangeRequestDetailController', () => {
     test('shows Location, Site ID, Status, Date added and BES expiry date in the header row', async () => {
       const result = await getPage(ITEM.queried)
 
+      const labels = [
+        ...result.matchAll(/<dt class="govuk-body[^"]*">([^<]*)<\/dt>/g)
+      ]
+      expect(labels.map(([, label]) => label.trim())).toEqual([
+        'Location:',
+        'Site ID:',
+        'Status:',
+        'Date added:',
+        'BES expiry date:'
+      ])
       expect(valueOf(result, 'header-location')).toBe(
         'Industrieweg 44, Netherlands'
       )

@@ -1084,11 +1084,11 @@
       },
       "detail": {
         "header": {
-          "location": "Location",
-          "siteId": "Site ID",
-          "status": "Status",
-          "dateAdded": "Date added",
-          "besExpiry": "BES expiry date"
+          "location": "Location:",
+          "siteId": "Site ID:",
+          "status": "Status:",
+          "dateAdded": "Date added:",
+          "besExpiry": "BES expiry date:"
         },
         "notProvided": "Not provided",
         "notSubmitted": "Not submitted",

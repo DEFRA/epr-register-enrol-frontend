@@ -1083,11 +1083,11 @@
       },
       "detail": {
         "header": {
-          "location": "[Welsh] Location",
-          "siteId": "[Welsh] Site ID",
-          "status": "[Welsh] Status",
-          "dateAdded": "[Welsh] Date added",
-          "besExpiry": "[Welsh] BES expiry date"
+          "location": "[Welsh] Location:",
+          "siteId": "[Welsh] Site ID:",
+          "status": "[Welsh] Status:",
+          "dateAdded": "[Welsh] Date added:",
+          "besExpiry": "[Welsh] BES expiry date:"
         },
         "notProvided": "[Welsh] Not provided",
         "notSubmitted": "[Welsh] Not submitted",
