@@ -60,9 +60,11 @@
 // address beneath it, and a rule between ORSs. Figma spaces each ORS 20px
 // above and below its rule, except 10px above the first, 40px under the intro.
 
-// The tab intros' text box is 586px wide in Figma (RA-425 and RA-492 frames).
+// Wraps the Registered intro after "(ORSs) that", as in Figma. Figma's box is
+// 571px, but GDS Transport renders narrower in the browser, where "that" ends
+// at 526px and "you" at 559px.
 .app-ors-list__intro {
-  max-width: 586px;
+  max-width: 545px;
 }
 
 // Collapses with the intro's 20px margin: 30px, plus the first ORS's 10px.
