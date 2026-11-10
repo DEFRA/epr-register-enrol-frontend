@@ -74,7 +74,7 @@ export async function loadView(request) {
     }
     throw err
   }
-  if (view.sites.length === 0) {
+  if (!view.sites?.length) {
     throw Boom.notFound()
   }
   return view

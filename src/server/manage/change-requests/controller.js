@@ -68,8 +68,7 @@ export const manageChangeRequestsController = {
       paginate(
         filterItems(
           sortItems(flattenItems(view.requests ?? [], view.sites ?? [])),
-          filters,
-          types
+          filters
         ),
         request.query.page
       )

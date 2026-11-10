@@ -1,4 +1,5 @@
 import { ITEM_STATUSES } from '../../common/constants/changeRequests.js'
+import { isItemForSite } from '../../common/helpers/changeRequestSite.js'
 import { hasValue } from '../../common/helpers/hasValue.js'
 import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 import {
@@ -35,9 +36,8 @@ export function findSite(view, siteId) {
 }
 
 export function findRequestSite(view, siteId) {
-  return view.activeRequest?.sites?.find(
-    (site) => String(site.siteId) === String(siteId)
-  )
+  const site = findSite(view, siteId) ?? { siteId }
+  return view.activeRequest?.sites?.find((item) => isItemForSite(item, site))
 }
 
 /**
@@ -47,7 +47,7 @@ export function findRequestSite(view, siteId) {
  */
 export function changeRequestsSummary(view) {
   const statusBySiteId = new Map(
-    view.sites.map((entry) => [
+    (view.sites ?? []).map((entry) => [
       String(entry.siteId),
       entry.pendingRequestStatus ?? null
     ])

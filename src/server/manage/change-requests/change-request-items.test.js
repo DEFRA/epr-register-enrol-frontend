@@ -527,14 +527,6 @@ describe('filterItems', () => {
     ).toEqual([])
   })
 
-  test('ignores unknown filter values', () => {
-    expect(
-      ids(
-        filterItems(rows, { status: 'Expired', type: 'remove-overseas-site' })
-      )
-    ).toEqual(ids(rows))
-  })
-
   test('leaves its input unchanged', () => {
     const input = [...rows]
     filterItems(input, { status: 'Queried', type: null })

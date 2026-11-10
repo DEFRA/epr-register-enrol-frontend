@@ -3,30 +3,37 @@
 
 export function initAutoSubmit(doc = document) {
   const forms = doc.querySelectorAll('form[data-module="app-auto-submit"]')
+  if (forms.length === 0) {
+    return
+  }
+  const unnamed = []
 
   forms.forEach((form) => {
-    const selects = () => Array.from(form.querySelectorAll('select'))
-
     form.addEventListener('change', (event) => {
       if (event.target.tagName !== 'SELECT') {
         return
       }
-      // A disabled select isn't submitted, so a placeholder leaves no empty
-      // `?status=` in the URL.
-      selects()
-        .filter((select) => select.value === '')
-        .forEach((select) => {
-          select.disabled = true
-        })
+      // An unnamed select isn't submitted, so a placeholder leaves no empty
+      // `?status=` in the URL. Disabling it instead would drop focus to the
+      // body while the next page loads.
+      form.querySelectorAll('select[name]').forEach((select) => {
+        if (select.value === '') {
+          unnamed.push({ select, name: select.name })
+          select.removeAttribute('name')
+        }
+      })
       form.submit()
     })
+  })
 
-    // Back from the next page can restore this page from the bfcache with
-    // the selects still disabled.
-    window.addEventListener('pageshow', () => {
-      selects().forEach((select) => {
-        select.disabled = false
-      })
+  // Back from the next page can restore this page from the bfcache with the
+  // names still removed.
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) {
+      return
+    }
+    unnamed.splice(0).forEach(({ select, name }) => {
+      select.name = name
     })
   })
 }

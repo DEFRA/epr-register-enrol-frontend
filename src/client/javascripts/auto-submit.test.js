@@ -55,8 +55,20 @@ describe('initAutoSubmit', () => {
     const type = choose('type', '')
 
     expect(form.submit).toHaveBeenCalledTimes(1)
-    expect(type.disabled).toBe(true)
-    expect(status.disabled).toBe(true)
+    expect(type.hasAttribute('name')).toBe(false)
+    expect(status.hasAttribute('name')).toBe(false)
+  })
+
+  it('leaves the changed select enabled, so it keeps focus', () => {
+    renderForm()
+    initAutoSubmit(document)
+    const type = document.getElementById('type')
+    type.focus()
+
+    choose('type', '')
+
+    expect(type.disabled).toBe(false)
+    expect(document.activeElement).toBe(type)
   })
 
   it('keeps the selects that have a value', () => {
@@ -65,8 +77,8 @@ describe('initAutoSubmit', () => {
 
     const status = choose('status', 'Queried')
 
-    expect(status.disabled).toBe(false)
-    expect(document.getElementById('type').disabled).toBe(false)
+    expect(status.name).toBe('status')
+    expect(document.getElementById('type').name).toBe('type')
   })
 
   it('ignores changes from other forms', () => {
@@ -84,14 +96,44 @@ describe('initAutoSubmit', () => {
 })
 
 describe('back to the page', () => {
-  it('enables the selects again when the page is shown from the cache', () => {
+  const pageshow = (persisted) =>
+    window.dispatchEvent(
+      new window.PageTransitionEvent('pageshow', { persisted })
+    )
+
+  it('names the selects again when the page is shown from the cache', () => {
     renderForm()
     initAutoSubmit(document)
     choose('type', '')
 
-    window.dispatchEvent(new Event('pageshow'))
+    pageshow(true)
 
-    expect(document.getElementById('status').disabled).toBe(false)
-    expect(document.getElementById('type').disabled).toBe(false)
+    expect(document.getElementById('status').name).toBe('status')
+    expect(document.getElementById('type').name).toBe('type')
+  })
+
+  it('leaves the selects alone on a fresh page load', () => {
+    renderForm()
+    initAutoSubmit(document)
+    choose('type', '')
+
+    pageshow(false)
+
+    expect(document.getElementById('status').hasAttribute('name')).toBe(false)
+    expect(document.getElementById('type').hasAttribute('name')).toBe(false)
+  })
+
+  it('names each select only once after repeated submits', () => {
+    renderForm()
+    initAutoSubmit(document)
+    choose('type', '')
+    choose('status', '')
+
+    pageshow(true)
+    choose('status', 'Queried')
+    pageshow(true)
+
+    expect(document.getElementById('status').name).toBe('status')
+    expect(document.getElementById('type').name).toBe('type')
   })
 })

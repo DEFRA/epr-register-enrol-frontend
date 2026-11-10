@@ -186,8 +186,7 @@ export function readFilters(query = {}, types = TYPE_ORDER) {
   }
 }
 
-export function filterItems(rows, filters, types = TYPE_ORDER) {
-  const { status, type } = readFilters(filters, types)
+export function filterItems(rows, { status, type }) {
   return rows.filter(
     (row) =>
       (!status || row.status === status) && (!type || row.changeType === type)

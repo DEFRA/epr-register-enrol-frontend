@@ -608,6 +608,13 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
+    test('returns 404 for a view with no sites list', async () => {
+      const { sites: _sites, ...view } = makeView({ active: null })
+      mockGet(view)
+      const { statusCode } = await server.inject(`${BASE}/requests`)
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
     test('a backend failure loading the request is not hidden', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(500))
       const { statusCode } = await server.inject(`${BASE}/requests`)
