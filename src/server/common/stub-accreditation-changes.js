@@ -5,11 +5,39 @@
 // fee per site.
 // Sites come from the stub application itself, so any Approved exporter in
 // the stub org docs (org 50019 is seeded for it) can be used locally.
+// RA-697: each site on a request is an item with its own id, type and
+// status; a tonnage band upgrade request has one tonnageBandUpgrade item and
+// no sites. A site is pending only while an item for it is active, and a
+// granted reprocessor's view lists its requests but no sites. Org 50018's
+// accreditations start with the backend dev seed's requests
+// (stub-change-request-seed.js).
+// RA-697: a registration-only operator's view is read by organisation,
+// registration and material (GET only), with the registration's ORSs as
+// Registered sites; org 50021 starts with the backend dev seed's requests.
+// RA-697 task 014: an accreditation's GET also lists its registration's
+// registration-only requests for its material and year (pending counts them),
+// but its active request is only ever its own draft.
 
+import { randomUUID } from 'node:crypto'
+
+import {
+  ACTIVE_ITEM_STATUSES,
+  CHANGE_TYPES,
+  ITEM_STATUSES
+} from './constants/changeRequests.js'
+import { APPROVED_STATUS } from './constants/applicationStatuses.js'
 import { statusCodes } from './constants/status-codes.js'
+import { isItemForSite } from './helpers/changeRequestSite.js'
+import { currentYear } from './helpers/currentYear.js'
 import { hasValue } from './helpers/hasValue.js'
 import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
+import {
+  seededStubChangeRequests,
+  seededStubRegistrationChangeRequests
+} from './stub-change-request-seed.js'
 
+const REGISTRATION_RE =
+  /^\/api\/v1\/accreditation-changes\/([^/]+)\/registrations\/([^/]+)\/([^/]+)(\/.*)?$/
 const CHANGES_RE = /^\/api\/v1\/accreditation-changes\/([^/]+)\/([^/]+)(\/.*)?$/
 const LOCKABLE = [
   'country',
@@ -25,17 +53,79 @@ function stubError(status, message, response) {
   return Object.assign(new Error(message), { status, response })
 }
 
-function stateFor(key) {
+function stateFor(key, initialRequests = () => []) {
   if (!state.has(key)) {
-    state.set(key, { draft: null, submitted: [] })
+    const store = { draft: null, submitted: [] }
+    for (const request of initialRequests()) {
+      storeRequest(store, request)
+    }
+    state.set(key, store)
   }
   return state.get(key)
+}
+
+function newItem(changeType, item = {}) {
+  return {
+    itemId: randomUUID(),
+    changeType,
+    status: ITEM_STATUSES.inProgress,
+    validFrom: null,
+    withdrawnAt: null,
+    ...item
+  }
+}
+
+function newSiteItem(entry) {
+  return {
+    ...newItem(CHANGE_TYPES.addOverseasSite, entry),
+    answers: entry.answers ?? {},
+    besEvidenceUploads: entry.besEvidenceUploads ?? []
+  }
+}
+
+function setItemStatuses(request, status) {
+  for (const item of [...request.sites, request.tonnageBandUpgrade]) {
+    if (item) {
+      item.status = status
+    }
+  }
+}
+
+function storeRequest(store, request) {
+  const now = new Date().toISOString()
+  const seeded = {
+    changeType: CHANGE_TYPES.addOverseasSite,
+    createdAt: now,
+    updatedAt: request.createdAt ?? now,
+    submittedAt: null,
+    submittedBy: null,
+    caseManagementReference: null,
+    ...request,
+    sites: (request.sites ?? []).map(newSiteItem),
+    tonnageBandUpgrade: request.tonnageBandUpgrade
+      ? newItem(CHANGE_TYPES.upgradeTonnageBand, request.tonnageBandUpgrade)
+      : null
+  }
+  if (seeded.status === ITEM_STATUSES.inProgress) {
+    store.draft = seeded
+  } else {
+    store.submitted.push(seeded)
+  }
+}
+
+/**
+ * Stores a change request for `${orgId}/${appId}` as the backend's seed
+ * would: a Submitted (or later) request, or the one InProgress draft.
+ */
+export function seedStubChangeRequest(key, request) {
+  storeRequest(stateFor(key), request)
 }
 
 function besRequired(site, effective) {
   return !site.isEu && !site.isOecd && effective.conditionsOfExport !== true
 }
 
+// site is empty for an item whose site the view doesn't list.
 function requestSiteView(site, entry) {
   const effective = Object.fromEntries(
     LOCKABLE.map((field) => [
@@ -49,64 +139,100 @@ function requestSiteView(site, entry) {
     missingFields.push('besEvidence')
   }
   return {
-    siteId: site.siteId,
-    orsId: site.orsId,
-    siteName: site.siteName,
+    siteId: entry.siteId,
+    orsId: entry.orsId ?? site.orsId ?? null,
+    siteName: entry.siteName ?? site.siteName,
     answers: entry.answers,
     effective,
     besEvidenceRequired: required,
     besEvidence: { besEvidenceUploads: entry.besEvidenceUploads },
     missingFields,
-    isComplete: missingFields.length === 0
+    isComplete: missingFields.length === 0,
+    itemId: entry.itemId,
+    changeType: entry.changeType,
+    status: entry.status,
+    validFrom: entry.validFrom,
+    withdrawnAt: entry.withdrawnAt
   }
 }
 
-function requestView(request, sitesById) {
+const siteFor = (sites, item) => sites.find((site) => isItemForSite(item, site))
+
+function requestView(request, siteList) {
   const sites = request.sites.map((entry) =>
-    requestSiteView(sitesById.get(entry.siteId), entry)
+    requestSiteView(siteFor(siteList, entry) ?? {}, entry)
   )
   return {
     requestId: request.requestId,
-    changeType: 'add-overseas-site',
+    changeType: request.changeType,
     status: request.status,
+    createdAt: request.createdAt,
+    updatedAt: request.updatedAt,
+    submittedAt: request.submittedAt ?? null,
     submittedBy: request.submittedBy ?? null,
+    caseManagementReference: request.caseManagementReference ?? null,
     sites,
-    isComplete: sites.every((site) => site.isComplete),
+    isComplete: sites.length > 0 && sites.every((site) => site.isComplete),
     charge: {
       chargeableSites: sites.length,
       chargePerSitePence: CHARGE_PER_SITE_PENCE,
       totalPence: sites.length * CHARGE_PER_SITE_PENCE
-    }
+    },
+    tonnageBandUpgrade: request.tonnageBandUpgrade ?? null
   }
 }
 
-function buildView(orgId, appId, application, store) {
-  const sites = application.overseasSites?.sites ?? []
-  const sitesById = new Map(sites.map((site) => [site.siteId, site]))
-  const requests = [store.draft, ...store.submitted].filter(Boolean)
-  const pendingStatus = (siteId) =>
-    requests.find((r) => r.sites.some((s) => s.siteId === siteId))?.status ??
-    null
-  return {
-    organisationId: orgId,
-    applicationId: appId,
-    registrationId: application.registrationId,
-    materialType: application.materialType,
-    year: application.year,
-    sites: sites.map((site) => ({
+const isActive = (item) => ACTIVE_ITEM_STATUSES.has(item.status)
+
+function buildView(orgId, appId, application, store, registrationOnly = null) {
+  const sites = application.isExporter
+    ? (application.overseasSites?.sites ?? [])
+    : []
+  const requests = [
+    store.draft,
+    ...store.submitted,
+    registrationOnly?.draft,
+    ...(registrationOnly?.submitted ?? [])
+  ]
+    .filter(Boolean)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const activeSiteItems = requests.flatMap((request) =>
+    request.sites.filter(isActive).map((item) => ({ request, item }))
+  )
+  const siteView = (site) => {
+    const pending = activeSiteItems.find(({ item }) =>
+      isItemForSite(item, site)
+    )?.request
+    return {
       siteId: site.siteId,
       orsId: site.orsId,
       accreditationStatus:
         site.selected === false ? 'Registered' : 'Accredited',
-      pendingRequestStatus: pendingStatus(site.siteId),
+      pendingRequestId: pending?.requestId ?? null,
+      pendingRequestStatus: pending?.status ?? null,
       lockedFields: LOCKABLE.filter((field) => hasValue(site[field])),
       site
-    })),
-    activeRequest: store.draft ? requestView(store.draft, sitesById) : null,
-    requests: requests
-      .slice()
-      .reverse()
-      .map((r) => requestView(r, sitesById))
+    }
+  }
+  return {
+    organisationId: orgId,
+    applicationId: appId,
+    organisationName: application.organisationName ?? null,
+    registrationId: application.registrationId,
+    materialType: application.materialType,
+    year: application.year,
+    accreditationReference: application.accreditationReference ?? null,
+    registrationReference: application.registrationReference ?? null,
+    sites: sites.map(siteView),
+    activeRequest: store.draft ? requestView(store.draft, sites) : null,
+    requests: requests.map((r) => requestView(r, sites)),
+    pendingOrsIds: [
+      ...new Set(
+        activeSiteItems
+          .map(({ item }) => item.orsId ?? siteFor(sites, item)?.orsId)
+          .filter(Boolean)
+      )
+    ]
   }
 }
 
@@ -134,23 +260,32 @@ function addSite(ctx) {
     throw stubError(statusCodes.notFound, 'Site not found')
   }
   const listed = ctx.view().sites.find((s) => s.siteId === target.siteId)
-  if (
-    listed.accreditationStatus === 'Accredited' ||
-    listed.pendingRequestStatus === 'Submitted'
-  ) {
+  // RA-697: only one change per ORS can be active, so a registration-only
+  // request counts too, its draft included: that draft is never this
+  // accreditation's own, so the site can't join it here.
+  const registrationOnly = registrationStore(ctx.orgId, ctx.application)
+  const awaitingDecision = [
+    ...ctx.store.submitted,
+    ...(registrationOnly?.submitted ?? []),
+    registrationOnly?.draft
+  ]
+    .filter(Boolean)
+    .some((request) =>
+      request.sites.some(
+        (item) => isActive(item) && isItemForSite(item, target)
+      )
+    )
+  if (listed.accreditationStatus === 'Accredited' || awaitingDecision) {
     throw stubError(statusCodes.conflict, 'Site cannot be added')
   }
-  ctx.store.draft ??= {
-    requestId: `stub-request-${Date.now()}`,
-    status: 'InProgress',
-    sites: []
+  if (!ctx.store.draft) {
+    storeRequest(ctx.store, {
+      requestId: `stub-request-${Date.now()}`,
+      status: ITEM_STATUSES.inProgress
+    })
   }
   if (!ctx.store.draft.sites.some((s) => s.siteId === target.siteId)) {
-    ctx.store.draft.sites.push({
-      siteId: target.siteId,
-      answers: {},
-      besEvidenceUploads: []
-    })
+    ctx.store.draft.sites.push(newSiteItem({ siteId: target.siteId }))
   }
   return currentRequest(ctx)
 }
@@ -222,7 +357,9 @@ function submit(ctx) {
   if (!currentRequest(ctx).isComplete) {
     throw stubError(statusCodes.unprocessableEntity, 'Incomplete')
   }
-  store.draft.status = 'Submitted'
+  store.draft.status = ITEM_STATUSES.submitted
+  setItemStatuses(store.draft, ITEM_STATUSES.submitted)
+  store.draft.submittedAt = new Date().toISOString()
   store.draft.submittedBy = {
     fullName: ctx.body.fullName,
     jobTitle: ctx.body.jobTitle,
@@ -237,7 +374,7 @@ function submit(ctx) {
 const SITE_PATH = String.raw`/requests/current/sites/(\d+)`
 
 const ROUTES = [
-  ['get', '', (ctx) => ctx.view()],
+  ['get', '', (ctx) => ctx.mergedView()],
   ['post', '/requests/current/sites', addSite],
   ['delete', SITE_PATH, removeSite],
   ['patch', SITE_PATH, patchSite],
@@ -255,12 +392,18 @@ const ROUTES = [
   handle
 }))
 
-async function grantedApplication(deps, orgId, appId) {
+async function grantedApplication(deps, orgId, appId, method) {
   const application = await deps.getApplication(orgId, appId)
   if (!application) {
     throw stubError(statusCodes.notFound, 'Application not found')
   }
-  if (application.applicationStatus !== 'Approved' || !application.isExporter) {
+  if (application.applicationStatus !== APPROVED_STATUS) {
+    throw stubError(
+      statusCodes.conflict,
+      'Application is not a granted accreditation'
+    )
+  }
+  if (method !== 'get' && !application.isExporter) {
     throw stubError(
       statusCodes.conflict,
       'Application is not a granted exporter accreditation'
@@ -269,25 +412,106 @@ async function grantedApplication(deps, orgId, appId) {
   return application
 }
 
+// Read by the registration GET and merged into the accreditation GET.
+function registrationState(orgId, registrationId, materialType, year, sites) {
+  return stateFor(
+    `${orgId}/registrations/${registrationId}/${materialType}/${year}`,
+    () =>
+      seededStubRegistrationChangeRequests(orgId, registrationId, sites, year)
+  )
+}
+
+async function registrationChanges(method, endpoint, deps) {
+  const [, orgId, registrationId, material, rest = ''] =
+    REGISTRATION_RE.exec(endpoint)
+  if (method !== 'get' || rest !== '') {
+    throw stubError(
+      statusCodes.notFound,
+      `No stub for ${method.toUpperCase()} ${endpoint}`
+    )
+  }
+  const registration = await deps.getRegistration(orgId, registrationId)
+  if (registration?.materialType.toLowerCase() !== material.toLowerCase()) {
+    throw stubError(statusCodes.notFound, 'Registration not found')
+  }
+  if (registration.status !== APPROVED_STATUS) {
+    throw stubError(statusCodes.conflict, 'Registration is not Approved')
+  }
+  const year = currentYear()
+  const sites = registration.isExporter ? registration.sites : []
+  const store = registrationState(
+    orgId,
+    registrationId,
+    registration.materialType,
+    year,
+    sites
+  )
+  return buildView(
+    orgId,
+    null,
+    {
+      isExporter: registration.isExporter,
+      overseasSites: { sites },
+      organisationName: registration.organisationName,
+      registrationId,
+      registrationReference: registration.registrationNumber,
+      materialType: registration.materialType,
+      year
+    },
+    store
+  )
+}
+
+function registrationStore(orgId, application) {
+  const { registrationId, materialType, year } = application
+  if (!registrationId) {
+    return null
+  }
+  return registrationState(
+    orgId,
+    registrationId,
+    materialType,
+    year,
+    application.overseasSites?.sites ?? []
+  )
+}
+
 /**
  * Handles one accreditation-changes call.
  *
  * @param {object} deps - { getApplication(orgId, appId) -> application or
  *   null, initiateUpload(orgId, appId, body), getUploadStatus(orgId, appId,
- *   fileUploadId) }
+ *   fileUploadId), getRegistration(orgId, registrationId) -> the
+ *   registration status with its registered ORSs (`sites`), or null }
  */
 export async function stubAccreditationChanges(method, endpoint, body, deps) {
+  if (REGISTRATION_RE.test(endpoint)) {
+    return registrationChanges(method, endpoint, deps)
+  }
   const [, orgId, appId, rest = ''] = CHANGES_RE.exec(endpoint)
-  const application = await grantedApplication(deps, orgId, appId)
-  const store = stateFor(`${orgId}/${appId}`)
+  const application = await grantedApplication(deps, orgId, appId, method)
+  const key = `${orgId}/${appId}`
+  const store = stateFor(key, () =>
+    seededStubChangeRequests(orgId, appId, application)
+  )
   const ctx = {
     orgId,
     appId,
+    key,
     application,
     store,
     body,
     deps,
-    view: () => buildView(orgId, appId, application, store)
+    view: () => buildView(orgId, appId, application, store),
+    // Only the GET merges: every write acts on the accreditation's own requests.
+    mergedView: () =>
+      buildView(
+        orgId,
+        appId,
+        application,
+        store,
+        registrationStore(orgId, application)
+      )
   }
   for (const route of ROUTES) {
     const match = route.method === method ? route.pattern.exec(rest) : null

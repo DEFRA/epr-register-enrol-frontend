@@ -11,7 +11,8 @@ import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
 import { config } from '../../../config/config.js'
-import { buildTonnageOptions, TONNAGE_OPTIONS } from './controller.js'
+import { TONNAGE_OPTIONS } from '../../common/constants/tonnageBands.js'
+import { buildTonnageOptions } from './controller.js'
 
 const APPLICATION_ID = 'app-prns-001'
 

@@ -12,7 +12,7 @@
   {% elif site.inProgress %}
     <div class="app-ors-list__actions">
       <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-2" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
-      <a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.siteId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
+      {% if site.viewUrl %}<a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.siteId }}">{{ t('pages.manageOverseasSites.viewChangeRequests') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>{% endif %}
     </div>
   {% elif site.addUrl %}
     {# Adding a site changes the draft request, so this is a crumb-protected
@@ -26,8 +26,8 @@
 
 {% macro orsList(name, sites) %}
   <h2 class="govuk-heading-m govuk-!-margin-bottom-2">{{ t('pages.manageOverseasSites.' + name + '.heading') }}</h2>
-  <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro', { year: year }) }}</p>
   {% if sites.length %}
+    <p class="govuk-body app-ors-list__intro">{{ t('pages.manageOverseasSites.' + name + '.intro', { year: year }) }}</p>
     <ul class="govuk-list app-ors-list" data-testid="{{ name }}-sites-list">
       {% for site in sites %}
         <li class="app-ors-list__item" data-testid="{{ name }}-site-row-{{ site.siteId }}">
@@ -51,7 +51,7 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="govuk-body" data-testid="{{ name }}-sites-empty">{{ t('pages.manageOverseasSites.' + name + '.empty') }}</p>
+    <p class="govuk-body" data-testid="{{ name }}-sites-empty">{{ t('pages.manageOverseasSites.' + name + '.empty', { year: year }) }}</p>
   {% endif %}
 {% endmacro %}
 
@@ -68,12 +68,12 @@
   </div>
 
   {% if pendingCount > 0 %}
-    <div class="govuk-notification-banner" role="region" aria-labelledby="pending-change-title" data-module="govuk-notification-banner" data-testid="pending-change-banner">
+    <div class="govuk-notification-banner app-notification-banner--full-width" role="region" aria-labelledby="pending-change-title" data-module="govuk-notification-banner" data-testid="pending-change-banner">
       <div class="govuk-notification-banner__header">
         <h2 class="govuk-notification-banner__title" id="pending-change-title">{{ t('pages.manageOverseasSites.pendingBanner.title') }}</h2>
       </div>
       <div class="govuk-notification-banner__content">
-        <p class="govuk-body">{{ t('pages.manageOverseasSites.pendingBanner.body', { count: pendingCount }) }}</p>
+        <p class="govuk-body">{{ t('pages.manageOverseasSites.pendingBanner.' + ('bodyRegistrationOnly' if isRegistrationOnly else 'body'), { count: pendingCount }) }}</p>
       </div>
     </div>
   {% endif %}
@@ -86,7 +86,7 @@
       <div class="govuk-notification-banner__content">
         <p class="govuk-body">
           {{ t('pages.manageOverseasSites.requestsBanner.body', { count: readyForSubmissionCount }) }}
-          <br><a class="govuk-notification-banner__link" href="{{ requestsUrl }}" data-testid="view-requests-link">{{ t('pages.manageOverseasSites.requestsBanner.link') }}</a>
+          {% if requestsUrl %}<br><a class="govuk-notification-banner__link" href="{{ requestsUrl }}" data-testid="view-requests-link">{{ t('pages.manageOverseasSites.requestsBanner.link') }}</a>{% endif %}
         </p>
       </div>
     </div>

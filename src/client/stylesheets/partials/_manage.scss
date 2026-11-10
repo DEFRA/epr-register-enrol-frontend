@@ -144,3 +144,45 @@
   margin-left: auto;
   text-align: right;
 }
+
+// RA-732: the change requests filters, per Figma 773:25074.
+.app-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  column-gap: govuk-spacing(6);
+}
+
+// Figma's 304px selects, from tablet up so they never overflow a phone.
+.app-filters__field .govuk-select {
+  @media #{govuk-from-breakpoint(tablet)} {
+    min-width: 304px;
+  }
+}
+
+.app-filters__clear {
+  margin-bottom: govuk-spacing(6);
+  padding-bottom: govuk-spacing(2);
+}
+
+// RA-697: the change request detail page's header row, per Figma 604:137479:
+// five label and value pairs in a row, wrapping on narrow screens.
+.app-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: govuk-spacing(6);
+  margin-top: 0;
+}
+
+// The interim sites, one per line between rules, with no actions.
+.app-detail-interim-list__item {
+  margin-bottom: 0;
+  padding: govuk-spacing(3) 0;
+  border-bottom: 1px solid $govuk-border-colour;
+}
+
+// The change pending and query raised banners' text runs the full width of
+// the banner, not GOV.UK's two-thirds line length.
+.app-notification-banner--full-width .govuk-notification-banner__content > * {
+  max-width: none;
+}

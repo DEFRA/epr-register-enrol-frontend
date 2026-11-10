@@ -8,6 +8,12 @@ import {
   STUB_OPERATOR_RELATIONSHIPS,
   STUB_OPERATOR_CURRENT_RELATIONSHIP_ID
 } from './stub-operator-orgs.js'
+import {
+  IN_YEAR_CHANGE_ORG,
+  MANAGE_EXPORTER_ORG,
+  NO_CHANGE_REQUESTS_ORG,
+  REGISTRATION_ONLY_ORG
+} from './constants/test-orgs.js'
 
 describe('STUB_DEFRA_LINKS', () => {
   test('maps each ReEx org id to its linked Defra org id', () => {
@@ -68,5 +74,18 @@ describe('operator page drift guard', () => {
         `operator page links to /operator-accreditation/${orgId}/… but there is no STUB_OPERATOR_ORGS entry for it — the stub operator would get a 403. Add it to src/server/common/stub-operator-orgs.js.`
       ).toHaveProperty(orgId)
     }
+  })
+})
+
+// The operator page builds its manage links from these constants rather than
+// the template, so the guard above can't see them.
+describe('manage org drift guard', () => {
+  test.each([
+    MANAGE_EXPORTER_ORG.orgId,
+    IN_YEAR_CHANGE_ORG.orgId,
+    NO_CHANGE_REQUESTS_ORG.orgId,
+    REGISTRATION_ONLY_ORG.orgId
+  ])('authorises the stub operator for manage org %s', (orgId) => {
+    expect(STUB_DEFRA_LINKS).toHaveProperty(String(orgId))
   })
 })

@@ -3,6 +3,7 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
+import { TONNAGE_OPTIONS } from '../../common/constants/tonnageBands.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
@@ -15,8 +16,6 @@ import {
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
-
-export const TONNAGE_OPTIONS = ['UpTo500', 'UpTo5000', 'UpTo10000', 'Over10000']
 
 // Deliberately checks shape/size, not the exact enum values: the controller
 // already renders its own friendly inline error for a missing or business-

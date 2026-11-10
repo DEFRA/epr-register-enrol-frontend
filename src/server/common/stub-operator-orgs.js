@@ -1,8 +1,9 @@
 import {
-  IN_YEAR_CHANGE_ORG_ID,
-  IN_YEAR_CHANGE_ORG_NAME,
-  MANAGE_EXPORTER_ORG_ID,
-  MANAGE_EXPORTER_ORG_NAME
+  IN_YEAR_CHANGE_ORG,
+  MANAGE_EXPORTER_ORG,
+  NO_CHANGE_REQUESTS_ORG,
+  NO_OVERSEAS_SITES_ORG,
+  REGISTRATION_ONLY_ORG
 } from './constants/test-orgs.js'
 
 /**
@@ -58,9 +59,15 @@ const NUMBERED_TEST_ORGS = [
   ['50015', 'Exporter Accreditation Test Exports Ltd'],
   ['50016', 'Section Lock Test Recycling Ltd'],
   ['50017', 'Coordinate Precision Test Exports Ltd'],
-  [String(MANAGE_EXPORTER_ORG_ID), MANAGE_EXPORTER_ORG_NAME],
+  [String(MANAGE_EXPORTER_ORG.orgId), MANAGE_EXPORTER_ORG.orgName],
   // RA-492: in-year add-ORS journey tests.
-  [String(IN_YEAR_CHANGE_ORG_ID), IN_YEAR_CHANGE_ORG_NAME]
+  [String(IN_YEAR_CHANGE_ORG.orgId), IN_YEAR_CHANGE_ORG.orgName],
+  // RA-697: the in-year change request pages' empty states.
+  [String(NO_CHANGE_REQUESTS_ORG.orgId), NO_CHANGE_REQUESTS_ORG.orgName],
+  // RA-697: the registration-only manage pages.
+  [String(REGISTRATION_ONLY_ORG.orgId), REGISTRATION_ONLY_ORG.orgName],
+  // RA-697: the overseas-sites page's empty tabs.
+  [String(NO_OVERSEAS_SITES_ORG.orgId), NO_OVERSEAS_SITES_ORG.orgName]
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).

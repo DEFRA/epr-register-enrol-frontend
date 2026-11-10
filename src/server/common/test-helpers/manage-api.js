@@ -16,6 +16,27 @@ export const approvedRegistration = {
   status: 'Approved'
 }
 
+// RA-697: the registration-status response also names the organisation,
+// material, exporter flag and site address, from which a registration-only
+// operator's pages are built.
+export const registrationOnlyExporter = {
+  ...approvedRegistration,
+  organisationName: 'Reg Only Exports Ltd',
+  materialType: 'Plastic',
+  glassRecyclingProcess: null,
+  isExporter: true,
+  siteAddress: null
+}
+
+export const registrationOnlyReprocessor = {
+  ...registrationOnlyExporter,
+  registrationNumber: 'R27ER0500180002GR',
+  materialType: 'Glass',
+  glassRecyclingProcess: 'glass_re_melt',
+  isExporter: false,
+  siteAddress: 'Unit 9, Furnace Lane, Doncaster, DN4 5HT'
+}
+
 /**
  * A raw application that the /manage pages accept as the current
  * accreditation for MANAGE_REGISTRATION_ID and MANAGE_MATERIAL.
@@ -39,7 +60,12 @@ export const makeManageApp = (overrides = {}) => ({
 
 // RA-492: the accreditation-changes view when the operator has made no
 // in-year change requests.
-export const noChangeRequests = { sites: [], activeRequest: null, requests: [] }
+export const noChangeRequests = {
+  sites: [],
+  activeRequest: null,
+  requests: [],
+  pendingOrsIds: []
+}
 
 const responseOrThrow = (response) => {
   if (response instanceof Error) {
@@ -58,7 +84,9 @@ const responseOrThrow = (response) => {
  *
  * @param {object[]} apps - raw applications, each with an `id`
  * @param {object|Error} [registration] - the registration-status response
- * @param {object|Error} [changes] - the accreditation-changes view
+ * @param {object|Error|function(string): (object|Error)} [changes] - the
+ *   accreditation-changes view, or a function of the application id giving
+ *   each application's own view
  */
 export function mockManageGets(
   apps,
@@ -70,7 +98,10 @@ export function mockManageGets(
       return responseOrThrow(registration)
     }
     if (url.startsWith('/api/v1/accreditation-changes/')) {
-      return responseOrThrow(changes)
+      const applicationId = decodeURIComponent(url.split('/').pop())
+      return responseOrThrow(
+        typeof changes === 'function' ? changes(applicationId) : changes
+      )
     }
     const lastSegment = url.split('/').pop()
     return apps.find((app) => app.id === lastSegment) ?? apps

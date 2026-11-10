@@ -2,6 +2,8 @@ import { config } from '../../config/config.js'
 import { stubApiClient, stubOrgDocs } from './stub-api-client.js'
 import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
 import { stubAccreditationChanges } from './stub-accreditation-changes.js'
+import { manageStubRegistrationStatuses } from './stub-manage-accreditations.js'
+import { registeredOverseasSites } from './stub-registered-ors.js'
 
 function overlayOrgName(items) {
   const docs = stubOrgDocs()
@@ -75,6 +77,14 @@ const accreditationChangesDeps = {
     return stubApiClient.get(
       `${BASE}/${orgId}/${appId}/files/${fileUploadId}/status`
     )
+  },
+  // RA-697: as the registration-status stub, which does not check the
+  // organisation either.
+  getRegistration(_orgId, registrationId) {
+    const registration = manageStubRegistrationStatuses()[registrationId]
+    return registration
+      ? { ...registration, sites: registeredOverseasSites(registrationId) }
+      : null
   }
 }
 

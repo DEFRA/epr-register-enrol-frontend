@@ -5,6 +5,10 @@ import { getUser } from '../../common/helpers/auth/get-user.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import {
+  CHANGE_TYPES,
+  ITEM_STATUSES
+} from '../../common/constants/changeRequests.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
 import {
@@ -18,15 +22,14 @@ import {
   buildViewData as buildDeclarationViewData,
   validateDeclaration
 } from '../submit-declaration/controller.js'
-import { accreditationChangesService } from './service.js'
+import { orsAddressLine } from '../../common/helpers/orsAddress.js'
+import { accreditationChangesService } from '../../common/helpers/accreditationChangesService.js'
 import {
-  SUBMITTED,
   buildMissingFieldErrors,
   manageSitesText,
   buildSummaryRows,
   findRequestSite,
-  findSite,
-  siteAddressLine
+  findSite
 } from './view-model.js'
 import {
   addToAccreditationUrl,
@@ -54,12 +57,14 @@ export function organisationIdFrom(request) {
 
 /**
  * The backend's view of the granted accreditation. 404 (no such
- * application) and 409 (not Approved, or not an exporter) both mean this
- * journey does not exist for the application.
+ * application) and 409 (not Approved) both mean this journey does not exist
+ * for the application, as does a view with no sites: RA-697's view of a
+ * granted reprocessor, which has no overseas sites to add.
  */
 export async function loadView(request) {
+  let view
   try {
-    return await accreditationChangesService.getView(
+    view = await accreditationChangesService.getView(
       organisationIdFrom(request),
       request.params.applicationId
     )
@@ -69,6 +74,10 @@ export async function loadView(request) {
     }
     throw err
   }
+  if (!view.sites?.length) {
+    throw Boom.notFound()
+  }
+  return view
 }
 
 /**
@@ -91,7 +100,11 @@ export async function redirectToManageSites(request, h, view) {
 export function resolveDraftSite(view, siteId) {
   const entry = findSite(view, siteId)
   const requestSite = findRequestSite(view, siteId)
-  if (!entry || !requestSite || entry.pendingRequestStatus === SUBMITTED) {
+  if (
+    !entry ||
+    !requestSite ||
+    entry.pendingRequestStatus === ITEM_STATUSES.submitted
+  ) {
     return null
   }
   return { entry, requestSite }
@@ -276,7 +289,7 @@ function renderRequests(
         siteId: site.siteId,
         orsId: site.orsId,
         siteName: site.siteName,
-        address: siteAddressLine(entry.site),
+        address: orsAddressLine(entry.site),
         viewUrl: addToAccreditationUrl(applicationId, site.siteId)
       }
     }),
@@ -423,7 +436,9 @@ export const paymentGetController = {
     const organisationId = organisationIdFrom(request)
     const view = await loadView(request)
     const submitted = view.requests.find(
-      (changeRequest) => changeRequest.status === SUBMITTED
+      (changeRequest) =>
+        changeRequest.status === ITEM_STATUSES.submitted &&
+        changeRequest.changeType === CHANGE_TYPES.addOverseasSite
     )
     if (!submitted) {
       return redirectToManageSites(request, h, view)

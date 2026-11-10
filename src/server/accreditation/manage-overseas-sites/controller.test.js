@@ -23,6 +23,7 @@ function siteEntry(overrides = {}) {
     siteId: 900182,
     orsId: '002',
     accreditationStatus: 'Registered',
+    pendingRequestId: null,
     pendingRequestStatus: null,
     lockedFields: ['country', 'coordinates', 'operationCodes'],
     site: {
@@ -59,6 +60,11 @@ function requestSite(overrides = {}) {
     besEvidence: null,
     missingFields: ['conditionsOfExport', 'besEvidence'],
     isComplete: false,
+    itemId: '6f1c2d0e-0000-4000-8000-000000900182',
+    changeType: 'add-overseas-site',
+    status: 'InProgress',
+    validFrom: null,
+    withdrawnAt: null,
     ...overrides
   }
 }
@@ -78,10 +84,12 @@ function makeView({ sites, active, requests } = {}) {
       ? null
       : {
           requestId: 'req-1',
+          changeType: 'add-overseas-site',
           status: 'InProgress',
           sites: active ?? [requestSite()],
           isComplete: (active ?? [requestSite()]).every((s) => s.isComplete),
-          charge: chargeOf((active ?? [requestSite()]).length)
+          charge: chargeOf((active ?? [requestSite()]).length),
+          tonnageBandUpgrade: null
         }
   return {
     organisationId: '50018',
@@ -107,7 +115,8 @@ function makeView({ sites, active, requests } = {}) {
       })
     ],
     activeRequest,
-    requests: requests ?? (activeRequest ? [activeRequest] : [])
+    requests: requests ?? (activeRequest ? [activeRequest] : []),
+    pendingOrsIds: active === null ? [] : ['002']
   }
 }
 
@@ -302,6 +311,21 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('data-testid="row-location-missing"')
       expect(result).toMatch(
         /data-testid="row-location-action">Add information/
+      )
+    })
+
+    // RA-697: an operator-entered ORS's siteAddress already ends with its
+    // country.
+    test('summary: the location row names the request country once', async () => {
+      const view = makeView({
+        active: [requestSite({ effective: { country: 'Germany' } })]
+      })
+      view.sites[1].site.siteAddress = 'Ejbyvvej, Denmark'
+      mockGet(view)
+      const { result } = await server.inject(`${BASE}/add/900182`)
+
+      expect(result).toMatch(
+        /data-testid="row-location-value">\s*Ejbyvvej, Germany\s*</
       )
     })
 
@@ -576,6 +600,21 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(statusCode).toBe(statusCodes.notFound)
     })
 
+    // RA-697: the backend lists a granted reprocessor's change requests, with
+    // no sites; there is still nothing for this journey to add to.
+    test('returns 404 for a granted reprocessor accreditation (no sites)', async () => {
+      mockGet(makeView({ sites: [], active: null }))
+      const { statusCode } = await server.inject(`${BASE}/requests`)
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('returns 404 for a view with no sites list', async () => {
+      const { sites: _sites, ...view } = makeView({ active: null })
+      mockGet(view)
+      const { statusCode } = await server.inject(`${BASE}/requests`)
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
     test('a backend failure loading the request is not hidden', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(500))
       const { statusCode } = await server.inject(`${BASE}/requests`)
@@ -608,6 +647,17 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toMatch(/data-testid="charge-total">£656.00/)
       expect(result).toContain(`href="${MANAGE}#registered"`)
       expect(result).toContain(`href="${BASE}/add/900184"`)
+    })
+
+    test('names each site country once in its address line', async () => {
+      const view = makeView()
+      view.sites[1].site.siteAddress = 'Ejbyvvej, Denmark'
+      mockGet(view)
+      const { result } = await server.inject(`${BASE}/requests`)
+
+      expect(result).toMatch(
+        /data-testid="request-site-name-002">[\s\S]*?<span[^>]*>Ejbyvvej, Denmark<\/span>/
+      )
     })
 
     test('Continue with an incomplete site stays on the page and names it', async () => {
@@ -747,6 +797,7 @@ describe('#manageOverseasSites (RA-492)', () => {
     test('AC03/AC04: the payment page charges £328 per submitted ORS and no tonnage fee', async () => {
       const submitted = {
         requestId: 'req-1',
+        changeType: 'add-overseas-site',
         status: 'Submitted',
         submittedBy: { fullName: 'Jane Smith', email: 'jane@example.com' },
         sites: [requestSite(), requestSite({ siteId: 900184, orsId: '004' })],
@@ -760,6 +811,32 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('£656.00 for 2 Overseas Sites')
       expect(result).not.toMatch(/accreditation for Plastic/)
       expect(result).toContain('jane@example.com')
+    })
+
+    // RA-697: a newer submitted tonnage band upgrade is not this payment.
+    test('the payment page charges the latest submitted ORS request, not a tonnage one', async () => {
+      const tonnage = {
+        requestId: 'req-tonnage',
+        changeType: 'upgrade-tonnage-band',
+        status: 'Submitted',
+        sites: [],
+        charge: chargeOf(0),
+        tonnageBandUpgrade: { status: 'Submitted', requestedBand: 'UpTo5000' }
+      }
+      const ors = {
+        requestId: 'req-1',
+        changeType: 'add-overseas-site',
+        status: 'Submitted',
+        submittedBy: { fullName: 'Jane Smith' },
+        sites: [requestSite()],
+        charge: chargeOf(1),
+        tonnageBandUpgrade: null
+      }
+      mockGet(makeView({ active: null, requests: [tonnage, ors] }))
+      const { statusCode, result } = await server.inject(`${BASE}/payment`)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(/data-testid="amount-due">\s*Amount due: £328.00/)
     })
 
     test('the payment page redirects when nothing has been submitted', async () => {

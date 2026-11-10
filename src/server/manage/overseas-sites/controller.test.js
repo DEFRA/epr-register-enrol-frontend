@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from 'vitest'
+import { describe, test, expect, beforeAll, beforeEach, vi } from 'vitest'
 
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
@@ -15,12 +15,16 @@ import {
   approvedRegistration,
   makeManageApp,
   mockManageGets,
-  noChangeRequests
+  noChangeRequests,
+  registrationOnlyExporter,
+  registrationOnlyReprocessor
 } from '../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
-  MANAGE_EXPORTER_ORG_ID,
-  MANAGE_EXPORTER_REGISTRATION_ID
+  MANAGE_EXPORTER_ORG,
+  NO_OVERSEAS_SITES_ORG,
+  REGISTRATION_ONLY_ORG
 } from '../../common/constants/test-orgs.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
@@ -192,13 +196,19 @@ describe('#manageOverseasSitesController', () => {
       )
     }
 
-    test('when there is no Approved current-year accreditation', async () => {
-      mockManageGets([
-        makeApp({ year: CURRENT_YEAR - 1 }),
-        makeApp({ id: 'app-started', applicationStatus: 'Started' })
-      ])
+    // RA-697: a registration-only exporter's sites come from the same view
+    // as its change requests, so without it the tabs would be empty.
+    test('rather than empty tabs when a registration-only exporter’s view cannot be read', async () => {
+      mockManageGets(
+        [],
+        registrationOnlyExporter,
+        apiError(statusCodes.internalServerError)
+      )
 
-      expectServiceProblem(await get(PAGE_URL))
+      const response = await get(PAGE_URL)
+
+      expectServiceProblem(response)
+      expect(response.result).not.toContain('accredited-sites-tab')
     })
 
     test.each(['Created', 'Rejected', 'Cancelled'])(
@@ -283,7 +293,7 @@ describe('#manageOverseasSitesController', () => {
         /<h2 class="govuk-heading-m[^"]*">\s*Registered overseas reprocessing sites\s*<\/h2>/
       )
       expect(registered).toContain(
-        'These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for 2027.'
+        'These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for 2027.'
       )
     })
 
@@ -406,7 +416,7 @@ describe('#manageOverseasSitesController', () => {
     ['only Registered', [ors(1)], ['registered']],
     ['neither tab', SITES, []]
   ])(
-    'shows the empty message on %s when it has no ORSs',
+    'shows the empty message, naming the year, without the intro, on %s when it has no ORSs',
     async (_case, sites, emptyTabs) => {
       const result = await getPage(
         makeApp({ overseasSites: { sectionStatus: 'Completed', sites } })
@@ -420,9 +430,16 @@ describe('#manageOverseasSitesController', () => {
               `data-testid="${name}-sites-tab"[^>]*>\\s*${label} \\(0\\)\\s*<`
             )
           )
-          expect(tabPanel(result, name)).toContain(emptyTestId)
+          const panel = tabPanel(result, name)
+          expect(panel).toMatch(
+            new RegExp(
+              `${emptyTestId}[^>]*>\\s*You have no ${label.toLowerCase()} overseas reprocessing sites for 2027\\.\\s*<`
+            )
+          )
+          expect(panel).not.toContain('app-ors-list__intro')
         } else {
           expect(result).not.toContain(emptyTestId)
+          expect(tabPanel(result, name)).toContain('app-ors-list__intro')
         }
       }
     }
@@ -460,7 +477,7 @@ describe('#manageOverseasSitesController', () => {
 
     test('shows the stub exporter with accredited and registered ORSs and interim sites', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_EXPORTER_ORG_ID}/${MANAGE_EXPORTER_REGISTRATION_ID}/Plastic/overseas-sites`
+        `/manage/${MANAGE_EXPORTER_ORG.orgId}/${MANAGE_EXPORTER_ORG.registrationId}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -476,6 +493,52 @@ describe('#manageOverseasSitesController', () => {
         'interim-sites-disclosure'
       )
       expect(result).not.toContain('Saigon Port Storage')
+    })
+
+    // RA-697 task 012: org 50021 has a registration and no accreditation.
+    test('shows the registration-only exporter’s four registered ORSs, none accredited', async () => {
+      const { statusCode, result } = await get(
+        `/manage/${REGISTRATION_ONLY_ORG.orgId}/${REGISTRATION_ONLY_ORG.registrationId}/Plastic/overseas-sites`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(0\)\s*</
+      )
+      expect(tabPanel(result, 'accredited')).toContain(
+        'data-testid="accredited-sites-empty"'
+      )
+      expect(result).toMatch(
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(4\)\s*</
+      )
+      const registered = tabPanel(result, 'registered')
+      for (const name of [
+        'Porto Plasticos Lda',
+        'Milano Riciclo SpA',
+        'Penang Polymers Sdn Bhd',
+        'Jakarta Daur Ulang PT'
+      ]) {
+        expect(registered).toContain(name)
+      }
+      expect(result).not.toMatch(/add-to-accreditation-|view-request-|<form /)
+      expect(result).not.toContain('Leixoes Port Storage')
+    })
+
+    // Org 50022: registered, with no accreditation and no registered ORSs.
+    test('shows both tabs empty for the exporter with no overseas sites', async () => {
+      const { statusCode, result } = await get(
+        `/manage/${NO_OVERSEAS_SITES_ORG.orgId}/${NO_OVERSEAS_SITES_ORG.registrationId}/Plastic/overseas-sites`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      for (const name of ['accredited', 'registered']) {
+        expect(tabPanel(result, name)).toContain(
+          `data-testid="${name}-sites-empty"`
+        )
+      }
+      expect(result).toMatch(
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(0\)\s*</
+      )
     })
   })
 
@@ -534,14 +597,27 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="site-status-tag-4"[^>]*>\s*In progress\s*</
       )
       expect(registered).toContain(
-        'href="/accreditation/manage-overseas-sites/app-current/add/4" data-testid="view-request-4"'
+        'href="/accreditation/manage-overseas-sites/app-current/add/4" data-testid="view-request-4">View change requests<'
       )
       expect(registered).not.toContain('add-to-accreditation-4')
       expect(registered).toContain('data-testid="add-to-accreditation-5"')
       expect(result).toMatch(
-        /data-testid="requests-banner"[\s\S]*You currently have 1 request ready for submission\.[\s\S]*href="\/accreditation\/manage-overseas-sites\/app-current\/requests" data-testid="view-requests-link"/
+        /data-testid="requests-banner"[\s\S]*In year change request[\s\S]*You currently have 1 change request ready for submission\.[\s\S]*href="\/accreditation\/manage-overseas-sites\/app-current\/requests" data-testid="view-requests-link">View change request</
       )
       expect(result).toContain(REQUESTS_URL)
+    })
+
+    // RA-697: e.g. a registration-only draft, which the accreditation's
+    // journey can't open, so there's nothing to View.
+    test('a site in progress in another draft shows In progress, with no View or Add to accreditation', async () => {
+      const { result } = await getWithChanges(changes({ 4: 'InProgress' }))
+      const registered = tabPanel(result, 'registered')
+
+      expect(registered).toMatch(
+        /data-testid="site-status-tag-4"[^>]*>\s*In progress\s*</
+      )
+      expect(registered).not.toContain('view-request-4')
+      expect(registered).not.toContain('add-to-accreditation-4')
     })
 
     test('AC09: a site in a submitted request stays on the Registered tab as Pending, with no action, and the pending banner', async () => {
@@ -558,7 +634,10 @@ describe('#manageOverseasSitesController', () => {
       )
       expect(result).toMatch(/Registered \(3\)/)
       expect(result).toMatch(
-        /data-testid="pending-change-banner"[\s\S]*request to add 1 overseas reprocessing site to this accreditation\. You cannot change this site /
+        /data-testid="pending-change-banner"[\s\S]*application to add 1 overseas reprocessing site to your accreditation\. You will not be able to apply for any other changes to this site /
+      )
+      expect(result).toMatch(
+        /class="govuk-notification-banner app-notification-banner--full-width"[^>]*data-testid="pending-change-banner"/
       )
       expect(result).not.toContain('data-testid="requests-banner"')
     })
@@ -572,10 +651,10 @@ describe('#manageOverseasSitesController', () => {
       )
 
       expect(result).toContain(
-        'You currently have 2 requests ready for submission.'
+        'You currently have 2 change requests ready for submission.'
       )
       expect(result).toContain(
-        'request to add 2 overseas reprocessing sites to this accreditation. You cannot change these sites '
+        'application to add 2 overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites '
       )
     })
 
@@ -593,6 +672,239 @@ describe('#manageOverseasSitesController', () => {
       expect(result).toContain('data-testid="registered-site-row-4"')
       expect(result).not.toMatch(
         /add-to-accreditation-|site-status-tag-|view-request-|pending-change-banner|requests-banner|<form /
+      )
+    })
+  })
+
+  // RA-697 task 012: an exporter with an Approved registration and no
+  // Approved current-year accreditation.
+  describe('registration only', () => {
+    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
+    // The registration view: every registered ORS, none selected.
+    const registrationView = (sites) => ({
+      ...noChangeRequests,
+      applicationId: null,
+      accreditationReference: null,
+      sites: sites.map(({ pendingRequestStatus = null, ...site }) => ({
+        siteId: site.siteId,
+        orsId: site.orsId,
+        accreditationStatus: 'Registered',
+        pendingRequestId: pendingRequestStatus ? 'req-1' : null,
+        pendingRequestStatus,
+        lockedFields: [],
+        site
+      }))
+    })
+    const REGISTERED_SITES = [
+      ors(1, {
+        selected: false,
+        siteName: 'Porto Plasticos',
+        country: 'Portugal',
+        interimSites: [interimSite(10, { siteName: 'Leixoes Store' })]
+      }),
+      ors(2, { selected: false }),
+      ors(3, { selected: false })
+    ]
+
+    // The accreditation session keys as the page's response goes out.
+    let session = null
+    beforeAll(() => {
+      page.server.ext('onPreResponse', (request, h) => {
+        if (request.path.endsWith('/overseas-sites')) {
+          session = Object.fromEntries(
+            Object.entries(ACCREDITATION_SESSION_KEYS).map(([name, key]) => [
+              name,
+              request.yar?.get(key) ?? null
+            ])
+          )
+        }
+        return h.continue
+      })
+    })
+    beforeEach(() => {
+      session = null
+    })
+
+    async function getRegistrationOnly(
+      view = registrationView(REGISTERED_SITES)
+    ) {
+      const spy = mockManageGets([], registrationOnlyExporter, view)
+      const response = await get(PAGE_URL)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      return { result: response.result, spy }
+    }
+
+    test('reads the sites from the registration view', async () => {
+      const { spy } = await getRegistrationOnly()
+
+      expect(spy).toHaveBeenCalledWith(REGISTRATION_VIEW_URL)
+    })
+
+    test('captions the page from the registration', async () => {
+      const { result } = await getRegistrationOnly()
+
+      expect(result).toMatch(
+        /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2027, Plastic\)\s*</
+      )
+    })
+
+    test('shows Accredited (0) with its empty state', async () => {
+      const { result } = await getRegistrationOnly()
+
+      expect(result).toMatch(
+        /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(0\)\s*</
+      )
+      expect(tabPanel(result, 'accredited')).toContain(
+        'data-testid="accredited-sites-empty"'
+      )
+    })
+
+    test('lists every registered ORS with its name, ORS ID and address, without interim sites', async () => {
+      const { result } = await getRegistrationOnly()
+      const registered = tabPanel(result, 'registered')
+
+      expect(result).toMatch(
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(3\)\s*</
+      )
+      for (const id of [1, 2, 3]) {
+        expect(registered).toContain(`data-testid="registered-site-row-${id}"`)
+      }
+      expect(registered).toMatch(
+        /data-testid="registered-site-orsid-1"[^>]*>\s*001\s*</
+      )
+      expect(registered).toMatch(
+        /data-testid="registered-site-name-1"[^>]*>\s*Porto Plasticos\s*</
+      )
+      expect(registered).toMatch(
+        /data-testid="registered-site-address-1"[^>]*>\s*1 Industrieweg, Portugal\s*</
+      )
+      expect(result).not.toContain('interim-sites-disclosure')
+      expect(result).not.toContain('Leixoes Store')
+    })
+
+    test('lists an ORS on Registered even if the view marks it selected', async () => {
+      const { result } = await getRegistrationOnly(
+        registrationView([ors(1), ors(2, { selected: false })])
+      )
+
+      expect(result).toMatch(/Accredited \(0\)/)
+      expect(tabPanel(result, 'registered')).toContain(
+        'data-testid="registered-site-row-1"'
+      )
+    })
+
+    test('offers no "Add to accreditation" on any ORS', async () => {
+      const { result } = await getRegistrationOnly()
+
+      expect(result).not.toMatch(/add-to-accreditation-|<form /)
+    })
+
+    test('shows a submitted ORS as Pending, from the data', async () => {
+      const { result } = await getRegistrationOnly(
+        registrationView(
+          REGISTERED_SITES.map((site) => ({
+            ...site,
+            pendingRequestStatus: site.siteId === 2 ? 'Submitted' : null
+          }))
+        )
+      )
+
+      expect(tabPanel(result, 'registered')).toMatch(
+        /data-testid="site-status-tag-2"[^>]*>\s*Pending\s*</
+      )
+      expect(result).toContain('data-testid="pending-change-banner"')
+      expect(result).not.toMatch(/add-to-accreditation-|<form /)
+    })
+
+    test('words the pending banner for the registration, not an accreditation', async () => {
+      const { result } = await getRegistrationOnly(
+        registrationView(
+          REGISTERED_SITES.map((site) => ({
+            ...site,
+            pendingRequestStatus: site.siteId === 2 ? 'Submitted' : null
+          }))
+        )
+      )
+
+      expect(result).toContain(
+        'Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
+      )
+      expect(result).not.toContain('to your accreditation')
+    })
+
+    test('words the registration pending banner in the plural for several sites', async () => {
+      const { result } = await getRegistrationOnly(
+        registrationView(
+          REGISTERED_SITES.map((site) => ({
+            ...site,
+            pendingRequestStatus: site.siteId === 1 ? null : 'Submitted'
+          }))
+        )
+      )
+
+      expect(result).toContain(
+        'Your regulator is reviewing your application to add 2 overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      )
+    })
+
+    // RA-492's View link and requests link have no registration-only page yet.
+    test('shows an in-progress ORS as In progress, without View or the requests link', async () => {
+      const { result } = await getRegistrationOnly({
+        ...registrationView(
+          REGISTERED_SITES.map((site) => ({
+            ...site,
+            pendingRequestStatus: site.siteId === 3 ? 'InProgress' : null
+          }))
+        ),
+        activeRequest: { status: 'InProgress', sites: [{ siteId: 3 }] }
+      })
+
+      expect(tabPanel(result, 'registered')).toMatch(
+        /data-testid="site-status-tag-3"[^>]*>\s*In progress\s*</
+      )
+      expect(result).toContain('data-testid="requests-banner"')
+      expect(result).not.toMatch(
+        /view-request-|view-requests-link|manage-overseas-sites\/null/
+      )
+    })
+
+    test('sets no accreditation session keys', async () => {
+      await getRegistrationOnly()
+
+      expect(session).toMatchObject({
+        accreditationId: null,
+        organisationId: null,
+        registrationId: null,
+        materialType: null,
+        year: null
+      })
+    })
+
+    test('an accredited exporter’s page still sets them', async () => {
+      mockManageGets([makeApp()])
+
+      const { statusCode } = await get(PAGE_URL)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(session).toMatchObject({
+        accreditationId: 'app-current',
+        organisationId: 'org-123',
+        registrationId: REGISTRATION_ID,
+        materialType: MATERIAL,
+        year: CURRENT_YEAR
+      })
+    })
+
+    test('returns 404 for a registration-only reprocessor', async () => {
+      const spy = mockManageGets([], registrationOnlyReprocessor)
+
+      const { statusCode } = await get(
+        `/manage/org-123/${REGISTRATION_ID}/Glass/overseas-sites`
+      )
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(spy).not.toHaveBeenCalledWith(
+        expect.stringMatching(/^\/api\/v1\/accreditation-changes\//)
       )
     })
   })

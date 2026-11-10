@@ -926,8 +926,9 @@
       }
     },
     "manageRegistrationAccreditation": {
-      "heading": "[Welsh] Manage your registration and accreditation",
+      "heading": "[Welsh] Manage registration and accreditation",
       "applicationStatusLabel": "[Welsh] Application status:",
+      "registrationStatusLabel": "[Welsh] Status:",
       "accreditationNumberLabel": "[Welsh] Accreditation number:",
       "registrationNumberLabel": "[Welsh] Registration number:",
       "expiryDateLabel": "[Welsh] Expiry date:",
@@ -940,6 +941,11 @@
         "title": "[Welsh] Manage overseas reprocessing sites",
         "description": "[Welsh] Add, update and manage your overseas reprocessing sites.",
         "link": "[Welsh] Manage overseas reprocessing sites"
+      },
+      "changeRequests": {
+        "title": "[Welsh] In year change requests",
+        "noActive": "[Welsh] You currently have no active change requests.",
+        "viewAll": "[Welsh] View change requests"
       }
     },
     "manageOverseasSites": {
@@ -948,29 +954,34 @@
         "tab": "[Welsh] Accredited ({{count}})",
         "heading": "[Welsh] Accredited overseas reprocessing sites",
         "intro": "[Welsh] These are your accredited overseas reprocessing sites for {{year}}.",
-        "empty": "[Welsh] You have no accredited overseas reprocessing sites."
+        "empty": "[Welsh] You have no accredited overseas reprocessing sites for {{year}}."
       },
       "registered": {
         "tab": "[Welsh] Registered ({{count}})",
         "heading": "[Welsh] Registered overseas reprocessing sites",
-        "intro": "[Welsh] These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {{year}}.",
-        "empty": "[Welsh] You have no registered overseas reprocessing sites."
+        "intro": "[Welsh] These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for {{year}}.",
+        "empty": "[Welsh] You have no registered overseas reprocessing sites for {{year}}."
       },
       "interimDisclosure": "[Welsh] Show interim sites",
+      "viewChangeRequests": "[Welsh] View change requests",
       "returnToHome": "[Welsh] Return to home",
       "requestsBanner": {
-        "title": "[Welsh] Accreditation requests",
+        "title": "[Welsh] In year change request",
         "body": {
-          "one": "[Welsh] You currently have 1 request ready for submission.",
-          "other": "[Welsh] You currently have {{count}} requests ready for submission."
+          "one": "[Welsh] You currently have 1 change request ready for submission.",
+          "other": "[Welsh] You currently have {{count}} change requests ready for submission."
         },
-        "link": "[Welsh] View requests"
+        "link": "[Welsh] View change request"
       },
       "pendingBanner": {
-        "title": "[Welsh] Change pending",
+        "title": "[Welsh] Change in review",
         "body": {
-          "one": "[Welsh] You have a change pending. Your regulator is reviewing your request to add 1 overseas reprocessing site to this accreditation. You cannot change this site until your regulator has made a decision.",
-          "other": "[Welsh] You have a change pending. Your regulator is reviewing your request to add {{count}} overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision."
+          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site to your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
+        },
+        "bodyRegistrationOnly": {
+          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         }
       },
       "status": {
@@ -1024,6 +1035,85 @@
       },
       "payment": {
         "backLink": "[Welsh] Back to manage overseas reprocessing sites"
+      }
+    },
+    "manageChangeRequests": {
+      "heading": "[Welsh] In year change requests",
+      "filters": {
+        "heading": "[Welsh] Filter by",
+        "status": "[Welsh] Status",
+        "statusPlaceholder": "[Welsh] Select status",
+        "type": "[Welsh] Type",
+        "typePlaceholder": "[Welsh] Select type",
+        "clearFilters": "[Welsh] Clear filters",
+        "statuses": {
+          "Queried": "[Welsh] Queried",
+          "InProgress": "[Welsh] In progress",
+          "Submitted": "[Welsh] Submitted",
+          "Updated": "[Welsh] Updated",
+          "DulyMade": "[Welsh] Duly made",
+          "Approved": "[Welsh] Granted",
+          "Rejected": "[Welsh] Refused",
+          "Withdrawn": "[Welsh] Withdrawn"
+        }
+      },
+      "table": {
+        "siteName": "[Welsh] Site name",
+        "type": "[Welsh] Type",
+        "status": "[Welsh] Status",
+        "action": "[Welsh] Action"
+      },
+      "notApplicable": "[Welsh] Not applicable",
+      "view": "[Welsh] View",
+      "viewHidden": "[Welsh] {{type}} for {{site}}",
+      "types": {
+        "addOverseasSite": "[Welsh] New ORS accreditation",
+        "updateOverseasSite": "[Welsh] ORS update",
+        "upgradeTonnageBand": "[Welsh] Tonnage band upgrade",
+        "other": "[Welsh] Change request"
+      },
+      "noResults": {
+        "title": "[Welsh] There are no matching results",
+        "body": "[Welsh] Improve your search results by removing one or more of your selected filters."
+      },
+      "returnToHome": "[Welsh] Return to home",
+      "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}",
+      "pagination": {
+        "landmarkLabel": "[Welsh] Pagination",
+        "previous": "[Welsh] Previous",
+        "next": "[Welsh] Next",
+        "visuallyHiddenPage": "[Welsh] page",
+        "page": "[Welsh] Page {{number}}"
+      },
+      "detail": {
+        "header": {
+          "location": "[Welsh] Location:",
+          "siteId": "[Welsh] Site ID:",
+          "status": "[Welsh] Status:",
+          "dateAdded": "[Welsh] Date added:",
+          "besExpiry": "[Welsh] BES expiry date:"
+        },
+        "notProvided": "[Welsh] Not provided",
+        "notSubmitted": "[Welsh] Not submitted",
+        "interimSites": "[Welsh] Interim sites ({{count}})",
+        "interimSitesNone": "[Welsh] Interim sites",
+        "noInterimSites": "[Welsh] No interim sites have been added.",
+        "requestDetails": {
+          "heading": "[Welsh] Request details",
+          "type": "[Welsh] Type",
+          "sent": "[Welsh] Request sent",
+          "submittedBy": "[Welsh] Submitted by",
+          "validFrom": "[Welsh] Valid from",
+          "validTo": "[Welsh] Valid to",
+          "reference": "[Welsh] Reference"
+        },
+        "queried": {
+          "title": "[Welsh] Important",
+          "body": "[Welsh] A query has been raised on this application for change."
+        },
+        "tonnage": {
+          "requestedBand": "[Welsh] Tonnage band"
+        }
       }
     },
     "contact": {
@@ -1145,6 +1235,7 @@
     "applicationStatuses": {
       "Saved": "[Welsh] NOT STARTED",
       "Started": "[Welsh] IN PROGRESS",
+      "InProgress": "[Welsh] IN PROGRESS",
       "Submitted": "[Welsh] SUBMITTED",
       "DulyMade": "[Welsh] DULY MADE",
       "Queried": "[Welsh] QUERIED",

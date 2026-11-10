@@ -1,0 +1,94 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
+      <h1 class="govuk-heading-xl govuk-!-margin-bottom-6" data-testid="page-heading">{{ heading }}</h1>
+    </div>
+  </div>
+
+  {# RA-732: no Apply button and no no-JS fallback, as agreed. With no page
+     field, a filter change always lands on page 1. #}
+  <form method="get" action="{{ listUrl }}" data-module="app-auto-submit" data-testid="change-requests-filters">
+    <fieldset class="govuk-fieldset">
+      <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">{{ t('pages.manageChangeRequests.filters.heading') }}</legend>
+      <div class="app-filters">
+        <div class="govuk-form-group app-filters__field">
+          <label class="govuk-label" for="status">{{ t('pages.manageChangeRequests.filters.status') }}</label>
+          <select class="govuk-select" id="status" name="status" data-testid="status-filter">
+            {% for option in filterOptions.status %}
+              <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.text }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="govuk-form-group app-filters__field">
+          <label class="govuk-label" for="type">{{ t('pages.manageChangeRequests.filters.type') }}</label>
+          <select class="govuk-select" id="type" name="type" data-testid="type-filter">
+            {% for option in filterOptions.type %}
+              <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.text }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <p class="govuk-body app-filters__clear">
+          <a href="{{ listUrl }}" class="govuk-link" data-testid="clear-filters-link">{{ t('pages.manageChangeRequests.filters.clearFilters') }}</a>
+        </p>
+      </div>
+    </fieldset>
+  </form>
+
+  {% if countText %}
+    <p class="govuk-body" data-testid="change-requests-count"><strong>{{ countText }}</strong></p>
+  {% endif %}
+
+  {% if rows.length %}
+    <table class="govuk-table" data-testid="change-requests-table">
+      <thead class="govuk-table__head">
+        <tr class="govuk-table__row">
+          <th scope="col" class="govuk-table__header">{{ t('pages.manageChangeRequests.table.siteName') }}</th>
+          <th scope="col" class="govuk-table__header">{{ t('pages.manageChangeRequests.table.type') }}</th>
+          <th scope="col" class="govuk-table__header">{{ t('pages.manageChangeRequests.table.status') }}</th>
+          <th scope="col" class="govuk-table__header">{{ t('pages.manageChangeRequests.table.action') }}</th>
+        </tr>
+      </thead>
+      <tbody class="govuk-table__body">
+        {% for row in rows %}
+          <tr class="govuk-table__row" data-testid="change-request-row-{{ row.itemId }}">
+            <td class="govuk-table__cell">
+              {% if row.isTonnage %}
+                <span data-testid="change-request-site-name-{{ row.itemId }}">{{ t('pages.manageChangeRequests.notApplicable') }}</span>
+              {% else %}
+                <strong class="govuk-!-font-weight-bold" data-testid="change-request-site-name-{{ row.itemId }}">{{ row.siteName }}</strong>
+                {% if row.siteAddress %}
+                  <br><span data-testid="change-request-site-address-{{ row.itemId }}">{{ row.siteAddress }}</span>
+                {% endif %}
+              {% endif %}
+            </td>
+            <td class="govuk-table__cell" data-testid="change-request-type-{{ row.itemId }}">{{ row.typeLabel }}</td>
+            <td class="govuk-table__cell">
+              <strong class="govuk-tag {{ row.statusTag.classes }}" data-testid="change-request-status-{{ row.itemId }}">{{ row.statusTag.text }}</strong>
+            </td>
+            <td class="govuk-table__cell">
+              <a class="govuk-link" href="{{ row.viewUrl }}" data-testid="change-request-view-{{ row.itemId }}">{{ t('pages.manageChangeRequests.view') }}<span class="govuk-visually-hidden"> {{ row.viewHiddenText }}</span></a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if pagination %}
+      {{ govukPagination(pagination) }}
+    {% endif %}
+  {% else %}
+    {# RA-697: Figma 773:25912's no-results copy, as-is, also for no requests
+       at all. Its Clear filters link is the one in the filter block above. #}
+    <div data-testid="no-results">
+      <h2 class="govuk-heading-s" data-testid="no-results-title">{{ t('pages.manageChangeRequests.noResults.title') }}</h2>
+      <p class="govuk-body" data-testid="no-results-body">{{ t('pages.manageChangeRequests.noResults.body') }}</p>
+    </div>
+  {% endif %}
+
+  <p class="govuk-body">
+    <a href="{{ homeUrl }}" class="govuk-link" data-testid="return-to-home-link">{{ t('pages.manageChangeRequests.returnToHome') }}</a>
+  </p>
+{% endblock %}

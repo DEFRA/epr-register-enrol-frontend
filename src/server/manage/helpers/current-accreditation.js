@@ -23,8 +23,13 @@ function selectCurrentAccreditation(
  * Shared by every RA-425 page so they always agree on which accreditation they
  * show.
  *
- * Returns null when nothing matches or when any API call fails; the caller
- * shows the service-problem page rather than partial information.
+ * RA-697: "none found" and "call failed" differ. Returns { application } when
+ * the lookup succeeds, with application null when nothing matches (a
+ * registration-only operator), and { failed: true } when any API call fails;
+ * the caller then shows the service-problem page rather than partial
+ * information, so an outage never passes for "no accreditation".
+ *
+ * @returns {Promise<{ application: object | null } | { failed: true }>}
  */
 export async function fetchCurrentAccreditation({
   organisationId,
@@ -43,16 +48,18 @@ export async function fetchCurrentAccreditation({
       year: currentYear()
     })
     if (!chosen) {
-      logger.warn(
+      logger.info(
         { organisationId, registrationId, materialType },
         'No Approved current-year accreditation application found'
       )
-      return null
+      return { application: null }
     }
-    return await accreditationApiService.getApplication(
-      organisationId,
-      chosen.applicationId
-    )
+    return {
+      application: await accreditationApiService.getApplication(
+        organisationId,
+        chosen.applicationId
+      )
+    }
   } catch (error) {
     logStructuredError(
       logger,
@@ -60,6 +67,6 @@ export async function fetchCurrentAccreditation({
       { organisationId, registrationId, materialType },
       'Error fetching the current accreditation application'
     )
-    return null
+    return { failed: true }
   }
 }

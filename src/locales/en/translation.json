@@ -927,8 +927,9 @@
       }
     },
     "manageRegistrationAccreditation": {
-      "heading": "Manage your registration and accreditation",
+      "heading": "Manage registration and accreditation",
       "applicationStatusLabel": "Application status:",
+      "registrationStatusLabel": "Status:",
       "accreditationNumberLabel": "Accreditation number:",
       "registrationNumberLabel": "Registration number:",
       "expiryDateLabel": "Expiry date:",
@@ -941,6 +942,11 @@
         "title": "Manage overseas reprocessing sites",
         "description": "Add, update and manage your overseas reprocessing sites.",
         "link": "Manage overseas reprocessing sites"
+      },
+      "changeRequests": {
+        "title": "In year change requests",
+        "noActive": "You currently have no active change requests.",
+        "viewAll": "View change requests"
       }
     },
     "manageOverseasSites": {
@@ -949,29 +955,34 @@
         "tab": "Accredited ({{count}})",
         "heading": "Accredited overseas reprocessing sites",
         "intro": "These are your accredited overseas reprocessing sites for {{year}}.",
-        "empty": "You have no accredited overseas reprocessing sites."
+        "empty": "You have no accredited overseas reprocessing sites for {{year}}."
       },
       "registered": {
         "tab": "Registered ({{count}})",
         "heading": "Registered overseas reprocessing sites",
-        "intro": "These are the registered overseas reprocessing sites (ORSs) that you can request to add as an accredited ORS for {{year}}.",
-        "empty": "You have no registered overseas reprocessing sites."
+        "intro": "These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for {{year}}.",
+        "empty": "You have no registered overseas reprocessing sites for {{year}}."
       },
       "interimDisclosure": "Show interim sites",
+      "viewChangeRequests": "View change requests",
       "returnToHome": "Return to home",
       "requestsBanner": {
-        "title": "Accreditation requests",
+        "title": "In year change request",
         "body": {
-          "one": "You currently have 1 request ready for submission.",
-          "other": "You currently have {{count}} requests ready for submission."
+          "one": "You currently have 1 change request ready for submission.",
+          "other": "You currently have {{count}} change requests ready for submission."
         },
-        "link": "View requests"
+        "link": "View change request"
       },
       "pendingBanner": {
-        "title": "Change pending",
+        "title": "Change in review",
         "body": {
-          "one": "You have a change pending. Your regulator is reviewing your request to add 1 overseas reprocessing site to this accreditation. You cannot change this site until your regulator has made a decision.",
-          "other": "You have a change pending. Your regulator is reviewing your request to add {{count}} overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision."
+          "one": "Your regulator is reviewing your application to add 1 overseas reprocessing site to your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
+        },
+        "bodyRegistrationOnly": {
+          "one": "Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         }
       },
       "status": {
@@ -1025,6 +1036,85 @@
       },
       "payment": {
         "backLink": "Back to manage overseas reprocessing sites"
+      }
+    },
+    "manageChangeRequests": {
+      "heading": "In year change requests",
+      "filters": {
+        "heading": "Filter by",
+        "status": "Status",
+        "statusPlaceholder": "Select status",
+        "type": "Type",
+        "typePlaceholder": "Select type",
+        "clearFilters": "Clear filters",
+        "statuses": {
+          "Queried": "Queried",
+          "InProgress": "In progress",
+          "Submitted": "Submitted",
+          "Updated": "Updated",
+          "DulyMade": "Duly made",
+          "Approved": "Granted",
+          "Rejected": "Refused",
+          "Withdrawn": "Withdrawn"
+        }
+      },
+      "table": {
+        "siteName": "Site name",
+        "type": "Type",
+        "status": "Status",
+        "action": "Action"
+      },
+      "notApplicable": "Not applicable",
+      "view": "View",
+      "viewHidden": "{{type}} for {{site}}",
+      "types": {
+        "addOverseasSite": "New ORS accreditation",
+        "updateOverseasSite": "ORS update",
+        "upgradeTonnageBand": "Tonnage band upgrade",
+        "other": "Change request"
+      },
+      "noResults": {
+        "title": "There are no matching results",
+        "body": "Improve your search results by removing one or more of your selected filters."
+      },
+      "returnToHome": "Return to home",
+      "showing": "Showing {{start}}-{{end}} of {{total}}",
+      "pagination": {
+        "landmarkLabel": "Pagination",
+        "previous": "Previous",
+        "next": "Next",
+        "visuallyHiddenPage": "page",
+        "page": "Page {{number}}"
+      },
+      "detail": {
+        "header": {
+          "location": "Location:",
+          "siteId": "Site ID:",
+          "status": "Status:",
+          "dateAdded": "Date added:",
+          "besExpiry": "BES expiry date:"
+        },
+        "notProvided": "Not provided",
+        "notSubmitted": "Not submitted",
+        "interimSites": "Interim sites ({{count}})",
+        "interimSitesNone": "Interim sites",
+        "noInterimSites": "No interim sites have been added.",
+        "requestDetails": {
+          "heading": "Request details",
+          "type": "Type",
+          "sent": "Request sent",
+          "submittedBy": "Submitted by",
+          "validFrom": "Valid from",
+          "validTo": "Valid to",
+          "reference": "Reference"
+        },
+        "queried": {
+          "title": "Important",
+          "body": "A query has been raised on this application for change."
+        },
+        "tonnage": {
+          "requestedBand": "Tonnage band"
+        }
       }
     },
     "contact": {
@@ -1146,6 +1236,7 @@
     "applicationStatuses": {
       "Saved": "NOT STARTED",
       "Started": "IN PROGRESS",
+      "InProgress": "IN PROGRESS",
       "NotStarted": "NOT STARTED",
       "Submitted": "SUBMITTED",
       "DulyMade": "DULY MADE",

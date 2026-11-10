@@ -1,4 +1,4 @@
-import { apiClient } from '../../common/api-client.js'
+import { apiClient } from '../api-client.js'
 
 // RA-492: client for the backend's accreditation-changes API (see the
 // backend's AccreditationChanges endpoints). apiClient throws on a non-OK
@@ -10,9 +10,43 @@ const base = (organisationId, applicationId) =>
 const current = (organisationId, applicationId) =>
   `${base(organisationId, applicationId)}/requests/current`
 
+/**
+ * RA-697: one change within a request. A site entry on a request's `sites`
+ * carries these alongside its RA-492 fields; a tonnage band upgrade request
+ * has no sites and one `tonnageBandUpgrade` item, which adds `requestedBand`.
+ *
+ * @typedef {object} ChangeRequestItem
+ * @property {string} itemId
+ * @property {string} changeType - one of CHANGE_TYPES
+ * @property {string} status - InProgress, Submitted, Queried, Updated,
+ *   DulyMade, Approved, Rejected or Withdrawn
+ * @property {string|null} validFrom
+ * @property {string|null} withdrawnAt
+ */
+
 export const accreditationChangesService = {
+  /**
+   * The accreditation's sites (none for a reprocessor), its draft
+   * (`activeRequest`), every request newest first (`requests`, each with
+   * `sites` items and a nullable `tonnageBandUpgrade`), and `pendingOrsIds`.
+   * A site's `pendingRequestId` and `pendingRequestStatus` come from a request
+   * with an active item for it; the status is that request's lifecycle
+   * status (InProgress or Submitted).
+   */
   getView(organisationId, applicationId) {
     return apiClient.get(base(organisationId, applicationId))
+  },
+
+  /**
+   * RA-697: a registration-only operator's view, in the same shape with a
+   * null applicationId and accreditationReference: the registration's
+   * registered ORSs (none for a reprocessor) and its registration-only
+   * requests for the current year. Read only.
+   */
+  getRegistrationView(organisationId, registrationId, materialType) {
+    return apiClient.get(
+      `/api/v1/accreditation-changes/${encodeURIComponent(organisationId)}/registrations/${encodeURIComponent(registrationId)}/${encodeURIComponent(materialType)}`
+    )
   },
 
   addSite(organisationId, applicationId, siteId) {

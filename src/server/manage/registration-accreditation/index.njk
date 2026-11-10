@@ -24,29 +24,80 @@
   <hr class="govuk-section-break govuk-section-break--m govuk-section-break--visible govuk-!-margin-bottom-6">
 
   <div class="govuk-grid-row govuk-!-margin-bottom-6" data-testid="accreditation-summary">
-    {% call summaryItem(t('pages.manageRegistrationAccreditation.applicationStatusLabel'), 'application-status') %}
-      <strong class="govuk-tag {{ applicationStatusTag.classes }}" data-testid="application-status-tag">{{ applicationStatusTag.text }}</strong>
-    {% endcall %}
-    {% call summaryItem(t('pages.manageRegistrationAccreditation.accreditationNumberLabel'), 'accreditation-number') %}{{ accreditationNumber }}{% endcall %}
+    {# RA-697: a registration-only operator has no accreditation, so sees the
+       registration's status and number only. #}
+    {% if isRegistrationOnly %}
+      {% call summaryItem(t('pages.manageRegistrationAccreditation.registrationStatusLabel'), 'registration-status') %}
+        <strong class="govuk-tag {{ statusTag.classes }}" data-testid="registration-status-tag">{{ statusTag.text }}</strong>
+      {% endcall %}
+    {% else %}
+      {% call summaryItem(t('pages.manageRegistrationAccreditation.applicationStatusLabel'), 'application-status') %}
+        <strong class="govuk-tag {{ statusTag.classes }}" data-testid="application-status-tag">{{ statusTag.text }}</strong>
+      {% endcall %}
+      {% call summaryItem(t('pages.manageRegistrationAccreditation.accreditationNumberLabel'), 'accreditation-number') %}{{ accreditationNumber }}{% endcall %}
+    {% endif %}
     {% call summaryItem(t('pages.manageRegistrationAccreditation.registrationNumberLabel'), 'registration-number') %}{{ registrationNumber }}{% endcall %}
-    {% call summaryItem(t('pages.manageRegistrationAccreditation.expiryDateLabel'), 'expiry-date') %}{{ expiryDate | formatDate('d MMM yyyy', currentLocale) }}{% endcall %}
+    {% if not isRegistrationOnly %}
+      {% call summaryItem(t('pages.manageRegistrationAccreditation.expiryDateLabel'), 'expiry-date') %}{{ expiryDate | formatDate('d MMM yyyy', currentLocale) }}{% endcall %}
+    {% endif %}
   </div>
 
+  {# RA-697: left out when the change requests can't be read. #}
+  {% if changeRequests %}
+    <div class="govuk-grid-row govuk-!-margin-bottom-6" data-testid="change-requests-section">
+      <div class="govuk-grid-column-full">
+        <h2 class="govuk-heading-m" data-testid="change-requests-heading">{{ t('pages.manageRegistrationAccreditation.changeRequests.title') }}</h2>
+        {% if changeRequests.rows.length %}
+          <table class="govuk-table" data-testid="change-requests-summary-table">
+            <thead class="govuk-table__head">
+              <tr class="govuk-table__row">
+                <th scope="col" class="govuk-table__header">{{ t('pages.manageChangeRequests.table.type') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.manageChangeRequests.table.status') }}</th>
+                <th scope="col" class="govuk-table__header">{{ t('pages.manageChangeRequests.table.action') }}</th>
+              </tr>
+            </thead>
+            <tbody class="govuk-table__body">
+              {% for row in changeRequests.rows %}
+                <tr class="govuk-table__row" data-testid="change-requests-summary-row-{{ row.changeType }}">
+                  <td class="govuk-table__cell" data-testid="change-requests-summary-type-{{ row.changeType }}">{{ row.typeLabel }}</td>
+                  <td class="govuk-table__cell">
+                    <strong class="govuk-tag {{ row.statusTag.classes }}" data-testid="change-requests-summary-status-{{ row.changeType }}">{{ row.statusTag.text }}</strong>
+                  </td>
+                  <td class="govuk-table__cell">
+                    <a class="govuk-link" href="{{ row.viewUrl }}" data-testid="change-requests-summary-view-{{ row.changeType }}">{{ t('pages.manageChangeRequests.view') }}<span class="govuk-visually-hidden"> {{ row.typeLabel }}</span></a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="govuk-body" data-testid="no-active-change-requests">{{ t('pages.manageRegistrationAccreditation.changeRequests.noActive') }} <a href="{{ changeRequests.listUrl }}" class="govuk-link" data-testid="view-change-requests-link">{{ t('pages.manageRegistrationAccreditation.changeRequests.viewAll') }}</a>.</p>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if isExporter or not isRegistrationOnly %}
   <div class="govuk-grid-row app-task-card__row">
-    {# RA-425: per Figma, a reprocessor's only card runs the full width. #}
-    {% call appTaskCard({
-      id: 'manage-accreditation',
-      title: t('pages.manageRegistrationAccreditation.manageAccreditation.title'),
-      description: t('pages.manageRegistrationAccreditation.manageAccreditation.description'),
-      columnClass: 'govuk-grid-column-one-half' if isExporter else 'govuk-grid-column-full'
-    }) %}
-      {{ appInactiveLink('upgrade-tonnage-link', t('pages.manageRegistrationAccreditation.manageAccreditation.upgradeTonnageLink')) }}
-    {% endcall %}
+    {# RA-425: per Figma, a reprocessor's only card runs the full width.
+       RA-697: a registration-only operator has no accreditation to manage, so
+       an exporter's overseas-sites card runs the full width instead. #}
+    {% if not isRegistrationOnly %}
+      {% call appTaskCard({
+        id: 'manage-accreditation',
+        title: t('pages.manageRegistrationAccreditation.manageAccreditation.title'),
+        description: t('pages.manageRegistrationAccreditation.manageAccreditation.description'),
+        columnClass: 'govuk-grid-column-one-half' if isExporter else 'govuk-grid-column-full'
+      }) %}
+        {{ appInactiveLink('upgrade-tonnage-link', t('pages.manageRegistrationAccreditation.manageAccreditation.upgradeTonnageLink')) }}
+      {% endcall %}
+    {% endif %}
     {% if isExporter %}
       {% call appTaskCard({
         id: 'manage-overseas-sites',
         title: t('pages.manageRegistrationAccreditation.manageOverseasSites.title'),
-        description: t('pages.manageRegistrationAccreditation.manageOverseasSites.description')
+        description: t('pages.manageRegistrationAccreditation.manageOverseasSites.description'),
+        columnClass: 'govuk-grid-column-full' if isRegistrationOnly else 'govuk-grid-column-one-half'
       }) %}
         <p class="govuk-body">
           <a href="{{ overseasSitesUrl }}" class="govuk-link" data-testid="manage-overseas-sites-link">{{ t('pages.manageRegistrationAccreditation.manageOverseasSites.link') }}</a>
@@ -54,4 +105,5 @@
       {% endcall %}
     {% endif %}
   </div>
+  {% endif %}
 {% endblock %}
