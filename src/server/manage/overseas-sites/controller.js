@@ -168,6 +168,7 @@ export const manageOverseasSitesController = {
       registeredSites: registered,
       // RA-492 banners: AC09 pending change, AC10 requests to resume.
       pendingCount: registered.filter((site) => site.pending).length,
+      isRegistrationOnly: context.isRegistrationOnly,
       readyForSubmissionCount: changeRequests?.readyForSubmissionCount ?? 0,
       requestsUrl: sites.requestsUrl
     })

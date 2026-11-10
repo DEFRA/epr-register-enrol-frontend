@@ -974,10 +974,14 @@
         "link": "[Welsh] View change request"
       },
       "pendingBanner": {
-        "title": "[Welsh] Change pending",
+        "title": "[Welsh] Change in review",
         "body": {
-          "one": "[Welsh] You have a change pending. Your regulator is reviewing your request to add 1 overseas reprocessing site to this accreditation. You cannot change this site until your regulator has made a decision.",
-          "other": "[Welsh] You have a change pending. Your regulator is reviewing your request to add {{count}} overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision."
+          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site to your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
+        },
+        "bodyRegistrationOnly": {
+          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         }
       },
       "status": {
@@ -1105,7 +1109,7 @@
         },
         "queried": {
           "title": "[Welsh] Important",
-          "body": "[Welsh] A query has been raised on this request"
+          "body": "[Welsh] A query has been raised on this application for change."
         },
         "tonnage": {
           "requestedBand": "[Welsh] Tonnage band"

@@ -634,7 +634,7 @@ describe('#manageOverseasSitesController', () => {
       )
       expect(result).toMatch(/Registered \(3\)/)
       expect(result).toMatch(
-        /data-testid="pending-change-banner"[\s\S]*request to add 1 overseas reprocessing site to this accreditation\. You cannot change this site /
+        /data-testid="pending-change-banner"[\s\S]*application to add 1 overseas reprocessing site to your accreditation\. You will not be able to apply for any other changes to this site /
       )
       expect(result).toMatch(
         /class="govuk-notification-banner app-notification-banner--full-width"[^>]*data-testid="pending-change-banner"/
@@ -654,7 +654,7 @@ describe('#manageOverseasSitesController', () => {
         'You currently have 2 change requests ready for submission.'
       )
       expect(result).toContain(
-        'request to add 2 overseas reprocessing sites to this accreditation. You cannot change these sites '
+        'application to add 2 overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites '
       )
     })
 
@@ -814,6 +814,37 @@ describe('#manageOverseasSitesController', () => {
       )
       expect(result).toContain('data-testid="pending-change-banner"')
       expect(result).not.toMatch(/add-to-accreditation-|<form /)
+    })
+
+    test('words the pending banner for the registration, not an accreditation', async () => {
+      const { result } = await getRegistrationOnly(
+        registrationView(
+          REGISTERED_SITES.map((site) => ({
+            ...site,
+            pendingRequestStatus: site.siteId === 2 ? 'Submitted' : null
+          }))
+        )
+      )
+
+      expect(result).toContain(
+        'Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
+      )
+      expect(result).not.toContain('to your accreditation')
+    })
+
+    test('words the registration pending banner in the plural for several sites', async () => {
+      const { result } = await getRegistrationOnly(
+        registrationView(
+          REGISTERED_SITES.map((site) => ({
+            ...site,
+            pendingRequestStatus: site.siteId === 1 ? null : 'Submitted'
+          }))
+        )
+      )
+
+      expect(result).toContain(
+        'Your regulator is reviewing your application to add 2 overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      )
     })
 
     // RA-492's View link and requests link have no registration-only page yet.

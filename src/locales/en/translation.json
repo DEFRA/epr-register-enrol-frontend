@@ -975,10 +975,14 @@
         "link": "View change request"
       },
       "pendingBanner": {
-        "title": "Change pending",
+        "title": "Change in review",
         "body": {
-          "one": "You have a change pending. Your regulator is reviewing your request to add 1 overseas reprocessing site to this accreditation. You cannot change this site until your regulator has made a decision.",
-          "other": "You have a change pending. Your regulator is reviewing your request to add {{count}} overseas reprocessing sites to this accreditation. You cannot change these sites until your regulator has made a decision."
+          "one": "Your regulator is reviewing your application to add 1 overseas reprocessing site to your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
+        },
+        "bodyRegistrationOnly": {
+          "one": "Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         }
       },
       "status": {
@@ -1106,7 +1110,7 @@
         },
         "queried": {
           "title": "Important",
-          "body": "A query has been raised on this request"
+          "body": "A query has been raised on this application for change."
         },
         "tonnage": {
           "requestedBand": "Tonnage band"

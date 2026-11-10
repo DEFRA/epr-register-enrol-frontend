@@ -639,7 +639,9 @@ describe('#manageChangeRequestDetailController', () => {
         start,
         result.indexOf('data-testid="page-caption"', start)
       )
-      expect(banner).toContain('A query has been raised on this request')
+      expect(banner).toContain(
+        'A query has been raised on this application for change.'
+      )
       expect(banner).not.toMatch(/<a |<button/)
     })
 
@@ -952,7 +954,9 @@ describe('#manageChangeRequestDetailController', () => {
         start,
         result.indexOf('data-testid="page-caption"', start)
       )
-      expect(banner).toContain('A query has been raised on this request')
+      expect(banner).toContain(
+        'A query has been raised on this application for change.'
+      )
       expect(banner).not.toMatch(/<a |<button/)
       expect(result).toMatch(
         /class="govuk-notification-banner app-notification-banner--full-width"[^>]*data-testid="query-raised-banner"/

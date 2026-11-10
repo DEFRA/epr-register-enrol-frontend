@@ -73,7 +73,7 @@
         <h2 class="govuk-notification-banner__title" id="pending-change-title">{{ t('pages.manageOverseasSites.pendingBanner.title') }}</h2>
       </div>
       <div class="govuk-notification-banner__content">
-        <p class="govuk-body">{{ t('pages.manageOverseasSites.pendingBanner.body', { count: pendingCount }) }}</p>
+        <p class="govuk-body">{{ t('pages.manageOverseasSites.pendingBanner.' + ('bodyRegistrationOnly' if isRegistrationOnly else 'body'), { count: pendingCount }) }}</p>
       </div>
     </div>
   {% endif %}
