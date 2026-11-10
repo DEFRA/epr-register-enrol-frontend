@@ -81,6 +81,18 @@ describe('initAutoSubmit', () => {
     expect(document.getElementById('type').name).toBe('type')
   })
 
+  it('sends a select chosen after a submit that did not leave the page', () => {
+    const form = renderForm()
+    initAutoSubmit(document)
+    choose('type', '')
+
+    const status = choose('status', 'Queried')
+
+    expect(form.submit).toHaveBeenCalledTimes(2)
+    expect(status.name).toBe('status')
+    expect(document.getElementById('type').hasAttribute('name')).toBe(false)
+  })
+
   it('ignores changes from other forms', () => {
     const form = renderForm()
     document.body.insertAdjacentHTML(
