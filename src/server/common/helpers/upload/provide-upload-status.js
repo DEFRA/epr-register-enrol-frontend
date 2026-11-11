@@ -2,6 +2,7 @@ import Boom from '@hapi/boom'
 import { apiClient } from '../../api-client.js'
 import { statusCodes } from '../../constants/status-codes.js'
 import { getLocaleAndTranslator } from '../get-locale-translator.js'
+import { localePrefix } from '../localePrefix.js'
 import { logStructuredError } from '../logging/log-structured-error.js'
 
 /**
@@ -11,7 +12,8 @@ import { logStructuredError } from '../logging/log-structured-error.js'
  * The backend answers 404 when it has no record of the upload (it expired,
  * or it never started there), so the upload will never become ready. Rather
  * than the status page polling forever, the operator gets the
- * upload-not-found page, which does not refresh, with a link to upload again.
+ * upload-not-found page, which does not refresh, with a link to upload again
+ * (under /cy when the status page was, so a Welsh user stays in Welsh).
  * Both that and any other failure (a 502) are logged at error level with the
  * session key and status path, so an upload the operator lost leaves a trace.
  * The session entry is left in place: only the status route reads it, so a
@@ -41,11 +43,11 @@ export function provideUploadStatusFromSession(sessionKey, uploadPageUrl) {
             context,
             'Upload status not found: the backend has no record of this upload'
           )
-          const { t } = getLocaleAndTranslator(request)
+          const { currentLocale, t } = getLocaleAndTranslator(request)
           return h
             .view('errors/upload-not-found', {
               pageTitle: t('common.errors.uploadNotFound.title'),
-              uploadPageUrl: uploadPageUrl(request.params)
+              uploadPageUrl: `${localePrefix(currentLocale)}${uploadPageUrl(request.params)}`
             })
             .code(statusCodes.notFound)
             .takeover()

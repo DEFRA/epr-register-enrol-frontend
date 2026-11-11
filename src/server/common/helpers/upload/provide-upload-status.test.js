@@ -81,7 +81,7 @@ describe('#provideUploadStatusFromSession', () => {
     expect(response.takeover).toHaveBeenCalled()
   })
 
-  test('titles the upload-not-found page in Welsh on a /cy path', async () => {
+  test('titles the upload-not-found page in Welsh and keeps /cy on the upload link on a /cy path', async () => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(404))
     const { h } = makeToolkit()
 
@@ -93,7 +93,8 @@ describe('#provideUploadStatusFromSession', () => {
     expect(h.view).toHaveBeenCalledWith(
       'errors/upload-not-found',
       expect.objectContaining({
-        pageTitle: '[Welsh] We could not find your file upload'
+        pageTitle: '[Welsh] We could not find your file upload',
+        uploadPageUrl: '/cy/upload/app-1'
       })
     )
   })
