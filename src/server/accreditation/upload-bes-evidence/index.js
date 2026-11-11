@@ -2,7 +2,6 @@ import {
   uploadBesEvidenceGetController,
   uploadBesEvidencePostController,
   besEvidenceCdpStatusController,
-  uploadBesEvidenceUrl,
   BES_EVIDENCE_UPLOAD_SESSION_KEY
 } from './controller.js'
 import {
@@ -11,6 +10,7 @@ import {
 } from './amend-controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
+import { uploadBesEvidenceUrl } from '../../common/helpers/accreditationUrls.js'
 
 const uploadOptions = {
   ...requireOperator,

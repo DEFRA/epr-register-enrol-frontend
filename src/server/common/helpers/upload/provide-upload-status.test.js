@@ -9,6 +9,7 @@ function makeRequest(session, path = '/upload/app-1/status') {
   return {
     path,
     params: { applicationId: 'app-1' },
+    logger: { error: vi.fn() },
     yar: {
       get: vi.fn().mockReturnValue(session)
     }
@@ -55,10 +56,21 @@ describe('#provideUploadStatusFromSession', () => {
   })
 
   test('takes over with the upload-not-found page when the backend has no record of the upload', async () => {
-    vi.spyOn(apiClient, 'get').mockRejectedValue(apiError(404))
+    const notFound = apiError(404)
+    vi.spyOn(apiClient, 'get').mockRejectedValue(notFound)
+    const request = makeRequest({ statusUrl: STATUS_URL })
     const { h, response } = makeToolkit()
 
-    const result = await method(makeRequest({ statusUrl: STATUS_URL }), h)
+    const result = await method(request, h)
+
+    expect(request.logger.error).toHaveBeenCalledWith(
+      {
+        sessionKey: 'uploadSession',
+        statusPath: '/api/v1/files/abc123/status',
+        err: notFound
+      },
+      'Upload status not found: the backend has no record of this upload'
+    )
 
     expect(result).toBe(response)
     expect(h.view).toHaveBeenCalledWith('errors/upload-not-found', {
@@ -91,14 +103,21 @@ describe('#provideUploadStatusFromSession', () => {
     ['a backend 500', apiError(500)]
   ])('wraps %s as a 502', async (_label, error) => {
     vi.spyOn(apiClient, 'get').mockRejectedValue(error)
+    const request = makeRequest({ statusUrl: STATUS_URL })
     const { h } = makeToolkit()
 
-    await expect(
-      method(makeRequest({ statusUrl: STATUS_URL }), h)
-    ).rejects.toMatchObject({
+    await expect(method(request, h)).rejects.toMatchObject({
       message: 'CDP uploader status check failed',
       output: { statusCode: 502 }
     })
     expect(h.view).not.toHaveBeenCalled()
+    expect(request.logger.error).toHaveBeenCalledWith(
+      {
+        sessionKey: 'uploadSession',
+        statusPath: '/api/v1/files/abc123/status',
+        err: error
+      },
+      'Upload status check failed'
+    )
   })
 })

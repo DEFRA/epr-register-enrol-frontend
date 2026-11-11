@@ -2,17 +2,16 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  queryTaskListUrl,
+  uploadBesEvidenceUrl
+} from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
   guardSectionWrite
 } from '../../common/helpers/queriedSectionAccess.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
-
-function uploadBesEvidenceUrl(applicationId, siteId) {
-  return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
-}
 
 function cyaUrl(applicationId, siteId) {
   return `/accreditation/cya-evidence-for-overseas-site/${applicationId}/${siteId}`

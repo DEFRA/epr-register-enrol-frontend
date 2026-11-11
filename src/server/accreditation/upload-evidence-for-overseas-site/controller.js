@@ -2,7 +2,10 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  queryTaskListUrl,
+  uploadBesEvidenceUrl
+} from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
   isRegulatorQueryBannerVisible
@@ -16,10 +19,6 @@ import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplica
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
-}
-
-function uploadUrl(applicationId, siteId) {
-  return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
 }
 
 // A site with existing uploads should route to the review screen (view/
@@ -79,7 +78,7 @@ function mapSites(t, applicationId, rawSites) {
       evidenceStatusClass: status.tagClass,
       uploadUrl: hasUploads
         ? reviewUrl(applicationId, s.siteId)
-        : uploadUrl(applicationId, s.siteId),
+        : uploadBesEvidenceUrl(applicationId, s.siteId),
       uploadLinkText: hasUploads
         ? t('pages.uploadEvidenceList.viewLink')
         : t('pages.uploadEvidenceList.uploadLink')

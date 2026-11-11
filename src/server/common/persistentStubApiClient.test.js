@@ -34,10 +34,13 @@ describe('#persistentStubApiClient CDP upload status', () => {
   // The real backend has no record of a stub-generated fileUploadId, so the
   // stub must answer for it, or a completed stub upload would never be ready.
   test('reflects a completed stub upload as ready/validated once stubCompleteUpload has run', async () => {
-    const endpoint =
-      '/api/v1/accreditation-applications/org1/app1/files/stub-upload-999/status'
+    const { fileUploadId, statusUrl } = await persistentStubApiClient.post(
+      '/api/v1/accreditation-applications/org1/app1/sampling-plan/files/initiate',
+      {}
+    )
+    const endpoint = new URL(statusUrl).pathname
 
-    stubCompleteUpload('stub-upload-999', {
+    stubCompleteUpload(fileUploadId, {
       filename: 'sampling-plan.pdf',
       contentType: 'application/pdf'
     })

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import {
   resolveNationFromPostcode,
   NATIONS
@@ -1128,11 +1129,20 @@ function stubRegistrationStatus(registrationId) {
 
 // In-memory store for stub CDP uploads: fileUploadId → file data once the
 // stub upload has completed, or null while it is pending. As in the backend,
-// an id that /initiate did not hand out has no record, so its status is a 404.
+// only an id that /initiate handed out has a record: its status for any other
+// id is a 404, and completing any other id changes nothing.
 const stubUploads = new Map()
 
+/**
+ * Marks an upload that /initiate handed out as complete.
+ * @returns {boolean} false, with nothing recorded, for any other id
+ */
 export function stubCompleteUpload(fileUploadId, fileData) {
+  if (!stubUploads.has(fileUploadId)) {
+    return false
+  }
   stubUploads.set(fileUploadId, fileData)
+  return true
 }
 
 export const stubApiClient = {
@@ -1206,7 +1216,7 @@ export const stubApiClient = {
   post(endpoint, body) {
     // CDP upload initiation — returns stub uploadUrl/statusUrl for local dev
     if (/\/initiate$/.test(endpoint)) {
-      const fileUploadId = `stub-upload-${Date.now()}`
+      const fileUploadId = `stub-upload-${randomUUID()}`
       stubUploads.set(fileUploadId, null)
       // Strip everything from /files/ onwards and rebuild as /files/{id}/status
       // so the status-check regex (/files/[^/]+/status$) always matches

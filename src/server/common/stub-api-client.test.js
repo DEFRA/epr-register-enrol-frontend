@@ -523,28 +523,45 @@ describe('stubApiClient.get — CDP upload status', () => {
 
   test('returns ready status with file details once completed', async () => {
     const mod = await freshStubModule()
-    mod.stubCompleteUpload('upload002', {
-      filename: 'evidence.pdf',
-      contentType: 'application/pdf'
-    })
-
-    const ready = await mod.stubApiClient.get(
-      '/api/stub/upload/some-id/files/upload002/status'
+    const { fileUploadId, statusUrl } = await mod.stubApiClient.post(
+      INITIATE_URL,
+      {}
     )
+    expect(
+      mod.stubCompleteUpload(fileUploadId, {
+        filename: 'evidence.pdf',
+        contentType: 'application/pdf'
+      })
+    ).toBe(true)
+
+    const ready = await mod.stubApiClient.get(new URL(statusUrl).pathname)
     expect(ready.uploadStatus).toBe('ready')
     expect(ready.processingStatus).toBe('validated')
     expect(ready.form.file.filename).toBe('evidence.pdf')
     expect(ready.form.file.contentType).toBe('application/pdf')
-    expect(ready.form.file.fileId).toBe('stub-file-upload002')
+    expect(ready.form.file.fileId).toBe(`stub-file-${fileUploadId}`)
+  })
+
+  test('does not record completion for an id it never handed out', async () => {
+    const mod = await freshStubModule()
+
+    expect(mod.stubCompleteUpload('upload004', { filename: 'x.pdf' })).toBe(
+      false
+    )
+    await expect(
+      mod.stubApiClient.get('/api/stub/upload/some-id/files/upload004/status')
+    ).rejects.toMatchObject({ status: 404 })
   })
 
   test('defaults filename and contentType when not supplied', async () => {
     const mod = await freshStubModule()
-    mod.stubCompleteUpload('upload003', {})
-
-    const ready = await mod.stubApiClient.get(
-      '/api/stub/upload/some-id/files/upload003/status'
+    const { fileUploadId, statusUrl } = await mod.stubApiClient.post(
+      INITIATE_URL,
+      {}
     )
+    mod.stubCompleteUpload(fileUploadId, {})
+
+    const ready = await mod.stubApiClient.get(new URL(statusUrl).pathname)
     expect(ready.form.file.filename).toBe('unknown')
     expect(ready.form.file.contentType).toBe('application/octet-stream')
   })
