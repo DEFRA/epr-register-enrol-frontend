@@ -498,22 +498,31 @@ describe('stubApiClient.delete — sampling plan file', () => {
 })
 
 describe('stubApiClient.get — CDP upload status', () => {
-  test('returns pending status when upload has not completed', async () => {
+  const INITIATE_URL =
+    '/api/v1/accreditation-applications/50001/app001/sampling-plan/files/initiate'
+
+  test('returns pending status from initiate until the upload completes', async () => {
     const stub = await freshStub()
-    const result = await stub.get(
-      '/api/stub/upload/some-id/files/upload001/status'
-    )
-    expect(result.uploadStatus).toBe('pending')
-    expect(result.processingStatus).toBe('preprocessing')
+    const { statusUrl } = await stub.post(INITIATE_URL, {})
+
+    const result = await stub.get(new URL(statusUrl).pathname)
+
+    expect(result).toEqual({
+      uploadStatus: 'pending',
+      processingStatus: 'preprocessing'
+    })
+  })
+
+  test('rejects with a 404, as the API client does, for an id it never handed out', async () => {
+    const stub = await freshStub()
+
+    await expect(
+      stub.get('/api/stub/upload/some-id/files/upload001/status')
+    ).rejects.toMatchObject({ status: 404 })
   })
 
   test('returns ready status with file details once completed', async () => {
     const mod = await freshStubModule()
-    const result = await mod.stubApiClient.get(
-      '/api/stub/upload/some-id/files/upload002/status'
-    )
-    expect(result.uploadStatus).toBe('pending')
-
     mod.stubCompleteUpload('upload002', {
       filename: 'evidence.pdf',
       contentType: 'application/pdf'

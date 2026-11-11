@@ -1270,7 +1270,12 @@
     },
     "errors": {
       "serviceTitle": "Ymddiheuriadau, mae yna broblem gyda\u0027r gwasanaeth",
-      "tryAgain": "Trio eto"
+      "tryAgain": "Trio eto",
+      "uploadNotFound": {
+        "title": "[Welsh] We could not find your file upload",
+        "message": "[Welsh] Your upload may have expired or not finished, so your file has not been saved.",
+        "uploadAgain": "[Welsh] Upload your file again"
+      }
     }
   },
   "languageSwitcher": {

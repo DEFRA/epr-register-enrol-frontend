@@ -4,6 +4,7 @@ import {
   samplingPlanResultsGetController,
   samplingPlanResultsPostController,
   samplingPlanCdpStatusController,
+  samplingPlanUrl,
   SAMPLING_PLAN_UPLOAD_SESSION_KEY
 } from './controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
@@ -21,7 +22,12 @@ const uploadOptions = {
 
 const statusOptions = {
   ...requireOperator,
-  pre: [provideUploadStatusFromSession(SAMPLING_PLAN_UPLOAD_SESSION_KEY)]
+  pre: [
+    provideUploadStatusFromSession(
+      SAMPLING_PLAN_UPLOAD_SESSION_KEY,
+      ({ applicationId }) => samplingPlanUrl(applicationId)
+    )
+  ]
 }
 
 export const samplingPlanUpload = {

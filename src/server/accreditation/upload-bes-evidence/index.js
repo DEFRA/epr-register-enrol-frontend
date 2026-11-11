@@ -2,6 +2,7 @@ import {
   uploadBesEvidenceGetController,
   uploadBesEvidencePostController,
   besEvidenceCdpStatusController,
+  uploadBesEvidenceUrl,
   BES_EVIDENCE_UPLOAD_SESSION_KEY
 } from './controller.js'
 import {
@@ -23,7 +24,12 @@ const uploadOptions = {
 
 const statusOptions = {
   ...requireOperator,
-  pre: [provideUploadStatusFromSession(BES_EVIDENCE_UPLOAD_SESSION_KEY)]
+  pre: [
+    provideUploadStatusFromSession(
+      BES_EVIDENCE_UPLOAD_SESSION_KEY,
+      ({ applicationId, siteId }) => uploadBesEvidenceUrl(applicationId, siteId)
+    )
+  ]
 }
 
 export const uploadBesEvidence = {

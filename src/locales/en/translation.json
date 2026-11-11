@@ -1249,7 +1249,12 @@
     },
     "errors": {
       "serviceTitle": "Sorry, there is a problem with the service",
-      "tryAgain": "Try again"
+      "tryAgain": "Try again",
+      "uploadNotFound": {
+        "title": "We could not find your file upload",
+        "message": "Your upload may have expired or not finished, so your file has not been saved.",
+        "uploadAgain": "Upload your file again"
+      }
     },
     "regulatorQuery": {
       "heading": "Regulator query",

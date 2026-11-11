@@ -128,8 +128,9 @@ describe('#router — stub CDP upload endpoint', () => {
 
     expect(statusCode).toBe(415)
 
-    const status = await stubApiClient.get(`/files/${fileUploadId}/status`)
-
-    expect(status.form?.file?.filename).not.toBe('evidence.pdf')
+    // Never initiated and never completed, so the stub has no record of it.
+    await expect(
+      stubApiClient.get(`/files/${fileUploadId}/status`)
+    ).rejects.toMatchObject({ status: statusCodes.notFound })
   })
 })

@@ -17,6 +17,7 @@ import {
 } from './controller.js'
 import {
   IN_YEAR_BES_UPLOAD_SESSION_KEY,
+  besEvidenceUrl,
   requireUploadForSite,
   besEvidenceGetController,
   besEvidencePostController,
@@ -65,7 +66,10 @@ const statusOptions = {
   ...routeOptions,
   pre: [
     requireUploadForSite,
-    provideUploadStatusFromSession(IN_YEAR_BES_UPLOAD_SESSION_KEY)
+    provideUploadStatusFromSession(
+      IN_YEAR_BES_UPLOAD_SESSION_KEY,
+      ({ applicationId, siteId }) => besEvidenceUrl(applicationId, siteId)
+    )
   ]
 }
 

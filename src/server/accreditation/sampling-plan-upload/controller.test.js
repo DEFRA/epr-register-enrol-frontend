@@ -1198,6 +1198,85 @@ describe('#samplingPlanUploadController', () => {
       expect(result).toContain('Your file is being virus checked')
       expect(result).toContain('This may take a few minutes.')
       expect(result).toContain('Keep this page open and do not refresh it.')
+      expect(result).toContain('<meta http-equiv="refresh" content="2">')
+    })
+
+    describe('when the backend has no record of the upload (404)', () => {
+      const notFound = () =>
+        vi.spyOn(apiClient, 'get').mockRejectedValue(
+          Object.assign(new Error('API request failed: 404 Not Found'), {
+            status: 404
+          })
+        )
+
+      test('stops polling and offers to upload the file again', async () => {
+        const cookie = await getStatusCookie()
+        notFound()
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+          headers: { Cookie: cookie }
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(result).not.toContain('http-equiv="refresh"')
+        expect(result).toContain('We could not find your file upload')
+        expect(result).toContain(
+          'Your upload may have expired or not finished, so your file has not been saved.'
+        )
+        expect(result).toContain(
+          `href="${`/accreditation/sampling-plan/${APPLICATION_ID}`}" class="govuk-link" data-testid="upload-again-link">Upload your file again</a>`
+        )
+      })
+
+      test('shows the Welsh page on the /cy route', async () => {
+        const cookie = await getStatusCookie()
+        notFound()
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/cy${`/accreditation/sampling-plan/${APPLICATION_ID}/status`}`,
+          headers: { Cookie: cookie }
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(result).not.toContain('http-equiv="refresh"')
+        expect(result).toContain('[Welsh] We could not find your file upload')
+        expect(result).toContain('[Welsh] Upload your file again')
+      })
+
+      test('shows the same page again on a refresh, as the session entry is kept', async () => {
+        const cookie = await getStatusCookie()
+        notFound()
+        const inject = () =>
+          server.inject({
+            method: 'GET',
+            url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+            headers: { Cookie: cookie }
+          })
+
+        await inject()
+        const { statusCode, result } = await inject()
+
+        expect(statusCode).toBe(statusCodes.notFound)
+        expect(result).toContain('We could not find your file upload')
+      })
+    })
+
+    test('still returns a 502 for any other backend failure', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockRejectedValue(
+        Object.assign(new Error('API request failed: 500'), { status: 500 })
+      )
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/status`,
+        headers: { Cookie: cookie }
+      })
+
+      expect(statusCode).toBe(502)
     })
 
     test('saves Clean scanStatus and redirects to the results page', async () => {

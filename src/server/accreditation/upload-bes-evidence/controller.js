@@ -139,6 +139,10 @@ export function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
+export function uploadBesEvidenceUrl(applicationId, siteId) {
+  return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
+}
+
 function uploadMoreUrl(applicationId, siteId) {
   return `/accreditation/upload-more-evidence/${applicationId}/${siteId}`
 }
