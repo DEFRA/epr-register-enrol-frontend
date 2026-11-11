@@ -1243,7 +1243,9 @@ describe('#samplingPlanUploadController', () => {
         expect(statusCode).toBe(statusCodes.notFound)
         expect(result).not.toContain('http-equiv="refresh"')
         expect(result).toContain('[Welsh] We could not find your file upload')
-        expect(result).toContain('[Welsh] Upload your file again')
+        expect(result).toContain(
+          `href="/cy/accreditation/sampling-plan/${APPLICATION_ID}" class="govuk-link" data-testid="upload-again-link">[Welsh] Upload your file again</a>`
+        )
       })
 
       test('shows the same page again on a refresh, as the session entry is kept', async () => {
