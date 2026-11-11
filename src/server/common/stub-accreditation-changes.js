@@ -71,6 +71,7 @@ function newItem(changeType, item = {}) {
     status: ITEM_STATUSES.inProgress,
     validFrom: null,
     withdrawnAt: null,
+    caseManagementReference: null,
     ...item
   }
 }
@@ -99,7 +100,7 @@ function storeRequest(store, request) {
     updatedAt: request.createdAt ?? now,
     submittedAt: null,
     submittedBy: null,
-    caseManagementReference: null,
+    submissionReference: null,
     ...request,
     sites: (request.sites ?? []).map(newSiteItem),
     tonnageBandUpgrade: request.tonnageBandUpgrade
@@ -152,7 +153,8 @@ function requestSiteView(site, entry) {
     changeType: entry.changeType,
     status: entry.status,
     validFrom: entry.validFrom,
-    withdrawnAt: entry.withdrawnAt
+    withdrawnAt: entry.withdrawnAt,
+    caseManagementReference: entry.caseManagementReference ?? null
   }
 }
 
@@ -170,7 +172,6 @@ function requestView(request, siteList) {
     updatedAt: request.updatedAt,
     submittedAt: request.submittedAt ?? null,
     submittedBy: request.submittedBy ?? null,
-    caseManagementReference: request.caseManagementReference ?? null,
     sites,
     isComplete: sites.length > 0 && sites.every((site) => site.isComplete),
     charge: {

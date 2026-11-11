@@ -381,7 +381,6 @@ describe('#manageRegistrationAccreditationController', () => {
         updatedAt: '2027-03-01T09:00:00Z',
         submittedAt: '2027-03-01T09:00:00Z',
         submittedBy: null,
-        caseManagementReference: `CR-${requestId}`,
         sites: [item],
         tonnageBandUpgrade: null
       })
@@ -620,7 +619,6 @@ describe('#manageRegistrationAccreditationController', () => {
       updatedAt: '2027-03-01T09:00:00Z',
       submittedAt: '2027-03-01T09:00:00Z',
       submittedBy: null,
-      caseManagementReference: `CR-${requestId}`,
       sites,
       tonnageBandUpgrade: tonnage
     })

@@ -126,19 +126,35 @@ const orsItem = (itemId, status, extra = {}) => ({
   ...extra
 })
 
-const submittedRequest = (requestId, createdAt, items, extra = {}) => ({
+// Unreferenced, as before submission or with Case Management submission off.
+const submittedRequest = (
   requestId,
-  changeType: 'add-overseas-site',
-  status: 'Submitted',
   createdAt,
-  updatedAt: createdAt,
-  submittedAt: createdAt.replace('T09', 'T11'),
-  submittedBy: SUBMITTER,
-  caseManagementReference: `CR27${requestId}`,
-  sites: items.sites ?? [],
-  tonnageBandUpgrade: items.tonnage ?? null,
-  ...extra
-})
+  items,
+  { unreferenced = false, ...extra } = {}
+) => {
+  const withReference = (item, index) => ({
+    ...item,
+    caseManagementReference: unreferenced
+      ? null
+      : `CR27${requestId}-${index + 1}`
+  })
+  const sites = (items.sites ?? []).map(withReference)
+  return {
+    requestId,
+    changeType: 'add-overseas-site',
+    status: 'Submitted',
+    createdAt,
+    updatedAt: createdAt,
+    submittedAt: createdAt.replace('T09', 'T11'),
+    submittedBy: SUBMITTER,
+    sites,
+    tonnageBandUpgrade: items.tonnage
+      ? withReference(items.tonnage, sites.length)
+      : null,
+    ...extra
+  }
+}
 
 const CURRENT_VIEW = {
   ...noChangeRequests,
@@ -158,7 +174,7 @@ const CURRENT_VIEW = {
         status: 'InProgress',
         submittedAt: null,
         submittedBy: null,
-        caseManagementReference: null
+        unreferenced: true
       }
     ),
     submittedRequest('R003', '2027-04-01T09:00:00Z', {
@@ -186,7 +202,7 @@ const CURRENT_VIEW = {
         ]
       },
       // Submitted while Case Management submission is off.
-      { caseManagementReference: null }
+      { unreferenced: true }
     ),
     submittedRequest('R000', '2027-01-20T09:00:00Z', {
       tonnage: {
@@ -580,7 +596,7 @@ describe('#manageChangeRequestDetailController', () => {
       expect(valueOf(result, 'request-submitted-by')).toBe('Sam Patel')
       expect(valueOf(result, 'request-valid-from')).toBe('Not applicable')
       expect(valueOf(result, 'request-valid-to')).toBe('Not applicable')
-      expect(valueOf(result, 'request-reference')).toBe('CR27R000')
+      expect(valueOf(result, 'request-reference')).toBe('CR27R000-1')
     })
 
     test('shows "Not submitted" and no reference for an In progress item', async () => {
@@ -592,7 +608,7 @@ describe('#manageChangeRequestDetailController', () => {
             status: 'InProgress',
             submittedAt: null,
             submittedBy: null,
-            caseManagementReference: null
+            unreferenced: true
           }
         )
       )
@@ -671,8 +687,21 @@ describe('#manageChangeRequestDetailController', () => {
       expect(valueOf(result, 'request-type')).toBe('ORS update')
       expect(valueOf(result, 'request-sent')).toBe('1 Apr 2027')
       expect(valueOf(result, 'request-submitted-by')).toBe('Sam Patel')
-      expect(valueOf(result, 'request-reference')).toBe('CR27R003')
+      expect(valueOf(result, 'request-reference')).toBe('CR27R003-1')
     })
+
+    // RA-739: Case Management makes each site its own application.
+    test.each([
+      [ITEM.submitted, 'CR27R002-1'],
+      [ITEM.refused, 'CR27R002-2']
+    ])(
+      'shows item %s’s own reference, not one shared with the other items in its request',
+      async (itemId, reference) => {
+        const result = await getPage(itemId)
+
+        expect(valueOf(result, 'request-reference')).toBe(reference)
+      }
+    )
 
     test('shows "Not submitted" and no reference for an In progress item', async () => {
       const result = await getPage(ITEM.inProgress)
@@ -835,7 +864,7 @@ describe('#manageChangeRequestDetailController', () => {
         submittedBy: 'Sam Patel',
         validFrom: '2 Mar 2027',
         validTo: '31 Dec 2027',
-        reference: 'CR27G001'
+        reference: 'CR27G001-1'
       })
     })
 

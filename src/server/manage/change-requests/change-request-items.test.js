@@ -49,7 +49,6 @@ const request = (requestId, overrides = {}) => ({
   updatedAt: '2027-03-01T11:00:00Z',
   submittedAt: '2027-03-01T11:00:00Z',
   submittedBy: SUBMITTER,
-  caseManagementReference: `CR-${requestId}`,
   sites: [],
   tonnageBandUpgrade: null,
   ...overrides
@@ -79,24 +78,26 @@ const accreditationSites = [
 ]
 
 describe('flattenItems', () => {
-  test('gives one row per ORS item and per tonnage item, carrying its request’s fields', () => {
+  test('gives one row per ORS item and per tonnage item, carrying its request’s fields and its own reference', () => {
     const rows = flattenItems(
       [
         request('r1', {
           sites: [
-            siteItem('item-1'),
+            siteItem('item-1', {
+              caseManagementReference: 'IYC-ORS-2027-00001'
+            }),
             siteItem('item-2', {
               siteId: 2,
               orsId: '002',
               siteName: 'Paris Paper',
-              status: 'Queried'
+              status: 'Queried',
+              caseManagementReference: 'IYC-ORS-2027-00002'
             })
           ]
         }),
         request('r2', {
           submittedAt: null,
           submittedBy: null,
-          caseManagementReference: null,
           status: 'InProgress',
           tonnageBandUpgrade: {
             itemId: 'item-3',
@@ -123,12 +124,13 @@ describe('flattenItems', () => {
         submittedAt: '2027-03-01T11:00:00Z',
         submittedBy: SUBMITTER,
         updatedAt: '2027-03-01T11:00:00Z',
-        reference: 'CR-r1'
+        reference: 'IYC-ORS-2027-00001'
       },
       expect.objectContaining({
         itemId: 'item-2',
         status: 'Queried',
         siteName: 'Paris Paper',
+        reference: 'IYC-ORS-2027-00002',
         // Older ORS records carry only the flattened siteAddress.
         siteAddress: '2 Rue du Port, France'
       }),

@@ -76,7 +76,6 @@ const submittedRequest = (requestId, submittedAt, items) => ({
   updatedAt: submittedAt,
   submittedAt,
   submittedBy: SUBMITTER,
-  caseManagementReference: `CR-${requestId}`,
   sites: items.sites ?? [],
   tonnageBandUpgrade: items.tonnage ?? null
 })
@@ -105,8 +104,7 @@ const CURRENT_VIEW = {
       status: 'InProgress',
       createdAt: '2027-05-01T09:00:00Z',
       updatedAt: '2027-05-02T09:00:00Z',
-      submittedBy: null,
-      caseManagementReference: null
+      submittedBy: null
     },
     submittedRequest('r4', '2027-04-15T09:00:00Z', {
       sites: [
@@ -1108,7 +1106,9 @@ describe('#manageChangeRequestsController', () => {
       )
       expect(result).toMatch(/data-testid="header-status"[\s\S]*?REFUSED/)
       expect(result).toContain('Saigon Port Storage')
-      expect(result).toContain(`CR${String(currentYear()).slice(-2)}050018A012`)
+      expect(result).toContain(
+        `CR${String(currentYear()).slice(-2)}050018A012-1`
+      )
     })
 
     test('shows the no-results message for the org with no change requests', async () => {
