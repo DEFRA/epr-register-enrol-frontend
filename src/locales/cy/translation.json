@@ -980,8 +980,8 @@
           "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         },
         "bodyRegistrationOnly": {
-          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
-          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
+          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         }
       },
       "status": {
