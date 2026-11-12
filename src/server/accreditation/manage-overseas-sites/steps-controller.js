@@ -98,7 +98,7 @@ function effectiveValue(draft, field) {
   return draft.requestSite.effective?.[field] ?? draft.entry.site?.[field]
 }
 
-function besEvidenceUrl(applicationId, siteId) {
+export function besEvidenceUrl(applicationId, siteId) {
   return stepUrl(applicationId, siteId, 'bes-evidence')
 }
 

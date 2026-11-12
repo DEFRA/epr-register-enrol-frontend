@@ -85,7 +85,11 @@ const stubUploadRoute = {
     const filename = filePart.filename
     const contentType =
       filePart.headers?.['content-type'] ?? 'application/octet-stream'
-    stubCompleteUpload(fileUploadId, { filename, contentType })
+    if (!stubCompleteUpload(fileUploadId, { filename, contentType })) {
+      return h
+        .response({ message: 'Unknown fileUploadId' })
+        .code(statusCodes.notFound)
+    }
     return h.response({}).code(statusCodes.ok)
   }
 }

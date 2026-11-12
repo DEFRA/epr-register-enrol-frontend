@@ -4,7 +4,7 @@ import { statusCodes } from './common/constants/status-codes.js'
 import { stubApiClient } from './common/stub-api-client.js'
 
 // The stub CDP upload endpoint (registered only when config.api.stubEnabled
-// is true, the default for local dev and this test suite) marks a
+// is true, the default for local dev and this test suite) marks an initiated
 // fileUploadId as ready so a later status poll returns it.
 //
 // RA-619: the frontend now posts uploads to CDP as a multipart form (a header
@@ -45,6 +45,14 @@ describe('#router — stub CDP upload endpoint', () => {
     await server.stop({ timeout: 0 })
   })
 
+  async function initiateUpload() {
+    const { fileUploadId } = await stubApiClient.post(
+      '/api/v1/accreditation-applications/org1/app1/files/initiate',
+      {}
+    )
+    return fileUploadId
+  }
+
   function postUpload(fileUploadId, parts) {
     return server.inject({
       method: 'POST',
@@ -57,7 +65,7 @@ describe('#router — stub CDP upload endpoint', () => {
   }
 
   test('marks the upload ready using the filename and content type of the multipart file part', async () => {
-    const fileUploadId = 'router-test-upload-001'
+    const fileUploadId = await initiateUpload()
 
     const { statusCode } = await postUpload(fileUploadId, [
       {
@@ -84,7 +92,7 @@ describe('#router — stub CDP upload endpoint', () => {
   ])(
     'RA-619: records %s exactly as the user chose it',
     async (_label, filename) => {
-      const fileUploadId = `router-test-upload-ra619-${_label.replace(/\W+/g, '-')}`
+      const fileUploadId = await initiateUpload()
 
       const { statusCode } = await postUpload(fileUploadId, [
         {
@@ -102,6 +110,24 @@ describe('#router — stub CDP upload endpoint', () => {
       expect(status.form.file.filename).toBe(filename)
     }
   )
+
+  test('answers 404, recording nothing, for an id /initiate never handed out', async () => {
+    const fileUploadId = 'router-test-upload-never-initiated'
+
+    const { statusCode } = await postUpload(fileUploadId, [
+      {
+        name: 'file',
+        filename: 'evidence.pdf',
+        contentType: 'application/pdf',
+        content: 'file-bytes'
+      }
+    ])
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    await expect(
+      stubApiClient.get(`/files/${fileUploadId}/status`)
+    ).rejects.toMatchObject({ status: statusCodes.notFound })
+  })
 
   test('rejects a request that carries no multipart file part', async () => {
     const { statusCode } = await postUpload('router-test-upload-002', [
@@ -128,8 +154,9 @@ describe('#router — stub CDP upload endpoint', () => {
 
     expect(statusCode).toBe(415)
 
-    const status = await stubApiClient.get(`/files/${fileUploadId}/status`)
-
-    expect(status.form?.file?.filename).not.toBe('evidence.pdf')
+    // Never initiated and never completed, so the stub has no record of it.
+    await expect(
+      stubApiClient.get(`/files/${fileUploadId}/status`)
+    ).rejects.toMatchObject({ status: statusCodes.notFound })
   })
 })

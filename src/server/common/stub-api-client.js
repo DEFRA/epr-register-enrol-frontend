@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import {
   resolveNationFromPostcode,
   NATIONS
@@ -1110,32 +1111,51 @@ const REGISTRATION_STATUS_RE =
 
 // Rejects like the real API client does for a 404, so callers see the same
 // "no record" error with or without the stub.
+function stubNotFound() {
+  return Promise.reject(
+    Object.assign(new Error('API request failed: 404 Not Found'), {
+      status: 404
+    })
+  )
+}
+
 function stubRegistrationStatus(registrationId) {
   const registration = manageStubRegistrationStatuses()[registrationId]
   if (!registration) {
-    return Promise.reject(
-      Object.assign(new Error('API request failed: 404 Not Found'), {
-        status: 404
-      })
-    )
+    return stubNotFound()
   }
   return Promise.resolve({ registrationId, ...registration })
 }
 
-// In-memory store for stub CDP upload sessions (fileUploadId → scan result)
-const stubPendingUploads = new Map()
+// In-memory store for stub CDP uploads: fileUploadId → file data once the
+// stub upload has completed, or null while it is pending. As in the backend,
+// only an id that /initiate handed out has a record: its status for any other
+// id is a 404, and completing any other id changes nothing.
+const stubUploads = new Map()
 
+/**
+ * Marks an upload that /initiate handed out as complete.
+ * @returns {boolean} false, with nothing recorded, for any other id
+ */
 export function stubCompleteUpload(fileUploadId, fileData) {
-  stubPendingUploads.set(fileUploadId, fileData)
+  if (!stubUploads.has(fileUploadId)) {
+    return false
+  }
+  stubUploads.set(fileUploadId, fileData)
+  return true
 }
 
 export const stubApiClient = {
   get(endpoint) {
-    // CDP upload status — returns ready once stubCompleteUpload has been called
+    // CDP upload status — pending from /initiate, ready once stubCompleteUpload
+    // has been called, and a 404 for an id the stub never handed out
     const statusMatch = endpoint.match(/\/files\/([^/]+)\/status$/)
     if (statusMatch) {
       const fileUploadId = statusMatch[1]
-      const fileData = stubPendingUploads.get(fileUploadId)
+      if (!stubUploads.has(fileUploadId)) {
+        return stubNotFound()
+      }
+      const fileData = stubUploads.get(fileUploadId)
       if (!fileData) {
         return Promise.resolve({
           uploadStatus: 'pending',
@@ -1196,7 +1216,8 @@ export const stubApiClient = {
   post(endpoint, body) {
     // CDP upload initiation — returns stub uploadUrl/statusUrl for local dev
     if (/\/initiate$/.test(endpoint)) {
-      const fileUploadId = `stub-upload-${Date.now()}`
+      const fileUploadId = `stub-upload-${randomUUID()}`
+      stubUploads.set(fileUploadId, null)
       // Strip everything from /files/ onwards and rebuild as /files/{id}/status
       // so the status-check regex (/files/[^/]+/status$) always matches
       const statusPath =

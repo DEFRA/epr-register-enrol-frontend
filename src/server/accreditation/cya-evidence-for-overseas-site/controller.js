@@ -2,7 +2,10 @@ import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translat
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  queryTaskListUrl,
+  uploadBesEvidenceUrl
+} from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
   guardSectionWrite
@@ -12,14 +15,6 @@ import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplica
 
 function evidenceListUrl(applicationId) {
   return `/accreditation/upload-evidence-for-overseas-site/${applicationId}`
-}
-
-// RA-570: lets the operator add a further file from the review screen
-// itself, rather than only being able to amend/delete what's already
-// there - the raw upload form already supports uploading onto a site
-// that has existing evidence.
-function addFileUrl(applicationId, siteId) {
-  return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
 }
 
 function renderPage(h, viewData) {
@@ -37,7 +32,7 @@ function formatDate(isoString) {
 // reuses that controller's existing date validation for editing a single
 // file's dates.
 function amendUrl(applicationId, siteId, fileId) {
-  return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}/amend/${fileId}`
+  return `${uploadBesEvidenceUrl(applicationId, siteId)}/amend/${fileId}`
 }
 
 function mapUploads(uploads, applicationId, siteId) {
@@ -73,7 +68,11 @@ function buildViewData(
     error,
     readOnly,
     isQueriedApplication,
-    addFileUrl: addFileUrl(applicationId, siteId)
+    // RA-570: lets the operator add a further file from the review screen
+    // itself, rather than only being able to amend/delete what's already
+    // there - the raw upload form already supports uploading onto a site
+    // that has existing evidence.
+    addFileUrl: uploadBesEvidenceUrl(applicationId, siteId)
   }
 }
 

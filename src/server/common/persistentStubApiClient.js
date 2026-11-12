@@ -97,10 +97,7 @@ const persistentStubClient = {
   async get(endpoint) {
     // CDP upload status — always use the stub. /files/initiate (see post() below)
     // never calls the real backend, so every fileUploadId this client hands out is
-    // stub-only; the real backend has no record of it and its status endpoint
-    // returns 200 "pending" for any unrecognised id rather than an error, so
-    // trying the backend here previously masked the stub's real "ready" result
-    // behind a false-positive "pending" that the poll loop never recovered from.
+    // stub-only; the real backend has no record of it and would answer 404.
     if (/\/files\/[^/]+\/status$/.test(endpoint)) {
       return stubApiClient.get(endpoint)
     }

@@ -5,7 +5,10 @@ import { initUpload } from '../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
-import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  queryTaskListUrl,
+  uploadBesEvidenceUrl
+} from '../../common/helpers/accreditationUrls.js'
 import {
   resolveQueriedSectionAccess,
   guardSectionWrite
@@ -365,7 +368,7 @@ export const uploadBesEvidencePostController = {
     try {
       uploadDetail = await initUpload({
         initiateUrl: `/api/v1/accreditation-applications/${organisationId}/${applicationId}/files/bes-evidence/initiate`,
-        redirectUrl: `${config.get('auth.callbackBaseUrl')}/accreditation/upload-bes-evidence/${applicationId}/${siteId}/status`,
+        redirectUrl: `${config.get('auth.callbackBaseUrl')}${uploadBesEvidenceUrl(applicationId, siteId)}/status`,
         s3Path: `accreditation/bes-evidence/${applicationId}/${siteId}`,
         s3Bucket: config.get('fileUpload.s3Bucket'),
         metadata: { besEvidenceValidFromDate, besEvidenceExpiryDate },
@@ -419,9 +422,7 @@ export const uploadBesEvidencePostController = {
       besEvidenceExpiryDate
     })
 
-    return h.redirect(
-      `/accreditation/upload-bes-evidence/${applicationId}/${siteId}/status`
-    )
+    return h.redirect(`${uploadBesEvidenceUrl(applicationId, siteId)}/status`)
   }
 }
 
@@ -444,9 +445,7 @@ export const besEvidenceCdpStatusController = {
     request.yar.clear(BES_EVIDENCE_UPLOAD_SESSION_KEY)
 
     if (fileInput?.hasError) {
-      return h.redirect(
-        `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
-      )
+      return h.redirect(uploadBesEvidenceUrl(applicationId, siteId))
     }
 
     try {
@@ -469,7 +468,7 @@ export const besEvidenceCdpStatusController = {
       )
       if (isMaxFilesRejection(err)) {
         return h.redirect(
-          `/accreditation/upload-bes-evidence/${applicationId}/${siteId}?${MAX_FILES_QUERY}`
+          `${uploadBesEvidenceUrl(applicationId, siteId)}?${MAX_FILES_QUERY}`
         )
       }
     }

@@ -235,6 +235,7 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
       headers: { Cookie: cookie }
     })
     expect(pending.statusCode).toBe(statusCodes.ok)
+    expect(pending.result).toContain('<meta http-equiv="refresh" content="2">')
 
     mockStatusGets({
       uploadStatus: 'ready',
@@ -252,6 +253,27 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
       expect.objectContaining({ fileUploadId: 'up-1' })
     )
     expect(ready.headers.location).toBe(SITE)
+  })
+
+  test('status: an upload the backend has no record of (404) stops polling and links back to the upload page', async () => {
+    const { cookie } = await uploadCookie()
+    vi.spyOn(apiClient, 'get').mockRejectedValue(
+      Object.assign(new Error('API request failed: 404 Not Found'), {
+        status: 404
+      })
+    )
+    const post = vi.spyOn(apiClient, 'post')
+    const { statusCode, result } = await server.inject({
+      url: `${SITE}/bes-evidence/status`,
+      headers: { Cookie: cookie }
+    })
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(result).not.toContain('http-equiv="refresh"')
+    expect(result).toContain('We could not find your file upload')
+    expect(result).toContain(
+      `href="${SITE}/bes-evidence" class="govuk-link" data-testid="upload-again-link">Upload your file again</a>`
+    )
+    expect(post).not.toHaveBeenCalled()
   })
 
   test('status: a rejected file goes back to the upload page', async () => {

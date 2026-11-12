@@ -28,6 +28,12 @@ export function queryTaskListUrl(applicationId) {
   return `/accreditation/query-task-list/${applicationId}`
 }
 
+// The BES evidence upload page for one overseas site; its /status and
+// /amend/{fileId} routes build on it.
+export function uploadBesEvidenceUrl(applicationId, siteId) {
+  return `/accreditation/upload-bes-evidence/${applicationId}/${siteId}`
+}
+
 export function queryDeclarationUrl(applicationId) {
   return `/accreditation/query-declaration/${applicationId}`
 }
