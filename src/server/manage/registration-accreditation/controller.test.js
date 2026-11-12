@@ -304,7 +304,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
       test("shows the registration's status as a green GRANTED tag", () => {
         expect(result).toMatch(
-          /<p[^>]*>\s*Status:\s*<\/p>\s*<div class="govuk-body" data-testid="registration-status">/
+          /<p[^>]*>\s*Registration status:\s*<\/p>\s*<div class="govuk-body" data-testid="registration-status">/
         )
         expect(result).toMatch(
           /class="govuk-tag govuk-tag--green"[^>]*data-testid="registration-status-tag"[^>]*>\s*GRANTED\s*</
@@ -489,6 +489,10 @@ describe('#manageRegistrationAccreditationController', () => {
     })
 
     test('shows the application status with the re-accreditation status tag', () => {
+      expect(result).toMatch(
+        /<p[^>]*>\s*Accreditation status:\s*<\/p>\s*<div class="govuk-body" data-testid="application-status">/
+      )
+      expect(result).not.toContain('Application status:')
       expect(result).toMatch(
         /class="govuk-tag govuk-tag--green"[^>]*data-testid="application-status-tag"[^>]*>\s*GRANTED\s*</
       )
