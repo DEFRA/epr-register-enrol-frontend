@@ -827,7 +827,7 @@ describe('#manageOverseasSitesController', () => {
       )
 
       expect(result).toContain(
-        'Your regulator is reviewing your application to add 1 overseas reprocessing site to your registration. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
+        'Your regulator is reviewing your application to add 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
       )
       expect(result).not.toContain('to your accreditation')
     })
@@ -843,7 +843,7 @@ describe('#manageOverseasSitesController', () => {
       )
 
       expect(result).toContain(
-        'Your regulator is reviewing your application to add 2 overseas reprocessing sites to your registration. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+        'Your regulator is reviewing your application to add 2 overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
       )
     })
 
