@@ -118,6 +118,8 @@ const NO_CHANGE_REQUESTS_SITE_IDS = {
 const IN_YEAR_CHANGE_SITE_IDS = {
   HAMBURG: 901901,
   LYON: 901910,
+  ROTTERDAM: 901914,
+  ANTWERP_FOR_ROTTERDAM: 901915,
   DELHI: 901911,
   IZMIR: 901912
 }
@@ -278,7 +280,8 @@ function inYearChangeOrs(siteId, orsId, siteName, country, extra) {
   )
 }
 
-// RA-492: one accredited ORS and three registered-only ones, each missing a
+// RA-492: one accredited ORS and four registered-only ones: two complete
+// (RA-739: Lyon, then Rotterdam with an interim site), and two each missing a
 // different set of the fields the in-year add journey asks for.
 function inYearChangeSites(year) {
   return [
@@ -308,6 +311,25 @@ function inYearChangeSites(year) {
         coordinates: '45.7640, 4.8357',
         operationCodes: ['R3'],
         conditionsOfExport: true
+      }
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.ROTTERDAM,
+      '009',
+      'Rotterdam Recycling BV',
+      'Netherlands',
+      {
+        isEu: true,
+        isOecd: true,
+        coordinates: '51.9244, 4.4777',
+        operationCodes: ['R3'],
+        conditionsOfExport: true,
+        interimSites: [
+          antwerpInterimSite(
+            IN_YEAR_CHANGE_SITE_IDS.ANTWERP_FOR_ROTTERDAM,
+            '001'
+          )
+        ]
       }
     ),
     inYearChangeOrs(

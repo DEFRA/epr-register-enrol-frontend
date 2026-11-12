@@ -511,7 +511,13 @@ describe('persistentStubApiClient accreditation-changes routing (RA-492)', () =>
       await import('./persistentStubApiClient.js')
     const base = `/api/v1/accreditation-changes/50019/a${currentYear()}0000000000000050019`
     const view = await client.get(base)
-    expect(view.sites.map((s) => s.orsId)).toEqual(['001', '005', '006', '007'])
+    expect(view.sites.map((s) => s.orsId)).toEqual([
+      '001',
+      '005',
+      '009',
+      '006',
+      '007'
+    ])
     expect(view.sites[1].lockedFields).toEqual([
       'country',
       'coordinates',
