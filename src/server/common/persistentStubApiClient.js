@@ -64,7 +64,10 @@ const accreditationChangesDeps = {
       isExporter: raw.wasteProcessingType === 'exporter',
       materialType:
         raw.material.charAt(0).toUpperCase() + raw.material.slice(1),
-      year: Number.parseInt(raw.yearlyMetrics.year, 10)
+      year: Number.parseInt(raw.yearlyMetrics.year, 10),
+      // RA-739: as the backend's view, whose Manage ORS links carry it.
+      registrationReference:
+        raw.registrationReference ?? raw.wasteRegistrationNumber ?? null
     }
   },
   initiateUpload(orgId, appId, body) {

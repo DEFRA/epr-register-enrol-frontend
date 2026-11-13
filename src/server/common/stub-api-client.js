@@ -1104,14 +1104,17 @@ function mergeBpItems(existing, incoming) {
 }
 
 // RA-697: the organisationId query names the organisation, which the stub's
-// statuses already carry.
+// statuses already carry. RA-739: found by registration number.
 const REGISTRATION_STATUS_RE =
-  /^\/api\/v1\/registrations\/([^/?]+)\/status(?:\?.*)?$/
+  /^\/api\/v1\/registrations\/by-number\/([^/?]+)\/status(?:\?.*)?$/
 
 // Rejects like the real API client does for a 404, so callers see the same
 // "no record" error with or without the stub.
-function stubRegistrationStatus(registrationId) {
-  const registration = manageStubRegistrationStatuses()[registrationId]
+function stubRegistrationStatus(registrationNumber) {
+  const [registrationId, registration] =
+    Object.entries(manageStubRegistrationStatuses()).find(
+      ([, status]) => status.registrationNumber === registrationNumber
+    ) ?? []
   if (!registration) {
     return Promise.reject(
       Object.assign(new Error('API request failed: 404 Not Found'), {

@@ -8,6 +8,9 @@ import {
   NO_CHANGE_REQUESTS_ORG,
   NO_OVERSEAS_SITES_ORG,
   REGISTRATION_ONLY_ORG,
+  createdRegistrationNumber,
+  exporterRegistrationNumber,
+  reprocessorRegistrationNumber,
   seededApplicationId
 } from './constants/test-orgs.js'
 
@@ -26,14 +29,6 @@ import {
 // (management-be's ApplicationReferenceGenerator): AP, 2-digit year, agency
 // code, 6-digit org id, last 3 characters of the postcode, first 2 letters of
 // the material.
-function exporterRegistrationNumber(year, orgId = MANAGE_EXPORTER_ORG.orgId) {
-  return `R${yearSuffix(year)}EX0${orgId}0001PL`
-}
-
-function reprocessorRegistrationNumber(year) {
-  return `R${yearSuffix(year)}ER0500180002GR`
-}
-
 function approvedApplication(year, overrides) {
   return {
     applicationStatus: 'Approved',
@@ -509,8 +504,10 @@ export function manageStubRegistrationStatuses() {
       NO_OVERSEAS_SITES_ORG.orgName,
       exporterRegistrationNumber(year, NO_OVERSEAS_SITES_ORG.orgId)
     ),
+    // RA-739: numbered, unlike a real Created registration, so its /manage URL
+    // reaches the not-Approved error path.
     [MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID]: {
-      registrationNumber: null,
+      registrationNumber: createdRegistrationNumber(year),
       status: 'Created',
       organisationName: MANAGE_EXPORTER_ORG.orgName,
       materialType: 'Wood',

@@ -4,15 +4,16 @@ import { apiClient } from '../api-client.js'
 
 export const MANAGE_ORG_ID = 'org-123'
 export const MANAGE_REGISTRATION_ID = 'REG001'
+export const MANAGE_REGISTRATION_NUMBER = 'R27EX0500180001PL'
 export const MANAGE_MATERIAL = 'Plastic'
 export const MANAGE_CURRENT_YEAR = 2027
-export const MANAGE_URL = `/manage/${MANAGE_ORG_ID}/${MANAGE_REGISTRATION_ID}/${MANAGE_MATERIAL}`
+export const MANAGE_URL = `/manage/${MANAGE_ORG_ID}/${MANAGE_REGISTRATION_NUMBER}/${MANAGE_MATERIAL}`
 // The Re/Ex material page, from REEX_FRONTEND_BASE_URL in vitest.config.js.
 export const MANAGE_REEX_URL = `https://reex.example.test/organisations/${MANAGE_ORG_ID}/registrations/${MANAGE_REGISTRATION_ID}`
 
 export const approvedRegistration = {
   registrationId: MANAGE_REGISTRATION_ID,
-  registrationNumber: 'R27EX0500180001PL',
+  registrationNumber: MANAGE_REGISTRATION_NUMBER,
   status: 'Approved'
 }
 

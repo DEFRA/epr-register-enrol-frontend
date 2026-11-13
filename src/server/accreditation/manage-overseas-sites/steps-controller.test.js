@@ -27,6 +27,7 @@ const SITE = `/accreditation/manage-overseas-sites/${APP}/add/900183`
 const view = {
   organisationId: '50018',
   registrationId: 'aaa000000000000000050018',
+  registrationReference: 'R26EX0500180001PL',
   materialType: 'Plastic',
   sites: [
     {
@@ -386,7 +387,7 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
       headers: { Cookie: cookie }
     })
     expect(headers.location).toBe(
-      '/manage/50018/aaa000000000000000050018/Plastic/overseas-sites'
+      '/manage/50018/R26EX0500180001PL/Plastic/overseas-sites'
     )
     expect(post).not.toHaveBeenCalled()
   })
@@ -408,7 +409,7 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     })
     const { headers } = await server.inject(`${SITE}/location`)
     expect(headers.location).toBe(
-      '/manage/50018/aaa000000000000000050018/Plastic/overseas-sites'
+      '/manage/50018/R26EX0500180001PL/Plastic/overseas-sites'
     )
   })
 

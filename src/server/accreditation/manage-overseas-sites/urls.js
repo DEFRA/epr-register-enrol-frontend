@@ -10,14 +10,23 @@ function journeyUrl(applicationId) {
 
 /**
  * RA-425's Manage overseas reprocessing sites page for the accreditation in
- * the backend's change view, optionally on its Registered tab.
+ * the backend's change view, optionally on its Registered tab. RA-739: the
+ * view's registrationReference is the registration number the page's URL
+ * carries.
  */
 export function manageSitesUrl(
   view,
   currentLocale,
   { registered = false } = {}
 ) {
-  const url = overseasSitesUrl(view, currentLocale)
+  const url = overseasSitesUrl(
+    {
+      organisationId: view.organisationId,
+      registrationNumber: view.registrationReference,
+      materialType: view.materialType
+    },
+    currentLocale
+  )
   return registered ? `${url}#registered` : url
 }
 

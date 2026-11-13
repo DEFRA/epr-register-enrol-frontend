@@ -6,14 +6,24 @@ import {
   MANAGE_EXPORTER_ORG_REPROCESSOR,
   NO_CHANGE_REQUESTS_ORG,
   NO_OVERSEAS_SITES_ORG,
-  REGISTRATION_ONLY_ORG
+  REGISTRATION_ONLY_ORG,
+  exporterRegistrationNumber,
+  reprocessorRegistrationNumber
 } from '../common/constants/test-orgs.js'
+import { currentYear } from '../common/helpers/currentYear.js'
 import { manageUrl } from '../manage/helpers/manage-urls.js'
 
-function manageLink({ orgId, orgName, registrationId, material }) {
+function manageLink(
+  { orgId, orgName, material },
+  registrationNumber = exporterRegistrationNumber(currentYear(), orgId)
+) {
   const materialType = material.charAt(0).toUpperCase() + material.slice(1)
   return {
-    href: manageUrl({ organisationId: orgId, registrationId, materialType }),
+    href: manageUrl({
+      organisationId: orgId,
+      registrationNumber,
+      materialType
+    }),
     organisationName: orgName,
     materialType
   }
@@ -22,7 +32,10 @@ function manageLink({ orgId, orgName, registrationId, material }) {
 function manageLinks() {
   return {
     // RA-697: the stub API and the backend's dev seed both have it.
-    reprocessor: manageLink(MANAGE_EXPORTER_ORG_REPROCESSOR),
+    reprocessor: manageLink(
+      MANAGE_EXPORTER_ORG_REPROCESSOR,
+      reprocessorRegistrationNumber(currentYear())
+    ),
     exporter: manageLink(MANAGE_EXPORTER_ORG),
     // RA-492: the in-year add-ORS journey's own exporter.
     inYearChange: manageLink(IN_YEAR_CHANGE_ORG),

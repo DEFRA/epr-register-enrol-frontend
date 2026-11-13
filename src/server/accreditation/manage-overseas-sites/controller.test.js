@@ -16,7 +16,7 @@ const APP = 'a26000000000000000050018'
 const BASE = `/accreditation/manage-overseas-sites/${APP}`
 // RA-425's Manage overseas reprocessing sites page for makeView()'s
 // accreditation, where the journey starts and returns.
-const MANAGE = '/manage/50018/aaa000000000000000050018/Plastic/overseas-sites'
+const MANAGE = '/manage/50018/R26EX0500180001PL/Plastic/overseas-sites'
 
 function siteEntry(overrides = {}) {
   return {
@@ -95,6 +95,7 @@ function makeView({ sites, active, requests } = {}) {
     organisationId: '50018',
     applicationId: APP,
     registrationId: 'aaa000000000000000050018',
+    registrationReference: 'R26EX0500180001PL',
     materialType: 'Plastic',
     year: 2026,
     sites: sites ?? [

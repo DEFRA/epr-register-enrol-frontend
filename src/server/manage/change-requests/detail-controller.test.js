@@ -4,6 +4,7 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
 import {
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
+  MANAGE_REGISTRATION_NUMBER as REGISTRATION_NUMBER,
   MANAGE_MATERIAL as MATERIAL,
   MANAGE_CURRENT_YEAR as CURRENT_YEAR,
   MANAGE_URL,
@@ -272,7 +273,7 @@ describe('#manageChangeRequestDetailController', () => {
       const getSpy = mockManageGets([currentApp])
 
       const { statusCode } = await get(
-        `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}/change-requests/${ITEM.granted}`
+        `/manage/not-my-org/${REGISTRATION_NUMBER}/${MATERIAL}/change-requests/${ITEM.granted}`
       )
 
       expect(statusCode).toBe(statusCodes.forbidden)
