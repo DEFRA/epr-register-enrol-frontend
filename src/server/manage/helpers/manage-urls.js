@@ -1,8 +1,7 @@
 import { localePrefix } from '../../common/helpers/localePrefix.js'
 
-// The manage registration and accreditation page, which Re/Ex links to.
-// RA-739: by registration number, not ReEx's registration id, so Re/Ex must
-// link with the number.
+// The manage registration and accreditation page, which Re/Ex links to (see
+// MANAGE_PATH in manage/index.js).
 export function manageUrl(
   { organisationId, registrationNumber, materialType },
   currentLocale

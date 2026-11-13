@@ -50,8 +50,6 @@ export function manageCaption(context, t) {
   })
 }
 
-// RA-739: registrationNumber is the URL's; registrationId, ReEx's, is for the
-// backend lookups and Re/Ex's own links.
 const registrationFields = (registration) => ({
   registrationId: registration.registrationId,
   registrationNumber: registration.registrationNumber,

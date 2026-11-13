@@ -92,8 +92,6 @@ export function reprocessorRegistrationNumber(year) {
   return `R${yearSuffix(year)}ER0500180002GR`
 }
 
-// Stub only: the Created registration's number, and one the stub has no
-// registration for.
 export function createdRegistrationNumber(year) {
   return `R${yearSuffix(year)}ER0500180003WO`
 }
