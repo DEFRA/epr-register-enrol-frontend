@@ -411,6 +411,7 @@ A Hapi pre-handler ([src/server/common/helpers/upload/provide-upload-status.js](
 ```
 
 - If `uploadStatus` is not `"ready"`, the status page is rendered with a `<meta http-equiv="refresh" content="2">` tag so the browser polls automatically every 2 seconds.
+- If the backend answers **404** (it has no record of the upload: it expired, or it never started there), polling stops. The pre-handler logs the failure at error level and renders the shared upload-not-found page ([src/server/errors/upload-not-found.njk](src/server/errors/upload-not-found.njk)) with HTTP 404. The page has no refresh tag, and links back to the journey's upload page so the operator can upload the file again. Any other failure of the status call is logged the same way and answered with a 502.
 - If `uploadStatus` is `"ready"` and `fileInput.hasError` is `true` (virus detected), an error flash is set and the user is redirected back to the upload form.
 - If `uploadStatus` is `"ready"` and `fileInput.fileStatus` is not `"complete"` or `"rejected"` (unexpected state), an error flash is set and the user is redirected back to the upload form.
 - If `uploadStatus` is `"ready"` and `fileInput.fileStatus` is `"complete"`, the file metadata is saved to the backend API.

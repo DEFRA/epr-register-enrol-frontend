@@ -18,31 +18,29 @@ describe('#persistentStubApiClient CDP upload status', () => {
     const endpoint =
       '/api/v1/accreditation-applications/org1/app1/files/stub-upload-123/status'
 
-    await persistentStubApiClient.get(endpoint)
+    await persistentStubApiClient.get(endpoint).catch(() => {})
 
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
-  test('returns pending when the stub has no record of the upload yet', async () => {
-    const result = await persistentStubApiClient.get(
-      '/api/v1/accreditation-applications/org1/app1/files/never-completed/status'
-    )
-
-    expect(result).toEqual({
-      uploadStatus: 'pending',
-      processingStatus: 'preprocessing'
-    })
+  test('rejects with a 404 when the stub has no record of the upload', async () => {
+    await expect(
+      persistentStubApiClient.get(
+        '/api/v1/accreditation-applications/org1/app1/files/never-initiated/status'
+      )
+    ).rejects.toMatchObject({ status: 404 })
   })
 
-  // Regression guard for the bug this fixes: the real backend has no record of a
-  // stub-generated fileUploadId and returns 200 "pending" for any id it doesn't
-  // recognise, rather than an error — which previously masked a completed stub
-  // upload behind a false "pending" that a poll loop never recovers from.
+  // The real backend has no record of a stub-generated fileUploadId, so the
+  // stub must answer for it, or a completed stub upload would never be ready.
   test('reflects a completed stub upload as ready/validated once stubCompleteUpload has run', async () => {
-    const endpoint =
-      '/api/v1/accreditation-applications/org1/app1/files/stub-upload-999/status'
+    const { fileUploadId, statusUrl } = await persistentStubApiClient.post(
+      '/api/v1/accreditation-applications/org1/app1/sampling-plan/files/initiate',
+      {}
+    )
+    const endpoint = new URL(statusUrl).pathname
 
-    stubCompleteUpload('stub-upload-999', {
+    stubCompleteUpload(fileUploadId, {
       filename: 'sampling-plan.pdf',
       contentType: 'application/pdf'
     })
@@ -59,7 +57,7 @@ describe('#persistentStubApiClient CDP upload status', () => {
       '/api/v1/accreditation-applications/org1/app1/files/abc/status'
     const stubGetSpy = vi.spyOn(stubApiClient, 'get')
 
-    await persistentStubApiClient.get(endpoint)
+    await persistentStubApiClient.get(endpoint).catch(() => {})
 
     expect(stubGetSpy).toHaveBeenCalledWith(endpoint)
     stubGetSpy.mockRestore()

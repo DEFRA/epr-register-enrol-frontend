@@ -10,6 +10,7 @@ import {
 } from './amend-controller.js'
 import { requireOperator } from '../../common/helpers/auth/auth-scopes.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
+import { uploadBesEvidenceUrl } from '../../common/helpers/accreditationUrls.js'
 
 const uploadOptions = {
   ...requireOperator,
@@ -23,7 +24,12 @@ const uploadOptions = {
 
 const statusOptions = {
   ...requireOperator,
-  pre: [provideUploadStatusFromSession(BES_EVIDENCE_UPLOAD_SESSION_KEY)]
+  pre: [
+    provideUploadStatusFromSession(
+      BES_EVIDENCE_UPLOAD_SESSION_KEY,
+      ({ applicationId, siteId }) => uploadBesEvidenceUrl(applicationId, siteId)
+    )
+  ]
 }
 
 export const uploadBesEvidence = {

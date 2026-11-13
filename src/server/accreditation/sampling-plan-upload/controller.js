@@ -115,7 +115,7 @@ function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
 }
 
-function samplingPlanUrl(applicationId) {
+export function samplingPlanUrl(applicationId) {
   return `/accreditation/sampling-plan/${applicationId}`
 }
 
