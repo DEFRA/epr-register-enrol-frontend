@@ -928,8 +928,8 @@
     },
     "manageRegistrationAccreditation": {
       "heading": "Manage registration and accreditation",
-      "applicationStatusLabel": "Application status:",
-      "registrationStatusLabel": "Status:",
+      "accreditationStatusLabel": "Accreditation status:",
+      "registrationStatusLabel": "Registration status:",
       "accreditationNumberLabel": "Accreditation number:",
       "registrationNumberLabel": "Registration number:",
       "expiryDateLabel": "Expiry date:",

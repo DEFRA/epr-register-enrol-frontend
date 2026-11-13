@@ -3,6 +3,9 @@ import { vi } from 'vitest'
 import { config } from '../../config/config.js'
 import { createServer } from '../server.js'
 import { statusCodes } from '../common/constants/status-codes.js'
+import { currentYear, yearSuffix } from '../common/helpers/currentYear.js'
+
+const YY = yearSuffix(currentYear())
 
 describe('#operatorController', () => {
   let server
@@ -51,12 +54,9 @@ describe('#operatorController', () => {
   })
 
   describe('RA-425 manage page links', () => {
-    const DELTA_GREEN_MANAGE =
-      'href="/manage/50003/aaa000000000000000050003/Plastic"'
-    const REPROCESSOR_MANAGE =
-      'href="/manage/50018/bbb000000000000000050018/Glass"'
-    const EXPORTER_MANAGE =
-      'href="/manage/50018/aaa000000000000000050018/Plastic"'
+    const DELTA_GREEN_MANAGE = 'href="/manage/50003/'
+    const REPROCESSOR_MANAGE = `href="/manage/50018/R${YY}ER0500180002GR/Glass"`
+    const EXPORTER_MANAGE = `href="/manage/50018/R${YY}EX0500180001PL/Plastic"`
 
     function setConfig({ inYearChangesEnabled, stubEnabled }) {
       const realGet = config.get.bind(config)
@@ -120,13 +120,13 @@ describe('#operatorController', () => {
         // RA-492: the in-year add-ORS journey's own exporter.
         expect(result).toMatch(
           linkWithTestId(
-            'href="/manage/50019/aaa000000000000000050019/Plastic"',
+            `href="/manage/50019/R${YY}EX0500190001PL/Plastic"`,
             'manage-in-year-change-link'
           )
         )
         expect(result).toMatch(
           linkWithTestId(
-            'href="/manage/50020/aaa000000000000000050020/Plastic"',
+            `href="/manage/50020/R${YY}EX0500200001PL/Plastic"`,
             'manage-no-change-requests-link'
           )
         )
@@ -146,7 +146,7 @@ describe('#operatorController', () => {
 
         expect(result).toMatch(
           linkWithTestId(
-            'href="/manage/50021/aaa000000000000000050021/Plastic"',
+            `href="/manage/50021/R${YY}EX0500210001PL/Plastic"`,
             'manage-registration-only-link'
           )
         )
@@ -166,7 +166,7 @@ describe('#operatorController', () => {
 
         expect(result).toMatch(
           linkWithTestId(
-            'href="/manage/50022/aaa000000000000000050022/Plastic"',
+            `href="/manage/50022/R${YY}EX0500220001PL/Plastic"`,
             'manage-no-overseas-sites-link'
           )
         )

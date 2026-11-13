@@ -8,6 +8,9 @@ import {
   NO_CHANGE_REQUESTS_ORG,
   NO_OVERSEAS_SITES_ORG,
   REGISTRATION_ONLY_ORG,
+  createdRegistrationNumber,
+  exporterRegistrationNumber,
+  reprocessorRegistrationNumber,
   seededApplicationId
 } from './constants/test-orgs.js'
 
@@ -26,14 +29,6 @@ import {
 // (management-be's ApplicationReferenceGenerator): AP, 2-digit year, agency
 // code, 6-digit org id, last 3 characters of the postcode, first 2 letters of
 // the material.
-function exporterRegistrationNumber(year, orgId = MANAGE_EXPORTER_ORG.orgId) {
-  return `R${yearSuffix(year)}EX0${orgId}0001PL`
-}
-
-function reprocessorRegistrationNumber(year) {
-  return `R${yearSuffix(year)}ER0500180002GR`
-}
-
 function approvedApplication(year, overrides) {
   return {
     applicationStatus: 'Approved',
@@ -118,6 +113,8 @@ const NO_CHANGE_REQUESTS_SITE_IDS = {
 const IN_YEAR_CHANGE_SITE_IDS = {
   HAMBURG: 901901,
   LYON: 901910,
+  ROTTERDAM: 901914,
+  ANTWERP_FOR_ROTTERDAM: 901915,
   DELHI: 901911,
   IZMIR: 901912
 }
@@ -278,7 +275,8 @@ function inYearChangeOrs(siteId, orsId, siteName, country, extra) {
   )
 }
 
-// RA-492: one accredited ORS and three registered-only ones, each missing a
+// RA-492: one accredited ORS and four registered-only ones: two complete
+// (RA-739: Lyon, then Rotterdam with an interim site), and two each missing a
 // different set of the fields the in-year add journey asks for.
 function inYearChangeSites(year) {
   return [
@@ -308,6 +306,25 @@ function inYearChangeSites(year) {
         coordinates: '45.7640, 4.8357',
         operationCodes: ['R3'],
         conditionsOfExport: true
+      }
+    ),
+    inYearChangeOrs(
+      IN_YEAR_CHANGE_SITE_IDS.ROTTERDAM,
+      '009',
+      'Rotterdam Recycling BV',
+      'Netherlands',
+      {
+        isEu: true,
+        isOecd: true,
+        coordinates: '51.9244, 4.4777',
+        operationCodes: ['R3'],
+        conditionsOfExport: true,
+        interimSites: [
+          antwerpInterimSite(
+            IN_YEAR_CHANGE_SITE_IDS.ANTWERP_FOR_ROTTERDAM,
+            '001'
+          )
+        ]
       }
     ),
     inYearChangeOrs(
@@ -487,8 +504,10 @@ export function manageStubRegistrationStatuses() {
       NO_OVERSEAS_SITES_ORG.orgName,
       exporterRegistrationNumber(year, NO_OVERSEAS_SITES_ORG.orgId)
     ),
+    // RA-739: numbered, unlike a real Created registration, so its /manage URL
+    // reaches the not-Approved error path.
     [MANAGE_EXPORTER_ORG_CREATED_REGISTRATION_ID]: {
-      registrationNumber: null,
+      registrationNumber: createdRegistrationNumber(year),
       status: 'Created',
       organisationName: MANAGE_EXPORTER_ORG.orgName,
       materialType: 'Wood',

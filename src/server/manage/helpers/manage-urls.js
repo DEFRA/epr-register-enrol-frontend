@@ -1,11 +1,12 @@
 import { localePrefix } from '../../common/helpers/localePrefix.js'
 
-// The manage registration and accreditation page, which Re/Ex links to.
+// The manage registration and accreditation page, which Re/Ex links to (see
+// MANAGE_PATH in manage/index.js).
 export function manageUrl(
-  { organisationId, registrationId, materialType },
+  { organisationId, registrationNumber, materialType },
   currentLocale
 ) {
-  return `${localePrefix(currentLocale)}/manage/${organisationId}/${registrationId}/${materialType}`
+  return `${localePrefix(currentLocale)}/manage/${organisationId}/${encodeURIComponent(registrationNumber)}/${materialType}`
 }
 
 export function overseasSitesUrl(params, currentLocale) {

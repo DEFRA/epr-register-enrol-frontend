@@ -62,8 +62,10 @@ function requestDetails({ request, item, year, t, currentLocale }) {
       ? (request.submittedBy?.fullName ?? notSubmitted)
       : notSubmitted,
     ...validity(item, year, notApplicable, currentLocale),
-    // Null while In progress, and whenever Case Management submission is off.
-    reference: request.caseManagementReference ?? notApplicable
+    // RA-739: the item's own, as Case Management makes each site its own
+    // application. Null while In progress, and whenever Case Management
+    // submission is off.
+    reference: item.caseManagementReference ?? notApplicable
   }
 }
 

@@ -49,6 +49,19 @@ const CHARGE_PER_SITE_PENCE = ORS_FEE * PENCE_PER_POUND
 
 const state = new Map()
 
+// RA-739: Case Management's references, counted per year in process as the
+// backend's StubCaseWorkingApiAdapter does, restarting at 1 with the app.
+const IYC_SEQ_DIGITS = 5
+const SUB_SEQ_DIGITS = 4
+const referenceSequences = new Map()
+
+function nextReference(prefix, year, digits) {
+  const key = `${prefix}-${year}`
+  const next = (referenceSequences.get(key) ?? 0) + 1
+  referenceSequences.set(key, next)
+  return `${key}-${String(next).padStart(digits, '0')}`
+}
+
 function stubError(status, message, response) {
   return Object.assign(new Error(message), { status, response })
 }
@@ -71,6 +84,7 @@ function newItem(changeType, item = {}) {
     status: ITEM_STATUSES.inProgress,
     validFrom: null,
     withdrawnAt: null,
+    caseManagementReference: null,
     ...item
   }
 }
@@ -99,7 +113,7 @@ function storeRequest(store, request) {
     updatedAt: request.createdAt ?? now,
     submittedAt: null,
     submittedBy: null,
-    caseManagementReference: null,
+    submissionReference: null,
     ...request,
     sites: (request.sites ?? []).map(newSiteItem),
     tonnageBandUpgrade: request.tonnageBandUpgrade
@@ -152,7 +166,8 @@ function requestSiteView(site, entry) {
     changeType: entry.changeType,
     status: entry.status,
     validFrom: entry.validFrom,
-    withdrawnAt: entry.withdrawnAt
+    withdrawnAt: entry.withdrawnAt,
+    caseManagementReference: entry.caseManagementReference ?? null
   }
 }
 
@@ -170,7 +185,6 @@ function requestView(request, siteList) {
     updatedAt: request.updatedAt,
     submittedAt: request.submittedAt ?? null,
     submittedBy: request.submittedBy ?? null,
-    caseManagementReference: request.caseManagementReference ?? null,
     sites,
     isComplete: sites.length > 0 && sites.every((site) => site.isComplete),
     charge: {
@@ -366,6 +380,15 @@ function submit(ctx) {
     email: ctx.body.email ?? null
   }
   store.draft.paymentReference = ctx.body.paymentReference ?? null
+  const { year } = ctx.application
+  store.draft.submissionReference = nextReference('SUB', year, SUB_SEQ_DIGITS)
+  for (const site of store.draft.sites) {
+    site.caseManagementReference = nextReference(
+      'IYC-ORS',
+      year,
+      IYC_SEQ_DIGITS
+    )
+  }
   store.submitted.push(store.draft)
   store.draft = null
   return ctx.view().requests[0]

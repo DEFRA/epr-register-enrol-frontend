@@ -1,26 +1,28 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { apiClient } from '../api-client.js'
-import { getRegistrationStatus } from './registrationApiService.js'
+import { getRegistrationStatusByNumber } from './registrationApiService.js'
 
 vi.mock('../api-client.js', () => ({
   apiClient: { get: vi.fn() }
 }))
 
-const REG_ID = 'aaa000000000000000050018'
+const REG_NUMBER = 'R27EX0500180001PL'
 
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
-describe('getRegistrationStatus', () => {
+describe('getRegistrationStatusByNumber', () => {
   test('asks for the registration on behalf of the organisation', async () => {
     apiClient.get.mockResolvedValue({ status: 'Approved' })
 
-    await expect(getRegistrationStatus(REG_ID, 50018)).resolves.toEqual({
+    await expect(
+      getRegistrationStatusByNumber(REG_NUMBER, 50018)
+    ).resolves.toEqual({
       status: 'Approved'
     })
     expect(apiClient.get).toHaveBeenCalledWith(
-      `/api/v1/registrations/${REG_ID}/status?organisationId=50018`
+      `/api/v1/registrations/by-number/${REG_NUMBER}/status?organisationId=50018`
     )
   })
 
@@ -28,7 +30,7 @@ describe('getRegistrationStatus', () => {
     'rejects without calling the backend for organisationId %j',
     async (organisationId) => {
       await expect(
-        getRegistrationStatus(REG_ID, organisationId)
+        getRegistrationStatusByNumber(REG_NUMBER, organisationId)
       ).rejects.toThrow('organisationId is required')
       expect(apiClient.get).not.toHaveBeenCalled()
     }
