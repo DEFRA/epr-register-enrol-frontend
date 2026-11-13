@@ -413,6 +413,16 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(MANAGE)
     })
 
+    test('Cancel of a site fixed by an earlier send to the regulator returns to the list', async () => {
+      mockGet(makeView())
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(409))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/cancel`
+      })
+      expect(headers.location).toBe(MANAGE)
+    })
+
     test('a backend failure on Cancel is not hidden', async () => {
       vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(500))
       const { statusCode } = await server.inject({
