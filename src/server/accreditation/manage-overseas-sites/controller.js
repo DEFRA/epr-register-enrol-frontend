@@ -359,6 +359,44 @@ export const declarationGetController = {
   }
 }
 
+// Extracted from declarationPostController's handler (SonarCloud cyclomatic
+// complexity): the in-year submit-failure mapping.
+function submitErrorResponse(request, h, t, err, { fullName, jobTitle }) {
+  const { applicationId } = request.params
+  // 404: no draft to submit. 409: a concurrent submit (another tab) won,
+  // so this one has nothing left to submit either.
+  if (NOTHING_TO_DO.has(err.status)) {
+    return redirectToManageSites(request, h)
+  }
+  if (err.status === statusCodes.unprocessableEntity) {
+    return h.redirect(requestsUrl(applicationId))
+  }
+  logStructuredError(
+    request.server.logger,
+    err,
+    { applicationId },
+    'Error submitting in-year accreditation change request'
+  )
+  // RA-000: 503 means nothing reached the regulator (no organisation
+  // number or nation for the payment reference, or the regulator's service
+  // was unavailable), so the operator can try again later.
+  const unavailable = err.status === statusCodes.serviceUnavailable
+  return h
+    .view(VIEWS.declaration, {
+      ...declarationViewData(t, applicationId, fullName, jobTitle),
+      error: t(
+        unavailable
+          ? 'pages.submitDeclaration.validation.submitUnavailable'
+          : 'pages.submitDeclaration.validation.submitError'
+      )
+    })
+    .code(
+      unavailable
+        ? statusCodes.serviceUnavailable
+        : statusCodes.internalServerError
+    )
+}
+
 export const declarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -389,38 +427,7 @@ export const declarationPostController = {
         { fullName, jobTitle, email }
       )
     } catch (err) {
-      // 404: no draft to submit. 409: a concurrent submit (another tab) won,
-      // so this one has nothing left to submit either.
-      if (NOTHING_TO_DO.has(err.status)) {
-        return redirectToManageSites(request, h)
-      }
-      if (err.status === statusCodes.unprocessableEntity) {
-        return h.redirect(requestsUrl(applicationId))
-      }
-      logStructuredError(
-        request.server.logger,
-        err,
-        { applicationId },
-        'Error submitting in-year accreditation change request'
-      )
-      // RA-000: 503 means nothing reached the regulator (no organisation
-      // number or nation for the payment reference, or the regulator's service
-      // was unavailable), so the operator can try again later.
-      const unavailable = err.status === statusCodes.serviceUnavailable
-      return h
-        .view(VIEWS.declaration, {
-          ...declarationViewData(t, applicationId, fullName, jobTitle),
-          error: t(
-            unavailable
-              ? 'pages.submitDeclaration.validation.submitUnavailable'
-              : 'pages.submitDeclaration.validation.submitError'
-          )
-        })
-        .code(
-          unavailable
-            ? statusCodes.serviceUnavailable
-            : statusCodes.internalServerError
-        )
+      return submitErrorResponse(request, h, t, err, { fullName, jobTitle })
     }
     return h.redirect(paymentUrl(applicationId))
   }
