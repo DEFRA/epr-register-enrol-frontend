@@ -93,6 +93,24 @@ const sameMaterial = (a, b) =>
   typeof b === 'string' &&
   a.toLowerCase() === b.toLowerCase()
 
+// The backend names the organisation only once ReEx confirms it holds the
+// registration: with no accreditation, nothing else ties the URL's
+// registration to its organisation.
+const registrationMatchesUrl = (registration, materialType) =>
+  Boolean(registration.organisationName) &&
+  sameMaterial(registration.materialType, materialType)
+
+async function assertCanAccessOrganisation(request, organisationId) {
+  const canAccess = await operatorCanAccessOrganisation(
+    getUser(request),
+    organisationId,
+    { logger: request.logger }
+  )
+  if (!canAccess) {
+    throw Boom.forbidden('You do not have access to this organisation')
+  }
+}
+
 // Throws a 404 for a reprocessor when the page is for exporters only.
 function assertExporterIfRequired(exportersOnly, operator) {
   if (exportersOnly && !operator.isExporter) {
@@ -128,14 +146,7 @@ export async function loadManagePage(
   const { t, currentLocale } = getLocaleAndTranslator(request)
   const { organisationId, registrationNumber, materialType } = request.params
 
-  const canAccess = await operatorCanAccessOrganisation(
-    getUser(request),
-    organisationId,
-    { logger: request.logger }
-  )
-  if (!canAccess) {
-    throw Boom.forbidden('You do not have access to this organisation')
-  }
+  await assertCanAccessOrganisation(request, organisationId)
 
   const registration = await fetchRegistration({
     organisationId,
@@ -173,13 +184,9 @@ export async function loadManagePage(
     }
   }
 
-  // The backend names the organisation only once ReEx confirms it holds the
-  // registration: with no accreditation, nothing else ties the URL's
-  // registration to its organisation.
   if (
     !allowRegistrationOnly ||
-    !registration.organisationName ||
-    !sameMaterial(registration.materialType, materialType)
+    !registrationMatchesUrl(registration, materialType)
   ) {
     return { response: serviceProblem(request, h, t) }
   }
