@@ -748,7 +748,8 @@ describe('#manageOverseasSites (RA-492)', () => {
           jobTitle: 'Director',
           // The reference the payment page shows (England exporter, org 50018).
           paymentReference: 'PR/PK/EXP/50018'
-        })
+        }),
+        { timeout: 20000 }
       )
       expect(headers.location).toBe(`${BASE}/payment`)
     })

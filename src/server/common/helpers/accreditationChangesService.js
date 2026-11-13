@@ -85,10 +85,13 @@ export const accreditationChangesService = {
     )
   },
 
+  // RA-739: the backend waits up to 15s for Case Management, so this must
+  // wait longer or the backend sees a cancelled request instead of a timeout.
   submit(organisationId, applicationId, body) {
     return apiClient.post(
       `${current(organisationId, applicationId)}/submit`,
-      body
+      body,
+      { timeout: 20000 }
     )
   }
 }
