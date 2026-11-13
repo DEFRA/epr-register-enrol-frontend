@@ -322,7 +322,8 @@
         "fullNameRequired": "Rhowch eich enw llawn",
         "jobTitleRequired": "Rhowch eich teitl swydd",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
-        "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again."
+        "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again.",
+        "submitUnavailable": "[Welsh] We could not submit your application. Try again later."
       }
     },
     "submitConfirmation": {

@@ -4,7 +4,7 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import {
   resolveNation,
   buildPaymentDetails,
-  buildPaymentReference,
+  requirePaymentReference,
   resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
@@ -13,6 +13,7 @@ import {
   reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -34,33 +35,37 @@ export const submitConfirmationGetController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
-    let materialDisplay = ''
-    let paymentDetails = null
-    let paymentReference = accreditationReference
-    let returnHomeUrl = reExBackLinkFromSession(request.yar)
-    let regulatorContact = null
+    let application
+    let paymentReference
+    let paymentDetails
     try {
-      const application = await accreditationApiService.getApplication(
+      application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
-      materialDisplay = materialDisplayName(application, t)
-      const nation = resolveNation(application)
-      paymentDetails = buildPaymentDetails(application, t, nation)
-      paymentReference = buildPaymentReference(
-        nation,
-        application.organisationNumber,
-        application.isExporter
+      paymentReference = requirePaymentReference(application)
+      paymentDetails = buildPaymentDetails(
+        application,
+        t,
+        resolveNation(application)
       )
-      regulatorContact = resolveRegulatorContact(nation)
-      returnHomeUrl = landingUrl(application)
     } catch (err) {
+      // RA-000: never show the application reference, or any other value, in
+      // place of a payment reference the backend could not give us.
       logStructuredError(
         request.server.logger,
         err,
-        { applicationId },
-        `Error fetching payment details ${applicationId}`
+        { applicationId, organisationId },
+        `Error loading payment details ${applicationId}`
       )
+      return h
+        .view('accreditation/submit-confirmation/index', {
+          pageTitle: t('pages.submitConfirmation.title'),
+          error: t('pages.viewPaymentDetails.loadError'),
+          returnHome: t('pages.submitConfirmation.returnHome'),
+          returnHomeUrl: reExBackLinkFromSession(request.yar)
+        })
+        .code(statusCodes.internalServerError)
     }
 
     return h.view('accreditation/submit-confirmation/index', {
@@ -71,12 +76,11 @@ export const submitConfirmationGetController = {
       paymentText: t('pages.submitConfirmation.paymentText'),
       returnHome: t('pages.submitConfirmation.returnHome'),
       accreditationReference,
-      materialDisplay,
-      applicationId,
+      materialDisplay: materialDisplayName(application, t),
       paymentDetails,
       paymentReference,
-      regulatorContact,
-      returnHomeUrl
+      regulatorContact: resolveRegulatorContact(resolveNation(application)),
+      returnHomeUrl: landingUrl(application)
     })
   }
 }

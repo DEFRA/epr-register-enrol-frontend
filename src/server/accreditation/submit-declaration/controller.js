@@ -1,13 +1,10 @@
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
-import {
-  resolveNation,
-  buildPaymentReference
-} from '../../common/helpers/paymentDetails.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { redirectIfStatusNot } from '../../common/helpers/accreditationUrls.js'
 import { redirectIfSitesIncomplete } from '../../common/helpers/incompleteSitesGate.js'
+import { statusCodes } from '../../common/constants/status-codes.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -108,8 +105,8 @@ export const submitDeclarationGetController = {
 }
 
 // Extracted from submitDeclarationPostController's handler (SonarCloud cyclomatic
-// complexity): the submit-failure branching (transient 5xx vs a re-rendered validation-style
-// 4xx) doesn't need to live inline in the handler.
+// complexity): the submit-failure branching (503, other 5xx, or a re-rendered
+// validation-style 4xx) doesn't need to live inline in the handler.
 function handleSubmitError(
   h,
   t,
@@ -124,6 +121,15 @@ function handleSubmitError(
     },
     'Error submitting application'
   )
+  // RA-000: the backend answers 503 when it can't build the payment
+  // reference (no organisation number or nation), having sent nothing to the
+  // regulator. Keep what the operator entered so they can try again.
+  if (err.status === statusCodes.serviceUnavailable) {
+    return renderPage(h, {
+      ...buildViewData(t, applicationId, fullName, jobTitle),
+      error: t('pages.submitDeclaration.validation.submitUnavailable')
+    }).code(statusCodes.serviceUnavailable)
+  }
   if (!err.status || err.status >= 500) {
     return h
       .view('errors/service-problem', {
@@ -198,18 +204,6 @@ export const submitDeclarationPostController = {
       }).code(400)
     }
 
-    // RA-503: the operator's real, nation-specific bank payment reference - the exact string
-    // shown to them on the submit-confirmation and view-payment-details pages
-    // (buildPaymentReference, same helper both pages already use). Sent with the submission so
-    // the regulator's duly-making page shows the same reference the operator was told to quote,
-    // instead of a different one management-be generates independently.
-    const nation = resolveNation(application)
-    const paymentReference = buildPaymentReference(
-      nation,
-      application.organisationNumber,
-      application.isExporter
-    )
-
     let response
     try {
       response = await accreditationApiService.submitApplication(
@@ -218,8 +212,7 @@ export const submitDeclarationPostController = {
         {
           fullName: fullName.trim(),
           jobTitle: jobTitle.trim(),
-          email: request.auth.credentials.email,
-          paymentReference
+          email: request.auth.credentials.email
         },
         // Submission can take substantially longer than the default global
         // API timeout while OJ BE hops through to CM BE, so use a longer

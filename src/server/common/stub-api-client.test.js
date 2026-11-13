@@ -617,6 +617,31 @@ describe('stubApiClient.get — application list and single accreditation', () =
   })
 })
 
+// RA-000: mirrors the OJ backend's payment reference formats, so stub mode
+// shows a reference the way the real backend returns one.
+describe('stubPaymentReference', () => {
+  test.each([
+    ['England', 'reprocessor', 'PR/PK/REP/50001'],
+    ['England', 'exporter', 'PR/PK/EXP/50001'],
+    ['NorthernIreland', 'exporter', 'NI/PR/REEX/50001'],
+    ['Wales', 'reprocessor', 'PREX/50001'],
+    ['Scotland', 'exporter', 'E800 81581/50001']
+  ])('%s %s gives %s', async (nation, wasteProcessingType, expected) => {
+    const { stubPaymentReference } = await freshStubModule()
+    expect(
+      stubPaymentReference({ orgId: 50001, nation, wasteProcessingType })
+    ).toBe(expected)
+  })
+
+  test('the single-application GET carries the payment reference', async () => {
+    const stub = await freshStub()
+    const result = await stub.get(
+      '/api/v1/accreditation-applications/50001/app001'
+    )
+    expect(result.paymentReference).toBe('PR/PK/REP/50001')
+  })
+})
+
 describe('stubApiClient.post — CDP upload initiate', () => {
   test('returns a fileUploadId, uploadUrl and statusUrl', async () => {
     const stub = await freshStub()

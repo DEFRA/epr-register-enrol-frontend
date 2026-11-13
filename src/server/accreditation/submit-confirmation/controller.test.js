@@ -20,6 +20,7 @@ function makeApplication(overrides = {}) {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
     orgId: 500500,
+    paymentReference: 'PR/PK/REP/500500',
     registrationId: 'reg-conf-001',
     materialType: 'Steel',
     year: 2025,
@@ -204,7 +205,7 @@ describe('#submitConfirmationController', () => {
         headers: { Cookie: cookie }
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
+      expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain(
         'href="https://reex.example" class="govuk-link" data-testid="return-home-link"'
       )
@@ -236,55 +237,30 @@ describe('#submitConfirmationController', () => {
     })
 
     describe('regulator payment reference (RA-426)', () => {
-      test.each([
-        ['England', false, 'PR/PK/REP/500500'],
-        ['England', true, 'PR/PK/EXP/500500'],
-        ['NorthernIreland', false, 'NI/PR/REEX/500500'],
-        ['NorthernIreland', true, 'NI/PR/REEX/500500'],
-        ['Wales', false, 'PREX/500500'],
-        ['Wales', true, 'PREX/500500'],
-        ['Scotland', false, 'E800 81581/500500'],
-        ['Scotland', true, 'E800 81581/500500']
-      ])(
-        'renders %s reference for nation %s isExporter %s',
-        async (nation, isExporter, expectedReference) => {
-          vi.spyOn(apiClient, 'get').mockResolvedValue(
-            makeApplication({ nation, isExporter })
-          )
-          const cookie = await getSessionCookieWithReference()
-
-          const { result } = await server.inject({
-            method: 'GET',
-            url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-            headers: { Cookie: cookie }
-          })
-
-          expect(result).toContain('data-testid="bank-payment-reference"')
-          expect(result).toContain(expectedReference)
-        }
-      )
-
-      // RA-503: organisationId is ReEx's internal ObjectId on a real submission - orgId is the
-      // operator/regulator-safe numeric organisation number that must actually be quoted on a
-      // bank transfer. Confirms the payment reference is built from orgId, not organisationId,
-      // when the backend sends both.
-      test('builds the bank payment reference from orgId, not the raw ObjectId-shaped organisationId', async () => {
+      // RA-000: the backend builds the reference from the stored organisation
+      // number and nation; the page shows that value and never rebuilds it.
+      test('shows the payment reference from the application, not one rebuilt from orgId and nation', async () => {
         vi.spyOn(apiClient, 'get').mockResolvedValue(
           makeApplication({
             orgId: 500500,
-            organisationId: '6a74a6a12b7c39b0cc15ca55'
+            nation: 'England',
+            isExporter: false,
+            paymentReference: 'PREX/123456'
           })
         )
         const cookie = await getSessionCookieWithReference()
 
-        const { result } = await server.inject({
+        const { statusCode, result } = await server.inject({
           method: 'GET',
           url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
           headers: { Cookie: cookie }
         })
 
-        expect(result).toContain('data-testid="bank-payment-reference"')
-        expect(result).toContain('PR/PK/REP/500500')
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain(
+          'data-testid="bank-payment-reference">PREX/123456</dd>'
+        )
+        expect(result).not.toContain('PR/PK/REP/500500')
       })
 
       test('application-reference is unaffected by the payment reference change', async () => {
@@ -356,22 +332,6 @@ describe('#submitConfirmationController', () => {
           expect(contactIndex).toBeLessThan(returnHomeIndex)
         }
       )
-
-      test('omits the section when payment details cannot be calculated', async () => {
-        vi.spyOn(apiClient, 'get').mockResolvedValue(
-          makeApplication({ prns: { plannedTonnageBand: null } })
-        )
-        const cookie = await getSessionCookieWithReference()
-
-        const { statusCode, result } = await server.inject({
-          method: 'GET',
-          url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-          headers: { Cookie: cookie }
-        })
-
-        expect(statusCode).toBe(statusCodes.ok)
-        expect(result).not.toContain('data-testid="contact-regulator-heading"')
-      })
     })
 
     // RA-526: nation resolution no longer touches postcode - application.nation
@@ -414,23 +374,6 @@ describe('#submitConfirmationController', () => {
       expect(result).not.toContain('govuk-details')
     })
 
-    test('omits the payment details section gracefully when payment cannot be calculated', async () => {
-      vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({ prns: { plannedTonnageBand: null } })
-      )
-      const cookie = await getSessionCookieWithReference()
-
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { Cookie: cookie }
-      })
-
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="confirmation-panel"')
-      expect(result).not.toContain('data-testid="amount-due"')
-    })
-
     test('can be revisited — session is not cleared on render', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
       const cookie = await getSessionCookieWithReference()
@@ -459,20 +402,74 @@ describe('#submitConfirmationController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    test('renders confirmation without materialDisplay when API fallback fails', async () => {
-      // materialType is not in session (declare POST does not set it), and API call fails
-      vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API error'))
-      const cookie = await getSessionCookieWithReference()
+    // RA-000 (AC5): no payment reference means an error, never the
+    // application reference or a blank in its place, and an Error log.
+    describe('when the payment reference cannot be loaded', () => {
+      async function getConfirmation() {
+        const cookie = await getSessionCookieWithReference('RA-000000001')
+        return server.inject({
+          method: 'GET',
+          url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
+          headers: { Cookie: cookie }
+        })
+      }
 
-      const { statusCode, result } = await server.inject({
-        method: 'GET',
-        url: `/accreditation/submit-confirmation/${APPLICATION_ID}`,
-        headers: { Cookie: cookie }
+      function expectErrorPage({ statusCode, result }) {
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(result).toContain('data-testid="load-error"')
+        expect(result).toContain(
+          'Sorry, we were unable to load the payment details. Please try again.'
+        )
+        expect(result).not.toContain('data-testid="bank-payment-reference"')
+        expect(result).not.toContain('data-testid="confirmation-panel"')
+        expect(result).not.toContain('RA-000000001')
+      }
+
+      test.each([
+        ['null', { paymentReference: null }],
+        ['missing', { paymentReference: undefined }]
+      ])(
+        'shows an error and logs at Error when the reference is %s',
+        async (_label, overrides) => {
+          vi.spyOn(apiClient, 'get').mockResolvedValue(
+            makeApplication(overrides)
+          )
+          const errorLog = vi.spyOn(server.logger, 'error')
+
+          expectErrorPage(await getConfirmation())
+          expect(errorLog).toHaveBeenCalledWith(
+            expect.objectContaining({
+              applicationId: APPLICATION_ID,
+              err: expect.objectContaining({
+                message: 'Application has no payment reference'
+              })
+            }),
+            `Error loading payment details ${APPLICATION_ID}`
+          )
+        }
+      )
+
+      test('shows an error and logs at Error when the application fetch fails', async () => {
+        vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API error'))
+        const errorLog = vi.spyOn(server.logger, 'error')
+
+        expectErrorPage(await getConfirmation())
+        expect(errorLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            applicationId: APPLICATION_ID,
+            err: expect.objectContaining({ message: 'API error' })
+          }),
+          `Error loading payment details ${APPLICATION_ID}`
+        )
       })
 
-      expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="confirmation-panel"')
-      expect(result).toContain('RA-000000001')
+      test('shows an error when the payment amount cannot be calculated', async () => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(
+          makeApplication({ prns: { plannedTonnageBand: null } })
+        )
+
+        expectErrorPage(await getConfirmation())
+      })
     })
 
     test('returns 200 in Welsh locale', async () => {

@@ -323,7 +323,8 @@
         "fullNameRequired": "Enter your full name",
         "jobTitleRequired": "Enter your job title",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
-        "submitError": "Sorry, there was a problem submitting your application. Please try again."
+        "submitError": "Sorry, there was a problem submitting your application. Please try again.",
+        "submitUnavailable": "We could not submit your application. Try again later."
       }
     },
     "submitConfirmation": {

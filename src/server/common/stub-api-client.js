@@ -9,6 +9,7 @@ import {
   DETAIL_FIELD_TO_CATEGORY
 } from './constants/businessPlanCategories.js'
 import { allInterimSites } from './helpers/interimSites.js'
+import { resolveNation } from './helpers/paymentDetails.js'
 import {
   DELTA_GREEN_ORG_ID,
   DELTA_GREEN_REGISTRATION_ID
@@ -1051,8 +1052,36 @@ function findAccreditation(orgId, itemId) {
   return doc.accreditations.find((a) => a.id === itemId) ?? null
 }
 
+// RA-000: mirrors the OJ backend, which builds the bank payment reference
+// from the application's organisation number and nation and returns it on
+// GET. Stub applications carry no nation, so this uses the same
+// resolveNation the payment pages use for the bank details, keeping the
+// stub's reference and bank details for the same nation.
+const PAYMENT_REFERENCE_PREFIX_BY_NATION = {
+  [NATIONS.NORTHERN_IRELAND]: 'NI/PR/REEX/',
+  [NATIONS.WALES]: 'PREX/',
+  [NATIONS.SCOTLAND]: 'E800 81581/'
+}
+
+export function stubPaymentReference(application) {
+  const prefix =
+    PAYMENT_REFERENCE_PREFIX_BY_NATION[resolveNation(application)] ??
+    (application.wasteProcessingType === 'exporter'
+      ? 'PR/PK/EXP/'
+      : 'PR/PK/REP/')
+  return `${prefix}${application.orgId}`
+}
+
 function withOrgData(doc, item) {
-  return { orgId: doc.orgId, companyName: doc.companyDetails?.name, ...item }
+  const application = {
+    orgId: doc.orgId,
+    companyName: doc.companyDetails?.name,
+    ...item
+  }
+  return {
+    ...application,
+    paymentReference: stubPaymentReference(application)
+  }
 }
 
 function parseEndpoint(endpoint) {
