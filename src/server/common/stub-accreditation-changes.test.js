@@ -193,6 +193,19 @@ describe('stubAccreditationChanges items (RA-697)', () => {
     expect(submitted.submittedAt).toEqual(expect.any(String))
   })
 
+  test("RA-739: submit gives each site its own Case Management reference for the accreditation's year", async () => {
+    d = deps(application({ year: 2027 }))
+    await completeSite2()
+
+    const submitted = await call('post', '/requests/current/submit', {
+      fullName: 'Jane'
+    })
+
+    expect(submitted.sites[0].caseManagementReference).toMatch(
+      /^IYC-ORS-2027-\d{5}$/
+    )
+  })
+
   const seedSubmitted = (requestId, sites, extra = {}) =>
     seedStubChangeRequest(`50018/app-${appSeq}`, {
       requestId,

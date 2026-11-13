@@ -195,7 +195,7 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(`${BASE}/add/900182`)
     })
 
-    test('AC09: a site the backend refuses (accredited or submitted) goes back to the list', async () => {
+    test('AC09: a site the backend refuses (accredited, submitted, or the draft sites fixed by an earlier send) goes back to the list', async () => {
       mockGet(makeView())
       vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(409))
       const { headers } = await server.inject({
