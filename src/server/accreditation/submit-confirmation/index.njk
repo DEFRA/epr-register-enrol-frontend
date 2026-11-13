@@ -4,15 +4,12 @@
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
 
-      {% if error %}
-      <p class="govuk-body govuk-error-message" data-testid="load-error">{{ error }}</p>
-      {% else %}
       <div class="govuk-panel govuk-panel--confirmation" data-testid="confirmation-panel">
         <h1 class="govuk-panel__title" data-testid="panel-heading">
           {{ panelHeading }}
         </h1>
         <div class="govuk-panel__body" data-testid="panel-body">
-          {{ panelBodyPrefix }} {{ materialDisplay }}:
+          {% if materialDisplay %}{{ panelBodyPrefix }} {{ materialDisplay }}{% else %}{{ applicationReferenceLabel }}{% endif %}:
           <br>
           <strong data-testid="application-reference">{{ accreditationReference }}</strong>
         </div>
@@ -31,11 +28,15 @@
         </div>
       </div>
 
+      {% if paymentDetailsError %}
+      <p class="govuk-body govuk-error-message" data-testid="load-error">{{ paymentDetailsError }}</p>
+      {% else %}
       {{ paymentDetailsSummary({
         paymentDetails: paymentDetails,
         paymentReference: paymentReference,
         t: t
       }) }}
+      {% endif %}
 
       {% if regulatorContact %}
       <h3 class="govuk-heading-s" data-testid="contact-regulator-heading">
@@ -46,7 +47,6 @@
         <br/>
         Email: {{ regulatorContact.email }}
       </p>
-      {% endif %}
       {% endif %}
 
       <p class="govuk-body">

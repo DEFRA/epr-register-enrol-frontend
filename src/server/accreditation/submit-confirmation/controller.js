@@ -13,7 +13,6 @@ import {
   reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
-import { statusCodes } from '../../common/constants/status-codes.js'
 
 function taskListUrl(applicationId) {
   return `/accreditation/task-list/${applicationId}`
@@ -35,52 +34,53 @@ export const submitConfirmationGetController = {
       return h.redirect(taskListUrl(applicationId))
     }
 
+    const viewData = {
+      pageTitle: t('pages.submitConfirmation.title'),
+      panelHeading: t('pages.submitConfirmation.panelHeading'),
+      panelBodyPrefix: t('pages.submitConfirmation.panelBodyPrefix'),
+      applicationReferenceLabel: t(
+        'pages.submitConfirmation.applicationReferenceLabel'
+      ),
+      paymentText: t('pages.submitConfirmation.paymentText'),
+      returnHome: t('pages.submitConfirmation.returnHome'),
+      accreditationReference,
+      returnHomeUrl: reExBackLinkFromSession(request.yar)
+    }
+
     let application
-    let paymentReference
-    let paymentDetails
     try {
       application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
-      paymentReference = requirePaymentReference(application)
-      paymentDetails = buildPaymentDetails(
-        application,
-        t,
-        resolveNation(application)
-      )
+      const nation = resolveNation(application)
+      return h.view('accreditation/submit-confirmation/index', {
+        ...viewData,
+        materialDisplay: materialDisplayName(application, t),
+        paymentReference: requirePaymentReference(application),
+        paymentDetails: buildPaymentDetails(application, t, nation),
+        regulatorContact: resolveRegulatorContact(nation),
+        returnHomeUrl: landingUrl(application)
+      })
     } catch (err) {
-      // RA-000: never show the application reference, or any other value, in
-      // place of a payment reference the backend could not give us.
       logStructuredError(
         request.server.logger,
         err,
         { applicationId, organisationId },
         `Error loading payment details ${applicationId}`
       )
-      return h
-        .view('accreditation/submit-confirmation/index', {
-          pageTitle: t('pages.submitConfirmation.title'),
-          error: t('pages.viewPaymentDetails.loadError'),
-          returnHome: t('pages.submitConfirmation.returnHome'),
-          returnHomeUrl: reExBackLinkFromSession(request.yar)
-        })
-        .code(statusCodes.internalServerError)
+      // RA-000: the submission itself succeeded, so the page still confirms
+      // it (200, so nothing reads it as a failed submit to retry). Only the
+      // payment details are replaced by an error; no other reference is
+      // shown in place of the payment reference.
+      return h.view('accreditation/submit-confirmation/index', {
+        ...viewData,
+        ...(application && {
+          materialDisplay: materialDisplayName(application, t),
+          returnHomeUrl: landingUrl(application)
+        }),
+        paymentDetailsError: t('pages.viewPaymentDetails.loadError')
+      })
     }
-
-    return h.view('accreditation/submit-confirmation/index', {
-      pageTitle: t('pages.submitConfirmation.title'),
-      panelHeading: t('pages.submitConfirmation.panelHeading'),
-      panelBodyPrefix: t('pages.submitConfirmation.panelBodyPrefix'),
-      panelBodySuffix: t('pages.submitConfirmation.panelBodySuffix'),
-      paymentText: t('pages.submitConfirmation.paymentText'),
-      returnHome: t('pages.submitConfirmation.returnHome'),
-      accreditationReference,
-      materialDisplay: materialDisplayName(application, t),
-      paymentDetails,
-      paymentReference,
-      regulatorContact: resolveRegulatorContact(resolveNation(application)),
-      returnHomeUrl: landingUrl(application)
-    })
   }
 }

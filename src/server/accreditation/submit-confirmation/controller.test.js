@@ -205,7 +205,7 @@ describe('#submitConfirmationController', () => {
         headers: { Cookie: cookie }
       })
 
-      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
         'href="https://reex.example" class="govuk-link" data-testid="return-home-link"'
       )
@@ -402,8 +402,9 @@ describe('#submitConfirmationController', () => {
       expect(statusCode).toBe(statusCodes.ok)
     })
 
-    // RA-000 (AC5): no payment reference means an error, never the
-    // application reference or a blank in its place, and an Error log.
+    // RA-000 (AC5): the submission succeeded, so the page still confirms it
+    // with the application reference. Only the payment details become an
+    // error: no payment reference, nothing in its place, and an Error log.
     describe('when the payment reference cannot be loaded', () => {
       async function getConfirmation() {
         const cookie = await getSessionCookieWithReference('RA-000000001')
@@ -414,29 +415,35 @@ describe('#submitConfirmationController', () => {
         })
       }
 
-      function expectErrorPage({ statusCode, result }) {
-        expect(statusCode).toBe(statusCodes.internalServerError)
-        expect(result).toContain('data-testid="load-error"')
+      function expectSubmittedWithPaymentError({ statusCode, result }) {
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="confirmation-panel"')
         expect(result).toContain(
-          'Sorry, we were unable to load the payment details. Please try again.'
+          '<strong data-testid="application-reference">RA-000000001</strong>'
+        )
+        expect(result).toContain(
+          '<p class="govuk-body govuk-error-message" data-testid="load-error">Sorry, we were unable to load the payment details. Please try again.</p>'
         )
         expect(result).not.toContain('data-testid="bank-payment-reference"')
-        expect(result).not.toContain('data-testid="confirmation-panel"')
-        expect(result).not.toContain('RA-000000001')
+        expect(result).not.toContain('data-testid="bank-details-list"')
+        expect(result.match(/RA-000000001/g)).toHaveLength(1)
       }
 
       test.each([
         ['null', { paymentReference: null }],
         ['missing', { paymentReference: undefined }]
       ])(
-        'shows an error and logs at Error when the reference is %s',
+        'confirms the submission, shows a payment details error and logs at Error when the reference is %s',
         async (_label, overrides) => {
           vi.spyOn(apiClient, 'get').mockResolvedValue(
             makeApplication(overrides)
           )
           const errorLog = vi.spyOn(server.logger, 'error')
 
-          expectErrorPage(await getConfirmation())
+          const response = await getConfirmation()
+
+          expectSubmittedWithPaymentError(response)
+          expect(response.result).toMatch(/Application reference for\s+Steel:/)
           expect(errorLog).toHaveBeenCalledWith(
             expect.objectContaining({
               applicationId: APPLICATION_ID,
@@ -446,14 +453,21 @@ describe('#submitConfirmationController', () => {
             }),
             `Error loading payment details ${APPLICATION_ID}`
           )
+          expect(errorLog.mock.calls[0][0]).toHaveProperty('organisationId')
         }
       )
 
-      test('shows an error and logs at Error when the application fetch fails', async () => {
+      test('confirms the submission without a material name, shows a payment details error and logs at Error when the application fetch fails', async () => {
         vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API error'))
         const errorLog = vi.spyOn(server.logger, 'error')
 
-        expectErrorPage(await getConfirmation())
+        const response = await getConfirmation()
+
+        expectSubmittedWithPaymentError(response)
+        expect(response.result).toMatch(
+          /data-testid="panel-body">\s*Application reference:/
+        )
+        expect(response.result).not.toContain('Application reference for')
         expect(errorLog).toHaveBeenCalledWith(
           expect.objectContaining({
             applicationId: APPLICATION_ID,
@@ -461,14 +475,32 @@ describe('#submitConfirmationController', () => {
           }),
           `Error loading payment details ${APPLICATION_ID}`
         )
+        expect(errorLog.mock.calls[0][0]).toHaveProperty('organisationId')
       })
 
-      test('shows an error when the payment amount cannot be calculated', async () => {
+      test('confirms the submission and shows a payment details error when the amount cannot be calculated', async () => {
         vi.spyOn(apiClient, 'get').mockResolvedValue(
           makeApplication({ prns: { plannedTonnageBand: null } })
         )
 
-        expectErrorPage(await getConfirmation())
+        expectSubmittedWithPaymentError(await getConfirmation())
+      })
+
+      test('shows the error in Welsh on the Welsh route', async () => {
+        vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API error'))
+        const cookie = await getSessionCookieWithReference('RA-000000001')
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/cy/accreditation/submit-confirmation/${APPLICATION_ID}`,
+          headers: { Cookie: cookie }
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('[Welsh] Application reference:')
+        expect(result).toContain(
+          '[Welsh] Sorry, we were unable to load the payment details. Please try again.'
+        )
       })
     })
 
