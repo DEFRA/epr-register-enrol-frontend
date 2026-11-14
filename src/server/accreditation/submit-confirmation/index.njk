@@ -9,7 +9,7 @@
           {{ panelHeading }}
         </h1>
         <div class="govuk-panel__body" data-testid="panel-body">
-          {{ panelBodyPrefix }} {{ materialDisplay }}:
+          {% if materialDisplay %}{{ panelBodyPrefix }} {{ materialDisplay }}{% else %}{{ applicationReferenceLabel }}{% endif %}:
           <br>
           <strong data-testid="application-reference">{{ accreditationReference }}</strong>
         </div>
@@ -28,11 +28,15 @@
         </div>
       </div>
 
+      {% if paymentDetailsError %}
+      <p class="govuk-body govuk-error-message" data-testid="load-error">{{ paymentDetailsError }}</p>
+      {% else %}
       {{ paymentDetailsSummary({
         paymentDetails: paymentDetails,
         paymentReference: paymentReference,
         t: t
       }) }}
+      {% endif %}
 
       {% if regulatorContact %}
       <h3 class="govuk-heading-s" data-testid="contact-regulator-heading">

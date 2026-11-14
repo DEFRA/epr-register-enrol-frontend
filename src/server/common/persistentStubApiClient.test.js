@@ -229,6 +229,24 @@ describe('#persistentStubApiClient get — single application', () => {
     expect(result.fromBackend).toBe(true)
   })
 
+  // RA-000: the real backend builds the payment reference on every GET; the
+  // backend stub store only holds the raw document.
+  test('adds the payment reference the real backend would build', async () => {
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        orgId: 50001,
+        id: 'app001',
+        nation: 'Wales',
+        paymentReference: null
+      })
+    })
+
+    const result = await persistentStubApiClient.get(SINGLE_URL)
+
+    expect(result.paymentReference).toBe('PREX/50001')
+  })
+
   test('falls back to the stub when the backend responds not-ok', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({ ok: false })
 
