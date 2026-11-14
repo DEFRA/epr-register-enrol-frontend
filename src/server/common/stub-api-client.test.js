@@ -633,6 +633,17 @@ describe('stubPaymentReference', () => {
     ).toBe(expected)
   })
 
+  test.each([
+    ['null', null],
+    ['missing', undefined]
+  ])(
+    'is null, as the backend returns, when the organisation number is %s',
+    async (_label, orgId) => {
+      const { stubPaymentReference } = await freshStubModule()
+      expect(stubPaymentReference({ orgId, nation: 'England' })).toBeNull()
+    }
+  )
+
   test('the single-application GET carries the payment reference', async () => {
     const stub = await freshStub()
     const result = await stub.get(

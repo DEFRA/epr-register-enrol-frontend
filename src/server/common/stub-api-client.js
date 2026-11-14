@@ -1052,11 +1052,12 @@ function findAccreditation(orgId, itemId) {
   return doc.accreditations.find((a) => a.id === itemId) ?? null
 }
 
-// RA-000: mirrors the OJ backend, which builds the bank payment reference
-// from the application's organisation number and nation and returns it on
-// GET. Stub applications carry no nation, so this uses the same
-// resolveNation the payment pages use for the bank details, keeping the
-// stub's reference and bank details for the same nation.
+// RA-000: stands in for the OJ backend, which builds the bank payment
+// reference on GET from the application's organisation number and nation,
+// and returns null without an organisation number. It departs from the
+// backend on nation: stub data carries none, so this uses the same
+// resolveNation (England when absent) the payment pages use for the bank
+// details, keeping the stub's reference and bank details for one nation.
 const PAYMENT_REFERENCE_PREFIX_BY_NATION = {
   [NATIONS.NORTHERN_IRELAND]: 'NI/PR/REEX/',
   [NATIONS.WALES]: 'PREX/',
@@ -1064,6 +1065,9 @@ const PAYMENT_REFERENCE_PREFIX_BY_NATION = {
 }
 
 export function stubPaymentReference(application) {
+  if (application.orgId === null || application.orgId === undefined) {
+    return null
+  }
   const prefix =
     PAYMENT_REFERENCE_PREFIX_BY_NATION[resolveNation(application)] ??
     (application.wasteProcessingType === 'exporter'

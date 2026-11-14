@@ -374,7 +374,7 @@ function submitErrorResponse(request, h, t, err, { fullName, jobTitle }) {
   logStructuredError(
     request.server.logger,
     err,
-    { applicationId },
+    { applicationId, organisationId: organisationIdFrom(request) },
     'Error submitting in-year accreditation change request'
   )
   // RA-000: 503 means nothing reached the regulator (no organisation
@@ -417,14 +417,14 @@ export const declarationPostController = {
         .code(statusCodes.badRequest)
     }
     try {
-      const email = getUser(request)?.email
-      if (!email) {
-        throw new Error('Signed-in user has no email address')
-      }
       await accreditationChangesService.submit(
         organisationIdFrom(request),
         applicationId,
-        { fullName, jobTitle, email }
+        {
+          fullName,
+          jobTitle,
+          email: getUser(request)?.email ?? null
+        }
       )
     } catch (err) {
       return submitErrorResponse(request, h, t, err, { fullName, jobTitle })

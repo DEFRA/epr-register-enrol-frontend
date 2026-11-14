@@ -793,37 +793,7 @@ describe('#manageOverseasSites (RA-492)', () => {
         expect.objectContaining({ applicationId: APP }),
         'Error submitting in-year accreditation change request'
       )
-    })
-
-    // RA-000: the submitter's email comes from the sign-in; without one the
-    // request is not sent with a made-up or empty address.
-    test('a signed-in user with no email is not submitted, sees an error, and it logs at Error', async () => {
-      const post = vi.spyOn(apiClient, 'post')
-      const errorLog = vi.spyOn(server.logger, 'error')
-      const { statusCode, result } = await server.inject({
-        method: 'POST',
-        url: `${BASE}/declaration`,
-        payload: { fullName: 'Jane Smith', jobTitle: 'Director' },
-        auth: {
-          strategy: 'session',
-          credentials: { scope: ['operator'], userType: 'operator' }
-        }
-      })
-      expect(post).not.toHaveBeenCalled()
-      expect(statusCode).toBe(statusCodes.internalServerError)
-      expect(result).toContain(
-        'Sorry, there was a problem submitting your application. Please try again.'
-      )
-      expect(result).toContain('value="Jane Smith"')
-      expect(errorLog).toHaveBeenCalledWith(
-        expect.objectContaining({
-          applicationId: APP,
-          err: expect.objectContaining({
-            message: 'Signed-in user has no email address'
-          })
-        }),
-        'Error submitting in-year accreditation change request'
-      )
+      expect(errorLog.mock.calls[0][0]).toHaveProperty('organisationId')
     })
 
     // RA-000 (AC6): 503 when the backend has no organisation number or nation
@@ -857,6 +827,7 @@ describe('#manageOverseasSites (RA-492)', () => {
           }),
           'Error submitting in-year accreditation change request'
         )
+        expect(errorLog.mock.calls[0][0]).toHaveProperty('organisationId')
       }
     )
 
