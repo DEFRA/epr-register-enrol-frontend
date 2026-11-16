@@ -61,6 +61,21 @@ npm run test:watch
 npm run dev       # Nodemon dev server on :3000
 ```
 
+## SonarCloud scan — before calling a PR done
+
+The SonarCloud quality gate is not a required check, so a PR can be green and mergeable while
+failing it. Once the PR is open:
+
+1. Run `scripts/sonar.sh > /tmp/sonar-frontend.log 2>&1; echo "exit=$?"`, then read only the
+   report: `sed -n '/^Quality gate:/,$p' /tmp/sonar-frontend.log`. It runs the full test suite
+   for coverage, so it can be your one full-suite run.
+2. `exit=0`: the gate passed. `exit=1`: fix every gate failure it lists, plus any MINOR issue in
+   code you wrote (INFO can stay); re-scan once, then push.
+3. `exit=2`: it could not run, and the message says why. **If the message is about the token,
+   stop and tell the human.** Never create, request, search for, print or copy a token, and
+   never use CI's secrets — only a person can set one up (README.md, "Running the SonarCloud
+   scan locally"). `scripts/sonar.sh --check-token` checks the setup without scanning.
+
 ## Architecture Overview
 
 Hapi 21 server with Nunjucks templating and GOV.UK Frontend. Bilingual (en/cy) via hapi-i18n.
