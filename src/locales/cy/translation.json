@@ -322,13 +322,15 @@
         "fullNameRequired": "Rhowch eich enw llawn",
         "jobTitleRequired": "Rhowch eich teitl swydd",
         "fetchError": "[Welsh] Sorry, there was a problem loading your application. Please try again.",
-        "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again."
+        "submitError": "[Welsh] Sorry, there was a problem submitting your application. Please try again.",
+        "submitUnavailable": "[Welsh] We could not submit your application. Try again later."
       }
     },
     "submitConfirmation": {
       "title": "[Welsh] Application submitted",
       "panelHeading": "[Welsh]  Now pay the application charge",
       "panelBodyPrefix": "[Welsh] Application reference for",
+      "applicationReferenceLabel": "[Welsh] Application reference",
       "caseReferenceLabel": "[Welsh] Your case reference is",
       "paymentText": "[Welsh] The regulator will only review your application after you\u0027ve paid.",
       "returnHome": "[Welsh] Return to home page"

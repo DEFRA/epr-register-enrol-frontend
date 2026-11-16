@@ -128,6 +128,7 @@ function mockGet(view, application = {}) {
     return {
       applicationId: APP,
       orgId: 50018,
+      paymentReference: 'PR/PK/EXP/50018',
       material: 'plastic',
       wasteProcessingType: 'exporter',
       applicationStatus: 'Approved',
@@ -730,15 +731,16 @@ describe('#manageOverseasSites (RA-492)', () => {
         url: `${BASE}/declaration`,
         payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
       })
+      // RA-000 (AC6): the backend builds the payment reference at submit.
       expect(post).toHaveBeenCalledWith(
         expect.stringMatching(/\/requests\/current\/submit$/),
-        expect.objectContaining({
+        {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
-          // The reference the payment page shows (England exporter, org 50018).
-          paymentReference: 'PR/PK/EXP/50018'
-        })
+          email: 'operator@test.example'
+        }
       )
+      expect(post.mock.calls[0][1]).not.toHaveProperty('paymentReference')
       expect(headers.location).toBe(`${BASE}/payment`)
     })
 
@@ -774,15 +776,60 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(`${BASE}/requests`)
     })
 
-    test('a failed submit keeps the operator on the declaration with an error', async () => {
-      vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(503))
-      const { statusCode } = await server.inject({
+    test('a failed submit keeps the operator on the declaration with an error, and logs at Error', async () => {
+      vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(500))
+      const errorLog = vi.spyOn(server.logger, 'error')
+      const { statusCode, result } = await server.inject({
         method: 'POST',
         url: `${BASE}/declaration`,
         payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
       })
       expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain(
+        'Sorry, there was a problem submitting your application. Please try again.'
+      )
+      expect(result).toContain('value="Jane Smith"')
+      expect(errorLog).toHaveBeenCalledWith(
+        expect.objectContaining({ applicationId: APP }),
+        'Error submitting in-year accreditation change request'
+      )
+      expect(errorLog.mock.calls[0][0]).toHaveProperty('organisationId')
     })
+
+    // RA-000 (AC6): 503 when the backend has no organisation number or nation
+    // for the payment reference; nothing reached the regulator.
+    test.each(['Organisation number unavailable', 'Nation unavailable'])(
+      'a 503 "%s" keeps the operator on the declaration with what they entered, and logs at Error',
+      async (title) => {
+        vi.spyOn(apiClient, 'post').mockRejectedValue(
+          apiError(503, JSON.stringify({ status: 503, title }))
+        )
+        const errorLog = vi.spyOn(server.logger, 'error')
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: `${BASE}/declaration`,
+          payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+        })
+        expect(statusCode).toBe(statusCodes.serviceUnavailable)
+        expect(result).toContain('data-testid="error-summary"')
+        expect(result).toContain(
+          'We could not submit your application. Try again later.'
+        )
+        expect(result).toContain('value="Jane Smith"')
+        expect(result).toContain('value="Director"')
+        expect(errorLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            applicationId: APP,
+            err: expect.objectContaining({
+              status: 503,
+              response: expect.stringContaining(title)
+            })
+          }),
+          'Error submitting in-year accreditation change request'
+        )
+        expect(errorLog.mock.calls[0][0]).toHaveProperty('organisationId')
+      }
+    )
 
     test('save and come back later returns to the manage page', async () => {
       mockGet(makeView())
@@ -837,6 +884,81 @@ describe('#manageOverseasSites (RA-492)', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toMatch(/data-testid="amount-due">\s*Amount due: £328.00/)
+    })
+
+    describe('the payment page payment reference (RA-000)', () => {
+      const submitted = {
+        requestId: 'req-1',
+        changeType: 'add-overseas-site',
+        status: 'Submitted',
+        submittedBy: { fullName: 'Jane Smith', email: 'jane@example.com' },
+        sites: [requestSite()],
+        charge: chargeOf(1)
+      }
+
+      test('shows the reference from the application, not one rebuilt from orgId and nation', async () => {
+        mockGet(makeView({ active: null, requests: [submitted] }), {
+          paymentReference: 'E800 81581/50018'
+        })
+        const { statusCode, result } = await server.inject(`${BASE}/payment`)
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain(
+          'data-testid="bank-payment-reference">E800 81581/50018</dd>'
+        )
+        expect(result).not.toContain('PR/PK/EXP/50018')
+      })
+
+      test.each([
+        ['null', { paymentReference: null }],
+        ['missing', { paymentReference: undefined }]
+      ])(
+        'shows an error and logs at Error when the reference is %s',
+        async (_label, application) => {
+          mockGet(
+            makeView({ active: null, requests: [submitted] }),
+            application
+          )
+          const errorLog = vi.spyOn(server.logger, 'error')
+          const { statusCode, result } = await server.inject(`${BASE}/payment`)
+
+          expect(statusCode).toBe(statusCodes.internalServerError)
+          expect(result).toContain('data-testid="load-error"')
+          expect(result).toContain(
+            'Sorry, we were unable to load the payment details. Please try again.'
+          )
+          expect(result).not.toContain('data-testid="bank-payment-reference"')
+          expect(errorLog).toHaveBeenCalledWith(
+            expect.objectContaining({
+              applicationId: APP,
+              err: expect.objectContaining({
+                message: 'Application has no payment reference'
+              })
+            }),
+            'Error loading in-year accreditation change payment details'
+          )
+        }
+      )
+
+      test('shows an error and logs at Error when the application fetch fails', async () => {
+        const view = makeView({ active: null, requests: [submitted] })
+        vi.spyOn(apiClient, 'get').mockImplementation(async (endpoint) => {
+          if (endpoint.startsWith('/api/v1/accreditation-changes/')) {
+            return view
+          }
+          throw apiError(500)
+        })
+        const errorLog = vi.spyOn(server.logger, 'error')
+        const { statusCode, result } = await server.inject(`${BASE}/payment`)
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(result).toContain('data-testid="load-error"')
+        expect(result).not.toContain('data-testid="bank-payment-reference"')
+        expect(errorLog).toHaveBeenCalledWith(
+          expect.objectContaining({ applicationId: APP }),
+          'Error loading in-year accreditation change payment details'
+        )
+      })
     })
 
     test('the payment page redirects when nothing has been submitted', async () => {

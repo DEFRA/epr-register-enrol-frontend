@@ -14,7 +14,7 @@ import { materialDisplayName } from '../../common/helpers/materialDisplayName.js
 import {
   PENCE_PER_POUND,
   buildInYearOrsPaymentDetails,
-  buildPaymentReference,
+  requirePaymentReference,
   resolveNation,
   resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
@@ -359,15 +359,42 @@ export const declarationGetController = {
   }
 }
 
-// RA-503: the bank payment reference the payment page shows. Sent with the
-// submission, as the application declaration sends it, so the regulator sees
-// the reference the operator was told to quote.
-function paymentReferenceFor(application) {
-  return buildPaymentReference(
-    resolveNation(application),
-    application.organisationNumber,
-    application.isExporter
+// Extracted from declarationPostController's handler (SonarCloud cyclomatic
+// complexity): the in-year submit-failure mapping.
+function submitErrorResponse(request, h, t, err, { fullName, jobTitle }) {
+  const { applicationId } = request.params
+  // 404: no draft to submit. 409: a concurrent submit (another tab) won,
+  // so this one has nothing left to submit either.
+  if (NOTHING_TO_DO.has(err.status)) {
+    return redirectToManageSites(request, h)
+  }
+  if (err.status === statusCodes.unprocessableEntity) {
+    return h.redirect(requestsUrl(applicationId))
+  }
+  logStructuredError(
+    request.server.logger,
+    err,
+    { applicationId, organisationId: organisationIdFrom(request) },
+    'Error submitting in-year accreditation change request'
   )
+  // RA-000: 503 means nothing reached the regulator (no organisation
+  // number or nation for the payment reference, or the regulator's service
+  // was unavailable), so the operator can try again later.
+  const unavailable = err.status === statusCodes.serviceUnavailable
+  return h
+    .view(VIEWS.declaration, {
+      ...declarationViewData(t, applicationId, fullName, jobTitle),
+      error: t(
+        unavailable
+          ? 'pages.submitDeclaration.validation.submitUnavailable'
+          : 'pages.submitDeclaration.validation.submitError'
+      )
+    })
+    .code(
+      unavailable
+        ? statusCodes.serviceUnavailable
+        : statusCodes.internalServerError
+    )
 }
 
 export const declarationPostController = {
@@ -390,38 +417,17 @@ export const declarationPostController = {
         .code(statusCodes.badRequest)
     }
     try {
-      const organisationId = organisationIdFrom(request)
-      const application = await accreditationApiService.getApplication(
-        organisationId,
-        applicationId
+      await accreditationChangesService.submit(
+        organisationIdFrom(request),
+        applicationId,
+        {
+          fullName,
+          jobTitle,
+          email: getUser(request)?.email ?? null
+        }
       )
-      await accreditationChangesService.submit(organisationId, applicationId, {
-        fullName,
-        jobTitle,
-        email: getUser(request)?.email ?? null,
-        paymentReference: paymentReferenceFor(application)
-      })
     } catch (err) {
-      // 404: no draft to submit. 409: a concurrent submit (another tab) won,
-      // so this one has nothing left to submit either.
-      if (NOTHING_TO_DO.has(err.status)) {
-        return redirectToManageSites(request, h)
-      }
-      if (err.status === statusCodes.unprocessableEntity) {
-        return h.redirect(requestsUrl(applicationId))
-      }
-      logStructuredError(
-        request.logger,
-        err,
-        { applicationId },
-        'Error submitting in-year accreditation change request'
-      )
-      return h
-        .view(VIEWS.declaration, {
-          ...declarationViewData(t, applicationId, fullName, jobTitle),
-          error: t('pages.submitDeclaration.validation.submitError')
-        })
-        .code(statusCodes.internalServerError)
+      return submitErrorResponse(request, h, t, err, { fullName, jobTitle })
     }
     return h.redirect(paymentUrl(applicationId))
   }
@@ -443,10 +449,34 @@ export const paymentGetController = {
     if (!submitted) {
       return redirectToManageSites(request, h, view)
     }
-    const application = await accreditationApiService.getApplication(
-      organisationId,
-      applicationId
-    )
+    const backLink = manageSitesUrl(view, currentLocale)
+    const backLinkText = manageSitesText(t, 'payment.backLink')
+    let application
+    let paymentReference
+    try {
+      application = await accreditationApiService.getApplication(
+        organisationId,
+        applicationId
+      )
+      paymentReference = requirePaymentReference(application)
+    } catch (err) {
+      // RA-000: no substitute for a payment reference the backend could not
+      // give us; the operator must quote the one the regulator received.
+      logStructuredError(
+        request.server.logger,
+        err,
+        { applicationId, organisationId },
+        'Error loading in-year accreditation change payment details'
+      )
+      return h
+        .view(VIEWS.payment, {
+          pageTitle: t('pages.viewPaymentDetails.title'),
+          backLink,
+          backLinkText,
+          error: t('pages.viewPaymentDetails.loadError')
+        })
+        .code(statusCodes.internalServerError)
+    }
     const nation = resolveNation(application)
     const paymentDetails = buildInYearOrsPaymentDetails(
       application,
@@ -456,12 +486,12 @@ export const paymentGetController = {
     )
     return h.view(VIEWS.payment, {
       pageTitle: t('pages.viewPaymentDetails.title'),
-      backLink: manageSitesUrl(view, currentLocale),
-      backLinkText: manageSitesText(t, 'payment.backLink'),
+      backLink,
+      backLinkText,
       materialDisplay: materialDisplayName(application, t),
       submitterName: submitted.submittedBy.fullName,
       submitterEmail: submitted.submittedBy.email ?? '',
-      paymentReference: paymentReferenceFor(application),
+      paymentReference,
       regulatorName: paymentDetails.companyName ?? paymentDetails.accountName,
       regulatorContact: resolveRegulatorContact(nation),
       paymentDetails

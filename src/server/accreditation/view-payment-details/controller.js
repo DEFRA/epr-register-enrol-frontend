@@ -4,7 +4,7 @@ import { materialDisplayName } from '../../common/helpers/materialDisplayName.js
 import {
   resolveNation,
   buildPaymentDetails,
-  buildPaymentReference,
+  requirePaymentReference,
   resolveRegulatorContact
 } from '../../common/helpers/paymentDetails.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
@@ -44,14 +44,16 @@ export const viewPaymentDetailsGetController = {
     const nation = resolveNation(application)
 
     let paymentDetails
+    let paymentReference
     try {
+      paymentReference = requirePaymentReference(application)
       paymentDetails = buildPaymentDetails(application, t, nation)
     } catch (err) {
       logStructuredError(
         request.server.logger,
         err,
-        { applicationId },
-        `Error calculating payment details ${applicationId}`
+        { applicationId, organisationId },
+        `Error loading payment details ${applicationId}`
       )
       return h
         .view('accreditation/view-payment-details/index', {
@@ -76,11 +78,7 @@ export const viewPaymentDetailsGetController = {
       materialDisplay,
       submitterName: submittedBy.name ?? '',
       submitterEmail: submittedBy.email ?? '',
-      paymentReference: buildPaymentReference(
-        nation,
-        application.organisationNumber,
-        application.isExporter
-      ),
+      paymentReference,
       regulatorName,
       regulatorContact: resolveRegulatorContact(nation),
       paymentDetails

@@ -129,10 +129,6 @@ function normalizeApplication(item) {
     // so it is kept here under its own name.
     accreditationNumber: item.accreditationReference ?? null,
     organisationId: item.organisationId,
-    // RA-503: item.orgId is the operator/regulator-safe numeric organisation
-    // number - distinct from organisationId (ReEx's internal ObjectId) and
-    // never safe to build URLs from. Used for the bank payment reference.
-    organisationNumber: item.orgId ?? null,
     organisationName: item.companyName ?? item.organisationName ?? '',
     materialType: item.material
       ? item.material.charAt(0).toUpperCase() + item.material.slice(1)

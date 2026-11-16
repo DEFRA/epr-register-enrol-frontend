@@ -358,10 +358,7 @@ describe('#submitDeclarationController', () => {
         {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
-          email: 'operator@test.example',
-          // RA-503: the operator's real bank payment reference, computed from the fetched
-          // application's organisationId/nation/isExporter (buildPaymentReference).
-          paymentReference: 'PR/PK/REP/500500'
+          email: 'operator@test.example'
         },
         { timeout: 20000 }
       )
@@ -388,23 +385,17 @@ describe('#submitDeclarationController', () => {
         {
           fullName: 'Jane Smith',
           jobTitle: 'Director',
-          email: 'operator@test.example',
-          paymentReference: 'PR/PK/REP/500500'
+          email: 'operator@test.example'
         },
         { timeout: 20000 }
       )
     })
 
-    // RA-503: organisationId is ReEx's internal ObjectId on a real submission - orgId is the
-    // operator/regulator-safe numeric organisation number that must actually be quoted on a
-    // bank transfer. Confirms the submitted paymentReference is built from orgId, not
-    // organisationId, when the backend sends both.
-    test('builds the submitted payment reference from orgId, not the raw ObjectId-shaped organisationId', async () => {
+    // RA-000 (AC3): the backend builds the payment reference at submit, so
+    // the frontend no longer sends one, whatever the application holds.
+    test('does not send a payment reference with the submission', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
-        makeApplication({
-          orgId: 500500,
-          organisationId: '6a74a6a12b7c39b0cc15ca55'
-        })
+        makeApplication({ paymentReference: 'PR/PK/REP/500500' })
       )
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({
         accreditationReference: 'RA-000000001',
@@ -421,10 +412,69 @@ describe('#submitDeclarationController', () => {
         }
       })
 
-      expect(postSpy).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({ paymentReference: 'PR/PK/REP/500500' }),
-        { timeout: 20000 }
+      expect(postSpy).toHaveBeenCalledTimes(1)
+      expect(postSpy.mock.calls[0][1]).not.toHaveProperty('paymentReference')
+    })
+
+    // RA-000 (AC2): the backend answers 503 when it has no organisation number
+    // or nation to build the payment reference, and sends nothing on.
+    test.each(['Organisation number unavailable', 'Nation unavailable'])(
+      'a 503 "%s" keeps the operator on the declaration with what they entered, and logs at Error',
+      async (title) => {
+        const err = Object.assign(new Error('API request failed: 503'), {
+          status: 503,
+          response: JSON.stringify({ status: 503, title })
+        })
+        vi.spyOn(apiClient, 'post').mockRejectedValue(err)
+        const errorLog = vi.spyOn(server.logger, 'error')
+
+        const { statusCode, result } = await server.inject({
+          method: 'POST',
+          url: `/accreditation/submit-declaration/${APPLICATION_ID}`,
+          payload: {
+            fullName: 'Jane Smith',
+            jobTitle: 'Director',
+            submitAction: 'submit'
+          }
+        })
+
+        expect(statusCode).toBe(statusCodes.serviceUnavailable)
+        expect(result).toContain('data-testid="error-summary"')
+        expect(result).toContain(
+          'We could not submit your application. Try again later.'
+        )
+        expect(result).toContain('data-testid="declaration-form"')
+        expect(result).toContain('value="Jane Smith"')
+        expect(result).toContain('value="Director"')
+        expect(result).not.toContain('data-testid="try-again-link"')
+        expect(errorLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            applicationId: APPLICATION_ID,
+            responseBody: expect.stringContaining(title)
+          }),
+          'Error submitting application'
+        )
+      }
+    )
+
+    test('a 503 is shown in Welsh on the Welsh route', async () => {
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        Object.assign(new Error('API request failed: 503'), { status: 503 })
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `/cy/accreditation/submit-declaration/${APPLICATION_ID}`,
+        payload: {
+          fullName: 'Jane Smith',
+          jobTitle: 'Director',
+          submitAction: 'submit'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(result).toContain(
+        '[Welsh] We could not submit your application. Try again later.'
       )
     })
 

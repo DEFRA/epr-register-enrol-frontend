@@ -1,5 +1,9 @@
 import { config } from '../../config/config.js'
-import { stubApiClient, stubOrgDocs } from './stub-api-client.js'
+import {
+  stubApiClient,
+  stubOrgDocs,
+  stubPaymentReference
+} from './stub-api-client.js'
 import { STUB_DEFRA_LINKS } from './stub-operator-orgs.js'
 import { stubAccreditationChanges } from './stub-accreditation-changes.js'
 import { manageStubRegistrationStatuses } from './stub-manage-accreditations.js'
@@ -159,7 +163,13 @@ const persistentStubClient = {
           }
         )
         if (res.ok) {
-          return res.json()
+          // The real backend builds the payment reference on every GET; the
+          // backend stub store only holds the raw document, so build it here.
+          const application = await res.json()
+          return {
+            ...application,
+            paymentReference: stubPaymentReference(application)
+          }
         }
       } catch (err) {
         console.warn(

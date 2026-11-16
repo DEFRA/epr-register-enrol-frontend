@@ -141,9 +141,7 @@ describe('accreditationApiService', () => {
 
     // RA-519: organisationId is ReEx's internal ObjectId, used to build
     // resubmit/redirect URLs (landingUrl) - never safe to substitute the
-    // numeric orgId for it. orgId is the operator/regulator-safe numeric
-    // organisation number, surfaced separately as organisationNumber for the
-    // bank payment reference.
+    // numeric orgId for it.
     test('organisationId comes from the raw organisationId, not orgId', async () => {
       apiClient.get.mockResolvedValue({
         orgId: 500500,
@@ -167,27 +165,27 @@ describe('accreditationApiService', () => {
       expect(result.organisationId).toBeUndefined()
     })
 
-    test('organisationNumber comes from orgId', async () => {
-      apiClient.get.mockResolvedValue({
-        orgId: 500500,
-        organisationId: '6a74a6a12b7c39b0cc15ca55'
-      })
-      const result = await accreditationApiService.getApplication(
-        ORG_ID,
-        APP_ID
-      )
-      expect(result.organisationNumber).toBe(500500)
-    })
+    // RA-000: the backend builds the payment reference; the frontend passes
+    // it through untouched, null included, and never builds one from orgId.
+    test.each([['PR/PK/REP/500500'], [null]])(
+      'paymentReference %s is passed through from the backend',
+      async (paymentReference) => {
+        apiClient.get.mockResolvedValue({ orgId: 500500, paymentReference })
+        const result = await accreditationApiService.getApplication(
+          ORG_ID,
+          APP_ID
+        )
+        expect(result.paymentReference).toBe(paymentReference)
+      }
+    )
 
-    test('organisationNumber is null when orgId is absent', async () => {
-      apiClient.get.mockResolvedValue({
-        organisationId: '6a74a6a12b7c39b0cc15ca55'
-      })
+    test('paymentReference is not made up when the backend sends none', async () => {
+      apiClient.get.mockResolvedValue({ orgId: 500500, nation: 'England' })
       const result = await accreditationApiService.getApplication(
         ORG_ID,
         APP_ID
       )
-      expect(result.organisationNumber).toBeNull()
+      expect(result.paymentReference).toBeUndefined()
     })
 
     test('sitePostcode is extracted from an object-shaped siteAddress', async () => {

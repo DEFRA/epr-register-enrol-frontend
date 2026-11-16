@@ -323,13 +323,15 @@
         "fullNameRequired": "Enter your full name",
         "jobTitleRequired": "Enter your job title",
         "fetchError": "Sorry, there was a problem loading your application. Please try again.",
-        "submitError": "Sorry, there was a problem submitting your application. Please try again."
+        "submitError": "Sorry, there was a problem submitting your application. Please try again.",
+        "submitUnavailable": "We could not submit your application. Try again later."
       }
     },
     "submitConfirmation": {
       "title": "Application submitted",
       "panelHeading": "Now pay the application charge",
       "panelBodyPrefix": "Application reference for",
+      "applicationReferenceLabel": "Application reference",
       "caseReferenceLabel": "Your case reference is",
       "paymentText": "The regulator will only review your application after you've paid.",
       "returnHome": "Return to home page"

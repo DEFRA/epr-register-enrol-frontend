@@ -18,6 +18,7 @@ function makeApplication(overrides = {}) {
     applicationId: APPLICATION_ID,
     organisationId: 'test-operator-id',
     orgId: 500500,
+    paymentReference: 'PR/PK/REP/500500',
     materialType: 'Glass',
     siteAddress: 'North Road, Siteville, SI1 1AA',
     accreditationReference: 'APP2027ER5000390GL',
@@ -106,27 +107,62 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).not.toContain('APP2027ER5000390GL')
     })
 
-    // RA-503: organisationId is ReEx's internal ObjectId on a real submission - orgId is the
-    // operator/regulator-safe numeric organisation number that must actually be quoted on a
-    // bank transfer. Confirms the payment reference is built from orgId, not organisationId,
-    // when the backend sends both.
-    test('builds the bank payment reference from orgId, not the raw ObjectId-shaped organisationId', async () => {
+    // RA-000 (AC4/AC5): the page shows the reference the backend built and
+    // stored at submit; it never rebuilds one, and never shows a page without
+    // one.
+    test('shows the payment reference from the application, not one rebuilt from orgId and nation', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(
         makeApplication({
           orgId: 500500,
-          organisationId: '6a74a6a12b7c39b0cc15ca55'
+          nation: 'England',
+          paymentReference: 'NI/PR/REEX/123456'
         })
       )
 
-      const { result } = await server.inject({
+      const { statusCode, result } = await server.inject({
         method: 'GET',
         url: `/accreditation/view-payment-details/${APPLICATION_ID}`
       })
 
-      expect(result).toContain('data-testid="bank-payment-reference"')
-      expect(result).toContain('PR/PK/REP/500500')
-      expect(result).not.toContain('6a74a6a12b7c39b0cc15ca55')
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        'data-testid="bank-payment-reference">NI/PR/REEX/123456</dd>'
+      )
+      expect(result).not.toContain('PR/PK/REP/500500')
     })
+
+    test.each([
+      ['null', { paymentReference: null }],
+      ['missing', { paymentReference: undefined }]
+    ])(
+      'returns 500 with an error and logs at Error when the payment reference is %s',
+      async (_label, overrides) => {
+        vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication(overrides))
+        const errorLog = vi.spyOn(server.logger, 'error')
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/accreditation/view-payment-details/${APPLICATION_ID}`
+        })
+
+        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(result).toContain('data-testid="load-error"')
+        expect(result).toContain(
+          'Sorry, we were unable to load the payment details. Please try again.'
+        )
+        expect(result).not.toContain('data-testid="bank-payment-reference"')
+        expect(result).not.toContain('APP2027ER5000390GL')
+        expect(errorLog).toHaveBeenCalledWith(
+          expect.objectContaining({
+            applicationId: APPLICATION_ID,
+            err: expect.objectContaining({
+              message: 'Application has no payment reference'
+            })
+          }),
+          `Error loading payment details ${APPLICATION_ID}`
+        )
+      }
+    )
 
     test('renders England bank details by default (no derivable postcode)', async () => {
       vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
@@ -450,8 +486,9 @@ describe('#viewPaymentDetailsController', () => {
       expect(result).toContain('data-testid="page-caption"')
     })
 
-    test('returns 500 with error message when API call fails', async () => {
+    test('returns 500 with error message and logs at Error when API call fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('API down'))
+      const errorLog = vi.spyOn(server.logger, 'error')
 
       const { statusCode, result } = await server.inject({
         method: 'GET',
@@ -460,6 +497,11 @@ describe('#viewPaymentDetailsController', () => {
 
       expect(statusCode).toBe(statusCodes.internalServerError)
       expect(result).toContain('data-testid="load-error"')
+      expect(result).not.toContain('data-testid="bank-payment-reference"')
+      expect(errorLog).toHaveBeenCalledWith(
+        expect.objectContaining({ applicationId: APPLICATION_ID }),
+        `Error fetching application ${APPLICATION_ID}`
+      )
     })
 
     test('back link points to submit-confirmation', async () => {
@@ -641,34 +683,6 @@ describe('#viewPaymentDetailsController', () => {
           'Application submitted to the Environment Agency'
         )
       })
-    })
-
-    describe('regulator payment reference (RA-426)', () => {
-      test.each([
-        ['England', false, 'PR/PK/REP/500500'],
-        ['England', true, 'PR/PK/EXP/500500'],
-        ['NorthernIreland', false, 'NI/PR/REEX/500500'],
-        ['NorthernIreland', true, 'NI/PR/REEX/500500'],
-        ['Wales', false, 'PREX/500500'],
-        ['Wales', true, 'PREX/500500'],
-        ['Scotland', false, 'E800 81581/500500'],
-        ['Scotland', true, 'E800 81581/500500']
-      ])(
-        'renders %s reference for nation %s isExporter %s',
-        async (nation, isExporter, expectedReference) => {
-          vi.spyOn(apiClient, 'get').mockResolvedValue(
-            makeApplication({ nation, isExporter })
-          )
-
-          const { result } = await server.inject({
-            method: 'GET',
-            url: `/accreditation/view-payment-details/${APPLICATION_ID}`
-          })
-
-          expect(result).toContain('data-testid="bank-payment-reference"')
-          expect(result).toContain(expectedReference)
-        }
-      )
     })
 
     describe('tailored regulator contact block (RA-426)', () => {

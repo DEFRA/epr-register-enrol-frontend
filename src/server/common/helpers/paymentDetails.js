@@ -79,20 +79,15 @@ export function resolveNation(application) {
   return application.nation || NATIONS.ENGLAND
 }
 
-export function buildPaymentReference(nation, organisationId, isExporter) {
-  switch (nation) {
-    case NATIONS.NORTHERN_IRELAND:
-      return `NI/PR/REEX/${organisationId}`
-    case NATIONS.WALES:
-      return `PREX/${organisationId}`
-    case NATIONS.SCOTLAND:
-      return `E800 81581/${organisationId}`
-    case NATIONS.ENGLAND:
-    default:
-      return isExporter
-        ? `PR/PK/EXP/${organisationId}`
-        : `PR/PK/REP/${organisationId}`
+// RA-000: the OJ backend builds the bank payment reference from the
+// application's stored organisation number and nation, and returns null when
+// it can't. The frontend shows exactly that value and never builds or
+// substitutes one, so the operator quotes what the regulator receives.
+export function requirePaymentReference(application) {
+  if (!application?.paymentReference) {
+    throw new Error('Application has no payment reference')
   }
+  return application.paymentReference
 }
 
 export function tonnageFeeCalculator(tonnage) {
