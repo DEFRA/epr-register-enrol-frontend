@@ -136,6 +136,15 @@ function buildRequest(target, side, number, [changeType, created, items]) {
     }
   })
   const draft = seeded.some((item) => item.status === IN_PROGRESS)
+  // Mirrors the backend seed, so fe-tests find the same references either way.
+  const submissionReference = draft
+    ? null
+    : `CR${yearSuffix(year)}${pad(orgId, ID_ORG_DIGITS)}${side.toUpperCase()}${pad(number, REFERENCE_REQUEST_DIGITS)}`
+  for (const [index, item] of seeded.entries()) {
+    item.caseManagementReference = submissionReference
+      ? `${submissionReference}-${index + 1}`
+      : null
+  }
   const createdAt = on(created)
   const submittedAt = draft
     ? null
@@ -157,9 +166,7 @@ function buildRequest(target, side, number, [changeType, created, items]) {
     updatedAt: updatedAt ?? createdAt,
     submittedAt,
     submittedBy: draft ? null : SUBMITTER,
-    caseManagementReference: draft
-      ? null
-      : `CR${yearSuffix(year)}${pad(orgId, ID_ORG_DIGITS)}${side.toUpperCase()}${pad(number, REFERENCE_REQUEST_DIGITS)}`,
+    submissionReference,
     sites: seeded.filter((item) => item.siteId),
     tonnageBandUpgrade: seeded.find((item) => item.requestedBand) ?? null
   }

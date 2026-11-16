@@ -139,10 +139,10 @@ run under stub auth.
 
 ### Feature flags
 
-| Variable                         | Default | Description                                                                                                                                                                                                                                                           |
-| -------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MULTIPLE_INTERIM_SITES_ENABLED` | `false` | RA-603. Lets an overseas reprocessing site carry more than one interim site                                                                                                                                                                                           |
-| `IN_YEAR_CHANGES_ENABLED`        | `false` | In-year changes epic (from RA-425). The current-accreditation pages under `/manage/{organisationId}/{registrationId}/{materialType}`, which Re/Ex links to. Off, every route 404s. Against the real backend, also needs its `FeatureFlags__InYearChangesEnabled=true` |
+| Variable                         | Default | Description                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MULTIPLE_INTERIM_SITES_ENABLED` | `false` | RA-603. Lets an overseas reprocessing site carry more than one interim site                                                                                                                                                                                                                                                                                       |
+| `IN_YEAR_CHANGES_ENABLED`        | `false` | In-year changes epic (from RA-425). The current-accreditation pages under `/manage/{organisationId}/{registrationNumber}/{materialType}`, which Re/Ex links to with the registration number (for example `R27EX0500180001PL`), not its registration id. Off, every route 404s. Against the real backend, also needs its `FeatureFlags__InYearChangesEnabled=true` |
 
 ### Analytics and cookie consent
 

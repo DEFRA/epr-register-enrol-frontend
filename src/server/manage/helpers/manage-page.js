@@ -10,7 +10,10 @@ import { operatorCanAccessOrganisation } from '../../common/helpers/reex-organis
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { currentYear } from '../../common/helpers/currentYear.js'
 import { fetchCurrentAccreditation } from './current-accreditation.js'
-import { fetchApprovedRegistration } from './current-registration.js'
+import {
+  fetchRegistration,
+  isApprovedRegistration
+} from './current-registration.js'
 
 // Runs before auth, so a logged-out caller gets the same 404 as everyone else
 // rather than a redirect to sign in for a page that doesn't exist yet.
@@ -48,6 +51,7 @@ export function manageCaption(context, t) {
 }
 
 const registrationFields = (registration) => ({
+  registrationId: registration.registrationId,
   registrationNumber: registration.registrationNumber,
   registrationStatus: registration.status
 })
@@ -89,6 +93,24 @@ const sameMaterial = (a, b) =>
   typeof b === 'string' &&
   a.toLowerCase() === b.toLowerCase()
 
+// The backend names the organisation only once ReEx confirms it holds the
+// registration: with no accreditation, nothing else ties the URL's
+// registration to its organisation.
+const registrationMatchesUrl = (registration, materialType) =>
+  Boolean(registration.organisationName) &&
+  sameMaterial(registration.materialType, materialType)
+
+async function assertCanAccessOrganisation(request, organisationId) {
+  const canAccess = await operatorCanAccessOrganisation(
+    getUser(request),
+    organisationId,
+    { logger: request.logger }
+  )
+  if (!canAccess) {
+    throw Boom.forbidden('You do not have access to this organisation')
+  }
+}
+
 // Throws a 404 for a reprocessor when the page is for exporters only.
 function assertExporterIfRequired(exportersOnly, operator) {
   if (exportersOnly && !operator.isExporter) {
@@ -101,6 +123,11 @@ function assertExporterIfRequired(exportersOnly, operator) {
  * its registration is in: the page doesn't exist for them, so that answer
  * shouldn't depend on whether the registration happens to be Approved. A
  * registration-only reprocessor is a 404 too.
+ *
+ * RA-739: the URL's registration number is resolved first, as the
+ * accreditation is found by the registration's ReEx id; a number with no
+ * registration record is the service-problem page, as there is then no
+ * accreditation to tell a reprocessor by.
  *
  * RA-697: an Approved registration with no Approved current-year
  * accreditation is registration only. Pages opt in with allowRegistrationOnly
@@ -117,35 +144,33 @@ export async function loadManagePage(
   { exportersOnly = false, allowRegistrationOnly = false } = {}
 ) {
   const { t, currentLocale } = getLocaleAndTranslator(request)
-  const { organisationId, registrationId, materialType } = request.params
+  const { organisationId, registrationNumber, materialType } = request.params
 
-  const canAccess = await operatorCanAccessOrganisation(
-    getUser(request),
+  await assertCanAccessOrganisation(request, organisationId)
+
+  const registration = await fetchRegistration({
     organisationId,
-    { logger: request.logger }
-  )
-  if (!canAccess) {
-    throw Boom.forbidden('You do not have access to this organisation')
+    registrationNumber,
+    logger: request.logger
+  })
+  if (!registration) {
+    return { response: serviceProblem(request, h, t) }
   }
 
-  const [accreditation, registration] = await Promise.all([
-    fetchCurrentAccreditation({
-      organisationId,
-      registrationId,
-      materialType,
-      logger: request.logger
-    }),
-    fetchApprovedRegistration({
-      organisationId,
-      registrationId,
-      logger: request.logger
-    })
-  ])
+  const accreditation = await fetchCurrentAccreditation({
+    organisationId,
+    registrationId: registration.registrationId,
+    materialType,
+    logger: request.logger
+  })
   const application = accreditation.application ?? null
   if (application) {
     assertExporterIfRequired(exportersOnly, application)
   }
-  if (accreditation.failed || !registration) {
+  if (
+    accreditation.failed ||
+    !isApprovedRegistration(registration, request.logger)
+  ) {
     return { response: serviceProblem(request, h, t) }
   }
 
@@ -159,13 +184,9 @@ export async function loadManagePage(
     }
   }
 
-  // The backend names the organisation only once ReEx confirms it holds the
-  // registration: with no accreditation, nothing else ties the URL's
-  // registration to its organisation.
   if (
     !allowRegistrationOnly ||
-    !registration.organisationName ||
-    !sameMaterial(registration.materialType, materialType)
+    !registrationMatchesUrl(registration, materialType)
   ) {
     return { response: serviceProblem(request, h, t) }
   }

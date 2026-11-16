@@ -31,7 +31,7 @@
         <strong class="govuk-tag {{ statusTag.classes }}" data-testid="registration-status-tag">{{ statusTag.text }}</strong>
       {% endcall %}
     {% else %}
-      {% call summaryItem(t('pages.manageRegistrationAccreditation.applicationStatusLabel'), 'application-status') %}
+      {% call summaryItem(t('pages.manageRegistrationAccreditation.accreditationStatusLabel'), 'application-status') %}
         <strong class="govuk-tag {{ statusTag.classes }}" data-testid="application-status-tag">{{ statusTag.text }}</strong>
       {% endcall %}
       {% call summaryItem(t('pages.manageRegistrationAccreditation.accreditationNumberLabel'), 'accreditation-number') %}{{ accreditationNumber }}{% endcall %}

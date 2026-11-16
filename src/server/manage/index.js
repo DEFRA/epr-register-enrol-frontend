@@ -7,8 +7,10 @@ import { manageChangeRequestsController } from './change-requests/controller.js'
 import { manageChangeRequestDetailController } from './change-requests/detail-controller.js'
 
 // RA-425: Re/Ex's material page links to MANAGE_PATH, the manage registration
-// and accreditation page.
-const MANAGE_PATH = '/manage/{organisationId}/{registrationId}/{materialType}'
+// and accreditation page. RA-739: keyed by the registration number, not ReEx's
+// registration id, so Re/Ex must link with the number.
+const MANAGE_PATH =
+  '/manage/{organisationId}/{registrationNumber}/{materialType}'
 
 // RA-697: a malformed itemId is a bad request (Hapi's default for invalid
 // params), as on RA-492's routes.
@@ -18,7 +20,7 @@ const itemRouteOptions = {
     params: Joi.object({
       language: Joi.string(),
       organisationId: Joi.string().required(),
-      registrationId: Joi.string().required(),
+      registrationNumber: Joi.string().required(),
       materialType: Joi.string().required(),
       itemId: Joi.string().guid().required()
     })

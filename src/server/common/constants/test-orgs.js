@@ -1,3 +1,5 @@
+import { yearSuffix } from '../helpers/currentYear.js'
+
 // RA-425: organisations the test-only operator page links to, shared with the
 // stub API that serves them locally.
 
@@ -74,4 +76,26 @@ const SEEDED_ORG_ID_DIGITS = 19
 
 export function seededApplicationId(prefix, year, orgId) {
   return `${prefix}${year}${String(orgId).padStart(SEEDED_ORG_ID_DIGITS, '0')}`
+}
+
+// RA-739: the registration numbers in these orgs' /manage URLs. They follow
+// the clock, as the backend's dev seed numbers (DevExporterOrg's
+// RegistrationNumberFor) and the fe-tests fixtures do: keep the three in step.
+export function exporterRegistrationNumber(
+  year,
+  orgId = MANAGE_EXPORTER_ORG.orgId
+) {
+  return `R${yearSuffix(year)}EX0${orgId}0001PL`
+}
+
+export function reprocessorRegistrationNumber(year) {
+  return `R${yearSuffix(year)}ER0500180002GR`
+}
+
+export function createdRegistrationNumber(year) {
+  return `R${yearSuffix(year)}ER0500180003WO`
+}
+
+export function missingRegistrationNumber(year) {
+  return `R${yearSuffix(year)}ER0500180004WO`
 }

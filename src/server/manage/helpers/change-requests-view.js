@@ -14,7 +14,8 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
  * @param {object} context - loadManagePage's context
  */
 export async function fetchChangeRequestsView(request, context) {
-  const { organisationId, registrationId, materialType } = request.params
+  const { organisationId, materialType } = request.params
+  const { registrationId } = context
   try {
     return context.isRegistrationOnly
       ? await accreditationChangesService.getRegistrationView(

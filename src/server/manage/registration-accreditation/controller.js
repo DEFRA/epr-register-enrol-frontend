@@ -58,7 +58,6 @@ export const manageRegistrationAccreditationController = {
       return response
     }
 
-    const { organisationId, registrationId } = request.params
     const heading = t('pages.manageRegistrationAccreditation.heading')
 
     return h.view('manage/registration-accreditation/index', {
@@ -66,7 +65,10 @@ export const manageRegistrationAccreditationController = {
       heading,
       caption: manageCaption(context, t),
       // RA-425: back to the Re/Ex material page that links here.
-      backLink: reExBackLinkUrl(organisationId, registrationId),
+      backLink: reExBackLinkUrl(
+        request.params.organisationId,
+        context.registrationId
+      ),
       isRegistrationOnly: context.isRegistrationOnly,
       isExporter: context.isExporter,
       siteAddress: context.siteAddress,

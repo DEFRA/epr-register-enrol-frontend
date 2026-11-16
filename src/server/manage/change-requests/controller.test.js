@@ -9,11 +9,14 @@ import {
   MANAGE_EXPORTER_ORG,
   MANAGE_EXPORTER_ORG_REPROCESSOR,
   NO_CHANGE_REQUESTS_ORG,
-  REGISTRATION_ONLY_ORG
+  REGISTRATION_ONLY_ORG,
+  exporterRegistrationNumber,
+  reprocessorRegistrationNumber
 } from '../../common/constants/test-orgs.js'
 import {
   MANAGE_ORG_ID as ORG_ID,
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
+  MANAGE_REGISTRATION_NUMBER as REGISTRATION_NUMBER,
   MANAGE_MATERIAL as MATERIAL,
   MANAGE_CURRENT_YEAR as CURRENT_YEAR,
   MANAGE_URL,
@@ -76,7 +79,6 @@ const submittedRequest = (requestId, submittedAt, items) => ({
   updatedAt: submittedAt,
   submittedAt,
   submittedBy: SUBMITTER,
-  caseManagementReference: `CR-${requestId}`,
   sites: items.sites ?? [],
   tonnageBandUpgrade: items.tonnage ?? null
 })
@@ -105,8 +107,7 @@ const CURRENT_VIEW = {
       status: 'InProgress',
       createdAt: '2027-05-01T09:00:00Z',
       updatedAt: '2027-05-02T09:00:00Z',
-      submittedBy: null,
-      caseManagementReference: null
+      submittedBy: null
     },
     submittedRequest('r4', '2027-04-15T09:00:00Z', {
       sites: [
@@ -220,7 +221,7 @@ describe('#manageChangeRequestsController', () => {
     const getSpy = mockManageGets([currentApp])
 
     const { statusCode } = await get(
-      `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}/change-requests`
+      `/manage/not-my-org/${REGISTRATION_NUMBER}/${MATERIAL}/change-requests`
     )
 
     expect(statusCode).toBe(statusCodes.forbidden)
@@ -991,8 +992,8 @@ describe('#manageChangeRequestsController', () => {
       operatorCanAccessOrganisation.mockResolvedValue(true)
     })
 
-    const listUrl = (orgId, registrationId, material) =>
-      `/manage/${orgId}/${registrationId}/${material}/change-requests`
+    const listUrl = (orgId, registrationNumber, material) =>
+      `/manage/${orgId}/${registrationNumber}/${material}/change-requests`
 
     const cellTexts = (html, cell) =>
       [
@@ -1010,7 +1011,7 @@ describe('#manageChangeRequestsController', () => {
     test('lists the seeded exporter’s items over two pages, most urgent first', async () => {
       const exporterUrl = listUrl(
         MANAGE_EXPORTER_ORG.orgId,
-        MANAGE_EXPORTER_ORG.registrationId,
+        exporterRegistrationNumber(currentYear(), MANAGE_EXPORTER_ORG.orgId),
         'Plastic'
       )
       const first = await get(exporterUrl)
@@ -1049,7 +1050,7 @@ describe('#manageChangeRequestsController', () => {
       const { statusCode, result } = await get(
         listUrl(
           MANAGE_EXPORTER_ORG.orgId,
-          MANAGE_EXPORTER_ORG_REPROCESSOR.registrationId,
+          reprocessorRegistrationNumber(currentYear()),
           MANAGE_EXPORTER_ORG_REPROCESSOR.material
         )
       )
@@ -1068,7 +1069,10 @@ describe('#manageChangeRequestsController', () => {
       const { statusCode, result } = await get(
         listUrl(
           REGISTRATION_ONLY_ORG.orgId,
-          REGISTRATION_ONLY_ORG.registrationId,
+          exporterRegistrationNumber(
+            currentYear(),
+            REGISTRATION_ONLY_ORG.orgId
+          ),
           'Plastic'
         )
       )
@@ -1099,7 +1103,7 @@ describe('#manageChangeRequestsController', () => {
     test('opens the seeded exporter’s registration-only ORS update on Dragon', async () => {
       const itemId = `0000${currentYear()}-0000-0001-a000-050018000012`
       const { statusCode, result } = await get(
-        `${listUrl(MANAGE_EXPORTER_ORG.orgId, MANAGE_EXPORTER_ORG.registrationId, 'Plastic')}/${itemId}`
+        `${listUrl(MANAGE_EXPORTER_ORG.orgId, exporterRegistrationNumber(currentYear(), MANAGE_EXPORTER_ORG.orgId), 'Plastic')}/${itemId}`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -1108,14 +1112,19 @@ describe('#manageChangeRequestsController', () => {
       )
       expect(result).toMatch(/data-testid="header-status"[\s\S]*?REFUSED/)
       expect(result).toContain('Saigon Port Storage')
-      expect(result).toContain(`CR${String(currentYear()).slice(-2)}050018A012`)
+      expect(result).toContain(
+        `CR${String(currentYear()).slice(-2)}050018A012-1`
+      )
     })
 
     test('shows the no-results message for the org with no change requests', async () => {
       const { statusCode, result } = await get(
         listUrl(
           NO_CHANGE_REQUESTS_ORG.orgId,
-          NO_CHANGE_REQUESTS_ORG.registrationId,
+          exporterRegistrationNumber(
+            currentYear(),
+            NO_CHANGE_REQUESTS_ORG.orgId
+          ),
           'Plastic'
         )
       )

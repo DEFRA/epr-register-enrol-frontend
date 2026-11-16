@@ -20,7 +20,7 @@ function rowFor(request, item, site) {
     submittedAt: request.submittedAt ?? null,
     submittedBy: request.submittedBy ?? null,
     updatedAt: request.updatedAt,
-    reference: request.caseManagementReference ?? null
+    reference: item.caseManagementReference ?? null
   }
 }
 

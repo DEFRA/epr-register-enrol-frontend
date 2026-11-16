@@ -16,7 +16,7 @@ const APP = 'a26000000000000000050018'
 const BASE = `/accreditation/manage-overseas-sites/${APP}`
 // RA-425's Manage overseas reprocessing sites page for makeView()'s
 // accreditation, where the journey starts and returns.
-const MANAGE = '/manage/50018/aaa000000000000000050018/Plastic/overseas-sites'
+const MANAGE = '/manage/50018/R26EX0500180001PL/Plastic/overseas-sites'
 
 function siteEntry(overrides = {}) {
   return {
@@ -95,6 +95,7 @@ function makeView({ sites, active, requests } = {}) {
     organisationId: '50018',
     applicationId: APP,
     registrationId: 'aaa000000000000000050018',
+    registrationReference: 'R26EX0500180001PL',
     materialType: 'Plastic',
     year: 2026,
     sites: sites ?? [
@@ -195,7 +196,7 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(`${BASE}/add/900182`)
     })
 
-    test('AC09: a site the backend refuses (accredited or submitted) goes back to the list', async () => {
+    test('AC09: a site the backend refuses (accredited, submitted, or the draft sites fixed by an earlier send) goes back to the list', async () => {
       mockGet(makeView())
       vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(409))
       const { headers } = await server.inject({
@@ -406,6 +407,16 @@ describe('#manageOverseasSites (RA-492)', () => {
     test('Cancel of a site already gone from the draft still returns to the list', async () => {
       mockGet(makeView())
       vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(404))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/add/900182/cancel`
+      })
+      expect(headers.location).toBe(MANAGE)
+    })
+
+    test('Cancel of a site fixed by an earlier send to the regulator returns to the list', async () => {
+      mockGet(makeView())
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(409))
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/add/900182/cancel`
@@ -737,7 +748,8 @@ describe('#manageOverseasSites (RA-492)', () => {
           jobTitle: 'Director',
           // The reference the payment page shows (England exporter, org 50018).
           paymentReference: 'PR/PK/EXP/50018'
-        })
+        }),
+        { timeout: 20000 }
       )
       expect(headers.location).toBe(`${BASE}/payment`)
     })

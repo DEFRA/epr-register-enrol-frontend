@@ -132,7 +132,8 @@ export const addSiteToRequestController = {
       )
     } catch (err) {
       // 404 unknown site, 409 already accredited or in a submitted request
-      // (AC09): nothing to add, so back to the list that offered it.
+      // (AC09), or the draft's sites are fixed by an earlier send to the
+      // regulator: nothing to add, so back to the list that offered it.
       if (NOTHING_TO_DO.has(err.status)) {
         return redirectToManageSites(request, h)
       }
@@ -261,7 +262,9 @@ export const cancelAddToAccreditationController = {
         siteId
       )
     } catch (err) {
-      if (err.status !== statusCodes.notFound) {
+      // 404 already gone. 409: the request was sent to the regulator once,
+      // so its sites are fixed until a resubmit succeeds.
+      if (!NOTHING_TO_DO.has(err.status)) {
         throw err
       }
     }

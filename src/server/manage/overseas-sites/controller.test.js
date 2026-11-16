@@ -7,6 +7,7 @@ import { stubApiClient } from '../../common/stub-api-client.js'
 import { persistentStubApiClient } from '../../common/persistentStubApiClient.js'
 import {
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
+  MANAGE_REGISTRATION_NUMBER as REGISTRATION_NUMBER,
   MANAGE_MATERIAL as MATERIAL,
   MANAGE_CURRENT_YEAR as CURRENT_YEAR,
   MANAGE_URL,
@@ -24,8 +25,10 @@ import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditation
 import {
   MANAGE_EXPORTER_ORG,
   NO_OVERSEAS_SITES_ORG,
-  REGISTRATION_ONLY_ORG
+  REGISTRATION_ONLY_ORG,
+  exporterRegistrationNumber
 } from '../../common/constants/test-orgs.js'
+import { currentYear } from '../../common/helpers/currentYear.js'
 
 vi.mock('../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
@@ -151,7 +154,7 @@ describe('#manageOverseasSitesController', () => {
     const getSpy = mockManageGets([makeApp()])
 
     const { statusCode } = await get(
-      `/manage/not-my-org/${REGISTRATION_ID}/${MATERIAL}/overseas-sites`
+      `/manage/not-my-org/${REGISTRATION_NUMBER}/${MATERIAL}/overseas-sites`
     )
 
     expect(statusCode).toBe(statusCodes.forbidden)
@@ -177,15 +180,31 @@ describe('#manageOverseasSitesController', () => {
     expect(statusCode).toBe(statusCodes.notFound)
   })
 
-  test('returns 404 for a reprocessor accreditation whose registration has no record', async () => {
-    mockManageGets(
+  test('returns 404 for a reprocessor accreditation whose registration is not Approved', async () => {
+    mockManageGets([makeApp({ wasteProcessingType: 'reprocessor' })], {
+      ...approvedRegistration,
+      status: 'Created'
+    })
+
+    const { statusCode } = await get(PAGE_URL)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+  })
+
+  // RA-739: the accreditation is found by the registration's ReEx id, which
+  // only the registration's record gives.
+  test('shows the service-problem page when the registration number has no record', async () => {
+    const spy = mockManageGets(
       [makeApp({ wasteProcessingType: 'reprocessor' })],
       apiError(statusCodes.notFound)
     )
 
     const { statusCode } = await get(PAGE_URL)
 
-    expect(statusCode).toBe(statusCodes.notFound)
+    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(spy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^\/api\/v1\/accreditation-applications\//)
+    )
   })
 
   describe('service problem', () => {
@@ -477,7 +496,7 @@ describe('#manageOverseasSitesController', () => {
 
     test('shows the stub exporter with accredited and registered ORSs and interim sites', async () => {
       const { statusCode, result } = await get(
-        `/manage/${MANAGE_EXPORTER_ORG.orgId}/${MANAGE_EXPORTER_ORG.registrationId}/Plastic/overseas-sites`
+        `/manage/${MANAGE_EXPORTER_ORG.orgId}/${exporterRegistrationNumber(currentYear(), MANAGE_EXPORTER_ORG.orgId)}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -498,7 +517,7 @@ describe('#manageOverseasSitesController', () => {
     // RA-697 task 012: org 50021 has a registration and no accreditation.
     test('shows the registration-only exporter’s four registered ORSs, none accredited', async () => {
       const { statusCode, result } = await get(
-        `/manage/${REGISTRATION_ONLY_ORG.orgId}/${REGISTRATION_ONLY_ORG.registrationId}/Plastic/overseas-sites`
+        `/manage/${REGISTRATION_ONLY_ORG.orgId}/${exporterRegistrationNumber(currentYear(), REGISTRATION_ONLY_ORG.orgId)}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -527,7 +546,7 @@ describe('#manageOverseasSitesController', () => {
     // Org 50022: registered, with no accreditation and no registered ORSs.
     test('shows both tabs empty for the exporter with no overseas sites', async () => {
       const { statusCode, result } = await get(
-        `/manage/${NO_OVERSEAS_SITES_ORG.orgId}/${NO_OVERSEAS_SITES_ORG.registrationId}/Plastic/overseas-sites`
+        `/manage/${NO_OVERSEAS_SITES_ORG.orgId}/${exporterRegistrationNumber(currentYear(), NO_OVERSEAS_SITES_ORG.orgId)}/Plastic/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.ok)
@@ -899,7 +918,7 @@ describe('#manageOverseasSitesController', () => {
       const spy = mockManageGets([], registrationOnlyReprocessor)
 
       const { statusCode } = await get(
-        `/manage/org-123/${REGISTRATION_ID}/Glass/overseas-sites`
+        `/manage/org-123/${REGISTRATION_NUMBER}/Glass/overseas-sites`
       )
 
       expect(statusCode).toBe(statusCodes.notFound)

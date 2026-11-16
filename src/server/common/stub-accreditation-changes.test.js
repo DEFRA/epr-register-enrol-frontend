@@ -193,6 +193,19 @@ describe('stubAccreditationChanges items (RA-697)', () => {
     expect(submitted.submittedAt).toEqual(expect.any(String))
   })
 
+  test("RA-739: submit gives each site its own Case Management reference for the accreditation's year", async () => {
+    d = deps(application({ year: 2027 }))
+    await completeSite2()
+
+    const submitted = await call('post', '/requests/current/submit', {
+      fullName: 'Jane'
+    })
+
+    expect(submitted.sites[0].caseManagementReference).toMatch(
+      /^IYC-ORS-2027-\d{5}$/
+    )
+  })
+
   const seedSubmitted = (requestId, sites, extra = {}) =>
     seedStubChangeRequest(`50018/app-${appSeq}`, {
       requestId,
@@ -212,14 +225,18 @@ describe('stubAccreditationChanges items (RA-697)', () => {
 
   test('a seeded request shows its items, validity and tonnage item', async () => {
     seedSubmitted('granted', [
-      seededSite('Approved', { validFrom: '2026-03-01T00:00:00.000Z' })
+      seededSite('Approved', {
+        validFrom: '2026-03-01T00:00:00.000Z',
+        caseManagementReference: 'IYC-ORS-1'
+      })
     ])
     seedSubmitted('tonnage', [], {
       changeType: 'upgrade-tonnage-band',
-      caseManagementReference: 'CHG-1',
+      submissionReference: 'SUB-1',
       tonnageBandUpgrade: {
         itemId: 'item-tonnage',
         status: 'Queried',
+        caseManagementReference: 'IYC-TBU-1',
         requestedBand: 'UpTo10000'
       }
     })
@@ -232,12 +249,12 @@ describe('stubAccreditationChanges items (RA-697)', () => {
       changeType: 'add-overseas-site',
       status: 'Approved',
       validFrom: '2026-03-01T00:00:00.000Z',
-      withdrawnAt: null
+      withdrawnAt: null,
+      caseManagementReference: 'IYC-ORS-1'
     })
     const tonnage = requests.find((r) => r.requestId === 'tonnage')
     expect(tonnage).toMatchObject({
       changeType: 'upgrade-tonnage-band',
-      caseManagementReference: 'CHG-1',
       sites: [],
       tonnageBandUpgrade: {
         itemId: 'item-tonnage',
@@ -245,9 +262,12 @@ describe('stubAccreditationChanges items (RA-697)', () => {
         status: 'Queried',
         requestedBand: 'UpTo10000',
         validFrom: null,
-        withdrawnAt: null
+        withdrawnAt: null,
+        caseManagementReference: 'IYC-TBU-1'
       }
     })
+    expect(tonnage).not.toHaveProperty('caseManagementReference')
+    expect(tonnage).not.toHaveProperty('submissionReference')
   })
 
   test('a site whose items are all final is not pending and can be added again', async () => {
@@ -504,7 +524,13 @@ describe('persistentStubApiClient accreditation-changes routing (RA-492)', () =>
       await import('./persistentStubApiClient.js')
     const base = `/api/v1/accreditation-changes/50019/a${currentYear()}0000000000000050019`
     const view = await client.get(base)
-    expect(view.sites.map((s) => s.orsId)).toEqual(['001', '005', '006', '007'])
+    expect(view.sites.map((s) => s.orsId)).toEqual([
+      '001',
+      '005',
+      '009',
+      '006',
+      '007'
+    ])
     expect(view.sites[1].lockedFields).toEqual([
       'country',
       'coordinates',
@@ -584,12 +610,28 @@ describe('seeded stub change requests (RA-697)', () => {
       status: 'Submitted',
       createdAt: `${year}-02-03T09:00:00.000Z`,
       submittedAt: `${year}-02-03T11:00:00.000Z`,
-      submittedBy: { fullName: 'Sam Patel', jobTitle: 'Director' },
-      caseManagementReference: `CR${yy}050018A001`
+      submittedBy: { fullName: 'Sam Patel', jobTitle: 'Director' }
     })
-    expect(first.sites.map((s) => [s.itemId, s.orsId, s.status])).toEqual([
-      [`0000${year}-0000-0001-a000-050018000001`, '001', 'Approved'],
-      [`0000${year}-0000-0002-a000-050018000001`, '002', 'Approved']
+    expect(
+      first.sites.map((s) => [
+        s.itemId,
+        s.orsId,
+        s.status,
+        s.caseManagementReference
+      ])
+    ).toEqual([
+      [
+        `0000${year}-0000-0001-a000-050018000001`,
+        '001',
+        'Approved',
+        `CR${yy}050018A001-1`
+      ],
+      [
+        `0000${year}-0000-0002-a000-050018000001`,
+        '002',
+        'Approved',
+        `CR${yy}050018A001-2`
+      ]
     ])
     expect(first.sites[0].validFrom).toBe(`${year}-03-02T09:00:00.000Z`)
     const withdrawn = itemsOf(requests).find(
@@ -617,7 +659,7 @@ describe('seeded stub change requests (RA-697)', () => {
     expect(view.activeRequest.sites).toMatchObject([
       { orsId: '004', changeType: 'add-overseas-site', status: 'InProgress' }
     ])
-    expect(view.activeRequest.caseManagementReference).toBeNull()
+    expect(view.activeRequest.sites[0].caseManagementReference).toBeNull()
     expect(view.requests.filter((r) => r.status === 'InProgress')).toHaveLength(
       1
     )
@@ -663,7 +705,13 @@ describe('seeded stub change requests (RA-697)', () => {
       changeType: 'update-overseas-site',
       status: 'Submitted',
       createdAt: `${year}-09-15T09:00:00.000Z`,
-      caseManagementReference: `CR${yy}050018A012`,
+      sites: [
+        expect.objectContaining({
+          caseManagementReference: `CR${yy}050018A012-1`
+        })
+      ]
+    })
+    expect(registrationOnly).toMatchObject({
       sites: [
         {
           itemId: `0000${year}-0000-0001-a000-050018000012`,
@@ -697,7 +745,9 @@ describe('seeded stub change requests (RA-697)', () => {
         })
       )
     )
-    expect(view.requests[0].caseManagementReference).toBe(`CR${yy}050018B003`)
+    expect(view.requests[0].tonnageBandUpgrade.caseManagementReference).toBe(
+      `CR${yy}050018B003-1`
+    )
   })
 
   test('the empty org has its sites and no requests', async () => {
@@ -784,7 +834,11 @@ describe('registration-only stub change requests (RA-697)', () => {
     expect(first).toMatchObject({
       requestId: `0000${year}-0000-0000-a000-050021000001`,
       createdAt: `${year}-02-10T09:00:00.000Z`,
-      caseManagementReference: `CR${yy}050021A001`
+      sites: [
+        expect.objectContaining({
+          caseManagementReference: `CR${yy}050021A001-1`
+        })
+      ]
     })
     expect(first.sites[0].itemId).toBe(
       `0000${year}-0000-0001-a000-050021000001`

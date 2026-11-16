@@ -72,8 +72,9 @@ function partitionSites(sites, applicationId, changeRequests) {
 // RA-492: the in-year change pages under /accreditation/ read the
 // accreditation from the session, as they do after the operator-accreditation
 // landing page, which this page's journey does not pass through.
-function enterAccreditationSession(request, application) {
-  const { organisationId, registrationId, materialType } = request.params
+function enterAccreditationSession(request, context) {
+  const { application, registrationId } = context
+  const { organisationId, materialType } = request.params
   request.yar.set(
     ACCREDITATION_SESSION_KEYS.accreditationId,
     application.applicationId
@@ -101,7 +102,7 @@ async function accreditedSites(request, context) {
   }
   const view = await fetchChangeRequestsView(request, context)
   // Set either way: the RA-492 pages handle their own errors.
-  enterAccreditationSession(request, application)
+  enterAccreditationSession(request, context)
   const changeRequests = view && changeRequestsSummary(view)
   return {
     changeRequests,
@@ -152,7 +153,6 @@ export const manageOverseasSitesController = {
       return serviceProblem(request, h, t)
     }
 
-    const { organisationId, registrationId } = request.params
     const heading = t('pages.manageOverseasSites.heading')
     const { accredited, registered, changeRequests } = sites
 
@@ -163,7 +163,10 @@ export const manageOverseasSitesController = {
       year: context.year,
       backLink: manageUrl(request.params, currentLocale),
       // RA-425: "home" is the Re/Ex material page.
-      homeUrl: reExBackLinkUrl(organisationId, registrationId),
+      homeUrl: reExBackLinkUrl(
+        request.params.organisationId,
+        context.registrationId
+      ),
       accreditedSites: accredited,
       registeredSites: registered,
       // RA-492 banners: AC09 pending change, AC10 requests to resume.
