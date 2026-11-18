@@ -1032,7 +1032,9 @@
         "totalAmount": "Total amount",
         "addAnother": "Add another request",
         "none": "You have no accreditation requests in progress.",
-        "incomplete": "{{site}} ({{orsId}}) is missing information"
+        "incomplete": "{{site}} ({{orsId}}) is missing information",
+        "besMaxFiles": "{{site}} ({{orsId}}) has more than 10 files as evidence of broadly equivalent standards",
+        "besDuplicateFilename": "{{site}} ({{orsId}}) has a file with the same name as another uploaded file"
       },
       "payment": {
         "backLink": "Back to manage overseas reprocessing sites"

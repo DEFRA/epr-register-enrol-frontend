@@ -12,14 +12,13 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { buildViewData as buildRecyclingViewData } from '../add-overseas-site/recycling-operation-details/controller.js'
 import { buildViewData as buildConditionsViewData } from '../add-overseas-site/conditions-of-export/controller.js'
-import { isMaxFilesRejection } from '../../common/helpers/isMaxFilesRejection.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 import {
   ALLOWED_MIME_TYPES,
-  MAX_FILES_QUERY,
   MAX_FILE_BYTES,
   hasMaxBesEvidenceFiles,
-  maxFilesErrorFromQuery,
+  uploadRejectionErrorFromQuery,
+  uploadRejectionQuery,
   buildViewData as buildBesViewData,
   parseDate,
   resolveBesEvidenceValidTo,
@@ -417,7 +416,7 @@ export const besEvidenceGetController = stepHandler(
       draft,
       {},
       {
-        fileError: maxFilesErrorFromQuery(request, t)
+        fileError: uploadRejectionErrorFromQuery(request, t)
       }
     )
   }
@@ -559,18 +558,21 @@ export const besEvidenceStatusController = stepHandler(
         }
       )
     } catch (err) {
-      // 422: not scanned clean, a duplicate filename, or (RA-605) the site
-      // already has the most files allowed. The summary still shows the
-      // evidence as missing, so the operator can try again.
+      // 422: not scanned clean, a duplicate filename (3bb.48: one the
+      // upload page could not check, such as a sampling plan file's), or
+      // (RA-605) the site already has the most files allowed. The last two
+      // go back to the upload page with their message; otherwise the summary
+      // still shows the evidence as missing, so the operator can try again.
       logStructuredError(
         request.server.logger,
         err,
         { siteId, applicationId },
         `Error saving in-year BES evidence for site ${siteId}, application ${applicationId}`
       )
-      if (isMaxFilesRejection(err)) {
+      const rejection = uploadRejectionQuery(err)
+      if (rejection) {
         return h.redirect(
-          `${besEvidenceUrl(applicationId, siteId)}?${MAX_FILES_QUERY}`
+          `${besEvidenceUrl(applicationId, siteId)}?${rejection}`
         )
       }
     }

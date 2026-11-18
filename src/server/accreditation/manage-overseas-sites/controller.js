@@ -23,7 +23,11 @@ import {
   validateDeclaration
 } from '../submit-declaration/controller.js'
 import { orsAddressLine } from '../../common/helpers/orsAddress.js'
-import { accreditationChangesService } from '../../common/helpers/accreditationChangesService.js'
+import {
+  accreditationChangesService,
+  validationErrors
+} from '../../common/helpers/accreditationChangesService.js'
+import { uploadRejectionErrorFromQuery } from '../upload-bes-evidence/controller.js'
 import {
   buildMissingFieldErrors,
   manageSitesText,
@@ -164,18 +168,24 @@ function renderSummary(
   })
 }
 
+// 3bb.49: the requests page links a site the backend refused at submit for
+// its BES files here with the refusal as the reason, shown on the BES row
+// with the upload page's message.
 export const addToAccreditationGetController = {
   async handler(request, h) {
+    const locale = getLocaleAndTranslator(request)
     const { applicationId, siteId } = request.params
     const view = await loadView(request)
     const draft = resolveDraftSite(view, siteId)
     if (!draft) {
       return redirectToManageSites(request, h, view)
     }
-    return renderSummary(h, getLocaleAndTranslator(request), {
+    const besError = uploadRejectionErrorFromQuery(request, locale.t)
+    return renderSummary(h, locale, {
       view,
       applicationId,
-      ...draft
+      ...draft,
+      errors: besError ? [{ row: 'bes-evidence', text: besError }] : []
     })
   }
 }
@@ -301,12 +311,66 @@ function renderRequests(
   })
 }
 
+// 3bb.49: the backend's submit refusals for a site's BES files, by its
+// ValidationProblem key suffix, as the requests page's query parameter (also
+// the summary page's reason) and that page's message for the site.
+const BES_SUBMIT_REFUSALS = [
+  {
+    key: 'besEvidenceMaxFiles',
+    reason: 'maxFiles',
+    text: 'requests.besMaxFiles'
+  },
+  {
+    key: 'besEvidenceDuplicateFilename',
+    reason: 'duplicateFilename',
+    text: 'requests.besDuplicateFilename'
+  }
+]
+
+const SITE_ERROR_KEY = /^sites\[(\d+)\]\.(\w+)$/
+
+function besRefusalQuery(err) {
+  const siteIds = Object.keys(validationErrors(err))
+    .map((key) => SITE_ERROR_KEY.exec(key))
+    .filter(Boolean)
+  const params = new URLSearchParams()
+  for (const refusal of BES_SUBMIT_REFUSALS) {
+    const ids = siteIds
+      .filter(([, , suffix]) => suffix === refusal.key)
+      .map(([, id]) => id)
+    if (ids.length > 0) {
+      params.set(refusal.reason, ids.join(','))
+    }
+  }
+  return params.toString()
+}
+
+function besRefusalErrors(t, applicationId, view, query) {
+  const sites = view.activeRequest?.sites ?? []
+  return BES_SUBMIT_REFUSALS.flatMap((refusal) => {
+    const ids = new Set(String(query?.[refusal.reason] ?? '').split(','))
+    return sites
+      .filter((site) => ids.has(String(site.siteId)))
+      .map((site) => ({
+        href: `${addToAccreditationUrl(applicationId, site.siteId)}?reason=${refusal.reason}`,
+        orsId: site.orsId,
+        text: manageSitesText(t, refusal.text, {
+          site: site.siteName,
+          orsId: site.orsId
+        })
+      }))
+  })
+}
+
 export const requestsGetController = {
   async handler(request, h) {
+    const locale = getLocaleAndTranslator(request)
+    const { applicationId } = request.params
     const view = await loadView(request)
-    return renderRequests(h, getLocaleAndTranslator(request), {
-      applicationId: request.params.applicationId,
-      view
+    return renderRequests(h, locale, {
+      applicationId,
+      view,
+      errors: besRefusalErrors(locale.t, applicationId, view, request.query)
     })
   }
 }
@@ -411,7 +475,12 @@ export const declarationPostController = {
         return redirectToManageSites(request, h)
       }
       if (err.status === statusCodes.unprocessableEntity) {
-        return h.redirect(requestsUrl(applicationId))
+        const query = besRefusalQuery(err)
+        return h.redirect(
+          query
+            ? `${requestsUrl(applicationId)}?${query}`
+            : requestsUrl(applicationId)
+        )
       }
       logStructuredError(
         request.logger,

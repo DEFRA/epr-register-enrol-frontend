@@ -1031,7 +1031,9 @@
         "totalAmount": "[Welsh] Total amount",
         "addAnother": "[Welsh] Add another request",
         "none": "[Welsh] You have no accreditation requests in progress.",
-        "incomplete": "[Welsh] {{site}} ({{orsId}}) is missing information"
+        "incomplete": "[Welsh] {{site}} ({{orsId}}) is missing information",
+        "besMaxFiles": "[Welsh] {{site}} ({{orsId}}) has more than 10 files as evidence of broadly equivalent standards",
+        "besDuplicateFilename": "[Welsh] {{site}} ({{orsId}}) has a file with the same name as another uploaded file"
       },
       "payment": {
         "backLink": "[Welsh] Back to manage overseas reprocessing sites"

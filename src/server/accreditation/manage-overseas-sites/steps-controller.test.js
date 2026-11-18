@@ -459,6 +459,31 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     )
   })
 
+  test("status: the backend's duplicate filename 422 shows the duplicate message on the upload page", async () => {
+    const { cookie } = await uploadCookie()
+    mockStatusGets({ uploadStatus: 'ready', form: {} })
+    vi.spyOn(apiClient, 'post').mockRejectedValue(
+      Object.assign(new Error('422'), {
+        status: 422,
+        response: JSON.stringify({ code: 'DuplicateFilename' })
+      })
+    )
+    const { headers } = await server.inject({
+      url: `${SITE}/bes-evidence/status`,
+      headers: { Cookie: cookie }
+    })
+    expect(headers.location).toBe(
+      `${SITE}/bes-evidence?reason=duplicateFilename`
+    )
+
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    const page = await server.inject(headers.location)
+    expect(page.statusCode).toBe(statusCodes.ok)
+    expect(page.result).toContain(
+      'A file with this name has already been uploaded. Please rename the file so that each uploaded document has a unique filename'
+    )
+  })
+
   test('status: with no upload in the session, nothing is attached and the operator goes back to the upload page', async () => {
     const get = vi.spyOn(apiClient, 'get')
     const post = vi.spyOn(apiClient, 'post')

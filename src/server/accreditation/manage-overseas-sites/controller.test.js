@@ -250,6 +250,40 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toMatch(/data-testid="row-bes-evidence-action">Change/)
     })
 
+    // 3bb.49: a site the backend refused at submit for its BES files, linked
+    // from the requests page, shows the upload page's message on the row.
+    test.each([
+      [
+        'maxFiles',
+        'You can only upload a maximum of 10 files as evidence of broadly equivalent standards.'
+      ],
+      [
+        'duplicateFilename',
+        'A file with this name has already been uploaded. Please rename the file so that each uploaded document has a unique filename'
+      ]
+    ])(
+      "summary: reason=%s shows that refusal's message on the BES evidence row",
+      async (reason, message) => {
+        mockGet(makeView({ active: [requestSite(WITH_FILE)] }))
+        const { statusCode, result } = await server.inject(
+          `${BASE}/add/900182?reason=${reason}`
+        )
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('data-testid="error-bes-evidence"')
+        expect(result).toMatch(
+          new RegExp(
+            `data-testid="row-bes-evidence-error">[\\s\\S]*?${message.replace('.', '\\.')}`
+          )
+        )
+      }
+    )
+
+    test('summary: an unknown reason shows no error', async () => {
+      mockGet(makeView({ active: [requestSite(WITH_FILE)] }))
+      const { result } = await server.inject(`${BASE}/add/900182?reason=other`)
+      expect(result).not.toContain('data-testid="error-summary"')
+    })
+
     test('removing a BES file deletes it from the request and returns to the summary', async () => {
       mockGet(makeView({ active: [requestSite(WITH_FILE)] }))
       const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
@@ -706,6 +740,35 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('data-testid="no-requests"')
       expect(result).not.toContain('data-testid="continue-button"')
     })
+
+    // 3bb.49: sites the backend refused at submit for their BES files.
+    test('names each site refused at submit for its BES files, linking to its summary', async () => {
+      mockGet(
+        makeView({
+          active: [
+            requestSite({ isComplete: true }),
+            requestSite({
+              siteId: 900184,
+              orsId: '004',
+              siteName: 'Bergen factory',
+              isComplete: true
+            })
+          ]
+        })
+      )
+      const { statusCode, result } = await server.inject(
+        `${BASE}/requests?maxFiles=900182&duplicateFilename=900184,999999`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        `href="${BASE}/add/900182?reason=maxFiles" data-testid="error-request-002">Denmark PR (002) has more than 10 files as evidence of broadly equivalent standards`
+      )
+      expect(result).toContain(
+        `href="${BASE}/add/900184?reason=duplicateFilename" data-testid="error-request-004">Bergen factory (004) has a file with the same name as another uploaded file`
+      )
+      expect(result).not.toContain('999999')
+    })
   })
 
   describe('Declaration and payment', () => {
@@ -774,6 +837,30 @@ describe('#manageOverseasSites (RA-492)', () => {
         payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
       })
       expect(headers.location).toBe(MANAGE)
+    })
+
+    test('a submit refused for BES files goes back to the requests page naming each site', async () => {
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        apiError(
+          422,
+          JSON.stringify({
+            errors: {
+              'sites[900182].besEvidenceMaxFiles': ['max'],
+              'sites[900182].besEvidenceDuplicateFilename': ['dup'],
+              'sites[900184].besEvidenceDuplicateFilename': ['dup'],
+              'sites[900185].conditionsOfExport': ['missing']
+            }
+          })
+        )
+      )
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/declaration`,
+        payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+      })
+      expect(headers.location).toBe(
+        `${BASE}/requests?maxFiles=900182&duplicateFilename=900182%2C900184`
+      )
     })
 
     test('an incomplete request at submit goes back to the requests page', async () => {
