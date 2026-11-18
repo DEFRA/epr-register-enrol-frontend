@@ -353,6 +353,89 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     expect(initUpload).toHaveBeenCalled()
   })
 
+  // 3bb.38: a grant adds the request's files to the site's own on the
+  // accreditation, so the cap and the duplicate filename rule are checked
+  // across both before anything is uploaded.
+  function bes(prefix, count) {
+    return {
+      besEvidenceUploads: Array.from({ length: count }, (_, i) => ({
+        fileId: `${prefix}-${i}`,
+        filename: `${prefix}-${i}.pdf`,
+        scanStatus: 'Clean'
+      }))
+    }
+  }
+
+  function viewWith({ siteEvidence, requestEvidence, otherSites = [] }) {
+    const [entry] = view.sites
+    const [requestSite] = view.activeRequest.sites
+    return {
+      ...view,
+      sites: [
+        { ...entry, site: { ...entry.site, besEvidence: siteEvidence } },
+        ...otherSites
+      ],
+      activeRequest: {
+        ...view.activeRequest,
+        sites: [{ ...requestSite, besEvidence: requestEvidence }]
+      }
+    }
+  }
+
+  test("the cap counts the site's files on the accreditation as well as the request's", async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(
+      viewWith({ siteEvidence: bes('held', 6), requestEvidence: bes('new', 4) })
+    )
+    const { statusCode, result } = await postUpload()
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain(
+      'You can only upload a maximum of 10 files as evidence of broadly equivalent standards.'
+    )
+    expect(initUpload).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    [
+      "the site's file on the accreditation",
+      {
+        siteEvidence: {
+          besEvidenceUploads: [{ fileId: 'h', filename: 'Evidence.PDF' }]
+        }
+      }
+    ],
+    [
+      "another site's file on the accreditation",
+      {
+        otherSites: [
+          {
+            siteId: 900184,
+            site: {
+              besEvidence: {
+                besEvidenceUploads: [{ fileId: 'h', filename: 'evidence.docx' }]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    [
+      "the request's own file",
+      {
+        requestEvidence: {
+          besEvidenceUploads: [{ fileId: 'h', filename: 'EVIDENCE.pdf' }]
+        }
+      }
+    ]
+  ])('a file named as %s is refused before uploading', async (_, evidence) => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(viewWith(evidence))
+    const { statusCode, result } = await postUpload(dates, 'evidence.pdf')
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain(
+      'A file with this name has already been uploaded. Please rename the file so that each uploaded document has a unique filename'
+    )
+    expect(initUpload).not.toHaveBeenCalled()
+  })
+
   test("status: the backend's max-files 422 shows the cap's message on the upload page", async () => {
     const { cookie } = await uploadCookie()
     mockStatusGets({ uploadStatus: 'ready', form: {} })
