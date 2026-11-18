@@ -18,7 +18,10 @@ import { materialDisplayName } from '../../common/helpers/materialDisplayName.js
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
-import { isMaxFilesRejection } from '../../common/helpers/isMaxFilesRejection.js'
+import {
+  isDuplicateFilenameRejection,
+  isMaxFilesRejection
+} from '../../common/helpers/isMaxFilesRejection.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -53,6 +56,25 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 export const MAX_FILES = 10
 
 const MAX_FILES_REASON = 'maxFiles'
+const DUPLICATE_FILENAME_REASON = 'duplicateFilename'
+
+// 3bb.55: the backend's refusals after the CDP upload, by the results page's
+// reason query parameter, to the message that page shows.
+const UPLOAD_REFUSAL_MESSAGE_KEYS = {
+  [MAX_FILES_REASON]: 'pages.samplingPlanUpload.validation.maxFiles',
+  [DUPLICATE_FILENAME_REASON]:
+    'pages.samplingPlanUpload.validation.duplicateFilename'
+}
+
+function uploadRefusalReason(err) {
+  if (isMaxFilesRejection(err)) {
+    return MAX_FILES_REASON
+  }
+  if (isDuplicateFilenameRejection(err)) {
+    return DUPLICATE_FILENAME_REASON
+  }
+  return null
+}
 
 export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
 
@@ -390,13 +412,14 @@ function buildResultsFiles(files, t) {
   }))
 }
 
-function uploadErrorMessage(t, { uploadFailed, maxFilesReached }) {
+function uploadErrorMessage(t, { uploadFailed, reason }) {
   if (!uploadFailed) {
     return null
   }
-  return maxFilesReached
-    ? t('pages.samplingPlanUpload.validation.maxFiles')
-    : t('pages.samplingPlanUpload.validation.uploadError')
+  return t(
+    UPLOAD_REFUSAL_MESSAGE_KEYS[reason] ??
+      'pages.samplingPlanUpload.validation.uploadError'
+  )
 }
 
 export const samplingPlanResultsGetController = {
@@ -407,7 +430,7 @@ export const samplingPlanResultsGetController = {
     )
     const { applicationId } = request.params
     const uploadFailed = request.query?.upload === 'failed'
-    const maxFilesReached = request.query?.reason === MAX_FILES_REASON
+    const reason = request.query?.reason
 
     const { application, errorResponse } = await fetchApplicationOrRenderError({
       request,
@@ -450,7 +473,7 @@ export const samplingPlanResultsGetController = {
       taskListLink: taskListUrl(applicationId),
       uploadAnotherLink: samplingPlanUrl(applicationId),
       files,
-      error: uploadErrorMessage(t, { uploadFailed, maxFilesReached }),
+      error: uploadErrorMessage(t, { uploadFailed, reason }),
       readOnly,
       isQueriedApplication: application.applicationStatus === 'Queried'
     })
@@ -701,10 +724,11 @@ export const samplingPlanCdpStatusController = {
         { applicationId },
         `Error saving uploaded file for application ${applicationId}`
       )
-      const reason = isMaxFilesRejection(err)
-        ? `&reason=${MAX_FILES_REASON}`
-        : ''
-      return h.redirect(`${resultsUrl(applicationId)}?upload=failed${reason}`)
+      const reason = uploadRefusalReason(err)
+      const reasonParam = reason ? `&reason=${reason}` : ''
+      return h.redirect(
+        `${resultsUrl(applicationId)}?upload=failed${reasonParam}`
+      )
     }
 
     return h.redirect(
