@@ -353,7 +353,8 @@ function besRefusalErrors(t, applicationId, view, query) {
       .filter((site) => ids.has(String(site.siteId)))
       .map((site) => ({
         href: `${addToAccreditationUrl(applicationId, site.siteId)}?reason=${refusal.reason}`,
-        orsId: site.orsId,
+        // A site refused for both reasons has two entries, so the reason keeps each id unique.
+        testId: `error-request-${site.orsId}-${refusal.reason}`,
         text: manageSitesText(t, refusal.text, {
           site: site.siteName,
           orsId: site.orsId
@@ -389,7 +390,7 @@ export const requestsPostController = {
     if (incomplete.length > 0) {
       const errors = incomplete.map((site) => ({
         href: addToAccreditationUrl(applicationId, site.siteId),
-        orsId: site.orsId,
+        testId: `error-request-${site.orsId}`,
         text: manageSitesText(t, 'requests.incomplete', {
           site: site.siteName,
           orsId: site.orsId

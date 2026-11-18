@@ -762,12 +762,24 @@ describe('#manageOverseasSites (RA-492)', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        `href="${BASE}/add/900182?reason=maxFiles" data-testid="error-request-002">Denmark PR (002) has more than 10 files as evidence of broadly equivalent standards`
+        `href="${BASE}/add/900182?reason=maxFiles" data-testid="error-request-002-maxFiles">Denmark PR (002) has more than 10 files as evidence of broadly equivalent standards`
       )
       expect(result).toContain(
-        `href="${BASE}/add/900184?reason=duplicateFilename" data-testid="error-request-004">Bergen factory (004) has a file with the same name as another uploaded file`
+        `href="${BASE}/add/900184?reason=duplicateFilename" data-testid="error-request-004-duplicateFilename">Bergen factory (004) has a file with the same name as another uploaded file`
       )
       expect(result).not.toContain('999999')
+    })
+
+    test('a site refused for both reasons gets an error for each, with distinct test ids', async () => {
+      mockGet(makeView({ active: [requestSite({ isComplete: true })] }))
+      const { result } = await server.inject(
+        `${BASE}/requests?maxFiles=900182&duplicateFilename=900182`
+      )
+
+      expect(result).toContain('data-testid="error-request-002-maxFiles"')
+      expect(result).toContain(
+        'data-testid="error-request-002-duplicateFilename"'
+      )
     })
   })
 
