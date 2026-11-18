@@ -762,10 +762,10 @@ describe('#manageOverseasSites (RA-492)', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain(
-        `href="${BASE}/add/900182?reason=maxFiles" data-testid="error-request-002-maxFiles">Denmark PR (002) has more than 10 files as evidence of broadly equivalent standards`
+        `href="${BASE}/add/900182?reason=maxFiles" data-testid="error-request-002-maxFiles">You can only upload a maximum of 10 files as evidence of broadly equivalent standards.`
       )
       expect(result).toContain(
-        `href="${BASE}/add/900184?reason=duplicateFilename" data-testid="error-request-004-duplicateFilename">Bergen factory (004) has a file with the same name as another uploaded file`
+        `href="${BASE}/add/900184?reason=duplicateFilename" data-testid="error-request-004-duplicateFilename">A file with this name has already been uploaded. Please rename the file so that each uploaded document has a unique filename`
       )
       expect(result).not.toContain('999999')
     })

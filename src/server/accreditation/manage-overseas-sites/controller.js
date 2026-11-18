@@ -313,17 +313,18 @@ function renderRequests(
 
 // 3bb.49: the backend's submit refusals for a site's BES files, by its
 // ValidationProblem key suffix, as the requests page's query parameter (also
-// the summary page's reason) and that page's message for the site.
+// the summary page's reason). The message is the BES upload page's own, as in
+// the accreditation application journey (user, 2026-11-18).
 const BES_SUBMIT_REFUSALS = [
   {
     key: 'besEvidenceMaxFiles',
     reason: 'maxFiles',
-    text: 'requests.besMaxFiles'
+    text: 'pages.uploadBesEvidence.validation.maxFiles'
   },
   {
     key: 'besEvidenceDuplicateFilename',
     reason: 'duplicateFilename',
-    text: 'requests.besDuplicateFilename'
+    text: 'pages.uploadBesEvidence.validation.duplicateFilename'
   }
 ]
 
@@ -355,10 +356,7 @@ function besRefusalErrors(t, applicationId, view, query) {
         href: `${addToAccreditationUrl(applicationId, site.siteId)}?reason=${refusal.reason}`,
         // A site refused for both reasons has two entries, so the reason keeps each id unique.
         testId: `error-request-${site.orsId}-${refusal.reason}`,
-        text: manageSitesText(t, refusal.text, {
-          site: site.siteName,
-          orsId: site.orsId
-        })
+        text: t(refusal.text)
       }))
   })
 }
