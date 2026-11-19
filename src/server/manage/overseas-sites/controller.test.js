@@ -914,6 +914,21 @@ describe('#manageOverseasSitesController', () => {
       })
     })
 
+    // The add-ORS journey looks the material up by our names (Glass's
+    // recycling operation codes), which have no glass_re_melt.
+    test("sets the accreditation's own material, not the URL's", async () => {
+      mockManageGets([
+        makeApp({ material: 'glass', glassRecyclingProcess: ['glass_re_melt'] })
+      ])
+
+      const { statusCode } = await get(
+        `/manage/org-123/${REGISTRATION_NUMBER}/glass_re_melt/overseas-sites`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(session).toMatchObject({ materialType: 'Glass' })
+    })
+
     test('returns 404 for a registration-only reprocessor', async () => {
       const spy = mockManageGets([], registrationOnlyReprocessor)
 

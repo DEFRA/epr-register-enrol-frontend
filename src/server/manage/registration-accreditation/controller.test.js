@@ -466,14 +466,129 @@ describe('#manageRegistrationAccreditationController', () => {
     })
   })
 
-  test('accepts the lowercase material slug Re/Ex links with', async () => {
-    mockManageGets([makeApp()])
+  // Re/Ex links with its organisation read model's material: lowercase, and
+  // glass_re_melt or glass_other for glass. Older links carry ours (Plastic,
+  // Glass).
+  describe("the URL's material", () => {
+    const urlFor = (material) =>
+      `/manage/${ORG_ID}/${REGISTRATION_NUMBER}/${material}`
 
-    const { statusCode } = await get(
-      `/manage/${ORG_ID}/${REGISTRATION_NUMBER}/plastic`
+    const glassApp = (glassRecyclingProcess) =>
+      makeApp({
+        material: 'glass',
+        glassRecyclingProcess: [glassRecyclingProcess],
+        wasteProcessingType: 'reprocessor'
+      })
+
+    const expectAccreditedView = ({ statusCode, result }) => {
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        /data-testid="accreditation-number"[^>]*>\s*A27EX0500180001PL\s*</
+      )
+    }
+
+    const expectServiceProblem = ({ statusCode, result }) => {
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="service-problem-heading"')
+    }
+
+    test.each(['plastic', 'Plastic', 'PLASTIC'])(
+      'shows an accredited operator their accreditation for %s',
+      async (material) => {
+        mockManageGets([makeApp()])
+
+        expectAccreditedView(await get(urlFor(material)))
+      }
     )
 
-    expect(statusCode).toBe(statusCodes.ok)
+    test.each([
+      ['glass_re_melt', 'glass_re_melt', 'Glass - Remelt'],
+      ['Glass_Re_Melt', 'glass_re_melt', 'Glass - Remelt'],
+      ['glass_other', 'glass_other', 'Glass - Other'],
+      ['glass', 'glass_other', 'Glass - Other'],
+      ['Glass', 'glass_re_melt', 'Glass - Remelt']
+    ])(
+      'shows an accredited %s operator with %s glass their accreditation',
+      async (material, glassRecyclingProcess, caption) => {
+        mockManageGets([glassApp(glassRecyclingProcess)])
+
+        const response = await get(urlFor(material))
+
+        expectAccreditedView(response)
+        expect(response.result).toMatch(
+          new RegExp(
+            `data-testid="page-caption"[^>]*>\\s*Acme Recycling Ltd \\(2027, ${caption}\\)\\s*<`
+          )
+        )
+      }
+    )
+
+    test.each([
+      ['glass_other', 'glass_re_melt'],
+      ['glass_re_melt', 'glass_other']
+    ])(
+      'shows the service-problem page for %s when the accreditation is %s glass',
+      async (material, glassRecyclingProcess) => {
+        mockManageGets([glassApp(glassRecyclingProcess)])
+
+        expectServiceProblem(await get(urlFor(material)))
+      }
+    )
+
+    test.each(['glass_re_melt', 'GLASS_RE_MELT', 'glass'])(
+      'shows a registration-only re-melt glass reprocessor their registration for %s',
+      async (material) => {
+        mockManageGets([], registrationOnlyReprocessor)
+
+        const { statusCode, result } = await get(urlFor(material))
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toMatch(
+          /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2027, Glass - Remelt\)\s*</
+        )
+      }
+    )
+
+    test('shows the service-problem page for glass_other when the registration is re-melt glass', async () => {
+      mockManageGets([], registrationOnlyReprocessor)
+
+      expectServiceProblem(await get(urlFor('glass_other')))
+    })
+
+    test("reads a registration-only operator's change requests by the registration's own material", async () => {
+      const getSpy = mockManageGets([], registrationOnlyReprocessor)
+
+      await get(urlFor('glass_re_melt'))
+
+      expect(
+        getSpy.mock.calls
+          .map(([url]) => url)
+          .filter((url) => url.startsWith('/api/v1/accreditation-changes/'))
+      ).toEqual([
+        `/api/v1/accreditation-changes/${ORG_ID}/registrations/${REGISTRATION_ID}/Glass`
+      ])
+    })
+
+    // The route params guard's answer for any other path param it refuses.
+    test.each(['glass-re-melt', 'glassremelt', 'tin'])(
+      'returns 400 for %s on every manage page, without reading data',
+      async (material) => {
+        const getSpy = mockManageGets([makeApp()])
+        const url = urlFor(material)
+
+        for (const path of [
+          url,
+          `/cy${url}`,
+          `${url}/overseas-sites`,
+          `${url}/change-requests`,
+          `${url}/change-requests/3f2504e0-4f89-41d3-9a0c-0305e82c3301`
+        ]) {
+          const { statusCode } = await get(path)
+          expect(statusCode, path).toBe(statusCodes.badRequest)
+        }
+        expect(getSpy).not.toHaveBeenCalled()
+      }
+    )
   })
 
   describe('content shared by exporters and reprocessors', () => {

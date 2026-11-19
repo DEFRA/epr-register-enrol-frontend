@@ -71,10 +71,12 @@ function partitionSites(sites, applicationId, changeRequests) {
 
 // RA-492: the in-year change pages under /accreditation/ read the
 // accreditation from the session, as they do after the operator-accreditation
-// landing page, which this page's journey does not pass through.
+// landing page, which this page's journey does not pass through. The
+// accreditation's own material, not the URL's: the journey looks it up by our
+// material names (Steel), in that case.
 function enterAccreditationSession(request, context) {
-  const { application, registrationId } = context
-  const { organisationId, materialType } = request.params
+  const { application, registrationId, materialType } = context
+  const { organisationId } = request.params
   request.yar.set(
     ACCREDITATION_SESSION_KEYS.accreditationId,
     application.applicationId

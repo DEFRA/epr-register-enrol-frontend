@@ -14,6 +14,7 @@ import {
   fetchRegistration,
   isApprovedRegistration
 } from './current-registration.js'
+import { matchesUrlMaterial, parseUrlMaterial } from './url-material.js'
 
 // Runs before auth, so a logged-out caller gets the same 404 as everyone else
 // rather than a redirect to sign in for a page that doesn't exist yet.
@@ -26,7 +27,9 @@ function notFoundUnlessEnabled(_request, h) {
 
 export const manageRouteOptions = {
   ...requireOperator,
-  ext: { onPreAuth: { method: notFoundUnlessEnabled } }
+  ext: { onPreAuth: { method: notFoundUnlessEnabled } },
+  // RA-739: Re/Ex links with its organisation read model's material.
+  plugins: { routeParamsGuard: { glassRecyclingProcesses: true } }
 }
 
 export function serviceProblem(request, h, t) {
@@ -88,17 +91,12 @@ function registrationOnlyContext(registration) {
   }
 }
 
-const sameMaterial = (a, b) =>
-  typeof a === 'string' &&
-  typeof b === 'string' &&
-  a.toLowerCase() === b.toLowerCase()
-
 // The backend names the organisation only once ReEx confirms it holds the
 // registration: with no accreditation, nothing else ties the URL's
 // registration to its organisation.
-const registrationMatchesUrl = (registration, materialType) =>
+const registrationMatchesUrl = (registration, urlMaterial) =>
   Boolean(registration.organisationName) &&
-  sameMaterial(registration.materialType, materialType)
+  matchesUrlMaterial(registration, urlMaterial)
 
 async function assertCanAccessOrganisation(request, organisationId) {
   const canAccess = await operatorCanAccessOrganisation(
@@ -145,6 +143,7 @@ export async function loadManagePage(
 ) {
   const { t, currentLocale } = getLocaleAndTranslator(request)
   const { organisationId, registrationNumber, materialType } = request.params
+  const urlMaterial = parseUrlMaterial(materialType)
 
   await assertCanAccessOrganisation(request, organisationId)
 
@@ -160,7 +159,7 @@ export async function loadManagePage(
   const accreditation = await fetchCurrentAccreditation({
     organisationId,
     registrationId: registration.registrationId,
-    materialType,
+    urlMaterial,
     logger: request.logger
   })
   const application = accreditation.application ?? null
@@ -186,7 +185,7 @@ export async function loadManagePage(
 
   if (
     !allowRegistrationOnly ||
-    !registrationMatchesUrl(registration, materialType)
+    !registrationMatchesUrl(registration, urlMaterial)
   ) {
     return { response: serviceProblem(request, h, t) }
   }

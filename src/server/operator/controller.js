@@ -15,14 +15,15 @@ import { manageUrl } from '../manage/helpers/manage-urls.js'
 
 function manageLink(
   { orgId, orgName, material },
-  registrationNumber = exporterRegistrationNumber(currentYear(), orgId)
+  registrationNumber = exporterRegistrationNumber(currentYear(), orgId),
+  urlMaterial = null
 ) {
   const materialType = material.charAt(0).toUpperCase() + material.slice(1)
   return {
     href: manageUrl({
       organisationId: orgId,
       registrationNumber,
-      materialType
+      materialType: urlMaterial ?? materialType
     }),
     organisationName: orgName,
     materialType
@@ -31,10 +32,12 @@ function manageLink(
 
 function manageLinks() {
   return {
-    // RA-697: the stub API and the backend's dev seed both have it.
+    // RA-697: the stub API and the backend's dev seed both have it. RA-739:
+    // linked as Re/Ex links it, with its organisation read model's material.
     reprocessor: manageLink(
       MANAGE_EXPORTER_ORG_REPROCESSOR,
-      reprocessorRegistrationNumber(currentYear())
+      reprocessorRegistrationNumber(currentYear()),
+      'glass_re_melt'
     ),
     exporter: manageLink(MANAGE_EXPORTER_ORG),
     // RA-492: the in-year add-ORS journey's own exporter.
