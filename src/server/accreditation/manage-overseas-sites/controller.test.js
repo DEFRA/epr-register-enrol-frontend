@@ -250,6 +250,72 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toMatch(/data-testid="row-bes-evidence-action">Change/)
     })
 
+    function viewWithHeldFiles(active) {
+      return makeView({
+        active,
+        sites: [
+          siteEntry({
+            pendingRequestStatus: 'InProgress',
+            site: {
+              ...siteEntry().site,
+              besEvidence: {
+                besEvidenceUploads: [{ fileId: 'h1', filename: 'held.pdf' }]
+              }
+            }
+          })
+        ]
+      })
+    }
+
+    test('summary: the site’s existing BES files are listed first, without a Delete button', async () => {
+      mockGet(viewWithHeldFiles([requestSite(WITH_FILE)]))
+      const { result } = await server.inject(`${BASE}/add/900182`)
+      expect(result).toMatch(
+        /data-testid="filename-h1">held\.pdf[\s\S]*data-testid="filename-f1">bes\.pdf/
+      )
+      expect(result).not.toContain('data-testid="delete-file-form-h1"')
+      expect(result).not.toContain('/bes-evidence/h1/delete')
+      expect(result).toContain('data-testid="delete-file-button-f1"')
+      expect(result).toMatch(/data-testid="row-bes-evidence-action">Change/)
+      expect(result).not.toContain('data-testid="row-bes-evidence-missing"')
+    })
+
+    test('summary: a request file the site already holds is listed once, without a Delete button', async () => {
+      mockGet(
+        viewWithHeldFiles([
+          requestSite({
+            besEvidence: {
+              besEvidenceUploads: [{ fileId: 'h1', filename: 'held.pdf' }]
+            }
+          })
+        ])
+      )
+      const { result } = await server.inject(`${BASE}/add/900182`)
+      expect(result.match(/data-testid="filename-h1"/g)).toHaveLength(1)
+      expect(result).not.toContain('data-testid="delete-file-form-h1"')
+    })
+
+    test('summary: with only the site’s files and evidence still required, the row lists them and is missing', async () => {
+      mockGet(viewWithHeldFiles([requestSite()]))
+      const { result } = await server.inject(`${BASE}/add/900182`)
+      expect(result).toMatch(/data-testid="filename-h1">held\.pdf/)
+      expect(result).toContain('data-testid="row-bes-evidence-missing"')
+      expect(result).toMatch(
+        /data-testid="row-bes-evidence-action">Add information/
+      )
+    })
+
+    test('summary: with only the site’s files and no evidence required, the row lists them and is not missing', async () => {
+      mockGet(
+        viewWithHeldFiles([
+          requestSite({ besEvidenceRequired: false, missingFields: [] })
+        ])
+      )
+      const { result } = await server.inject(`${BASE}/add/900182`)
+      expect(result).toMatch(/data-testid="filename-h1">held\.pdf/)
+      expect(result).not.toContain('data-testid="row-bes-evidence-missing"')
+    })
+
     // 3bb.49: a site the backend refused at submit for its BES files, linked
     // from the requests page, shows the upload page's message on the row.
     test.each([

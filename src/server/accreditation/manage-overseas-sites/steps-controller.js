@@ -35,6 +35,7 @@ import {
   resolveDraftSite
 } from './controller.js'
 import { addToAccreditationUrl, stepUrl } from './urls.js'
+import { besUploadsOf, grantedBesUploads } from './view-model.js'
 
 // RA-492: the "Add information" / "Change" steps behind the Add to
 // accreditation summary. Each captures one of the fields the backend lets
@@ -360,7 +361,7 @@ function besView(h, t, request, draft, payload, errors) {
 // takes in every site's files there as well as the request's. The backend
 // also checks the accreditation's sampling plan files, which the view lacks.
 function validateBesFile(t, uploadedFile, draft) {
-  if (hasMaxBesEvidenceFiles(grantedBesUploads(draft))) {
+  if (hasMaxBesEvidenceFiles(grantedBesFiles(draft))) {
     return t('pages.uploadBesEvidence.validation.maxFiles')
   }
   const filename = uploadedFile?.filename ?? ''
@@ -379,19 +380,9 @@ function validateBesFile(t, uploadedFile, draft) {
   return null
 }
 
-function besUploadsOf(holder) {
-  return holder?.besEvidence?.besEvidenceUploads ?? []
-}
-
-// As the backend's ChangeRequestRules.GrantedBesEvidence: a request file the
-// site already holds is not added again.
-function grantedBesUploads(draft) {
-  const held = besUploadsOf(draft.entry.site)
-  const heldIds = new Set(held.map((f) => f.fileId))
-  return [
-    ...held,
-    ...besUploadsOf(draft.requestSite).filter((f) => !heldIds.has(f.fileId))
-  ]
+function grantedBesFiles(draft) {
+  const { held, added } = grantedBesUploads(draft.entry.site, draft.requestSite)
+  return [...held, ...added]
 }
 
 function filenamesOnRequestAndAccreditation(draft) {
