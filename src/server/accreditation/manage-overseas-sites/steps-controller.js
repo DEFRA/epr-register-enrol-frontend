@@ -12,7 +12,7 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { buildViewData as buildRecyclingViewData } from '../add-overseas-site/recycling-operation-details/controller.js'
 import { buildViewData as buildConditionsViewData } from '../add-overseas-site/conditions-of-export/controller.js'
-import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
+import { isFilenameAmong } from '../../common/helpers/duplicateFilename.js'
 import {
   ALLOWED_MIME_TYPES,
   MAX_FILE_BYTES,
@@ -373,7 +373,7 @@ function validateBesFile(t, uploadedFile, draft) {
   if (uploadedFile.payload.length > MAX_FILE_BYTES) {
     return t('pages.uploadBesEvidence.validation.fileTooLarge')
   }
-  if (isDuplicateFilename(filename, filesOnRequestAndAccreditation(draft))) {
+  if (isFilenameAmong(filename, filenamesOnRequestAndAccreditation(draft))) {
     return t('pages.uploadBesEvidence.validation.duplicateFilename')
   }
   return null
@@ -394,16 +394,11 @@ function grantedBesUploads(draft) {
   ]
 }
 
-// In collectApplicationFilenames' shape, so isDuplicateFilename applies.
-function filesOnRequestAndAccreditation(draft) {
-  return {
-    overseasSites: {
-      sites: [
-        ...(draft.view.sites ?? []).map((entry) => entry.site),
-        ...(draft.view.activeRequest?.sites ?? [])
-      ]
-    }
-  }
+function filenamesOnRequestAndAccreditation(draft) {
+  return [
+    ...(draft.view.sites ?? []).map((entry) => entry.site),
+    ...(draft.view.activeRequest?.sites ?? [])
+  ].flatMap((site) => besUploadsOf(site).map((f) => f?.filename))
 }
 
 export const besEvidenceGetController = stepHandler(

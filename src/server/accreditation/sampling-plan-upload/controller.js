@@ -19,9 +19,9 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 import {
-  isDuplicateFilenameRejection,
-  isMaxFilesRejection
-} from '../../common/helpers/isMaxFilesRejection.js'
+  UPLOAD_REJECTION_REASONS,
+  uploadRejectionReason
+} from '../../common/helpers/uploadRejection.js'
 
 export const SAMPLING_PLAN_UPLOAD_SESSION_KEY = 'samplingPlanUpload'
 
@@ -55,23 +55,11 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 // files don't count, matching the backend's AddFile check.
 export const MAX_FILES = 10
 
-const MAX_FILES_REASON = 'maxFiles'
-const DUPLICATE_FILENAME_REASON = 'duplicateFilename'
-
-const UPLOAD_REFUSAL_MESSAGE_KEYS = {
-  [MAX_FILES_REASON]: 'pages.samplingPlanUpload.validation.maxFiles',
-  [DUPLICATE_FILENAME_REASON]:
+const UPLOAD_REJECTION_MESSAGE_KEYS = {
+  [UPLOAD_REJECTION_REASONS.maxFiles]:
+    'pages.samplingPlanUpload.validation.maxFiles',
+  [UPLOAD_REJECTION_REASONS.duplicateFilename]:
     'pages.samplingPlanUpload.validation.duplicateFilename'
-}
-
-function uploadRefusalReason(err) {
-  if (isMaxFilesRejection(err)) {
-    return MAX_FILES_REASON
-  }
-  if (isDuplicateFilenameRejection(err)) {
-    return DUPLICATE_FILENAME_REASON
-  }
-  return null
 }
 
 export const DOCUMENT_TYPES = ['SamplingPlan', 'SupportingEvidence']
@@ -415,7 +403,7 @@ function uploadErrorMessage(t, { uploadFailed, reason }) {
     return null
   }
   return t(
-    UPLOAD_REFUSAL_MESSAGE_KEYS[reason] ??
+    UPLOAD_REJECTION_MESSAGE_KEYS[reason] ??
       'pages.samplingPlanUpload.validation.uploadError'
   )
 }
@@ -722,7 +710,7 @@ export const samplingPlanCdpStatusController = {
         { applicationId },
         `Error saving uploaded file for application ${applicationId}`
       )
-      const reason = uploadRefusalReason(err)
+      const reason = uploadRejectionReason(err)
       const reasonParam = reason ? `&reason=${reason}` : ''
       return h.redirect(
         `${resultsUrl(applicationId)}?upload=failed${reasonParam}`

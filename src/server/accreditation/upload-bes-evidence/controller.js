@@ -17,9 +17,9 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { isDuplicateFilename } from '../../common/helpers/duplicateFilename.js'
 import {
-  isDuplicateFilenameRejection,
-  isMaxFilesRejection
-} from '../../common/helpers/isMaxFilesRejection.js'
+  UPLOAD_REJECTION_REASONS,
+  uploadRejectionReason
+} from '../../common/helpers/uploadRejection.js'
 
 export const BES_EVIDENCE_UPLOAD_SESSION_KEY = 'besEvidenceUpload'
 
@@ -52,9 +52,6 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024
 // RA-605: per overseas site; infected files don't count, matching the
 // backend's AddBesEvidenceFile check.
 export const MAX_FILES = 10
-const MAX_FILES_REASON = 'maxFiles'
-const DUPLICATE_FILENAME_REASON = 'duplicateFilename'
-
 // RA-492: shared with the in-year add-ORS journey's BES step, which applies
 // the same cap to a change request's site.
 export function hasMaxBesEvidenceFiles(uploads) {
@@ -65,20 +62,16 @@ export function hasMaxBesEvidenceFiles(uploads) {
 }
 
 const REJECTION_MESSAGE_KEYS = {
-  [MAX_FILES_REASON]: 'pages.uploadBesEvidence.validation.maxFiles',
-  [DUPLICATE_FILENAME_REASON]:
+  [UPLOAD_REJECTION_REASONS.maxFiles]:
+    'pages.uploadBesEvidence.validation.maxFiles',
+  [UPLOAD_REJECTION_REASONS.duplicateFilename]:
     'pages.uploadBesEvidence.validation.duplicateFilename'
 }
 
 // Shared with the in-year add-ORS journey's BES status step (3bb.48).
 export function uploadRejectionQuery(err) {
-  if (isMaxFilesRejection(err)) {
-    return `reason=${MAX_FILES_REASON}`
-  }
-  if (isDuplicateFilenameRejection(err)) {
-    return `reason=${DUPLICATE_FILENAME_REASON}`
-  }
-  return null
+  const reason = uploadRejectionReason(err)
+  return reason ? `reason=${reason}` : null
 }
 
 export function uploadRejectionErrorFromQuery(request, t) {
