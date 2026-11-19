@@ -70,9 +70,7 @@ const REJECTION_MESSAGE_KEYS = {
     'pages.uploadBesEvidence.validation.duplicateFilename'
 }
 
-// The upload page's URL query after the backend refused a file over the cap
-// or (3bb.48) with a duplicate name, or null for any other failure. Shared
-// with the in-year add-ORS journey's BES status step.
+// Shared with the in-year add-ORS journey's BES status step (3bb.48).
 export function uploadRejectionQuery(err) {
   if (isMaxFilesRejection(err)) {
     return `reason=${MAX_FILES_REASON}`
@@ -83,7 +81,6 @@ export function uploadRejectionQuery(err) {
   return null
 }
 
-// The refusal's error for an upload page the backend's refusal redirected to.
 export function uploadRejectionErrorFromQuery(request, t) {
   const key = Object.hasOwn(REJECTION_MESSAGE_KEYS, request.query?.reason)
     ? REJECTION_MESSAGE_KEYS[request.query.reason]

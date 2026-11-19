@@ -58,8 +58,6 @@ export const MAX_FILES = 10
 const MAX_FILES_REASON = 'maxFiles'
 const DUPLICATE_FILENAME_REASON = 'duplicateFilename'
 
-// 3bb.55: the backend's refusals after the CDP upload, by the results page's
-// reason query parameter, to the message that page shows.
 const UPLOAD_REFUSAL_MESSAGE_KEYS = {
   [MAX_FILES_REASON]: 'pages.samplingPlanUpload.validation.maxFiles',
   [DUPLICATE_FILENAME_REASON]:
