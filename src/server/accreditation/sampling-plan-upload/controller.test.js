@@ -1443,10 +1443,22 @@ describe('#samplingPlanUploadController', () => {
         '&reason=maxFiles'
       ],
       [
-        'a 422 that is not the file cap (e.g. duplicate filename)',
+        'a 422 carrying the DuplicateFilename code',
         {
           status: 422,
-          response: '"A file with this name has already been uploaded."'
+          response: JSON.stringify({
+            status: 422,
+            detail: 'A file with this name has already been uploaded.',
+            code: 'DuplicateFilename'
+          })
+        },
+        '&reason=duplicateFilename'
+      ],
+      [
+        'a 422 with no recognised code',
+        {
+          status: 422,
+          response: '"The file type is not allowed."'
         },
         ''
       ],
@@ -1791,6 +1803,20 @@ describe('#samplingPlanUploadController', () => {
 
       expect(result).toContain(
         'You can only upload a maximum of 10 &#39;sampling and inspection plan&#39; and &#39;supporting information&#39; files.'
+      )
+      expect(result).not.toContain('problem uploading your file')
+    })
+
+    test('shows the duplicate-filename message when redirected with reason=duplicateFilename', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/sampling-plan/${APPLICATION_ID}/results?upload=failed&reason=duplicateFilename`
+      })
+
+      expect(result).toContain(
+        'A file with this name has already been uploaded. Please rename the file so that each uploaded document has a unique filename'
       )
       expect(result).not.toContain('problem uploading your file')
     })

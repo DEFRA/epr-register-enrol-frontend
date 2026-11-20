@@ -55,7 +55,7 @@ describe('#operatorController', () => {
 
   describe('RA-425 manage page links', () => {
     const DELTA_GREEN_MANAGE = 'href="/manage/50003/'
-    const REPROCESSOR_MANAGE = `href="/manage/50018/R${YY}ER0500180002GR/Glass"`
+    const REPROCESSOR_MANAGE = `href="/manage/50018/R${YY}ER0500180002GR/glass_re_melt"`
     const EXPORTER_MANAGE = `href="/manage/50018/R${YY}EX0500180001PL/Plastic"`
 
     function setConfig({ inYearChangesEnabled, stubEnabled }) {

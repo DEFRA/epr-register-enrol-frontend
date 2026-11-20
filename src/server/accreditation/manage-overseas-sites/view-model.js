@@ -205,8 +205,8 @@ export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
   )
   const label = (key) => manageSitesText(t, `rows.${key}`)
 
-  const files = requestSite.besEvidence?.besEvidenceUploads ?? []
-  if (requestSite.besEvidenceRequired || files.length > 0) {
+  const { held, added } = grantedBesUploads(entry.site, requestSite)
+  if (requestSite.besEvidenceRequired || held.length + added.length > 0) {
     rows.push({
       ...editableRow({
         t,
@@ -214,22 +214,49 @@ export function buildSummaryRows({ t, applicationId, entry, requestSite }) {
         siteId: entry.siteId,
         field: 'besEvidence',
         label: label('besEvidence'),
-        value: files.map((file) => file.filename).join(', ')
+        value: added.map((file) => file.filename).join(', ')
       }),
-      // Each uploaded file can be removed, as on the reaccreditation
-      // journey's evidence page.
-      files: files.map((file) => ({
-        fileId: file.fileId,
-        filename: file.filename,
-        deleteUrl: besEvidenceFileDeleteUrl(
-          applicationId,
-          entry.siteId,
-          file.fileId
-        )
-      }))
+      missing: requestSite.besEvidenceRequired && added.length === 0,
+      // The site's own files count towards the cap and unique names but are
+      // the accreditation's, not the request's, so only the request's can be
+      // removed, as on the reaccreditation journey's evidence page.
+      files: [
+        ...held.map((file) => ({
+          fileId: file.fileId,
+          filename: file.filename,
+          deleteUrl: null
+        })),
+        ...added.map((file) => ({
+          fileId: file.fileId,
+          filename: file.filename,
+          deleteUrl: besEvidenceFileDeleteUrl(
+            applicationId,
+            entry.siteId,
+            file.fileId
+          )
+        }))
+      ]
     })
   }
   return rows
+}
+
+export function besUploadsOf(holder) {
+  return holder?.besEvidence?.besEvidenceUploads ?? []
+}
+
+/**
+ * As the backend's ChangeRequestRules.GrantedBesEvidence: the BES files the
+ * site already holds on the accreditation, and the request's files a grant
+ * would add to them (one the site already holds is not added again).
+ */
+export function grantedBesUploads(site, requestSite) {
+  const held = besUploadsOf(site)
+  const heldIds = new Set(held.map((file) => file.fileId))
+  return {
+    held,
+    added: besUploadsOf(requestSite).filter((file) => !heldIds.has(file.fileId))
+  }
 }
 
 /**

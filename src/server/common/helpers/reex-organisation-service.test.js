@@ -127,6 +127,31 @@ describe('operatorCanAccessOrganisation', () => {
     expect(logger.error).toHaveBeenCalledOnce()
   })
 
+  test('throws a 404 when ReEx has no such organisation', async () => {
+    const logger = { error: vi.fn() }
+    const resolveLinkedId = vi.fn(async () => {
+      throw Object.assign(new Error('API request failed: 404'), { status: 404 })
+    })
+
+    await expect(
+      operatorCanAccessOrganisation(user, '999999', { resolveLinkedId, logger })
+    ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 404 } })
+    expect(logger.error).not.toHaveBeenCalled()
+  })
+
+  test('still throws a 503 for any other API failure', async () => {
+    const resolveLinkedId = vi.fn(async () => {
+      throw Object.assign(new Error('API request failed: 502'), { status: 502 })
+    })
+
+    await expect(
+      operatorCanAccessOrganisation(user, 'reex-1', {
+        resolveLinkedId,
+        logger: { error: vi.fn() }
+      })
+    ).rejects.toMatchObject({ isBoom: true, output: { statusCode: 503 } })
+  })
+
   test('denies when ReEx resolved no link (null)', async () => {
     const resolveLinkedId = vi.fn(async () => null)
 

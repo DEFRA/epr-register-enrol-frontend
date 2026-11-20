@@ -137,6 +137,35 @@ describe('#manageOverseasSitesController', () => {
     return html.slice(start, html.indexOf('</details>', start))
   }
 
+  test('lists both tabs in site ID order, with the accredited ORSs on Accredited only', async () => {
+    const html = await getPage(
+      makeApp({
+        overseasSites: {
+          sectionStatus: 'Completed',
+          sites: [
+            ors(9, { selected: true }),
+            ors(2, { selected: false }),
+            ors(5, { selected: true }),
+            ors(1, { selected: false })
+          ]
+        }
+      })
+    )
+
+    const ids = [
+      ...tabPanel(html, 'registered').matchAll(
+        /data-testid="registered-site-row-(\d+)"/g
+      )
+    ].map((match) => Number(match[1]))
+    expect(ids).toEqual([1, 2])
+    const accreditedIds = [
+      ...tabPanel(html, 'accredited').matchAll(
+        /data-testid="accredited-site-row-(\d+)"/g
+      )
+    ].map((match) => Number(match[1]))
+    expect(accreditedIds).toEqual([5, 9])
+  })
+
   test.each([PAGE_URL, WELSH_PAGE_URL])(
     'GET %s returns 404 when the flag is off, without reading data',
     async (url) => {
@@ -193,7 +222,7 @@ describe('#manageOverseasSitesController', () => {
 
   // RA-739: the accreditation is found by the registration's ReEx id, which
   // only the registration's record gives.
-  test('shows the service-problem page when the registration number has no record', async () => {
+  test('is a 404 when the registration number has no record for the organisation', async () => {
     const spy = mockManageGets(
       [makeApp({ wasteProcessingType: 'reprocessor' })],
       apiError(statusCodes.notFound)
@@ -201,7 +230,7 @@ describe('#manageOverseasSitesController', () => {
 
     const { statusCode } = await get(PAGE_URL)
 
-    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(statusCode).toBe(statusCodes.notFound)
     expect(spy).not.toHaveBeenCalledWith(
       expect.stringMatching(/^\/api\/v1\/accreditation-applications\//)
     )
@@ -238,12 +267,6 @@ describe('#manageOverseasSitesController', () => {
         expectServiceProblem(await get(PAGE_URL))
       }
     )
-
-    test('when the registration has no record', async () => {
-      mockManageGets([makeApp()], apiError(statusCodes.notFound))
-
-      expectServiceProblem(await get(PAGE_URL))
-    })
 
     test('when the API fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(
@@ -316,7 +339,7 @@ describe('#manageOverseasSitesController', () => {
       )
     })
 
-    test('puts selected ORSs on Accredited and other existing ORSs on Registered', () => {
+    test('puts selected ORSs on Accredited, and the other existing ORSs on Registered', () => {
       const accredited = tabPanel(result, 'accredited')
       const registered = tabPanel(result, 'registered')
 
@@ -329,6 +352,14 @@ describe('#manageOverseasSitesController', () => {
         expect(accredited).not.toContain(`site-row-${id}"`)
       }
       expect(result).not.toContain('site-row-6"')
+    })
+
+    // RA-495 (user, 2026-11-20): accredited ORSs are not repeated on Registered.
+    test('never tags or repeats an accredited ORS on the Registered tab', () => {
+      const registered = tabPanel(result, 'registered')
+
+      expect(registered).not.toContain('site-status-tag-1')
+      expect(registered).not.toContain('Accredited')
     })
 
     test('shows each ORS number, name in bold, and "address line 1, country"', () => {
@@ -376,13 +407,12 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toContain('interim-sites-disclosure-3"')
     })
 
-    test('never shows interim sites on the Registered tab, even for a registered ORS that has them', () => {
+    test('shows interim sites on the Registered tab too, for an ORS that has them', () => {
       const registered = tabPanel(result, 'registered')
 
       expect(registered).toContain('data-testid="registered-site-row-4"')
-      expect(registered).not.toContain('interim-sites-disclosure')
-      expect(registered).not.toContain('Show interim sites')
-      expect(result).not.toContain('Registration Interim')
+      expect(registered).toContain('interim-sites-disclosure-4"')
+      expect(registered).toContain('Registration Interim')
     })
 
     // RA-492's "Add to accreditation" on registered ORSs is the only action.
@@ -507,11 +537,8 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="registered-sites-tab"[^>]*>\s*Registered \(1\)\s*</
       )
       expect(result).toMatch(/Show interim sites \(2\)/)
-      // Dragon Recyclers is registered only, so its interim site stays hidden.
-      expect(tabPanel(result, 'registered')).not.toContain(
-        'interim-sites-disclosure'
-      )
-      expect(result).not.toContain('Saigon Port Storage')
+      // Dragon Recyclers is registered only, and its interim site shows too.
+      expect(tabPanel(result, 'registered')).toContain('Saigon Port Storage')
     })
 
     // RA-697 task 012: org 50021 has a registration and no accreditation.
@@ -540,7 +567,7 @@ describe('#manageOverseasSitesController', () => {
         expect(registered).toContain(name)
       }
       expect(result).not.toMatch(/add-to-accreditation-|view-request-|<form /)
-      expect(result).not.toContain('Leixoes Port Storage')
+      expect(registered).toContain('Leixoes Port Storage')
     })
 
     // Org 50022: registered, with no accreditation and no registered ORSs.
@@ -587,7 +614,7 @@ describe('#manageOverseasSitesController', () => {
       const { spy } = await getWithChanges(noChangeRequests)
 
       expect(spy).toHaveBeenCalledWith(
-        '/api/v1/accreditation-changes/org-123/app-current'
+        '/api/v1/accreditation-changes/reex-org-123/app-current'
       )
     })
 
@@ -689,6 +716,7 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="registered-sites-tab"[^>]*>\s*Registered \(3\)\s*</
       )
       expect(result).toContain('data-testid="registered-site-row-4"')
+      // Only the Accredited tags (not from the requests) remain.
       expect(result).not.toMatch(
         /add-to-accreditation-|site-status-tag-|view-request-|pending-change-banner|requests-banner|<form /
       )
@@ -698,7 +726,7 @@ describe('#manageOverseasSitesController', () => {
   // RA-697 task 012: an exporter with an Approved registration and no
   // Approved current-year accreditation.
   describe('registration only', () => {
-    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
+    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/reex-org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
     // The registration view: every registered ORS, none selected.
     const registrationView = (sites) => ({
       ...noChangeRequests,
@@ -778,7 +806,7 @@ describe('#manageOverseasSitesController', () => {
       )
     })
 
-    test('lists every registered ORS with its name, ORS ID and address, without interim sites', async () => {
+    test('lists every registered ORS with its name, ORS ID, address and interim sites', async () => {
       const { result } = await getRegistrationOnly()
       const registered = tabPanel(result, 'registered')
 
@@ -797,8 +825,8 @@ describe('#manageOverseasSitesController', () => {
       expect(registered).toMatch(
         /data-testid="registered-site-address-1"[^>]*>\s*1 Industrieweg, Portugal\s*</
       )
-      expect(result).not.toContain('interim-sites-disclosure')
-      expect(result).not.toContain('Leixoes Store')
+      expect(registered).toContain('interim-sites-disclosure-1"')
+      expect(registered).toContain('Leixoes Store')
     })
 
     test('lists an ORS on Registered even if the view marks it selected', async () => {
@@ -810,6 +838,8 @@ describe('#manageOverseasSitesController', () => {
       expect(tabPanel(result, 'registered')).toContain(
         'data-testid="registered-site-row-1"'
       )
+      // A registration has no accreditation, so nothing is tagged Accredited.
+      expect(result).not.toContain('site-status-tag-1')
     })
 
     test('offers no "Add to accreditation" on any ORS', async () => {
@@ -907,11 +937,26 @@ describe('#manageOverseasSitesController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(session).toMatchObject({
         accreditationId: 'app-current',
-        organisationId: 'org-123',
+        organisationId: 'reex-org-123',
         registrationId: REGISTRATION_ID,
         materialType: MATERIAL,
         year: CURRENT_YEAR
       })
+    })
+
+    // The add-ORS journey looks the material up by our names (Glass's
+    // recycling operation codes), which have no glass_re_melt.
+    test("sets the accreditation's own material, not the URL's", async () => {
+      mockManageGets([
+        makeApp({ material: 'glass', glassRecyclingProcess: ['glass_re_melt'] })
+      ])
+
+      const { statusCode } = await get(
+        `/manage/org-123/${REGISTRATION_NUMBER}/glass_re_melt/overseas-sites`
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(session).toMatchObject({ materialType: 'Glass' })
     })
 
     test('returns 404 for a registration-only reprocessor', async () => {

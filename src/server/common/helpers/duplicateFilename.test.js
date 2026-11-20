@@ -2,7 +2,8 @@ import { describe, test, expect } from 'vitest'
 import {
   normaliseFilenameKey,
   collectApplicationFilenames,
-  isDuplicateFilename
+  isDuplicateFilename,
+  isFilenameAmong
 } from './duplicateFilename.js'
 
 describe('#normaliseFilenameKey', () => {
@@ -179,5 +180,17 @@ describe('#isDuplicateFilename', () => {
     }
     expect(isDuplicateFilename('other.pdf', application)).toBe(false)
     expect(isDuplicateFilename('plan.pdf', application)).toBe(true)
+  })
+})
+
+describe('#isFilenameAmong', () => {
+  test('matches on the base name, ignoring case and extension', () => {
+    expect(isFilenameAmong('Plan.DOCX', ['other.pdf', 'plan.pdf'])).toBe(true)
+  })
+
+  test('is false for a new name, an empty list or a blank filename', () => {
+    expect(isFilenameAmong('new.pdf', ['plan.pdf'])).toBe(false)
+    expect(isFilenameAmong('plan.pdf', [])).toBe(false)
+    expect(isFilenameAmong('  ', ['plan.pdf'])).toBe(false)
   })
 })

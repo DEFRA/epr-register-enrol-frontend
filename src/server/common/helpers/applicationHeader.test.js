@@ -35,7 +35,7 @@ describe('buildApplicationHeaderViewModel', () => {
     })
   })
 
-  test('uses the UK registered address instead of the site address for exporters', () => {
+  test('uses the UK registered address instead of the location for exporters', () => {
     expect(
       buildApplicationHeaderViewModel(
         {
@@ -117,9 +117,9 @@ describe('composeApplicationCaption', () => {
     ).toBe('Acme Ltd (2025, Plastic, Kings Warehouse)')
   })
 
-  // RA102-mgwh: a multi-part site address (already comma-separated) must
+  // RA102-mgwh: a multi-part location (already comma-separated) must
   // not be preceded by "and" -- every part is joined with ", " throughout.
-  test('comma-joins a multi-part site address without an "and"', () => {
+  test('comma-joins a multi-part location without an "and"', () => {
     expect(
       composeApplicationCaption({
         operatorName: 'NEWDEV RECYCLING LIMITED',

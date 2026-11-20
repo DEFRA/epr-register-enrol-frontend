@@ -12,13 +12,13 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { buildViewData as buildRecyclingViewData } from '../add-overseas-site/recycling-operation-details/controller.js'
 import { buildViewData as buildConditionsViewData } from '../add-overseas-site/conditions-of-export/controller.js'
-import { isMaxFilesRejection } from '../../common/helpers/isMaxFilesRejection.js'
+import { isFilenameAmong } from '../../common/helpers/duplicateFilename.js'
 import {
   ALLOWED_MIME_TYPES,
-  MAX_FILES_QUERY,
   MAX_FILE_BYTES,
   hasMaxBesEvidenceFiles,
-  maxFilesErrorFromQuery,
+  uploadRejectionErrorFromQuery,
+  uploadRejectionQuery,
   buildViewData as buildBesViewData,
   parseDate,
   resolveBesEvidenceValidTo,
@@ -35,6 +35,7 @@ import {
   resolveDraftSite
 } from './controller.js'
 import { addToAccreditationUrl, stepUrl } from './urls.js'
+import { besUploadsOf, grantedBesUploads } from './view-model.js'
 
 // RA-492: the "Add information" / "Change" steps behind the Add to
 // accreditation summary. Each captures one of the fields the backend lets
@@ -73,7 +74,7 @@ async function loadStep(request, h, fields) {
       redirect: h.redirect(addToAccreditationUrl(applicationId, siteId))
     }
   }
-  return { ...draft, open, locked, materialType: view.materialType }
+  return { ...draft, open, locked, materialType: view.materialType, view }
 }
 
 /**
@@ -355,8 +356,12 @@ function besView(h, t, request, draft, payload, errors) {
 
 // RA-605's cap comes first, as on the application's upload page: a site
 // already at the cap gets that message whatever file was chosen.
-function validateBesFile(t, uploadedFile, requestSite) {
-  if (hasMaxBesEvidenceFiles(requestSite.besEvidence?.besEvidenceUploads)) {
+// 3bb.38: a grant adds the request's files to the site's own on the
+// accreditation, so the cap counts both, and RA-571's duplicate filename rule
+// takes in every site's files there as well as the request's. The backend
+// also checks the accreditation's sampling plan files, which the view lacks.
+function validateBesFile(t, uploadedFile, draft) {
+  if (hasMaxBesEvidenceFiles(grantedBesFiles(draft))) {
     return t('pages.uploadBesEvidence.validation.maxFiles')
   }
   const filename = uploadedFile?.filename ?? ''
@@ -369,7 +374,22 @@ function validateBesFile(t, uploadedFile, requestSite) {
   if (uploadedFile.payload.length > MAX_FILE_BYTES) {
     return t('pages.uploadBesEvidence.validation.fileTooLarge')
   }
+  if (isFilenameAmong(filename, filenamesOnRequestAndAccreditation(draft))) {
+    return t('pages.uploadBesEvidence.validation.duplicateFilename')
+  }
   return null
+}
+
+function grantedBesFiles(draft) {
+  const { held, added } = grantedBesUploads(draft.entry.site, draft.requestSite)
+  return [...held, ...added]
+}
+
+function filenamesOnRequestAndAccreditation(draft) {
+  return [
+    ...(draft.view.sites ?? []).map((entry) => entry.site),
+    ...(draft.view.activeRequest?.sites ?? [])
+  ].flatMap((site) => besUploadsOf(site).map((f) => f?.filename))
 }
 
 export const besEvidenceGetController = stepHandler(
@@ -382,7 +402,7 @@ export const besEvidenceGetController = stepHandler(
       draft,
       {},
       {
-        fileError: maxFilesErrorFromQuery(request, t)
+        fileError: uploadRejectionErrorFromQuery(request, t)
       }
     )
   }
@@ -431,7 +451,7 @@ export const besEvidencePostController = stepHandler(
     if (payload.action === 'saveAndComeLater') {
       return h.redirect(stepUrls(request).summary)
     }
-    const fileError = validateBesFile(t, payload.file, draft.requestSite)
+    const fileError = validateBesFile(t, payload.file, draft)
     if (fileError) {
       return besView(h, t, request, draft, payload, { fileError }).code(
         statusCodes.badRequest
@@ -524,18 +544,21 @@ export const besEvidenceStatusController = stepHandler(
         }
       )
     } catch (err) {
-      // 422: not scanned clean, a duplicate filename, or (RA-605) the site
-      // already has the most files allowed. The summary still shows the
-      // evidence as missing, so the operator can try again.
+      // 422: not scanned clean, a duplicate filename (3bb.48: one the
+      // upload page could not check, such as a sampling plan file's), or
+      // (RA-605) the site already has the most files allowed. The last two
+      // go back to the upload page with their message; otherwise the summary
+      // still shows the evidence as missing, so the operator can try again.
       logStructuredError(
         request.server.logger,
         err,
         { siteId, applicationId },
         `Error saving in-year BES evidence for site ${siteId}, application ${applicationId}`
       )
-      if (isMaxFilesRejection(err)) {
+      const rejection = uploadRejectionQuery(err)
+      if (rejection) {
         return h.redirect(
-          `${besEvidenceUrl(applicationId, siteId)}?${MAX_FILES_QUERY}`
+          `${besEvidenceUrl(applicationId, siteId)}?${rejection}`
         )
       }
     }
