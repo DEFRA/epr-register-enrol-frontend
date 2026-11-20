@@ -344,7 +344,7 @@ describe('#manageRegistrationAccreditationController', () => {
         )
       })
 
-      test('shows no site address', () => {
+      test('shows no location', () => {
         expect(result).not.toContain('data-testid="site-address"')
       })
 
@@ -437,7 +437,7 @@ describe('#manageRegistrationAccreditationController', () => {
       expect(result).toContain('data-testid="service-problem-heading"')
     })
 
-    test('shows a reprocessor their site address, a glass caption and no cards', async () => {
+    test('shows a reprocessor their location, a glass caption and no cards', async () => {
       mockManageGets([], registrationOnlyReprocessor)
 
       const { statusCode, result } = await get(
@@ -662,7 +662,7 @@ describe('#manageRegistrationAccreditationController', () => {
     expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Dec 2028\s*</)
   })
 
-  test('shows an exporter no site address, and both cards', async () => {
+  test('shows an exporter no location, and both cards', async () => {
     mockManageGets([makeApp()])
 
     const { result } = await get(PAGE_URL)
@@ -692,7 +692,7 @@ describe('#manageRegistrationAccreditationController', () => {
     )
   })
 
-  test('shows a reprocessor their site address, and only the Manage accreditation card', async () => {
+  test('shows a reprocessor their location, and only the Manage accreditation card', async () => {
     mockManageGets([reprocessorApp()])
 
     const { result } = await get(PAGE_URL)
@@ -1047,7 +1047,7 @@ describe('#manageRegistrationAccreditationController', () => {
       )
     })
 
-    test('shows the stub reprocessor with its site address', async () => {
+    test('shows the stub reprocessor with its location', async () => {
       const { statusCode, result } = await get(
         stubManageUrl(
           MANAGE_EXPORTER_ORG,
