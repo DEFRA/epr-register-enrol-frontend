@@ -64,12 +64,20 @@ function registeredSiteView(site, applicationId, changeRequests) {
 // one in a submitted request shows "Pending" and no action (AC09). It stays on
 // the Registered tab until the regulator approves it. Without them the rows
 // are RA-425's alone.
+// RA-495 (user, 2026-11-20): both tabs are in site ID order; on Registered the
+// accredited ones sit among the rest, not first.
+const bySiteId = (a, b) => a.siteId - b.siteId
+
 function partitionSites(sites, applicationId, changeRequests) {
   const isAccredited = (site) => site.selected === true
   return {
-    accredited: sites.filter(isAccredited).map((site) => toOrsView(site)),
+    accredited: sites
+      .filter(isAccredited)
+      .sort(bySiteId)
+      .map((site) => toOrsView(site)),
     registered: sites
       .filter((site) => isAccredited(site) || !site.isNewSite)
+      .sort(bySiteId)
       .map((site) => registeredSiteView(site, applicationId, changeRequests))
   }
 }
@@ -136,9 +144,10 @@ async function registrationOnlySites(request, context) {
     changeRequests,
     requestsUrl: null,
     accredited: [],
-    registered: view.sites.map((entry) =>
-      registeredSiteView(entry.site, null, changeRequests)
-    )
+    registered: view.sites
+      .map((entry) => entry.site)
+      .sort(bySiteId)
+      .map((site) => registeredSiteView(site, null, changeRequests))
   }
 }
 

@@ -137,6 +137,35 @@ describe('#manageOverseasSitesController', () => {
     return html.slice(start, html.indexOf('</details>', start))
   }
 
+  test('lists both tabs in site ID order, accredited and registered-only together on Registered', async () => {
+    const html = await getPage(
+      makeApp({
+        overseasSites: {
+          sectionStatus: 'Completed',
+          sites: [
+            ors(9, { selected: true }),
+            ors(2, { selected: false }),
+            ors(5, { selected: true }),
+            ors(1, { selected: false })
+          ]
+        }
+      })
+    )
+
+    const ids = [
+      ...tabPanel(html, 'registered').matchAll(
+        /data-testid="registered-site-row-(\d+)"/g
+      )
+    ].map((match) => Number(match[1]))
+    expect(ids).toEqual([1, 2, 5, 9])
+    const accreditedIds = [
+      ...tabPanel(html, 'accredited').matchAll(
+        /data-testid="accredited-site-row-(\d+)"/g
+      )
+    ].map((match) => Number(match[1]))
+    expect(accreditedIds).toEqual([5, 9])
+  })
+
   test.each([PAGE_URL, WELSH_PAGE_URL])(
     'GET %s returns 404 when the flag is off, without reading data',
     async (url) => {
