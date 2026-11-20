@@ -14,8 +14,7 @@ import { logStructuredError } from '../../common/helpers/logging/log-structured-
  * @param {object} context - loadManagePage's context
  */
 export async function fetchChangeRequestsView(request, context) {
-  const { organisationId } = request.params
-  const { registrationId } = context
+  const { registrationId, reExOrganisationId: organisationId } = context
   try {
     // The registration's own material, not the URL's: the backend takes our
     // material names (Glass), not the Re/Ex read model's (glass_re_melt).

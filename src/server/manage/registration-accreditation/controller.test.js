@@ -8,6 +8,7 @@ import { stubApiClient } from '../../common/stub-api-client.js'
 import { persistentStubApiClient } from '../../common/persistentStubApiClient.js'
 import {
   MANAGE_ORG_ID as ORG_ID,
+  MANAGE_REEX_ORG_ID as REEX_ORG_ID,
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
   MANAGE_REGISTRATION_NUMBER as REGISTRATION_NUMBER,
   MANAGE_MATERIAL as MATERIAL,
@@ -44,7 +45,7 @@ const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
 const REGISTRATION_STATUS_URL = `/api/v1/registrations/by-number/${REGISTRATION_NUMBER}/status?organisationId=${ORG_ID}`
 
-const LIST_URL = `/api/v1/accreditation-applications/${ORG_ID}`
+const LIST_URL = `/api/v1/accreditation-applications/${REEX_ORG_ID}`
 
 // RA-739: the stub registration numbers follow the clock.
 const stubManageUrl = (org, registrationNumber, material = 'Plastic') =>
@@ -247,17 +248,49 @@ describe('#manageRegistrationAccreditationController', () => {
       }
     )
 
-    test('when the registration has no record', async () => {
-      mockManageGets([makeApp()], apiError(statusCodes.notFound))
-
-      expectServiceProblem(await get(PAGE_URL))
-    })
-
     test('when the registration-status call fails', async () => {
       mockManageGets([makeApp()], apiError(statusCodes.internalServerError))
 
       expectServiceProblem(await get(PAGE_URL))
     })
+
+    // Without ReEx's id for the organisation there is nothing to look the
+    // accreditation up by.
+    test('when the registration status has no ReEx organisation id', async () => {
+      const getSpy = mockManageGets([makeApp()], {
+        ...approvedRegistration,
+        reExOrganisationId: null
+      })
+
+      expectServiceProblem(await get(PAGE_URL))
+      expect(getSpy).not.toHaveBeenCalledWith(
+        expect.stringMatching(/^\/api\/v1\/accreditation-applications\//)
+      )
+    })
+  })
+
+  // The backend answers 404 for a number no current registration has, and for
+  // an organisation number that isn't the holder's.
+  test('is a 404 when the registration has no record for the organisation', async () => {
+    const getSpy = mockManageGets([makeApp()], apiError(statusCodes.notFound))
+
+    const { statusCode } = await get(PAGE_URL)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(getSpy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^\/api\/v1\/accreditation-applications\//)
+    )
+  })
+
+  test("looks the accreditation up by ReEx's id for the organisation, not the URL's number", async () => {
+    const getSpy = mockManageGets([makeApp()])
+
+    await get(PAGE_URL)
+
+    expect(getSpy).toHaveBeenCalledWith(LIST_URL)
+    expect(getSpy).not.toHaveBeenCalledWith(
+      `/api/v1/accreditation-applications/${ORG_ID}`
+    )
   })
 
   test('asks for the status of the registration in the URL, naming its organisation', async () => {
@@ -355,7 +388,7 @@ describe('#manageRegistrationAccreditationController', () => {
             .map(([url]) => url)
             .filter((url) => url.startsWith('/api/v1/accreditation-changes/'))
         ).toEqual([
-          `/api/v1/accreditation-changes/${ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
+          `/api/v1/accreditation-changes/${REEX_ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
         ])
       })
 
@@ -565,7 +598,7 @@ describe('#manageRegistrationAccreditationController', () => {
           .map(([url]) => url)
           .filter((url) => url.startsWith('/api/v1/accreditation-changes/'))
       ).toEqual([
-        `/api/v1/accreditation-changes/${ORG_ID}/registrations/${REGISTRATION_ID}/Glass`
+        `/api/v1/accreditation-changes/${REEX_ORG_ID}/registrations/${REGISTRATION_ID}/Glass`
       ])
     })
 
@@ -820,7 +853,7 @@ describe('#manageRegistrationAccreditationController', () => {
       await get(PAGE_URL)
 
       expect(getSpy).toHaveBeenCalledWith(
-        `/api/v1/accreditation-changes/${ORG_ID}/app-current`
+        `/api/v1/accreditation-changes/${REEX_ORG_ID}/app-current`
       )
     })
 
@@ -1125,11 +1158,15 @@ describe('#manageRegistrationAccreditationController', () => {
     })
 
     test.each([
-      ['not Approved', createdRegistrationNumber],
-      ['missing', missingRegistrationNumber]
+      [
+        'not Approved',
+        createdRegistrationNumber,
+        statusCodes.internalServerError
+      ],
+      ['missing', missingRegistrationNumber, statusCodes.notFound]
     ])(
-      'shows the service-problem page for the stub registration that is %s',
-      async (_case, registrationNumber) => {
+      'responds as the backend does for the stub registration that is %s',
+      async (_case, registrationNumber, expectedStatus) => {
         const { statusCode } = await get(
           stubManageUrl(
             MANAGE_EXPORTER_ORG,
@@ -1138,7 +1175,7 @@ describe('#manageRegistrationAccreditationController', () => {
           )
         )
 
-        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(statusCode).toBe(expectedStatus)
       }
     )
   })

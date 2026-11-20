@@ -88,13 +88,13 @@ function partitionSites(sites, applicationId, changeRequests) {
 // accreditation's own material, not the URL's: the journey looks it up by our
 // material names (Steel), in that case.
 function enterAccreditationSession(request, context) {
-  const { application, registrationId, materialType } = context
-  const { organisationId } = request.params
+  const { application, registrationId, materialType, reExOrganisationId } =
+    context
   request.yar.set(
     ACCREDITATION_SESSION_KEYS.accreditationId,
     application.applicationId
   )
-  request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
+  request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, reExOrganisationId)
   request.yar.set(ACCREDITATION_SESSION_KEYS.registrationId, registrationId)
   request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
   request.yar.set(ACCREDITATION_SESSION_KEYS.year, application.year)
@@ -180,7 +180,7 @@ export const manageOverseasSitesController = {
       backLink: manageUrl(request.params, currentLocale),
       // RA-425: "home" is the Re/Ex material page.
       homeUrl: reExBackLinkUrl(
-        request.params.organisationId,
+        context.reExOrganisationId,
         context.registrationId
       ),
       accreditedSites: accredited,

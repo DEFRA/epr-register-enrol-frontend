@@ -222,7 +222,7 @@ describe('#manageOverseasSitesController', () => {
 
   // RA-739: the accreditation is found by the registration's ReEx id, which
   // only the registration's record gives.
-  test('shows the service-problem page when the registration number has no record', async () => {
+  test('is a 404 when the registration number has no record for the organisation', async () => {
     const spy = mockManageGets(
       [makeApp({ wasteProcessingType: 'reprocessor' })],
       apiError(statusCodes.notFound)
@@ -230,7 +230,7 @@ describe('#manageOverseasSitesController', () => {
 
     const { statusCode } = await get(PAGE_URL)
 
-    expect(statusCode).toBe(statusCodes.internalServerError)
+    expect(statusCode).toBe(statusCodes.notFound)
     expect(spy).not.toHaveBeenCalledWith(
       expect.stringMatching(/^\/api\/v1\/accreditation-applications\//)
     )
@@ -267,12 +267,6 @@ describe('#manageOverseasSitesController', () => {
         expectServiceProblem(await get(PAGE_URL))
       }
     )
-
-    test('when the registration has no record', async () => {
-      mockManageGets([makeApp()], apiError(statusCodes.notFound))
-
-      expectServiceProblem(await get(PAGE_URL))
-    })
 
     test('when the API fails', async () => {
       vi.spyOn(apiClient, 'get').mockRejectedValue(
@@ -630,7 +624,7 @@ describe('#manageOverseasSitesController', () => {
       const { spy } = await getWithChanges(noChangeRequests)
 
       expect(spy).toHaveBeenCalledWith(
-        '/api/v1/accreditation-changes/org-123/app-current'
+        '/api/v1/accreditation-changes/reex-org-123/app-current'
       )
     })
 
@@ -742,7 +736,7 @@ describe('#manageOverseasSitesController', () => {
   // RA-697 task 012: an exporter with an Approved registration and no
   // Approved current-year accreditation.
   describe('registration only', () => {
-    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
+    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/reex-org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
     // The registration view: every registered ORS, none selected.
     const registrationView = (sites) => ({
       ...noChangeRequests,
@@ -953,7 +947,7 @@ describe('#manageOverseasSitesController', () => {
       expect(statusCode).toBe(statusCodes.ok)
       expect(session).toMatchObject({
         accreditationId: 'app-current',
-        organisationId: 'org-123',
+        organisationId: 'reex-org-123',
         registrationId: REGISTRATION_ID,
         materialType: MATERIAL,
         year: CURRENT_YEAR

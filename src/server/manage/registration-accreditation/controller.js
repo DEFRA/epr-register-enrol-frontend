@@ -66,7 +66,7 @@ export const manageRegistrationAccreditationController = {
       caption: manageCaption(context, t),
       // RA-425: back to the Re/Ex material page that links here.
       backLink: reExBackLinkUrl(
-        request.params.organisationId,
+        context.reExOrganisationId,
         context.registrationId
       ),
       isRegistrationOnly: context.isRegistrationOnly,
