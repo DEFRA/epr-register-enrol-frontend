@@ -17,22 +17,28 @@ import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 
 // RA-425: withdrawn interim sites are filtered per ORS, so withdrawing a
 // shared interim site from one ORS leaves it showing under the others.
-// Interim sites belong to the accreditation, so a registered-only ORS shows
-// none, even if its registration lists some (Figma's Registered tab has none).
-function toOrsView(site, { withInterimSites }) {
+// RA-495 (user, 2026-11-20): the Registered tab shows each ORS's interim sites
+// too, as the Accredited tab does.
+function toOrsView(site) {
   return {
     siteId: site.siteId,
     orsId: site.orsId,
     siteName: site.siteName,
     address: orsAddressLine(site),
-    interimSites: withInterimSites ? activeInterimSites(site) : []
+    interimSites: activeInterimSites(site)
   }
 }
 
 // RA-492: where a registered ORS stands in the in-year change requests.
 // RA-697: applicationId is null for registration only.
+// RA-495 (user, 2026-11-20): an ORS already accredited (selected) is listed
+// here too, tagged Accredited, with no "Add to accreditation" action. A
+// registration has no accreditation, so nothing is tagged there.
 function registeredSiteView(site, applicationId, changeRequests) {
-  const view = toOrsView(site, { withInterimSites: false })
+  const view = toOrsView(site)
+  if (applicationId && site.selected === true) {
+    return { ...view, accredited: true }
+  }
   if (!changeRequests) {
     return view
   }
@@ -48,8 +54,9 @@ function registeredSiteView(site, applicationId, changeRequests) {
   }
 }
 
-// Accredited: selected on the accreditation. Registered: every other existing
-// ORS. A new site that was never selected is on neither. Unlike the
+// Accredited: selected on the accreditation. Registered: every existing ORS,
+// the accredited ones included (RA-495, user 2026-11-20). A new site that was
+// never selected is on neither. Unlike the
 // application journey, an ORS with no selected value is not accredited: on an
 // issued accreditation only an explicit selection counts.
 // RA-492: with the change requests, each registered ORS offers "Add to
@@ -60,11 +67,9 @@ function registeredSiteView(site, applicationId, changeRequests) {
 function partitionSites(sites, applicationId, changeRequests) {
   const isAccredited = (site) => site.selected === true
   return {
-    accredited: sites
-      .filter(isAccredited)
-      .map((site) => toOrsView(site, { withInterimSites: true })),
+    accredited: sites.filter(isAccredited).map((site) => toOrsView(site)),
     registered: sites
-      .filter((site) => !isAccredited(site) && !site.isNewSite)
+      .filter((site) => isAccredited(site) || !site.isNewSite)
       .map((site) => registeredSiteView(site, applicationId, changeRequests))
   }
 }

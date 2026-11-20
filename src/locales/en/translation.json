@@ -987,7 +987,8 @@
       },
       "status": {
         "pending": "Pending",
-        "inProgress": "In progress"
+        "inProgress": "In progress",
+        "accredited": "Accredited"
       },
       "addToAccreditation": "Add to accreditation",
       "view": "View",

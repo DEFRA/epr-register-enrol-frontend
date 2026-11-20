@@ -986,7 +986,8 @@
       },
       "status": {
         "pending": "[Welsh] Pending",
-        "inProgress": "[Welsh] In progress"
+        "inProgress": "[Welsh] In progress",
+        "accredited": "[Welsh] Accredited"
       },
       "addToAccreditation": "[Welsh] Add to accreditation",
       "view": "[Welsh] View",
