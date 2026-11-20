@@ -31,14 +31,8 @@ function toOrsView(site) {
 
 // RA-492: where a registered ORS stands in the in-year change requests.
 // RA-697: applicationId is null for registration only.
-// RA-495 (user, 2026-11-20): an ORS already accredited (selected) is listed
-// here too, tagged Accredited, with no "Add to accreditation" action. A
-// registration has no accreditation, so nothing is tagged there.
 function registeredSiteView(site, applicationId, changeRequests) {
   const view = toOrsView(site)
-  if (applicationId && site.selected === true) {
-    return { ...view, accredited: true }
-  }
   if (!changeRequests) {
     return view
   }
@@ -54,9 +48,9 @@ function registeredSiteView(site, applicationId, changeRequests) {
   }
 }
 
-// Accredited: selected on the accreditation. Registered: every existing ORS,
-// the accredited ones included (RA-495, user 2026-11-20). A new site that was
-// never selected is on neither. Unlike the
+// Accredited: selected on the accreditation. Registered: every other existing
+// ORS (RA-495, user 2026-11-20: the accredited ones are not repeated here). A
+// new site that was never selected is on neither. Unlike the
 // application journey, an ORS with no selected value is not accredited: on an
 // issued accreditation only an explicit selection counts.
 // RA-492: with the change requests, each registered ORS offers "Add to
@@ -64,8 +58,7 @@ function registeredSiteView(site, applicationId, changeRequests) {
 // one in a submitted request shows "Pending" and no action (AC09). It stays on
 // the Registered tab until the regulator approves it. Without them the rows
 // are RA-425's alone.
-// RA-495 (user, 2026-11-20): both tabs are in site ID order; on Registered the
-// accredited ones sit among the rest, not first.
+// RA-495 (user, 2026-11-20): both tabs are in site ID order.
 const bySiteId = (a, b) => a.siteId - b.siteId
 
 function partitionSites(sites, applicationId, changeRequests) {
@@ -76,7 +69,7 @@ function partitionSites(sites, applicationId, changeRequests) {
       .sort(bySiteId)
       .map((site) => toOrsView(site)),
     registered: sites
-      .filter((site) => isAccredited(site) || !site.isNewSite)
+      .filter((site) => !isAccredited(site) && !site.isNewSite)
       .sort(bySiteId)
       .map((site) => registeredSiteView(site, applicationId, changeRequests))
   }

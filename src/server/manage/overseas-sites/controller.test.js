@@ -137,7 +137,7 @@ describe('#manageOverseasSitesController', () => {
     return html.slice(start, html.indexOf('</details>', start))
   }
 
-  test('lists both tabs in site ID order, accredited and registered-only together on Registered', async () => {
+  test('lists both tabs in site ID order, with the accredited ORSs on Accredited only', async () => {
     const html = await getPage(
       makeApp({
         overseasSites: {
@@ -157,7 +157,7 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="registered-site-row-(\d+)"/g
       )
     ].map((match) => Number(match[1]))
-    expect(ids).toEqual([1, 2, 5, 9])
+    expect(ids).toEqual([1, 2])
     const accreditedIds = [
       ...tabPanel(html, 'accredited').matchAll(
         /data-testid="accredited-site-row-(\d+)"/g
@@ -317,7 +317,7 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(3\)\s*</
       )
       expect(result).toMatch(
-        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(6\)\s*</
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(3\)\s*</
       )
     })
 
@@ -339,13 +339,13 @@ describe('#manageOverseasSitesController', () => {
       )
     })
 
-    test('puts selected ORSs on Accredited, and every existing ORS on Registered', () => {
+    test('puts selected ORSs on Accredited, and the other existing ORSs on Registered', () => {
       const accredited = tabPanel(result, 'accredited')
       const registered = tabPanel(result, 'registered')
 
       for (const id of [1, 2, 3]) {
         expect(accredited).toContain(`data-testid="accredited-site-row-${id}"`)
-        expect(registered).toContain(`data-testid="registered-site-row-${id}"`)
+        expect(registered).not.toContain(`site-row-${id}"`)
       }
       for (const id of [4, 5, 7]) {
         expect(registered).toContain(`data-testid="registered-site-row-${id}"`)
@@ -354,22 +354,12 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toContain('site-row-6"')
     })
 
-    // RA-495 (user, 2026-11-20).
-    test('tags an accredited ORS Accredited on the Registered tab, with no Add to accreditation', () => {
+    // RA-495 (user, 2026-11-20): accredited ORSs are not repeated on Registered.
+    test('never tags or repeats an accredited ORS on the Registered tab', () => {
       const registered = tabPanel(result, 'registered')
 
-      for (const id of [1, 2, 3]) {
-        expect(registered).toMatch(
-          new RegExp(
-            `data-testid="site-status-tag-${id}"[^>]*>\\s*Accredited\\s*<`
-          )
-        )
-        expect(registered).not.toContain(`add-to-accreditation-${id}`)
-      }
-      for (const id of [4, 5, 7]) {
-        expect(registered).not.toContain(`site-status-tag-${id}`)
-      }
-      expect(tabPanel(result, 'accredited')).not.toContain('site-status-tag-')
+      expect(registered).not.toContain('site-status-tag-1')
+      expect(registered).not.toContain('Accredited')
     })
 
     test('shows each ORS number, name in bold, and "address line 1, country"', () => {
@@ -472,7 +462,7 @@ describe('#manageOverseasSitesController', () => {
   test.each([
     ['both tabs', [], ['accredited', 'registered']],
     ['only Accredited', [ors(4, { selected: false })], ['accredited']],
-    // Registered lists the accredited ORSs too, so it is empty only with none.
+    ['only Registered', [ors(1)], ['registered']],
     ['neither tab', SITES, []]
   ])(
     'shows the empty message, naming the year, without the intro, on %s when it has no ORSs',
@@ -544,7 +534,7 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(3\)\s*</
       )
       expect(result).toMatch(
-        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(4\)\s*</
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(1\)\s*</
       )
       expect(result).toMatch(/Show interim sites \(2\)/)
       // Dragon Recyclers is registered only, and its interim site shows too.
@@ -688,7 +678,7 @@ describe('#manageOverseasSitesController', () => {
       expect(tabPanel(result, 'accredited')).not.toContain(
         'registered-site-row-5'
       )
-      expect(result).toMatch(/Registered \(6\)/)
+      expect(result).toMatch(/Registered \(3\)/)
       expect(result).toMatch(
         /data-testid="pending-change-banner"[\s\S]*application to add 1 overseas reprocessing site to your accreditation\. You will not be able to apply for any other changes to this site /
       )
@@ -723,12 +713,12 @@ describe('#manageOverseasSitesController', () => {
         /data-testid="accredited-sites-tab"[^>]*>\s*Accredited \(3\)\s*</
       )
       expect(result).toMatch(
-        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(6\)\s*</
+        /data-testid="registered-sites-tab"[^>]*>\s*Registered \(3\)\s*</
       )
       expect(result).toContain('data-testid="registered-site-row-4"')
       // Only the Accredited tags (not from the requests) remain.
       expect(result).not.toMatch(
-        /add-to-accreditation-|site-status-tag-[457]|view-request-|pending-change-banner|requests-banner|<form /
+        /add-to-accreditation-|site-status-tag-|view-request-|pending-change-banner|requests-banner|<form /
       )
     })
   })

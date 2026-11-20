@@ -5,11 +5,7 @@
 
 {# RA-492: where the ORS stands in the operator's in-year change requests. #}
 {% macro siteActions(site) %}
-  {% if site.accredited %}
-    <div class="app-ors-list__actions">
-      <strong class="govuk-tag govuk-tag--green" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.accredited') }}</strong>
-    </div>
-  {% elif site.pending %}
+  {% if site.pending %}
     <div class="app-ors-list__actions">
       <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
     </div>
