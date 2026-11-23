@@ -264,14 +264,14 @@ describe('#logoutController federated (Defra ID) branch', () => {
 
   // RA-537: regulator sign-in was removed. A return leg still carrying the
   // old `?userType=regulator` tag (an IdP round trip begun before deploy)
-  // lands on the operator login page like any other value.
-  test('a legacy userType=regulator return leg (empty session) lands on the operator login page', async () => {
+  // hands off to ReEx logout like any other value (RA-460).
+  test('a legacy userType=regulator return leg (empty session) hands off to ReEx logout', async () => {
     const h = mockH()
     const request = { query: { userType: 'regulator' }, yar: fakeYar() }
 
     await logoutController(request, h)
 
-    expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+    expect(h.redirect).toHaveBeenCalledWith('https://reex.example.test/logout')
   })
 
   test('a leftover regulator session with an id_token logs out through Defra ID, not Entra ID', async () => {
