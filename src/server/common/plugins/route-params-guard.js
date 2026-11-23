@@ -20,7 +20,7 @@ const SAFE_ID = Joi.string()
   .max(100)
   .pattern(/^[\w.:-]+$/)
 
-const MATERIAL_TYPES = [
+export const MATERIAL_TYPES = [
   'Steel',
   'Wood',
   'Aluminium',
@@ -29,6 +29,9 @@ const MATERIAL_TYPES = [
   'Paper',
   'Plastic'
 ]
+
+// Re/Ex's organisation read model names glass by its recycling process.
+export const GLASS_RECYCLING_PROCESSES = ['glass_re_melt', 'glass_other']
 
 const PARAM_SCHEMAS = {
   applicationId: SAFE_ID,
@@ -55,6 +58,21 @@ const PARAM_SCHEMAS = {
     .insensitive()
 }
 
+// RA-739: the /manage pages, which Re/Ex links to with its organisation read
+// model's material, also take glass's recycling process (glass_re_melt). Only
+// routes that opt in with the route option
+// plugins.routeParamsGuard.glassRecyclingProcesses do: the rest look the
+// material up by this app's names, which have no such value.
+const GLASS_RECYCLING_PROCESS_SCHEMAS = {
+  ...PARAM_SCHEMAS,
+  materialType: Joi.string()
+    .valid(...MATERIAL_TYPES, ...GLASS_RECYCLING_PROCESSES)
+    .insensitive()
+}
+
+const schemasFor = ({ glassRecyclingProcesses = false } = {}) =>
+  glassRecyclingProcesses ? GLASS_RECYCLING_PROCESS_SCHEMAS : PARAM_SCHEMAS
+
 // Only materialType's schema value can differ from its raw input (case
 // normalisation) — every other schema here validates shape without
 // transforming the value. Scoped explicitly rather than rewriting every
@@ -63,9 +81,15 @@ const PARAM_SCHEMAS = {
 // or tested that coercion against.
 const NORMALISED_PARAM_KEYS = ['materialType']
 
-export function findInvalidParam(params) {
+/**
+ * @param {object} [params]
+ * @param {{ glassRecyclingProcesses?: boolean }} [options] - the route's
+ *   plugins.routeParamsGuard option
+ */
+export function findInvalidParam(params, options) {
+  const schemas = schemasFor(options)
   for (const [key, value] of Object.entries(params ?? {})) {
-    const schema = PARAM_SCHEMAS[key]
+    const schema = schemas[key]
     if (!schema) {
       continue
     }
@@ -80,12 +104,13 @@ export function findInvalidParam(params) {
 // Rewrites params in place to the canonical casing their schema validated
 // against. Only touches the keys in NORMALISED_PARAM_KEYS (materialType) —
 // see the comment there for why the rest are left as-is.
-export function normaliseParams(params) {
+export function normaliseParams(params, options) {
+  const schemas = schemasFor(options)
   for (const key of NORMALISED_PARAM_KEYS) {
     if (!(key in (params ?? {}))) {
       continue
     }
-    const { value: normalised } = PARAM_SCHEMAS[key].validate(params[key])
+    const { value: normalised } = schemas[key].validate(params[key])
     params[key] = normalised
   }
 }
@@ -112,7 +137,8 @@ export const routeParamsGuard = {
         // validate/normalise logic inline) keeps a single source of truth —
         // see the review discussion on PR #260 for why a second inline
         // implementation was rejected.
-        const invalidParam = findInvalidParam(request.params)
+        const options = request.route.settings.plugins?.routeParamsGuard
+        const invalidParam = findInvalidParam(request.params, options)
         if (invalidParam === 'language') {
           // Every route in the app has both a plain and a /{language}-
           // prefixed variant, and `/{language}` alone is the app-wide
@@ -128,7 +154,7 @@ export const routeParamsGuard = {
         if (invalidParam) {
           throw Boom.badRequest(`Invalid ${invalidParam} in request path.`)
         }
-        normaliseParams(request.params)
+        normaliseParams(request.params, options)
         return h.continue
       })
     }

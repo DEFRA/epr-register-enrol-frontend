@@ -1,6 +1,7 @@
 import Boom from '@hapi/boom'
 
 import { apiClient } from '../api-client.js'
+import { statusCodes } from '../constants/status-codes.js'
 import { config } from '../../../config/config.js'
 import { userIsRelatedToDefraOrg } from './auth/organisation-access.js'
 
@@ -71,8 +72,9 @@ export async function getLinkedDefraOrganisationId(
  * org's linked Defra organisation (cached) and returns whether the operator is
  * related to it.
  *
- * Two distinct failure modes:
+ * Three distinct failure modes:
  *   - operator is not related to the org  -> returns false (caller responds 403)
+ *   - ReEx has no such organisation (backend 404) -> throws Boom 404
  *   - the link cannot be resolved (ReEx/backend outage) -> throws Boom 503, so the
  *     user sees a "service temporarily unavailable" page rather than a misleading
  *     "access denied". We do not fail open — an unresolved link is never allowed.
@@ -88,6 +90,10 @@ export async function operatorCanAccessOrganisation(
   try {
     linkedDefraOrganisationId = await resolveLinkedId(organisationId)
   } catch (err) {
+    // ReEx doesn't know the organisation: nothing is wrong with the service.
+    if (err.status === statusCodes.notFound) {
+      throw Boom.notFound()
+    }
     ;(logger ?? console).error(
       `Could not resolve linked Defra organisation for org=${organisationId}: ${err.message}`
     )

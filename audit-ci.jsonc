@@ -3,6 +3,10 @@
   "allowlist": [
     // braces: stack-exhaustion DoS (high). No upstream fix as of 2026-10-05 (latest 3.0.3).
     // Remove this entry once a patched braces release exists (PR #360).
-    "GHSA-vfj7-8cjw-p6xm"
+    "GHSA-vfj7-8cjw-p6xm",
+    // picomatch: GHSA-fc5q-39xc-vjpf affects <=4.0.7, and 4.0.7 is the latest release
+    // as of 2026-11-18 (2.x tops out at 2.3.2, also affected). Inherited from main.
+    // Remove this entry once a patched picomatch release exists.
+    "GHSA-fc5q-39xc-vjpf"
   ]
 }

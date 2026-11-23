@@ -17,22 +17,22 @@ import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 
 // RA-425: withdrawn interim sites are filtered per ORS, so withdrawing a
 // shared interim site from one ORS leaves it showing under the others.
-// Interim sites belong to the accreditation, so a registered-only ORS shows
-// none, even if its registration lists some (Figma's Registered tab has none).
-function toOrsView(site, { withInterimSites }) {
+// RA-495 (user, 2026-11-20): the Registered tab shows each ORS's interim sites
+// too, as the Accredited tab does.
+function toOrsView(site) {
   return {
     siteId: site.siteId,
     orsId: site.orsId,
     siteName: site.siteName,
     address: orsAddressLine(site),
-    interimSites: withInterimSites ? activeInterimSites(site) : []
+    interimSites: activeInterimSites(site)
   }
 }
 
 // RA-492: where a registered ORS stands in the in-year change requests.
 // RA-697: applicationId is null for registration only.
 function registeredSiteView(site, applicationId, changeRequests) {
-  const view = toOrsView(site, { withInterimSites: false })
+  const view = toOrsView(site)
   if (!changeRequests) {
     return view
   }
@@ -49,7 +49,8 @@ function registeredSiteView(site, applicationId, changeRequests) {
 }
 
 // Accredited: selected on the accreditation. Registered: every other existing
-// ORS. A new site that was never selected is on neither. Unlike the
+// ORS (RA-495, user 2026-11-20: the accredited ones are not repeated here). A
+// new site that was never selected is on neither. Unlike the
 // application journey, an ORS with no selected value is not accredited: on an
 // issued accreditation only an explicit selection counts.
 // RA-492: with the change requests, each registered ORS offers "Add to
@@ -57,29 +58,36 @@ function registeredSiteView(site, applicationId, changeRequests) {
 // one in a submitted request shows "Pending" and no action (AC09). It stays on
 // the Registered tab until the regulator approves it. Without them the rows
 // are RA-425's alone.
+// RA-495 (user, 2026-11-20): both tabs are in site ID order.
+const bySiteId = (a, b) => a.siteId - b.siteId
+
 function partitionSites(sites, applicationId, changeRequests) {
   const isAccredited = (site) => site.selected === true
   return {
     accredited: sites
       .filter(isAccredited)
-      .map((site) => toOrsView(site, { withInterimSites: true })),
+      .sort(bySiteId)
+      .map((site) => toOrsView(site)),
     registered: sites
       .filter((site) => !isAccredited(site) && !site.isNewSite)
+      .sort(bySiteId)
       .map((site) => registeredSiteView(site, applicationId, changeRequests))
   }
 }
 
 // RA-492: the in-year change pages under /accreditation/ read the
 // accreditation from the session, as they do after the operator-accreditation
-// landing page, which this page's journey does not pass through.
+// landing page, which this page's journey does not pass through. The
+// accreditation's own material, not the URL's: the journey looks it up by our
+// material names (Steel), in that case.
 function enterAccreditationSession(request, context) {
-  const { application, registrationId } = context
-  const { organisationId, materialType } = request.params
+  const { application, registrationId, materialType, reExOrganisationId } =
+    context
   request.yar.set(
     ACCREDITATION_SESSION_KEYS.accreditationId,
     application.applicationId
   )
-  request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, organisationId)
+  request.yar.set(ACCREDITATION_SESSION_KEYS.organisationId, reExOrganisationId)
   request.yar.set(ACCREDITATION_SESSION_KEYS.registrationId, registrationId)
   request.yar.set(ACCREDITATION_SESSION_KEYS.materialType, materialType)
   request.yar.set(ACCREDITATION_SESSION_KEYS.year, application.year)
@@ -129,9 +137,10 @@ async function registrationOnlySites(request, context) {
     changeRequests,
     requestsUrl: null,
     accredited: [],
-    registered: view.sites.map((entry) =>
-      registeredSiteView(entry.site, null, changeRequests)
-    )
+    registered: view.sites
+      .map((entry) => entry.site)
+      .sort(bySiteId)
+      .map((site) => registeredSiteView(site, null, changeRequests))
   }
 }
 
@@ -164,7 +173,7 @@ export const manageOverseasSitesController = {
       backLink: manageUrl(request.params, currentLocale),
       // RA-425: "home" is the Re/Ex material page.
       homeUrl: reExBackLinkUrl(
-        request.params.organisationId,
+        context.reExOrganisationId,
         context.registrationId
       ),
       accreditedSites: accredited,

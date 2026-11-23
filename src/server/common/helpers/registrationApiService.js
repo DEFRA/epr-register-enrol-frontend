@@ -13,7 +13,12 @@ import { hasValue } from './hasValue.js'
  * pages are built. 404 too when ReEx says the organisation doesn't hold the
  * registration; organisationName is null when ReEx can't be read.
  *
- * @returns {Promise<{ registrationId: string, registrationNumber: string | null, status: 'Created' | 'Approved' | 'Rejected' | 'Cancelled', organisationName: string | null, materialType: string, glassRecyclingProcess: string | null, isExporter: boolean, siteAddress: string | null }>}
+ * organisationId is the organisation's number (as in the /manage URL), never
+ * ReEx's id for it: the backend answers 404 for anything else, and for a
+ * number that isn't the holder's. reExOrganisationId is then ReEx's id for
+ * the holder, for the organisation-keyed calls that follow.
+ *
+ * @returns {Promise<{ registrationId: string, registrationNumber: string | null, status: 'Created' | 'Approved' | 'Rejected' | 'Cancelled', organisationName: string | null, materialType: string, glassRecyclingProcess: string | null, isExporter: boolean, siteAddress: string | null, reExOrganisationId: string }>}
  */
 export async function getRegistrationStatusByNumber(
   registrationNumber,

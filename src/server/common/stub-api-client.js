@@ -1107,7 +1107,7 @@ function mergeBpItems(existing, incoming) {
 // RA-697: the organisationId query names the organisation, which the stub's
 // statuses already carry. RA-739: found by registration number.
 const REGISTRATION_STATUS_RE =
-  /^\/api\/v1\/registrations\/by-number\/([^/?]+)\/status(?:\?.*)?$/
+  /^\/api\/v1\/registrations\/by-number\/([^/?]+)\/status(?:\?(.*))?$/
 
 // Rejects like the real API client does for a 404, so callers see the same
 // "no record" error with or without the stub.
@@ -1119,15 +1119,23 @@ function stubNotFound() {
   )
 }
 
-function stubRegistrationStatus(registrationNumber) {
+// As the backend: the organisation is named by its number, and a number is
+// all it accepts. The stub's organisations are known by that number
+// throughout, so it is also their id for the calls that follow.
+function stubRegistrationStatus(registrationNumber, query) {
+  const organisationId = new URLSearchParams(query ?? '').get('organisationId')
   const [registrationId, registration] =
     Object.entries(manageStubRegistrationStatuses()).find(
       ([, status]) => status.registrationNumber === registrationNumber
     ) ?? []
-  if (!registration) {
+  if (!registration || !/^\d+$/.test(organisationId ?? '')) {
     return stubNotFound()
   }
-  return Promise.resolve({ registrationId, ...registration })
+  return Promise.resolve({
+    registrationId,
+    ...registration,
+    reExOrganisationId: organisationId
+  })
 }
 
 // In-memory store for stub CDP uploads: fileUploadId → file data once the
@@ -1182,7 +1190,8 @@ export const stubApiClient = {
     const registrationStatusMatch = endpoint.match(REGISTRATION_STATUS_RE)
     if (registrationStatusMatch) {
       return stubRegistrationStatus(
-        decodeURIComponent(registrationStatusMatch[1])
+        decodeURIComponent(registrationStatusMatch[1]),
+        registrationStatusMatch[2]
       )
     }
 

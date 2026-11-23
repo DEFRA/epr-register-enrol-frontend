@@ -752,7 +752,7 @@ describe('#manageChangeRequestDetailController', () => {
   // RA-697 task 013: an exporter with an Approved registration and no
   // Approved current-year accreditation.
   describe('registration only', () => {
-    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
+    const REGISTRATION_VIEW_URL = `/api/v1/accreditation-changes/reex-org-123/registrations/${REGISTRATION_ID}/${MATERIAL}`
     // The registration view keys each ORS by its ORS id's integer value, and
     // its items carry the same siteId and orsId.
     const PORTO = {

@@ -14,7 +14,7 @@ import {
   reprocessorRegistrationNumber
 } from '../../common/constants/test-orgs.js'
 import {
-  MANAGE_ORG_ID as ORG_ID,
+  MANAGE_REEX_ORG_ID as REEX_ORG_ID,
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
   MANAGE_REGISTRATION_NUMBER as REGISTRATION_NUMBER,
   MANAGE_MATERIAL as MATERIAL,
@@ -875,7 +875,7 @@ describe('#manageChangeRequestsController', () => {
         expect(rowIds(result)).toEqual(['item-queried', 'item-granted'])
         expect(row(result, 'item-queried')).toContain('1 Industrial Road')
         expect(getSpy).toHaveBeenCalledWith(
-          `/api/v1/accreditation-changes/${ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
+          `/api/v1/accreditation-changes/${REEX_ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
         )
         expect(result).toMatch(
           /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2027, Plastic\)\s*</

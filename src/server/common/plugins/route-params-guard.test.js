@@ -67,6 +67,43 @@ describe('findInvalidParam', () => {
   ])('accepts a differently-cased %s value', (key, value) => {
     expect(findInvalidParam({ [key]: value })).toBeNull()
   })
+
+  test.each(['glass_re_melt', 'glass_other'])(
+    'rejects the glass recycling process %s on a route that has not opted in',
+    (value) => {
+      expect(findInvalidParam({ materialType: value })).toBe('materialType')
+      expect(
+        findInvalidParam(
+          { materialType: value },
+          { glassRecyclingProcesses: false }
+        )
+      ).toBe('materialType')
+    }
+  )
+
+  test.each(['glass_re_melt', 'GLASS_OTHER', 'Plastic', 'paper'])(
+    'accepts %s on a route that has opted in to glass recycling processes',
+    (value) => {
+      expect(
+        findInvalidParam(
+          { materialType: value },
+          { glassRecyclingProcesses: true }
+        )
+      ).toBeNull()
+    }
+  )
+
+  test.each(['glass-re-melt', 'glassremelt', 'Uranium'])(
+    'rejects %s on a route that has opted in to glass recycling processes',
+    (value) => {
+      expect(
+        findInvalidParam(
+          { materialType: value },
+          { glassRecyclingProcesses: true }
+        )
+      ).toBe('materialType')
+    }
+  )
 })
 
 describe('normaliseParams', () => {
@@ -98,6 +135,12 @@ describe('normaliseParams', () => {
     expect(typeof params.year).toBe('string')
   })
 
+  test('rewrites a glass recycling process to lowercase on a route that has opted in', () => {
+    const params = { materialType: 'Glass_Re_Melt' }
+    normaliseParams(params, { glassRecyclingProcesses: true })
+    expect(params.materialType).toBe('glass_re_melt')
+  })
+
   test('does not throw when params is undefined', () => {
     expect(() => normaliseParams(undefined)).not.toThrow()
   })
@@ -117,9 +160,29 @@ describe('routeParamsGuard plugin', () => {
       path: '/{language}',
       handler: (request) => request.params
     })
+    server.route({
+      method: 'GET',
+      path: '/opted-in/{materialType}',
+      options: {
+        plugins: { routeParamsGuard: { glassRecyclingProcesses: true } }
+      },
+      handler: (request) => request.params
+    })
     await server.initialize()
     return server
   }
+
+  test('takes a glass recycling process only on a route that opts in', async () => {
+    const server = await makeServer()
+
+    const optedIn = await server.inject('/opted-in/Glass_Re_Melt')
+    const notOptedIn = await server.inject('/test/900001/glass_re_melt')
+
+    expect(optedIn.statusCode).toBe(200)
+    expect(optedIn.result).toEqual({ materialType: 'glass_re_melt' })
+    expect(notOptedIn.statusCode).toBe(400)
+    await server.stop({ timeout: 0 })
+  })
 
   test('rejects an invalid param with a 400 before the handler runs', async () => {
     const server = await makeServer()

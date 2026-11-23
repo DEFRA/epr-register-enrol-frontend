@@ -79,7 +79,10 @@ export const manageChangeRequestsController = {
       caption: manageCaption(context, t),
       backLink: manageUrl(params, currentLocale),
       // RA-425: "home" is the Re/Ex material page.
-      homeUrl: reExBackLinkUrl(params.organisationId, context.registrationId),
+      homeUrl: reExBackLinkUrl(
+        context.reExOrganisationId,
+        context.registrationId
+      ),
       listUrl,
       filterOptions: filterOptions(filters, t, types),
       rows: rows.map((row) => toRowView(row, { t, params, currentLocale })),

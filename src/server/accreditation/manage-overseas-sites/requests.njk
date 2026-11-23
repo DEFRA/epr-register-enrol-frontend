@@ -11,7 +11,7 @@
             <div class="govuk-error-summary__body">
               <ul class="govuk-list govuk-error-summary__list">
                 {% for error in errors %}
-                  <li><a href="{{ error.href }}" data-testid="error-request-{{ error.orsId }}">{{ error.text }}</a></li>
+                  <li><a href="{{ error.href }}" data-testid="{{ error.testId }}">{{ error.text }}</a></li>
                 {% endfor %}
               </ul>
             </div>

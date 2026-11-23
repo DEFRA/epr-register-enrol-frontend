@@ -721,7 +721,7 @@ describe('#operatorAccreditationController', () => {
     expect(statusCode).toBe(statusCodes.ok)
   })
 
-  test('renders Not Set site address in current accreditation details when there is no site address', async () => {
+  test('renders Not Set location in current accreditation details when there is no location', async () => {
     mockAccreditationGet([
       makeApp({
         organisation: {
@@ -938,7 +938,7 @@ describe('#operatorAccreditationController', () => {
     expect(result).toContain('Dragon Recyclers')
   })
 
-  test('page heading is unaffected by site address; the address appears in the application header instead', async () => {
+  test('page heading is unaffected by location; the address appears in the application header instead', async () => {
     mockAccreditationGet([
       makeApp({ siteAddress: '2 North Road, Addingrove, AA3 1AB' })
     ])
@@ -1566,7 +1566,7 @@ describe('#operatorAccreditationController', () => {
   })
 
   describe('exporter applications on the main route (RA-374: isExporter comes from the record, not the URL)', () => {
-    test('does NOT render current accreditation site address row for an exporter application', async () => {
+    test('does NOT render current accreditation location row for an exporter application', async () => {
       mockAccreditationGet([
         makeExporterApp({
           organisation: {
@@ -1591,7 +1591,7 @@ describe('#operatorAccreditationController', () => {
       )
     })
 
-    test('reprocessor application still renders current accreditation site address row', async () => {
+    test('reprocessor application still renders current accreditation location row', async () => {
       mockAccreditationGet([
         makeApp({
           organisation: {

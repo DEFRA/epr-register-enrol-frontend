@@ -1106,6 +1106,36 @@ describe('#uploadBesEvidenceController', () => {
       )
     })
 
+    test('redirects back to the upload form with reason=duplicateFilename when the backend rejects with DuplicateFilename, which shows the duplicate message', async () => {
+      const cookie = await getStatusCookie()
+      vi.spyOn(apiClient, 'get').mockResolvedValue({
+        uploadStatus: 'ready',
+        processingStatus: 'validated',
+        form: { file: { filename: 'evidence.pdf', fileId: 'file-validated' } }
+      })
+      vi.spyOn(apiClient, 'post').mockRejectedValue(
+        Object.assign(new Error('Rejected'), {
+          status: 422,
+          response: JSON.stringify({ code: 'DuplicateFilename' })
+        })
+      )
+
+      const { headers } = await server.inject({
+        method: 'GET',
+        url: `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}/status`,
+        headers: { Cookie: cookie }
+      })
+
+      expect(headers.location).toBe(
+        `/accreditation/upload-bes-evidence/${APPLICATION_ID}/${SITE_ID}?reason=duplicateFilename`
+      )
+      vi.spyOn(apiClient, 'get').mockResolvedValue(makeApplication())
+      const page = await server.inject(headers.location)
+      expect(page.result).toContain(
+        'A file with this name has already been uploaded. Please rename the file so that each uploaded document has a unique filename'
+      )
+    })
+
     test('still redirects to upload-more-evidence when saving the file record fails', async () => {
       const cookie = await getStatusCookie()
       vi.spyOn(apiClient, 'get').mockResolvedValue({

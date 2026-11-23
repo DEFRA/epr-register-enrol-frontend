@@ -1,3 +1,6 @@
+import Boom from '@hapi/boom'
+
+import { statusCodes } from '../../common/constants/status-codes.js'
 import { getRegistrationStatusByNumber } from '../../common/helpers/registrationApiService.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { APPROVED_STATUS } from '../../common/constants/applicationStatuses.js'
@@ -7,8 +10,10 @@ import { APPROVED_STATUS } from '../../common/constants/applicationStatuses.js'
  * is found by it before anything else, and its ReEx registration id is what
  * the accreditation and change-request lookups use.
  *
- * Returns null when the registration has no record or the call fails; the
- * caller shows the service-problem page.
+ * A 404 from the backend means no current registration has the number, or
+ * that organisation number's organisation doesn't hold it, so the page is a
+ * 404 too. Returns null when the call fails any other way; the caller shows
+ * the service-problem page.
  */
 export async function fetchRegistration({
   organisationId,
@@ -21,6 +26,9 @@ export async function fetchRegistration({
       organisationId
     )
   } catch (error) {
+    if (error.status === statusCodes.notFound) {
+      throw Boom.notFound()
+    }
     logStructuredError(
       logger,
       error,

@@ -3,16 +3,17 @@ import { latestByCreatedAt } from '../../common/helpers/accreditationSelection.j
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { APPROVED_STATUS } from '../../common/constants/applicationStatuses.js'
 import { currentYear } from '../../common/helpers/currentYear.js'
+import { matchesUrlMaterial } from './url-material.js'
 
 function selectCurrentAccreditation(
   applications,
-  { registrationId, materialType, year }
+  { registrationId, urlMaterial, year }
 ) {
   return latestByCreatedAt(
     applications.filter(
       (application) =>
         application.registrationId === registrationId &&
-        application.materialType === materialType &&
+        matchesUrlMaterial(application, urlMaterial) &&
         application.year === year &&
         application.applicationStatus === APPROVED_STATUS
     )
@@ -29,12 +30,15 @@ function selectCurrentAccreditation(
  * the caller then shows the service-problem page rather than partial
  * information, so an outage never passes for "no accreditation".
  *
+ * @param {object} params
+ * @param {{ materialType: string, glassRecyclingProcess: string|null }} params.urlMaterial
+ *   the URL's material, from parseUrlMaterial
  * @returns {Promise<{ application: object | null } | { failed: true }>}
  */
 export async function fetchCurrentAccreditation({
   organisationId,
   registrationId,
-  materialType,
+  urlMaterial,
   logger
 }) {
   try {
@@ -44,12 +48,12 @@ export async function fetchCurrentAccreditation({
     // never a URL parameter.
     const chosen = selectCurrentAccreditation(applications, {
       registrationId,
-      materialType,
+      urlMaterial,
       year: currentYear()
     })
     if (!chosen) {
       logger.info(
-        { organisationId, registrationId, materialType },
+        { organisationId, registrationId, ...urlMaterial },
         'No Approved current-year accreditation application found'
       )
       return { application: null }
@@ -64,7 +68,7 @@ export async function fetchCurrentAccreditation({
     logStructuredError(
       logger,
       error,
-      { organisationId, registrationId, materialType },
+      { organisationId, registrationId, ...urlMaterial },
       'Error fetching the current accreditation application'
     )
     return { failed: true }

@@ -8,6 +8,7 @@ import { stubApiClient } from '../../common/stub-api-client.js'
 import { persistentStubApiClient } from '../../common/persistentStubApiClient.js'
 import {
   MANAGE_ORG_ID as ORG_ID,
+  MANAGE_REEX_ORG_ID as REEX_ORG_ID,
   MANAGE_REGISTRATION_ID as REGISTRATION_ID,
   MANAGE_REGISTRATION_NUMBER as REGISTRATION_NUMBER,
   MANAGE_MATERIAL as MATERIAL,
@@ -44,7 +45,7 @@ const WELSH_PAGE_URL = `/cy${PAGE_URL}`
 
 const REGISTRATION_STATUS_URL = `/api/v1/registrations/by-number/${REGISTRATION_NUMBER}/status?organisationId=${ORG_ID}`
 
-const LIST_URL = `/api/v1/accreditation-applications/${ORG_ID}`
+const LIST_URL = `/api/v1/accreditation-applications/${REEX_ORG_ID}`
 
 // RA-739: the stub registration numbers follow the clock.
 const stubManageUrl = (org, registrationNumber, material = 'Plastic') =>
@@ -247,17 +248,49 @@ describe('#manageRegistrationAccreditationController', () => {
       }
     )
 
-    test('when the registration has no record', async () => {
-      mockManageGets([makeApp()], apiError(statusCodes.notFound))
-
-      expectServiceProblem(await get(PAGE_URL))
-    })
-
     test('when the registration-status call fails', async () => {
       mockManageGets([makeApp()], apiError(statusCodes.internalServerError))
 
       expectServiceProblem(await get(PAGE_URL))
     })
+
+    // Without ReEx's id for the organisation there is nothing to look the
+    // accreditation up by.
+    test('when the registration status has no ReEx organisation id', async () => {
+      const getSpy = mockManageGets([makeApp()], {
+        ...approvedRegistration,
+        reExOrganisationId: null
+      })
+
+      expectServiceProblem(await get(PAGE_URL))
+      expect(getSpy).not.toHaveBeenCalledWith(
+        expect.stringMatching(/^\/api\/v1\/accreditation-applications\//)
+      )
+    })
+  })
+
+  // The backend answers 404 for a number no current registration has, and for
+  // an organisation number that isn't the holder's.
+  test('is a 404 when the registration has no record for the organisation', async () => {
+    const getSpy = mockManageGets([makeApp()], apiError(statusCodes.notFound))
+
+    const { statusCode } = await get(PAGE_URL)
+
+    expect(statusCode).toBe(statusCodes.notFound)
+    expect(getSpy).not.toHaveBeenCalledWith(
+      expect.stringMatching(/^\/api\/v1\/accreditation-applications\//)
+    )
+  })
+
+  test("looks the accreditation up by ReEx's id for the organisation, not the URL's number", async () => {
+    const getSpy = mockManageGets([makeApp()])
+
+    await get(PAGE_URL)
+
+    expect(getSpy).toHaveBeenCalledWith(LIST_URL)
+    expect(getSpy).not.toHaveBeenCalledWith(
+      `/api/v1/accreditation-applications/${ORG_ID}`
+    )
   })
 
   test('asks for the status of the registration in the URL, naming its organisation', async () => {
@@ -344,7 +377,7 @@ describe('#manageRegistrationAccreditationController', () => {
         )
       })
 
-      test('shows no site address', () => {
+      test('shows no location', () => {
         expect(result).not.toContain('data-testid="site-address"')
       })
 
@@ -355,7 +388,7 @@ describe('#manageRegistrationAccreditationController', () => {
             .map(([url]) => url)
             .filter((url) => url.startsWith('/api/v1/accreditation-changes/'))
         ).toEqual([
-          `/api/v1/accreditation-changes/${ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
+          `/api/v1/accreditation-changes/${REEX_ORG_ID}/registrations/${REGISTRATION_ID}/${MATERIAL}`
         ])
       })
 
@@ -437,7 +470,7 @@ describe('#manageRegistrationAccreditationController', () => {
       expect(result).toContain('data-testid="service-problem-heading"')
     })
 
-    test('shows a reprocessor their site address, a glass caption and no cards', async () => {
+    test('shows a reprocessor their location, a glass caption and no cards', async () => {
       mockManageGets([], registrationOnlyReprocessor)
 
       const { statusCode, result } = await get(
@@ -466,14 +499,129 @@ describe('#manageRegistrationAccreditationController', () => {
     })
   })
 
-  test('accepts the lowercase material slug Re/Ex links with', async () => {
-    mockManageGets([makeApp()])
+  // Re/Ex links with its organisation read model's material: lowercase, and
+  // glass_re_melt or glass_other for glass. Older links carry ours (Plastic,
+  // Glass).
+  describe("the URL's material", () => {
+    const urlFor = (material) =>
+      `/manage/${ORG_ID}/${REGISTRATION_NUMBER}/${material}`
 
-    const { statusCode } = await get(
-      `/manage/${ORG_ID}/${REGISTRATION_NUMBER}/plastic`
+    const glassApp = (glassRecyclingProcess) =>
+      makeApp({
+        material: 'glass',
+        glassRecyclingProcess: [glassRecyclingProcess],
+        wasteProcessingType: 'reprocessor'
+      })
+
+    const expectAccreditedView = ({ statusCode, result }) => {
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toMatch(
+        /data-testid="accreditation-number"[^>]*>\s*A27EX0500180001PL\s*</
+      )
+    }
+
+    const expectServiceProblem = ({ statusCode, result }) => {
+      expect(statusCode).toBe(statusCodes.internalServerError)
+      expect(result).toContain('data-testid="service-problem-heading"')
+    }
+
+    test.each(['plastic', 'Plastic', 'PLASTIC'])(
+      'shows an accredited operator their accreditation for %s',
+      async (material) => {
+        mockManageGets([makeApp()])
+
+        expectAccreditedView(await get(urlFor(material)))
+      }
     )
 
-    expect(statusCode).toBe(statusCodes.ok)
+    test.each([
+      ['glass_re_melt', 'glass_re_melt', 'Glass - Remelt'],
+      ['Glass_Re_Melt', 'glass_re_melt', 'Glass - Remelt'],
+      ['glass_other', 'glass_other', 'Glass - Other'],
+      ['glass', 'glass_other', 'Glass - Other'],
+      ['Glass', 'glass_re_melt', 'Glass - Remelt']
+    ])(
+      'shows an accredited %s operator with %s glass their accreditation',
+      async (material, glassRecyclingProcess, caption) => {
+        mockManageGets([glassApp(glassRecyclingProcess)])
+
+        const response = await get(urlFor(material))
+
+        expectAccreditedView(response)
+        expect(response.result).toMatch(
+          new RegExp(
+            `data-testid="page-caption"[^>]*>\\s*Acme Recycling Ltd \\(2027, ${caption}\\)\\s*<`
+          )
+        )
+      }
+    )
+
+    test.each([
+      ['glass_other', 'glass_re_melt'],
+      ['glass_re_melt', 'glass_other']
+    ])(
+      'shows the service-problem page for %s when the accreditation is %s glass',
+      async (material, glassRecyclingProcess) => {
+        mockManageGets([glassApp(glassRecyclingProcess)])
+
+        expectServiceProblem(await get(urlFor(material)))
+      }
+    )
+
+    test.each(['glass_re_melt', 'GLASS_RE_MELT', 'glass'])(
+      'shows a registration-only re-melt glass reprocessor their registration for %s',
+      async (material) => {
+        mockManageGets([], registrationOnlyReprocessor)
+
+        const { statusCode, result } = await get(urlFor(material))
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toMatch(
+          /data-testid="page-caption"[^>]*>\s*Reg Only Exports Ltd \(2027, Glass - Remelt\)\s*</
+        )
+      }
+    )
+
+    test('shows the service-problem page for glass_other when the registration is re-melt glass', async () => {
+      mockManageGets([], registrationOnlyReprocessor)
+
+      expectServiceProblem(await get(urlFor('glass_other')))
+    })
+
+    test("reads a registration-only operator's change requests by the registration's own material", async () => {
+      const getSpy = mockManageGets([], registrationOnlyReprocessor)
+
+      await get(urlFor('glass_re_melt'))
+
+      expect(
+        getSpy.mock.calls
+          .map(([url]) => url)
+          .filter((url) => url.startsWith('/api/v1/accreditation-changes/'))
+      ).toEqual([
+        `/api/v1/accreditation-changes/${REEX_ORG_ID}/registrations/${REGISTRATION_ID}/Glass`
+      ])
+    })
+
+    // The route params guard's answer for any other path param it refuses.
+    test.each(['glass-re-melt', 'glassremelt', 'tin'])(
+      'returns 400 for %s on every manage page, without reading data',
+      async (material) => {
+        const getSpy = mockManageGets([makeApp()])
+        const url = urlFor(material)
+
+        for (const path of [
+          url,
+          `/cy${url}`,
+          `${url}/overseas-sites`,
+          `${url}/change-requests`,
+          `${url}/change-requests/3f2504e0-4f89-41d3-9a0c-0305e82c3301`
+        ]) {
+          const { statusCode } = await get(path)
+          expect(statusCode, path).toBe(statusCodes.badRequest)
+        }
+        expect(getSpy).not.toHaveBeenCalled()
+      }
+    )
   })
 
   describe('content shared by exporters and reprocessors', () => {
@@ -547,7 +695,7 @@ describe('#manageRegistrationAccreditationController', () => {
     expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Dec 2028\s*</)
   })
 
-  test('shows an exporter no site address, and both cards', async () => {
+  test('shows an exporter no location, and both cards', async () => {
     mockManageGets([makeApp()])
 
     const { result } = await get(PAGE_URL)
@@ -577,7 +725,7 @@ describe('#manageRegistrationAccreditationController', () => {
     )
   })
 
-  test('shows a reprocessor their site address, and only the Manage accreditation card', async () => {
+  test('shows a reprocessor their location, and only the Manage accreditation card', async () => {
     mockManageGets([reprocessorApp()])
 
     const { result } = await get(PAGE_URL)
@@ -705,7 +853,7 @@ describe('#manageRegistrationAccreditationController', () => {
       await get(PAGE_URL)
 
       expect(getSpy).toHaveBeenCalledWith(
-        `/api/v1/accreditation-changes/${ORG_ID}/app-current`
+        `/api/v1/accreditation-changes/${REEX_ORG_ID}/app-current`
       )
     })
 
@@ -932,7 +1080,7 @@ describe('#manageRegistrationAccreditationController', () => {
       )
     })
 
-    test('shows the stub reprocessor with its site address', async () => {
+    test('shows the stub reprocessor with its location', async () => {
       const { statusCode, result } = await get(
         stubManageUrl(
           MANAGE_EXPORTER_ORG,
@@ -1010,11 +1158,15 @@ describe('#manageRegistrationAccreditationController', () => {
     })
 
     test.each([
-      ['not Approved', createdRegistrationNumber],
-      ['missing', missingRegistrationNumber]
+      [
+        'not Approved',
+        createdRegistrationNumber,
+        statusCodes.internalServerError
+      ],
+      ['missing', missingRegistrationNumber, statusCodes.notFound]
     ])(
-      'shows the service-problem page for the stub registration that is %s',
-      async (_case, registrationNumber) => {
+      'responds as the backend does for the stub registration that is %s',
+      async (_case, registrationNumber, expectedStatus) => {
         const { statusCode } = await get(
           stubManageUrl(
             MANAGE_EXPORTER_ORG,
@@ -1023,7 +1175,7 @@ describe('#manageRegistrationAccreditationController', () => {
           )
         )
 
-        expect(statusCode).toBe(statusCodes.internalServerError)
+        expect(statusCode).toBe(expectedStatus)
       }
     )
   })

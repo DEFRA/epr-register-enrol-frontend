@@ -43,12 +43,14 @@ export function collectApplicationFilenames(application) {
   return [...samplingPlanFilenames, ...besEvidenceFilenames]
 }
 
-export function isDuplicateFilename(filename, application) {
+export function isFilenameAmong(filename, filenames) {
   const key = normaliseFilenameKey(filename)
   if (!key) {
     return false
   }
-  return collectApplicationFilenames(application).some(
-    (existing) => normaliseFilenameKey(existing) === key
-  )
+  return filenames.some((existing) => normaliseFilenameKey(existing) === key)
+}
+
+export function isDuplicateFilename(filename, application) {
+  return isFilenameAmong(filename, collectApplicationFilenames(application))
 }
