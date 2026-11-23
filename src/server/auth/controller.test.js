@@ -48,14 +48,14 @@ describe('#logoutController', () => {
     expect(headers.location).toBe('/auth/operator/login')
   })
 
-  test('redirects to the operator login page when there is no session', async () => {
+  test('hands off to ReEx logout when there is no session (RA-460)', async () => {
     const { statusCode, headers } = await server.inject({
       method: 'GET',
       url: '/auth/logout'
     })
 
     expect(statusCode).toBe(statusCodes.redirect)
-    expect(headers.location).toBe('/auth/operator/login')
+    expect(headers.location).toBe('https://reex.example.test/logout')
   })
 })
 

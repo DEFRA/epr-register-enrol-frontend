@@ -2,7 +2,8 @@ import { describe, test, expect, vi, afterEach } from 'vitest'
 
 function defaultConfigGet(key) {
   const values = {
-    'auth.callbackBaseUrl': 'https://frontend.example'
+    'auth.callbackBaseUrl': 'https://frontend.example',
+    'reex.frontendBaseUrl': 'https://reex.example'
   }
   return values[key]
 }
@@ -105,47 +106,76 @@ describe('#logoutController federated logout', () => {
 
   // On the round trip back from a federated logout, `user` has already been
   // reset by the first pass — the request that hits this route as Defra
-  // ID's callback has no session at all. Every return leg lands on the
-  // operator login page, the only login this service has.
+  // ID's callback has no session at all. Every return leg hands off to ReEx's
+  // logout (RA-460), which ends the ReEx session and lands on its "you've been
+  // logged out" page.
   describe('second pass — Defra ID redirecting back to /auth/logout with an already-empty session', () => {
-    test('a legacy userType=regulator return leg lands on the operator login page', async () => {
+    test('a legacy userType=regulator return leg hands off to ReEx logout', async () => {
       const yar = fakeYar()
       const h = mockH()
       const request = { yar, query: { userType: 'regulator' } }
 
       await logoutController(request, h)
 
-      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example/logout')
     })
 
-    test('an operator lands on the operator login page', async () => {
+    test('an operator return leg hands off to ReEx logout', async () => {
       const yar = fakeYar()
       const h = mockH()
       const request = { yar, query: { userType: 'operator' } }
 
       await logoutController(request, h)
 
-      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example/logout')
     })
 
-    test('an unrecognised userType value defaults to the operator login page rather than throwing', async () => {
+    test('an unrecognised userType value still hands off to ReEx logout rather than throwing', async () => {
       const yar = fakeYar()
       const h = mockH()
       const request = { yar, query: { userType: 'not-a-real-type' } }
 
       await logoutController(request, h)
 
-      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example/logout')
     })
 
-    test('a direct visit with no userType query param at all defaults to operator', async () => {
+    test('a direct visit with no userType query param at all hands off to ReEx logout', async () => {
       const yar = fakeYar()
       const h = mockH()
       const request = { yar, query: {} }
 
       await logoutController(request, h)
 
-      expect(h.redirect).toHaveBeenCalledWith('/auth/operator/login')
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example/logout')
+    })
+  })
+
+  describe('the ReEx hand-off address', () => {
+    test('comes from config, not from the request', async () => {
+      const h = mockH()
+      const request = {
+        yar: fakeYar(),
+        query: { userType: 'operator', redirect: 'https://evil.example' }
+      }
+
+      await logoutController(request, h)
+
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example/logout')
+    })
+
+    test('a base URL with a trailing slash still gives a single /logout', async () => {
+      const { config } = await import('../../config/config.js')
+      config.get.mockImplementation((key) =>
+        key === 'reex.frontendBaseUrl'
+          ? 'https://reex.example/'
+          : defaultConfigGet(key)
+      )
+      const h = mockH()
+
+      await logoutController({ yar: fakeYar(), query: {} }, h)
+
+      expect(h.redirect).toHaveBeenCalledWith('https://reex.example/logout')
     })
   })
 })
