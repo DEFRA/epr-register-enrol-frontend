@@ -195,7 +195,17 @@ export async function logoutController(request, h) {
   // authenticated via Defra ID (stub users never get one).
   if (!idToken) {
     request.yar.reset()
-    return h.redirect('/auth/operator/login')
+    if (user) {
+      // Stub user (never has an id_token): back to the stub chooser.
+      return h.redirect('/auth/operator/login')
+    }
+    // RA-460: the Defra ID return leg (or no session at all). Hand off to ReEx
+    // so its session ends too, and the user finishes on ReEx's "you've been
+    // logged out" page. The target comes from config, never from the request.
+    request.logger?.info('Sign-out: handing off to ReEx logout')
+    return h.redirect(
+      new URL('/logout', config.get('reex.frontendBaseUrl')).toString()
+    )
   }
 
   const provider = getDefraIdConfig(config)
@@ -204,7 +214,7 @@ export async function logoutController(request, h) {
   // Reset (not clear) the local session before redirecting, so the server-side
   // cache entry is actually dropped rather than just nulling out these two keys.
   // If the user returns to /auth/logout after the IdP signs them out, the
-  // session will be empty and we fall through to the redirect above.
+  // session will be empty and we hand off to ReEx's logout (RA-460).
   request.yar.reset()
 
   const params = new URLSearchParams({
