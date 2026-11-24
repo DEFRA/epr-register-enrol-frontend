@@ -1,5 +1,4 @@
 import { findInterimSite } from '../../common/helpers/interimSites.js'
-import { canAddInterimSite } from '../../common/helpers/interimSiteLimit.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
@@ -36,14 +35,13 @@ async function runInterimSiteAction(
     interimSiteId,
     act,
     describe,
-    onSuccess,
-    allowed = () => true
+    onSuccess
   }
 ) {
   const { h, t, logger, request } = ctx
   const { selectOverseasSitesUrl, renderSaveError } = deps
   const found = findInterimSite(rawSites, Number.parseInt(interimSiteId, 10))
-  if (!found || !allowed(found)) {
+  if (!found) {
     return h.redirect(selectOverseasSitesUrl(applicationId))
   }
 
@@ -108,10 +106,6 @@ export function removeInterimSite(
 // and nothing else, so the site returns with the siteId, siteNumber and
 // createdAt it always had - the same record resuming, not a replacement, which
 // is the whole reason withdrawal was made soft in the first place.
-//
-// With multiple interim sites off, restoring counts as adding one: allowed only
-// while the ORS has no active interim site. Otherwise withdraw, add a
-// replacement, restore would leave it with two.
 export function restoreInterimSite(
   ctx,
   deps,
@@ -126,7 +120,6 @@ export function restoreInterimSite(
     rawSites,
     interimSiteId,
     act: (...args) => accreditationApiService.restoreInterimSite(...args),
-    allowed: (found) => canAddInterimSite(found.site),
     describe: () =>
       `Error restoring interim site ${interimSiteId} for application ${applicationId}`
   })

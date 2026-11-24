@@ -118,12 +118,10 @@
           {{ submitButton }}
         </button>
 
-        {% if showAddInterimSiteButton %}
-          <button type="submit" name="action" value="addInterimSite" class="govuk-button govuk-button--secondary" data-module="govuk-button"
-                  data-testid="save-and-add-interim-site-button">
-            {{ addInterimSiteButton }}
-          </button>
-        {% endif %}
+        <button type="submit" name="action" value="addInterimSite" class="govuk-button govuk-button--secondary" data-module="govuk-button"
+                data-testid="save-and-add-interim-site-button">
+          {{ addInterimSiteButton }}
+        </button>
       </form>
 
       <a href="{{ cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ cancelLink }}</a>

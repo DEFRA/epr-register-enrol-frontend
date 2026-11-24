@@ -8,10 +8,6 @@ import {
 } from '../../../common/helpers/addInterimSiteSession.js'
 import { describeSiteSaveValidationError } from '../../../common/helpers/logging/describe-site-save-validation-error.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
-import {
-  siteCanTakeInterimSite,
-  InterimSiteLimitError
-} from '../../../common/helpers/interimSiteLimit.js'
 
 export const INTERIM_SITE_SUCCESS_FLASH = 'interimSiteSuccess'
 
@@ -163,26 +159,12 @@ function buildSitePayload(session) {
 // owns siteId, siteNumber, createdAt and removedAt and ignores them from the
 // request body, so an edit can no longer wipe the generated site number by
 // forgetting to echo it.
-//
-// Every create goes through here, so this is where the one-per-ORS limit is
-// enforced whichever way the operator arrived: the list's add link, a typed
-// URL, or "Save and add interim site" on the ORS check-your-answers page.
-// Against a fresh read, since the entry points only saw the application as it
-// was when the wizard started.
 async function createInterimSite(
   organisationId,
   applicationId,
   session,
   sitePayload
 ) {
-  const allowed = await siteCanTakeInterimSite({
-    organisationId,
-    applicationId,
-    siteId: session.linkedSiteId
-  })
-  if (!allowed) {
-    throw new InterimSiteLimitError(session.linkedSiteId)
-  }
   return accreditationApiService.createInterimSite(
     organisationId,
     applicationId,
@@ -291,10 +273,8 @@ export const addInterimSiteCyaPostController = {
       // RA-481: a 409 means the application locked between the guard check
       // above and this write landing — send the operator back to the
       // section's own (now read-only) list page rather than a raw error.
-      // InterimSiteLimitError takes the same path: the list is where the
-      // interim site already on this ORS can be seen. The answers can never
-      // be saved now, so they are cleared rather than left to pre-fill the
-      // next "Add interim site".
+      // The answers can never be saved now, so they are cleared rather than
+      // left to pre-fill the next "Add interim site".
       if (err.status === statusCodes.conflict) {
         clearAddInterimSiteSession(request)
         return h.redirect(selectOverseasSitesUrl(applicationId))

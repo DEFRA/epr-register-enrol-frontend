@@ -5,13 +5,11 @@ import {
   beforeAll,
   afterAll,
   vi,
-  beforeEach,
-  afterEach
+  beforeEach
 } from 'vitest'
 import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
-import { setMultipleInterimSitesEnabled } from '../../../common/test-helpers/feature-flags.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../../common/constants/accreditationSessionKeys.js'
 import {
   addOrsCyaGetController,
@@ -1232,73 +1230,19 @@ describe('#addOrsCyaController', () => {
       expect(accreditationApiService.promoteOverseasSite).not.toHaveBeenCalled()
     })
 
-    // RA-603, multiple interim sites off: an ORS may hold one interim site, so
-    // "Save and add interim site" is offered only while it has none.
-    describe('with multiple interim sites off', () => {
-      const SITE_WITH_INTERIM = {
+    test('still offers "Save and add interim site" for an ORS that already has an interim site', async () => {
+      const sessionCookie = await seedEditSession({
         ...ACCREDITED_SITE,
         interimSite: { siteId: 42, siteName: 'Interim Depot' }
-      }
-      let flag
-      beforeEach(() => {
-        flag = setMultipleInterimSitesEnabled(false)
-      })
-      afterEach(() => {
-        flag.mockRestore()
       })
 
-      test('does not offer "Save and add interim site" for an ORS that already has one', async () => {
-        const sessionCookie = await seedEditSession(SITE_WITH_INTERIM)
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: BASE_URL,
-          headers: { cookie: sessionCookie }
-        })
-
-        expect(result).not.toContain(
-          'data-testid="save-and-add-interim-site-button"'
-        )
-        expect(result).toContain('data-testid="submit-button"')
+      const { result } = await server.inject({
+        method: 'GET',
+        url: BASE_URL,
+        headers: { cookie: sessionCookie }
       })
 
-      test('still offers it for an ORS with no interim site', async () => {
-        const sessionCookie = await seedEditSession()
-
-        const { result } = await server.inject({
-          method: 'GET',
-          url: BASE_URL,
-          headers: { cookie: sessionCookie }
-        })
-
-        expect(result).toContain(
-          'data-testid="save-and-add-interim-site-button"'
-        )
-      })
-
-      // A page rendered before the ORS got its interim site can still post the
-      // action; it saves the ORS like Confirm instead of opening the wizard.
-      test('saves and returns to the list when the action is posted anyway', async () => {
-        const sessionCookie = await seedEditSession(SITE_WITH_INTERIM)
-        vi.spyOn(
-          accreditationApiService,
-          'updateOverseasSite'
-        ).mockResolvedValue({ siteId: 900001 })
-
-        const { statusCode, headers } = await server.inject({
-          method: 'POST',
-          url: BASE_URL,
-          headers: {
-            'content-type': 'application/x-www-form-urlencoded',
-            cookie: sessionCookie
-          },
-          payload: 'action=addInterimSite'
-        })
-
-        expect(statusCode).toBe(statusCodes.redirect)
-        expect(headers.location).toBe(SELECT_ORS_URL)
-        expect(accreditationApiService.updateOverseasSite).toHaveBeenCalled()
-      })
+      expect(result).toContain('data-testid="save-and-add-interim-site-button"')
     })
 
     test('returns 500 with error summary when updateOverseasSite fails', async () => {

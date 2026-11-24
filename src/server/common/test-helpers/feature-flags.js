@@ -18,13 +18,3 @@ export function setFeatureFlag(flag, enabled) {
       key === `featureFlags.${flag}` ? enabled : realGet(key)
     )
 }
-
-/**
- * The flag defaults to false, so any test exercising more than one interim site
- * per ORS has to turn it on.
- *
- * @param {boolean} enabled
- */
-export function setMultipleInterimSitesEnabled(enabled) {
-  return setFeatureFlag('multipleInterimSitesEnabled', enabled)
-}
