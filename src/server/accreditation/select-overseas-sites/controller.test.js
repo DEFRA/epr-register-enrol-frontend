@@ -1620,7 +1620,7 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('data-testid="add-interim-site-900001"')
     })
 
-    test('skips a withdrawn first entry when choosing which one to show', async () => {
+    test('omits a withdrawn interim site and shows the live one', async () => {
       const result = await renderWithSites([
         {
           ...ACCREDITED_SITE,
@@ -1640,7 +1640,7 @@ describe('#selectOverseasSitesController', () => {
       expect(result).not.toContain('data-testid="interim-site-row-42"')
     })
 
-    // Withdrawing the only one frees the slot: the disclosure still renders
+    // Withdrawing the only one: the disclosure still renders
     // (it carries the withdrawn one), and adding a replacement is allowed.
     test('offers adding one again once the only interim site is withdrawn', async () => {
       const result = await renderWithSites([

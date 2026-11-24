@@ -224,7 +224,7 @@ describe('#confirmOverseasSitesController', () => {
     // RA-630: an ORS can hold many interim sites since RA-603, in the
     // `interimSites` list. This page read only the singular mirror, so it
     // showed one of them.
-    describe('with multiple interim sites', () => {
+    describe('when an ORS has several interim sites', () => {
       async function renderWithInterimSites(siteOverrides) {
         vi.spyOn(apiClient, 'get').mockResolvedValue(
           makeApplication({
