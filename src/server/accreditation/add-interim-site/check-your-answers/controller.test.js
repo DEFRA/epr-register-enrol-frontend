@@ -11,7 +11,6 @@ import { createServer } from '../../../server.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationApiService } from '../../../common/helpers/accreditationApiService.js'
 import { fillCompleteOrsAnswers } from '../../../common/test-helpers/ors-session.js'
-import { setMultipleInterimSitesEnabled } from '../../../common/test-helpers/feature-flags.js'
 
 const APPLICATION_ID = 'app-is-cya-001'
 const BASE_URL = `/accreditation/add-interim-site/${APPLICATION_ID}/check-your-answers`
@@ -209,6 +208,49 @@ describe('#addInterimSiteCyaController', () => {
       expect(result).toContain('[Welsh] Check your answers')
     })
 
+    // No one-interim-site-per-ORS limit: the create goes through for an ORS
+    // that already holds an active interim site.
+    test('calls createInterimSite for an ORS that already has an active interim site', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
+        applicationId: APPLICATION_ID,
+        organisationId: 'org-001',
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [
+            {
+              siteId: 555,
+              siteName: 'Accredited Site',
+              interimSites: [{ siteId: 42, siteName: 'Existing Depot' }]
+            }
+          ]
+        }
+      })
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue({
+        siteId: 43,
+        siteNumber: 'SN-002',
+        isNewSite: true
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.createInterimSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        555,
+        expect.objectContaining({ siteName: 'Interim Depot' })
+      )
+    })
+
     test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
       'redirects to select-overseas-sites when the application is locked (%s) and overseasSites is not Queried',
       async (applicationStatus) => {
@@ -337,39 +379,6 @@ describe('#addInterimSiteCyaController', () => {
 
       expect(statusCode).toBe(statusCodes.redirect)
       expect(headers.location).toBe(SELECT_ORS_URL)
-    })
-
-    // Multiple interim sites off: the create is held to one per ORS against a
-    // fresh read, whichever page the operator came in from. 555 is the ORS the
-    // session was linked to in beforeEach.
-    test('with multiple interim sites off, refuses a create for an ORS that already has one', async () => {
-      const flag = setMultipleInterimSitesEnabled(false)
-      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
-        applicationId: APPLICATION_ID,
-        organisationId: 'org-001',
-        overseasSites: {
-          sectionStatus: 'InProgress',
-          sites: [{ siteId: 555, interimSites: [{ siteId: 42 }] }]
-        }
-      })
-      const createSpy = vi
-        .spyOn(accreditationApiService, 'createInterimSite')
-        .mockResolvedValue({ siteId: 2 })
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: BASE_URL,
-        headers: {
-          'content-type': 'application/x-www-form-urlencoded',
-          Cookie: cookie
-        },
-        payload: ''
-      })
-      flag.mockRestore()
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe(SELECT_ORS_URL)
-      expect(createSpy).not.toHaveBeenCalled()
     })
 
     // RA-620: same diagnosability gap as the overseas site save.
@@ -560,7 +569,6 @@ describe('#addInterimSiteCyaController', () => {
     // a duplicate SiteId and a null SiteNumber. Falls back to the normal
     // create path, which is where the backend allocates both.
     test('falls back to createInterimSite when the interim site being edited is gone', async () => {
-      const flag = setMultipleInterimSitesEnabled(true)
       const sessionCookie = await seedEditSession()
 
       // A stale editingInterimSiteId - an abandoned Change carried into a
@@ -590,65 +598,6 @@ describe('#addInterimSiteCyaController', () => {
         555,
         expect.objectContaining({ siteName: 'Interim Depot' })
       )
-      flag.mockRestore()
-    })
-
-    // The fallback is a create, so with multiple interim sites off it is held
-    // to one per ORS like any other: refused while the ORS still shows an
-    // active interim site, allowed once it has none.
-    test('with multiple interim sites off, refuses the fallback create while the ORS still has one', async () => {
-      const flag = setMultipleInterimSitesEnabled(false)
-      const sessionCookie = await seedEditSession()
-      const notFound = Object.assign(new Error('not found'), { status: 404 })
-      vi.spyOn(accreditationApiService, 'updateInterimSite').mockRejectedValue(
-        notFound
-      )
-      vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue(
-        {}
-      )
-
-      const { statusCode, headers } = await server.inject({
-        method: 'POST',
-        url: BASE_URL,
-        headers: { ...postHeaders, cookie: sessionCookie },
-        payload: ''
-      })
-      flag.mockRestore()
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(headers.location).toBe(SELECT_ORS_URL)
-      expect(accreditationApiService.createInterimSite).not.toHaveBeenCalled()
-    })
-
-    test('with multiple interim sites off, allows the fallback create once the ORS has none', async () => {
-      const flag = setMultipleInterimSitesEnabled(false)
-      const sessionCookie = await seedEditSession()
-      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
-        applicationId: APPLICATION_ID,
-        organisationId: 'org-001',
-        overseasSites: {
-          sectionStatus: 'InProgress',
-          sites: [{ ...EXISTING_SITE, interimSite: null }]
-        }
-      })
-      const notFound = Object.assign(new Error('not found'), { status: 404 })
-      vi.spyOn(accreditationApiService, 'updateInterimSite').mockRejectedValue(
-        notFound
-      )
-      vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue(
-        {}
-      )
-
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: BASE_URL,
-        headers: { ...postHeaders, cookie: sessionCookie },
-        payload: ''
-      })
-      flag.mockRestore()
-
-      expect(statusCode).toBe(statusCodes.redirect)
-      expect(accreditationApiService.createInterimSite).toHaveBeenCalled()
     })
 
     // RA-620: an edit's 400 is logged under the call that actually failed,

@@ -1,7 +1,6 @@
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { findInterimSite } from '../../common/helpers/interimSites.js'
 import { answersFromSite } from '../../common/helpers/overseasSiteCompleteness.js'
-import { canAddInterimSite } from '../../common/helpers/interimSiteLimit.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
 import {
   resetAddOrsSession,
@@ -271,12 +270,6 @@ export const selectOverseasSitesInterimSiteAddEntryGetController = {
     )
     if (redirect) {
       return redirect
-    }
-
-    // With multiple interim sites off an ORS may hold one. The list hides the
-    // link once it has one; this stops the same page being reached by URL.
-    if (!canAddInterimSite(site)) {
-      return h.redirect(selectOverseasSitesUrl(applicationId))
     }
 
     resetAddInterimSiteSession(request)

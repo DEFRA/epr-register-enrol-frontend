@@ -5,13 +5,11 @@ import {
   beforeAll,
   afterAll,
   vi,
-  beforeEach,
-  afterEach
+  beforeEach
 } from 'vitest'
 import { createServer } from '../../server.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { apiClient } from '../../common/api-client.js'
-import { setMultipleInterimSitesEnabled } from '../../common/test-helpers/feature-flags.js'
 
 const APPLICATION_ID = 'app-cos-001'
 
@@ -226,7 +224,7 @@ describe('#confirmOverseasSitesController', () => {
     // RA-630: an ORS can hold many interim sites since RA-603, in the
     // `interimSites` list. This page read only the singular mirror, so it
     // showed one of them.
-    describe('with multiple interim sites', () => {
+    describe('when an ORS has several interim sites', () => {
       async function renderWithInterimSites(siteOverrides) {
         vi.spyOn(apiClient, 'get').mockResolvedValue(
           makeApplication({
@@ -244,72 +242,47 @@ describe('#confirmOverseasSitesController', () => {
         return result
       }
 
-      describe('enabled', () => {
-        let flag
-        beforeEach(() => {
-          flag = setMultipleInterimSitesEnabled(true)
-        })
-        afterEach(() => {
-          flag.mockRestore()
-        })
-
-        test('lists every interim site on the ORS', async () => {
-          const result = await renderWithInterimSites({
-            interimSites: [
-              { siteId: 42, siteName: 'First Depot' },
-              { siteId: 43, siteName: 'Second Depot' }
-            ]
-          })
-
-          expect(result).toContain('data-testid="interim-site-row-42"')
-          expect(result).toContain('data-testid="interim-site-row-43"')
-          expect(result).toContain('data-testid="interim-site-name-42"')
-          expect(result).toContain('data-testid="interim-site-name-43"')
-          expect(result).toContain('First Depot')
-          expect(result).toContain('Second Depot')
-        })
-
-        test('leaves out a withdrawn interim site', async () => {
-          const result = await renderWithInterimSites({
-            interimSites: [
-              { siteId: 42, siteName: 'First Depot' },
-              {
-                siteId: 43,
-                siteName: 'Withdrawn Depot',
-                removedAt: '2026-09-01T00:00:00Z'
-              }
-            ]
-          })
-
-          expect(result).toContain('data-testid="interim-site-row-42"')
-          expect(result).not.toContain('data-testid="interim-site-row-43"')
-          expect(result).not.toContain('Withdrawn Depot')
-        })
-
-        test('prefers the interimSites list over a stale singular mirror', async () => {
-          const result = await renderWithInterimSites({
-            interimSite: { siteId: 41, siteName: 'Stale Mirror' },
-            interimSites: [{ siteId: 42, siteName: 'Authoritative Depot' }]
-          })
-
-          expect(result).toContain('Authoritative Depot')
-          expect(result).not.toContain('Stale Mirror')
-        })
-      })
-
-      test('lists only the first active interim site when the feature is off', async () => {
-        const flag = setMultipleInterimSitesEnabled(false)
+      test('lists every interim site on the ORS', async () => {
         const result = await renderWithInterimSites({
           interimSites: [
             { siteId: 42, siteName: 'First Depot' },
             { siteId: 43, siteName: 'Second Depot' }
           ]
         })
-        flag.mockRestore()
+
+        expect(result).toContain('data-testid="interim-site-row-42"')
+        expect(result).toContain('data-testid="interim-site-row-43"')
+        expect(result).toContain('data-testid="interim-site-name-42"')
+        expect(result).toContain('data-testid="interim-site-name-43"')
+        expect(result).toContain('First Depot')
+        expect(result).toContain('Second Depot')
+      })
+
+      test('leaves out a withdrawn interim site', async () => {
+        const result = await renderWithInterimSites({
+          interimSites: [
+            { siteId: 42, siteName: 'First Depot' },
+            {
+              siteId: 43,
+              siteName: 'Withdrawn Depot',
+              removedAt: '2026-09-01T00:00:00Z'
+            }
+          ]
+        })
 
         expect(result).toContain('data-testid="interim-site-row-42"')
         expect(result).not.toContain('data-testid="interim-site-row-43"')
-        expect(result).not.toContain('Second Depot')
+        expect(result).not.toContain('Withdrawn Depot')
+      })
+
+      test('prefers the interimSites list over a stale singular mirror', async () => {
+        const result = await renderWithInterimSites({
+          interimSite: { siteId: 41, siteName: 'Stale Mirror' },
+          interimSites: [{ siteId: 42, siteName: 'Authoritative Depot' }]
+        })
+
+        expect(result).toContain('Authoritative Depot')
+        expect(result).not.toContain('Stale Mirror')
       })
     })
 

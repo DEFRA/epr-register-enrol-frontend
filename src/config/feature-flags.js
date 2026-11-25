@@ -11,12 +11,6 @@
  * `config.get('featureFlags.x')` is unchanged.
  */
 export const featureFlagsSchema = {
-  multipleInterimSitesEnabled: {
-    doc: 'RA-603. Allow an overseas reprocessing site to carry more than one interim site: shows every one it has, and offers "Add another interim site". Off by default. The same flag name and default exist in epr-register-enrol-management-fe and the two are meant to be flipped together - with this on and that off, a regulator would see fewer interim sites than the operator entered.',
-    format: Boolean,
-    default: false,
-    env: 'MULTIPLE_INTERIM_SITES_ENABLED'
-  },
   inYearChangesEnabled: {
     doc: 'In-year changes epic (from RA-425). Shows the operator in-year changes pages under /manage: so far the pages for viewing a current accreditation and its overseas reprocessing sites. Off by default; with it off every /manage route returns 404.',
     format: Boolean,

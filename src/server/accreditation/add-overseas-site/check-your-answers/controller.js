@@ -16,7 +16,6 @@ import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 import { annotateRows, buildRows } from './rows.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 import { describeSiteSaveValidationError } from '../../../common/helpers/logging/describe-site-save-validation-error.js'
-import { siteCanTakeInterimSite } from '../../../common/helpers/interimSiteLimit.js'
 import { activeInterimSites } from '../../../common/helpers/interimSites.js'
 import { findIncompleteAnswers } from '../../../common/helpers/overseasSiteCompleteness.js'
 
@@ -117,7 +116,6 @@ function buildViewData(
   applicationId,
   session,
   error,
-  showAddInterimSiteButton = true,
   { materialType, issues = [], interimSites = [] } = {}
 ) {
   const { rows, errorSummary } = annotateRows(
@@ -129,7 +127,6 @@ function buildViewData(
     heading: t('pages.addOverseasSite.cya.heading'),
     submitButton: t('pages.addOverseasSite.cya.submitButton'),
     addInterimSiteButton: t('pages.addOverseasSite.cya.addInterimSiteButton'),
-    showAddInterimSiteButton,
     cancelLink: t('pages.addOverseasSite.cya.cancelLink'),
     backLink: cyaBackLink(applicationId, session),
     cancelUrl: selectOrsUrl(applicationId),
@@ -194,26 +191,6 @@ function handleDeleteBaselCode(request, h, session, action, applicationId) {
   return h.redirect(cyaUrl(applicationId))
 }
 
-// RA-603: with multiple interim sites off an ORS may hold one, so "Save and add
-// interim site" is only offered while the ORS has none. A brand-new ORS always
-// qualifies; an edited or promoted one is checked against the application.
-// Fails open - the interim site create re-checks the limit before it writes,
-// so a failed read here costs a button, not the rule.
-async function interimSiteAllowed(organisationId, applicationId, siteId) {
-  if (siteId == null) {
-    return true
-  }
-  try {
-    return await siteCanTakeInterimSite({
-      organisationId,
-      applicationId,
-      siteId
-    })
-  } catch {
-    return true
-  }
-}
-
 export const addOrsCyaGetController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -233,14 +210,9 @@ export const addOrsCyaGetController = {
     }
 
     const session = getAddOrsSession(request)
-    const showAddInterimSiteButton = await interimSiteAllowed(
-      organisationId,
-      applicationId,
-      session.editingSiteId ?? session.promotingSiteId
-    )
     return renderPage(
       h,
-      buildViewData(t, applicationId, session, null, showAddInterimSiteButton, {
+      buildViewData(t, applicationId, session, null, {
         materialType: request.yar.get(ACCREDITATION_SESSION_KEYS.materialType),
         interimSites: await loadInterimSites(
           request,
@@ -320,26 +292,18 @@ async function renderIncompleteSite({
   materialType,
   issues
 }) {
-  const siteId = session.editingSiteId ?? session.promotingSiteId
   return renderPage(
     h,
-    buildViewData(
-      t,
-      applicationId,
-      session,
-      null,
-      await interimSiteAllowed(organisationId, applicationId, siteId),
-      {
-        materialType,
-        issues,
-        interimSites: await loadInterimSites(
-          request,
-          organisationId,
-          applicationId,
-          session
-        )
-      }
-    )
+    buildViewData(t, applicationId, session, null, {
+      materialType,
+      issues,
+      interimSites: await loadInterimSites(
+        request,
+        organisationId,
+        applicationId,
+        session
+      )
+    })
   ).code(statusCodes.badRequest)
 }
 
@@ -415,16 +379,7 @@ export const addOrsCyaPostController = {
 
     clearAddOrsSession(request)
 
-    // The button is hidden when the ORS may not take another interim site, but
-    // a stale page can still post it; that case saves the ORS like "Confirm".
-    if (
-      action === ADD_INTERIM_SITE_ACTION &&
-      (await interimSiteAllowed(
-        organisationId,
-        applicationId,
-        savedSite?.siteId
-      ))
-    ) {
+    if (action === ADD_INTERIM_SITE_ACTION) {
       resetAddInterimSiteSession(request)
       setAddInterimSiteSession(request, { linkedSiteId: savedSite?.siteId })
       return h.redirect(addInterimSiteCountryUrl(applicationId))

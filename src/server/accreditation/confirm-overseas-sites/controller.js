@@ -10,7 +10,6 @@ import {
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { fetchApplicationOrRenderError } from '../../common/helpers/fetchApplicationOrRenderError.js'
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
-import { isMultipleInterimSitesEnabled } from '../../common/helpers/interimSiteLimit.js'
 import { redirectIfSitesIncomplete } from '../../common/helpers/incompleteSitesGate.js'
 
 function taskListUrl(applicationId) {
@@ -21,15 +20,10 @@ function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
 }
 
-// RA-630: list the interim sites the same way select-overseas-sites does - every
-// active one, or only the first while multiple interim sites are off - rather
+// RA-630: list every active interim site, as select-overseas-sites does, rather
 // than reading the singular `interimSite` mirror, which holds just one.
 function decorateSite(site) {
-  const active = activeInterimSites(site)
-  return {
-    ...site,
-    interimSites: isMultipleInterimSitesEnabled() ? active : active.slice(0, 1)
-  }
+  return { ...site, interimSites: activeInterimSites(site) }
 }
 
 function selectedSites(application) {
