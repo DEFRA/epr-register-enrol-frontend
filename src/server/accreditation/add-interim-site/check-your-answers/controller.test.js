@@ -208,6 +208,49 @@ describe('#addInterimSiteCyaController', () => {
       expect(result).toContain('[Welsh] Check your answers')
     })
 
+    // No one-interim-site-per-ORS limit: the create goes through for an ORS
+    // that already holds an active interim site.
+    test('calls createInterimSite for an ORS that already has an active interim site', async () => {
+      vi.spyOn(accreditationApiService, 'getApplication').mockResolvedValue({
+        applicationId: APPLICATION_ID,
+        organisationId: 'org-001',
+        overseasSites: {
+          sectionStatus: 'InProgress',
+          sites: [
+            {
+              siteId: 555,
+              siteName: 'Accredited Site',
+              interimSites: [{ siteId: 42, siteName: 'Existing Depot' }]
+            }
+          ]
+        }
+      })
+      vi.spyOn(accreditationApiService, 'createInterimSite').mockResolvedValue({
+        siteId: 43,
+        siteNumber: 'SN-002',
+        isNewSite: true
+      })
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          Cookie: cookie
+        },
+        payload: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(SELECT_ORS_URL)
+      expect(accreditationApiService.createInterimSite).toHaveBeenCalledWith(
+        null,
+        APPLICATION_ID,
+        555,
+        expect.objectContaining({ siteName: 'Interim Depot' })
+      )
+    })
+
     test.each(['Submitted', 'DulyMade', 'Updated', 'AwaitingDecision'])(
       'redirects to select-overseas-sites when the application is locked (%s) and overseasSites is not Queried',
       async (applicationStatus) => {

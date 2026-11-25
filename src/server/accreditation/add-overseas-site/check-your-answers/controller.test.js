@@ -1230,7 +1230,7 @@ describe('#addOrsCyaController', () => {
       expect(accreditationApiService.promoteOverseasSite).not.toHaveBeenCalled()
     })
 
-    test('still offers "Save and add interim site" for an ORS that already has an interim site', async () => {
+    test('offers "Save and add interim site" for an ORS that already has an interim site', async () => {
       const sessionCookie = await seedEditSession({
         ...ACCREDITED_SITE,
         interimSite: { siteId: 42, siteName: 'Interim Depot' }
@@ -1243,6 +1243,34 @@ describe('#addOrsCyaController', () => {
       })
 
       expect(result).toContain('data-testid="save-and-add-interim-site-button"')
+    })
+
+    // There is no one-interim-site-per-ORS limit to refuse this: the ORS is
+    // saved and the add-interim-site wizard opens, linked to it.
+    test('POST action=addInterimSite saves the ORS and opens the interim site wizard when it already has an active interim site', async () => {
+      const sessionCookie = await seedEditSession({
+        ...ACCREDITED_SITE,
+        interimSites: [{ siteId: 42, siteName: 'Interim Depot' }]
+      })
+      vi.spyOn(accreditationApiService, 'updateOverseasSite').mockResolvedValue(
+        { siteId: 900001 }
+      )
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: BASE_URL,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          cookie: sessionCookie
+        },
+        payload: 'action=addInterimSite'
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/add-interim-site/${APPLICATION_ID}/country`
+      )
+      expect(accreditationApiService.updateOverseasSite).toHaveBeenCalled()
     })
 
     test('returns 500 with error summary when updateOverseasSite fails', async () => {

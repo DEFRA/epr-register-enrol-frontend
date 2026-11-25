@@ -145,20 +145,6 @@ function buildSitePayload(session) {
   }
 }
 
-// RA-603: edits one interim site through its own endpoint.
-//
-// This used to read the whole site list, rewrite the targeted ORS's nested
-// interimSite and send the entire list back through the bulk patchOverseasSites,
-// because there was no dedicated update route. There is now, and it matters
-// beyond tidiness: the old shape was a read-modify-write over every site, so a
-// concurrent change anywhere else in the list was silently overwritten, and it
-// could not express "change this one interim site" once an ORS could hold
-// several.
-//
-// It also means siteNumber no longer has to be carried by hand. The backend
-// owns siteId, siteNumber, createdAt and removedAt and ignores them from the
-// request body, so an edit can no longer wipe the generated site number by
-// forgetting to echo it.
 async function createInterimSite(
   organisationId,
   applicationId,
@@ -173,6 +159,21 @@ async function createInterimSite(
   )
 }
 
+// RA-603: edits one interim site through its own endpoint.
+//
+// This used to read the whole site list, rewrite the targeted ORS's nested
+// interimSite and send the entire list back through the bulk patchOverseasSites,
+// because there was no dedicated update route. There is now, and it matters
+// beyond tidiness: the old shape was a read-modify-write over every site, so a
+// concurrent change anywhere else in the list was silently overwritten, and it
+// could not express "change this one interim site" once an ORS could hold
+// several.
+//
+// It also means siteNumber no longer has to be carried by hand. The backend
+// owns siteId, siteNumber, createdAt and removedAt and ignores them from the
+// request body, so an edit can no longer wipe the generated site number by
+// forgetting to echo it.
+//
 // editingInterimSiteId can still point at something that is no longer there - a
 // stale session left over from an abandoned Change, or a site withdrawn in
 // another tab - so a 404 falls back to creating fresh rather than surfacing an

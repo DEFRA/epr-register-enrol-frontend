@@ -1640,9 +1640,9 @@ describe('#selectOverseasSitesController', () => {
       expect(result).not.toContain('data-testid="interim-site-row-42"')
     })
 
-    // Withdrawing the only one: the disclosure still renders
-    // (it carries the withdrawn one), and adding a replacement is allowed.
-    test('offers adding one again once the only interim site is withdrawn', async () => {
+    // Withdrawing the only one: the disclosure still renders (it carries the
+    // withdrawn one), with a way to restore it and a way to add another.
+    test('offers restoring the only interim site once it is withdrawn, and adding another', async () => {
       const result = await renderWithSites([
         {
           ...ACCREDITED_SITE,
@@ -1832,6 +1832,45 @@ describe('#selectOverseasSitesController', () => {
             {
               siteId: 42,
               siteName: 'Interim Depot',
+              removedAt: '2026-08-14T09:30:00.000Z'
+            }
+          ]
+        }
+      ])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`,
+        payload: {
+          submitAction: 'restoreInterimSite',
+          siteId: '900001',
+          interimSiteId: '42'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      )
+      expect(postSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          '/overseas-sites/900001/interim-sites/42/restore'
+        )
+      )
+    })
+
+    // No one-interim-site-per-ORS limit: restoring a withdrawn interim site
+    // must go through while the ORS already has an active one.
+    test('restoreInterimSite succeeds for an ORS that already has an active interim site', async () => {
+      mockApplication([
+        {
+          ...ACCREDITED_SITE,
+          interimSites: [
+            { siteId: 43, siteName: 'Live Depot' },
+            {
+              siteId: 42,
+              siteName: 'Old Depot',
               removedAt: '2026-08-14T09:30:00.000Z'
             }
           ]
