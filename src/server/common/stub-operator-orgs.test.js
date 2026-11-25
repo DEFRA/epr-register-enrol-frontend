@@ -50,6 +50,15 @@ describe('STUB_OPERATOR_RELATIONSHIPS', () => {
     }
   })
 
+  test("authorises RA-806's ReEx registration status orgs", () => {
+    expect(STUB_OPERATOR_RELATIONSHIPS).toContain(
+      'stub-rel-50023:50023:RA-806 Approved Exporter Ltd'
+    )
+    expect(STUB_OPERATOR_RELATIONSHIPS).toContain(
+      'stub-rel-50024:50024:RA-806 Created Exporter Ltd'
+    )
+  })
+
   test('current relationship id points at the first org', () => {
     expect(STUB_OPERATOR_CURRENT_RELATIONSHIP_ID).toBe('stub-rel-50001')
   })

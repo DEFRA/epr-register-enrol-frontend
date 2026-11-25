@@ -67,7 +67,14 @@ const NUMBERED_TEST_ORGS = [
   // RA-697: the registration-only manage pages.
   [String(REGISTRATION_ONLY_ORG.orgId), REGISTRATION_ONLY_ORG.orgName],
   // RA-697: the overseas-sites page's empty tabs.
-  [String(NO_OVERSEAS_SITES_ORG.orgId), NO_OVERSEAS_SITES_ORG.orgName]
+  [String(NO_OVERSEAS_SITES_ORG.orgId), NO_OVERSEAS_SITES_ORG.orgName],
+  // RA-806: exporters whose registration status comes only from the stub
+  // ReEx (approved and created), for the fe-tests' RA-806 spec. The backend's
+  // FakeOrganisationPersistence defines the same orgs, and the fe-tests
+  // fixture test/fixtures/reex-registration-status-orgs.js uses them: keep
+  // all three in step.
+  ['50023', 'RA-806 Approved Exporter Ltd'],
+  ['50024', 'RA-806 Created Exporter Ltd']
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).
