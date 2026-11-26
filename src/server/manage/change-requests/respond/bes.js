@@ -1,8 +1,6 @@
 import { config } from '../../../../config/config.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import {
-  accreditationChangesService
-} from '../../../common/helpers/accreditationChangesService.js'
+import { accreditationChangesService } from '../../../common/helpers/accreditationChangesService.js'
 import { isFilenameAmong } from '../../../common/helpers/duplicateFilename.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 import { initUpload } from '../../../common/helpers/upload/init-upload.js'
@@ -120,7 +118,9 @@ function validateDates(ctx, payload) {
   if (!validFrom) {
     return {
       errors: {
-        validFromError: t('pages.uploadBesEvidence.validation.validFromRequired')
+        validFromError: t(
+          'pages.uploadBesEvidence.validation.validFromRequired'
+        )
       }
     }
   }
@@ -229,9 +229,7 @@ export const requireUploadForItem = {
     if (upload?.statusUrl && upload.itemId === request.params.itemId) {
       return h.continue
     }
-    return h
-      .redirect(besUploadUrl(request.params))
-      .takeover()
+    return h.redirect(besUploadUrl(request.params)).takeover()
   }
 }
 
@@ -326,11 +324,16 @@ export const besDeleteController = {
           { itemId: ctx.item.itemId },
           'Error deleting BES evidence in response to a query'
         )
-        return renderPage(h, ctx, {}, {
-          fileError: ctx.t(
-            'pages.manageChangeRequests.respond.bes.removeError'
-          )
-        }).code(statusCodes.internalServerError)
+        return renderPage(
+          h,
+          ctx,
+          {},
+          {
+            fileError: ctx.t(
+              'pages.manageChangeRequests.respond.bes.removeError'
+            )
+          }
+        ).code(statusCodes.internalServerError)
       }
     }
     return h.redirect(uploadPage)

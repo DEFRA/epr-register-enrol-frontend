@@ -111,10 +111,7 @@ const ROUTES = [
     `${ITEM}/contact-details`,
     orsStepControllers['contact-details']
   ),
-  ...stepRoutes(
-    `${ITEM}/rejected-loads`,
-    orsStepControllers['rejected-loads']
-  ),
+  ...stepRoutes(`${ITEM}/rejected-loads`, orsStepControllers['rejected-loads']),
   respond('GET', `${ITEM}/bes-evidence`, besGetController),
   respond('POST', `${ITEM}/bes-evidence`, besPostController, uploadOptions),
   respond(
@@ -123,11 +120,7 @@ const ROUTES = [
     besStatusController,
     statusOptions
   ),
-  respond(
-    'POST',
-    `${ITEM}/bes-evidence/{fileId}/delete`,
-    besDeleteController
-  ),
+  respond('POST', `${ITEM}/bes-evidence/{fileId}/delete`, besDeleteController),
   respond('GET', INTERIM, interimSiteController),
   ...stepRoutes(`${INTERIM}/site-name`, interimStepControllers['site-name']),
   ...stepRoutes(`${INTERIM}/location`, interimStepControllers.location),
@@ -145,13 +138,18 @@ export const manage = {
     register(server) {
       server.route(
         ROUTES.flatMap(
-          ({ method = 'GET', path, controller, options = manageRouteOptions }) =>
-          [path, `/{language}${path}`].map((routePath) => ({
-            method,
-            path: routePath,
-            options,
-            ...controller
-          }))
+          ({
+            method = 'GET',
+            path,
+            controller,
+            options = manageRouteOptions
+          }) =>
+            [path, `/{language}${path}`].map((routePath) => ({
+              method,
+              path: routePath,
+              options,
+              ...controller
+            }))
         )
       )
     }

@@ -183,8 +183,16 @@ function withActions(rows, { respond, t }) {
     return {
       ...labelled,
       action: {
-        href: respondUrl(respond.params, respond.itemId, respond.locale, target.step),
-        text: respondText(t, target.upload ? 'actions.upload' : 'actions.change'),
+        href: respondUrl(
+          respond.params,
+          respond.itemId,
+          respond.locale,
+          target.step
+        ),
+        text: respondText(
+          t,
+          target.upload ? 'actions.upload' : 'actions.change'
+        ),
         hiddenText: labelled.label
       }
     }

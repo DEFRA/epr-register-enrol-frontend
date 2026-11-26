@@ -746,7 +746,9 @@ describe('#manageRegistrationAccreditationController', () => {
     const { statusCode, result } = await get(WELSH_PAGE_URL)
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('[Welsh] Manage your registration and accreditation')
+    expect(result).toContain(
+      '[Welsh] Manage your registration and accreditation'
+    )
     expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Rhag 2027\s*</)
     expect(result).toMatch(
       new RegExp(`href="${MANAGE_REEX_URL}"[^>]*data-testid="back-link"`)

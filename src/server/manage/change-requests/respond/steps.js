@@ -192,7 +192,9 @@ const ORS_STEPS = {
           maxwords: LOADS_MAX_WORDS,
           rows: 8,
           value: values.repatriatedLoads,
-          label: { text: ctx.t('pages.addOverseasSite.repatriatedLoads.label') },
+          label: {
+            text: ctx.t('pages.addOverseasSite.repatriatedLoads.label')
+          },
           hint: { text: ctx.t('pages.addOverseasSite.repatriatedLoads.hint') },
           errorMessage: errors.repatriatedLoads
             ? {
@@ -418,9 +420,7 @@ function resolveTarget(ctx, interimSiteId) {
 
 // A field the query leaves closed goes back to the page that lists it.
 function isOpen(ctx, step, interim) {
-  const open = new Set(
-    (interim ?? ctx.item.query).editableFields ?? []
-  )
+  const open = new Set((interim ?? ctx.item.query).editableFields ?? [])
   return Object.values(step.fields).every((field) => open.has(field))
 }
 

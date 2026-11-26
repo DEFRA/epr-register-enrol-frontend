@@ -243,9 +243,12 @@ describe('responding to a queried item (RA-698)', () => {
         siteName: '  New name '
       })
 
-      expect(patch).toHaveBeenCalledWith(`${CHANGES}/items/${ITEM_ID}/answers`, {
-        siteName: 'New name'
-      })
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          siteName: 'New name'
+        }
+      )
       expect(response.statusCode).toBe(statusCodes.redirect)
       expect(response.headers.location).toBe(ITEM_URL)
     })
@@ -285,13 +288,16 @@ describe('responding to a queried item (RA-698)', () => {
         country: 'France'
       })
 
-      expect(patch).toHaveBeenCalledWith(`${CHANGES}/items/${ITEM_ID}/answers`, {
-        addressLine1: '1 New Street',
-        addressLine2: '',
-        townOrCity: 'Rotterdam',
-        stateOrRegion: '',
-        postcode: '3000 AA'
-      })
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          addressLine1: '1 New Street',
+          addressLine2: '',
+          townOrCity: 'Rotterdam',
+          stateOrRegion: '',
+          postcode: '3000 AA'
+        }
+      )
     })
 
     test('POST contact details maps the form fields to the backend ones', async () => {
@@ -303,11 +309,14 @@ describe('responding to a queried item (RA-698)', () => {
         siteContactPhone: ''
       })
 
-      expect(patch).toHaveBeenCalledWith(`${CHANGES}/items/${ITEM_ID}/answers`, {
-        contactName: 'Pat',
-        contactEmail: 'pat@example.com',
-        contactPhone: ''
-      })
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          contactName: 'Pat',
+          contactEmail: 'pat@example.com',
+          contactPhone: ''
+        }
+      )
     })
 
     test('POST the rejected loads arrangements', async () => {
@@ -317,9 +326,12 @@ describe('responding to a queried item (RA-698)', () => {
         repatriatedLoads: 'Sent back by rail'
       })
 
-      expect(patch).toHaveBeenCalledWith(`${CHANGES}/items/${ITEM_ID}/answers`, {
-        rejectedLoadsArrangements: 'Sent back by rail'
-      })
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          rejectedLoadsArrangements: 'Sent back by rail'
+        }
+      )
     })
 
     test('a backend 400 is shown against the field it names', async () => {
@@ -389,7 +401,9 @@ describe('responding to a queried item (RA-698)', () => {
           {
             requestId: 'T1',
             sites: [],
-            tonnageBandUpgrade: queriedItem({ changeType: 'upgrade-tonnage-band' })
+            tonnageBandUpgrade: queriedItem({
+              changeType: 'upgrade-tonnage-band'
+            })
           }
         ]
       })
@@ -588,7 +602,9 @@ describe('responding to a queried item (RA-698)', () => {
 
     test('a backend failure keeps the declaration with an error', async () => {
       load()
-      postSpy.mockRejectedValue(Object.assign(new Error('503'), { status: 503 }))
+      postSpy.mockRejectedValue(
+        Object.assign(new Error('503'), { status: 503 })
+      )
 
       const { statusCode } = await post(DECLARATION, details)
 

@@ -7,7 +7,12 @@ import { FLASH_UPDATED } from './steps.js'
 // recycling operations cannot, and interim sites are never added or removed.
 
 const ROWS = [
-  { id: 'site-name', labelKey: 'siteName', step: 'site-name', fields: ['siteName'] },
+  {
+    id: 'site-name',
+    labelKey: 'siteName',
+    step: 'site-name',
+    fields: ['siteName']
+  },
   {
     id: 'location',
     labelKey: 'location',

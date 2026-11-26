@@ -30,7 +30,11 @@ const ORS_LOCKED = [
 const INTERIM_EDITABLE = ORS_EDITABLE.filter(
   (field) => !['rejectedLoadsArrangements', 'besEvidence'].includes(field)
 )
-const INTERIM_LOCKED = ['country', 'operationCodes', 'rejectedLoadsArrangements']
+const INTERIM_LOCKED = [
+  'country',
+  'operationCodes',
+  'rejectedLoadsArrangements'
+]
 const ORS_REQUIRED = [
   'siteName',
   'addressLine1',

@@ -8,7 +8,9 @@ describe('queriedBannerData (RA-698)', () => {
   test('names the sites alone when only they are queried', () => {
     const data = queriedBannerData(t, true)
 
-    expect(data.querySummary).toContain('common.regulatorQuery.sectionLabels.overseasSites')
+    expect(data.querySummary).toContain(
+      'common.regulatorQuery.sectionLabels.overseasSites'
+    )
     expect(data.regulatorQueryFields[0].label).toBe(
       'pages.taskList.tasks.overseasSites'
     )
