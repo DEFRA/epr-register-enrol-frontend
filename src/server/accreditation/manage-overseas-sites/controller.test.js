@@ -756,7 +756,10 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('Number of overseas reprocessing sites: 2')
       expect(result).toContain('£328.00')
       expect(result).toMatch(/data-testid="charge-total">£656.00/)
-      expect(result).toContain(`href="${MANAGE}#registered"`)
+      expect(result).toMatch(
+        new RegExp(`href="${MANAGE}"[^>]*data-testid="add-another-request"`)
+      )
+      expect(result).not.toContain('#registered')
       expect(result).toContain(`href="${BASE}/add/900184"`)
     })
 

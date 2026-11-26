@@ -950,17 +950,13 @@
     },
     "manageOverseasSites": {
       "heading": "[Welsh] Manage overseas reprocessing sites",
-      "accredited": {
-        "tab": "[Welsh] Accredited ({{count}})",
-        "heading": "[Welsh] Accredited overseas reprocessing sites",
-        "intro": "[Welsh] These are your accredited overseas reprocessing sites for {{year}}.",
-        "empty": "[Welsh] You have no accredited overseas reprocessing sites for {{year}}."
-      },
-      "registered": {
-        "tab": "[Welsh] Registered ({{count}})",
-        "heading": "[Welsh] Registered overseas reprocessing sites",
-        "intro": "[Welsh] These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for {{year}}.",
-        "empty": "[Welsh] You have no registered overseas reprocessing sites for {{year}}."
+      "intro": "[Welsh] You can add new overseas reprocessing sites, change existing site details or withdraw sites from your accreditation.",
+      "introRegistrationOnly": "[Welsh] You can add new overseas reprocessing sites or change existing site details.",
+      "empty": "[Welsh] You have no overseas reprocessing sites.",
+      "table": {
+        "siteName": "[Welsh] Site name",
+        "status": "[Welsh] Status",
+        "actions": "[Welsh] Actions"
       },
       "interimDisclosure": "[Welsh] Interim sites",
       "viewChangeRequests": "[Welsh] View change requests",
@@ -985,6 +981,8 @@
         }
       },
       "status": {
+        "approved": "[Welsh] Approved",
+        "registered": "[Welsh] Registered",
         "pending": "[Welsh] Pending",
         "inProgress": "[Welsh] In progress"
       },

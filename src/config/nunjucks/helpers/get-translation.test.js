@@ -28,40 +28,28 @@ describe('#getTranslator', () => {
   })
 
   test('fills {{var}} placeholders from the params', () => {
-    expect(t('pages.manageOverseasSites.accredited.tab', { count: 3 })).toBe(
-      'Accredited (3)'
-    )
     expect(
-      getTranslator('cy')('pages.manageOverseasSites.accredited.intro', {
-        year: 2027
-      })
-    ).toBe(
-      '[Welsh] These are your accredited overseas reprocessing sites for 2027.'
+      t('pages.manageChangeRequests.showing', { start: 1, end: 10, total: 12 })
+    ).toBe('Showing 1-10 of 12')
+    expect(getTranslator('cy')('common.pagination.page', { number: 2 })).toBe(
+      '[Welsh] Page 2'
     )
   })
 
   test('fills a zero value', () => {
-    expect(t('pages.manageOverseasSites.registered.tab', { count: 0 })).toBe(
-      'Registered (0)'
-    )
+    expect(t('common.pagination.page', { number: 0 })).toBe('Page 0')
   })
 
   test('leaves placeholders untouched without params', () => {
-    expect(t('pages.manageOverseasSites.accredited.tab')).toBe(
-      'Accredited ({{count}})'
-    )
+    expect(t('common.pagination.page')).toBe('Page {{number}}')
   })
 
   test('leaves a placeholder untouched when its param is missing', () => {
-    expect(t('pages.manageOverseasSites.accredited.tab', { year: 2027 })).toBe(
-      'Accredited ({{count}})'
-    )
+    expect(t('common.pagination.page', { year: 2027 })).toBe('Page {{number}}')
   })
 
   test('ignores params that are not an object', () => {
-    expect(t('pages.manageOverseasSites.accredited.tab', 2)).toBe(
-      'Accredited ({{count}})'
-    )
+    expect(t('common.pagination.page', 2)).toBe('Page {{number}}')
   })
 
   test('leaves single-brace placeholders for the pages that still use replace()', () => {
@@ -107,10 +95,8 @@ describe('#getTranslator', () => {
   })
 
   test('returns non-string values unchanged', () => {
-    expect(t('pages.manageOverseasSites.accredited', { count: 1 })).toEqual(
-      expect.objectContaining({
-        heading: 'Accredited overseas reprocessing sites'
-      })
+    expect(t('pages.manageOverseasSites.table', { count: 1 })).toEqual(
+      expect.objectContaining({ siteName: 'Site name' })
     )
   })
 })

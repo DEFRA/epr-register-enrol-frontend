@@ -55,57 +55,31 @@
   max-width: 580px;
 }
 
-// RA-425: the overseas-sites page's ORS list, per Figma "Viewing ORSs for an
-// existing Accreditation - EXPORTER": the ORS number beside a bold name, the
-// address beneath it, and a rule between ORSs. Figma spaces each ORS 20px
-// above and below its rule, except 10px above the first, 40px under the intro.
-
-// Wraps the Registered intro after "(ORSs) that", as in Figma. Figma's box is
-// 571px, but GDS Transport renders narrower in the browser, where "that" ends
-// at 526px and "you" at 559px.
-.app-ors-list__intro {
-  max-width: 545px;
-}
-
-// Collapses with the intro's 20px margin: 30px, plus the first ORS's 10px.
-.app-ors-list {
-  margin-top: govuk-spacing(6);
-}
-
-.app-ors-list__item {
-  margin-bottom: 0;
-  padding: govuk-spacing(4) 0;
-  border-bottom: 1px solid $govuk-border-colour;
-
-  &:first-child {
-    padding-top: govuk-spacing(2);
-  }
-}
-
-.app-ors-list__site {
+// RA-814: the overseas-sites page's single table, per Figma 1405:35529: the
+// ORS number beside a bold name, the address beneath it, and the interim
+// sites disclosure under both.
+.app-ors-table__site {
   display: flex;
   gap: govuk-spacing(2);
 }
 
-.app-ors-list__details {
+.app-ors-table__details {
   display: flex;
   flex-direction: column;
 }
 
-.app-ors-list__address {
+.app-ors-table__address {
   @include govuk-font($size: 16);
 
   color: $govuk-secondary-text-colour;
 }
 
 // The shared interim-site disclosure drops govuk-details' left border because
-// on select-overseas-sites it sits in an already-indented table cell. Here it
-// stands on its own, so Figma keeps the border.
-// Figma puts it 10px in from the ORS number and 5px under the address, with
-// 60px between interim sites.
-.app-ors-list .select-overseas-sites-interim-disclosure {
+// on select-overseas-sites it sits in an already-indented table cell. Here
+// Figma keeps the border, 5px under the address.
+.app-ors-table .select-overseas-sites-interim-disclosure {
   margin-top: govuk-spacing(1);
-  margin-left: govuk-spacing(2);
+  margin-bottom: 0;
 
   .govuk-details__text {
     padding-left: govuk-spacing(4);
@@ -127,22 +101,22 @@
   }
 }
 
-// RA-425: per Figma, the ORS tab panels have no side or bottom border and no
-// side padding: only the rule under the tab list frames them. Matches the
-// JS-enabled tablet-up rule it overrides.
-.govuk-frontend-supported .app-ors-tabs .govuk-tabs__panel {
-  @media #{govuk-from-breakpoint(tablet)} {
-    @include govuk-responsive-margin(6, 'bottom');
-
-    padding: govuk-spacing(6) 0 0;
-    border: 0;
-  }
+// RA-492: an ORS's in-year change status and actions, at the end of its row.
+// RA-814: several can share a row, as in Figma.
+.app-ors-table__actions-cell {
+  text-align: right;
 }
 
-// RA-492: an ORS's in-year change status or action, at the end of its row.
-.app-ors-list__actions {
-  margin-left: auto;
-  text-align: right;
+.app-ors-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: govuk-spacing(2);
+
+  form {
+    margin: 0;
+  }
 }
 
 // RA-732: the change requests filters, per Figma 773:25074.

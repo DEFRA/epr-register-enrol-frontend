@@ -61,9 +61,10 @@ export function changeRequestsSummary(view) {
 }
 
 /**
- * RA-492's actions for an ORS on RA-425's Registered tab: "Pending" and no
- * action while it is in a submitted request (AC09), "In progress" and a View
- * link while it is in the draft request, otherwise "Add to accreditation".
+ * RA-492's actions for a registered ORS on RA-425's Manage overseas
+ * reprocessing sites page: "Pending" and no action while it is in a submitted
+ * request (AC09), "In progress" and a View link while it is in the draft
+ * request, otherwise "Add to accreditation".
  *
  * RA-697: with no accreditation (a null applicationId, for registration only)
  * there is nothing to add the ORS to, and RA-492's View link has no
@@ -71,6 +72,9 @@ export function changeRequestsSummary(view) {
  * View is also left out for an ORS In progress in a draft other than the
  * accreditation's own (a registration-only one), which this journey can't
  * open.
+ *
+ * RA-814: each link is its own value, set only when it shows, so later flows
+ * (RA-682, RA-683, RA-676) can add theirs to a row alongside these.
  */
 export function registeredSiteActions(
   applicationId,
@@ -79,14 +83,17 @@ export function registeredSiteActions(
   isInDraftRequest
 ) {
   const hasAccreditation = Boolean(applicationId)
+  const pending = status === ITEM_STATUSES.submitted
+  const inProgress = status === ITEM_STATUSES.inProgress
   return {
-    pending: status === ITEM_STATUSES.submitted,
-    inProgress: status === ITEM_STATUSES.inProgress,
-    addUrl: hasAccreditation
-      ? addSiteToRequestUrl(applicationId, siteId)
-      : null,
+    pending,
+    inProgress,
+    addUrl:
+      hasAccreditation && !pending && !inProgress
+        ? addSiteToRequestUrl(applicationId, siteId)
+        : null,
     viewUrl:
-      hasAccreditation && isInDraftRequest
+      hasAccreditation && inProgress && isInDraftRequest
         ? addToAccreditationUrl(applicationId, siteId)
         : null
   }

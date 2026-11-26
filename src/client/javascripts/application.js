@@ -5,8 +5,7 @@ import {
   Checkboxes,
   ErrorSummary,
   Radios,
-  SkipLink,
-  Tabs
+  SkipLink
 } from 'govuk-frontend'
 import accessibleAutocomplete from 'accessible-autocomplete'
 
@@ -31,7 +30,6 @@ createAll(Checkboxes)
 createAll(ErrorSummary)
 createAll(Radios)
 createAll(SkipLink)
-createAll(Tabs)
 
 // Called here, not on import: webpack treats this app's modules as side
 // effect free, so a bare `import './auto-submit.js'` is dropped from the

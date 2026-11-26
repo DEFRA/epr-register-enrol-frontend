@@ -15,24 +15,26 @@ import {
 import { manageUrl } from '../helpers/manage-urls.js'
 import { orsAddressLine } from '../../common/helpers/orsAddress.js'
 
+const ORS_STATUSES = { approved: 'approved', registered: 'registered' }
+
 // RA-425: withdrawn interim sites are filtered per ORS, so withdrawing a
 // shared interim site from one ORS leaves it showing under the others.
-// RA-495 (user, 2026-11-20): the Registered tab shows each ORS's interim sites
-// too, as the Accredited tab does.
-function toOrsView(site) {
+// RA-495 (user, 2026-11-20): registered ORSs show their interim sites too.
+function toOrsView(site, status) {
   return {
     siteId: site.siteId,
     orsId: site.orsId,
     siteName: site.siteName,
     address: orsAddressLine(site),
-    interimSites: activeInterimSites(site)
+    interimSites: activeInterimSites(site),
+    status
   }
 }
 
 // RA-492: where a registered ORS stands in the in-year change requests.
 // RA-697: applicationId is null for registration only.
 function registeredSiteView(site, applicationId, changeRequests) {
-  const view = toOrsView(site)
+  const view = toOrsView(site, ORS_STATUSES.registered)
   if (!changeRequests) {
     return view
   }
@@ -48,31 +50,43 @@ function registeredSiteView(site, applicationId, changeRequests) {
   }
 }
 
-// Accredited: selected on the accreditation. Registered: every other existing
-// ORS (RA-495, user 2026-11-20: the accredited ones are not repeated here). A
-// new site that was never selected is on neither. Unlike the
-// application journey, an ORS with no selected value is not accredited: on an
+// RA-814: by ORS ID as a number, so "010" follows "9". A blank or
+// non-numeric ORS ID has no place in that order, so those go last, by site ID.
+const numericOrsId = (site) =>
+  /^\d+$/.test(String(site.orsId ?? '').trim()) ? Number(site.orsId) : null
+
+function byOrsId(a, b) {
+  const [left, right] = [numericOrsId(a), numericOrsId(b)]
+  if (left !== right) {
+    if (left === null) {
+      return 1
+    }
+    if (right === null) {
+      return -1
+    }
+    return left - right
+  }
+  return a.siteId - b.siteId
+}
+
+// Approved: selected on the accreditation. Registered: every other existing
+// ORS. A new site that was never selected is not listed. Unlike the
+// application journey, an ORS with no selected value is not approved: on an
 // issued accreditation only an explicit selection counts.
 // RA-492: with the change requests, each registered ORS offers "Add to
 // accreditation"; one in the draft request shows "In progress" and View, and
-// one in a submitted request shows "Pending" and no action (AC09). It stays on
-// the Registered tab until the regulator approves it. Without them the rows
-// are RA-425's alone.
-// RA-495 (user, 2026-11-20): both tabs are in site ID order.
-const bySiteId = (a, b) => a.siteId - b.siteId
-
-function partitionSites(sites, applicationId, changeRequests) {
-  const isAccredited = (site) => site.selected === true
-  return {
-    accredited: sites
-      .filter(isAccredited)
-      .sort(bySiteId)
-      .map((site) => toOrsView(site)),
-    registered: sites
-      .filter((site) => !isAccredited(site) && !site.isNewSite)
-      .sort(bySiteId)
-      .map((site) => registeredSiteView(site, applicationId, changeRequests))
-  }
+// one in a submitted request shows "Pending" and no action (AC09). It stays
+// Registered until the regulator approves it. Without them the rows are
+// RA-425's alone.
+function accreditationSites(sites, applicationId, changeRequests) {
+  return sites
+    .filter((site) => site.selected === true || !site.isNewSite)
+    .sort(byOrsId)
+    .map((site) =>
+      site.selected === true
+        ? toOrsView(site, ORS_STATUSES.approved)
+        : registeredSiteView(site, applicationId, changeRequests)
+    )
 }
 
 // RA-492: the in-year change pages under /accreditation/ read the
@@ -96,11 +110,11 @@ function enterAccreditationSession(request, context) {
 // RA-492: without the change requests the page shows RA-425's view without
 // RA-492's actions, tags or banners, so an outage of the change requests
 // never takes down the list of sites.
-async function accreditedSites(request, context) {
+async function accreditationList(request, context) {
   const { application } = context
   // The backend always sends overseasSites for an Approved exporter
-  // accreditation, so without it the data is incomplete, and empty tabs
-  // would pass that off as a complete list.
+  // accreditation, so without it the data is incomplete, and an empty list
+  // would pass that off as a complete one.
   if (!Array.isArray(application.overseasSites?.sites)) {
     request.logger.warn(
       { applicationId: application.applicationId },
@@ -115,7 +129,7 @@ async function accreditedSites(request, context) {
   return {
     changeRequests,
     requestsUrl: requestsUrl(application.applicationId),
-    ...partitionSites(
+    sites: accreditationSites(
       application.overseasSites.sites,
       application.applicationId,
       changeRequests
@@ -125,9 +139,9 @@ async function accreditedSites(request, context) {
 
 // RA-697: the registration view holds the sites as well as the change
 // requests, so without it there is no list to show. Every ORS in it is
-// registered, and none accredited. With no accreditation there is no
+// registered, and none approved. With no accreditation there is no
 // accreditation session for RA-492's pages.
-async function registrationOnlySites(request, context) {
+async function registrationOnlyList(request, context) {
   const view = await fetchChangeRequestsView(request, context)
   if (!Array.isArray(view?.sites)) {
     return null
@@ -136,10 +150,9 @@ async function registrationOnlySites(request, context) {
   return {
     changeRequests,
     requestsUrl: null,
-    accredited: [],
-    registered: view.sites
+    sites: view.sites
       .map((entry) => entry.site)
-      .sort(bySiteId)
+      .sort(byOrsId)
       .map((site) => registeredSiteView(site, null, changeRequests))
   }
 }
@@ -155,15 +168,15 @@ export const manageOverseasSitesController = {
       return response
     }
 
-    const sites = context.isRegistrationOnly
-      ? await registrationOnlySites(request, context)
-      : await accreditedSites(request, context)
-    if (!sites) {
+    const list = context.isRegistrationOnly
+      ? await registrationOnlyList(request, context)
+      : await accreditationList(request, context)
+    if (!list) {
       return serviceProblem(request, h, t)
     }
 
     const heading = t('pages.manageOverseasSites.heading')
-    const { accredited, registered, changeRequests } = sites
+    const { sites, changeRequests } = list
 
     return h.view('manage/overseas-sites/index', {
       pageTitle: heading,
@@ -176,13 +189,12 @@ export const manageOverseasSitesController = {
         context.reExOrganisationId,
         context.registrationId
       ),
-      accreditedSites: accredited,
-      registeredSites: registered,
+      sites,
       // RA-492 banners: AC09 pending change, AC10 requests to resume.
-      pendingCount: registered.filter((site) => site.pending).length,
+      pendingCount: sites.filter((site) => site.pending).length,
       isRegistrationOnly: context.isRegistrationOnly,
       readyForSubmissionCount: changeRequests?.readyForSubmissionCount ?? 0,
-      requestsUrl: sites.requestsUrl
+      requestsUrl: list.requestsUrl
     })
   }
 }
