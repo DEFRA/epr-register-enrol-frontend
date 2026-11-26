@@ -29,9 +29,26 @@ import {
   recyclingOperationGetController,
   recyclingOperationPostController
 } from './steps-controller.js'
+import {
+  STEP_NAMES,
+  cancelUpdateController,
+  detailsGetController,
+  interimAdditionGetController,
+  interimAdditionPostController,
+  interimChangeGetController,
+  interimChangePostController,
+  interimNewGetController,
+  interimNewPostController,
+  interimRemoveController,
+  interimUndoController,
+  stepGetController,
+  stepPostController,
+  submittedGetController
+} from './update/controller.js'
 
 const BASE = '/accreditation/manage-overseas-sites/{applicationId}'
 const SITE = `${BASE}/add/{siteId}`
+const UPDATE = `${BASE}/update/{siteId}`
 
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
@@ -71,6 +88,22 @@ const statusOptions = {
       ({ applicationId, siteId }) => besEvidenceUrl(applicationId, siteId)
     )
   ]
+}
+
+// RA-682: changing an accredited ORS's details, under the same flag and
+// operator-only options, with the update pages' own route parameters.
+const updateOptions = {
+  ...manageRouteOptions,
+  validate: {
+    params: Joi.object({
+      language: Joi.string(),
+      applicationId: Joi.string().required(),
+      siteId: Joi.number().integer().positive(),
+      interimSiteId: Joi.number().integer().positive(),
+      changeId: Joi.string().guid(),
+      step: Joi.string().valid(...STEP_NAMES)
+    })
+  }
 }
 
 // RA-492: in-year request to add registered ORSs to a granted accreditation.
@@ -119,7 +152,60 @@ const ROUTES = [
   route('POST', `${BASE}/requests`, requestsPostController),
   route('GET', `${BASE}/declaration`, declarationGetController),
   route('POST', `${BASE}/declaration`, declarationPostController),
-  route('GET', `${BASE}/payment`, paymentGetController)
+  route('GET', `${BASE}/payment`, paymentGetController),
+  route('GET', `${BASE}/submitted`, submittedGetController),
+  route('GET', UPDATE, detailsGetController, updateOptions),
+  route('POST', `${UPDATE}/cancel`, cancelUpdateController, updateOptions),
+  route('GET', `${UPDATE}/details/{step}`, stepGetController, updateOptions),
+  route('POST', `${UPDATE}/details/{step}`, stepPostController, updateOptions),
+  route(
+    'GET',
+    `${UPDATE}/interim-sites/new`,
+    interimNewGetController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-sites/new`,
+    interimNewPostController,
+    updateOptions
+  ),
+  route(
+    'GET',
+    `${UPDATE}/interim-sites/{interimSiteId}`,
+    interimChangeGetController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-sites/{interimSiteId}`,
+    interimChangePostController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-sites/{interimSiteId}/remove`,
+    interimRemoveController,
+    updateOptions
+  ),
+  route(
+    'GET',
+    `${UPDATE}/interim-site-changes/{changeId}`,
+    interimAdditionGetController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-site-changes/{changeId}`,
+    interimAdditionPostController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-site-changes/{changeId}/undo`,
+    interimUndoController,
+    updateOptions
+  )
 ]
 
 export const manageOverseasSites = {

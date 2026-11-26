@@ -6,7 +6,8 @@ import {
   addSiteToRequestUrl,
   addToAccreditationUrl,
   besEvidenceFileDeleteUrl,
-  stepUrl
+  stepUrl,
+  updateUrl
 } from './urls.js'
 
 // RA-492: view models for the in-year add-ORS pages, built from the
@@ -72,6 +73,26 @@ export function changeRequestsSummary(view) {
  * accreditation's own (a registration-only one), which this journey can't
  * open.
  */
+/**
+ * RA-682's actions for an ORS on the Accredited tab: "Pending" and no action
+ * while a submitted request holds it (AC03), "In progress" and View while its
+ * change is in the draft, otherwise Change. All lead to its details page.
+ */
+export function accreditedSiteActions(
+  applicationId,
+  siteId,
+  status,
+  isInDraftRequest
+) {
+  const detailsUrl = updateUrl(applicationId, siteId)
+  return {
+    pending: status === ITEM_STATUSES.submitted,
+    inProgress: status === ITEM_STATUSES.inProgress,
+    viewUrl: isInDraftRequest ? detailsUrl : null,
+    changeUrl: detailsUrl
+  }
+}
+
 export function registeredSiteActions(
   applicationId,
   siteId,

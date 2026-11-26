@@ -49,10 +49,62 @@ export const accreditationChangesService = {
     )
   },
 
-  addSite(organisationId, applicationId, siteId) {
+  /**
+   * RA-492: adds a registered ORS to the draft. RA-682: with
+   * `CHANGE_TYPES.updateOverseasSite`, starts a change to an accredited ORS's
+   * details instead. Starting one already in the draft returns the draft.
+   */
+  addSite(organisationId, applicationId, siteId, changeType) {
     return apiClient.post(`${current(organisationId, applicationId)}/sites`, {
-      siteId
+      siteId,
+      ...(changeType ? { changeType } : {})
     })
+  },
+
+  // RA-682 AC04: an ORS update's interim site changes.
+  addInterimSite(organisationId, applicationId, siteId, body) {
+    return apiClient.post(
+      `${current(organisationId, applicationId)}/sites/${siteId}/interim-sites`,
+      body
+    )
+  },
+
+  changeInterimSite(
+    organisationId,
+    applicationId,
+    siteId,
+    interimSiteId,
+    body
+  ) {
+    return apiClient.patch(
+      `${current(organisationId, applicationId)}/sites/${siteId}/interim-sites/${interimSiteId}`,
+      body
+    )
+  },
+
+  removeInterimSite(organisationId, applicationId, siteId, interimSiteId) {
+    return apiClient.delete(
+      `${current(organisationId, applicationId)}/sites/${siteId}/interim-sites/${interimSiteId}`
+    )
+  },
+
+  changeInterimSiteAddition(
+    organisationId,
+    applicationId,
+    siteId,
+    changeId,
+    body
+  ) {
+    return apiClient.patch(
+      `${current(organisationId, applicationId)}/sites/${siteId}/interim-site-changes/${encodeURIComponent(changeId)}`,
+      body
+    )
+  },
+
+  undoInterimSiteChange(organisationId, applicationId, siteId, changeId) {
+    return apiClient.delete(
+      `${current(organisationId, applicationId)}/sites/${siteId}/interim-site-changes/${encodeURIComponent(changeId)}`
+    )
   },
 
   removeSite(organisationId, applicationId, siteId) {

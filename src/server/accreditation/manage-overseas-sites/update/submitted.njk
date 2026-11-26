@@ -1,0 +1,20 @@
+{% extends 'layouts/page.njk' %}
+
+{# RA-682 AC06: a submitted in-year change application with nothing to pay. #}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      <div class="govuk-panel govuk-panel--confirmation" data-testid="submitted-panel">
+        <h1 class="govuk-panel__title">{{ t('pages.updateOverseasSite.submitted.title') }}</h1>
+        {% if references.length %}
+          <div class="govuk-panel__body">
+            {{ t('pages.updateOverseasSite.submitted.references') }}<br>
+            {% for reference in references %}<strong data-testid="submitted-reference">{{ reference }}</strong>{% if not loop.last %}<br>{% endif %}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      <p class="govuk-body" data-testid="submitted-next">{{ t('pages.updateOverseasSite.submitted.next') }}</p>
+      <p class="govuk-body"><a class="govuk-link" href="{{ manageSitesUrl }}" data-testid="manage-sites-link">{{ t('pages.manageOverseasSites.payment.backLink') }}</a></p>
+    </div>
+  </div>
+{% endblock %}

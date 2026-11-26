@@ -1,0 +1,125 @@
+{% extends 'layouts/page.njk' %}
+
+{#
+  RA-682: an accredited ORS's details (Figma screens 3 and 5). Editable rows
+  link to their step; the locked ones (AC02) have no action. Interim sites are
+  changed, removed and added as part of the ORS's update (AC04). While a
+  submitted request holds the ORS (AC03) the page is read only.
+#}
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if successBanner %}
+        <div class="govuk-notification-banner govuk-notification-banner--success" role="alert" aria-labelledby="update-success-title" data-module="govuk-notification-banner" data-testid="success-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="update-success-title">{{ t('pages.updateOverseasSite.success') }}</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading">{{ successBanner }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+    </div>
+  </div>
+
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-full">
+      <dl class="govuk-summary-list govuk-summary-list--no-border govuk-!-margin-bottom-6" data-testid="site-status">
+        <div class="govuk-summary-list__row">
+          <dt class="govuk-summary-list__key">{{ t('pages.updateOverseasSite.status.label') }}</dt>
+          <dd class="govuk-summary-list__value">
+            {% if status == 'pending' %}
+              <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
+            {% elif status == 'inProgress' %}
+              <strong class="govuk-tag govuk-tag--blue" data-testid="site-status-tag">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
+            {% else %}
+              <strong class="govuk-tag govuk-tag--green" data-testid="site-status-tag">{{ t('pages.updateOverseasSite.status.approved') }}</strong>
+            {% endif %}
+          </dd>
+        </div>
+        {% if validFrom %}
+          <div class="govuk-summary-list__row">
+            <dt class="govuk-summary-list__key">{{ t('pages.updateOverseasSite.status.validFrom') }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="site-valid-from">{{ validFrom | formatDate('d MMM yyyy') }}</dd>
+          </div>
+        {% endif %}
+      </dl>
+
+      {% if pending %}
+        <div class="govuk-inset-text" data-testid="pending-inset">{{ t('pages.updateOverseasSite.pending') }}</div>
+      {% endif %}
+
+      <dl class="govuk-summary-list" data-testid="site-summary">
+        {% for row in rows %}
+          <div class="govuk-summary-list__row{% if not row.action %} govuk-summary-list__row--no-actions{% endif %}" id="row-{{ row.id }}" data-testid="row-{{ row.id }}">
+            <dt class="govuk-summary-list__key">{{ row.label }}</dt>
+            <dd class="govuk-summary-list__value" data-testid="row-{{ row.id }}-value">{{ row.value }}</dd>
+            {% if row.action %}
+              <dd class="govuk-summary-list__actions">
+                <a class="govuk-link" href="{{ row.action.href }}" data-testid="row-{{ row.id }}-action">{{ row.action.text }}<span class="govuk-visually-hidden"> {{ row.label | lower }}</span></a>
+              </dd>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </dl>
+
+      <h2 class="govuk-heading-m govuk-!-margin-top-8" data-testid="interim-sites-heading">{{ t('pages.updateOverseasSite.interim.heading', { count: interimSites.length }) }}</h2>
+      {% if interimSites.length %}
+        <dl class="govuk-summary-list" data-testid="interim-sites">
+          {% for interim in interimSites %}
+            <div class="govuk-summary-list__row" data-testid="{{ interim.key }}">
+              <dt class="govuk-summary-list__key govuk-!-font-weight-regular" data-testid="{{ interim.key }}-line">
+                {{ interim.line }}
+                {% if interim.state == 'change' %}
+                  <strong class="govuk-tag govuk-tag--blue govuk-!-margin-left-2" data-testid="{{ interim.key }}-state">{{ t('pages.updateOverseasSite.interim.changed') }}</strong>
+                {% elif interim.state == 'add' %}
+                  <strong class="govuk-tag govuk-tag--turquoise govuk-!-margin-left-2" data-testid="{{ interim.key }}-state">{{ t('pages.updateOverseasSite.interim.new') }}</strong>
+                {% elif interim.state == 'remove' %}
+                  <strong class="govuk-tag govuk-tag--red govuk-!-margin-left-2" data-testid="{{ interim.key }}-state">{{ t('pages.updateOverseasSite.interim.toBeRemoved') }}</strong>
+                {% endif %}
+              </dt>
+              <dd class="govuk-summary-list__actions">
+                <ul class="govuk-summary-list__actions-list">
+                  {% if interim.changeUrl %}
+                    <li class="govuk-summary-list__actions-list-item">
+                      <a class="govuk-link" href="{{ interim.changeUrl }}" data-testid="{{ interim.key }}-change">{{ t('pages.manageOverseasSites.change') }}<span class="govuk-visually-hidden"> {{ interim.line }}</span></a>
+                    </li>
+                  {% endif %}
+                  {% if interim.removeUrl %}
+                    <li class="govuk-summary-list__actions-list-item">
+                      <form method="post" action="{{ interim.removeUrl }}" class="govuk-!-display-inline">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--red govuk-body govuk-!-margin-bottom-0" data-testid="{{ interim.key }}-remove">{{ t('pages.updateOverseasSite.interim.remove') }}<span class="govuk-visually-hidden"> {{ interim.line }}</span></button>
+                      </form>
+                    </li>
+                  {% endif %}
+                  {% if interim.undoUrl %}
+                    <li class="govuk-summary-list__actions-list-item">
+                      <form method="post" action="{{ interim.undoUrl }}" class="govuk-!-display-inline">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--blue govuk-body govuk-!-margin-bottom-0" data-testid="{{ interim.key }}-undo">{{ t('pages.updateOverseasSite.interim.undo') }}<span class="govuk-visually-hidden"> {{ interim.line }}</span></button>
+                      </form>
+                    </li>
+                  {% endif %}
+                </ul>
+              </dd>
+            </div>
+          {% endfor %}
+        </dl>
+      {% endif %}
+
+      {% if addInterimSiteUrl %}
+        <p class="govuk-body"><a class="govuk-button govuk-button--secondary" href="{{ addInterimSiteUrl }}" data-testid="add-interim-site">{{ t('pages.updateOverseasSite.interim.add') }}</a></p>
+      {% endif %}
+
+      {% if continueUrl %}
+        <p class="govuk-body"><a class="govuk-button" href="{{ continueUrl }}" data-testid="save-and-continue">{{ t('pages.updateOverseasSite.saveAndContinue') }}</a></p>
+      {% endif %}
+
+      <p class="govuk-body"><a class="govuk-link" href="{{ manageSitesUrl }}" data-testid="manage-sites-link">{{ t('pages.manageOverseasSites.heading') }}</a></p>
+    </div>
+  </div>
+{% endblock %}

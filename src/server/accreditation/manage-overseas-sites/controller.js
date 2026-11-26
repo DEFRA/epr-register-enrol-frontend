@@ -37,10 +37,13 @@ import {
 } from './view-model.js'
 import {
   addToAccreditationUrl,
+  cancelUpdateUrl,
   declarationUrl,
   manageSitesUrl,
   paymentUrl,
-  requestsUrl
+  requestsUrl,
+  submittedUrl,
+  updateUrl
 } from './urls.js'
 
 const VIEWS = {
@@ -282,6 +285,13 @@ export const cancelAddToAccreditationController = {
   }
 }
 
+// RA-682: where a draft item is reviewed: an add's summary, an update's details.
+function itemUrl(applicationId, site) {
+  return site.changeType === CHANGE_TYPES.updateOverseasSite
+    ? updateUrl(applicationId, site.siteId)
+    : addToAccreditationUrl(applicationId, site.siteId)
+}
+
 function renderRequests(
   h,
   { t, currentLocale },
@@ -298,15 +308,23 @@ function renderRequests(
     addAnotherUrl: manageSitesUrl(view, currentLocale, { registered: true }),
     requests: sites.map((site) => {
       const entry = findSite(view, site.siteId)
+      const isUpdate = site.changeType === CHANGE_TYPES.updateOverseasSite
       return {
         siteId: site.siteId,
         orsId: site.orsId,
         siteName: site.siteName,
         address: orsAddressLine(entry.site),
-        viewUrl: addToAccreditationUrl(applicationId, site.siteId)
+        // RA-682: an update is listed as such, opens its details page, and can be taken out of the request here.
+        typeKey: isUpdate ? 'orsUpdate' : 'newOrs',
+        viewUrl: itemUrl(applicationId, site),
+        removeUrl: isUpdate ? cancelUpdateUrl(applicationId, site.siteId) : null
       }
     }),
-    charge: view.activeRequest ? chargeFor(view.activeRequest.charge) : null,
+    // RA-682 AC05: only adding an ORS is charged.
+    charge:
+      view.activeRequest?.charge?.chargeableSites > 0
+        ? chargeFor(view.activeRequest.charge)
+        : null,
     errors: errors ?? []
   })
 }
@@ -387,7 +405,7 @@ export const requestsPostController = {
     const incomplete = sites.filter((site) => site.isComplete === false)
     if (incomplete.length > 0) {
       const errors = incomplete.map((site) => ({
-        href: addToAccreditationUrl(applicationId, site.siteId),
+        href: itemUrl(applicationId, site),
         testId: `error-request-${site.orsId}`,
         text: manageSitesText(t, 'requests.incomplete', {
           site: site.siteName,
@@ -436,6 +454,17 @@ function paymentReferenceFor(application) {
   )
 }
 
+// Unreadable, the request is taken to be charged, as before RA-682: the
+// submit then quotes the payment reference and the backend decides.
+async function isCharged(request) {
+  try {
+    const view = await loadView(request)
+    return (view.activeRequest?.charge?.chargeableSites ?? 1) > 0
+  } catch {
+    return true
+  }
+}
+
 export const declarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -455,6 +484,9 @@ export const declarationPostController = {
         })
         .code(statusCodes.badRequest)
     }
+    // RA-682 AC05: a request that only changes ORS details has nothing to pay,
+    // so quotes no payment reference and has no payment page.
+    const charged = await isCharged(request)
     try {
       const organisationId = organisationIdFrom(request)
       const application = await accreditationApiService.getApplication(
@@ -465,7 +497,7 @@ export const declarationPostController = {
         fullName,
         jobTitle,
         email: getUser(request)?.email ?? null,
-        paymentReference: paymentReferenceFor(application)
+        paymentReference: charged ? paymentReferenceFor(application) : null
       })
     } catch (err) {
       // 404: no draft to submit. 409: a concurrent submit (another tab) won,
@@ -494,7 +526,9 @@ export const declarationPostController = {
         })
         .code(statusCodes.internalServerError)
     }
-    return h.redirect(paymentUrl(applicationId))
+    return h.redirect(
+      charged ? paymentUrl(applicationId) : submittedUrl(applicationId)
+    )
   }
 }
 

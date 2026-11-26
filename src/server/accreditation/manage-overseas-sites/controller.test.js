@@ -1022,4 +1022,87 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(MANAGE)
     })
   })
+
+  describe('RA-682: ORS updates on the requests and declaration pages', () => {
+    const update = requestSite({
+      siteId: 900181,
+      orsId: '001',
+      siteName: 'Rotterdam Recycling',
+      changeType: 'update-overseas-site',
+      missingFields: [],
+      isComplete: true
+    })
+
+    function viewWith(active) {
+      const view = makeView({ active })
+      view.activeRequest.charge = chargeOf(
+        active.filter((s) => s.changeType !== 'update-overseas-site').length
+      )
+      return view
+    }
+
+    test('an update is listed as an ORS update, opens its details and can be removed', async () => {
+      mockGet(
+        viewWith([update, requestSite({ isComplete: true, missingFields: [] })])
+      )
+      const { result } = await server.inject(`${BASE}/requests`)
+
+      expect(result).toMatch(/data-testid="request-type-001">ORS update</)
+      expect(result).toMatch(/data-testid="request-type-002">New ORS</)
+      expect(result).toContain(
+        `href="${BASE}/update/900181" data-testid="request-view-001"`
+      )
+      expect(result).toContain(`action="${BASE}/update/900181/cancel"`)
+      expect(result).not.toContain('data-testid="request-remove-002"')
+      expect(result).toContain('data-testid="charge-inset"')
+    })
+
+    test('AC05: a request of updates only shows no charge', async () => {
+      mockGet(viewWith([update]))
+      const { result } = await server.inject(`${BASE}/requests`)
+      expect(result).not.toContain('data-testid="charge-inset"')
+    })
+
+    test('an incomplete update at Continue links to its details page', async () => {
+      mockGet(
+        viewWith([{ ...update, isComplete: false, missingFields: ['changes'] }])
+      )
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/requests`
+      })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain(`href="${BASE}/update/900181"`)
+    })
+
+    test('AC05/AC06: a request with nothing to pay quotes no payment reference and goes to the confirmation', async () => {
+      mockGet(viewWith([update]))
+      const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/declaration`,
+        payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+      })
+
+      const [url, body] = post.mock.calls[0]
+      expect(url).toMatch(/requests\/current\/submit$/)
+      expect(body.paymentReference).toBeNull()
+      expect(headers.location).toBe(`${BASE}/submitted`)
+    })
+
+    test('a request with an add still pays', async () => {
+      mockGet(
+        viewWith([update, requestSite({ isComplete: true, missingFields: [] })])
+      )
+      const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/declaration`,
+        payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+      })
+
+      expect(post.mock.calls[0][1].paymentReference).toEqual(expect.any(String))
+      expect(headers.location).toBe(`${BASE}/payment`)
+    })
+  })
 })

@@ -61,3 +61,34 @@ export function declarationUrl(applicationId) {
 export function paymentUrl(applicationId) {
   return `${journeyUrl(applicationId)}/payment`
 }
+
+// RA-682: changing an accredited ORS's details (and its interim sites), keyed
+// by the approved application's id and the ORS's site id, as RA-492's pages.
+export function updateUrl(applicationId, siteId) {
+  return `${journeyUrl(applicationId)}/update/${siteId}`
+}
+
+export function updateStepUrl(applicationId, siteId, step) {
+  return `${updateUrl(applicationId, siteId)}/details/${step}`
+}
+
+export function cancelUpdateUrl(applicationId, siteId) {
+  return `${updateUrl(applicationId, siteId)}/cancel`
+}
+
+export function newInterimSiteUrl(applicationId, siteId) {
+  return `${updateUrl(applicationId, siteId)}/interim-sites/new`
+}
+
+export function interimSiteUrl(applicationId, siteId, interimSiteId) {
+  return `${updateUrl(applicationId, siteId)}/interim-sites/${interimSiteId}`
+}
+
+export function interimSiteAdditionUrl(applicationId, siteId, changeId) {
+  return `${updateUrl(applicationId, siteId)}/interim-site-changes/${encodeURIComponent(changeId)}`
+}
+
+// RA-682 AC06: where a request with nothing to pay goes once it is submitted.
+export function submittedUrl(applicationId) {
+  return `${journeyUrl(applicationId)}/submitted`
+}
