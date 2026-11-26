@@ -1,0 +1,104 @@
+{% extends 'layouts/page.njk' %}
+
+{% macro fileList(files, removable, removeLabel) %}
+  <ul class="govuk-list" data-testid="{{ 'new-files' if removable else 'existing-files' }}">
+    {% for file in files %}
+      <li data-testid="bes-file-{{ file.fileId }}">
+        {{ file.filename }}
+        {% if removable %}
+          <form method="post" action="{{ file.deleteUrl }}" class="govuk-!-display-inline govuk-!-margin-left-2">
+            <input type="hidden" name="crumb" value="{{ crumb }}">
+            <button type="submit" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button" data-testid="remove-file-{{ file.fileId }}">{{ removeLabel }}<span class="govuk-visually-hidden"> {{ file.filename }}</span></button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% macro dateInput(prefix, label, day, month, year, error) %}
+  <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
+    <fieldset class="govuk-fieldset" role="group">
+      <legend class="govuk-fieldset__legend"><span class="govuk-label">{{ label }}</span></legend>
+      <div class="govuk-hint">{{ t('pages.uploadBesEvidence.dateHint') }}</div>
+      {% if error %}
+        <p class="govuk-error-message" data-testid="{{ prefix }}-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ error }}</p>
+      {% endif %}
+      <div class="govuk-date-input" data-testid="{{ prefix }}-date">
+        <div class="govuk-date-input__item">
+          <label class="govuk-label govuk-date-input__label" for="{{ prefix }}Day">Day</label>
+          <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="{{ prefix }}Day" name="{{ prefix }}Day" type="text" inputmode="numeric" value="{{ day }}" data-testid="{{ prefix }}-day">
+        </div>
+        <div class="govuk-date-input__item">
+          <label class="govuk-label govuk-date-input__label" for="{{ prefix }}Month">Month</label>
+          <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="{{ prefix }}Month" name="{{ prefix }}Month" type="text" inputmode="numeric" value="{{ month }}" data-testid="{{ prefix }}-month">
+        </div>
+        <div class="govuk-date-input__item">
+          <label class="govuk-label govuk-date-input__label" for="{{ prefix }}Year">Year</label>
+          <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="{{ prefix }}Year" name="{{ prefix }}Year" type="text" inputmode="numeric" value="{{ year }}" data-testid="{{ prefix }}-year">
+        </div>
+      </div>
+    </fieldset>
+  </div>
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if fileError or validFromError or validToError %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% if fileError %}<li><a href="#file">{{ fileError }}</a></li>{% endif %}
+                {% if validFromError %}<li><a href="#validFromDay">{{ validFromError }}</a></li>{% endif %}
+                {% if validToError %}<li><a href="#validToDay">{{ validToError }}</a></li>{% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      {% if existing.length %}
+        <h2 class="govuk-heading-m">{{ existingHeading }}</h2>
+        {{ fileList(existing, false, removeLabel) }}
+      {% endif %}
+
+      <h2 class="govuk-heading-m">{{ newHeading }}</h2>
+      {% if added.length %}
+        {{ fileList(added, true, removeLabel) }}
+      {% else %}
+        <p class="govuk-body" data-testid="no-new-files">{{ noNewFiles }}</p>
+      {% endif %}
+
+      <p class="govuk-body">{{ t('pages.uploadBesEvidence.requirements.intro') }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ t('pages.uploadBesEvidence.requirements.maxSize') }}</li>
+        <li>{{ t('pages.uploadBesEvidence.requirements.fileTypes') }}</li>
+      </ul>
+
+      <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        <div class="govuk-form-group{% if fileError %} govuk-form-group--error{% endif %}">
+          <label class="govuk-label" for="file">{{ t('pages.uploadBesEvidence.fileLabel') }}</label>
+          {% if fileError %}
+            <p id="file-error" class="govuk-error-message" data-testid="file-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ fileError }}</p>
+          {% endif %}
+          <input class="govuk-file-upload{% if fileError %} govuk-file-upload--error{% endif %}" id="file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.csv,.png,.tif,.jpg,.msg" data-testid="file-input">
+        </div>
+        {{ dateInput('validFrom', t('pages.uploadBesEvidence.validFrom'), validFromDay, validFromMonth, validFromYear, validFromError) }}
+        {{ dateInput('validTo', t('pages.uploadBesEvidence.validTo'), validToDay, validToMonth, validToYear, validToError) }}
+        <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="upload-button">{{ t('pages.uploadBesEvidence.uploadButton') }}</button>
+      </form>
+
+      <p class="govuk-body">
+        <a href="{{ backLink }}" class="govuk-button" role="button" draggable="false" data-module="govuk-button" data-testid="continue-button">{{ continueLabel }}</a>
+        <a href="{{ cancelUrl }}" class="govuk-link govuk-!-margin-left-3" data-testid="cancel-link">{{ cancelLink }}</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

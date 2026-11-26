@@ -35,15 +35,23 @@ export function resolveBannerDefaults(banners) {
 
 // The regulator-query summary and the field links back to this page's accredited section,
 // both of which only show while the section is under query.
-export function queriedBannerData(t, queried) {
+// RA-698: when the BES evidence is queried with the sites, the summary names both.
+export function queriedBannerData(t, queried, combinedWithBes = false) {
   return {
     querySummary: queried
-      ? buildRegulatorQuerySummary('overseasSites', t)
+      ? buildRegulatorQuerySummary(
+          combinedWithBes ? 'overseasSitesAndBesEvidence' : 'overseasSites',
+          t
+        )
       : null,
     regulatorQueryFields: queried
       ? [
           {
-            label: t('pages.taskList.tasks.overseasSites'),
+            label: t(
+              combinedWithBes
+                ? 'pages.taskList.tasks.overseasSitesAndBesEvidence'
+                : 'pages.taskList.tasks.overseasSites'
+            ),
             href: '#accredited-sites'
           }
         ]

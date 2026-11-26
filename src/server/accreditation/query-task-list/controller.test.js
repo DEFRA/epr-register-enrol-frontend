@@ -116,7 +116,21 @@ describe('#buildQueryTaskListViewModel', () => {
     )
   })
 
-  test('exporter journey includes overseas sites and BES evidence when Queried', () => {
+  test('exporter journey includes overseas sites and BES evidence as separate tasks when only one is Queried', () => {
+    const vm = buildQueryTaskListViewModel(
+      makeApplication({
+        isExporter: true,
+        overseasSites: { sectionStatus: 'Queried' },
+        besEvidence: { sectionStatus: 'Completed' }
+      }),
+      t
+    )
+    const testIds = vm.tasks.map((task) => task.testId)
+    expect(testIds).toContain('task-overseas-sites')
+    expect(testIds).toContain('task-bes-evidence')
+  })
+
+  test('RA-698: overseas sites and BES evidence queried together are one task opening the sites section', () => {
     const vm = buildQueryTaskListViewModel(
       makeApplication({
         isExporter: true,
@@ -126,8 +140,16 @@ describe('#buildQueryTaskListViewModel', () => {
       t
     )
     const testIds = vm.tasks.map((task) => task.testId)
-    expect(testIds).toContain('task-overseas-sites')
-    expect(testIds).toContain('task-bes-evidence')
+    expect(testIds).not.toContain('task-overseas-sites')
+    expect(testIds).not.toContain('task-bes-evidence')
+    const combined = vm.tasks.find(
+      (task) => task.testId === 'task-overseas-sites-bes-evidence'
+    )
+    expect(combined.url).toBe(
+      `/accreditation/select-overseas-sites/${APPLICATION_ID}`
+    )
+    expect(combined.statusTagText).toBe('QUERIED')
+    expect(combined.locked).toBe(false)
   })
 
   // Material is no longer duplicated on this page's own heading — it's
@@ -297,7 +319,7 @@ describe('#queryTaskListGetController', () => {
     expect(result).not.toContain(`/accreditation/tonnage/${APPLICATION_ID}`)
   })
 
-  test('renders all 5 task items for a Queried exporter application with every section queried', async () => {
+  test('renders 4 task items (the sites and BES evidence as one) for a Queried exporter application with every section queried', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(
       makeApplication({
         isExporter: true,
@@ -317,8 +339,8 @@ describe('#queryTaskListGetController', () => {
     expect(result).toContain('data-testid="task-prns"')
     expect(result).toContain('data-testid="task-business-plan"')
     expect(result).toContain('data-testid="task-sampling-plan"')
-    expect(result).toContain('data-testid="task-overseas-sites"')
-    expect(result).toContain('data-testid="task-bes-evidence"')
+    expect(result).toContain('data-testid="task-overseas-sites-bes-evidence"')
+    expect(result).not.toContain('data-testid="task-bes-evidence"')
   })
 
   test('returns 500 with error summary when API fetch fails', async () => {

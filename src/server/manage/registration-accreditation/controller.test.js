@@ -321,7 +321,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toMatch(
-        /data-testid="page-heading"[^>]*>\s*Manage registration and accreditation\s*</
+        /data-testid="page-heading"[^>]*>\s*Manage your registration and accreditation\s*</
       )
     })
 
@@ -636,7 +636,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     test('shows the heading with an "orgName (year, material)" caption', () => {
       expect(result).toMatch(
-        /data-testid="page-heading"[^>]*>\s*Manage registration and accreditation\s*</
+        /data-testid="page-heading"[^>]*>\s*Manage your registration and accreditation\s*</
       )
       expect(result).toMatch(
         /data-testid="page-caption"[^>]*>\s*Acme Recycling Ltd \(2027, Plastic\)\s*</
@@ -715,7 +715,7 @@ describe('#manageRegistrationAccreditationController', () => {
     const { result } = await get(PAGE_URL)
 
     expect(result).toMatch(
-      /<h2 class="govuk-heading-m"[^>]*>\s*In year change requests\s*<\/h2>/
+      /<h2 class="govuk-heading-m"[^>]*>\s*In year change applications\s*<\/h2>/
     )
     expect(result).toMatch(
       /<h2 class="govuk-heading-m">\s*Manage accreditation\s*<\/h2>/
@@ -746,7 +746,7 @@ describe('#manageRegistrationAccreditationController', () => {
     const { statusCode, result } = await get(WELSH_PAGE_URL)
 
     expect(statusCode).toBe(statusCodes.ok)
-    expect(result).toContain('[Welsh] Manage registration and accreditation')
+    expect(result).toContain('[Welsh] Manage your registration and accreditation')
     expect(result).toMatch(/data-testid="expiry-date"[^>]*>\s*31 Rhag 2027\s*</)
     expect(result).toMatch(
       new RegExp(`href="${MANAGE_REEX_URL}"[^>]*data-testid="back-link"`)
@@ -758,7 +758,7 @@ describe('#manageRegistrationAccreditationController', () => {
     )
   })
 
-  describe('In year change requests section', () => {
+  describe('In year change applications section', () => {
     const item = (itemId, changeType, status) => ({
       siteId: 1,
       orsId: '001',
@@ -874,7 +874,7 @@ describe('#manageRegistrationAccreditationController', () => {
       ])
       const addRow = summaryRow(result, 'add-overseas-site')
       expect(addRow).toMatch(
-        /data-testid="change-requests-summary-type-add-overseas-site"[^>]*>\s*New ORS accreditation\s*</
+        /data-testid="change-requests-summary-type-add-overseas-site"[^>]*>\s*Accreditation: new ORS\s*</
       )
       expect(addRow).toMatch(
         /class="govuk-tag govuk-tag--green"[^>]*data-testid="change-requests-summary-status-add-overseas-site"[^>]*>\s*SUBMITTED\s*</
@@ -902,7 +902,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
       expect(summaryRow(result, 'add-overseas-site')).toMatch(
         new RegExp(
-          `href="${LIST_PAGE_URL}\\?type=add-overseas-site"[^>]*data-testid="change-requests-summary-view-add-overseas-site"[^>]*>\\s*View<span class="govuk-visually-hidden"> New ORS accreditation</span>`
+          `href="${LIST_PAGE_URL}\\?type=add-overseas-site"[^>]*data-testid="change-requests-summary-view-add-overseas-site"[^>]*>\\s*View<span class="govuk-visually-hidden"> Accreditation: new ORS</span>`
         )
       )
       expect(summaryRow(result, 'update-overseas-site')).toMatch(
@@ -915,7 +915,7 @@ describe('#manageRegistrationAccreditationController', () => {
     test('keeps the Welsh path in the type links', async () => {
       const result = await getSection(ACTIVE_VIEW, { url: WELSH_PAGE_URL })
 
-      expect(result).toContain('[Welsh] In year change requests')
+      expect(result).toContain('[Welsh] In year change applications')
       expect(summaryRow(result, 'add-overseas-site')).toContain(
         `href="/cy${LIST_PAGE_URL}?type=add-overseas-site"`
       )
@@ -940,7 +940,7 @@ describe('#manageRegistrationAccreditationController', () => {
         )
         expect(result).toMatch(
           new RegExp(
-            `data-testid="no-active-change-requests"[^>]*>\\s*You currently have no active change requests\\. <a href="${listUrl}" class="govuk-link" data-testid="view-change-requests-link">View change requests</a>\\.\\s*<`
+            `data-testid="no-active-change-requests"[^>]*>\\s*You currently have no active change requests\\. <a href="${listUrl}" class="govuk-link" data-testid="view-change-requests-link">View your in year change applications</a>\\.\\s*<`
           )
         )
       }
@@ -1046,7 +1046,8 @@ describe('#manageRegistrationAccreditationController', () => {
       const { statusCode, result } = await get(stubExporterUrl())
 
       expect(statusCode).toBe(statusCodes.ok)
-      expect(result).toContain('data-testid="manage-overseas-sites-link"')
+      // RA-698: the stub exporter has a Queried item, so ORSs cannot be added.
+      expect(result).not.toContain('data-testid="manage-overseas-sites-link"')
       expect(result).toMatch(
         new RegExp(
           `data-testid="accreditation-number"[^>]*>\\s*A${yearSuffix(currentYear())}EX0500180001PL\\s*<`

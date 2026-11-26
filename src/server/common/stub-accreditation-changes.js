@@ -30,6 +30,12 @@ import { statusCodes } from './constants/status-codes.js'
 import { isItemForSite } from './helpers/changeRequestSite.js'
 import { currentYear } from './helpers/currentYear.js'
 import { hasValue } from './helpers/hasValue.js'
+import {
+  QUERIED_ITEM_ROUTES,
+  isQueried,
+  queriedEffective,
+  queryView
+} from './stub-queried-items.js'
 import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
 import {
   seededStubChangeRequests,
@@ -157,7 +163,7 @@ function requestSiteView(site, entry) {
     orsId: entry.orsId ?? site.orsId ?? null,
     siteName: entry.siteName ?? site.siteName,
     answers: entry.answers,
-    effective,
+    effective: { ...effective, ...queriedEffective(site, entry) },
     besEvidenceRequired: required,
     besEvidence: { besEvidenceUploads: entry.besEvidenceUploads },
     missingFields,
@@ -167,7 +173,8 @@ function requestSiteView(site, entry) {
     status: entry.status,
     validFrom: entry.validFrom,
     withdrawnAt: entry.withdrawnAt,
-    caseManagementReference: entry.caseManagementReference ?? null
+    caseManagementReference: entry.caseManagementReference ?? null,
+    query: queryView(site, entry)
   }
 }
 
@@ -240,6 +247,7 @@ function buildView(orgId, appId, application, store, registrationOnly = null) {
     sites: sites.map(siteView),
     activeRequest: store.draft ? requestView(store.draft, sites) : null,
     requests: requests.map((r) => requestView(r, sites)),
+    hasOpenQuery: requests.some((request) => request.sites.some(isQueried)),
     pendingOrsIds: [
       ...new Set(
         activeSiteItems
@@ -408,7 +416,8 @@ const ROUTES = [
   ],
   ['post', `${SITE_PATH}/bes-evidence/files`, addBesEvidenceFile],
   ['delete', `${SITE_PATH}/bes-evidence/files/([^/]+)`, deleteBesEvidenceFile],
-  ['post', '/requests/current/submit', submit]
+  ['post', '/requests/current/submit', submit],
+  ...QUERIED_ITEM_ROUTES
 ].map(([method, path, handle]) => ({
   method,
   pattern: new RegExp(`^${path}$`),

@@ -22,6 +22,9 @@ async function changeRequestsSection(request, context, t, currentLocale) {
   const listUrl = changeRequestsUrl(request.params, currentLocale)
   return {
     listUrl,
+    // RA-698: while a query is open on an accreditation's ORS change, no ORS
+    // can be added. A registration-only operator has nothing to add to.
+    hasOpenQuery: !context.isRegistrationOnly && Boolean(view.hasOpenQuery),
     rows: summariseByType(flattenItems(view.requests ?? [])).map(
       ({ changeType, status }) => ({
         changeType,
@@ -80,6 +83,7 @@ export const manageRegistrationAccreditationController = {
         t,
         currentLocale
       ),
+      notification: request.yar.flash('notification')[0] ?? null,
       overseasSitesUrl: overseasSitesUrl(request.params, currentLocale)
     })
   }

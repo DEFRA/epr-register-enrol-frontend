@@ -41,6 +41,7 @@ describe('buildRegulatorQuerySummary', () => {
         'besEvidence',
         'businessPlan',
         'overseasSites',
+        'overseasSitesAndBesEvidence',
         'perns',
         'prns',
         'samplingPlan'

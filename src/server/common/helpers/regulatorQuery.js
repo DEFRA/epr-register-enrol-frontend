@@ -13,7 +13,23 @@ export const REGULATOR_QUERY_SECTION_LABEL_KEYS = {
   businessPlan: 'common.regulatorQuery.sectionLabels.businessPlan',
   samplingPlan: 'common.regulatorQuery.sectionLabels.samplingPlan',
   overseasSites: 'common.regulatorQuery.sectionLabels.overseasSites',
-  besEvidence: 'common.regulatorQuery.sectionLabels.besEvidence'
+  besEvidence: 'common.regulatorQuery.sectionLabels.besEvidence',
+  // RA-698: the single label for an ORS and BES evidence query raised together.
+  overseasSitesAndBesEvidence:
+    'common.regulatorQuery.sectionLabels.overseasSitesAndBesEvidence'
+}
+
+/**
+ * RA-698: the regulator queries the overseas reprocessing sites and the BES
+ * evidence together, so the operator answers them as one task.
+ * @param {object} application - the fetched application record
+ * @returns {boolean}
+ */
+export function isCombinedOrsBesQuery(application) {
+  return (
+    application?.overseasSites?.sectionStatus === 'Queried' &&
+    application?.besEvidence?.sectionStatus === 'Queried'
+  )
 }
 
 /**

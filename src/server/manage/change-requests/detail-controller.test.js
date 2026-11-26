@@ -707,7 +707,7 @@ describe('#manageChangeRequestDetailController', () => {
     test('shows "Not submitted" and no reference for an In progress item', async () => {
       const result = await getPage(ITEM.inProgress)
 
-      expect(valueOf(result, 'request-type')).toBe('New ORS accreditation')
+      expect(valueOf(result, 'request-type')).toBe('Accreditation: new ORS')
       expect(valueOf(result, 'request-sent')).toBe('Not submitted')
       expect(valueOf(result, 'request-submitted-by')).toBe('Not submitted')
       expect(valueOf(result, 'request-reference')).toBe('Not applicable')

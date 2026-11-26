@@ -40,6 +40,9 @@ const ID_REQUEST_DIGITS = 6
 const ID_ITEM_DIGITS = 4
 const REFERENCE_REQUEST_DIGITS = 3
 
+const QUERY_NOTE =
+  'Please confirm the site contact details and upload evidence of broadly equivalent standards.'
+
 const SUBMITTER = {
   fullName: 'Sam Patel',
   jobTitle: 'Director',
@@ -135,6 +138,12 @@ function buildRequest(target, side, number, [changeType, created, items]) {
       siteName: site.siteName
     }
   })
+  // RA-698: a Queried item carries the regulator's note, as the backend's seed gives it.
+  for (const item of seeded) {
+    if (item.status === QUERIED) {
+      item.query = { queryNote: QUERY_NOTE, raisedAt: on('08-01') }
+    }
+  }
   const draft = seeded.some((item) => item.status === IN_PROGRESS)
   // Mirrors the backend seed, so fe-tests find the same references either way.
   const submissionReference = draft

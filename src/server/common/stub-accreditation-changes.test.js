@@ -891,3 +891,145 @@ describe('registration-only stub change requests (RA-697)', () => {
     ).rejects.toMatchObject({ status: 404 })
   })
 })
+
+describe('stubAccreditationChanges: responding to a query (RA-698)', () => {
+  const ITEM = 'aaaaaaaa-0000-4000-8000-000000000001'
+  let base
+  let d
+
+  beforeEach(() => {
+    appSeq += 1
+    base = `${BASE}/app-${appSeq}`
+    d = deps(
+      application({
+        overseasSites: {
+          sites: [
+            {
+              siteId: 1,
+              orsId: '001',
+              selected: true,
+              country: 'Germany',
+              siteName: 'Berlin',
+              contactName: 'Jo',
+              interimSites: [
+                {
+                  siteId: 11,
+                  siteNumber: '1',
+                  siteName: 'Hamburg',
+                  country: 'Germany',
+                  operationCodes: ['R13'],
+                  removedAt: null
+                }
+              ]
+            }
+          ]
+        }
+      })
+    )
+    seedStubChangeRequest(`50018/app-${appSeq}`, {
+      requestId: 'q1',
+      status: 'Submitted',
+      sites: [
+        {
+          itemId: ITEM,
+          siteId: 1,
+          orsId: '001',
+          status: 'Queried',
+          query: { queryNote: 'Check the contact.' }
+        }
+      ]
+    })
+  })
+
+  const call = (method, rest, body) =>
+    stubAccreditationChanges(method, `${base}${rest}`, body, d)
+
+  const queriedItem = async () => {
+    const view = await call('get', '')
+    return view.requests[0].sites[0]
+  }
+
+  test('the view has an open query, with its note and what may change', async () => {
+    const view = await call('get', '')
+    const { query, effective } = view.requests[0].sites[0]
+
+    expect(view.hasOpenQuery).toBe(true)
+    expect(query.queryNote).toBe('Check the contact.')
+    expect(query.editableFields).toContain('contactName')
+    expect(query.lockedFields).toContain('country')
+    expect(query.interimSites[0].values.siteName).toBe('Hamburg')
+    expect(effective.siteName).toBe('Berlin')
+  })
+
+  test('a patch changes the effective value', async () => {
+    await call('patch', `/items/${ITEM}/answers`, { contactName: ' Pat ' })
+
+    expect((await queriedItem()).effective.contactName).toBe('Pat')
+  })
+
+  test('a locked field is a 422 and a blank required one a 400', async () => {
+    await expect(
+      call('patch', `/items/${ITEM}/answers`, { country: 'France' })
+    ).rejects.toMatchObject({ status: 422 })
+    await expect(
+      call('patch', `/items/${ITEM}/answers`, { siteName: ' ' })
+    ).rejects.toMatchObject({ status: 400 })
+  })
+
+  test('an interim site can be patched, but only one of the ORS', async () => {
+    await call('patch', `/items/${ITEM}/interim-sites/11/answers`, {
+      siteName: 'Hamburg Depot'
+    })
+
+    expect((await queriedItem()).query.interimSites[0].values.siteName).toBe(
+      'Hamburg Depot'
+    )
+    await expect(
+      call('patch', `/items/${ITEM}/interim-sites/99/answers`, {
+        siteName: 'x'
+      })
+    ).rejects.toMatchObject({ status: 422 })
+  })
+
+  test('resubmit is a 422 until something changes, then the item is Updated', async () => {
+    await expect(
+      call('post', `/items/${ITEM}/resubmit`, {
+        fullName: 'Sam',
+        jobTitle: 'Director'
+      })
+    ).rejects.toMatchObject({ status: 422 })
+
+    await call('patch', `/items/${ITEM}/answers`, { contactName: 'Pat' })
+    await call('post', `/items/${ITEM}/resubmit`, {
+      fullName: 'Sam',
+      jobTitle: 'Director'
+    })
+
+    const item = await queriedItem()
+    expect(item.status).toBe('Updated')
+    expect(item.query.editableFields).toEqual([])
+    expect((await call('get', '')).hasOpenQuery).toBe(false)
+  })
+
+  test('nothing can change once the item is no longer Queried', async () => {
+    await call('patch', `/items/${ITEM}/answers`, { contactName: 'Pat' })
+    await call('post', `/items/${ITEM}/resubmit`, {
+      fullName: 'Sam',
+      jobTitle: 'Director'
+    })
+
+    await expect(
+      call('patch', `/items/${ITEM}/answers`, { contactName: 'Lee' })
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
+  test('a BES file can be added and removed', async () => {
+    await call('post', `/items/${ITEM}/bes-evidence/files`, {
+      fileUploadId: 'f1'
+    })
+    expect((await queriedItem()).besEvidence.besEvidenceUploads).toHaveLength(1)
+
+    await call('delete', `/items/${ITEM}/bes-evidence/files/f1`)
+    expect((await queriedItem()).besEvidence.besEvidenceUploads).toHaveLength(0)
+  })
+})

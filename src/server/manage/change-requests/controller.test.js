@@ -260,15 +260,15 @@ describe('#manageChangeRequestsController', () => {
       const result = await getPage()
 
       expect(result).toMatch(
-        /data-testid="page-heading"[^>]*>\s*In year change requests\s*</
+        /data-testid="page-heading"[^>]*>\s*In year change applications\s*</
       )
       expect(result).toMatch(
         /data-testid="page-caption"[^>]*>\s*Acme Recycling Ltd \(2027, Plastic\)\s*</
       )
-      expect(result).toMatch(/<title>\s*In year change requests/)
+      expect(result).toMatch(/<title>\s*In year change applications/)
     })
 
-    test('has Site name, Type, Status and Action columns', async () => {
+    test('has ORS, Type, Status and Action columns', async () => {
       const result = await getPage()
 
       const head = result.slice(
@@ -279,7 +279,7 @@ describe('#manageChangeRequestsController', () => {
         [
           ...head.matchAll(/class="govuk-table__header"[^>]*>\s*([^<]+?)\s*</g)
         ].map((m) => m[1])
-      ).toEqual(['Site name', 'Type', 'Status', 'Action'])
+      ).toEqual(['ORS', 'Type', 'Status', 'Action'])
     })
 
     test('lists every item, final ones included, most urgent status first', async () => {
@@ -309,7 +309,7 @@ describe('#manageChangeRequestsController', () => {
     test.each([
       [
         'item-in-progress',
-        'New ORS accreditation',
+        'Accreditation: new ORS',
         'govuk-tag--blue',
         'IN PROGRESS'
       ],
@@ -325,7 +325,7 @@ describe('#manageChangeRequestsController', () => {
       ['item-refused', 'Change request', 'govuk-tag--red', 'REFUSED'],
       [
         'item-withdrawn',
-        'New ORS accreditation',
+        'Accreditation: new ORS',
         'govuk-tag--grey',
         'WITHDRAWN'
       ]
@@ -408,7 +408,7 @@ describe('#manageChangeRequestsController', () => {
           `href="/cy${PAGE_URL}/item-queried"[^>]*data-testid="change-request-view-item-queried"`
         )
       )
-      expect(result).toContain('[Welsh] In year change requests')
+      expect(result).toContain('[Welsh] In year change applications')
     })
   })
 
@@ -698,7 +698,7 @@ describe('#manageChangeRequestsController', () => {
         { value: '', text: 'Select type', selected: true },
         {
           value: 'add-overseas-site',
-          text: 'New ORS accreditation',
+          text: 'Accreditation: new ORS',
           selected: false
         },
         { value: 'update-overseas-site', text: 'ORS update', selected: false },

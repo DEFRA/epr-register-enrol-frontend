@@ -1,6 +1,10 @@
 import Joi from 'joi'
 
 import { manageRouteOptions } from '../../manage/helpers/manage-page.js'
+import { manageUrl } from '../../manage/helpers/manage-urls.js'
+import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
+import { accreditationChangesService } from '../../common/helpers/accreditationChangesService.js'
+import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { MAX_FILE_BYTES } from '../upload-bes-evidence/controller.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
 import {
@@ -35,10 +39,45 @@ const SITE = `${BASE}/add/{siteId}`
 
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
+// RA-698: while the regulator has a query open on one of the operator's ORS
+// changes, no ORS can be added, so every page here goes back to the manage
+// page. A view that cannot be read leaves the page to handle that itself.
+async function redirectWhenQueryOpen(request, h) {
+  const organisationId = request.yar.get(
+    ACCREDITATION_SESSION_KEYS.organisationId
+  )
+  let view
+  try {
+    view = await accreditationChangesService.getView(
+      organisationId,
+      request.params.applicationId
+    )
+  } catch {
+    return h.continue
+  }
+  if (!view?.hasOpenQuery) {
+    return h.continue
+  }
+  const { currentLocale } = getLocaleAndTranslator(request)
+  return h
+    .redirect(
+      manageUrl(
+        {
+          organisationId: view.organisationId,
+          registrationNumber: view.registrationReference,
+          materialType: view.materialType
+        },
+        currentLocale
+      )
+    )
+    .takeover()
+}
+
 // A malformed id in the URL is a bad request (Hapi's default for invalid
 // params). siteId is converted to the integer the backend uses.
 const routeOptions = {
   ...manageRouteOptions,
+  pre: [{ method: redirectWhenQueryOpen }],
   validate: {
     params: Joi.object({
       language: Joi.string(),
@@ -69,7 +108,8 @@ const statusOptions = {
     provideUploadStatusFromSession(
       IN_YEAR_BES_UPLOAD_SESSION_KEY,
       ({ applicationId, siteId }) => besEvidenceUrl(applicationId, siteId)
-    )
+    ),
+    ...routeOptions.pre
   ]
 }
 

@@ -3,7 +3,10 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
-import { isRegulatorQueryBannerVisible } from '../../common/helpers/regulatorQuery.js'
+import {
+  isCombinedOrsBesQuery,
+  isRegulatorQueryBannerVisible
+} from '../../common/helpers/regulatorQuery.js'
 import {
   accreditedYearFor,
   queriedBannerData,
@@ -392,7 +395,7 @@ export const selectOverseasSitesGetController = {
         promoteSuccessBanner,
         editSuccessBanner,
         withdrawnInterimSite,
-        ...queriedBannerData(t, queried),
+        ...queriedBannerData(t, queried, isCombinedOrsBesQuery(application)),
         readOnly,
         isQueriedApplication: application.applicationStatus === 'Queried',
         accreditedYear: accreditedYearFor(application)

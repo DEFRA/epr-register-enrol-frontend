@@ -6,6 +6,7 @@ import {
   reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
 import { fetchApplicationOrRenderSimpleErrorPage } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { isCombinedOrsBesQuery } from '../../common/helpers/regulatorQuery.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -48,7 +49,16 @@ function allSectionTasks(application, t) {
     }
   ]
 
-  if (isExporter) {
+  if (isExporter && isCombinedOrsBesQuery(application)) {
+    // RA-698: queried together, so one task. It opens the ORS section, whose
+    // confirmation continues to the BES upload.
+    tasks.push({
+      label: t('pages.taskList.tasks.overseasSitesAndBesEvidence'),
+      url: `/accreditation/select-overseas-sites/${applicationId}`,
+      status: 'Queried',
+      testId: 'task-overseas-sites-bes-evidence'
+    })
+  } else if (isExporter) {
     const { overseasSites, besEvidence } = application
     tasks.push(
       {

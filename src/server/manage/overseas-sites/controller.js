@@ -37,14 +37,16 @@ function registeredSiteView(site, applicationId, changeRequests) {
     return view
   }
   const status = changeRequests.pendingRequestStatus(site.siteId)
+  const actions = registeredSiteActions(
+    applicationId,
+    site.siteId,
+    status,
+    changeRequests.isInDraftRequest(site.siteId)
+  )
   return {
     ...view,
-    ...registeredSiteActions(
-      applicationId,
-      site.siteId,
-      status,
-      changeRequests.isInDraftRequest(site.siteId)
-    )
+    ...actions,
+    addUrl: changeRequests.hasOpenQuery ? null : actions.addUrl
   }
 }
 

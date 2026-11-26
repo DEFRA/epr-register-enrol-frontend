@@ -380,6 +380,7 @@
       "viewPaymentDetailsLink": "[Welsh] View payment details",
       "loadError": "[Welsh] Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
+        "overseasSitesAndBesEvidence": "[Welsh] Overseas reprocessing sites and BES evidence",
         "prns": "[Welsh] PRN tonnage and authority to issue",
         "perns": "[Welsh] PERN tonnage and authority to issue",
         "businessPlan": "[Welsh] Business plan",
@@ -926,7 +927,7 @@
       }
     },
     "manageRegistrationAccreditation": {
-      "heading": "[Welsh] Manage registration and accreditation",
+      "heading": "[Welsh] Manage your registration and accreditation",
       "accreditationStatusLabel": "[Welsh] Accreditation status:",
       "registrationStatusLabel": "[Welsh] Registration status:",
       "accreditationNumberLabel": "[Welsh] Accreditation number:",
@@ -943,9 +944,9 @@
         "link": "[Welsh] Manage overseas reprocessing sites"
       },
       "changeRequests": {
-        "title": "[Welsh] In year change requests",
+        "title": "[Welsh] In year change applications",
         "noActive": "[Welsh] You currently have no active change requests.",
-        "viewAll": "[Welsh] View change requests"
+        "viewAll": "[Welsh] View your in year change applications"
       }
     },
     "manageOverseasSites": {
@@ -1038,7 +1039,54 @@
       }
     },
     "manageChangeRequests": {
-      "heading": "[Welsh] In year change requests",
+      "respond": {
+        "actions": {
+          "change": "[Welsh] Change",
+          "upload": "[Welsh] Upload",
+          "changeHidden": "[Welsh] {{field}}",
+          "saveAndContinue": "[Welsh] Save and continue",
+          "cancel": "[Welsh] Cancel",
+          "continue": "[Welsh] Continue",
+          "remove": "[Welsh] Remove"
+        },
+        "rows": {
+          "siteName": "[Welsh] ORS name",
+          "recyclingOperation": "[Welsh] Recycling operations",
+          "country": "[Welsh] Country"
+        },
+        "fieldLabels": {
+          "siteName": "[Welsh] ORS name",
+          "location": "[Welsh] Location",
+          "contactName": "[Welsh] Contact name",
+          "contactEmail": "[Welsh] Contact email",
+          "contactPhone": "[Welsh] Contact phone number",
+          "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads",
+          "besEvidence": "[Welsh] Evidence of broadly equivalent standards"
+        },
+        "success": {
+          "title": "[Welsh] Success",
+          "body": "[Welsh] {{field}} updated"
+        },
+        "requestUpdated": "[Welsh] Request updated",
+        "queryInstruction": "[Welsh] Change the details you can change and upload any new evidence. Then save and continue to send your response.",
+        "nothingChanged": "[Welsh] Change at least one detail or upload new evidence before you continue.",
+        "besRequired": "[Welsh] Upload evidence of broadly equivalent standards before you continue.",
+        "lockedHint": "[Welsh] This cannot be changed in response to a query.",
+        "interimSite": {
+          "title": "[Welsh] Interim site",
+          "backToOrs": "[Welsh] Back to the overseas reprocessing site"
+        },
+        "bes": {
+          "existingFiles": "[Welsh] Files already uploaded",
+          "newFiles": "[Welsh] Files you have added",
+          "noNewFiles": "[Welsh] You have not added any new files.",
+          "removeError": "[Welsh] We could not remove the file. Try again."
+        },
+        "declaration": {
+          "confirm": "[Welsh] Confirm and submit"
+        }
+      },
+      "heading": "[Welsh] In year change applications",
       "filters": {
         "heading": "[Welsh] Filter by",
         "status": "[Welsh] Status",
@@ -1058,7 +1106,7 @@
         }
       },
       "table": {
-        "siteName": "[Welsh] Site name",
+        "siteName": "[Welsh] ORS",
         "type": "[Welsh] Type",
         "status": "[Welsh] Status",
         "action": "[Welsh] Action"
@@ -1067,7 +1115,7 @@
       "view": "[Welsh] View",
       "viewHidden": "[Welsh] {{type}} for {{site}}",
       "types": {
-        "addOverseasSite": "[Welsh] New ORS accreditation",
+        "addOverseasSite": "[Welsh] Accreditation: new ORS",
         "updateOverseasSite": "[Welsh] ORS update",
         "upgradeTonnageBand": "[Welsh] Tonnage band upgrade",
         "other": "[Welsh] Change request"
@@ -1108,6 +1156,7 @@
           "reference": "[Welsh] Reference"
         },
         "queried": {
+          "noteHeading": "[Welsh] The regulator’s query",
           "title": "[Welsh] Important",
           "body": "[Welsh] A query has been raised on this application for change."
         },
@@ -1251,6 +1300,7 @@
       "updateHeading": "[Welsh] Update the application",
       "changeLink": "[Welsh] Change",
       "sectionLabels": {
+        "overseasSitesAndBesEvidence": "[Welsh] overseas reprocessing sites and BES evidence",
         "prns": "[Welsh] tonnage and authority to issue PRNs",
         "perns": "[Welsh] tonnage and authority to issue PERNs",
         "businessPlan": "[Welsh] business plan",

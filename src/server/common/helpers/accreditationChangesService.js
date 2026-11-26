@@ -10,6 +10,11 @@ const base = (organisationId, applicationId) =>
 const current = (organisationId, applicationId) =>
   `${base(organisationId, applicationId)}/requests/current`
 
+// RA-698: a queried item sits in a submitted request, so its routes are keyed
+// by the item, not by the draft.
+const item = (organisationId, applicationId, itemId) =>
+  `${base(organisationId, applicationId)}/items/${encodeURIComponent(itemId)}`
+
 /**
  * RA-697: one change within a request. A site entry on a request's `sites`
  * carries these alongside its RA-492 fields; a tonnage band upgrade request
@@ -82,6 +87,63 @@ export const accreditationChangesService = {
   deleteBesEvidenceFile(organisationId, applicationId, siteId, fileId) {
     return apiClient.delete(
       `${current(organisationId, applicationId)}/sites/${siteId}/bes-evidence/files/${encodeURIComponent(fileId)}`
+    )
+  },
+
+  /**
+   * RA-698: changes the editable fields of a Queried item's ORS. A partial
+   * body: a field left out stays as it is. 400 for a blank required field or
+   * a bad email, 422 for a locked field, 409 when the item is not Queried.
+   */
+  patchItem(organisationId, applicationId, itemId, body) {
+    return apiClient.patch(
+      `${item(organisationId, applicationId, itemId)}/answers`,
+      body
+    )
+  },
+
+  /** RA-698: as patchItem, for one interim site of the queried ORS. */
+  patchItemInterimSite(
+    organisationId,
+    applicationId,
+    itemId,
+    interimSiteId,
+    body
+  ) {
+    return apiClient.patch(
+      `${item(organisationId, applicationId, itemId)}/interim-sites/${encodeURIComponent(interimSiteId)}/answers`,
+      body
+    )
+  },
+
+  itemBesEvidenceInitiateUrl(organisationId, applicationId, itemId) {
+    return `${item(organisationId, applicationId, itemId)}/bes-evidence/initiate`
+  },
+
+  addItemBesFile(organisationId, applicationId, itemId, body) {
+    return apiClient.post(
+      `${item(organisationId, applicationId, itemId)}/bes-evidence/files`,
+      body
+    )
+  },
+
+  /** RA-698: 422 for a file that existed before the query. */
+  deleteItemBesFile(organisationId, applicationId, itemId, fileId) {
+    return apiClient.delete(
+      `${item(organisationId, applicationId, itemId)}/bes-evidence/files/${encodeURIComponent(fileId)}`
+    )
+  },
+
+  /**
+   * RA-698: answers the query. Tells the regulator, then moves the item to
+   * Updated; 422 when nothing has changed. As for submit, the backend waits
+   * for the regulator's side, so this waits longer than it.
+   */
+  resubmitItem(organisationId, applicationId, itemId, body) {
+    return apiClient.post(
+      `${item(organisationId, applicationId, itemId)}/resubmit`,
+      body,
+      { timeout: 20000 }
     )
   },
 
