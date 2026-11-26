@@ -1078,13 +1078,6 @@
       },
       "returnToHome": "[Welsh] Return to home",
       "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}",
-      "pagination": {
-        "landmarkLabel": "[Welsh] Pagination",
-        "previous": "[Welsh] Previous",
-        "next": "[Welsh] Next",
-        "visuallyHiddenPage": "[Welsh] page",
-        "page": "[Welsh] Page {{number}}"
-      },
       "detail": {
         "header": {
           "location": "[Welsh] Location:",
@@ -1276,6 +1269,13 @@
         "message": "[Welsh] Your upload may have expired or not finished, so your file has not been saved.",
         "uploadAgain": "[Welsh] Upload your file again"
       }
+    },
+    "pagination": {
+      "landmarkLabel": "[Welsh] Pagination",
+      "previous": "[Welsh] Previous",
+      "next": "[Welsh] Next",
+      "visuallyHiddenPage": "[Welsh] page",
+      "page": "[Welsh] Page {{number}}"
     }
   },
   "languageSwitcher": {

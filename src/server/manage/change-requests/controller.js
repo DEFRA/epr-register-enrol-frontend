@@ -1,5 +1,6 @@
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
+import { buildPagination, paginate } from '../../common/helpers/pagination.js'
 import { fetchChangeRequestsView } from '../helpers/change-requests-view.js'
 import {
   loadManagePage,
@@ -12,13 +13,11 @@ import {
   manageUrl
 } from '../helpers/manage-urls.js'
 import {
-  buildPagination,
   changeTypeLabel,
   changeTypesFor,
   filterItems,
   filterOptions,
   flattenItems,
-  paginate,
   readFilters,
   sortItems
 } from './change-request-items.js'

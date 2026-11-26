@@ -1079,13 +1079,6 @@
       },
       "returnToHome": "Return to home",
       "showing": "Showing {{start}}-{{end}} of {{total}}",
-      "pagination": {
-        "landmarkLabel": "Pagination",
-        "previous": "Previous",
-        "next": "Next",
-        "visuallyHiddenPage": "page",
-        "page": "Page {{number}}"
-      },
       "detail": {
         "header": {
           "location": "Location:",
@@ -1278,6 +1271,13 @@
     "readOnlySubmittedSection": {
       "heading": "You cannot edit this section",
       "body": "This application has already been submitted, so this section is now read-only. Go back to the task list to view the rest of your application."
+    },
+    "pagination": {
+      "landmarkLabel": "Pagination",
+      "previous": "Previous",
+      "next": "Next",
+      "visuallyHiddenPage": "page",
+      "page": "Page {{number}}"
     }
   },
   "languageSwitcher": {
