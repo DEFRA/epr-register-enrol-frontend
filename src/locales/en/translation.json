@@ -456,7 +456,7 @@
         "action": "Action"
       },
       "sections": {
-        "accredited": "Accredited",
+        "accredited": "Approved",
         "accreditedCaption": "These are the sites that you used in {year}.",
         "registered": "Registered",
         "registeredCaption": "These are the registered sites that you can add to this application.",
@@ -465,7 +465,7 @@
       },
       "interimSite": {
         "removeButton": "Withdraw from application",
-        "disclosure": "Show interim sites",
+        "disclosure": "Interim sites",
         "addAnother": "Add another interim site",
         "withdrawnDisclosure": "Show withdrawn interim sites",
         "restoreButton": "Add to application",
@@ -963,7 +963,7 @@
         "intro": "These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for {{year}}.",
         "empty": "You have no registered overseas reprocessing sites for {{year}}."
       },
-      "interimDisclosure": "Show interim sites",
+      "interimDisclosure": "Interim sites",
       "viewChangeRequests": "View change requests",
       "returnToHome": "Return to home",
       "requestsBanner": {

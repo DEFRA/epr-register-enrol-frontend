@@ -374,7 +374,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toMatch(
-        /data-testid="accredited-heading">\s*Accredited\(\d+\)\s*</
+        /data-testid="accredited-heading">\s*Approved\(\d+\)\s*</
       )
       expect(result).toMatch(
         /data-testid="registered-heading">\s*Registered\(\d+\)\s*</
@@ -1580,7 +1580,7 @@ describe('#selectOverseasSitesController', () => {
       ])
 
       expect(result).toContain('data-testid="interim-sites-disclosure-900001"')
-      expect(result).toContain('Show interim sites (1)')
+      expect(result).toContain('Interim sites (1)')
       expect(result).toContain('Interim Depot')
     })
 
@@ -1616,7 +1616,7 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('data-testid="interim-site-row-43"')
       expect(result).toContain('First Depot')
       expect(result).toContain('Second Depot')
-      expect(result).toContain('Show interim sites (2)')
+      expect(result).toContain('Interim sites (2)')
       expect(result).toContain('data-testid="add-interim-site-900001"')
     })
 
@@ -1676,10 +1676,29 @@ describe('#selectOverseasSitesController', () => {
       expect(result).toContain('R12, R13')
     })
 
+    test('labels the disclosure "Interim sites (n)" in Welsh too', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          overseasSites: {
+            sectionStatus: 'InProgress',
+            sites: [{ ...ACCREDITED_SITE, interimSite: INTERIM_SITE }]
+          }
+        })
+      )
+      const { result } = await server.inject({
+        method: 'GET',
+        url: `/cy/accreditation/select-overseas-sites/${APPLICATION_ID}`
+      })
+
+      expect(result).toMatch(
+        /data-testid="interim-sites-disclosure-summary-900001"[^>]*>\s*\[Welsh\] Interim sites \(1\)\s*</
+      )
+    })
+
     test('renders no disclosure at all for a site with no interim sites', async () => {
       const result = await renderWithSites([ACCREDITED_SITE])
 
-      expect(result).not.toContain('Show interim sites')
+      expect(result).not.toMatch(/Interim sites \(\d+\)/)
     })
 
     test('renders no disclosure for a site with no interim site', async () => {
@@ -1919,7 +1938,7 @@ describe('#selectOverseasSitesController', () => {
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
-      expect(result).toContain('Show interim sites (1)')
+      expect(result).toContain('Interim sites (1)')
       expect(result).toContain('Show withdrawn interim sites (1)')
       expect(result).toContain('data-testid="restore-button-interim-site-43"')
       // The withdrawn one is not offered a Change or Withdraw of its own.

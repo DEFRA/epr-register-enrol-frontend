@@ -19,7 +19,7 @@ const LABELS = {
   withdraw: 'Withdraw from application',
   add: 'Add to application',
   interimRemove: 'Withdraw from application',
-  interimDisclosure: 'Show interim sites',
+  interimDisclosure: 'Interim sites',
   addAnotherInterimSite: 'Add another interim site',
   withdrawnDisclosure: 'Show withdrawn interim sites',
   restore: 'Add to application',
@@ -253,7 +253,7 @@ describe('overseasSiteRows component', () => {
         $('[data-testid="interim-sites-disclosure-summary-900001"]')
           .text()
           .trim()
-      ).toBe('Show interim sites (2)')
+      ).toBe('Interim sites (2)')
     })
 
     // The whole entry is one line: name, country and R codes read as a single
@@ -376,7 +376,7 @@ describe('overseasSiteRows component', () => {
         $('[data-testid="interim-sites-disclosure-summary-900001"]')
           .text()
           .trim()
-      ).toBe('Show interim sites (2)')
+      ).toBe('Interim sites (2)')
     })
 
     test('keeps each interim site R codes and actions independent', () => {
@@ -452,7 +452,7 @@ describe('overseasSiteRows component', () => {
         $('[data-testid="interim-sites-disclosure-summary-900001"]')
           .text()
           .trim()
-      ).toBe('Show interim sites (1)')
+      ).toBe('Interim sites (1)')
       expect(
         $('[data-testid="withdrawn-interim-sites-disclosure-summary-900001"]')
           .text()

@@ -389,7 +389,7 @@ describe('#manageOverseasSitesController', () => {
     test('lists current interim sites as "name, country, R-codes", leaving out removed ones', () => {
       const ors1 = disclosure(result, 1)
 
-      expect(ors1).toMatch(/Show interim sites \(2\)/)
+      expect(ors1).toMatch(/Interim sites \(2\)/)
       expect(ors1).toMatch(
         /data-testid="interim-site-row-10"[\s\S]*?Interim 10<\/span>, <span[^>]*>Belgium<\/span>, <span[^>]*>R3, R13</
       )
@@ -397,10 +397,21 @@ describe('#manageOverseasSitesController', () => {
       expect(ors1).not.toContain('Interim 11')
     })
 
+    // RA-814: one label, open or closed, so no Show/Hide wording.
+    test('labels the collapsed interim disclosure "Interim sites (n)"', () => {
+      expect(result).toMatch(
+        /data-testid="interim-sites-disclosure-summary-1"[^>]*>\s*Interim sites \(2\)\s*</
+      )
+      expect(result).not.toMatch(
+        /<details(?=[^>]*data-testid="interim-sites-disclosure-1")[^>]*\bopen\b/
+      )
+      expect(result).not.toMatch(/(Show|Hide) interim sites/)
+    })
+
     test('shows a shared interim site under every ORS where it is current', () => {
       expect(disclosure(result, 1)).toContain('Shared Hub')
       expect(disclosure(result, 2)).toContain('Shared Hub')
-      expect(disclosure(result, 2)).toMatch(/Show interim sites \(1\)/)
+      expect(disclosure(result, 2)).toMatch(/Interim sites \(1\)/)
     })
 
     test('shows no disclosure for an ORS with no current interim sites', () => {
@@ -501,6 +512,7 @@ describe('#manageOverseasSitesController', () => {
 
     expect(statusCode).toBe(statusCodes.ok)
     expect(result).toContain('[Welsh] Manage overseas reprocessing sites')
+    expect(result).toMatch(/\[Welsh\] Interim sites \(2\)/)
     expect(result).toMatch(
       new RegExp(`href="/cy${MANAGE_URL}"[^>]*data-testid="back-link"`)
     )
@@ -536,7 +548,7 @@ describe('#manageOverseasSitesController', () => {
       expect(result).toMatch(
         /data-testid="registered-sites-tab"[^>]*>\s*Registered \(1\)\s*</
       )
-      expect(result).toMatch(/Show interim sites \(2\)/)
+      expect(result).toMatch(/Interim sites \(2\)/)
       // Dragon Recyclers is registered only, and its interim site shows too.
       expect(tabPanel(result, 'registered')).toContain('Saigon Port Storage')
     })
