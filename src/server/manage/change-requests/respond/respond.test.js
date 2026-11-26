@@ -8,7 +8,9 @@ import {
   MANAGE_URL,
   makeManageApp,
   mockManageGets,
-  noChangeRequests
+  noChangeRequests,
+  registrationOnlyExporter,
+  apiError
 } from '../../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../../common/test-helpers/manage-page.js'
 
@@ -856,6 +858,218 @@ describe('responding to a queried item (RA-698)', () => {
 
       expect(response.headers.location).toBe(ITEM_URL)
       expect(postSpy).not.toHaveBeenCalled()
+    })
+  })
+  describe('pages that cannot be shown', () => {
+    const BES = `${ITEM_URL}/bes-evidence`
+    const INTERIM_URL = `${ITEM_URL}/interim-sites/901802`
+
+    test.each([
+      ['GET', BES],
+      ['POST', `${BES}/new-file/delete`],
+      ['GET', `${ITEM_URL}/declaration`],
+      ['POST', `${ITEM_URL}/declaration`],
+      ['GET', INTERIM_URL],
+      ['GET', `${INTERIM_URL}/site-name`]
+    ])(
+      '%s %s goes back to the detail page once the item is no longer Queried',
+      async (method, url) => {
+        load(queriedItem({ status: 'Updated' }))
+
+        const response = await page.server.inject({ method, url, payload: {} })
+
+        expect(response.statusCode).toBe(statusCodes.redirect)
+        expect(response.headers.location).toBe(ITEM_URL)
+      }
+    )
+
+    test('the BES status page goes back to the detail page once the item is no longer Queried', async () => {
+      load()
+      vi.mocked(initUpload).mockResolvedValue({
+        fileUploadId: 'upload-1',
+        uploadUrl: 'http://cdp/upload/upload-1',
+        statusUrl: 'http://cdp/status/upload-1'
+      })
+      vi.mocked(proxyUploadToCdp).mockResolvedValue()
+      const boundary = 'status-boundary'
+      const field = (name, value) =>
+        `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`
+      const started = await page.server.inject({
+        method: 'POST',
+        url: BES,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`
+        },
+        payload: Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="x.pdf"\r\nContent-Type: application/pdf\r\n\r\ncontent\r\n` +
+            field('validFromDay', '1') +
+            field('validFromMonth', '11') +
+            field('validFromYear', '2026') +
+            `--${boundary}--\r\n`
+        )
+      })
+      const cookie = started.headers['set-cookie']
+        ?.map((c) => c.split(';')[0])
+        .join('; ')
+      load(queriedItem({ status: 'Updated' }))
+
+      const response = await page.server.inject({
+        method: 'GET',
+        url: `${BES}/status`,
+        headers: { cookie }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+
+    test('is a 404 for a registration-only operator', async () => {
+      mockManageGets([], registrationOnlyExporter, viewWith(queriedItem()))
+
+      const { statusCode } = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('shows the service problem page when the changes cannot be loaded', async () => {
+      mockManageGets(
+        [app],
+        undefined,
+        apiError(statusCodes.internalServerError)
+      )
+
+      const { statusCode } = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(statusCode).not.toBe(statusCodes.ok)
+    })
+  })
+
+  describe('the remaining step pages', () => {
+    const INTERIM_URL = `${ITEM_URL}/interim-sites/901802`
+
+    test.each([
+      `${ITEM_URL}/contact-details`,
+      `${ITEM_URL}/rejected-loads`,
+      `${INTERIM_URL}/site-name`,
+      `${INTERIM_URL}/location`,
+      `${INTERIM_URL}/contact-details`
+    ])('GET %s shows the current values', async (url) => {
+      load()
+
+      const { statusCode } = await page.get(url)
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('POST a blank interim name shows the error without patching', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/site-name`, {
+        siteName: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(patch).not.toHaveBeenCalled()
+    })
+
+    test('POST an interim name that is too long shows the error', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/site-name`, {
+        siteName: 'x'.repeat(500)
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('POST an interim address with the required lines blank shows the errors', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/location`, {
+        addressLine1: '',
+        townOrCity: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(patch).not.toHaveBeenCalled()
+    })
+
+    test('POST an interim address with a line that is too long shows the error', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/location`, {
+        addressLine1: '1 Quay Street',
+        townOrCity: 'Calais',
+        postcode: 'x'.repeat(500)
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('the detail page shows the repatriated loads answer the item has given', async () => {
+      load(
+        queriedItem({
+          effective: {
+            country: 'Netherlands',
+            rejectedLoadsArrangements: 'Sent back by rail'
+          }
+        })
+      )
+
+      const { result } = await page.get(ITEM_URL)
+
+      expect(result).toContain('Sent back by rail')
+    })
+  })
+
+  describe('BES evidence limits', () => {
+    const BES = `${ITEM_URL}/bes-evidence`
+    const boundary = 'limits'
+    const upload = (size = 10) =>
+      page.server.inject({
+        method: 'POST',
+        url: BES,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`
+        },
+        payload: Buffer.concat([
+          Buffer.from(
+            `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="fresh.pdf"\r\nContent-Type: application/pdf\r\n\r\n`
+          ),
+          Buffer.alloc(size, 'a'),
+          Buffer.from(`\r\n--${boundary}--\r\n`)
+        ])
+      })
+
+    test('POST with too many files already held shows the error', async () => {
+      const held = Array.from({ length: 10 }, (_, index) => ({
+        fileId: `held-${index}`,
+        filename: `held-${index}.pdf`
+      }))
+      const view = viewWith(queriedItem())
+      mockManageGets([app], undefined, {
+        ...view,
+        sites: [
+          {
+            ...view.sites[0],
+            site: { ...SITE, besEvidence: { besEvidenceUploads: held } }
+          }
+        ]
+      })
+
+      const { statusCode } = await upload()
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with a file that is too large shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload(20 * 1024 * 1024 + 1)
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
     })
   })
 })

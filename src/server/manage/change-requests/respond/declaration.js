@@ -38,6 +38,39 @@ function backWithProblem(ctx, h, key) {
 // Required BES evidence has to be in place before the response can be sent.
 const isMissingBes = (item) => item.missingFields?.includes('besEvidence')
 
+// Returns the response for a failed resubmit, or null once it has succeeded.
+async function resubmit(request, h, ctx, { fullName, jobTitle }) {
+  try {
+    await accreditationChangesService.resubmitItem(
+      ctx.organisationId,
+      ctx.applicationId,
+      ctx.item.itemId,
+      { fullName, jobTitle, email: getUser(request)?.email ?? null }
+    )
+    return null
+  } catch (err) {
+    // 409: no longer Queried (another tab answered it).
+    if (err.status === statusCodes.conflict) {
+      return h.redirect(ctx.itemUrl)
+    }
+    // 422: nothing has changed since the query.
+    if (err.status === statusCodes.unprocessableEntity) {
+      return backWithProblem(ctx, h, 'nothingChanged')
+    }
+    logStructuredError(
+      request.logger,
+      err,
+      { itemId: ctx.item.itemId },
+      'Error answering a query on an in-year change request item'
+    )
+    return h
+      .view(VIEW, {
+        ...viewData(ctx, fullName, jobTitle),
+        error: ctx.t('pages.submitDeclaration.validation.submitError')
+      })
+      .code(statusCodes.internalServerError)
+  }
+}
 export const declarationGetController = {
   async handler(request, h) {
     const { ctx, response } = await loadQueriedItem(request, h)
@@ -73,34 +106,9 @@ export const declarationPostController = {
         .view(VIEW, { ...viewData(ctx, fullName, jobTitle), errors })
         .code(statusCodes.badRequest)
     }
-    try {
-      await accreditationChangesService.resubmitItem(
-        ctx.organisationId,
-        ctx.applicationId,
-        ctx.item.itemId,
-        { fullName, jobTitle, email: getUser(request)?.email ?? null }
-      )
-    } catch (err) {
-      // 409: no longer Queried (another tab answered it).
-      if (err.status === statusCodes.conflict) {
-        return h.redirect(ctx.itemUrl)
-      }
-      // 422: nothing has changed since the query.
-      if (err.status === statusCodes.unprocessableEntity) {
-        return backWithProblem(ctx, h, 'nothingChanged')
-      }
-      logStructuredError(
-        request.logger,
-        err,
-        { itemId: ctx.item.itemId },
-        'Error answering a query on an in-year change request item'
-      )
-      return h
-        .view(VIEW, {
-          ...viewData(ctx, fullName, jobTitle),
-          error: t('pages.submitDeclaration.validation.submitError')
-        })
-        .code(statusCodes.internalServerError)
+    const failure = await resubmit(request, h, ctx, { fullName, jobTitle })
+    if (failure) {
+      return failure
     }
     request.yar.flash(
       MANAGE_NOTIFICATION,

@@ -1032,4 +1032,45 @@ describe('stubAccreditationChanges: responding to a query (RA-698)', () => {
     await call('delete', `/items/${ITEM}/bes-evidence/files/f1`)
     expect((await queriedItem()).besEvidence.besEvidenceUploads).toHaveLength(0)
   })
+  test('an unknown item is a 404', async () => {
+    await expect(
+      call('patch', '/items/missing/answers', { contactName: 'Pat' })
+    ).rejects.toMatchObject({ status: 404 })
+  })
+
+  test('the same interim site can be patched twice', async () => {
+    const path = `/items/${ITEM}/interim-sites/11/answers`
+    await call('patch', path, { siteName: 'Hamburg Depot' })
+    await call('patch', path, { contactName: 'Pat' })
+
+    const [interim] = (await queriedItem()).query.interimSites
+    expect(interim.values.siteName).toBe('Hamburg Depot')
+    expect(interim.values.contactName).toBe('Pat')
+  })
+
+  test('a BES upload can be initiated for a queried item', async () => {
+    await expect(
+      call('post', `/items/${ITEM}/bes-evidence/initiate`, {})
+    ).resolves.toEqual({ fileUploadId: 'up-1' })
+  })
+
+  test('removing a file that is not there is a 404', async () => {
+    await expect(
+      call('delete', `/items/${ITEM}/bes-evidence/files/nope`)
+    ).rejects.toMatchObject({ status: 404 })
+  })
+
+  test('a new BES file alone is enough to resubmit', async () => {
+    await call('post', `/items/${ITEM}/bes-evidence/files`, {
+      fileUploadId: 'f1'
+    })
+    await call('post', `/items/${ITEM}/resubmit`, {
+      fullName: 'Sam',
+      jobTitle: 'Director'
+    })
+
+    const item = await queriedItem()
+    expect(item.status).toBe('Updated')
+    expect(item.query.querySubmissions[0].newBesFileIds).toEqual(['f1'])
+  })
 })

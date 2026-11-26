@@ -127,23 +127,25 @@ function withEffective(site, effective = {}) {
   return merged
 }
 
+const CONTACT_STEP = 'contact-details'
+
 // RA-698: a queried item's row -> the page that changes it, and the field the
 // backend lists as editable for it.
 const ROW_STEPS = {
   'site-name': { step: 'site-name', field: 'siteName', label: 'siteName' },
   location: { step: 'location', field: 'addressLine1', label: 'location' },
   'contact-name': {
-    step: 'contact-details',
+    step: CONTACT_STEP,
     field: 'contactName',
     label: 'contactName'
   },
   'contact-email': {
-    step: 'contact-details',
+    step: CONTACT_STEP,
     field: 'contactEmail',
     label: 'contactEmail'
   },
   'contact-phone': {
-    step: 'contact-details',
+    step: CONTACT_STEP,
     field: 'contactPhone',
     label: 'contactPhone'
   },
@@ -325,6 +327,35 @@ function tonnageDetail({ found, year, t, currentLocale }) {
   }
 }
 
+function respondView({ respond, found, params, currentLocale, t }) {
+  if (!respond) {
+    return respond
+  }
+  return {
+    continueUrl: respondUrl(
+      params,
+      found.item.itemId,
+      currentLocale,
+      'declaration'
+    ),
+    cancelUrl: changeRequestsUrl(params, currentLocale),
+    labels: {
+      instruction: respondText(t, 'queryInstruction'),
+      saveAndContinue: respondText(t, 'actions.saveAndContinue'),
+      cancel: respondText(t, 'actions.cancel'),
+      change: respondText(t, 'actions.change')
+    }
+  }
+}
+
+function successView(t, updatedField) {
+  return (
+    updatedField && {
+      title: respondText(t, 'success.title'),
+      text: respondText(t, 'success.body', { field: updatedField })
+    }
+  )
+}
 export const manageChangeRequestDetailController = {
   async handler(request, h) {
     const { context, t, currentLocale, response } = await loadManagePage(
@@ -370,25 +401,14 @@ export const manageChangeRequestDetailController = {
       backLink: changeRequestsUrl(request.params, currentLocale),
       ...detail,
       queryNote: respond?.note ?? null,
-      respond: respond && {
-        continueUrl: respondUrl(
-          request.params,
-          found.item.itemId,
-          currentLocale,
-          'declaration'
-        ),
-        cancelUrl: changeRequestsUrl(request.params, currentLocale),
-        labels: {
-          instruction: respondText(t, 'queryInstruction'),
-          saveAndContinue: respondText(t, 'actions.saveAndContinue'),
-          cancel: respondText(t, 'actions.cancel'),
-          change: respondText(t, 'actions.change')
-        }
-      },
-      success: updatedField && {
-        title: respondText(t, 'success.title'),
-        text: respondText(t, 'success.body', { field: updatedField })
-      },
+      respond: respondView({
+        respond,
+        found,
+        params: request.params,
+        currentLocale,
+        t
+      }),
+      success: successView(t, updatedField),
       problem
     })
   }

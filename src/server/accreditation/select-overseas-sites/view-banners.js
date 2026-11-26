@@ -37,24 +37,11 @@ export function resolveBannerDefaults(banners) {
 // both of which only show while the section is under query.
 // RA-698: when the BES evidence is queried with the sites, the summary names both.
 export function queriedBannerData(t, queried, combinedWithBes = false) {
+  const key = combinedWithBes ? 'overseasSitesAndBesEvidence' : 'overseasSites'
   return {
-    querySummary: queried
-      ? buildRegulatorQuerySummary(
-          combinedWithBes ? 'overseasSitesAndBesEvidence' : 'overseasSites',
-          t
-        )
-      : null,
+    querySummary: queried ? buildRegulatorQuerySummary(key, t) : null,
     regulatorQueryFields: queried
-      ? [
-          {
-            label: t(
-              combinedWithBes
-                ? 'pages.taskList.tasks.overseasSitesAndBesEvidence'
-                : 'pages.taskList.tasks.overseasSites'
-            ),
-            href: '#accredited-sites'
-          }
-        ]
+      ? [{ label: t(`pages.taskList.tasks.${key}`), href: '#accredited-sites' }]
       : null
   }
 }

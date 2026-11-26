@@ -451,6 +451,28 @@ describe('#confirmOverseasSitesController', () => {
         `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`
       )
     })
+
+    test('goes on to the BES upload when the sites were queried together with it', async () => {
+      vi.spyOn(apiClient, 'get').mockResolvedValue(
+        makeApplication({
+          applicationStatus: 'Queried',
+          overseasSites: { sectionStatus: 'Queried', sites: [SITE_ONE] },
+          besEvidence: { sectionStatus: 'Queried' }
+        })
+      )
+      vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `/accreditation/confirm-overseas-sites/${APPLICATION_ID}`,
+        payload: { submitAction: 'confirm' }
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(
+        `/accreditation/upload-evidence-for-overseas-site/${APPLICATION_ID}`
+      )
+    })
   })
 
   // RA-xxx: the section is not marked complete while a site in the application

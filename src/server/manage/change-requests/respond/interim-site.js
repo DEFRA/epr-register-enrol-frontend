@@ -6,6 +6,8 @@ import { FLASH_UPDATED } from './steps.js'
 // summary. Its name, address and contact can change; its country and
 // recycling operations cannot, and interim sites are never added or removed.
 
+const CONTACT_STEP = 'contact-details'
+
 const ROWS = [
   {
     id: 'site-name',
@@ -22,19 +24,19 @@ const ROWS = [
   {
     id: 'contact-name',
     labelKey: 'contactName',
-    step: 'contact-details',
+    step: CONTACT_STEP,
     fields: ['contactName']
   },
   {
     id: 'contact-email',
     labelKey: 'contactEmail',
-    step: 'contact-details',
+    step: CONTACT_STEP,
     fields: ['contactEmail']
   },
   {
     id: 'contact-phone',
     labelKey: 'contactPhone',
-    step: 'contact-details',
+    step: CONTACT_STEP,
     fields: ['contactPhone']
   }
 ]
@@ -54,14 +56,14 @@ function buildRows(ctx, interim) {
   const open = new Set(interim.editableFields ?? [])
   const label = (key) =>
     ctx.t(`pages.manageChangeRequests.respond.fieldLabels.${key}`)
-  const valueOf = (row) =>
+  const rowValue = (row) =>
     row.id === 'location'
       ? locationLine(interim.values ?? {})
       : (interim.values?.[row.fields[0]] ?? '')
   const editable = ROWS.map((row) => ({
     id: row.id,
     label: label(row.labelKey),
-    value: valueOf(row),
+    value: rowValue(row),
     changeUrl: row.fields.every((field) => open.has(field))
       ? interimSiteUrl(
           ctx.params,
@@ -72,7 +74,12 @@ function buildRows(ctx, interim) {
         )
       : null
   }))
-  const fixed = (id, label, value) => ({ id, label, value, changeUrl: null })
+  const fixed = (id, text, value) => ({
+    id,
+    label: text,
+    value,
+    changeUrl: null
+  })
   return [
     ...editable,
     fixed(

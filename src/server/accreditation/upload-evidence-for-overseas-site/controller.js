@@ -158,6 +158,8 @@ export const uploadEvidenceListGetController = {
     )
     const sites = mapSites(t, applicationId, selectedSites)
     const queried = isRegulatorQueryBannerVisible(application, { readOnly })
+    const combined = isCombinedOrsBesQuery(application)
+    const summaryKey = combined ? 'overseasSitesAndBesEvidence' : 'besEvidence'
     return renderPage(
       h,
       buildViewData(
@@ -166,22 +168,11 @@ export const uploadEvidenceListGetController = {
         sites,
         null,
         queried,
-        queried
-          ? buildRegulatorQuerySummary(
-              isCombinedOrsBesQuery(application)
-                ? 'overseasSitesAndBesEvidence'
-                : 'besEvidence',
-              t
-            )
-          : null,
+        queried ? buildRegulatorQuerySummary(summaryKey, t) : null,
         queried
           ? [
               {
-                label: t(
-                  isCombinedOrsBesQuery(application)
-                    ? 'pages.taskList.tasks.overseasSitesAndBesEvidence'
-                    : 'pages.taskList.tasks.besEvidence'
-                ),
+                label: t(`pages.taskList.tasks.${summaryKey}`),
                 href: '#sites-table'
               }
             ]

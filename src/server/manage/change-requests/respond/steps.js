@@ -267,7 +267,7 @@ const INTERIM_STEPS = {
   'site-name': {
     label: 'siteName',
     fields: { siteName: 'siteName' },
-    read: (ctx, interim) => ({ siteName: interimValue(interim, 'siteName') }),
+    read: (_ctx, interim) => ({ siteName: interimValue(interim, 'siteName') }),
     parse: (payload) => ({ siteName: trimmed(payload, 'siteName') }),
     validate: (t, values) => {
       const error = validateInterimName(t, values.siteName)
@@ -288,7 +288,7 @@ const INTERIM_STEPS = {
   location: {
     label: 'location',
     fields: Object.fromEntries(ADDRESS_FIELDS.map((field) => [field, field])),
-    read: (ctx, interim) =>
+    read: (_ctx, interim) =>
       addressFields((field) => interimValue(interim, field)),
     parse: (payload) => addressFields((field) => trimmed(payload, field)),
     validate: (t, values) => validateInterimLocation(t, values),
@@ -309,7 +309,7 @@ const INTERIM_STEPS = {
       siteContactEmail: 'contactEmail',
       siteContactPhone: 'contactPhone'
     },
-    read: (ctx, interim) => ({
+    read: (_ctx, interim) => ({
       siteContactName: interimValue(interim, 'contactName'),
       siteContactEmail: interimValue(interim, 'contactEmail'),
       siteContactPhone: interimValue(interim, 'contactPhone')
@@ -450,8 +450,8 @@ function stepRoutes(steps, name) {
     ),
     post: run(async (ctx, h, { back, interimSiteId }) => {
       const values = step.parse(ctx.request.payload)
-      const invalid = (errors) =>
-        step.render(h, ctx, values, errors, back).code(statusCodes.badRequest)
+      const invalid = (failures) =>
+        step.render(h, ctx, values, failures, back).code(statusCodes.badRequest)
 
       const errors = step.validate(ctx.t, values, ctx)
       if (Object.keys(errors).length > 0) {

@@ -49,7 +49,11 @@ function allSectionTasks(application, t) {
     }
   ]
 
-  if (isExporter && isCombinedOrsBesQuery(application)) {
+  if (!isExporter) {
+    return tasks
+  }
+
+  if (isCombinedOrsBesQuery(application)) {
     // RA-698: queried together, so one task. It opens the ORS section, whose
     // confirmation continues to the BES upload.
     tasks.push({
@@ -58,23 +62,24 @@ function allSectionTasks(application, t) {
       status: 'Queried',
       testId: 'task-overseas-sites-bes-evidence'
     })
-  } else if (isExporter) {
-    const { overseasSites, besEvidence } = application
-    tasks.push(
-      {
-        label: t('pages.taskList.tasks.overseasSites'),
-        url: `/accreditation/select-overseas-sites/${applicationId}`,
-        status: overseasSites?.sectionStatus,
-        testId: 'task-overseas-sites'
-      },
-      {
-        label: t('pages.taskList.tasks.besEvidence'),
-        url: `/accreditation/upload-evidence-for-overseas-site/${applicationId}`,
-        status: besEvidence?.sectionStatus,
-        testId: 'task-bes-evidence'
-      }
-    )
+    return tasks
   }
+
+  const { overseasSites, besEvidence } = application
+  tasks.push(
+    {
+      label: t('pages.taskList.tasks.overseasSites'),
+      url: `/accreditation/select-overseas-sites/${applicationId}`,
+      status: overseasSites?.sectionStatus,
+      testId: 'task-overseas-sites'
+    },
+    {
+      label: t('pages.taskList.tasks.besEvidence'),
+      url: `/accreditation/upload-evidence-for-overseas-site/${applicationId}`,
+      status: besEvidence?.sectionStatus,
+      testId: 'task-bes-evidence'
+    }
+  )
 
   return tasks
 }

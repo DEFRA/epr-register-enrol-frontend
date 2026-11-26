@@ -114,36 +114,45 @@ function fixedId(year, orgId, side, request, item) {
   return `0000${year}-0000-${pad(item, ID_ITEM_DIGITS)}-${side}000-${pad(orgId, ID_ORG_DIGITS)}${pad(request, ID_REQUEST_DIGITS)}`
 }
 
+function seedItem(item, index, { target, side, number, changeType, on }) {
+  const { year, orgId } = target
+  const fields = {
+    itemId: fixedId(year, orgId, side, number, index + 1),
+    changeType,
+    status: item.status,
+    validFrom: on(item.validFrom),
+    withdrawnAt: on(item.withdrawnAt)
+  }
+  if (item.requestedBand) {
+    return { ...fields, requestedBand: item.requestedBand }
+  }
+  const site = target.sites.find((candidate) => candidate.orsId === item.orsId)
+  return {
+    ...fields,
+    siteId: site.siteId,
+    orsId: site.orsId,
+    siteName: site.siteName
+  }
+}
+
 function buildRequest(target, side, number, [changeType, created, items]) {
   const { year, orgId } = target
   const on = (date) =>
     date ? new Date(`${year}-${date}T09:00:00Z`).toISOString() : null
-  const sitesByOrsId = new Map(target.sites.map((site) => [site.orsId, site]))
   const seeded = items.map((item, index) => {
-    const fields = {
-      itemId: fixedId(year, orgId, side, number, index + 1),
+    const built = seedItem(item, index, {
+      target,
+      side,
+      number,
       changeType,
-      status: item.status,
-      validFrom: on(item.validFrom),
-      withdrawnAt: on(item.withdrawnAt)
-    }
-    if (item.requestedBand) {
-      return { ...fields, requestedBand: item.requestedBand }
-    }
-    const site = sitesByOrsId.get(item.orsId)
-    return {
-      ...fields,
-      siteId: site.siteId,
-      orsId: site.orsId,
-      siteName: site.siteName
-    }
-  })
-  // RA-698: a Queried item carries the regulator's note, as the backend's seed gives it.
-  for (const item of seeded) {
+      on
+    })
+    // RA-698: a Queried item carries the regulator's note, as the backend's seed gives it.
     if (item.status === QUERIED) {
-      item.query = { queryNote: QUERY_NOTE, raisedAt: on('08-01') }
+      built.query = { queryNote: QUERY_NOTE, raisedAt: on('08-01') }
     }
-  }
+    return built
+  })
   const draft = seeded.some((item) => item.status === IN_PROGRESS)
   // Mirrors the backend seed, so fe-tests find the same references either way.
   const submissionReference = draft
