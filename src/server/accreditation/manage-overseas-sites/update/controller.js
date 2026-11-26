@@ -1,16 +1,23 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
-import { CHANGE_TYPES } from '../../../common/constants/changeRequests.js'
+import {
+  CHANGE_TYPES,
+  ITEM_STATUSES
+} from '../../../common/constants/changeRequests.js'
 import { COUNTRIES } from '../../../common/data/countries.js'
+import { INTERIM_OPERATION_CODES } from '../../../common/helpers/interimSiteValidation.js'
+import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 import {
   accreditationChangesService,
   validationErrors
 } from '../../../common/helpers/accreditationChangesService.js'
 import {
+  NOTHING_TO_DO,
   loadView,
   organisationIdFrom,
   redirectToManageSites
 } from '../controller.js'
+import { errorKeyFor, refusal } from '../steps-controller.js'
 import {
   manageSitesUrl,
   newInterimSiteUrl,
@@ -25,7 +32,7 @@ import {
   resolveUpdate,
   updateText
 } from './view-model.js'
-import { validateInterim, validateStep } from './validation.js'
+import { isTooManyWords, validateInterim, validateStep } from './validation.js'
 
 const VIEWS = {
   details: 'accreditation/manage-overseas-sites/update/details',
@@ -34,11 +41,7 @@ const VIEWS = {
   submitted: 'accreditation/manage-overseas-sites/update/submitted'
 }
 
-// 404 no such site or draft; 409 held by a submitted request (AC03) or the
-// draft was sent once and is fixed.
-const NOTHING_TO_DO = new Set([statusCodes.notFound, statusCodes.conflict])
-
-const INTERIM_CODES = ['R12', 'R13', 'R3', 'R4', 'R5']
+const MAX_REPATRIATED_WORDS = 500
 
 const STEPS = {
   'site-name': {
@@ -64,7 +67,8 @@ const STEPS = {
         width: 'govuk-input--width-20'
       }
     ],
-    // AC02: shown as read-only inputs (user, 2026-11-26), and sent unchanged.
+    // AC02: shown as read-only inputs (RA-682) from the ORS's stored values,
+    // and never posted, so the update can't change them.
     readOnly: [
       {
         name: 'country',
@@ -104,13 +108,15 @@ const STEPS = {
         name: 'repatriatedLoads',
         labelKey: 'pages.addOverseasSite.repatriatedLoads.label',
         hintKey: 'pages.addOverseasSite.repatriatedLoads.hint',
-        type: 'textarea'
+        maxwords: MAX_REPATRIATED_WORDS
       }
     ]
   }
 }
 
 export const STEP_NAMES = Object.keys(STEPS)
+
+export const UPDATED_KEYS = [...STEP_NAMES, 'interim-sites']
 
 /**
  * The accredited ORS for the route, or a redirect to Manage ORS when it isn't
@@ -142,53 +148,99 @@ function handler(options, run) {
   }
 }
 
-/**
- * Puts the ORS's update item in the draft if it isn't there yet (the first
- * change starts it), then runs `call`. Returns the backend's field errors on a
- * 400, a redirect when there's nothing to change, or null when it saved.
- */
-async function saveChange(request, h, call) {
-  const { applicationId, siteId } = request.params
-  const organisationId = organisationIdFrom(request)
+// Results.Conflict(string) sends the message as a JSON string; a
+// ProblemDetails carries it as its detail.
+function conflictMessage(err) {
   try {
-    await accreditationChangesService.addSite(
+    const body =
+      typeof err.response === 'string' ? JSON.parse(err.response) : null
+    return typeof body === 'string' ? body : (body?.detail ?? null)
+  } catch {
+    return null
+  }
+}
+
+// After a failed first save the update item holds nothing, so it comes back
+// out rather than show the ORS as In progress with no change.
+async function takeOutEmptyItem(
+  request,
+  organisationId,
+  applicationId,
+  siteId
+) {
+  try {
+    await accreditationChangesService.removeSite(
       organisationId,
       applicationId,
-      siteId,
-      CHANGE_TYPES.updateOverseasSite
+      siteId
     )
+  } catch (err) {
+    logStructuredError(
+      request.logger,
+      err,
+      { applicationId, siteId },
+      'Could not take an empty ORS update back out of the draft'
+    )
+  }
+}
+
+/**
+ * Starts the ORS's update item if the draft doesn't hold it yet, then runs
+ * `call`. Returns null when it saved, the backend's field errors on a 400, its
+ * message on a 409 (a concurrent edit, or a change already sent), or a
+ * redirect when the ORS has gone.
+ */
+async function saveChange(request, h, update, call) {
+  const { applicationId, siteId } = request.params
+  const organisationId = organisationIdFrom(request)
+  let started = false
+  try {
+    if (!update.item) {
+      await accreditationChangesService.addSite(
+        organisationId,
+        applicationId,
+        siteId,
+        CHANGE_TYPES.updateOverseasSite
+      )
+      started = true
+    }
     await call(organisationId, applicationId, siteId)
     return null
   } catch (err) {
+    if (started) {
+      await takeOutEmptyItem(request, organisationId, applicationId, siteId)
+    }
     if (err.status === statusCodes.badRequest) {
       return { errors: validationErrors(err) }
     }
-    if (NOTHING_TO_DO.has(err.status)) {
+    if (err.status === statusCodes.conflict) {
+      return { message: conflictMessage(err) }
+    }
+    if (err.status === statusCodes.notFound) {
       return { redirect: h.redirect(updateUrl(applicationId, siteId)) }
     }
     throw err
   }
 }
 
-// ASP.NET may send a ValidationProblem's keys in PascalCase.
-function backendErrors(t, errors, names) {
-  const byLower = Object.fromEntries(
-    Object.entries(errors ?? {}).map(([key, value]) => [
-      key.toLowerCase(),
-      value
-    ])
-  )
-  const mapped = {}
-  for (const name of names) {
-    const message = [byLower[name.toLowerCase()]].flat().find(Boolean)
-    if (message) {
-      mapped[name] = message
-    }
+/** A refused save's message against each field it names, or the first field when it names none. */
+function refusedFields(t, result, names) {
+  if (result.errors) {
+    const named = names.filter((name) => errorKeyFor(result.errors, name))
+    return Object.fromEntries(
+      (named.length > 0 ? named : names.slice(0, 1)).map((name) => [
+        name,
+        refusal(t, result.errors, name)
+      ])
+    )
   }
-  if (Object.keys(mapped).length === 0) {
-    mapped[names[0]] = t('pages.manageOverseasSites.saveRefused')
+  return {
+    [names[0]]: result.message ?? t('pages.manageOverseasSites.saveRefused')
   }
-  return mapped
+}
+
+function refusedStatus(result) {
+  return result.errors ? statusCodes.badRequest : statusCodes.conflict
 }
 
 function errorList(errors) {
@@ -200,53 +252,98 @@ function errorList(errors) {
 
 // --- Site details (Figma screens 3 and 5) -----------------------------------
 
-export const detailsGetController = handler(
-  {},
-  (request, h, { t, currentLocale }, loaded) => {
-    const { applicationId } = request.params
-    const { view, update } = loaded
-    const { entry, item, pending } = update
-    const updated = updateText(t, `updated.${request.query?.updated}`)
-    return h.view(VIEWS.details, {
-      pageTitle: `${update.details.siteName ?? entry.site.siteName} (${entry.orsId})`,
-      heading: `${entry.site.siteName} (${entry.orsId})`,
-      backLink: manageSitesUrl(view, currentLocale),
-      manageSitesUrl: manageSitesUrl(view, currentLocale),
-      status: pending ? 'pending' : item ? 'inProgress' : 'approved',
-      validFrom: entry.site.validFrom ?? null,
-      successBanner:
-        request.query?.updated && !updated.startsWith('pages.')
-          ? updated
-          : null,
-      rows: buildDetailRows({ t, applicationId, update }),
-      interimSites: buildInterimRows({ applicationId, update }),
-      addInterimSiteUrl: pending
-        ? null
-        : newInterimSiteUrl(applicationId, entry.siteId),
-      continueUrl: item ? requestsUrl(applicationId) : null,
-      pending
-    })
+function statusOf({ pending, item }) {
+  if (pending) {
+    return 'pending'
   }
+  return item ? 'inProgress' : 'approved'
+}
+
+function detailsView(h, request, { t, currentLocale }, loaded, error = null) {
+  const { applicationId } = request.params
+  const { view, update } = loaded
+  const { entry, item, pending } = update
+  const updated = request.query?.updated
+  const name = `${entry.site.siteName} (${entry.orsId})`
+  return h.view(VIEWS.details, {
+    pageTitle: name,
+    heading: name,
+    backLink: manageSitesUrl(view, currentLocale),
+    manageSitesUrl: manageSitesUrl(view, currentLocale),
+    status: statusOf(update),
+    validFrom: entry.site.validFrom ?? null,
+    successBanner:
+      updated && !error ? updateText(t, `updated.${updated}`) : null,
+    error,
+    rows: buildDetailRows({ t, applicationId, update }),
+    interimSites: buildInterimRows({ applicationId, update }),
+    addInterimSiteUrl: pending
+      ? null
+      : newInterimSiteUrl(applicationId, entry.siteId),
+    continueUrl: item ? requestsUrl(applicationId) : null,
+    pending
+  })
+}
+
+export const detailsGetController = handler({}, (request, h, locale, loaded) =>
+  detailsView(h, request, locale, loaded)
 )
 
 // --- ORS detail steps ----------------------------------------------------------
+
+function characterCount(field, value, error, tooManyWords) {
+  return {
+    id: field.name,
+    name: field.name,
+    maxwords: field.maxwords,
+    rows: 8,
+    value,
+    label: { text: field.label },
+    hint: field.hint ? { text: field.hint } : undefined,
+    errorMessage: error
+      ? {
+          text: error,
+          attributes: {
+            'data-testid': `${field.name}-error`,
+            ...(tooManyWords ? { 'data-error-type': 'length' } : {})
+          }
+        }
+      : undefined,
+    attributes: { 'data-testid': `${field.name}-input` }
+  }
+}
 
 function stepView(h, t, request, update, values, errors) {
   const { applicationId, siteId, step } = request.params
   const config = STEPS[step]
   const site = update.entry.site
+  const tooManyWords =
+    Boolean(errors.repatriatedLoads) && isTooManyWords(t, values)
   return h.view(VIEWS.step, {
     pageTitle: t(config.titleKey),
     heading: t(config.titleKey),
     backLink: updateUrl(applicationId, siteId),
     cancelUrl: updateUrl(applicationId, siteId),
-    inputs: config.fields.map((field) => ({
-      ...field,
-      label: t(field.labelKey),
-      hint: field.hintKey ? t(field.hintKey) : null,
-      value: values[field.name] ?? '',
-      error: errors[field.name] ?? null
-    })),
+    inputs: config.fields.map((field) => {
+      const input = {
+        ...field,
+        label: t(field.labelKey),
+        hint: field.hintKey ? t(field.hintKey) : null,
+        value: values[field.name] ?? '',
+        error: errors[field.name] ?? null
+      }
+      return field.maxwords
+        ? {
+            ...input,
+            characterCount: characterCount(
+              input,
+              input.value,
+              input.error,
+              tooManyWords
+            )
+          }
+        : input
+    }),
     readOnly: (config.readOnly ?? []).map((field) => ({
       ...field,
       label: t(field.labelKey),
@@ -267,8 +364,7 @@ export const stepPostController = handler(
   { editable: true },
   async (request, h, { t }, { update }) => {
     const { applicationId, siteId, step } = request.params
-    const config = STEPS[step]
-    const names = config.fields.map((field) => field.name)
+    const names = STEPS[step].fields.map((field) => field.name)
     const values = Object.fromEntries(
       names.map((name) => [name, String(request.payload?.[name] ?? '').trim()])
     )
@@ -278,31 +374,21 @@ export const stepPostController = handler(
         statusCodes.badRequest
       )
     }
-    // The read-only fields are sent as the form shows them; the backend refuses a change to them.
-    const readOnly = Object.fromEntries(
-      (config.readOnly ?? []).map((field) => [
-        field.name,
-        request.payload?.[field.name]
-      ])
-    )
-    const result = await saveChange(request, h, (org, app, site) =>
-      accreditationChangesService.patchSite(org, app, site, {
-        ...values,
-        ...readOnly
-      })
+    const result = await saveChange(request, h, update, (org, app, site) =>
+      accreditationChangesService.patchSite(org, app, site, values)
     )
     if (result?.redirect) {
       return result.redirect
     }
-    if (result?.errors) {
+    if (result) {
       return stepView(
         h,
         t,
         request,
         update,
         values,
-        backendErrors(t, result.errors, names)
-      ).code(statusCodes.badRequest)
+        refusedFields(t, result, names)
+      ).code(refusedStatus(result))
     }
     return h.redirect(`${updateUrl(applicationId, siteId)}?updated=${step}`)
   }
@@ -322,16 +408,19 @@ const INTERIM_TEXT_FIELDS = [
   'contactPhone'
 ]
 
+const INTERIM_FIELDS = [...INTERIM_TEXT_FIELDS, 'country', 'operationCodes']
+
 function interimValues(payload) {
-  const values = Object.fromEntries(
-    INTERIM_TEXT_FIELDS.map((name) => [
-      name,
-      String(payload?.[name] ?? '').trim()
-    ])
-  )
-  values.country = String(payload?.country ?? '').trim()
-  values.operationCodes = [payload?.operationCodes ?? []].flat().filter(Boolean)
-  return values
+  return {
+    ...Object.fromEntries(
+      INTERIM_TEXT_FIELDS.map((name) => [
+        name,
+        String(payload?.[name] ?? '').trim()
+      ])
+    ),
+    country: String(payload?.country ?? '').trim(),
+    operationCodes: [payload?.operationCodes ?? []].flat().filter(Boolean)
+  }
 }
 
 function interimBody(values) {
@@ -343,55 +432,61 @@ function interimBody(values) {
   }
 }
 
-function interimView(h, t, request, { isNew, values, errors }) {
+function interimView(h, t, request, { isNew, values, errors = {} }) {
   const { applicationId, siteId } = request.params
+  const heading = updateText(
+    t,
+    isNew ? 'interim.addHeading' : 'interim.changeHeading'
+  )
   return h.view(VIEWS.interim, {
-    pageTitle: updateText(
-      t,
-      isNew ? 'interim.addHeading' : 'interim.changeHeading'
-    ),
-    heading: updateText(
-      t,
-      isNew ? 'interim.addHeading' : 'interim.changeHeading'
-    ),
+    pageTitle: heading,
+    heading,
     backLink: updateUrl(applicationId, siteId),
     cancelUrl: updateUrl(applicationId, siteId),
     isNew,
     countries: COUNTRIES,
-    codes: INTERIM_CODES,
+    codes: INTERIM_OPERATION_CODES,
     values,
-    errors: errors ?? {},
-    errorSummary: errorList(errors ?? {})
+    errors,
+    errorSummary: errorList(errors)
   })
 }
 
-async function saveInterim(request, h, t, { isNew, call }) {
+/**
+ * Saves the interim site form. `locked` holds a changed interim site's
+ * country and recycling operations (AC02), which stay as they are whatever is
+ * posted; a new one takes them from the form.
+ */
+async function saveInterim(request, h, t, { update, locked, call }) {
   const { applicationId, siteId } = request.params
-  const values = interimValues(request.payload)
+  const isNew = !locked
+  const values = { ...interimValues(request.payload), ...locked }
   const errors = validateInterim(t, values, { isNew })
   if (Object.keys(errors).length > 0) {
     return interimView(h, t, request, { isNew, values, errors }).code(
       statusCodes.badRequest
     )
   }
-  const result = await saveChange(request, h, (org, app, site) =>
+  const result = await saveChange(request, h, update, (org, app, site) =>
     call(org, app, site, interimBody(values))
   )
   if (result?.redirect) {
     return result.redirect
   }
-  if (result?.errors) {
+  if (result) {
     return interimView(h, t, request, {
       isNew,
       values,
-      errors: backendErrors(t, result.errors, [
-        ...INTERIM_TEXT_FIELDS,
-        'country',
-        'operationCodes'
-      ])
-    }).code(statusCodes.badRequest)
+      errors: refusedFields(t, result, INTERIM_FIELDS)
+    }).code(refusedStatus(result))
   }
   return h.redirect(`${updateUrl(applicationId, siteId)}?updated=interim-sites`)
+}
+
+function backToDetails(request, h) {
+  return h.redirect(
+    updateUrl(request.params.applicationId, request.params.siteId)
+  )
 }
 
 export const interimChangeGetController = handler(
@@ -399,9 +494,7 @@ export const interimChangeGetController = handler(
   (request, h, { t }, { update }) => {
     const fields = interimFields(update, request.params.interimSiteId)
     if (!fields) {
-      return h.redirect(
-        updateUrl(request.params.applicationId, request.params.siteId)
-      )
+      return backToDetails(request, h)
     }
     return interimView(h, t, request, { isNew: false, values: fields })
   }
@@ -410,26 +503,23 @@ export const interimChangeGetController = handler(
 export const interimChangePostController = handler(
   { editable: true },
   (request, h, { t }, { update }) => {
-    const fields = interimFields(update, request.params.interimSiteId)
+    const { interimSiteId } = request.params
+    const fields = interimFields(update, interimSiteId)
     if (!fields) {
-      return h.redirect(
-        updateUrl(request.params.applicationId, request.params.siteId)
-      )
-    }
-    // AC02: an interim site's country and recycling operations stay as they are.
-    request.payload = {
-      ...request.payload,
-      country: fields.country,
-      operationCodes: fields.operationCodes
+      return backToDetails(request, h)
     }
     return saveInterim(request, h, t, {
-      isNew: false,
+      update,
+      locked: {
+        country: fields.country,
+        operationCodes: fields.operationCodes
+      },
       call: (org, app, site, body) =>
         accreditationChangesService.changeInterimSite(
           org,
           app,
           site,
-          request.params.interimSiteId,
+          interimSiteId,
           body
         )
     })
@@ -444,9 +534,9 @@ export const interimNewGetController = handler(
 
 export const interimNewPostController = handler(
   { editable: true },
-  (request, h, { t }) =>
+  (request, h, { t }, { update }) =>
     saveInterim(request, h, t, {
-      isNew: true,
+      update,
       call: (org, app, site, body) =>
         accreditationChangesService.addInterimSite(org, app, site, body)
     })
@@ -457,9 +547,7 @@ export const interimAdditionGetController = handler(
   (request, h, { t }, { update }) => {
     const addition = interimAddition(update, request.params.changeId)
     if (!addition) {
-      return h.redirect(
-        updateUrl(request.params.applicationId, request.params.siteId)
-      )
+      return backToDetails(request, h)
     }
     return interimView(h, t, request, {
       isNew: true,
@@ -471,48 +559,66 @@ export const interimAdditionGetController = handler(
 export const interimAdditionPostController = handler(
   { editable: true },
   (request, h, { t }, { update }) => {
-    if (!interimAddition(update, request.params.changeId)) {
-      return h.redirect(
-        updateUrl(request.params.applicationId, request.params.siteId)
-      )
+    const { changeId } = request.params
+    if (!interimAddition(update, changeId)) {
+      return backToDetails(request, h)
     }
     return saveInterim(request, h, t, {
-      isNew: true,
+      update,
       call: (org, app, site, body) =>
         accreditationChangesService.changeInterimSiteAddition(
           org,
           app,
           site,
-          request.params.changeId,
+          changeId,
           body
         )
     })
   }
 )
 
+function refusedOnDetails(h, request, locale, loaded, result) {
+  return detailsView(
+    h,
+    request,
+    locale,
+    loaded,
+    result.message ?? locale.t('pages.manageOverseasSites.saveRefused')
+  ).code(refusedStatus(result))
+}
+
 // Remove and undo change the draft, so each is a crumb-protected POST styled as a link.
 export const interimRemoveController = handler(
   { editable: true },
-  async (request, h) => {
+  async (request, h, locale, loaded) => {
     const { applicationId, siteId, interimSiteId } = request.params
-    const result = await saveChange(request, h, (org, app, site) =>
-      accreditationChangesService.removeInterimSite(
-        org,
-        app,
-        site,
-        interimSiteId
-      )
+    const result = await saveChange(
+      request,
+      h,
+      loaded.update,
+      (org, app, site) =>
+        accreditationChangesService.removeInterimSite(
+          org,
+          app,
+          site,
+          interimSiteId
+        )
     )
-    return (
-      result?.redirect ??
-      h.redirect(`${updateUrl(applicationId, siteId)}?updated=interim-sites`)
+    if (result?.redirect) {
+      return result.redirect
+    }
+    if (result) {
+      return refusedOnDetails(h, request, locale, loaded, result)
+    }
+    return h.redirect(
+      `${updateUrl(applicationId, siteId)}?updated=interim-sites`
     )
   }
 )
 
 export const interimUndoController = handler(
   { editable: true },
-  async (request, h) => {
+  async (request, h, locale, loaded) => {
     const { applicationId, siteId, changeId } = request.params
     try {
       await accreditationChangesService.undoInterimSiteChange(
@@ -522,11 +628,16 @@ export const interimUndoController = handler(
         changeId
       )
     } catch (err) {
-      if (!NOTHING_TO_DO.has(err.status)) {
+      if (err.status === statusCodes.conflict) {
+        return refusedOnDetails(h, request, locale, loaded, {
+          message: conflictMessage(err)
+        })
+      }
+      if (err.status !== statusCodes.notFound) {
         throw err
       }
     }
-    return h.redirect(updateUrl(applicationId, siteId))
+    return backToDetails(request, h)
   }
 )
 
@@ -552,13 +663,21 @@ export const cancelUpdateController = {
 
 // --- AC06: submitted, with nothing to pay ------------------------------------------
 
+/** The newest submitted request of ORS changes with nothing to pay. */
+function submittedFreeRequest(view) {
+  return view.requests?.find(
+    (changeRequest) =>
+      changeRequest.status === ITEM_STATUSES.submitted &&
+      changeRequest.sites?.length > 0 &&
+      (changeRequest.charge?.chargeableSites ?? 0) === 0
+  )
+}
+
 export const submittedGetController = {
   async handler(request, h) {
     const { t, currentLocale } = getLocaleAndTranslator(request)
     const view = await loadView(request)
-    const submitted = view.requests?.find(
-      (changeRequest) => changeRequest.status === 'Submitted'
-    )
+    const submitted = submittedFreeRequest(view)
     if (!submitted) {
       return redirectToManageSites(request, h, view)
     }

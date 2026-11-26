@@ -62,18 +62,6 @@ export function changeRequestsSummary(view) {
 }
 
 /**
- * RA-492's actions for an ORS on RA-425's Registered tab: "Pending" and no
- * action while it is in a submitted request (AC09), "In progress" and a View
- * link while it is in the draft request, otherwise "Add to accreditation".
- *
- * RA-697: with no accreditation (a null applicationId, for registration only)
- * there is nothing to add the ORS to, and RA-492's View link has no
- * registration-only page yet, so neither link; the tag still follows the data.
- * View is also left out for an ORS In progress in a draft other than the
- * accreditation's own (a registration-only one), which this journey can't
- * open.
- */
-/**
  * RA-682's actions for an ORS on the Accredited tab: "Pending" and no action
  * while a submitted request holds it (AC03), "In progress" and View while its
  * change is in the draft, otherwise Change. All lead to its details page.
@@ -93,6 +81,18 @@ export function accreditedSiteActions(
   }
 }
 
+/**
+ * RA-492's actions for an ORS on RA-425's Registered tab: "Pending" and no
+ * action while it is in a submitted request (AC09), "In progress" and a View
+ * link while it is in the draft request, otherwise "Add to accreditation".
+ *
+ * RA-697: with no accreditation (a null applicationId, for registration only)
+ * there is nothing to add the ORS to, and RA-492's View link has no
+ * registration-only page yet, so neither link; the tag still follows the data.
+ * View is also left out for an ORS In progress in a draft other than the
+ * accreditation's own (a registration-only one), which this journey can't
+ * open.
+ */
 export function registeredSiteActions(
   applicationId,
   siteId,
@@ -113,7 +113,7 @@ export function registeredSiteActions(
   }
 }
 
-function displayValue(t, field, value) {
+export function displayValue(t, field, value) {
   if (!hasValue(value)) {
     return ''
   }
@@ -143,7 +143,7 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
 // The site's rows, each with the backend field that edits it (if any) and
 // that field's own answer, which decides whether the row is missing: the
 // location row shows the whole address but is missing only without a country.
-function siteDetailRows(t, site, effective) {
+export function siteDetailRows(t, site, effective) {
   const label = (key) => manageSitesText(t, `rows.${key}`)
   const answer = (field, key) => {
     const value = displayValue(t, field, effective[field])

@@ -1033,7 +1033,7 @@
         "addAnother": "Add another request",
         "none": "You have no accreditation requests in progress.",
         "incomplete": "{{site}} ({{orsId}}) is missing information",
-        "orsUpdate": "ORS update"
+        "remove": "Remove"
       },
       "payment": {
         "backLink": "Back to manage overseas reprocessing sites"
@@ -1245,7 +1245,8 @@
       "submitted": {
         "title": "In year change application submitted",
         "references": "Your references",
-        "next": "Your regulator must approve your application for the changes to take effect. There is no charge for changing an overseas reprocessing site's details."
+        "next": "Your regulator must approve your application for the changes to take effect. There is no charge for changing an overseas reprocessing site's details.",
+        "backLink": "Back to manage overseas reprocessing sites"
       }
     }
   },

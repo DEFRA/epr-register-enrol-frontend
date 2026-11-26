@@ -67,7 +67,7 @@
         {% else %}
           <div class="govuk-form-group">
             <label class="govuk-label" for="country">{{ t('pages.addOverseasSite.siteLocation.countryLabel') }}</label>
-            <input class="govuk-input app-input--readonly" id="country" name="country" type="text" value="{{ values.country }}" readonly data-testid="country-input">
+            <input class="govuk-input app-input--readonly" id="country" type="text" value="{{ values.country }}" readonly data-testid="country-input">
           </div>
           <div class="govuk-form-group">
             <label class="govuk-label" for="operationCodesReadOnly">{{ t('pages.updateOverseasSite.interim.operations') }}</label>
@@ -79,7 +79,7 @@
         {{ textInput('contactEmail', t('pages.addInterimSite.siteContactDetails.emailLabel'), values.contactEmail, errors.contactEmail) }}
         {{ textInput('contactPhone', t('pages.addInterimSite.siteContactDetails.phoneLabel'), values.contactPhone, errors.contactPhone, 'govuk-input--width-20') }}
 
-        <button type="submit" class="govuk-button" data-module="govuk-button" data-testid="continue-button">{{ t('common.continue') }}</button>
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-prevent-double-click="true" data-testid="continue-button">{{ t('common.continue') }}</button>
       </form>
       <a href="{{ cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ t('pages.manageOverseasSites.cancel') }}</a>
     </div>

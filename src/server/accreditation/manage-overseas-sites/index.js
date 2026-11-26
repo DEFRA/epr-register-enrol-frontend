@@ -31,6 +31,7 @@ import {
 } from './steps-controller.js'
 import {
   STEP_NAMES,
+  UPDATED_KEYS,
   cancelUpdateController,
   detailsGetController,
   interimAdditionGetController,
@@ -90,19 +91,19 @@ const statusOptions = {
   ]
 }
 
-// RA-682: changing an accredited ORS's details, under the same flag and
-// operator-only options, with the update pages' own route parameters.
+// `updated` names the success banner's translation key, so only known ones pass.
 const updateOptions = {
-  ...manageRouteOptions,
+  ...routeOptions,
   validate: {
-    params: Joi.object({
-      language: Joi.string(),
-      applicationId: Joi.string().required(),
-      siteId: Joi.number().integer().positive(),
+    ...routeOptions.validate,
+    params: routeOptions.validate.params.keys({
       interimSiteId: Joi.number().integer().positive(),
       changeId: Joi.string().guid(),
       step: Joi.string().valid(...STEP_NAMES)
-    })
+    }),
+    query: Joi.object({
+      updated: Joi.string().valid(...UPDATED_KEYS)
+    }).unknown()
   }
 }
 

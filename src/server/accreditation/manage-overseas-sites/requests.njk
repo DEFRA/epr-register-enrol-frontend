@@ -38,14 +38,14 @@
             {% for item in requests %}
               <tr class="govuk-table__row" data-testid="request-row-{{ item.orsId }}">
                 <td class="govuk-table__cell" data-testid="request-site-name-{{ item.orsId }}"><strong>{{ item.siteName }} ({{ item.orsId }})</strong><br><span class="govuk-!-font-size-16">{{ item.address }}</span></td>
-                <td class="govuk-table__cell" data-testid="request-type-{{ item.orsId }}">{{ t('pages.manageOverseasSites.requests.' + item.typeKey) }}</td>
+                <td class="govuk-table__cell" data-testid="request-type-{{ item.orsId }}">{{ t(item.typeKey) }}</td>
                 <td class="govuk-table__cell"><strong class="govuk-tag govuk-tag--blue" data-testid="request-status-{{ item.orsId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong></td>
                 <td class="govuk-table__cell">
                   <a class="govuk-link" href="{{ item.viewUrl }}" data-testid="request-view-{{ item.orsId }}">{{ t('pages.manageOverseasSites.view') }}<span class="govuk-visually-hidden"> {{ item.siteName }}</span></a>
                   {% if item.removeUrl %}
                     <form method="post" action="{{ item.removeUrl }}" class="govuk-!-display-inline govuk-!-margin-left-2">
                       <input type="hidden" name="crumb" value="{{ crumb }}">
-                      <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--red govuk-body govuk-!-margin-bottom-0" data-testid="request-remove-{{ item.orsId }}">{{ t('pages.updateOverseasSite.interim.remove') }}<span class="govuk-visually-hidden"> {{ item.siteName }}</span></button>
+                      <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--red govuk-body govuk-!-margin-bottom-0" data-testid="request-remove-{{ item.orsId }}">{{ t('pages.manageOverseasSites.requests.remove') }}<span class="govuk-visually-hidden"> {{ item.siteName }}</span></button>
                     </form>
                   {% endif %}
                 </td>

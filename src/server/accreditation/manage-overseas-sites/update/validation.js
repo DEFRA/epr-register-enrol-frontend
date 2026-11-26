@@ -1,141 +1,91 @@
-// RA-682: the update steps' checks, with the add-overseas-site and
-// add-interim-site journeys' own messages and limits, so a change is held to
-// the rules the details were first entered under. The backend applies the same
-// rules and its refusal is shown when it disagrees.
+import {
+  validateOrsContactDetails,
+  validateRepatriatedLoads,
+  validateSiteName
+} from '../../../common/helpers/overseasSiteAnswerValidation.js'
+import { validateSiteAddressFields } from '../../../common/helpers/overseasSiteLocationValidation.js'
+import {
+  validateInterimContactDetails,
+  validateInterimCountry,
+  validateInterimOperationCodes,
+  validateInterimSiteLocation,
+  validateInterimSiteName
+} from '../../../common/helpers/interimSiteValidation.js'
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@.]+$/
-const PHONE = /^[0-9+()\-\s]*$/
+// RA-682: a change is held to the rules the details were first entered under,
+// so these are the add-overseas-site and add-interim-site journeys' own.
 
-function checks(t, rules, fields) {
-  const errors = {}
-  for (const [field, list] of Object.entries(rules)) {
-    const value = fields[field] ?? ''
-    const failed = list.find(([test]) => !test(value))
-    if (failed) {
-      errors[field] = t(failed[1])
-    }
-  }
-  return errors
+// The shared contact rules name their fields after the wizards' form fields.
+const CONTACT_FIELDS = {
+  siteContactName: 'contactName',
+  siteContactEmail: 'contactEmail',
+  siteContactPhone: 'contactPhone'
 }
 
-const required = (v) => v.trim() !== ''
-const max = (n) => (v) => v.length <= n
-
-const ORS = 'pages.addOverseasSite'
-const INTERIM = 'pages.addInterimSite'
-
-const ORS_RULES = {
-  'site-name': {
-    siteName: [
-      [required, `${ORS}.siteName.validation.required`],
-      [max(200), `${ORS}.siteName.validation.tooLong`]
-    ]
-  },
-  location: {
-    addressLine1: [
-      [required, `${ORS}.siteLocation.validation.addressLine1Required`],
-      [max(200), `${INTERIM}.siteLocation.validation.addressLine1TooLong`]
-    ],
-    addressLine2: [
-      [max(200), `${INTERIM}.siteLocation.validation.addressLine2TooLong`]
-    ],
-    townOrCity: [
-      [required, `${ORS}.siteLocation.validation.townOrCityRequired`],
-      [max(100), `${INTERIM}.siteLocation.validation.townOrCityTooLong`]
-    ]
-  },
-  'contact-details': {
-    contactName: [
-      [required, `${ORS}.siteContactDetails.validation.nameRequired`],
-      [max(200), `${ORS}.siteContactDetails.validation.nameTooLong`]
-    ],
-    contactEmail: [
-      [required, `${ORS}.siteContactDetails.validation.emailRequired`],
-      [
-        (v) => EMAIL.test(v),
-        `${ORS}.siteContactDetails.validation.emailInvalid`
-      ],
-      [max(254), `${ORS}.siteContactDetails.validation.emailTooLong`]
-    ],
-    contactPhone: [
-      [
-        (v) => PHONE.test(v),
-        `${ORS}.siteContactDetails.validation.phoneInvalid`
-      ]
-    ]
-  },
-  'rejected-loads': {
-    repatriatedLoads: [
-      [required, `${ORS}.repatriatedLoads.validation.required`],
-      [max(5000), `${ORS}.repatriatedLoads.validation.tooManyCharacters`]
-    ]
-  }
+function contactErrors(validate, t, fields) {
+  const errors = validate(
+    t,
+    Object.fromEntries(
+      Object.entries(CONTACT_FIELDS).map(([wizard, name]) => [
+        wizard,
+        fields[name] ?? ''
+      ])
+    )
+  )
+  return Object.fromEntries(
+    Object.entries(errors).map(([wizard, message]) => [
+      CONTACT_FIELDS[wizard],
+      message
+    ])
+  )
 }
 
+function only(name, message) {
+  return message ? { [name]: message } : {}
+}
+
+const STEP_RULES = {
+  'site-name': (t, fields) =>
+    only('siteName', validateSiteName(t, fields.siteName)),
+  location: (t, fields) => validateSiteAddressFields(t, fields),
+  'contact-details': (t, fields) =>
+    contactErrors(validateOrsContactDetails, t, fields),
+  'rejected-loads': (t, fields) =>
+    only(
+      'repatriatedLoads',
+      validateRepatriatedLoads(t, fields.repatriatedLoads)?.message
+    )
+}
+
+/** The errors on one ORS detail step, keyed by field. */
 export function validateStep(t, step, fields) {
-  return checks(t, ORS_RULES[step], fields)
+  return STEP_RULES[step](t, fields)
 }
 
-const INTERIM_RULES = {
-  siteName: [
-    [required, `${INTERIM}.siteName.validation.required`],
-    [max(200), `${INTERIM}.siteName.validation.tooLong`]
-  ],
-  addressLine1: [
-    [required, `${INTERIM}.siteLocation.validation.addressLine1Required`],
-    [max(200), `${INTERIM}.siteLocation.validation.addressLine1TooLong`]
-  ],
-  addressLine2: [
-    [max(200), `${INTERIM}.siteLocation.validation.addressLine2TooLong`]
-  ],
-  townOrCity: [
-    [required, `${INTERIM}.siteLocation.validation.townOrCityRequired`],
-    [max(100), `${INTERIM}.siteLocation.validation.townOrCityTooLong`]
-  ],
-  stateOrRegion: [
-    [max(100), `${INTERIM}.siteLocation.validation.stateOrRegionTooLong`]
-  ],
-  postcode: [[max(20), `${INTERIM}.siteLocation.validation.postcodeTooLong`]],
-  contactName: [
-    [required, `${INTERIM}.siteContactDetails.validation.nameRequired`],
-    [max(200), `${INTERIM}.siteContactDetails.validation.nameTooLong`]
-  ],
-  contactEmail: [
-    [required, `${INTERIM}.siteContactDetails.validation.emailRequired`],
-    [
-      (v) => EMAIL.test(v),
-      `${INTERIM}.siteContactDetails.validation.emailInvalid`
-    ],
-    [max(254), `${INTERIM}.siteContactDetails.validation.emailTooLong`]
-  ],
-  contactPhone: [
-    [required, `${INTERIM}.siteContactDetails.validation.phoneRequired`],
-    [
-      (v) => PHONE.test(v),
-      `${INTERIM}.siteContactDetails.validation.phoneInvalid`
-    ]
-  ]
-}
-
-const NEW_INTERIM_RULES = {
-  country: [[required, `${INTERIM}.country.validation.required`]],
-  operationCodes: [
-    [
-      (codes) => codes.length > 0,
-      `${INTERIM}.recyclingOperationDetails.validation.required`
-    ],
-    [
-      (codes) => codes.includes('R12') || codes.includes('R13'),
-      `${INTERIM}.recyclingOperationDetails.validation.coreCodeRequired`
-    ]
-  ]
+/** Whether the rejected-loads error is the word limit, which the page's live counter clears. */
+export function isTooManyWords(t, fields) {
+  return (
+    validateRepatriatedLoads(t, fields.repatriatedLoads ?? '')?.tooManyWords ??
+    false
+  )
 }
 
 /** An interim site's form. A new one also needs its country and recycling operations. */
 export function validateInterim(t, fields, { isNew }) {
-  const errors = checks(t, INTERIM_RULES, fields)
+  const errors = {
+    ...only('siteName', validateInterimSiteName(t, fields.siteName)),
+    ...validateInterimSiteLocation(t, fields),
+    ...contactErrors(validateInterimContactDetails, t, fields)
+  }
   if (isNew) {
-    Object.assign(errors, checks(t, NEW_INTERIM_RULES, fields))
+    Object.assign(
+      errors,
+      only('country', validateInterimCountry(t, fields.country)),
+      only(
+        'operationCodes',
+        validateInterimOperationCodes(t, fields.operationCodes)
+      )
+    )
   }
   return errors
 }

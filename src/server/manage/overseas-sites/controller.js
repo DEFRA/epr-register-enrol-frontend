@@ -31,7 +31,7 @@ function toOrsView(site) {
 }
 
 // RA-682: where an accredited ORS's change stands. Without the change
-// requests the row is RA-425's alone, with no action.
+// requests view or an accreditation the row has no status or action.
 function accreditedSiteView(site, applicationId, changeRequests) {
   const view = toOrsView(site)
   if (!changeRequests || !applicationId) {

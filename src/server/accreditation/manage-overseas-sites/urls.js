@@ -88,7 +88,6 @@ export function interimSiteAdditionUrl(applicationId, siteId, changeId) {
   return `${updateUrl(applicationId, siteId)}/interim-site-changes/${encodeURIComponent(changeId)}`
 }
 
-// RA-682 AC06: where a request with nothing to pay goes once it is submitted.
 export function submittedUrl(applicationId) {
   return `${journeyUrl(applicationId)}/submitted`
 }

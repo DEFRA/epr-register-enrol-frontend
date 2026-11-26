@@ -876,7 +876,9 @@ describe('#manageOverseasSites (RA-492)', () => {
 
     test('AC07: confirming submits the request and shows the payment page', async () => {
       mockGet(makeView())
-      const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      const post = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue({ charge: chargeOf(1) })
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/declaration`,
@@ -1075,9 +1077,12 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain(`href="${BASE}/update/900181"`)
     })
 
-    test('AC05/AC06: a request with nothing to pay quotes no payment reference and goes to the confirmation', async () => {
+    // The reference always goes; the backend keeps it only for a charged request.
+    test('AC05/AC06: a submitted request with nothing to pay goes to the confirmation', async () => {
       mockGet(viewWith([update]))
-      const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      const post = vi
+        .spyOn(apiClient, 'post')
+        .mockResolvedValue({ charge: chargeOf(0) })
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/declaration`,
@@ -1086,23 +1091,59 @@ describe('#manageOverseasSites (RA-492)', () => {
 
       const [url, body] = post.mock.calls[0]
       expect(url).toMatch(/requests\/current\/submit$/)
-      expect(body.paymentReference).toBeNull()
+      expect(body.paymentReference).toBe('PR/PK/EXP/50018')
       expect(headers.location).toBe(`${BASE}/submitted`)
     })
 
-    test('a request with an add still pays', async () => {
-      mockGet(
-        viewWith([update, requestSite({ isComplete: true, missingFields: [] })])
-      )
-      const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+    test('a submitted request with an add goes to the payment page', async () => {
+      vi.spyOn(apiClient, 'post').mockResolvedValue({ charge: chargeOf(1) })
       const { headers } = await server.inject({
         method: 'POST',
         url: `${BASE}/declaration`,
         payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
       })
-
-      expect(post.mock.calls[0][1].paymentReference).toEqual(expect.any(String))
       expect(headers.location).toBe(`${BASE}/payment`)
+    })
+
+    test('AC05: the payment page passes over a newer submitted request with nothing to pay', async () => {
+      const free = {
+        requestId: 'req-free',
+        changeType: 'add-overseas-site',
+        status: 'Submitted',
+        submittedBy: { fullName: 'Sam Lee', email: 'sam@example.com' },
+        sites: [update],
+        charge: chargeOf(0)
+      }
+      const charged = {
+        requestId: 'req-charged',
+        changeType: 'add-overseas-site',
+        status: 'Submitted',
+        submittedBy: { fullName: 'Jane Smith', email: 'jane@example.com' },
+        sites: [requestSite()],
+        charge: chargeOf(1)
+      }
+      mockGet(makeView({ active: null, requests: [free, charged] }))
+      const { result } = await server.inject(`${BASE}/payment`)
+      expect(result).toContain('jane@example.com')
+      expect(result).not.toContain('sam@example.com')
+    })
+
+    test('with no charged request submitted the payment page goes back to Manage ORS', async () => {
+      mockGet(
+        makeView({
+          active: null,
+          requests: [
+            {
+              requestId: 'req-free',
+              status: 'Submitted',
+              sites: [update],
+              charge: chargeOf(0)
+            }
+          ]
+        })
+      )
+      const { headers } = await server.inject(`${BASE}/payment`)
+      expect(headers.location).toBe(MANAGE)
     })
   })
 })

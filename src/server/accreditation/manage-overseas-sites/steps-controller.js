@@ -133,7 +133,7 @@ async function patchSite(request, body) {
 }
 
 // ASP.NET may send a ValidationProblem's error keys in either case.
-function errorKeyFor(errors, field) {
+export function errorKeyFor(errors, field) {
   return Object.keys(errors).find(
     (name) => name.toLowerCase() === field.toLowerCase()
   )
@@ -144,7 +144,7 @@ function errorKeyFor(errors, field) {
  * message for it, a general one when the answer was refused without naming
  * the field, or null when it saved.
  */
-function refusal(t, errors, field) {
+export function refusal(t, errors, field) {
   if (errors === null) {
     return null
   }

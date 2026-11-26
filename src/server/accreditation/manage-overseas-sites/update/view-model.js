@@ -1,11 +1,10 @@
 import {
   CHANGE_TYPES,
-  ITEM_STATUSES
+  ITEM_STATUSES,
+  SITE_ACCREDITATION_STATUSES
 } from '../../../common/constants/changeRequests.js'
 import { activeInterimSites } from '../../../common/helpers/interimSites.js'
-import { hasValue } from '../../../common/helpers/hasValue.js'
-import { orsAddressLine } from '../../../common/helpers/orsAddress.js'
-import { findRequestSite, findSite } from '../view-model.js'
+import { findRequestSite, findSite, siteDetailRows } from '../view-model.js'
 import {
   interimSiteAdditionUrl,
   interimSiteUrl,
@@ -21,8 +20,6 @@ export function updateText(t, key, params) {
   return t(`pages.updateOverseasSite.${key}`, params)
 }
 
-// The details an operator may change (AC02), as the backend's
-// OverseasSiteDetails holds them.
 export const DETAIL_FIELDS = [
   'siteName',
   'addressLine1',
@@ -48,7 +45,10 @@ export function detailsOf(site) {
  */
 export function resolveUpdate(view, siteId) {
   const entry = findSite(view, siteId)
-  if (!entry || entry.accreditationStatus !== 'Accredited') {
+  if (
+    !entry ||
+    entry.accreditationStatus !== SITE_ACCREDITATION_STATUSES.accredited
+  ) {
     return null
   }
   const item = findRequestSite(view, siteId)
@@ -61,101 +61,63 @@ export function resolveUpdate(view, siteId) {
   }
 }
 
-function row(id, label, value, href, t) {
-  return {
-    id,
-    label,
-    value: hasValue(value) ? value : '',
-    action: href ? { href, text: t('pages.manageOverseasSites.change') } : null
-  }
+// The update step that changes each of siteDetailRows' rows. The rest are
+// locked (AC02) and have no action.
+const ROW_STEPS = {
+  'site-name': 'site-name',
+  location: 'location',
+  'contact-name': 'contact-details',
+  'contact-email': 'contact-details',
+  'contact-phone': 'contact-details',
+  'repatriated-loads': 'rejected-loads'
 }
 
+const ROW_LABELS = {
+  'site-name': 'rows.orsName',
+  'recycling-operation': 'rows.recyclingOperations'
+}
+
+const LOCKED_ANSWERS = [
+  'country',
+  'coordinates',
+  'operationCodes',
+  'conditionsOfExport'
+]
+
 /**
- * The ORS's summary rows. Editable rows link to the step that changes them;
- * the locked ones (AC02: country, coordinates, recycling operations, Basel
- * codes, conditions of export, BES) have no action. A pending ORS has none.
+ * The ORS's summary rows, as RA-492's summary builds them, with the update's
+ * details in place of the ORS's own. Editable rows link to their step; a
+ * pending ORS has no actions.
  */
 export function buildDetailRows({ t, applicationId, update }) {
   const { entry, details, pending } = update
   const site = entry.site
-  const label = (key) => t(`pages.manageOverseasSites.rows.${key}`)
-  const step = (name) =>
-    pending ? null : updateStepUrl(applicationId, entry.siteId, name)
+  // A stored one-line siteAddress would show the ORS's old address lines.
+  const shown = { ...site, ...details, siteAddress: null }
+  const locked = Object.fromEntries(
+    LOCKED_ANSWERS.map((field) => [field, site[field]])
+  )
+  const rows = siteDetailRows(t, shown, locked).map(({ id, label, value }) => ({
+    id,
+    label: ROW_LABELS[id] ? updateText(t, ROW_LABELS[id]) : label,
+    value,
+    action:
+      ROW_STEPS[id] && !pending
+        ? {
+            href: updateStepUrl(applicationId, entry.siteId, ROW_STEPS[id]),
+            text: t('pages.manageOverseasSites.change')
+          }
+        : null
+  }))
   const besFiles = site.besEvidence?.besEvidenceUploads ?? []
   return [
-    row(
-      'site-name',
-      updateText(t, 'rows.orsName'),
-      details.siteName,
-      step('site-name'),
-      t
-    ),
-    row(
-      'location',
-      label('location'),
-      orsAddressLine({ ...site, ...details, siteAddress: null }),
-      step('location'),
-      t
-    ),
-    row('coordinates', label('coordinates'), site.coordinates, null, t),
-    row(
-      'contact-name',
-      label('contactName'),
-      details.contactName,
-      step('contact-details'),
-      t
-    ),
-    row(
-      'contact-email',
-      label('contactEmail'),
-      details.contactEmail,
-      step('contact-details'),
-      t
-    ),
-    row(
-      'contact-phone',
-      label('contactPhone'),
-      details.contactPhone,
-      step('contact-details'),
-      t
-    ),
-    row(
-      'recycling-operations',
-      updateText(t, 'rows.recyclingOperations'),
-      (site.operationCodes ?? []).join(', '),
-      null,
-      t
-    ),
-    row(
-      'basel-codes',
-      label('baselCodes'),
-      [site.code1, site.code2, site.code3].filter(Boolean).join(', '),
-      null,
-      t
-    ),
-    row(
-      'repatriated-loads',
-      label('repatriatedLoads'),
-      details.repatriatedLoads,
-      step('rejected-loads'),
-      t
-    ),
-    row(
-      'conditions-of-export',
-      label('conditionsOfExport'),
-      hasValue(site.conditionsOfExport)
-        ? t(site.conditionsOfExport ? 'common.yes' : 'common.no')
-        : '',
-      null,
-      t
-    ),
-    row(
-      'bes-evidence',
-      label('besEvidence'),
-      besFiles.map((file) => file.filename).join(', '),
-      null,
-      t
-    )
+    ...rows,
+    {
+      id: 'bes-evidence',
+      label: t('pages.manageOverseasSites.rows.besEvidence'),
+      value: besFiles.map((file) => file.filename).join(', '),
+      action: null
+    }
   ]
 }
 

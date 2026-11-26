@@ -242,10 +242,24 @@ describe('#updateOverseasSite (RA-682)', () => {
       )
     })
 
-    test('an unknown updated key shows no banner', async () => {
-      mockGet(makeView())
-      const { result } = await server.inject(`${UPDATE}?updated=nonsense`)
-      expect(result).not.toContain('data-testid="success-banner"')
+    test.each(['nonsense', 'constructor', 'site-name.x'])(
+      'an unknown updated key (%s) is a bad request',
+      async (updated) => {
+        mockGet(makeView())
+        const { statusCode } = await server.inject(
+          `${UPDATE}?updated=${updated}`
+        )
+        expect(statusCode).toBe(statusCodes.badRequest)
+      }
+    )
+
+    test('the title and heading both show the approved name while a new one is in the draft', async () => {
+      mockGet(makeView({ item: updateItem() }))
+      const { result } = await server.inject(UPDATE)
+      expect(result).toMatch(/<title>\s*Gdansk Recykling \(001\)/)
+      expect(result).toMatch(
+        /data-testid="page-heading">Gdansk Recykling \(001\)</
+      )
     })
 
     test('AC03: an ORS held by a submitted request is read only', async () => {
@@ -275,12 +289,31 @@ describe('#updateOverseasSite (RA-682)', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('value="902501 Harbour Estate"')
+      expect(result).toMatch(/id="country" type="text" value="Poland" readonly/)
       expect(result).toMatch(
-        /id="country" name="country" type="text" value="Poland" readonly/
+        /id="coordinates" type="text" value="54.3520, 18.6466" readonly/
       )
-      expect(result).toMatch(
-        /id="coordinates" name="coordinates" type="text" value="54.3520, 18.6466" readonly/
-      )
+      expect(result).not.toContain('name="country"')
+      expect(result).not.toContain('name="coordinates"')
+      expect(result).toContain('data-prevent-double-click="true"')
+    })
+
+    test('the rejected loads step counts words, as the add journey does', async () => {
+      mockGet(makeView())
+      const { result } = await server.inject(`${UPDATE}/details/rejected-loads`)
+      expect(result).toContain('data-maxwords="500"')
+      expect(result).toContain('data-testid="repatriatedLoads-input"')
+    })
+
+    test('over 500 words is refused with an error the live counter can clear', async () => {
+      mockGet(makeView())
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/details/rejected-loads`,
+        payload: { repatriatedLoads: 'word '.repeat(501) }
+      })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-error-type="length"')
     })
 
     test('an unknown step is 400', async () => {
@@ -288,7 +321,7 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(statusCode).toBe(statusCodes.badRequest)
     })
 
-    test('saving starts the update and patches the details, sending the read-only fields unchanged', async () => {
+    test('saving starts the update and patches the address, never the read-only fields', async () => {
       mockGet(makeView())
       const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
       const patch = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
@@ -300,8 +333,8 @@ describe('#updateOverseasSite (RA-682)', () => {
           addressLine1: ' 1 New Road ',
           addressLine2: '',
           townOrCity: 'Gdynia',
-          country: 'Poland',
-          coordinates: '54.3520, 18.6466'
+          country: 'Germany',
+          coordinates: ''
         }
       })
 
@@ -317,9 +350,7 @@ describe('#updateOverseasSite (RA-682)', () => {
         {
           addressLine1: '1 New Road',
           addressLine2: '',
-          townOrCity: 'Gdynia',
-          country: 'Poland',
-          coordinates: '54.3520, 18.6466'
+          townOrCity: 'Gdynia'
         }
       )
       expect(headers.location).toBe(`${UPDATE}?updated=location`)
@@ -332,7 +363,25 @@ describe('#updateOverseasSite (RA-682)', () => {
         { contactName: 'Ola', contactEmail: 'nope' },
         'Enter an email address in the correct format'
       ],
-      ['rejected-loads', { repatriatedLoads: ' ' }, 'Describe the arrangements']
+      [
+        'rejected-loads',
+        { repatriatedLoads: ' ' },
+        'Describe the arrangements'
+      ],
+      [
+        'contact-details',
+        {
+          contactName: 'Ola 2',
+          contactEmail: 'ola@example.com',
+          contactPhone: ''
+        },
+        'data-testid="contactName-error"'
+      ],
+      [
+        'location',
+        { addressLine1: '1 Road', townOrCity: 'Port 9' },
+        'data-testid="townOrCity-error"'
+      ]
     ])(
       '%s: an invalid answer is shown and nothing is saved',
       async (step, payload, message) => {
@@ -376,9 +425,91 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(result).toContain('This information could not be saved')
     })
 
-    test('AC03: an ORS a submitted request holds goes back to its details', async () => {
+    test("a 409 shows the backend's message on the step", async () => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(
+        apiError(
+          409,
+          JSON.stringify('This change has already been sent to the regulator')
+        )
+      )
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/details/site-name`,
+        payload: { siteName: 'Gdansk' }
+      })
+      expect(statusCode).toBe(statusCodes.conflict)
+      expect(result).toContain(
+        'This change has already been sent to the regulator'
+      )
+    })
+
+    test.each([
+      [
+        'a ProblemDetails',
+        JSON.stringify({ detail: 'Held by a request.' }),
+        'Held by a request.'
+      ],
+      ['an unreadable body', 'not json', 'This information could not be saved']
+    ])('a 409 with %s is shown too', async (_, body, message) => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(409, body))
+      const { result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/details/site-name`,
+        payload: { siteName: 'Gdansk' }
+      })
+      expect(result).toContain(message)
+    })
+
+    test('a failed first save takes the empty update back out of the draft', async () => {
       mockGet(makeView())
-      vi.spyOn(apiClient, 'post').mockRejectedValue(apiError(409))
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(
+        apiError(400, { errors: { SiteName: ['Site name is taken.'] } })
+      )
+      const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+      const { result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/details/site-name`,
+        payload: { siteName: 'Gdansk' }
+      })
+      expect(del).toHaveBeenCalledWith(
+        expect.stringMatching(/requests\/current\/sites\/902501$/)
+      )
+      expect(result).toContain('Site name is taken.')
+    })
+
+    test('a failure taking the empty update back out is logged and the refusal still shown', async () => {
+      mockGet(makeView())
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(503))
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(503))
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/details/site-name`,
+        payload: { siteName: 'Gdansk' }
+      })
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    test('a later save leaves the update in the draft whatever happens', async () => {
+      mockGet(makeView({ item: updateItem() }))
+      const post = vi.spyOn(apiClient, 'post')
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(400, {}))
+      const del = vi.spyOn(apiClient, 'delete')
+      await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/details/site-name`,
+        payload: { siteName: 'Gdansk' }
+      })
+      expect(post).not.toHaveBeenCalled()
+      expect(del).not.toHaveBeenCalled()
+    })
+
+    test('an ORS that has gone goes back to its details', async () => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(404))
       const { headers } = await server.inject({
         method: 'POST',
         url: `${UPDATE}/details/site-name`,
@@ -419,9 +550,8 @@ describe('#updateOverseasSite (RA-682)', () => {
       mockGet(makeView())
       const { result } = await server.inject(`${UPDATE}/interim-sites/902511`)
       expect(result).toContain('Change an interim site')
-      expect(result).toMatch(
-        /id="country" name="country" type="text" value="Poland" readonly/
-      )
+      expect(result).toMatch(/id="country" type="text" value="Poland" readonly/)
+      expect(result).toContain('data-prevent-double-click="true"')
       expect(result).toContain('value="R3, R13" readonly')
     })
 
@@ -594,6 +724,52 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(undone.headers.location).toBe(UPDATE)
     })
 
+    test("a refused remove shows the backend's message on the details page", async () => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(
+        apiError(409, JSON.stringify('Someone else changed this request.'))
+      )
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/interim-sites/902512/remove`
+      })
+      expect(statusCode).toBe(statusCodes.conflict)
+      expect(result).toContain('data-testid="error-summary"')
+      expect(result).toContain('Someone else changed this request.')
+    })
+
+    test('a remove refused with a 400 shows a general message', async () => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(400, {}))
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/interim-sites/902512/remove`
+      })
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('This information could not be saved')
+    })
+
+    test('removing from an ORS that has gone goes back to its details', async () => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(404))
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/interim-sites/902512/remove`
+      })
+      expect(headers.location).toBe(UPDATE)
+    })
+
+    test("a refused undo shows the backend's message", async () => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(409, 'not json'))
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/interim-site-changes/${CHANGE_ID}/undo`
+      })
+      expect(statusCode).toBe(statusCodes.conflict)
+      expect(result).toContain('This information could not be saved')
+    })
+
     test('undoing a change already gone still returns to the details', async () => {
       mockGet(makeView({ item: updateItem() }))
       vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(404))
@@ -646,16 +822,27 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(statusCode).toBe(statusCodes.internalServerError)
     })
 
-    test('AC06: the submitted page shows the references', async () => {
+    test('AC06: the submitted page shows the newest free request, not a newer charged one', async () => {
       mockGet(
         makeView({
           requests: [
             {
               status: 'Submitted',
+              sites: [{ caseManagementReference: 'IYC-ORS-2026-00009' }],
+              charge: { chargeableSites: 1 }
+            },
+            {
+              status: 'Submitted',
+              sites: [],
+              charge: { chargeableSites: 0 }
+            },
+            {
+              status: 'Submitted',
               sites: [
                 { caseManagementReference: 'IYC-ORS-2026-00007' },
                 { caseManagementReference: null }
-              ]
+              ],
+              charge: { chargeableSites: 0 }
             }
           ]
         })
@@ -663,6 +850,7 @@ describe('#updateOverseasSite (RA-682)', () => {
       const { result } = await server.inject(`${BASE}/submitted`)
       expect(result).toContain('In year change application submitted')
       expect(result).toContain('IYC-ORS-2026-00007')
+      expect(result).not.toContain('IYC-ORS-2026-00009')
     })
 
     test('with nothing submitted the submitted page goes back to Manage ORS', async () => {

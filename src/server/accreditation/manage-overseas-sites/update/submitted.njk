@@ -1,6 +1,5 @@
 {% extends 'layouts/page.njk' %}
 
-{# RA-682 AC06: a submitted in-year change application with nothing to pay. #}
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
@@ -14,7 +13,7 @@
         {% endif %}
       </div>
       <p class="govuk-body" data-testid="submitted-next">{{ t('pages.updateOverseasSite.submitted.next') }}</p>
-      <p class="govuk-body"><a class="govuk-link" href="{{ manageSitesUrl }}" data-testid="manage-sites-link">{{ t('pages.manageOverseasSites.payment.backLink') }}</a></p>
+      <p class="govuk-body"><a class="govuk-link" href="{{ manageSitesUrl }}" data-testid="manage-sites-link">{{ t('pages.updateOverseasSite.submitted.backLink') }}</a></p>
     </div>
   </div>
 {% endblock %}

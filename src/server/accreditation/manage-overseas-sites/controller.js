@@ -56,7 +56,10 @@ const VIEWS = {
 // 404 (no such application or site) and 409 (not a granted exporter
 // accreditation, or a site that cannot be added) mean the same thing to
 // these pages: there is nothing to show or do.
-const NOTHING_TO_DO = new Set([statusCodes.notFound, statusCodes.conflict])
+export const NOTHING_TO_DO = new Set([
+  statusCodes.notFound,
+  statusCodes.conflict
+])
 
 export function organisationIdFrom(request) {
   return request.yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
@@ -285,7 +288,6 @@ export const cancelAddToAccreditationController = {
   }
 }
 
-// RA-682: where a draft item is reviewed: an add's summary, an update's details.
 function itemUrl(applicationId, site) {
   return site.changeType === CHANGE_TYPES.updateOverseasSite
     ? updateUrl(applicationId, site.siteId)
@@ -314,17 +316,17 @@ function renderRequests(
         orsId: site.orsId,
         siteName: site.siteName,
         address: orsAddressLine(entry.site),
-        // RA-682: an update is listed as such, opens its details page, and can be taken out of the request here.
-        typeKey: isUpdate ? 'orsUpdate' : 'newOrs',
+        typeKey: isUpdate
+          ? 'pages.manageChangeRequests.types.updateOverseasSite'
+          : 'pages.manageOverseasSites.requests.newOrs',
         viewUrl: itemUrl(applicationId, site),
         removeUrl: isUpdate ? cancelUpdateUrl(applicationId, site.siteId) : null
       }
     }),
     // RA-682 AC05: only adding an ORS is charged.
-    charge:
-      view.activeRequest?.charge?.chargeableSites > 0
-        ? chargeFor(view.activeRequest.charge)
-        : null,
+    charge: isCharged(view.activeRequest)
+      ? chargeFor(view.activeRequest.charge)
+      : null,
     errors: errors ?? []
   })
 }
@@ -454,15 +456,8 @@ function paymentReferenceFor(application) {
   )
 }
 
-// Unreadable, the request is taken to be charged, as before RA-682: the
-// submit then quotes the payment reference and the backend decides.
-async function isCharged(request) {
-  try {
-    const view = await loadView(request)
-    return (view.activeRequest?.charge?.chargeableSites ?? 1) > 0
-  } catch {
-    return true
-  }
+function isCharged(changeRequest) {
+  return (changeRequest?.charge?.chargeableSites ?? 0) > 0
 }
 
 export const declarationPostController = {
@@ -484,21 +479,23 @@ export const declarationPostController = {
         })
         .code(statusCodes.badRequest)
     }
-    // RA-682 AC05: a request that only changes ORS details has nothing to pay,
-    // so quotes no payment reference and has no payment page.
-    const charged = await isCharged(request)
+    let submitted
     try {
       const organisationId = organisationIdFrom(request)
       const application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
-      await accreditationChangesService.submit(organisationId, applicationId, {
-        fullName,
-        jobTitle,
-        email: getUser(request)?.email ?? null,
-        paymentReference: charged ? paymentReferenceFor(application) : null
-      })
+      submitted = await accreditationChangesService.submit(
+        organisationId,
+        applicationId,
+        {
+          fullName,
+          jobTitle,
+          email: getUser(request)?.email ?? null,
+          paymentReference: paymentReferenceFor(application)
+        }
+      )
     } catch (err) {
       // 404: no draft to submit. 409: a concurrent submit (another tab) won,
       // so this one has nothing left to submit either.
@@ -526,8 +523,11 @@ export const declarationPostController = {
         })
         .code(statusCodes.internalServerError)
     }
+    // RA-682 AC05: a request that only changes ORS details has nothing to pay.
     return h.redirect(
-      charged ? paymentUrl(applicationId) : submittedUrl(applicationId)
+      isCharged(submitted)
+        ? paymentUrl(applicationId)
+        : submittedUrl(applicationId)
     )
   }
 }
@@ -543,7 +543,7 @@ export const paymentGetController = {
     const submitted = view.requests.find(
       (changeRequest) =>
         changeRequest.status === ITEM_STATUSES.submitted &&
-        changeRequest.changeType === CHANGE_TYPES.addOverseasSite
+        isCharged(changeRequest)
     )
     if (!submitted) {
       return redirectToManageSites(request, h, view)

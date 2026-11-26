@@ -1,14 +1,11 @@
 import { guardInterimSiteLinkedSiteId } from '../../../common/helpers/overseasSiteWizardGuard.js'
 import { enterInterimSiteWizardStep } from '../../../common/helpers/addInterimSiteWizardEntry.js'
-import {
-  extractSiteContactFields,
-  validateSiteContactDetails
-} from '../../../common/helpers/siteContactDetails.js'
+import { extractSiteContactFields } from '../../../common/helpers/siteContactDetails.js'
+import { validateInterimContactDetails } from '../../../common/helpers/interimSiteValidation.js'
 import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
-import { INTERIM_CONTACT_PHONE_RULES } from '../../../common/constants/siteFieldLimits.js'
 
 function selectOverseasSitesUrl(applicationId) {
   return `/accreditation/select-overseas-sites/${applicationId}`
@@ -27,15 +24,6 @@ function renderPage(h, viewData) {
     'accreditation/add-interim-site/site-contact-details/index',
     viewData
   )
-}
-
-// Unlike the ORS page, the phone is required here and the name isn't checked
-// for digits.
-const CONTACT_VALIDATION_OPTIONS = {
-  keyPrefix: 'pages.addInterimSite.siteContactDetails.validation',
-  phoneRequired: true,
-  nameRejectsDigits: false,
-  phoneRules: INTERIM_CONTACT_PHONE_RULES
 }
 
 function buildViewData(t, applicationId, fields, errors) {
@@ -96,11 +84,7 @@ export const addInterimSiteContactDetailsPostController = {
     }
 
     const fields = extractSiteContactFields(request.payload)
-    const errors = validateSiteContactDetails(
-      t,
-      fields,
-      CONTACT_VALIDATION_OPTIONS
-    )
+    const errors = validateInterimContactDetails(t, fields)
 
     if (Object.keys(errors).length > 0) {
       return renderPage(

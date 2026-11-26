@@ -6,6 +6,12 @@ export const CHANGE_TYPES = {
   upgradeTonnageBand: 'upgrade-tonnage-band'
 }
 
+// A site's accreditationStatus on the accreditation-changes view.
+export const SITE_ACCREDITATION_STATUSES = {
+  accredited: 'Accredited',
+  registered: 'Registered'
+}
+
 // A request's own lifecycle status is InProgress or Submitted, the same
 // strings as its items'.
 export const ITEM_STATUSES = {
