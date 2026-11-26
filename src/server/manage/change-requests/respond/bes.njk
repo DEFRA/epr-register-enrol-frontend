@@ -1,5 +1,8 @@
 {% extends 'layouts/page.njk' %}
 
+{% from "govuk/components/date-input/macro.njk" import govukDateInput %}
+{% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+
 {% macro fileList(files, removable, removeLabel) %}
   <ul class="govuk-list" data-testid="{{ 'new-files' if removable else 'existing-files' }}">
     {% for file in files %}
@@ -17,29 +20,18 @@
 {% endmacro %}
 
 {% macro dateInput(prefix, label, day, month, year, error) %}
-  <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
-    <fieldset class="govuk-fieldset" role="group">
-      <legend class="govuk-fieldset__legend"><span class="govuk-label">{{ label }}</span></legend>
-      <div class="govuk-hint">{{ t('pages.uploadBesEvidence.dateHint') }}</div>
-      {% if error %}
-        <p class="govuk-error-message" data-testid="{{ prefix }}-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ error }}</p>
-      {% endif %}
-      <div class="govuk-date-input" data-testid="{{ prefix }}-date">
-        <div class="govuk-date-input__item">
-          <label class="govuk-label govuk-date-input__label" for="{{ prefix }}Day">Day</label>
-          <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="{{ prefix }}Day" name="{{ prefix }}Day" type="text" inputmode="numeric" value="{{ day }}" data-testid="{{ prefix }}-day">
-        </div>
-        <div class="govuk-date-input__item">
-          <label class="govuk-label govuk-date-input__label" for="{{ prefix }}Month">Month</label>
-          <input class="govuk-input govuk-date-input__input govuk-input--width-2" id="{{ prefix }}Month" name="{{ prefix }}Month" type="text" inputmode="numeric" value="{{ month }}" data-testid="{{ prefix }}-month">
-        </div>
-        <div class="govuk-date-input__item">
-          <label class="govuk-label govuk-date-input__label" for="{{ prefix }}Year">Year</label>
-          <input class="govuk-input govuk-date-input__input govuk-input--width-4" id="{{ prefix }}Year" name="{{ prefix }}Year" type="text" inputmode="numeric" value="{{ year }}" data-testid="{{ prefix }}-year">
-        </div>
-      </div>
-    </fieldset>
-  </div>
+    {{ govukDateInput({
+    id: prefix,
+    fieldset: { legend: { text: label, classes: 'govuk-label' } },
+    hint: { text: t('pages.uploadBesEvidence.dateHint') },
+    errorMessage: { text: error, visuallyHiddenText: t('common.error'), attributes: { 'data-testid': prefix + '-error' } } if error,
+    attributes: { 'data-testid': prefix + '-date' },
+    items: [
+      { id: prefix + 'Day', name: prefix + 'Day', label: t('common.day'), classes: 'govuk-input--width-2' + (' govuk-input--error' if error), value: day, attributes: { 'data-testid': prefix + '-day' } },
+      { id: prefix + 'Month', name: prefix + 'Month', label: t('common.month'), classes: 'govuk-input--width-2' + (' govuk-input--error' if error), value: month, attributes: { 'data-testid': prefix + '-month' } },
+      { id: prefix + 'Year', name: prefix + 'Year', label: t('common.year'), classes: 'govuk-input--width-4' + (' govuk-input--error' if error), value: year, attributes: { 'data-testid': prefix + '-year' } }
+    ]
+  }) }}
 {% endmacro %}
 
 {% block content %}
@@ -83,13 +75,13 @@
 
       <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">
         <input type="hidden" name="crumb" value="{{ crumb }}">
-        <div class="govuk-form-group{% if fileError %} govuk-form-group--error{% endif %}">
-          <label class="govuk-label" for="file">{{ t('pages.uploadBesEvidence.fileLabel') }}</label>
-          {% if fileError %}
-            <p id="file-error" class="govuk-error-message" data-testid="file-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ fileError }}</p>
-          {% endif %}
-          <input class="govuk-file-upload{% if fileError %} govuk-file-upload--error{% endif %}" id="file" name="file" type="file" accept=".pdf,.doc,.docx,.xls,.csv,.png,.tif,.jpg,.msg" data-testid="file-input">
-        </div>
+        {{ govukFileUpload({
+          id: 'file',
+          name: 'file',
+          label: { text: t('pages.uploadBesEvidence.fileLabel') },
+          errorMessage: { text: fileError, visuallyHiddenText: t('common.error'), attributes: { 'data-testid': 'file-error' } } if fileError,
+          attributes: { accept: '.pdf,.doc,.docx,.xls,.csv,.png,.tif,.jpg,.msg', 'data-testid': 'file-input' }
+        }) }}
         {{ dateInput('validFrom', t('pages.uploadBesEvidence.validFrom'), validFromDay, validFromMonth, validFromYear, validFromError) }}
         {{ dateInput('validTo', t('pages.uploadBesEvidence.validTo'), validToDay, validToMonth, validToYear, validToError) }}
         <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="upload-button">{{ t('pages.uploadBesEvidence.uploadButton') }}</button>

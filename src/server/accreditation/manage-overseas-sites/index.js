@@ -4,6 +4,7 @@ import { manageRouteOptions } from '../../manage/helpers/manage-page.js'
 import { manageUrl } from '../../manage/helpers/manage-urls.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { accreditationChangesService } from '../../common/helpers/accreditationChangesService.js'
+import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { MAX_FILE_BYTES } from '../upload-bes-evidence/controller.js'
 import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
@@ -41,7 +42,8 @@ const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
 // RA-698: while the regulator has a query open on one of the operator's ORS
 // changes, no ORS can be added, so every page here goes back to the manage
-// page. A view that cannot be read leaves the page to handle that itself.
+// page. A view that cannot be read leaves the page to handle that itself, but
+// the failure is logged.
 async function redirectWhenQueryOpen(request, h) {
   const organisationId = request.yar.get(
     ACCREDITATION_SESSION_KEYS.organisationId
@@ -52,7 +54,13 @@ async function redirectWhenQueryOpen(request, h) {
       organisationId,
       request.params.applicationId
     )
-  } catch {
+  } catch (err) {
+    logStructuredError(
+      request.logger,
+      err,
+      { applicationId: request.params.applicationId },
+      'Could not read the change request view to check for an open query'
+    )
     return h.continue
   }
   if (!view?.hasOpenQuery) {

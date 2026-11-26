@@ -1057,4 +1057,15 @@ describe('while the regulator has a query open (RA-698)', () => {
       '/manage/50018/R26EX0500180001PL/Plastic'
     )
   })
+
+  test('lets the page through when the view cannot be read', async () => {
+    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('down'))
+
+    const response = await server.inject({
+      method: 'GET',
+      url: `${BASE}/requests`
+    })
+
+    expect(response.statusCode).not.toBe(statusCodes.redirect)
+  })
 })

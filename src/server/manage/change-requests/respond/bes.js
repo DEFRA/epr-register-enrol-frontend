@@ -2,6 +2,8 @@ import { config } from '../../../../config/config.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationChangesService } from '../../../common/helpers/accreditationChangesService.js'
 import { isFilenameAmong } from '../../../common/helpers/duplicateFilename.js'
+import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
+import { localePrefix } from '../../../common/helpers/localePrefix.js'
 import { logStructuredError } from '../../../common/helpers/logging/log-structured-error.js'
 import { initUpload } from '../../../common/helpers/upload/init-upload.js'
 import { proxyUploadToCdp } from '../../../common/helpers/upload/proxy-upload-to-cdp.js'
@@ -23,6 +25,9 @@ import { respondUrl } from './urls.js'
 // raised are shown but cannot be removed; only files added in response can.
 
 export const RESPOND_BES_UPLOAD_SESSION_KEY = 'respondBesEvidenceUpload'
+
+// A failed upload or save that has no more specific reason.
+const UPLOAD_FAILED_QUERY = 'reason=uploadFailed'
 
 const VIEW = 'manage/change-requests/respond/bes'
 
@@ -172,7 +177,11 @@ export const besGetController = {
     if (response) {
       return response
     }
-    const fileError = uploadRejectionErrorFromQuery(request, ctx.t)
+    const fileError =
+      uploadRejectionErrorFromQuery(request, ctx.t) ??
+      (request.query?.reason === 'uploadFailed'
+        ? ctx.t('pages.uploadBesEvidence.validation.uploadError')
+        : undefined)
     return renderPage(h, ctx, {}, fileError ? { fileError } : {})
   }
 }
@@ -229,7 +238,10 @@ export const requireUploadForItem = {
     if (upload?.statusUrl && upload.itemId === request.params.itemId) {
       return h.continue
     }
-    return h.redirect(besUploadUrl(request.params)).takeover()
+    const { currentLocale } = getLocaleAndTranslator(request)
+    return h
+      .redirect(`${localePrefix(currentLocale)}${besUploadUrl(request.params)}`)
+      .takeover()
   }
 }
 
@@ -262,7 +274,7 @@ export const besStatusController = {
       'bes-evidence'
     )
     if (uploadStatus.form?.file?.hasError) {
-      return h.redirect(uploadPage)
+      return h.redirect(`${uploadPage}?${UPLOAD_FAILED_QUERY}`)
     }
     try {
       await accreditationChangesService.addItemBesFile(
@@ -282,8 +294,8 @@ export const besStatusController = {
         { itemId: ctx.item.itemId },
         'Error saving BES evidence in response to a query'
       )
-      const rejection = uploadRejectionQuery(err)
-      return h.redirect(rejection ? `${uploadPage}?${rejection}` : uploadPage)
+      const rejection = uploadRejectionQuery(err) ?? UPLOAD_FAILED_QUERY
+      return h.redirect(`${uploadPage}?${rejection}`)
     }
     request.yar.flash(
       FLASH_UPDATED,

@@ -8,7 +8,7 @@ import { isItemForSite } from '../../common/helpers/changeRequestSite.js'
 import { endOfYear } from '../../common/helpers/currentYear.js'
 import { hasValue } from '../../common/helpers/hasValue.js'
 import { activeInterimSites } from '../../common/helpers/interimSites.js'
-import { orsAddressLine } from '../../common/helpers/orsAddress.js'
+import { orsFullAddressLine } from '../../common/helpers/orsAddress.js'
 import {
   buildSiteDetailRows,
   manageSitesText
@@ -202,11 +202,21 @@ function withActions(rows, { respond, t }) {
 }
 
 function siteRows({ t, entry, item, files, respond }) {
+  const site = {
+    ...withEffective(entry.site, item.effective),
+    country: item.effective?.country ?? entry.site.country
+  }
   const rows = buildSiteDetailRows({
     t,
-    entry: { ...entry, site: withEffective(entry.site, item.effective) },
+    entry: { ...entry, site },
     requestSite: item
-  }).filter((row) => !HIDDEN_ROWS.has(row.id))
+  })
+    .filter((row) => !HIDDEN_ROWS.has(row.id))
+    .map((row) =>
+      row.id === 'location'
+        ? { ...row, value: orsFullAddressLine(site) || row.value }
+        : row
+    )
   const bes = files.map((file) => file.filename).join(', ')
   const all = [
     ...rows,
@@ -231,6 +241,20 @@ function interimSiteLine(interimSite) {
   ]
     .filter(Boolean)
     .join(', ')
+}
+
+// The operator's own edits to an interim site over the ORS's record of it.
+function withInterimValues(interimSite, item) {
+  const values = item.query?.interimSites?.find(
+    (queried) => String(queried.siteId) === String(interimSite.siteId)
+  )?.values
+  const merged = { ...interimSite }
+  for (const [field, value] of Object.entries(values ?? {})) {
+    if (hasValue(value)) {
+      merged[field] = value
+    }
+  }
+  return merged
 }
 
 function findItemSite(view, item) {
@@ -264,7 +288,7 @@ function orsDetail({ view, found, year, t, currentLocale, respond }) {
     site: { siteId: item.siteId, orsId: item.orsId, siteName: item.siteName }
   }
   const site = {
-    ...entry.site,
+    ...withEffective(entry.site, item.effective),
     country: item.effective?.country ?? entry.site.country
   }
   const files = besEvidenceFiles(entry.site, item)
@@ -274,7 +298,7 @@ function orsDetail({ view, found, year, t, currentLocale, respond }) {
   return {
     heading: orsId ? `${siteName} (${orsId})` : siteName,
     header: {
-      location: orsAddressLine(site),
+      location: orsFullAddressLine(site),
       siteId: orsId,
       statusTag: applicationStatusTag(item.status, t),
       dateAdded: dateOr(request.createdAt, notApplicable, currentLocale),
@@ -287,19 +311,21 @@ function orsDetail({ view, found, year, t, currentLocale, respond }) {
       files,
       respond
     }),
-    interimSites: activeInterimSites(entry.site).map((interimSite) => ({
-      siteId: interimSite.siteId,
-      line: interimSiteLine(interimSite),
-      name: interimSite.siteName,
-      changeUrl: respond
-        ? interimSiteUrl(
-            respond.params,
-            respond.itemId,
-            interimSite.siteId,
-            currentLocale
-          )
-        : null
-    })),
+    interimSites: activeInterimSites(entry.site)
+      .map((interimSite) => withInterimValues(interimSite, item))
+      .map((interimSite) => ({
+        siteId: interimSite.siteId,
+        line: interimSiteLine(interimSite),
+        name: interimSite.siteName,
+        changeUrl: respond
+          ? interimSiteUrl(
+              respond.params,
+              respond.itemId,
+              interimSite.siteId,
+              currentLocale
+            )
+          : null
+      })),
     ...itemDetail({ found, year, t, currentLocale })
   }
 }

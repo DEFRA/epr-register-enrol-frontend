@@ -1044,7 +1044,6 @@
         "actions": {
           "change": "Change",
           "upload": "Upload",
-          "changeHidden": "{{field}}",
           "saveAndContinue": "Save and continue",
           "cancel": "Cancel",
           "continue": "Continue",
@@ -1074,8 +1073,7 @@
         "besRequired": "Upload evidence of broadly equivalent standards before you continue.",
         "lockedHint": "This cannot be changed in response to a query.",
         "interimSite": {
-          "title": "Interim site",
-          "backToOrs": "Back to the overseas reprocessing site"
+          "title": "Interim site"
         },
         "bes": {
           "existingFiles": "Files already uploaded",
@@ -1145,6 +1143,7 @@
         "notProvided": "Not provided",
         "notSubmitted": "Not submitted",
         "interimSites": "Interim sites ({{count}})",
+        "interimSiteHidden": "interim site {{name}}",
         "interimSitesNone": "Interim sites",
         "noInterimSites": "No interim sites have been added.",
         "requestDetails": {
@@ -1266,6 +1265,10 @@
     "signOut": "Sign out"
   },
   "common": {
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "success": "Success",
     "yes": "Yes",
     "no": "No",
     "back": "Back",

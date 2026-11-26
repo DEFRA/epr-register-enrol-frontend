@@ -1043,7 +1043,6 @@
         "actions": {
           "change": "[Welsh] Change",
           "upload": "[Welsh] Upload",
-          "changeHidden": "[Welsh] {{field}}",
           "saveAndContinue": "[Welsh] Save and continue",
           "cancel": "[Welsh] Cancel",
           "continue": "[Welsh] Continue",
@@ -1073,8 +1072,7 @@
         "besRequired": "[Welsh] Upload evidence of broadly equivalent standards before you continue.",
         "lockedHint": "[Welsh] This cannot be changed in response to a query.",
         "interimSite": {
-          "title": "[Welsh] Interim site",
-          "backToOrs": "[Welsh] Back to the overseas reprocessing site"
+          "title": "[Welsh] Interim site"
         },
         "bes": {
           "existingFiles": "[Welsh] Files already uploaded",
@@ -1144,6 +1142,7 @@
         "notProvided": "[Welsh] Not provided",
         "notSubmitted": "[Welsh] Not submitted",
         "interimSites": "[Welsh] Interim sites ({{count}})",
+        "interimSiteHidden": "[Welsh] interim site {{name}}",
         "interimSitesNone": "[Welsh] Interim sites",
         "noInterimSites": "[Welsh] No interim sites have been added.",
         "requestDetails": {
@@ -1265,6 +1264,10 @@
     "signOut": "Allgofnodi"
   },
   "common": {
+    "day": "Diwrnod",
+    "month": "Mis",
+    "year": "Blwyddyn",
+    "success": "Llwyddiant",
     "yes": "Hoffwn",
     "no": "Nac ydw",
     "back": "Yn ôl",

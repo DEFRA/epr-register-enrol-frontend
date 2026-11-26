@@ -463,6 +463,66 @@ describe('#manageChangeRequestDetailController', () => {
       )
     })
 
+    test('shows the operator’s edits to the whole address', async () => {
+      const view = {
+        ...CURRENT_VIEW,
+        requests: [
+          submittedRequest('R009', '2027-04-01T09:00:00Z', {
+            sites: [
+              orsItem(ITEM.queried, 'Queried', {
+                effective: {
+                  country: 'Netherlands',
+                  addressLine1: '7 New Road',
+                  addressLine2: 'Unit 2',
+                  townOrCity: 'Utrecht',
+                  stateOrRegion: 'Utrecht Province',
+                  postcode: '3511 AA'
+                }
+              })
+            ]
+          })
+        ]
+      }
+
+      const result = await getPage(ITEM.queried, view)
+
+      const address =
+        '7 New Road, Unit 2, Utrecht, Utrecht Province, 3511 AA, Netherlands'
+      expect(valueOf(result, 'row-location-value')).toBe(address)
+      expect(valueOf(result, 'header-location')).toBe(address)
+    })
+
+    test('shows an interim site renamed in response to the query', async () => {
+      const view = {
+        ...CURRENT_VIEW,
+        requests: [
+          submittedRequest('R009', '2027-04-01T09:00:00Z', {
+            sites: [
+              orsItem(ITEM.queried, 'Queried', {
+                query: {
+                  queryNote: 'Check',
+                  editableFields: [],
+                  interimSites: [
+                    {
+                      siteId: 901802,
+                      values: { siteName: 'Calais Depot', townOrCity: null }
+                    }
+                  ]
+                }
+              })
+            ]
+          })
+        ]
+      }
+
+      const result = await getPage(ITEM.queried, view)
+
+      expect(valueOf(result, 'interim-site-901802')).toContain(
+        'Calais Depot, France, R13'
+      )
+      expect(result).not.toContain('Calais Storage SARL')
+    })
+
     test('lists the ORS’s current interim sites', async () => {
       const result = await getPage(ITEM.queried)
 

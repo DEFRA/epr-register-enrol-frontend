@@ -527,6 +527,16 @@ describe('responding to a queried item (RA-698)', () => {
       expect(response.statusCode).toBe(statusCodes.redirect)
     })
 
+    test('the status page without an upload keeps the Welsh prefix', async () => {
+      load()
+
+      const response = await page.get(`/cy${ITEM_URL}/bes-evidence/status`)
+
+      expect(response.headers.location).toBe(
+        `/cy${MANAGE_URL}/change-requests/${ITEM_ID}/bes-evidence`
+      )
+    })
+
     test('the status page without an upload goes back to the upload page', async () => {
       load()
 
@@ -598,6 +608,15 @@ describe('responding to a queried item (RA-698)', () => {
       const { statusCode } = await page.get(`${BES}?uploadError=virus`)
 
       expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('GET shows an error for a failed upload', async () => {
+      load()
+
+      const { result } = await page.get(`${BES}?reason=uploadFailed`)
+
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('aria-describedby="file-error"')
     })
 
     test('POST with no file shows the error', async () => {
@@ -734,7 +753,7 @@ describe('responding to a queried item (RA-698)', () => {
 
         const response = await getStatus(cookie)
 
-        expect(response.headers.location).toBe(BES)
+        expect(response.headers.location).toBe(`${BES}?reason=uploadFailed`)
         expect(postSpy).not.toHaveBeenCalled()
       })
 
@@ -749,7 +768,7 @@ describe('responding to a queried item (RA-698)', () => {
         const response = await getStatus(cookie)
 
         expect(response.statusCode).toBe(statusCodes.redirect)
-        expect(response.headers.location).toContain(BES)
+        expect(response.headers.location).toBe(`${BES}?reason=uploadFailed`)
       })
     })
 

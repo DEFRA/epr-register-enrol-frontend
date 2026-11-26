@@ -12,7 +12,7 @@
 
 {% block content %}
   {% if notification %}
-    {{ govukNotificationBanner({ type: 'success', text: notification, attributes: { 'data-testid': 'success-banner' } }) }}
+    {{ govukNotificationBanner({ type: 'success', titleText: t('common.success'), text: notification, attributes: { 'data-testid': 'success-banner' } }) }}
   {% endif %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">

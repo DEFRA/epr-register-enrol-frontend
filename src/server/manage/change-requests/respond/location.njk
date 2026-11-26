@@ -4,21 +4,25 @@
   RA-698: the queried ORS's location. The address can be changed; country and
   coordinates are shown greyed out, as the query leaves them as they are.
 #}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+
 {% macro field(id, name, label, value, error, extraClass) %}
-  <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
-    <label class="govuk-label" for="{{ id }}">{{ label }}</label>
-    {% if error %}
-      <p class="govuk-error-message"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ error }}</p>
-    {% endif %}
-    <input class="govuk-input{% if extraClass %} {{ extraClass }}{% endif %}{% if error %} govuk-input--error{% endif %}" id="{{ id }}" name="{{ name }}" type="text" value="{{ value }}" data-testid="{{ id }}-input">
-  </div>
+  {{ govukInput({
+    id: id,
+    name: name,
+    label: { text: label },
+    value: value,
+    classes: extraClass,
+    errorMessage: { text: error, visuallyHiddenText: t('common.error') } if error,
+    attributes: { 'data-testid': id + '-input' }
+  }) }}
 {% endmacro %}
 
 {% macro lockedField(id, label, value, hint) %}
   <div class="govuk-form-group">
     <label class="govuk-label" for="{{ id }}">{{ label }}</label>
-    <div class="govuk-hint">{{ hint }}</div>
-    <input class="govuk-input" id="{{ id }}" type="text" value="{{ value }}" disabled aria-disabled="true" data-testid="locked-{{ id }}">
+    <div class="govuk-hint" id="{{ id }}-hint">{{ hint }}</div>
+    <input class="govuk-input" id="{{ id }}" type="text" value="{{ value }}" disabled aria-disabled="true" aria-describedby="{{ id }}-hint" data-testid="locked-{{ id }}">
   </div>
 {% endmacro %}
 
