@@ -2,6 +2,8 @@ import { describe, test, expect, vi, beforeEach } from 'vitest'
 
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { apiClient } from '../../../common/api-client.js'
+import { initUpload } from '../../../common/helpers/upload/init-upload.js'
+import { proxyUploadToCdp } from '../../../common/helpers/upload/proxy-upload-to-cdp.js'
 import {
   MANAGE_URL,
   makeManageApp,
@@ -10,6 +12,12 @@ import {
 } from '../../../common/test-helpers/manage-api.js'
 import { setupManagePageServer } from '../../../common/test-helpers/manage-page.js'
 
+vi.mock('../../../common/helpers/upload/init-upload.js', () => ({
+  initUpload: vi.fn()
+}))
+vi.mock('../../../common/helpers/upload/proxy-upload-to-cdp.js', () => ({
+  proxyUploadToCdp: vi.fn()
+}))
 vi.mock('../../../common/helpers/reex-organisation-service.js', () => ({
   operatorCanAccessOrganisation: vi.fn()
 }))
@@ -525,6 +533,233 @@ describe('responding to a queried item (RA-698)', () => {
       expect(response.headers.location).toBe(
         `${MANAGE_URL}/change-requests/${ITEM_ID}/bes-evidence`
       )
+    })
+  })
+
+  describe('uploading BES evidence', () => {
+    const BES = `${ITEM_URL}/bes-evidence`
+    const boundary = 'respond-bes-boundary'
+    const CRLF = '\r\n'
+
+    const multipart = ({
+      filename = 'evidence.pdf',
+      fields = {
+        validFromDay: '1',
+        validFromMonth: '11',
+        validFromYear: '2026',
+        validToDay: '30',
+        validToMonth: '11',
+        validToYear: '2027'
+      }
+    } = {}) => {
+      const parts = []
+      if (filename) {
+        parts.push(
+          `--${boundary}${CRLF}Content-Disposition: form-data; name="file"; filename="${filename}"${CRLF}Content-Type: application/pdf${CRLF}${CRLF}content${CRLF}`
+        )
+      } else {
+        parts.push(
+          `--${boundary}${CRLF}Content-Disposition: form-data; name="file"; filename=""${CRLF}Content-Type: application/octet-stream${CRLF}${CRLF}${CRLF}`
+        )
+      }
+      for (const [name, value] of Object.entries(fields)) {
+        parts.push(
+          `--${boundary}${CRLF}Content-Disposition: form-data; name="${name}"${CRLF}${CRLF}${value}${CRLF}`
+        )
+      }
+      parts.push(`--${boundary}--${CRLF}`)
+      return Buffer.from(parts.join(''))
+    }
+
+    const upload = (options) =>
+      page.server.inject({
+        method: 'POST',
+        url: BES,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`
+        },
+        payload: multipart(options)
+      })
+
+    beforeEach(() => {
+      vi.mocked(initUpload).mockReset().mockResolvedValue({
+        fileUploadId: 'upload-1',
+        uploadUrl: 'http://cdp/upload/upload-1',
+        statusUrl: 'http://cdp/status/upload-1'
+      })
+      vi.mocked(proxyUploadToCdp).mockReset().mockResolvedValue()
+    })
+
+    test('GET shows a rejected upload from the query string', async () => {
+      load()
+
+      const { statusCode } = await page.get(`${BES}?uploadError=virus`)
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('POST with no file shows the error', async () => {
+      load()
+
+      const { statusCode, result } = await upload({ filename: '' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with a disallowed file type shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({ filename: 'malware.exe' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with a filename already used shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({ filename: 'old.pdf' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('POST with no valid from date shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({ fields: {} })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with an invalid valid to date shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({
+        fields: {
+          validFromDay: '1',
+          validFromMonth: '11',
+          validFromYear: '2026',
+          validToDay: '1',
+          validToMonth: '1',
+          validToYear: '2020'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST starts the upload and goes to the status page', async () => {
+      load()
+
+      const response = await upload()
+
+      expect(initUpload).toHaveBeenCalledWith(
+        expect.objectContaining({
+          s3Path: expect.stringContaining(ITEM_ID)
+        })
+      )
+      expect(proxyUploadToCdp).toHaveBeenCalled()
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(`${BES}/status`)
+    })
+
+    test('POST shows an error when the upload cannot be started', async () => {
+      load()
+      vi.mocked(initUpload).mockRejectedValue(new Error('cdp down'))
+
+      const { statusCode } = await upload()
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    describe('the status page', () => {
+      const startUpload = async () => {
+        const response = await upload()
+        return response.headers['set-cookie']
+          ?.map((c) => c.split(';')[0])
+          .join('; ')
+      }
+      const getStatus = (cookie) =>
+        page.server.inject({
+          method: 'GET',
+          url: `${BES}/status`,
+          headers: { cookie }
+        })
+      const withStatus = (status) => {
+        const original = apiClient.get.getMockImplementation()
+        vi.spyOn(apiClient, 'get').mockImplementation((path, ...rest) =>
+          path.includes('/status/upload-1')
+            ? Promise.resolve(status)
+            : original(path, ...rest)
+        )
+      }
+
+      test('shows the progress page while the file is processing', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({ uploadStatus: 'pending', processingStatus: 'scanning' })
+
+        const { statusCode } = await getStatus(cookie)
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      test('saves a ready file and returns to the detail page', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({ uploadStatus: 'ready', form: { file: {} } })
+
+        const response = await getStatus(cookie)
+
+        expect(postSpy).toHaveBeenCalledWith(
+          `${CHANGES}/items/${ITEM_ID}/bes-evidence/files`,
+          expect.objectContaining({ fileUploadId: 'upload-1' })
+        )
+        expect(response.headers.location).toBe(ITEM_URL)
+      })
+
+      test('goes back to the upload page for a file the scan rejected', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({
+          uploadStatus: 'ready',
+          form: { file: { hasError: true } }
+        })
+
+        const response = await getStatus(cookie)
+
+        expect(response.headers.location).toBe(BES)
+        expect(postSpy).not.toHaveBeenCalled()
+      })
+
+      test('goes back to the upload page when the backend refuses the file', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({ uploadStatus: 'ready', form: { file: {} } })
+        postSpy.mockRejectedValue(
+          Object.assign(new Error('boom'), { status: 500 })
+        )
+
+        const response = await getStatus(cookie)
+
+        expect(response.statusCode).toBe(statusCodes.redirect)
+        expect(response.headers.location).toContain(BES)
+      })
+    })
+
+    test('removing a file shows an error when the backend fails', async () => {
+      load()
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(
+        Object.assign(new Error('500'), { status: 500 })
+      )
+
+      const { statusCode } = await post(`${BES}/new-file/delete`)
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
     })
   })
 
