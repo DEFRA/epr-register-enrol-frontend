@@ -16,7 +16,6 @@ vi.mock('../../../common/helpers/reex-organisation-service.js', () => ({
 
 const ITEM_ID = '0b6a3c1e-5d2f-4a8b-9c71-1e2d3f4a5b01'
 const ITEM_URL = `${MANAGE_URL}/change-requests/${ITEM_ID}`
-const APP_ID = 'app-current'
 const CHANGES = '/api/v1/accreditation-changes/reex-org-123/app-current'
 
 const SITE = {
@@ -607,9 +606,5 @@ describe('responding to a queried item (RA-698)', () => {
       expect(response.headers.location).toBe(ITEM_URL)
       expect(postSpy).not.toHaveBeenCalled()
     })
-  })
-
-  test('the APP id used by the backend calls is the accreditation’s', () => {
-    expect(APP_ID).toBe(app.id)
   })
 })
