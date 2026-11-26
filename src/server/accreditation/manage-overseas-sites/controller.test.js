@@ -203,6 +203,7 @@ describe('#manageOverseasSites (RA-492)', () => {
         method: 'POST',
         url: `${BASE}/sites/900182`
       })
+      // RA-814: the first page of the combined table.
       expect(headers.location).toBe(MANAGE)
     })
 
@@ -756,6 +757,7 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(result).toContain('Number of overseas reprocessing sites: 2')
       expect(result).toContain('£328.00')
       expect(result).toMatch(/data-testid="charge-total">£656.00/)
+      // RA-814: the first page of the combined table, with no page or anchor.
       expect(result).toMatch(
         new RegExp(`href="${MANAGE}"[^>]*data-testid="add-another-request"`)
       )

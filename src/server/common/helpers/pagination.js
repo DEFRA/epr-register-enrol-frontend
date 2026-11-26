@@ -27,6 +27,18 @@ export function paginate(rows, requestedPage, pageSize = PAGE_SIZE) {
 
 const PAGINATION_KEYS = 'common.pagination'
 
+// RA-697: the wording copies case management's count line. Null for an
+// empty list, which shows no count.
+export function countText({ rangeStart, rangeEnd, totalCount }, t) {
+  return totalCount > 0
+    ? t(`${PAGINATION_KEYS}.showing`, {
+        start: rangeStart,
+        end: rangeEnd,
+        total: totalCount
+      })
+    : null
+}
+
 // Ported from case management's work-items list. The labels are passed in
 // because the GOV.UK macro's defaults are English only.
 export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {

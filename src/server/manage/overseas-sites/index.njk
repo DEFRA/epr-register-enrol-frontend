@@ -1,6 +1,7 @@
 {% extends 'layouts/page.njk' %}
 
 {% from "overseas-site-row/macro.njk" import interimSiteDisclosure %}
+{% from "govuk/components/pagination/macro.njk" import govukPagination %}
 
 {# RA-492: where a registered ORS stands in the operator's in-year change
    requests. RA-814: each link is rendered on its own, so later flows can add
@@ -68,6 +69,7 @@
   <p class="govuk-body" data-testid="overseas-sites-intro">{{ t('pages.manageOverseasSites.' + ('introRegistrationOnly' if isRegistrationOnly else 'intro')) }}</p>
 
   {% if sites.length %}
+    <p class="govuk-body" data-testid="overseas-sites-count">{{ countText }}</p>
     <table class="govuk-table app-ors-table" data-testid="overseas-sites-table">
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">
@@ -107,6 +109,9 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if pagination %}
+      {{ govukPagination(pagination) }}
+    {% endif %}
   {% else %}
     <p class="govuk-body" data-testid="overseas-sites-empty">{{ t('pages.manageOverseasSites.empty') }}</p>
   {% endif %}

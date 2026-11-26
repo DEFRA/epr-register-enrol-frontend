@@ -29,7 +29,7 @@ describe('#getTranslator', () => {
 
   test('fills {{var}} placeholders from the params', () => {
     expect(
-      t('pages.manageChangeRequests.showing', { start: 1, end: 10, total: 12 })
+      t('common.pagination.showing', { start: 1, end: 10, total: 12 })
     ).toBe('Showing 1-10 of 12')
     expect(getTranslator('cy')('common.pagination.page', { number: 2 })).toBe(
       '[Welsh] Page 2'

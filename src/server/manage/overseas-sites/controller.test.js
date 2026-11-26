@@ -500,7 +500,9 @@ describe('#manageOverseasSitesController', () => {
       expect(result).toMatch(
         /data-testid="overseas-sites-empty"[^>]*>\s*You have no overseas reprocessing sites\.\s*</
       )
-      expect(result).not.toMatch(/overseas-sites-table|<table|site-row-/)
+      expect(result).not.toMatch(
+        /overseas-sites-table|<table|site-row-|overseas-sites-count|govuk-pagination/
+      )
       expect(result).toContain('data-testid="return-to-home-link"')
     }
   )
@@ -547,6 +549,210 @@ describe('#manageOverseasSitesController', () => {
         `href="${MANAGE_REEX_URL}"[^>]*data-testid="return-to-home-link"`
       )
     )
+  })
+
+  // RA-814: ten sites a page, as the Change requests page pages its list.
+  describe('count line and paging', () => {
+    const APPLICATION_ID = 'app-current'
+    // 23 sites whose ORS IDs run opposite to their site IDs, so the list is
+    // only in ORS ID order across pages if it is ordered before it is paged.
+    // Even site IDs are approved, odd ones registered.
+    const MANY_SITES = Array.from({ length: 23 }, (_, index) => {
+      const siteId = index + 1
+      return ors(siteId, {
+        orsId: String(24 - siteId).padStart(3, '0'),
+        selected: siteId % 2 === 0
+      })
+    })
+    const sitesApp = (sites) =>
+      makeApp({ overseasSites: { sectionStatus: 'Completed', sites } })
+    const siteIdsFrom = (from, to) =>
+      Array.from({ length: from - to + 1 }, (_, index) => from - index)
+
+    async function getListPage(
+      query,
+      { sites = MANY_SITES, changes = noChangeRequests, url = PAGE_URL } = {}
+    ) {
+      mockManageGets([sitesApp(sites)], approvedRegistration, changes)
+      const response = await get(`${url}${query}`)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      return response
+    }
+
+    const countLine = (html) =>
+      html.match(
+        /<p[^>]*data-testid="overseas-sites-count"[^>]*>\s*([^<]+?)\s*<\/p>/
+      )?.[1]
+
+    const paginationLinks = (html) =>
+      [
+        ...html.matchAll(
+          /class="govuk-link govuk-pagination__link" href="([^"]+)"(?: rel="(prev|next)")?/g
+        )
+      ].map(([, href, rel]) => [rel ?? 'page', href.replaceAll('&amp;', '&')])
+
+    test.each([
+      [6, SITES, 'Showing 1-6 of 6'],
+      [10, MANY_SITES.slice(0, 10), 'Showing 1-10 of 10']
+    ])(
+      'shows all %i sites under a normal weight count line, with no pagination',
+      async (count, sites, text) => {
+        const { result } = await getListPage('', { sites })
+
+        expect(rowIds(result)).toHaveLength(count)
+        expect(countLine(result)).toBe(text)
+        expect(result).toMatch(
+          new RegExp(
+            `<p class="govuk-body" data-testid="overseas-sites-count">\\s*${text}\\s*</p>`
+          )
+        )
+        expect(result).not.toContain('govuk-pagination')
+      }
+    )
+
+    test('puts the count line above the table', async () => {
+      const { result } = await getListPage('')
+      const count = result.indexOf('data-testid="overseas-sites-count"')
+
+      expect(count).toBeGreaterThan(-1)
+      expect(count).toBeLessThan(
+        result.indexOf('data-testid="overseas-sites-table"')
+      )
+    })
+
+    test('shows the first ten sites by ORS ID, with pagination, when there are more', async () => {
+      const { result } = await getListPage('')
+
+      expect(rowIds(result)).toEqual(siteIdsFrom(23, 14))
+      expect(countLine(result)).toBe('Showing 1-10 of 23')
+      expect(paginationLinks(result)).toEqual([
+        ['page', `${PAGE_URL}?page=1`],
+        ['page', `${PAGE_URL}?page=2`],
+        ['page', `${PAGE_URL}?page=3`],
+        ['next', `${PAGE_URL}?page=2`]
+      ])
+      expect(result).toMatch(
+        new RegExp(
+          `href="${PAGE_URL}\\?page=1" aria-label="Page 1" aria-current="page"`
+        )
+      )
+    })
+
+    test('continues in ORS ID order on later pages, with the right ranges', async () => {
+      const second = (await getListPage('?page=2')).result
+      const third = (await getListPage('?page=3')).result
+
+      expect(rowIds(second)).toEqual(siteIdsFrom(13, 4))
+      expect(countLine(second)).toBe('Showing 11-20 of 23')
+      expect(paginationLinks(second)).toEqual([
+        ['prev', `${PAGE_URL}?page=1`],
+        ['page', `${PAGE_URL}?page=1`],
+        ['page', `${PAGE_URL}?page=2`],
+        ['page', `${PAGE_URL}?page=3`],
+        ['next', `${PAGE_URL}?page=3`]
+      ])
+      expect(rowIds(third)).toEqual([3, 2, 1])
+      expect(countLine(third)).toBe('Showing 21-23 of 23')
+      expect(paginationLinks(third).at(-1)).toEqual([
+        'page',
+        `${PAGE_URL}?page=3`
+      ])
+    })
+
+    test('names the Previous and Next links and each page to screen readers', async () => {
+      const { result } = await getListPage('?page=2')
+
+      expect(result).toContain('aria-label="Pagination"')
+      expect(result).toContain('aria-label="Page 3"')
+      expect(result).toMatch(
+        /rel="prev"[\s\S]*?Previous<span class="govuk-visually-hidden"> page<\/span>/
+      )
+      expect(result).toMatch(
+        /rel="next"[\s\S]*?Next<span class="govuk-visually-hidden"> page<\/span>/
+      )
+    })
+
+    test.each([
+      ['a page past the last', '?page=99', 21, 23],
+      ['page 0', '?page=0', 1, 10],
+      ['a page that is not a number', '?page=last', 1, 10]
+    ])('shows a valid page for %s', async (_case, query, from, to) => {
+      const { result } = await getListPage(query)
+
+      expect(countLine(result)).toBe(`Showing ${from}-${to} of 23`)
+      expect(rowIds(result)).toHaveLength(to - from + 1)
+    })
+
+    test('keeps the Welsh prefix and labels in the count line and pagination', async () => {
+      const { result } = await getListPage('?page=2', { url: WELSH_PAGE_URL })
+
+      expect(countLine(result)).toBe('[Welsh] Showing 11-20 of 23')
+      expect(paginationLinks(result)).toEqual([
+        ['prev', `/cy${PAGE_URL}?page=1`],
+        ['page', `/cy${PAGE_URL}?page=1`],
+        ['page', `/cy${PAGE_URL}?page=2`],
+        ['page', `/cy${PAGE_URL}?page=3`],
+        ['next', `/cy${PAGE_URL}?page=3`]
+      ])
+      expect(result).toContain('aria-label="[Welsh] Pagination"')
+      expect(result).toContain('aria-label="[Welsh] Page 3"')
+      expect(result).toMatch(
+        /rel="prev"[\s\S]*?\[Welsh\] Previous<span class="govuk-visually-hidden"> \[Welsh\] page<\/span>/
+      )
+    })
+
+    // Worked out from the whole list, so the same on every page.
+    test.each(['', '?page=2', '?page=3'])(
+      'counts pending additions and ready requests across all pages (%s)',
+      async (query) => {
+        const changes = {
+          ...noChangeRequests,
+          sites: [
+            // Page 1 and page 3.
+            { siteId: 21, pendingRequestStatus: 'Submitted' },
+            { siteId: 3, pendingRequestStatus: 'Submitted' },
+            // Page 2.
+            { siteId: 9, pendingRequestStatus: 'InProgress' }
+          ],
+          activeRequest: { status: 'InProgress', sites: [{ siteId: 9 }] }
+        }
+
+        const { result } = await getListPage(query, { changes })
+
+        expect(result).toContain(
+          'application to add 2 overseas reprocessing sites to your accreditation.'
+        )
+        expect(result).toContain(
+          'You currently have 1 change request ready for submission.'
+        )
+      }
+    )
+
+    test('Add to accreditation works for a site on page 2, on a first visit straight to that page', async () => {
+      const { result, headers } = await getListPage('?page=2')
+      const action = `/accreditation/manage-overseas-sites/${APPLICATION_ID}/sites/13`
+      expect(actions(result, 13)).toContain(`action="${action}"`)
+
+      const post = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      const cookie = [headers['set-cookie']]
+        .flat()
+        .map((value) => value.split(';')[0])
+        .join('; ')
+      const response = await page.server.inject({
+        method: 'POST',
+        url: action,
+        headers: { cookie }
+      })
+
+      expect(post).toHaveBeenCalledWith(
+        `/api/v1/accreditation-changes/reex-org-123/${APPLICATION_ID}/requests/current/sites`,
+        { siteId: 13 }
+      )
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(
+        `/accreditation/manage-overseas-sites/${APPLICATION_ID}/add/13`
+      )
+    })
   })
 
   describe('with the frontend stub API', () => {

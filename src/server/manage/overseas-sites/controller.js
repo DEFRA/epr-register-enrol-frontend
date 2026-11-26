@@ -12,8 +12,13 @@ import {
   manageCaption,
   serviceProblem
 } from '../helpers/manage-page.js'
-import { manageUrl } from '../helpers/manage-urls.js'
+import { manageUrl, overseasSitesUrl } from '../helpers/manage-urls.js'
 import { orsAddressLine } from '../../common/helpers/orsAddress.js'
+import {
+  buildPagination,
+  countText,
+  paginate
+} from '../../common/helpers/pagination.js'
 
 const ORS_STATUSES = { approved: 'approved', registered: 'registered' }
 
@@ -177,6 +182,10 @@ export const manageOverseasSitesController = {
 
     const heading = t('pages.manageOverseasSites.heading')
     const { sites, changeRequests } = list
+    // RA-814: the list is ordered before it is paged, and the banners count
+    // the whole list, so they read the same on every page.
+    const paged = paginate(sites, request.query.page)
+    const pageUrl = overseasSitesUrl(request.params, currentLocale)
 
     return h.view('manage/overseas-sites/index', {
       pageTitle: heading,
@@ -189,7 +198,14 @@ export const manageOverseasSitesController = {
         context.reExOrganisationId,
         context.registrationId
       ),
-      sites,
+      sites: paged.rows,
+      countText: countText(paged, t),
+      pagination: buildPagination({
+        page: paged.page,
+        totalPages: paged.totalPages,
+        baseUrl: pageUrl,
+        t
+      }),
       // RA-492 banners: AC09 pending change, AC10 requests to resume.
       pendingCount: sites.filter((site) => site.pending).length,
       isRegistrationOnly: context.isRegistrationOnly,

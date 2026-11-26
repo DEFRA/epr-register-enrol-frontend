@@ -1075,7 +1075,6 @@
         "body": "[Welsh] Improve your search results by removing one or more of your selected filters."
       },
       "returnToHome": "[Welsh] Return to home",
-      "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}",
       "detail": {
         "header": {
           "location": "[Welsh] Location:",
@@ -1273,7 +1272,8 @@
       "previous": "[Welsh] Previous",
       "next": "[Welsh] Next",
       "visuallyHiddenPage": "[Welsh] page",
-      "page": "[Welsh] Page {{number}}"
+      "page": "[Welsh] Page {{number}}",
+      "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}"
     }
   },
   "languageSwitcher": {
