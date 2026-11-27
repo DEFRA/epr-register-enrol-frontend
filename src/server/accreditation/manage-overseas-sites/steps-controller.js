@@ -1,4 +1,3 @@
-import { config } from '../../../config/config.js'
 import { getLocaleAndTranslator } from '../../common/helpers/get-locale-translator.js'
 import { COUNTRIES } from '../../common/data/countries.js'
 import { validateSiteLocationFields } from '../../common/helpers/overseasSiteLocationValidation.js'
@@ -6,36 +5,32 @@ import {
   applicableCodesForMaterialType,
   validateRecyclingOperationCodes
 } from '../../common/helpers/overseasSiteAnswerValidation.js'
-import { initUpload } from '../../common/helpers/upload/init-upload.js'
-import { proxyUploadToCdp } from '../../common/helpers/upload/proxy-upload-to-cdp.js'
-import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { buildViewData as buildRecyclingViewData } from '../add-overseas-site/recycling-operation-details/controller.js'
 import { buildViewData as buildConditionsViewData } from '../add-overseas-site/conditions-of-export/controller.js'
-import { isFilenameAmong } from '../../common/helpers/duplicateFilename.js'
 import {
-  ALLOWED_MIME_TYPES,
-  MAX_FILE_BYTES,
-  hasMaxBesEvidenceFiles,
   uploadRejectionErrorFromQuery,
-  uploadRejectionQuery,
-  buildViewData as buildBesViewData,
-  parseDate,
-  resolveBesEvidenceValidTo,
-  validateFileExtension
+  buildViewData as buildBesViewData
 } from '../upload-bes-evidence/controller.js'
 import {
   accreditationChangesService,
+  conflictMessage,
   validationErrors
 } from '../../common/helpers/accreditationChangesService.js'
+import {
+  besFileContext,
+  besUploadStatusPre,
+  completeBesUpload,
+  postBesUpload
+} from './bes-upload.js'
 import {
   loadView,
   organisationIdFrom,
   redirectToManageSites,
   resolveDraftSite
 } from './controller.js'
+import { refusal, refusedFields } from './refusals.js'
 import { addToAccreditationUrl, stepUrl } from './urls.js'
-import { besUploadsOf, grantedBesUploads } from './view-model.js'
 
 // RA-492: the "Add information" / "Change" steps behind the Add to
 // accreditation summary. Each captures one of the fields the backend lets
@@ -44,8 +39,6 @@ import { besUploadsOf, grantedBesUploads } from './view-model.js'
 // journey's own template for it, and PATCHes the draft request before
 // returning to the summary. A field already recorded on the ORS is locked:
 // its step redirects to the summary and the backend refuses it too.
-
-export const IN_YEAR_BES_UPLOAD_SESSION_KEY = 'inYearBesEvidenceUpload'
 
 const VIEWS = {
   location: 'accreditation/manage-overseas-sites/location',
@@ -110,9 +103,11 @@ function stepUrls(request) {
 }
 
 /**
- * PATCHes the draft. Returns null when it saved, or the backend's field
- * errors (possibly none it can name) when it refused the answer with a 400
- * - a field that became locked, or one that failed its rules.
+ * PATCHes the draft. Returns null when it saved, or errors keyed by field
+ * when it was refused: the backend's own on a 400 (a field that became
+ * locked, or one that failed its rules, possibly none it can name), or a
+ * 409's message once, against the first field sent (the site was already
+ * sent to the regulator, or the draft was changed elsewhere).
  */
 async function patchSite(request, body) {
   const { applicationId, siteId } = request.params
@@ -128,31 +123,13 @@ async function patchSite(request, body) {
     if (err.status === statusCodes.badRequest) {
       return validationErrors(err)
     }
+    const message =
+      err.status === statusCodes.conflict ? conflictMessage(err) : null
+    if (message) {
+      return { [Object.keys(body)[0]]: message }
+    }
     throw err
   }
-}
-
-// ASP.NET may send a ValidationProblem's error keys in either case.
-function errorKeyFor(errors, field) {
-  return Object.keys(errors).find(
-    (name) => name.toLowerCase() === field.toLowerCase()
-  )
-}
-
-/**
- * The message to show against one field after a PATCH: the backend's own
- * message for it, a general one when the answer was refused without naming
- * the field, or null when it saved.
- */
-function refusal(t, errors, field) {
-  if (errors === null) {
-    return null
-  }
-  const key = errorKeyFor(errors, field)
-  return (
-    [key ? errors[key] : null].flat().find(Boolean) ??
-    t('pages.manageOverseasSites.saveRefused')
-  )
 }
 
 // --- Location: country and coordinates -------------------------------------
@@ -214,14 +191,7 @@ export const locationPostController = stepHandler(
     )
     const apiErrors = await patchSite(request, body)
     if (apiErrors) {
-      const named = draft.open.filter((field) => errorKeyFor(apiErrors, field))
-      // A refusal that names neither field is shown against the first one.
-      const shown = Object.fromEntries(
-        (named.length > 0 ? named : draft.open.slice(0, 1)).map((field) => [
-          field,
-          refusal(t, apiErrors, field)
-        ])
-      )
+      const shown = refusedFields(t, apiErrors, draft.open)
       return locationView(h, t, request, draft, fields, shown).code(
         statusCodes.badRequest
       )
@@ -354,44 +324,6 @@ function besView(h, t, request, draft, payload, errors) {
   })
 }
 
-// RA-605's cap comes first, as on the application's upload page: a site
-// already at the cap gets that message whatever file was chosen.
-// 3bb.38: a grant adds the request's files to the site's own on the
-// accreditation, so the cap counts both, and RA-571's duplicate filename rule
-// takes in every site's files there as well as the request's. The backend
-// also checks the accreditation's sampling plan files, which the view lacks.
-function validateBesFile(t, uploadedFile, draft) {
-  if (hasMaxBesEvidenceFiles(grantedBesFiles(draft))) {
-    return t('pages.uploadBesEvidence.validation.maxFiles')
-  }
-  const filename = uploadedFile?.filename ?? ''
-  if (!filename) {
-    return t('pages.uploadBesEvidence.validation.noFile')
-  }
-  if (!validateFileExtension(filename)) {
-    return t('pages.uploadBesEvidence.validation.invalidType')
-  }
-  if (uploadedFile.payload.length > MAX_FILE_BYTES) {
-    return t('pages.uploadBesEvidence.validation.fileTooLarge')
-  }
-  if (isFilenameAmong(filename, filenamesOnRequestAndAccreditation(draft))) {
-    return t('pages.uploadBesEvidence.validation.duplicateFilename')
-  }
-  return null
-}
-
-function grantedBesFiles(draft) {
-  const { held, added } = grantedBesUploads(draft.entry.site, draft.requestSite)
-  return [...held, ...added]
-}
-
-function filenamesOnRequestAndAccreditation(draft) {
-  return [
-    ...(draft.view.sites ?? []).map((entry) => entry.site),
-    ...(draft.view.activeRequest?.sites ?? [])
-  ].flatMap((site) => besUploadsOf(site).map((f) => f?.filename))
-}
-
 export const besEvidenceGetController = stepHandler(
   ['besEvidence'],
   async (request, h, t, draft) => {
@@ -408,110 +340,25 @@ export const besEvidenceGetController = stepHandler(
   }
 )
 
-/**
- * Sends the file to the CDP uploader through the change request's own
- * initiate endpoint, and remembers the upload for the status page.
- */
-async function uploadToRequest(request, file, { validFrom, validTo }) {
-  const { applicationId, siteId } = request.params
-  const besEvidenceValidFromDate = validFrom.toISOString()
-  const besEvidenceExpiryDate = validTo?.toISOString() ?? null
-  const uploadDetail = await initUpload({
-    initiateUrl: accreditationChangesService.besEvidenceInitiateUrl(
-      organisationIdFrom(request),
-      applicationId
-    ),
-    redirectUrl: `${config.get('auth.callbackBaseUrl')}${stepUrl(applicationId, siteId, 'bes-evidence/status')}`,
-    s3Path: `accreditation-changes/bes-evidence/${applicationId}/${siteId}`,
-    s3Bucket: config.get('fileUpload.s3Bucket'),
-    metadata: { besEvidenceValidFromDate, besEvidenceExpiryDate },
-    mimeTypes: ALLOWED_MIME_TYPES,
-    maxFileSize: MAX_FILE_BYTES
-  })
-  await proxyUploadToCdp({
-    uploadUrl: uploadDetail.uploadUrl,
-    payload: file.payload,
-    filename: file.filename,
-    contentType: file.headers['content-type']
-  })
-  request.yar.set(IN_YEAR_BES_UPLOAD_SESSION_KEY, {
-    statusUrl: uploadDetail.statusUrl,
-    fileUploadId: uploadDetail.fileUploadId,
-    siteId,
-    besEvidenceValidFromDate,
-    besEvidenceExpiryDate
-  })
+function besStatusUrl({ applicationId, siteId }) {
+  return stepUrl(applicationId, siteId, 'bes-evidence/status')
 }
 
 export const besEvidencePostController = stepHandler(
   ['besEvidence'],
-  async (request, h, t, draft) => {
-    const { applicationId, siteId } = request.params
-    const payload = request.payload ?? {}
-    if (payload.action === 'saveAndComeLater') {
-      return h.redirect(stepUrls(request).summary)
-    }
-    const fileError = validateBesFile(t, payload.file, draft)
-    if (fileError) {
-      return besView(h, t, request, draft, payload, { fileError }).code(
-        statusCodes.badRequest
-      )
-    }
-    const validFrom = parseDate(
-      payload.validFromDay,
-      payload.validFromMonth,
-      payload.validFromYear
-    )
-    if (!validFrom) {
-      return besView(h, t, request, draft, payload, {
-        validFromError: t(
-          'pages.uploadBesEvidence.validation.validFromRequired'
-        )
-      }).code(statusCodes.badRequest)
-    }
-    const { validTo, error: validToError } = resolveBesEvidenceValidTo(
-      payload,
-      validFrom,
-      t
-    )
-    if (validToError) {
-      return besView(h, t, request, draft, payload, { validToError }).code(
-        statusCodes.badRequest
-      )
-    }
-    try {
-      await uploadToRequest(request, payload.file, { validFrom, validTo })
-    } catch (err) {
-      logStructuredError(
-        request.server.logger,
-        err,
-        { siteId, applicationId },
-        `Error uploading in-year BES evidence for site ${siteId}, application ${applicationId}`
-      )
-      return besView(h, t, request, draft, payload, {
-        fileError: t('pages.uploadBesEvidence.validation.uploadError')
-      }).code(statusCodes.internalServerError)
-    }
-    return h.redirect(stepUrl(applicationId, siteId, 'bes-evidence/status'))
-  }
+  async (request, h, t, draft) =>
+    postBesUpload(request, h, t, {
+      files: besFileContext(draft.view, draft.entry.site, draft.requestSite),
+      render: (payload, errors) =>
+        besView(h, t, request, draft, payload, errors),
+      statusUrl: besStatusUrl(request.params),
+      doneUrl: stepUrls(request).summary
+    })
 )
 
-/**
- * Runs before the upload-status lookup on the status page: an upload this
- * session did not start for this site (expired, another tab, or another
- * site) is never attached here, so the operator goes back to that site's
- * upload page instead.
- */
-export const requireUploadForSite = {
-  method(request, h) {
-    const { applicationId, siteId } = request.params
-    const upload = request.yar.get(IN_YEAR_BES_UPLOAD_SESSION_KEY)
-    if (upload?.statusUrl && upload.siteId === siteId) {
-      return h.continue
-    }
-    return h.redirect(besEvidenceUrl(applicationId, siteId)).takeover()
-  }
-}
+export const besEvidenceStatusPre = besUploadStatusPre(
+  ({ applicationId, siteId }) => besEvidenceUrl(applicationId, siteId)
+)
 
 // The file is attached to the route's site only, and only while that site
 // is still in the draft with BES evidence open to it (see loadStep).
@@ -519,49 +366,18 @@ export const besEvidenceStatusController = stepHandler(
   ['besEvidence'],
   async (request, h, t) => {
     const { applicationId, siteId } = request.params
-    const uploadStatus = request.pre.uploadStatus
-    if (uploadStatus?.uploadStatus !== 'ready') {
-      return h.view('accreditation/upload-bes-evidence/status', {
-        pageTitle: t('pages.uploadBesEvidence.status.title'),
-        heading: t('pages.uploadBesEvidence.status.heading'),
-        processingStatus: uploadStatus.processingStatus ?? 'preprocessing'
-      })
-    }
-    const upload = request.yar.get(IN_YEAR_BES_UPLOAD_SESSION_KEY)
-    request.yar.clear(IN_YEAR_BES_UPLOAD_SESSION_KEY)
-    if (uploadStatus.form?.file?.hasError) {
-      return h.redirect(besEvidenceUrl(applicationId, siteId))
-    }
-    try {
-      await accreditationChangesService.addBesEvidenceFile(
-        organisationIdFrom(request),
-        applicationId,
-        siteId,
-        {
-          fileUploadId: upload.fileUploadId,
-          besEvidenceValidFromDate: upload.besEvidenceValidFromDate,
-          besEvidenceExpiryDate: upload.besEvidenceExpiryDate
-        }
-      )
-    } catch (err) {
-      // 422: not scanned clean, a duplicate filename (3bb.48: one the
-      // upload page could not check, such as a sampling plan file's), or
-      // (RA-605) the site already has the most files allowed. The last two
-      // go back to the upload page with their message; otherwise the summary
-      // still shows the evidence as missing, so the operator can try again.
-      logStructuredError(
-        request.server.logger,
-        err,
-        { siteId, applicationId },
-        `Error saving in-year BES evidence for site ${siteId}, application ${applicationId}`
-      )
-      const rejection = uploadRejectionQuery(err)
-      if (rejection) {
-        return h.redirect(
-          `${besEvidenceUrl(applicationId, siteId)}?${rejection}`
+    return completeBesUpload(request, h, t, {
+      uploadUrl: besEvidenceUrl(applicationId, siteId),
+      attach: async (body) => {
+        await accreditationChangesService.addBesEvidenceFile(
+          organisationIdFrom(request),
+          applicationId,
+          siteId,
+          body
         )
-      }
-    }
-    return h.redirect(addToAccreditationUrl(applicationId, siteId))
+        return null
+      },
+      doneUrl: addToAccreditationUrl(applicationId, siteId)
+    })
   }
 )

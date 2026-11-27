@@ -111,7 +111,7 @@ function validateTownOrCity(t, townOrCity) {
   return null
 }
 
-function validateRequiredFields(t, fields) {
+function validateRequiredAddressFields(t, fields) {
   const errors = {}
   if (!fields.addressLine1) {
     errors.addressLine1 = t(
@@ -122,6 +122,11 @@ function validateRequiredFields(t, fields) {
   if (townOrCityError) {
     errors.townOrCity = townOrCityError
   }
+  return errors
+}
+
+function validateRequiredFields(t, fields) {
+  const errors = validateRequiredAddressFields(t, fields)
   if (!fields.country) {
     errors.country = t(
       'pages.addOverseasSite.siteLocation.validation.countryRequired'
@@ -161,6 +166,16 @@ function addMaxLengthErrors(t, fields, errors) {
       errors[field] = t(`pages.addOverseasSite.siteLocation.validation.${key}`)
     }
   }
+}
+
+/**
+ * RA-682: the address lines alone, for a change to an accredited ORS, whose
+ * country and coordinates can't change.
+ */
+export function validateSiteAddressFields(t, fields) {
+  const errors = validateRequiredAddressFields(t, fields)
+  addMaxLengthErrors(t, fields, errors)
+  return errors
 }
 
 export function validateSiteLocationFields(t, fields) {

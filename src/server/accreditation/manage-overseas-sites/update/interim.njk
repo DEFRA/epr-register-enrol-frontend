@@ -1,0 +1,98 @@
+{% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "error-summary/macro.njk" import appErrorSummary %}
+
+{#
+  RA-682 AC04: an interim site's details as part of an ORS update. Changing one
+  keeps its country and recycling operations (read-only inputs); adding one
+  enters every field, as the add-interim-site journey does.
+#}
+{% macro textInput(name, label, value, error, width) %}
+  {{ govukInput({
+    id: name,
+    name: name,
+    value: value,
+    classes: width,
+    label: { text: label },
+    errorMessage: {
+      text: error,
+      visuallyHiddenText: t('common.error'),
+      attributes: { 'data-testid': name + '-error' }
+    } if error else undefined,
+    attributes: { 'data-testid': name + '-input' }
+  }) }}
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {{ appErrorSummary(errorSummary, t('common.errorSummaryTitle')) }}
+
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      <form method="post" novalidate>
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        {{ textInput('siteName', t('pages.addInterimSite.siteName.label'), values.siteName, errors.siteName) }}
+        {{ textInput('addressLine1', t('pages.addInterimSite.siteLocation.addressLine1Label'), values.addressLine1, errors.addressLine1) }}
+        {{ textInput('addressLine2', t('pages.addInterimSite.siteLocation.addressLine2Label'), values.addressLine2, errors.addressLine2) }}
+        {{ textInput('townOrCity', t('pages.addInterimSite.siteLocation.townOrCityLabel'), values.townOrCity, errors.townOrCity, 'govuk-input--width-20') }}
+        {{ textInput('stateOrRegion', t('pages.addInterimSite.siteLocation.stateOrRegionLabel'), values.stateOrRegion, errors.stateOrRegion, 'govuk-input--width-20') }}
+        {{ textInput('postcode', t('pages.addInterimSite.siteLocation.postcodeLabel'), values.postcode, errors.postcode, 'govuk-input--width-10') }}
+
+        {% if isNew %}
+          {{ govukSelect({
+            id: 'country',
+            name: 'country',
+            items: countryItems,
+            label: { text: t('pages.addOverseasSite.siteLocation.countryLabel') },
+            errorMessage: {
+              text: errors.country,
+              visuallyHiddenText: t('common.error'),
+              attributes: { 'data-testid': 'country-error' }
+            } if errors.country else undefined,
+            attributes: { 'data-testid': 'country-input' }
+          }) }}
+          {{ govukCheckboxes({
+            name: 'operationCodes',
+            classes: 'govuk-checkboxes--small',
+            fieldset: {
+              legend: { text: t('pages.updateOverseasSite.interim.operations'), classes: 'govuk-fieldset__legend--s' },
+              attributes: { id: 'operationCodes' }
+            },
+            items: codeItems,
+            errorMessage: {
+              text: errors.operationCodes,
+              visuallyHiddenText: t('common.error'),
+              attributes: { 'data-testid': 'operationCodes-error' }
+            } if errors.operationCodes else undefined
+          }) }}
+        {% else %}
+          {{ govukInput({
+            id: 'country',
+            value: values.country,
+            classes: 'app-input--readonly',
+            label: { text: t('pages.addOverseasSite.siteLocation.countryLabel') },
+            attributes: { readonly: 'readonly', 'data-testid': 'country-input' }
+          }) }}
+          {{ govukInput({
+            id: 'operationCodesReadOnly',
+            value: values.operationCodes | join(', '),
+            classes: 'app-input--readonly',
+            label: { text: t('pages.updateOverseasSite.interim.operations') },
+            attributes: { readonly: 'readonly', 'data-testid': 'operation-codes-input' }
+          }) }}
+        {% endif %}
+
+        {{ textInput('contactName', t('pages.addInterimSite.siteContactDetails.nameLabel'), values.contactName, errors.contactName) }}
+        {{ textInput('contactEmail', t('pages.addInterimSite.siteContactDetails.emailLabel'), values.contactEmail, errors.contactEmail) }}
+        {{ textInput('contactPhone', t('pages.addInterimSite.siteContactDetails.phoneLabel'), values.contactPhone, errors.contactPhone, 'govuk-input--width-20') }}
+
+        <button type="submit" class="govuk-button" data-module="govuk-button" data-prevent-double-click="true" data-testid="continue-button">{{ t('common.continue') }}</button>
+      </form>
+      <a href="{{ cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ t('pages.manageOverseasSites.cancel') }}</a>
+    </div>
+  </div>
+{% endblock %}

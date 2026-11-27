@@ -69,6 +69,15 @@ export const NO_OVERSEAS_SITES_ORG = {
   material: 'plastic'
 }
 
+// RA-682: the in-year ORS update journey's exporter. The backend's
+// DevExporterOrg.InYearUpdate and the fe-tests fixture define the same org.
+export const IN_YEAR_UPDATE_ORG = {
+  orgId: 50025,
+  orgName: 'In-Year Update Exports Ltd',
+  registrationId: 'aaa000000000000000050025',
+  material: 'plastic'
+}
+
 // RA-765: one exporter for each case of the manage page's apply banner. Each
 // application's year is an offset from the clock's (Y), as the backend's
 // DevExporterOrg.Applications are. The fe-tests fixture

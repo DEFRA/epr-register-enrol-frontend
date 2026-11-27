@@ -14,6 +14,10 @@
       <strong class="govuk-tag govuk-tag--blue govuk-!-margin-right-2" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.inProgress') }}</strong>
       {% if site.viewUrl %}<a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.siteId }}">{{ t('pages.manageOverseasSites.viewChangeRequests') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>{% endif %}
     </div>
+  {% elif site.changeUrl %}
+    <div class="app-ors-list__actions">
+      <a class="govuk-link" href="{{ site.changeUrl }}" data-testid="change-site-{{ site.siteId }}">{{ t('pages.manageOverseasSites.change') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
+    </div>
   {% elif site.addUrl %}
     {# Adding a site changes the draft request, so this is a crumb-protected
        POST styled as a link. #}
