@@ -515,36 +515,41 @@ export const declarationPostController = {
         }
       )
     } catch (err) {
-      // 404: no draft to submit. 409: a concurrent submit (another tab) won,
-      // so this one has nothing left to submit either.
-      if (NOTHING_TO_DO.has(err.status)) {
-        return redirectToManageSites(request, h)
-      }
-      if (err.status === statusCodes.unprocessableEntity) {
-        const query = besRefusalQuery(err)
-        return h.redirect(
-          query
-            ? `${requestsUrl(applicationId)}?${query}`
-            : requestsUrl(applicationId)
-        )
-      }
-      logStructuredError(
-        request.logger,
-        err,
-        { applicationId },
-        'Error submitting in-year accreditation change request'
-      )
-      return h
-        .view(VIEWS.declaration, {
-          ...declarationViewData(t, applicationId, fullName, jobTitle),
-          error: t('pages.submitDeclaration.validation.submitError')
-        })
-        .code(statusCodes.internalServerError)
+      return submitFailed(request, h, t, err, { fullName, jobTitle })
     }
     // RA-682 AC05: a request that only changes ORS details has nothing to pay.
     const next = isCharged(submitted) ? paymentUrl : submittedUrl
     return h.redirect(next(applicationId, submitted?.requestId))
   }
+}
+
+function submitFailed(request, h, t, err, { fullName, jobTitle }) {
+  const { applicationId } = request.params
+  // 404: no draft to submit. 409: a concurrent submit (another tab) won,
+  // so this one has nothing left to submit either.
+  if (NOTHING_TO_DO.has(err.status)) {
+    return redirectToManageSites(request, h)
+  }
+  if (err.status === statusCodes.unprocessableEntity) {
+    const query = besRefusalQuery(err)
+    return h.redirect(
+      query
+        ? `${requestsUrl(applicationId)}?${query}`
+        : requestsUrl(applicationId)
+    )
+  }
+  logStructuredError(
+    request.logger,
+    err,
+    { applicationId },
+    'Error submitting in-year accreditation change request'
+  )
+  return h
+    .view(VIEWS.declaration, {
+      ...declarationViewData(t, applicationId, fullName, jobTitle),
+      error: t('pages.submitDeclaration.validation.submitError')
+    })
+    .code(statusCodes.internalServerError)
 }
 
 // f07: the existing bank-transfer payment page, charged per ORS only

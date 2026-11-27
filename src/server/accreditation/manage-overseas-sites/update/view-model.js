@@ -30,10 +30,7 @@ export function updateText(t, key, params) {
  */
 export function resolveUpdate(view, siteId) {
   const entry = findSite(view, siteId)
-  if (
-    !entry ||
-    entry.accreditationStatus !== SITE_ACCREDITATION_STATUSES.accredited
-  ) {
+  if (entry?.accreditationStatus !== SITE_ACCREDITATION_STATUSES.accredited) {
     return null
   }
   const item = findRequestSite(view, siteId)
@@ -48,12 +45,14 @@ export function resolveUpdate(view, siteId) {
 
 // The update step that changes each of siteDetailRows' rows. The rest are
 // locked (AC02) and have no action.
+const CONTACT_DETAILS_STEP = 'contact-details'
+
 const ROW_STEPS = {
   'site-name': 'site-name',
   location: 'location',
-  'contact-name': 'contact-details',
-  'contact-email': 'contact-details',
-  'contact-phone': 'contact-details',
+  'contact-name': CONTACT_DETAILS_STEP,
+  'contact-email': CONTACT_DETAILS_STEP,
+  'contact-phone': CONTACT_DETAILS_STEP,
   'repatriated-loads': 'rejected-loads'
 }
 
