@@ -104,6 +104,33 @@ describe('findInvalidParam', () => {
       ).toBe('materialType')
     }
   )
+
+  // RA-765: the operator-accreditation landing route takes them only when
+  // its URL carries a registration number.
+  test('asks a route opting in by function whether these params take a glass recycling process', () => {
+    const byRegistrationNumber = ({ registrationId }) =>
+      registrationId === 'R27EX0500180001PL'
+    const options = { glassRecyclingProcesses: byRegistrationNumber }
+
+    expect(
+      findInvalidParam(
+        { registrationId: 'R27EX0500180001PL', materialType: 'glass_other' },
+        options
+      )
+    ).toBeNull()
+    expect(
+      findInvalidParam(
+        { registrationId: 'REG001', materialType: 'glass_other' },
+        options
+      )
+    ).toBe('materialType')
+    expect(
+      findInvalidParam(
+        { registrationId: 'REG001', materialType: 'Glass' },
+        options
+      )
+    ).toBeNull()
+  })
 })
 
 describe('normaliseParams', () => {
@@ -141,6 +168,14 @@ describe('normaliseParams', () => {
     expect(params.materialType).toBe('glass_re_melt')
   })
 
+  test('rewrites a glass recycling process to lowercase when a function opts these params in', () => {
+    const params = { registrationId: 'R1', materialType: 'GLASS_OTHER' }
+    normaliseParams(params, {
+      glassRecyclingProcesses: ({ registrationId }) => registrationId === 'R1'
+    })
+    expect(params.materialType).toBe('glass_other')
+  })
+
   test('does not throw when params is undefined', () => {
     expect(() => normaliseParams(undefined)).not.toThrow()
   })
@@ -168,6 +203,19 @@ describe('routeParamsGuard plugin', () => {
       },
       handler: (request) => request.params
     })
+    server.route({
+      method: 'GET',
+      path: '/opted-in-by-key/{registrationId}/{materialType}',
+      options: {
+        plugins: {
+          routeParamsGuard: {
+            glassRecyclingProcesses: ({ registrationId }) =>
+              registrationId.startsWith('R')
+          }
+        }
+      },
+      handler: (request) => request.params
+    })
     await server.initialize()
     return server
   }
@@ -180,6 +228,21 @@ describe('routeParamsGuard plugin', () => {
 
     expect(optedIn.statusCode).toBe(200)
     expect(optedIn.result).toEqual({ materialType: 'glass_re_melt' })
+    expect(notOptedIn.statusCode).toBe(400)
+    await server.stop({ timeout: 0 })
+  })
+
+  test('takes a glass recycling process only for the params a route opts in by function', async () => {
+    const server = await makeServer()
+
+    const optedIn = await server.inject('/opted-in-by-key/R27/GLASS_RE_MELT')
+    const notOptedIn = await server.inject('/opted-in-by-key/X27/glass_re_melt')
+
+    expect(optedIn.statusCode).toBe(200)
+    expect(optedIn.result).toEqual({
+      registrationId: 'R27',
+      materialType: 'glass_re_melt'
+    })
     expect(notOptedIn.statusCode).toBe(400)
     await server.stop({ timeout: 0 })
   })

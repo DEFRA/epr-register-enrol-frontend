@@ -7,8 +7,14 @@ import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSes
 import {
   queryTaskListUrl,
   landingUrl,
-  reExBackLinkUrl
+  reExBackLinkUrl,
+  usesRegistrationNumber
 } from '../common/helpers/accreditationUrls.js'
+import { fetchRegistration } from '../manage/helpers/current-registration.js'
+import {
+  matchesUrlMaterial,
+  parseUrlMaterial
+} from '../manage/helpers/url-material.js'
 import {
   APPLICATION_STATUS_TAGS,
   applicationStatusTag
@@ -17,9 +23,9 @@ import { APPROVED_STATUS } from '../common/constants/applicationStatuses.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
 import {
-  WITHDRAWN_STATUS,
   NON_WITHDRAWABLE_STATUSES,
   TERMINAL_STATUSES,
+  isLiveApplication,
   resolveLandingApplication
 } from '../common/helpers/accreditationSelection.js'
 
@@ -113,13 +119,13 @@ export function buildLandingViewModel(
     // audit. This used to link to accreditationYear + 1, which seeded against a
     // prior year that has no approved accreditation and always failed.
     // This is the action of a POST form, not an anchor href — see
-    // START_NEW_SEGMENT above.
-    startNewUrl:
-      application.applicationStatus === WITHDRAWN_STATUS
-        ? `${landingUrl({ ...application, year: accreditationYear })}${
-            isExporter ? '/exporter' : ''
-          }${START_NEW_SEGMENT}`
-        : null,
+    // START_NEW_SEGMENT above. RA-765: a refused (Rejected) application can be
+    // replaced the same way.
+    startNewUrl: !isLiveApplication(application)
+      ? `${landingUrl({ ...application, year: accreditationYear })}${
+          isExporter ? '/exporter' : ''
+        }${START_NEW_SEGMENT}`
+      : null,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',
@@ -129,26 +135,68 @@ export function buildLandingViewModel(
   }
 }
 
+async function assertCanAccessOrganisation(request, organisationId) {
+  const canAccess = await operatorCanAccessOrganisation(
+    getUser(request),
+    organisationId,
+    { logger: request.logger }
+  )
+  if (!canAccess) {
+    throw Boom.forbidden('You do not have access to this organisation')
+  }
+}
+
+/**
+ * RA-765: the manage page links here by organisation number and registration
+ * number. The by-number lookup, which only exists while the backend's in-year
+ * changes flag is on, checks that organisation holds the registration and
+ * gives ReEx's ids for both. A URL by number is a 404 with the flag off,
+ * checked before sign-in (see index.js). The registration must be for the
+ * URL's material, as on the manage page.
+ *
+ * As on the manage page, access is checked against the organisation number
+ * before the lookup, so its 404 never tells an operator about a registration
+ * another organisation holds.
+ *
+ * Everything after the entry URL (session, start-new, onward links) uses
+ * ReEx's ids, which a URL by ReEx's ids carries itself.
+ */
+async function resolveLandingIds(request) {
+  const { organisationId, registrationId, materialType } = request.params
+  await assertCanAccessOrganisation(request, organisationId)
+  if (!usesRegistrationNumber(request.params)) {
+    return { organisationId, registrationId, materialType }
+  }
+
+  const registration = await fetchRegistration({
+    organisationId,
+    registrationNumber: registrationId,
+    logger: request.logger
+  })
+  if (!registration?.reExOrganisationId) {
+    throw Boom.serverUnavailable('Registration service temporarily unavailable')
+  }
+  const urlMaterial = parseUrlMaterial(materialType)
+  if (!matchesUrlMaterial(registration, urlMaterial)) {
+    throw Boom.notFound()
+  }
+
+  return {
+    organisationId: registration.reExOrganisationId,
+    registrationId: registration.registrationId,
+    materialType: urlMaterial.materialType
+  }
+}
+
 export const operatorAccreditationController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
-    const { organisationId, registrationId, materialType, year } =
-      request.params
-    const yearInt = Number.parseInt(year, 10)
+    const { organisationId, registrationId, materialType } =
+      await resolveLandingIds(request)
+    const yearInt = Number.parseInt(request.params.year, 10)
     const userName = user?.name
     const reExBackLink = reExBackLinkUrl(organisationId, registrationId)
-
-    const canAccess = await operatorCanAccessOrganisation(
-      user,
-      organisationId,
-      {
-        logger: request.logger
-      }
-    )
-    if (!canAccess) {
-      throw Boom.forbidden('You do not have access to this organisation')
-    }
 
     const errorView = (message) =>
       h

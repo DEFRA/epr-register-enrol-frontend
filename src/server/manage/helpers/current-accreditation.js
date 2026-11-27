@@ -5,15 +5,10 @@ import { APPROVED_STATUS } from '../../common/constants/applicationStatuses.js'
 import { currentYear } from '../../common/helpers/currentYear.js'
 import { matchesUrlMaterial } from './url-material.js'
 
-function selectCurrentAccreditation(
-  applications,
-  { registrationId, urlMaterial, year }
-) {
+function selectCurrentAccreditation(registrationApplications, year) {
   return latestByCreatedAt(
-    applications.filter(
+    registrationApplications.filter(
       (application) =>
-        application.registrationId === registrationId &&
-        matchesUrlMaterial(application, urlMaterial) &&
         application.year === year &&
         application.applicationStatus === APPROVED_STATUS
     )
@@ -30,10 +25,14 @@ function selectCurrentAccreditation(
  * the caller then shows the service-problem page rather than partial
  * information, so an outage never passes for "no accreditation".
  *
+ * RA-765: registrationApplications is every year's application for the
+ * registration and the URL's material, so a page can work out which year the
+ * operator may apply for without another call.
+ *
  * @param {object} params
  * @param {{ materialType: string, glassRecyclingProcess: string|null }} params.urlMaterial
  *   the URL's material, from parseUrlMaterial
- * @returns {Promise<{ application: object | null } | { failed: true }>}
+ * @returns {Promise<{ application: object | null, registrationApplications: object[] } | { failed: true }>}
  */
 export async function fetchCurrentAccreditation({
   organisationId,
@@ -42,27 +41,32 @@ export async function fetchCurrentAccreditation({
   logger
 }) {
   try {
-    const applications =
+    const registrationApplications = (
       await accreditationApiService.listApplications(organisationId)
+    ).filter(
+      (application) =>
+        application.registrationId === registrationId &&
+        matchesUrlMaterial(application, urlMaterial)
+    )
     // RA-425: the compliance period is always the current calendar year,
     // never a URL parameter.
-    const chosen = selectCurrentAccreditation(applications, {
-      registrationId,
-      urlMaterial,
-      year: currentYear()
-    })
+    const chosen = selectCurrentAccreditation(
+      registrationApplications,
+      currentYear()
+    )
     if (!chosen) {
       logger.info(
         { organisationId, registrationId, ...urlMaterial },
         'No Approved current-year accreditation application found'
       )
-      return { application: null }
+      return { application: null, registrationApplications }
     }
     return {
       application: await accreditationApiService.getApplication(
         organisationId,
         chosen.applicationId
-      )
+      ),
+      registrationApplications
     }
   } catch (error) {
     logStructuredError(

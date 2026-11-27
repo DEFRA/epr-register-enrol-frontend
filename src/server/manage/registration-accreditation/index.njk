@@ -42,6 +42,26 @@
     {% endif %}
   </div>
 
+  {# RA-765: Figma 1226:84274. #}
+  {% if applyBanner %}
+    <div class="govuk-grid-row">
+      <div class="govuk-grid-column-two-thirds">
+        <div class="govuk-notification-banner" role="region" aria-labelledby="apply-banner-title" data-module="govuk-notification-banner" data-testid="apply-banner">
+          <div class="govuk-notification-banner__header">
+            <h2 class="govuk-notification-banner__title" id="apply-banner-title" data-testid="apply-banner-title">{{ t('pages.manageRegistrationAccreditation.applyBanner.title') }}</h2>
+          </div>
+          <div class="govuk-notification-banner__content">
+            <p class="govuk-notification-banner__heading" data-testid="apply-banner-heading">{{ t('pages.manageRegistrationAccreditation.applyBanner.heading', { year: applyBanner.year }) }}</p>
+            <p class="govuk-body govuk-!-margin-bottom-0" data-testid="apply-banner-body">{{ t('pages.manageRegistrationAccreditation.applyBanner.body', { year: applyBanner.year, deadlineYear: applyBanner.deadlineYear }) }}</p>
+            <p class="govuk-body">
+              <a href="{{ applyBanner.url }}" class="govuk-notification-banner__link" data-testid="apply-banner-link">{{ t('pages.manageRegistrationAccreditation.applyBanner.continueLink' if applyBanner.continues else 'pages.manageRegistrationAccreditation.applyBanner.link', { year: applyBanner.year }) }}</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   {# RA-697: left out when the change requests can't be read. #}
   {% if changeRequests %}
     <div class="govuk-grid-row govuk-!-margin-bottom-6" data-testid="change-requests-section">

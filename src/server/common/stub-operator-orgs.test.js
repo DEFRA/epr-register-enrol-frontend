@@ -12,6 +12,7 @@ import {
   IN_YEAR_CHANGE_ORG,
   MANAGE_EXPORTER_ORG,
   NO_CHANGE_REQUESTS_ORG,
+  REAPPLY_ORGS,
   REGISTRATION_ONLY_ORG
 } from './constants/test-orgs.js'
 
@@ -93,7 +94,9 @@ describe('manage org drift guard', () => {
     MANAGE_EXPORTER_ORG.orgId,
     IN_YEAR_CHANGE_ORG.orgId,
     NO_CHANGE_REQUESTS_ORG.orgId,
-    REGISTRATION_ONLY_ORG.orgId
+    REGISTRATION_ONLY_ORG.orgId,
+    // RA-765: the apply banner orgs.
+    ...REAPPLY_ORGS.map((org) => org.orgId)
   ])('authorises the stub operator for manage org %s', (orgId) => {
     expect(STUB_DEFRA_LINKS).toHaveProperty(String(orgId))
   })

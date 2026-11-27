@@ -1,5 +1,6 @@
 import { config } from '../../../config/config.js'
 import { ACCREDITATION_SESSION_KEYS } from '../constants/accreditationSessionKeys.js'
+import { localePrefix } from './localePrefix.js'
 
 // RA-459: /operator is a test-only page, so wherever the app would send an
 // operator "back" or "home" it lands them on the real Re-Ex frontend instead.
@@ -49,6 +50,24 @@ export function queryDeclarationUrl(applicationId) {
 export function landingUrl(application) {
   const { organisationId, registrationId, materialType, year } = application
   return `/operator-accreditation/${organisationId}/${registrationId}/${materialType}/${year}`
+}
+
+// RA-765: the landing route also takes an organisation number and a
+// registration number in place of ReEx's ids. Told apart by the registration
+// segment alone, as the local stub's ReEx organisation ids are numeric too.
+const MONGO_ID = /^[\da-f]{24}$/i
+
+export function usesRegistrationNumber({ registrationId }) {
+  return !MONGO_ID.test(String(registrationId))
+}
+
+// RA-765: the material is the manage page's, so glass carries its recycling
+// process.
+export function naturalNumberLandingUrl(
+  { organisationNumber, registrationNumber, materialType, year },
+  currentLocale
+) {
+  return `${localePrefix(currentLocale)}/operator-accreditation/${organisationNumber}/${encodeURIComponent(registrationNumber)}/${materialType}/${year}`
 }
 
 // Shared editable-status gate: several accreditation journey pages (the

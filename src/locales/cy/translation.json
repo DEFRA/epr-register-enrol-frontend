@@ -946,6 +946,13 @@
         "title": "[Welsh] In year change requests",
         "noActive": "[Welsh] You currently have no active change requests.",
         "viewAll": "[Welsh] View change requests"
+      },
+      "applyBanner": {
+        "title": "[Welsh] Important",
+        "heading": "[Welsh] You can now apply for {{year}} accreditation",
+        "body": "[Welsh] Apply by 30 September {{deadlineYear}} to be accredited from 1 January {{year}}.",
+        "link": "[Welsh] Start your {{year}} application",
+        "continueLink": "[Welsh] Continue your {{year}} application"
       }
     },
     "manageOverseasSites": {

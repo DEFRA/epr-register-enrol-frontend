@@ -3,6 +3,8 @@ import {
   queryTaskListUrl,
   queryDeclarationUrl,
   landingUrl,
+  naturalNumberLandingUrl,
+  usesRegistrationNumber,
   reExBackLinkUrl,
   redirectIfStatusNot
 } from './accreditationUrls.js'
@@ -55,6 +57,69 @@ describe('#landingUrl', () => {
     const url = landingUrl(application)
     expect(url).not.toContain('undefined')
     expect(url).toBe('/operator-accreditation/org-42/reg-42/Steel/2027')
+  })
+})
+
+describe('#naturalNumberLandingUrl', () => {
+  const params = {
+    organisationNumber: 50018,
+    registrationNumber: 'R27EX0500180001PL',
+    materialType: 'Plastic',
+    year: 2028
+  }
+
+  test('builds the landing URL from the organisation and registration numbers', () => {
+    expect(naturalNumberLandingUrl(params, 'en')).toBe(
+      '/operator-accreditation/50018/R27EX0500180001PL/Plastic/2028'
+    )
+  })
+
+  test('keeps the Welsh prefix', () => {
+    expect(naturalNumberLandingUrl(params, 'cy')).toBe(
+      '/cy/operator-accreditation/50018/R27EX0500180001PL/Plastic/2028'
+    )
+  })
+
+  test('keeps a glass recycling process material segment', () => {
+    expect(
+      naturalNumberLandingUrl(
+        { ...params, materialType: 'glass_re_melt' },
+        'en'
+      )
+    ).toBe('/operator-accreditation/50018/R27EX0500180001PL/glass_re_melt/2028')
+  })
+
+  test('encodes the registration number', () => {
+    expect(
+      naturalNumberLandingUrl({ ...params, registrationNumber: 'R27/1' }, 'en')
+    ).toBe('/operator-accreditation/50018/R27%2F1/Plastic/2028')
+  })
+})
+
+describe('#usesRegistrationNumber', () => {
+  test.each(['aaa000000000000000050001', '64F1C2A9E4B0A1B2C3D4E5F6'])(
+    'is false for the Mongo id %s',
+    (registrationId) => {
+      expect(usesRegistrationNumber({ registrationId })).toBe(false)
+    }
+  )
+
+  test.each([
+    'R27EX0500180001PL',
+    'aaa00000000000000005000',
+    'aaa0000000000000000500011',
+    'ggg000000000000000050001'
+  ])('is true for %s, which is not a Mongo id', (registrationId) => {
+    expect(usesRegistrationNumber({ registrationId })).toBe(true)
+  })
+
+  test('ignores the organisation segment, which the local stub makes numeric', () => {
+    expect(
+      usesRegistrationNumber({
+        organisationId: '50001',
+        registrationId: 'aaa000000000000000050001'
+      })
+    ).toBe(false)
   })
 })
 

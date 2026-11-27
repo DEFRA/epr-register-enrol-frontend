@@ -127,6 +127,61 @@ describe('#selectApplicationForYear', () => {
     })
   })
 
+  // RA-765: a refused (Rejected) application is not live either.
+  test.each([
+    ['refused first', true],
+    ['live first', false]
+  ])(
+    'prefers the live application over a refused one (%s)',
+    (_label, refusedFirst) => {
+      const refused = makeApp({
+        applicationId: 'app-refused',
+        applicationStatus: 'Rejected',
+        createdAt: '2026-06-01T00:00:00.000Z'
+      })
+      const alive = makeApp({
+        applicationId: 'app-live',
+        createdAt: '2026-01-01T00:00:00.000Z'
+      })
+      const list = refusedFirst ? [refused, alive] : [alive, refused]
+
+      const result = selectApplicationForYear(list, criteria)
+
+      expect(result.application).toBe(alive)
+      expect(result.hasLive).toBe(true)
+    }
+  )
+
+  test('falls back to the refused application when that is all there is', () => {
+    const refused = makeApp({ applicationStatus: 'Rejected' })
+
+    expect(selectApplicationForYear([refused], criteria)).toEqual({
+      application: refused,
+      hasLive: false,
+      hasMatch: true
+    })
+  })
+
+  test('falls back to the newest of withdrawn and refused applications', () => {
+    const olderWithdrawn = withdrawn({
+      applicationId: 'app-withdrawn',
+      createdAt: '2026-01-01T00:00:00.000Z'
+    })
+    const newerRefused = makeApp({
+      applicationId: 'app-refused',
+      applicationStatus: 'Rejected',
+      createdAt: '2026-06-01T00:00:00.000Z'
+    })
+
+    const result = selectApplicationForYear(
+      [newerRefused, olderWithdrawn],
+      criteria
+    )
+
+    expect(result.application).toBe(newerRefused)
+    expect(result.hasLive).toBe(false)
+  })
+
   test.each([
     ['newest last', false],
     ['newest first', true]

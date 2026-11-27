@@ -176,6 +176,47 @@ describe('#operatorController', () => {
       }
     )
 
+    // RA-765: one org for each case of the manage page's apply banner.
+    test.each([
+      [
+        50026,
+        'manage-reapply-current-year-link',
+        'Reapply Current Year Ltd, Plastic (apply for current year)'
+      ],
+      [
+        50027,
+        'manage-applied-next-year-link',
+        'Applied Next Year Ltd, Plastic (already applied for next year)'
+      ],
+      [
+        50028,
+        'manage-refused-next-year-link',
+        'Refused Next Year Ltd, Plastic (refused next year)'
+      ],
+      [
+        50029,
+        'manage-lapsed-accreditation-link',
+        'Lapsed Accreditation Ltd, Plastic (lapsed accreditation)'
+      ]
+    ])(
+      'lists apply banner org %s when the flag is on',
+      async (orgId, testId, label) => {
+        setConfig({ inYearChangesEnabled: true, stubEnabled: true })
+
+        const result = await getOperatorPage()
+
+        expect(result).toMatch(
+          linkWithTestId(
+            `href="/manage/${orgId}/R${YY}EX0${orgId}0001PL/Plastic"`,
+            testId
+          )
+        )
+        expect(result).toContain(
+          `Exporter manage registration and accreditation for ${label}`
+        )
+      }
+    )
+
     test('does not list any manage page when the flag is off', async () => {
       setConfig({ inYearChangesEnabled: false, stubEnabled: true })
 
@@ -183,6 +224,7 @@ describe('#operatorController', () => {
 
       expect(result).not.toContain('/manage/')
       expect(result).not.toContain('manage-registration-only-link')
+      expect(result).not.toContain('manage-refused-next-year-link')
     })
   })
 })

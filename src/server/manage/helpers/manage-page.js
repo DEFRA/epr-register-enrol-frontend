@@ -138,8 +138,10 @@ function assertExporterIfRequired(exportersOnly, operator) {
  * service-problem page, as does a failed accreditation lookup.
  *
  * Returns { response } when the page must not render — the service-problem
- * page — otherwise { context, application, registration, t, currentLocale },
- * where application is null for registration only.
+ * page — otherwise { context, application, registration,
+ * registrationApplications, t, currentLocale }, where application is null for
+ * registration only and registrationApplications is every year's application
+ * for the registration and the URL's material.
  */
 export async function loadManagePage(
   request,
@@ -185,6 +187,7 @@ export async function loadManagePage(
       context: accreditedContext(application, registration),
       application,
       registration,
+      registrationApplications: accreditation.registrationApplications,
       t,
       currentLocale
     }
@@ -204,6 +207,7 @@ export async function loadManagePage(
     context: registrationOnlyContext(registration),
     application: null,
     registration,
+    registrationApplications: accreditation.registrationApplications,
     t,
     currentLocale
   }
