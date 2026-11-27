@@ -124,7 +124,7 @@ export function validateBaselCodes(values, t) {
 }
 
 const REPATRIATED_KEYS = 'pages.addOverseasSite.repatriatedLoads.validation'
-const MAX_REPATRIATED_WORDS = 500
+export const MAX_REPATRIATED_WORDS = 500
 
 export function countWords(text) {
   return text.trim().split(/\s+/).filter(Boolean).length

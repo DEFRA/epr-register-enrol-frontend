@@ -186,3 +186,11 @@
 .app-notification-banner--full-width .govuk-notification-banner__content > * {
   max-width: none;
 }
+
+// RA-682 AC02: a locked field on an in-year change, shown as a read-only input:
+// grey, as Figma has it, but with full-strength text, unlike a disabled input,
+// so it stays readable and is still read out and focusable.
+.app-input--readonly {
+  background-color: govuk-colour('black', $variant: 'tint-95');
+  color: $govuk-text-colour;
+}

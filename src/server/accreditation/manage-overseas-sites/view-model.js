@@ -6,7 +6,8 @@ import {
   addSiteToRequestUrl,
   addToAccreditationUrl,
   besEvidenceFileDeleteUrl,
-  stepUrl
+  stepUrl,
+  updateUrl
 } from './urls.js'
 
 // RA-492: view models for the in-year add-ORS pages, built from the
@@ -57,6 +58,26 @@ export function changeRequestsSummary(view) {
       statusBySiteId.get(String(siteId)) ?? null,
     isInDraftRequest: (siteId) => Boolean(findRequestSite(view, siteId)),
     readyForSubmissionCount: view.activeRequest?.sites?.length ?? 0
+  }
+}
+
+/**
+ * RA-682's actions for an ORS on the Accredited tab: "Pending" and no action
+ * while a submitted request holds it (AC03), "In progress" and View while its
+ * change is in the draft, otherwise Change. All lead to its details page.
+ */
+export function approvedSiteActions(
+  applicationId,
+  siteId,
+  status,
+  isInDraftRequest
+) {
+  const detailsUrl = updateUrl(applicationId, siteId)
+  return {
+    pending: status === ITEM_STATUSES.submitted,
+    inProgress: status === ITEM_STATUSES.inProgress,
+    viewUrl: isInDraftRequest ? detailsUrl : null,
+    changeUrl: detailsUrl
   }
 }
 
@@ -122,7 +143,7 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
 // The site's rows, each with the backend field that edits it (if any) and
 // that field's own answer, which decides whether the row is missing: the
 // location row shows the whole address but is missing only without a country.
-function siteDetailRows(t, site, effective) {
+export function siteDetailRows(t, site, effective) {
   const label = (key) => manageSitesText(t, `rows.${key}`)
   const answer = (field, key) => {
     const value = displayValue(t, field, effective[field])

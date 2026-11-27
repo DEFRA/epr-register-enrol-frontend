@@ -69,6 +69,15 @@ export const NO_OVERSEAS_SITES_ORG = {
   material: 'plastic'
 }
 
+// RA-682: the in-year ORS update journey's exporter. The backend's
+// DevExporterOrg.InYearUpdate and the fe-tests fixture define the same org.
+export const IN_YEAR_UPDATE_ORG = {
+  orgId: 50025,
+  orgName: 'In-Year Update Exports Ltd',
+  registrationId: 'aaa000000000000000050025',
+  material: 'plastic'
+}
+
 // The backend dev seed's accreditation application id for the year: "a" for
 // an exporter or "b" for org 50018's reprocessor, the year, then the org id
 // padded to 19 digits (DevExporterAccreditationSeedService.ApplicationIdFor).

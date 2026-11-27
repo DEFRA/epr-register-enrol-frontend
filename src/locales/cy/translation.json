@@ -1031,7 +1031,8 @@
         "totalAmount": "[Welsh] Total amount",
         "addAnother": "[Welsh] Add another request",
         "none": "[Welsh] You have no accreditation requests in progress.",
-        "incomplete": "[Welsh] {{site}} ({{orsId}}) is missing information"
+        "incomplete": "[Welsh] {{site}} ({{orsId}}) is missing information",
+        "remove": "[Welsh] Remove"
       },
       "payment": {
         "backLink": "[Welsh] Back to manage overseas reprocessing sites"
@@ -1206,6 +1207,49 @@
       "saved": {
         "title": "[Welsh] Success",
         "body": "[Welsh] You've set your cookie preferences."
+      }
+    },
+    "updateOverseasSite": {
+      "success": "[Welsh] Success",
+      "rows": {
+        "orsName": "[Welsh] ORS name",
+        "recyclingOperations": "[Welsh] Recycling operations"
+      },
+      "status": {
+        "label": "[Welsh] Status",
+        "approved": "[Welsh] Approved",
+        "validFrom": "[Welsh] Valid from"
+      },
+      "pending": "[Welsh] Your regulator is reviewing a change to this overseas reprocessing site. You can apply for another change once they have made their decision.",
+      "updated": {
+        "siteName": "[Welsh] Site name updated.",
+        "location": "[Welsh] Location updated.",
+        "contactDetails": "[Welsh] Contact details updated.",
+        "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads updated.",
+        "interimSites": "[Welsh] Interim sites updated.",
+        "besEvidence": "[Welsh] Evidence of broadly equivalent standards updated."
+      },
+      "interim": {
+        "heading": "[Welsh] Interim sites ({{count}})",
+        "changed": "[Welsh] Changed",
+        "new": "[Welsh] New",
+        "toBeRemoved": "[Welsh] To be removed",
+        "remove": "[Welsh] Remove",
+        "undo": "[Welsh] Undo",
+        "add": "[Welsh] Add an interim site",
+        "addHeading": "[Welsh] Add an interim site",
+        "changeHeading": "[Welsh] Change an interim site",
+        "operations": "[Welsh] Recycling operations"
+      },
+      "besEvidence": {
+        "upload": "[Welsh] Upload"
+      },
+      "saveAndContinue": "[Welsh] Save and continue",
+      "submitted": {
+        "title": "[Welsh] In year change application submitted",
+        "references": "[Welsh] Your references",
+        "next": "[Welsh] Your regulator must approve your application for the changes to take effect. There is no charge for changing an overseas reprocessing site's details.",
+        "backLink": "[Welsh] Back to manage overseas reprocessing sites"
       }
     }
   },

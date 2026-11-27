@@ -139,6 +139,161 @@ describe('stubAccreditationChanges (RA-492)', () => {
   })
 })
 
+describe('stubAccreditationChanges ORS updates (RA-682)', () => {
+  let base
+  let d
+  const UPDATE = 'update-overseas-site'
+  const ORS = {
+    siteId: 1,
+    orsId: '001',
+    selected: true,
+    siteName: 'Berlin Recycling',
+    country: 'Germany',
+    townOrCity: 'Berlin',
+    interimSites: [{ siteId: 11, siteName: 'Hub', country: 'Germany' }]
+  }
+
+  beforeEach(() => {
+    appSeq += 1
+    base = `${BASE}/app-${appSeq}`
+    d = deps(
+      application({
+        year: 2026,
+        overseasSites: {
+          sites: [ORS, { siteId: 2, orsId: '002', selected: false }]
+        }
+      })
+    )
+  })
+
+  const call = (method, rest, body) =>
+    stubAccreditationChanges(method, `${base}${rest}`, body, d)
+  const SITE = '/requests/current/sites/1'
+  const start = () =>
+    call('post', '/requests/current/sites', { siteId: 1, changeType: UPDATE })
+
+  test('an accredited ORS can be updated, a registered one only added', async () => {
+    await expect(
+      call('post', '/requests/current/sites', { siteId: 1 })
+    ).rejects.toMatchObject({ status: 409 })
+    await expect(
+      call('post', '/requests/current/sites', { siteId: 2, changeType: UPDATE })
+    ).rejects.toMatchObject({ status: 409 })
+
+    const draft = await start()
+    expect(draft.sites[0]).toMatchObject({
+      changeType: UPDATE,
+      siteName: 'Berlin Recycling',
+      proposed: expect.objectContaining({ townOrCity: 'Berlin' }),
+      interimSiteChanges: [],
+      missingFields: ['changes'],
+      isComplete: false
+    })
+    expect(draft.changeType).toBe(UPDATE)
+    expect(draft.charge).toMatchObject({ chargeableSites: 0, totalPence: 0 })
+  })
+
+  test('a patch changes the proposed details only', async () => {
+    await start()
+    const draft = await call('patch', SITE, {
+      siteName: 'Berlin Recyclers',
+      addressLine2: '',
+      country: 'France'
+    })
+    expect(draft.sites[0].proposed).toMatchObject({
+      siteName: 'Berlin Recyclers',
+      addressLine2: null,
+      townOrCity: 'Berlin'
+    })
+    expect(draft.sites[0].previous.siteName).toBe('Berlin Recycling')
+    expect(draft.sites[0].siteName).toBe('Berlin Recyclers')
+  })
+
+  test('an update takes new BES evidence, which is a change, and can remove it', async () => {
+    await start()
+    const added = await call('post', `${SITE}/bes-evidence/files`, {
+      fileUploadId: 'up-1'
+    })
+    expect(added.sites[0]).toMatchObject({
+      besEvidence: { besEvidenceUploads: [{ fileId: 'up-1' }] },
+      missingFields: [],
+      isComplete: true
+    })
+    const removed = await call('delete', `${SITE}/bes-evidence/files/up-1`)
+    expect(removed.sites[0].missingFields).toEqual(['changes'])
+  })
+
+  test('an update is complete once it changes a detail', async () => {
+    await start()
+    const draft = await call('patch', SITE, { townOrCity: 'Potsdam' })
+    expect(draft.sites[0]).toMatchObject({
+      missingFields: [],
+      isComplete: true
+    })
+  })
+
+  test('changing an interim site back to what it holds drops the change', async () => {
+    await start()
+    await call('patch', `${SITE}/interim-sites/11`, { siteName: 'Hub 2' })
+    const draft = await call('patch', `${SITE}/interim-sites/11`, {
+      siteName: 'Hub',
+      country: 'Germany',
+      operationCodes: []
+    })
+    expect(draft.sites[0].interimSiteChanges).toEqual([])
+  })
+
+  test('interim sites are added, changed, removed and undone', async () => {
+    await start()
+    let draft = await call('post', `${SITE}/interim-sites`, {
+      siteName: 'Depot'
+    })
+    const added = draft.sites[0].interimSiteChanges[0]
+    expect(added).toMatchObject({ action: 'add', interimSiteId: null })
+
+    draft = await call(
+      'patch',
+      `${SITE}/interim-site-changes/${added.changeId}`,
+      { siteName: 'Depot 2' }
+    )
+    expect(draft.sites[0].interimSiteChanges[0].proposed.siteName).toBe(
+      'Depot 2'
+    )
+
+    await call('patch', `${SITE}/interim-sites/11`, { siteName: 'Hub 2' })
+    draft = await call('delete', `${SITE}/interim-sites/11`)
+    const changes = draft.sites[0].interimSiteChanges
+    expect(changes.map((c) => c.action)).toEqual(['add', 'remove'])
+
+    draft = await call(
+      'delete',
+      `${SITE}/interim-site-changes/${changes[1].changeId}`
+    )
+    expect(draft.sites[0].interimSiteChanges).toHaveLength(1)
+  })
+
+  test('404 for an unknown interim site or change, or an item that is not an update', async () => {
+    await start()
+    await expect(
+      call('patch', `${SITE}/interim-sites/99`, {})
+    ).rejects.toMatchObject({ status: 404 })
+    await expect(
+      call('delete', `${SITE}/interim-site-changes/nope`)
+    ).rejects.toMatchObject({ status: 404 })
+    await call('post', '/requests/current/sites', { siteId: 2 })
+    await expect(
+      call('post', '/requests/current/sites/2/interim-sites', {})
+    ).rejects.toMatchObject({ status: 404 })
+  })
+
+  test('a request with an add as well is charged for the add alone', async () => {
+    await start()
+    const draft = await call('post', '/requests/current/sites', { siteId: 2 })
+    expect(draft.changeType).toBe('add-overseas-site')
+    expect(draft.charge.chargeableSites).toBe(1)
+  })
+})
+
 // RA-697: mirrors the backend so the journey behaves the same in stub mode.
 describe('stubAccreditationChanges items (RA-697)', () => {
   let base

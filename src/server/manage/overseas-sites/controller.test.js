@@ -633,6 +633,40 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toContain('data-testid="requests-banner"')
     })
 
+    test('RA-682: an accredited ORS in no request offers Change, to its details page', async () => {
+      const { result } = await getWithChanges(noChangeRequests)
+      const accredited = tabPanel(result, 'accredited')
+
+      expect(accredited).toContain(
+        'href="/accreditation/manage-overseas-sites/app-current/update/1" data-testid="change-site-1"'
+      )
+    })
+
+    test('RA-682 AC03: an accredited ORS a submitted request holds shows Pending, with no Change', async () => {
+      const { result } = await getWithChanges(changes({ 1: 'Submitted' }))
+      const accredited = tabPanel(result, 'accredited')
+
+      expect(accredited).toMatch(
+        /data-testid="site-status-tag-1"[^>]*>\s*Pending\s*</
+      )
+      expect(accredited).not.toContain('data-testid="change-site-1"')
+      expect(accredited).toContain('data-testid="change-site-2"')
+    })
+
+    test('RA-682: an accredited ORS whose change is in the draft shows In progress and View, to its details', async () => {
+      const { result } = await getWithChanges(
+        changes({ 1: 'InProgress' }, [{ siteId: 1 }])
+      )
+      const accredited = tabPanel(result, 'accredited')
+
+      expect(accredited).toMatch(
+        /data-testid="site-status-tag-1"[^>]*>\s*In progress\s*</
+      )
+      expect(accredited).toContain(
+        'href="/accreditation/manage-overseas-sites/app-current/update/1" data-testid="view-request-1"'
+      )
+    })
+
     test('AC10: a site in the in-progress request shows In progress and View, with the requests banner', async () => {
       const { result } = await getWithChanges(
         changes({ 4: 'InProgress' }, [{ siteId: 4 }])

@@ -17,35 +17,40 @@
 // RA-697 task 014: an accreditation's GET also lists its registration's
 // registration-only requests for its material and year (pending counts them),
 // but its active request is only ever its own draft.
+// RA-682: an accredited ORS's details and interim sites can be changed as an
+// update-overseas-site item, which is free: only adds are charged, and a
+// request of updates alone is an update-overseas-site request.
 
 import { randomUUID } from 'node:crypto'
 
 import {
-  ACTIVE_ITEM_STATUSES,
   CHANGE_TYPES,
-  ITEM_STATUSES
+  ITEM_STATUSES,
+  ORS_UPDATE_DETAIL_FIELDS,
+  SITE_ACCREDITATION_STATUSES,
+  isOrsUpdate,
+  orsUpdateDetailsOf
 } from './constants/changeRequests.js'
 import { APPROVED_STATUS } from './constants/applicationStatuses.js'
 import { statusCodes } from './constants/status-codes.js'
 import { isItemForSite } from './helpers/changeRequestSite.js'
 import { currentYear } from './helpers/currentYear.js'
 import { hasValue } from './helpers/hasValue.js'
-import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
 import {
   seededStubChangeRequests,
   seededStubRegistrationChangeRequests
 } from './stub-change-request-seed.js'
+import {
+  LOCKABLE,
+  buildView,
+  isActive,
+  isUpdate,
+  sameValue
+} from './stub-accreditation-changes-view.js'
 
 const REGISTRATION_RE =
   /^\/api\/v1\/accreditation-changes\/([^/]+)\/registrations\/([^/]+)\/([^/]+)(\/.*)?$/
 const CHANGES_RE = /^\/api\/v1\/accreditation-changes\/([^/]+)\/([^/]+)(\/.*)?$/
-const LOCKABLE = [
-  'country',
-  'coordinates',
-  'operationCodes',
-  'conditionsOfExport'
-]
-const CHARGE_PER_SITE_PENCE = ORS_FEE * PENCE_PER_POUND
 
 const state = new Map()
 
@@ -135,121 +140,6 @@ export function seedStubChangeRequest(key, request) {
   storeRequest(stateFor(key), request)
 }
 
-function besRequired(site, effective) {
-  return !site.isEu && !site.isOecd && effective.conditionsOfExport !== true
-}
-
-// site is empty for an item whose site the view doesn't list.
-function requestSiteView(site, entry) {
-  const effective = Object.fromEntries(
-    LOCKABLE.map((field) => [
-      field,
-      entry.answers[field] ?? site[field] ?? null
-    ])
-  )
-  const required = besRequired(site, effective)
-  const missingFields = LOCKABLE.filter((field) => !hasValue(effective[field]))
-  if (required && entry.besEvidenceUploads.length === 0) {
-    missingFields.push('besEvidence')
-  }
-  return {
-    siteId: entry.siteId,
-    orsId: entry.orsId ?? site.orsId ?? null,
-    siteName: entry.siteName ?? site.siteName,
-    answers: entry.answers,
-    effective,
-    besEvidenceRequired: required,
-    besEvidence: { besEvidenceUploads: entry.besEvidenceUploads },
-    missingFields,
-    isComplete: missingFields.length === 0,
-    itemId: entry.itemId,
-    changeType: entry.changeType,
-    status: entry.status,
-    validFrom: entry.validFrom,
-    withdrawnAt: entry.withdrawnAt,
-    caseManagementReference: entry.caseManagementReference ?? null
-  }
-}
-
-const siteFor = (sites, item) => sites.find((site) => isItemForSite(item, site))
-
-function requestView(request, siteList) {
-  const sites = request.sites.map((entry) =>
-    requestSiteView(siteFor(siteList, entry) ?? {}, entry)
-  )
-  return {
-    requestId: request.requestId,
-    changeType: request.changeType,
-    status: request.status,
-    createdAt: request.createdAt,
-    updatedAt: request.updatedAt,
-    submittedAt: request.submittedAt ?? null,
-    submittedBy: request.submittedBy ?? null,
-    sites,
-    isComplete: sites.length > 0 && sites.every((site) => site.isComplete),
-    charge: {
-      chargeableSites: sites.length,
-      chargePerSitePence: CHARGE_PER_SITE_PENCE,
-      totalPence: sites.length * CHARGE_PER_SITE_PENCE
-    },
-    tonnageBandUpgrade: request.tonnageBandUpgrade ?? null
-  }
-}
-
-const isActive = (item) => ACTIVE_ITEM_STATUSES.has(item.status)
-
-function buildView(orgId, appId, application, store, registrationOnly = null) {
-  const sites = application.isExporter
-    ? (application.overseasSites?.sites ?? [])
-    : []
-  const requests = [
-    store.draft,
-    ...store.submitted,
-    registrationOnly?.draft,
-    ...(registrationOnly?.submitted ?? [])
-  ]
-    .filter(Boolean)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  const activeSiteItems = requests.flatMap((request) =>
-    request.sites.filter(isActive).map((item) => ({ request, item }))
-  )
-  const siteView = (site) => {
-    const pending = activeSiteItems.find(({ item }) =>
-      isItemForSite(item, site)
-    )?.request
-    return {
-      siteId: site.siteId,
-      orsId: site.orsId,
-      accreditationStatus:
-        site.selected === false ? 'Registered' : 'Accredited',
-      pendingRequestId: pending?.requestId ?? null,
-      pendingRequestStatus: pending?.status ?? null,
-      lockedFields: LOCKABLE.filter((field) => hasValue(site[field])),
-      site
-    }
-  }
-  return {
-    organisationId: orgId,
-    applicationId: appId,
-    organisationName: application.organisationName ?? null,
-    registrationId: application.registrationId,
-    materialType: application.materialType,
-    year: application.year,
-    accreditationReference: application.accreditationReference ?? null,
-    registrationReference: application.registrationReference ?? null,
-    sites: sites.map(siteView),
-    activeRequest: store.draft ? requestView(store.draft, sites) : null,
-    requests: requests.map((r) => requestView(r, sites)),
-    pendingOrsIds: [
-      ...new Set(
-        activeSiteItems
-          .map(({ item }) => item.orsId ?? siteFor(sites, item)?.orsId)
-          .filter(Boolean)
-      )
-    ]
-  }
-}
-
 function siteOf(ctx, siteId) {
   return ctx.application.overseasSites.sites.find(
     (site) => site.siteId === Number(siteId)
@@ -268,12 +158,24 @@ function draftSite(ctx, siteId) {
 
 const currentRequest = (ctx) => ctx.view().activeRequest
 
+function newUpdateItem(site) {
+  return newSiteItem({
+    changeType: CHANGE_TYPES.updateOverseasSite,
+    siteId: site.siteId,
+    proposed: orsUpdateDetailsOf(site),
+    interimSiteChanges: []
+  })
+}
+
 function addSite(ctx) {
   const target = siteOf(ctx, ctx.body?.siteId)
   if (!target) {
     throw stubError(statusCodes.notFound, 'Site not found')
   }
+  const updating = isOrsUpdate(ctx.body)
   const listed = ctx.view().sites.find((s) => s.siteId === target.siteId)
+  const accredited =
+    listed.accreditationStatus === SITE_ACCREDITATION_STATUSES.accredited
   // RA-697: only one change per ORS can be active, so a registration-only
   // request counts too, its draft included: that draft is never this
   // accreditation's own, so the site can't join it here.
@@ -289,17 +191,19 @@ function addSite(ctx) {
         (item) => isActive(item) && isItemForSite(item, target)
       )
     )
-  if (listed.accreditationStatus === 'Accredited' || awaitingDecision) {
+  if (accredited !== updating || awaitingDecision) {
     throw stubError(statusCodes.conflict, 'Site cannot be added')
   }
   if (!ctx.store.draft) {
     storeRequest(ctx.store, {
-      requestId: `stub-request-${Date.now()}`,
+      requestId: randomUUID(),
       status: ITEM_STATUSES.inProgress
     })
   }
   if (!ctx.store.draft.sites.some((s) => s.siteId === target.siteId)) {
-    ctx.store.draft.sites.push(newSiteItem({ siteId: target.siteId }))
+    ctx.store.draft.sites.push(
+      updating ? newUpdateItem(target) : newSiteItem({ siteId: target.siteId })
+    )
   }
   return currentRequest(ctx)
 }
@@ -317,6 +221,14 @@ function removeSite(ctx, siteId) {
 
 function patchSite(ctx, siteId) {
   const entry = draftSite(ctx, siteId)
+  if (isUpdate(entry)) {
+    for (const field of ORS_UPDATE_DETAIL_FIELDS) {
+      if (ctx.body?.[field] !== undefined) {
+        entry.proposed[field] = ctx.body[field] || null
+      }
+    }
+    return currentRequest(ctx)
+  }
   const site = siteOf(ctx, entry.siteId)
   const locked = new Set(LOCKABLE.filter((field) => hasValue(site[field])))
   const answers = Object.entries(ctx.body ?? {}).filter(
@@ -363,6 +275,79 @@ function deleteBesEvidenceFile(ctx, siteId, fileId) {
   return currentRequest(ctx)
 }
 
+function draftUpdate(ctx, siteId) {
+  const entry = draftSite(ctx, siteId)
+  if (!isUpdate(entry)) {
+    throw stubError(statusCodes.notFound, 'Not an ORS update')
+  }
+  return entry
+}
+
+function activeInterimSite(ctx, entry, interimSiteId) {
+  const interim = siteOf(ctx, entry.siteId).interimSites?.find(
+    (site) => site.siteId === Number(interimSiteId)
+  )
+  if (!interim) {
+    throw stubError(statusCodes.notFound, 'Interim site not found')
+  }
+  return interim
+}
+
+// One change per interim site: a later change or removal replaces it, and a
+// change back to what the interim site holds drops it, as the backend does.
+function setInterimChange(ctx, siteId, interimSiteId, change) {
+  const entry = draftUpdate(ctx, siteId)
+  const interim = activeInterimSite(ctx, entry, interimSiteId)
+  const unchanged =
+    change.action === 'change' &&
+    Object.entries(change.proposed).every(([field, value]) =>
+      sameValue(value, interim[field])
+    )
+  entry.interimSiteChanges = [
+    ...entry.interimSiteChanges.filter(
+      (c) => c.interimSiteId !== interim.siteId
+    ),
+    ...(unchanged
+      ? []
+      : [{ changeId: randomUUID(), interimSiteId: interim.siteId, ...change }])
+  ]
+  return currentRequest(ctx)
+}
+
+function addInterimSite(ctx, siteId) {
+  const entry = draftUpdate(ctx, siteId)
+  entry.interimSiteChanges.push({
+    changeId: randomUUID(),
+    action: 'add',
+    interimSiteId: null,
+    proposed: { ...ctx.body }
+  })
+  return currentRequest(ctx)
+}
+
+function interimChange(ctx, siteId, changeId) {
+  const entry = draftUpdate(ctx, siteId)
+  const change = entry.interimSiteChanges.find((c) => c.changeId === changeId)
+  if (!change) {
+    throw stubError(statusCodes.notFound, 'Interim site change not found')
+  }
+  return { entry, change }
+}
+
+function changeInterimSiteAddition(ctx, siteId, changeId) {
+  const { change } = interimChange(ctx, siteId, changeId)
+  change.proposed = { ...ctx.body }
+  return currentRequest(ctx)
+}
+
+function undoInterimSiteChange(ctx, siteId, changeId) {
+  const { entry, change } = interimChange(ctx, siteId, changeId)
+  entry.interimSiteChanges = entry.interimSiteChanges.filter(
+    (c) => c !== change
+  )
+  return currentRequest(ctx)
+}
+
 function submit(ctx) {
   const { store } = ctx
   if (!store.draft) {
@@ -395,6 +380,8 @@ function submit(ctx) {
 }
 
 const SITE_PATH = String.raw`/requests/current/sites/(\d+)`
+const INTERIM_PATH = String.raw`${SITE_PATH}/interim-sites/(\d+)`
+const INTERIM_CHANGE_PATH = `${SITE_PATH}/interim-site-changes/([^/]+)`
 
 const ROUTES = [
   ['get', '', (ctx) => ctx.mergedView()],
@@ -408,6 +395,27 @@ const ROUTES = [
   ],
   ['post', `${SITE_PATH}/bes-evidence/files`, addBesEvidenceFile],
   ['delete', `${SITE_PATH}/bes-evidence/files/([^/]+)`, deleteBesEvidenceFile],
+  ['post', `${SITE_PATH}/interim-sites`, addInterimSite],
+  [
+    'patch',
+    INTERIM_PATH,
+    (ctx, siteId, interimSiteId) =>
+      setInterimChange(ctx, siteId, interimSiteId, {
+        action: 'change',
+        proposed: { ...ctx.body }
+      })
+  ],
+  [
+    'delete',
+    INTERIM_PATH,
+    (ctx, siteId, interimSiteId) =>
+      setInterimChange(ctx, siteId, interimSiteId, {
+        action: 'remove',
+        proposed: null
+      })
+  ],
+  ['patch', INTERIM_CHANGE_PATH, changeInterimSiteAddition],
+  ['delete', INTERIM_CHANGE_PATH, undoInterimSiteChange],
   ['post', '/requests/current/submit', submit]
 ].map(([method, path, handle]) => ({
   method,

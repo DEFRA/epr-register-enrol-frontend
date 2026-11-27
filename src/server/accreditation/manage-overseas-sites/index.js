@@ -2,7 +2,6 @@ import Joi from 'joi'
 
 import { manageRouteOptions } from '../../manage/helpers/manage-page.js'
 import { MAX_FILE_BYTES } from '../upload-bes-evidence/controller.js'
-import { provideUploadStatusFromSession } from '../../common/helpers/upload/provide-upload-status.js'
 import {
   addSiteToRequestController,
   addToAccreditationGetController,
@@ -16,9 +15,7 @@ import {
   requestsPostController
 } from './controller.js'
 import {
-  IN_YEAR_BES_UPLOAD_SESSION_KEY,
-  besEvidenceUrl,
-  requireUploadForSite,
+  besEvidenceStatusPre,
   besEvidenceGetController,
   besEvidencePostController,
   besEvidenceStatusController,
@@ -29,9 +26,35 @@ import {
   recyclingOperationGetController,
   recyclingOperationPostController
 } from './steps-controller.js'
+import {
+  cancelUpdateController,
+  detailsGetController,
+  stepGetController,
+  stepPostController,
+  submittedGetController
+} from './update/controller.js'
+import {
+  interimAdditionGetController,
+  interimAdditionPostController,
+  interimChangeGetController,
+  interimChangePostController,
+  interimNewGetController,
+  interimNewPostController,
+  interimRemoveController,
+  interimUndoController
+} from './update/interim-controller.js'
+import {
+  besEvidenceFileDeleteController as updateBesFileDeleteController,
+  besEvidenceGetController as updateBesGetController,
+  besEvidencePostController as updateBesPostController,
+  besEvidenceStatusController as updateBesStatusController,
+  besEvidenceStatusPre as updateBesStatusPre
+} from './update/bes-controller.js'
+import { STEP_NAMES, UPDATED_KEYS } from './update/steps.js'
 
 const BASE = '/accreditation/manage-overseas-sites/{applicationId}'
 const SITE = `${BASE}/add/{siteId}`
+const UPDATE = `${BASE}/update/{siteId}`
 
 const MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
@@ -62,15 +85,35 @@ const uploadOptions = {
   }
 }
 
-const statusOptions = {
+const statusOptions = { ...routeOptions, pre: besEvidenceStatusPre }
+
+// `updated` names the success banner's translation key, so only known ones pass.
+const updateOptions = {
   ...routeOptions,
-  pre: [
-    requireUploadForSite,
-    provideUploadStatusFromSession(
-      IN_YEAR_BES_UPLOAD_SESSION_KEY,
-      ({ applicationId, siteId }) => besEvidenceUrl(applicationId, siteId)
-    )
-  ]
+  validate: {
+    ...routeOptions.validate,
+    params: routeOptions.validate.params.keys({
+      interimSiteId: Joi.number().integer().positive(),
+      changeId: Joi.string().guid(),
+      step: Joi.string().valid(...STEP_NAMES)
+    }),
+    query: Joi.object({
+      updated: Joi.string().valid(...Object.keys(UPDATED_KEYS))
+    }).unknown()
+  }
+}
+
+const updateUploadOptions = { ...updateOptions, payload: uploadOptions.payload }
+const updateStatusOptions = { ...updateOptions, pre: updateBesStatusPre }
+
+// The request the declaration just submitted. A value that is not an id is
+// refused; an id that matches no submitted request falls back to the newest.
+const submittedOptions = {
+  ...routeOptions,
+  validate: {
+    ...routeOptions.validate,
+    query: Joi.object({ request: Joi.string().guid() }).unknown()
+  }
 }
 
 // RA-492: in-year request to add registered ORSs to a granted accreditation.
@@ -119,7 +162,79 @@ const ROUTES = [
   route('POST', `${BASE}/requests`, requestsPostController),
   route('GET', `${BASE}/declaration`, declarationGetController),
   route('POST', `${BASE}/declaration`, declarationPostController),
-  route('GET', `${BASE}/payment`, paymentGetController)
+  route('GET', `${BASE}/payment`, paymentGetController, submittedOptions),
+  route('GET', `${BASE}/submitted`, submittedGetController, submittedOptions),
+  route('GET', UPDATE, detailsGetController, updateOptions),
+  route('POST', `${UPDATE}/cancel`, cancelUpdateController, updateOptions),
+  route('GET', `${UPDATE}/details/{step}`, stepGetController, updateOptions),
+  route('POST', `${UPDATE}/details/{step}`, stepPostController, updateOptions),
+  route('GET', `${UPDATE}/bes-evidence`, updateBesGetController, updateOptions),
+  route(
+    'POST',
+    `${UPDATE}/bes-evidence`,
+    updateBesPostController,
+    updateUploadOptions
+  ),
+  route(
+    'GET',
+    `${UPDATE}/bes-evidence/status`,
+    updateBesStatusController,
+    updateStatusOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/bes-evidence/{fileId}/delete`,
+    updateBesFileDeleteController,
+    updateOptions
+  ),
+  route(
+    'GET',
+    `${UPDATE}/interim-sites/new`,
+    interimNewGetController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-sites/new`,
+    interimNewPostController,
+    updateOptions
+  ),
+  route(
+    'GET',
+    `${UPDATE}/interim-sites/{interimSiteId}`,
+    interimChangeGetController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-sites/{interimSiteId}`,
+    interimChangePostController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-sites/{interimSiteId}/remove`,
+    interimRemoveController,
+    updateOptions
+  ),
+  route(
+    'GET',
+    `${UPDATE}/interim-site-changes/{changeId}`,
+    interimAdditionGetController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-site-changes/{changeId}`,
+    interimAdditionPostController,
+    updateOptions
+  ),
+  route(
+    'POST',
+    `${UPDATE}/interim-site-changes/{changeId}/undo`,
+    interimUndoController,
+    updateOptions
+  )
 ]
 
 export const manageOverseasSites = {

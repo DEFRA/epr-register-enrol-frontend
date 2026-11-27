@@ -4,13 +4,11 @@ import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
+import {
+  INTERIM_OPERATION_CODES,
+  validateInterimOperationCodes
+} from '../../../common/helpers/interimSiteValidation.js'
 
-// RA-486: R12/R13 are the mandatory codes on the interim-site recycling
-// operations question — at least one must be selected. R3/R4/R5 are
-// optional here (material is inherited from the parent ORS, so there is no
-// materialType-based filtering of the option set on this page).
-const ALL_CODES = ['R3', 'R4', 'R5', 'R12', 'R13']
-const CORE_CODES = new Set(['R12', 'R13'])
 const BAD_REQUEST_STATUS_CODE = 400
 
 function selectOverseasSitesUrl(applicationId) {
@@ -33,7 +31,7 @@ function renderPage(h, viewData) {
 }
 
 function buildOptions(t, selectedCodes) {
-  return ALL_CODES.map((code) => ({
+  return INTERIM_OPERATION_CODES.map((code) => ({
     value: code,
     text: t(
       `pages.addInterimSite.recyclingOperationDetails.operations.${code}`
@@ -70,10 +68,6 @@ function normaliseCodes(raw) {
   return values
     .map((v) => (typeof v === 'string' ? v.trim() : ''))
     .filter(Boolean)
-}
-
-function hasCoreCode(codes) {
-  return codes.some((c) => CORE_CODES.has(c))
 }
 
 export const addInterimSiteRecyclingOperationGetController = {
@@ -133,21 +127,9 @@ export const addInterimSiteRecyclingOperationPostController = {
         buildViewData(t, applicationId, recyclingOperationCodes, message)
       ).code(BAD_REQUEST_STATUS_CODE)
 
-    if (
-      recyclingOperationCodes.length === 0 ||
-      !recyclingOperationCodes.every((code) => ALL_CODES.includes(code))
-    ) {
-      return renderError(
-        t('pages.addInterimSite.recyclingOperationDetails.validation.required')
-      )
-    }
-
-    if (!hasCoreCode(recyclingOperationCodes)) {
-      return renderError(
-        t(
-          'pages.addInterimSite.recyclingOperationDetails.validation.coreCodeRequired'
-        )
-      )
+    const error = validateInterimOperationCodes(t, recyclingOperationCodes)
+    if (error) {
+      return renderError(error)
     }
 
     setAddInterimSiteSession(request, { recyclingOperationCodes })
