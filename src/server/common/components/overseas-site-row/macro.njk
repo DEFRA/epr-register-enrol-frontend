@@ -20,7 +20,7 @@
   <dl> could never legally contain.
 
   RA-603 T05/AC10: an ORS's interim sites render in that colspan row behind a
-  single "Show interim sites (n)" disclosure, which opens to one line per
+  single "Interim sites (n)" disclosure, which opens to one line per
   interim site. See interimSiteDisclosure below for why this is govuk-details
   rather than govuk-accordion.
 
@@ -53,7 +53,7 @@
   {% set site = params.site %}
   {#
     One disclosure per ORS, not one per interim site. Collapsed, an ORS shows
-    a single "Show interim sites (n)" link and nothing else; opened, it shows
+    a single "Interim sites (n)" link and nothing else; opened, it shows
     one line per interim site.
 
     This is govuk-details, not govuk-accordion. The accordion always injects

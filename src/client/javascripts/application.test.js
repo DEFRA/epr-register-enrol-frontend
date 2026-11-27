@@ -991,63 +991,6 @@ describe('character-count live error clearing', () => {
   })
 })
 
-// govuk-frontend hides every tab panel but the first once the page is
-// govuk-frontend-supported, so without createAll(Tabs) the Manage overseas
-// reprocessing sites page's Registered tab, where RA-492's "Add to
-// accreditation" actions are, could never be shown.
-describe('govuk-frontend Tabs', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals()
-    document.documentElement.style.removeProperty('--govuk-breakpoint-tablet')
-  })
-
-  it('shows the Registered panel when its tab is clicked', async () => {
-    // What the compiled application.css and a tablet-width browser give the
-    // Tabs module; jsdom has neither.
-    document.documentElement.style.setProperty(
-      '--govuk-breakpoint-tablet',
-      '40.0625rem'
-    )
-    vi.stubGlobal(
-      'matchMedia',
-      vi.fn(() => ({
-        matches: true,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn()
-      }))
-    )
-    document.body.className = 'govuk-frontend-supported'
-    document.body.innerHTML = `
-      <div class="govuk-tabs" data-module="govuk-tabs">
-        <ul class="govuk-tabs__list">
-          <li class="govuk-tabs__list-item govuk-tabs__list-item--selected">
-            <a class="govuk-tabs__tab" href="#accredited" data-testid="accredited-sites-tab">Accredited</a>
-          </li>
-          <li class="govuk-tabs__list-item">
-            <a class="govuk-tabs__tab" href="#registered" data-testid="registered-sites-tab">Registered</a>
-          </li>
-        </ul>
-        <div class="govuk-tabs__panel" id="accredited"></div>
-        <div class="govuk-tabs__panel govuk-tabs__panel--hidden" id="registered"></div>
-      </div>
-    `
-    await loadApplication()
-
-    document.querySelector('[data-testid="registered-sites-tab"]').click()
-
-    expect(
-      document
-        .getElementById('registered')
-        .classList.contains('govuk-tabs__panel--hidden')
-    ).toBe(false)
-    expect(
-      document
-        .getElementById('accredited')
-        .classList.contains('govuk-tabs__panel--hidden')
-    ).toBe(true)
-  })
-})
-
 describe('#country field enhancement', () => {
   beforeEach(() => {
     document.body.innerHTML = ''

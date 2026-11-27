@@ -307,8 +307,8 @@ function renderRequests(
     heading: manageSitesText(t, 'requests.title'),
     backLink: manageUrl,
     cancelUrl: manageUrl,
-    // AC10: "Add another request" goes to the registered ORS list.
-    addAnotherUrl: manageSitesUrl(view, currentLocale, { registered: true }),
+    // AC10, RA-814: "Add another request" goes to the combined ORS table.
+    addAnotherUrl: manageUrl,
     requests: sites.map((site) => {
       const entry = findSite(view, site.siteId)
       const isUpdate = isOrsUpdate(site)

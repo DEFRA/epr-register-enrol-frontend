@@ -171,7 +171,7 @@ describe('#operatorController', () => {
           )
         )
         expect(result).toContain(
-          'Exporter manage registration for No Overseas Sites Exports Ltd, Plastic (no accredited or registered sites)'
+          'Exporter manage registration for No Overseas Sites Exports Ltd, Plastic (no approved or registered sites)'
         )
       }
     )

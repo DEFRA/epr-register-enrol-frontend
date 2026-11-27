@@ -476,7 +476,7 @@ describe('#manageChangeRequestsController', () => {
 
     const countLine = (html) =>
       html.match(
-        /<p[^>]*data-testid="change-requests-count"[^>]*>\s*<strong[^>]*>\s*([^<]+?)\s*<\/strong>/
+        /<p[^>]*data-testid="change-requests-count"[^>]*>\s*([^<]+?)\s*<\/p>/
       )?.[1]
 
     const paginationLinks = (html) =>
@@ -486,11 +486,14 @@ describe('#manageChangeRequestsController', () => {
         )
       ].map(([, href, rel]) => [rel ?? 'page', href.replaceAll('&amp;', '&')])
 
-    test('shows all the items, a bold count and no pagination for 10 or fewer', async () => {
+    test('shows all the items, a normal weight count and no pagination for 10 or fewer', async () => {
       const result = await getPage()
 
       expect(rowIds(result)).toEqual(EXPECTED_ORDER)
       expect(countLine(result)).toBe('Showing 1-8 of 8')
+      expect(result).toMatch(
+        /<p class="govuk-body" data-testid="change-requests-count">\s*Showing 1-8 of 8\s*<\/p>/
+      )
       expect(result).not.toContain('govuk-pagination')
     })
 
@@ -657,7 +660,7 @@ describe('#manageChangeRequestsController', () => {
 
     const countLine = (html) =>
       html.match(
-        /data-testid="change-requests-count"[^>]*>\s*<strong[^>]*>\s*([^<]+?)\s*</
+        /data-testid="change-requests-count"[^>]*>\s*([^<]+?)\s*<\/p>/
       )?.[1]
 
     test('shows a GET form that submits itself when a select changes, with no Apply button', async () => {

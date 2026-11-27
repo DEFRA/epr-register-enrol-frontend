@@ -33,7 +33,7 @@ export function allInterimSites(site) {
 /**
  * The interim sites the operator currently has: everything not withdrawn.
  *
- * This is what the page lists and what the "Show interim sites (n)" count
+ * This is what the page lists and what the "Interim sites (n)" count
  * counts. A withdrawn site is deliberately excluded rather than greyed out —
  * AC05 keeps it for reporting, not for display.
  */
