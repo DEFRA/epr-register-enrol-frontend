@@ -76,15 +76,15 @@
     <table class="govuk-table app-ors-table" data-testid="overseas-sites-table">
       <thead class="govuk-table__head">
         <tr class="govuk-table__row">
-          <th scope="col" class="govuk-table__header">{{ t('pages.manageOverseasSites.table.siteName') }}</th>
-          <th scope="col" class="govuk-table__header">{{ t('pages.manageOverseasSites.table.status') }}</th>
-          <th scope="col" class="govuk-table__header app-ors-table__actions-cell">{{ t('pages.manageOverseasSites.table.actions') }}</th>
+          <th scope="col" class="govuk-table__header app-ors-table__site-column">{{ t('pages.manageOverseasSites.table.siteName') }}</th>
+          <th scope="col" class="govuk-table__header app-ors-table__status-column">{{ t('pages.manageOverseasSites.table.status') }}</th>
+          <th scope="col" class="govuk-table__header app-ors-table__actions-cell app-ors-table__actions-column">{{ t('pages.manageOverseasSites.table.actions') }}</th>
         </tr>
       </thead>
       <tbody class="govuk-table__body">
         {% for site in sites %}
           <tr class="govuk-table__row" data-testid="site-row-{{ site.siteId }}">
-            <td class="govuk-table__cell">
+            <td class="govuk-table__cell app-ors-table__site-cell">
               <div class="app-ors-table__site">
                 <span data-testid="site-orsid-{{ site.siteId }}">{{ site.orsId }}</span>
                 <div class="app-ors-table__details">

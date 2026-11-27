@@ -57,7 +57,28 @@
 
 // RA-814: the overseas-sites page's single table, per Figma 1405:35529: the
 // ORS number beside a bold name, the address beneath it, and the interim
-// sites disclosure under both.
+// sites disclosure under both. Fixed column widths, so opening a disclosure
+// wraps its lines instead of moving the other columns.
+.app-ors-table {
+  table-layout: fixed;
+}
+
+.app-ors-table__site-column {
+  width: 55%;
+}
+
+.app-ors-table__status-column {
+  width: 15%;
+}
+
+.app-ors-table__actions-column {
+  width: 30%;
+}
+
+.app-ors-table__site-cell {
+  overflow-wrap: break-word;
+}
+
 .app-ors-table__site {
   display: flex;
   gap: govuk-spacing(2);
