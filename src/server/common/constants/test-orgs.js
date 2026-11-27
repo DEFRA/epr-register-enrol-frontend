@@ -69,6 +69,65 @@ export const NO_OVERSEAS_SITES_ORG = {
   material: 'plastic'
 }
 
+// RA-765: one exporter for each case of the manage page's apply banner. Each
+// application's year is an offset from the clock's (Y), as the backend's
+// DevExporterOrg.Applications are. The fe-tests fixture
+// test/fixtures/reapply-orgs.js uses the same orgs: keep all three in step.
+const reapplyOrg = (orgId, orgName, postcode, applications) => ({
+  orgId,
+  orgName,
+  registrationId: `aaa${String(orgId).padStart(21, '0')}`,
+  material: 'plastic',
+  postcode,
+  applications
+})
+
+// Approved Y-1: the banner offers Y.
+export const REAPPLY_CURRENT_YEAR_ORG = reapplyOrg(
+  50026,
+  'Reapply Current Year Ltd',
+  'IP3 0AA',
+  [{ yearOffset: -1, status: 'Approved' }]
+)
+
+// Approved Y, Submitted Y+1: no banner.
+export const APPLIED_NEXT_YEAR_ORG = reapplyOrg(
+  50027,
+  'Applied Next Year Ltd',
+  'IP3 0AB',
+  [
+    { yearOffset: 0, status: 'Approved' },
+    { yearOffset: 1, status: 'Submitted' }
+  ]
+)
+
+// Approved Y, Rejected Y+1: the banner offers Y+1, whose apply page shows the
+// refused application with "start new".
+export const REFUSED_NEXT_YEAR_ORG = reapplyOrg(
+  50028,
+  'Refused Next Year Ltd',
+  'IP3 0AD',
+  [
+    { yearOffset: 0, status: 'Approved' },
+    { yearOffset: 1, status: 'Rejected' }
+  ]
+)
+
+// Approved Y-2 (lapsed): the banner offers Y.
+export const LAPSED_ACCREDITATION_ORG = reapplyOrg(
+  50029,
+  'Lapsed Accreditation Ltd',
+  'IP3 0AE',
+  [{ yearOffset: -2, status: 'Approved' }]
+)
+
+export const REAPPLY_ORGS = [
+  REAPPLY_CURRENT_YEAR_ORG,
+  APPLIED_NEXT_YEAR_ORG,
+  REFUSED_NEXT_YEAR_ORG,
+  LAPSED_ACCREDITATION_ORG
+]
+
 // The backend dev seed's accreditation application id for the year: "a" for
 // an exporter or "b" for org 50018's reprocessor, the year, then the org id
 // padded to 19 digits (DevExporterAccreditationSeedService.ApplicationIdFor).

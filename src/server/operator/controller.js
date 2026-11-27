@@ -1,11 +1,15 @@
 import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import {
+  APPLIED_NEXT_YEAR_ORG,
   IN_YEAR_CHANGE_ORG,
+  LAPSED_ACCREDITATION_ORG,
   MANAGE_EXPORTER_ORG,
   MANAGE_EXPORTER_ORG_REPROCESSOR,
   NO_CHANGE_REQUESTS_ORG,
   NO_OVERSEAS_SITES_ORG,
+  REAPPLY_CURRENT_YEAR_ORG,
+  REFUSED_NEXT_YEAR_ORG,
   REGISTRATION_ONLY_ORG,
   exporterRegistrationNumber,
   reprocessorRegistrationNumber
@@ -46,7 +50,12 @@ function manageLinks() {
     // RA-697: registered, never accredited.
     registrationOnly: manageLink(REGISTRATION_ONLY_ORG),
     // RA-697: registered, never accredited, with no registered ORSs.
-    noOverseasSites: manageLink(NO_OVERSEAS_SITES_ORG)
+    noOverseasSites: manageLink(NO_OVERSEAS_SITES_ORG),
+    // RA-765: one for each case of the apply banner.
+    reapplyCurrentYear: manageLink(REAPPLY_CURRENT_YEAR_ORG),
+    appliedNextYear: manageLink(APPLIED_NEXT_YEAR_ORG),
+    refusedNextYear: manageLink(REFUSED_NEXT_YEAR_ORG),
+    lapsedAccreditation: manageLink(LAPSED_ACCREDITATION_ORG)
   }
 }
 

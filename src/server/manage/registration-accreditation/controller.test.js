@@ -26,8 +26,12 @@ import {
 import { setupManagePageServer } from '../../common/test-helpers/manage-page.js'
 import { currentYear, yearSuffix } from '../../common/helpers/currentYear.js'
 import {
+  APPLIED_NEXT_YEAR_ORG,
+  LAPSED_ACCREDITATION_ORG,
   MANAGE_EXPORTER_ORG,
   NO_CHANGE_REQUESTS_ORG,
+  REAPPLY_CURRENT_YEAR_ORG,
+  REFUSED_NEXT_YEAR_ORG,
   REGISTRATION_ONLY_ORG,
   createdRegistrationNumber,
   exporterRegistrationNumber,
@@ -1463,6 +1467,41 @@ describe('#manageRegistrationAccreditationController', () => {
       )
 
       expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('data-testid="apply-banner"')
+    })
+
+    // RA-765: one stub org for each case of the banner.
+    test.each([
+      ['apply for current year', REAPPLY_CURRENT_YEAR_ORG, 0],
+      ['refused next year', REFUSED_NEXT_YEAR_ORG, 1],
+      ['lapsed accreditation', LAPSED_ACCREDITATION_ORG, 0]
+    ])(
+      'the stub %s org is offered the year it can apply for',
+      async (_label, org, offset) => {
+        const offered = currentYear() + offset
+        const number = exporterRegistrationNumber(currentYear(), org.orgId)
+
+        const { statusCode, result } = await get(stubManageUrl(org, number))
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toMatch(
+          new RegExp(
+            `href="/operator-accreditation/${org.orgId}/${number}/Plastic/${offered}"[^>]*data-testid="apply-banner-link"[^>]*>\\s*Start your ${offered} application\\s*<`
+          )
+        )
+      }
+    )
+
+    test('the stub org that has applied for next year is offered no year', async () => {
+      const { statusCode, result } = await get(
+        stubManageUrl(
+          APPLIED_NEXT_YEAR_ORG,
+          exporterRegistrationNumber(currentYear(), APPLIED_NEXT_YEAR_ORG.orgId)
+        )
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="accreditation-summary"')
       expect(result).not.toContain('data-testid="apply-banner"')
     })
 

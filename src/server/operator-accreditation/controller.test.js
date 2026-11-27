@@ -14,6 +14,14 @@ import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { buildLandingViewModel } from './controller.js'
+import { stubApiClient } from '../common/stub-api-client.js'
+import { currentYear } from '../common/helpers/currentYear.js'
+import {
+  APPLIED_NEXT_YEAR_ORG,
+  REFUSED_NEXT_YEAR_ORG,
+  exporterRegistrationNumber,
+  seededApplicationId
+} from '../common/constants/test-orgs.js'
 
 // The controller delegates the access decision to operatorCanAccessOrganisation
 // (resolve-linked-id + relationship check + fail-closed), which is unit-tested in
@@ -2100,5 +2108,54 @@ describe('#operatorAccreditationController', () => {
         )
       }
     )
+  })
+
+  // RA-765: the manage page's banner links to next year's application by
+  // number; the stub API serves the apply banner orgs as the backend's dev seed
+  // does.
+  describe("next year's application from the frontend stub API (RA-765)", () => {
+    const nextYear = currentYear() + 1
+    const stubNaturalUrl = (org) =>
+      `/operator-accreditation/${org.orgId}/${exporterRegistrationNumber(currentYear(), org.orgId)}/Plastic/${nextYear}`
+
+    beforeEach(() => {
+      configOverrides['featureFlags.inYearChangesEnabled'] = true
+      vi.spyOn(apiClient, 'get').mockImplementation((url) =>
+        stubApiClient.get(url)
+      )
+      operatorCanAccessOrganisation.mockResolvedValue(true)
+    })
+
+    test('the refused next year org sees its refused application with the start-new form', async () => {
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: stubNaturalUrl(REFUSED_NEXT_YEAR_ORG)
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('REFUSED')
+      expect(result).toContain(
+        `action="/operator-accreditation/${REFUSED_NEXT_YEAR_ORG.orgId}/${REFUSED_NEXT_YEAR_ORG.registrationId}/Plastic/${nextYear}/exporter/start-new"`
+      )
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('the applied next year org sees its submitted application, with no start-new form', async () => {
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: stubNaturalUrl(APPLIED_NEXT_YEAR_ORG)
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain(
+        `/accreditation/task-list/${seededApplicationId('a', nextYear, APPLIED_NEXT_YEAR_ORG.orgId)}`
+      )
+      expect(result).not.toContain('data-testid="start-new-form"')
+      expect(postSpy).not.toHaveBeenCalled()
+    })
   })
 })

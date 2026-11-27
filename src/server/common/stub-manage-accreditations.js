@@ -7,6 +7,7 @@ import {
   MANAGE_EXPORTER_ORG_REPROCESSOR,
   NO_CHANGE_REQUESTS_ORG,
   NO_OVERSEAS_SITES_ORG,
+  REAPPLY_ORGS,
   REGISTRATION_ONLY_ORG,
   createdRegistrationNumber,
   exporterRegistrationNumber,
@@ -433,6 +434,37 @@ function buildNoChangeRequestsOrgDoc(year) {
   }
 }
 
+// RA-765: an apply banner org's applications, each for the year its offset
+// gives from the clock's. Matches the backend's dev seed: only an Approved
+// application has an accreditation number.
+function buildReapplyOrgDoc(org, year) {
+  return {
+    orgId: org.orgId,
+    companyDetails: { name: org.orgName },
+    accreditations: org.applications.map(({ yearOffset, status }) => {
+      const applicationYear = year + yearOffset
+      const suffix = yearSuffix(applicationYear)
+      return approvedApplication(applicationYear, {
+        id: seededApplicationId('a', applicationYear, org.orgId),
+        // The apply page's start-new form posts back under it.
+        organisationId: String(org.orgId),
+        applicationStatus: status,
+        applicationReference: `AP${suffix}EA0${org.orgId}${org.postcode.slice(-POSTCODE_SUFFIX_LENGTH)}PL`,
+        accreditationReference:
+          status === 'Approved' ? `A${suffix}EX0${org.orgId}0001PL` : null,
+        material: org.material,
+        wasteProcessingType: 'exporter',
+        registrationId: org.registrationId,
+        companyRegisterAddressPostcode: org.postcode,
+        wasteRegistrationNumber: exporterRegistrationNumber(
+          applicationYear,
+          org.orgId
+        )
+      })
+    })
+  }
+}
+
 // Kept for the rest of the year because the stub API saves writes into the
 // docs it serves; rebuilt (dropping those writes) once the year changes.
 let cachedOrgDocs = null
@@ -445,7 +477,8 @@ export function manageStubOrgDocs() {
       docs: [
         buildOrgDoc(year),
         buildInYearChangeOrgDoc(year),
-        buildNoChangeRequestsOrgDoc(year)
+        buildNoChangeRequestsOrgDoc(year),
+        ...REAPPLY_ORGS.map((org) => buildReapplyOrgDoc(org, year))
       ]
     }
   }
@@ -503,6 +536,15 @@ export function manageStubRegistrationStatuses() {
     [NO_OVERSEAS_SITES_ORG.registrationId]: approvedExporterRegistration(
       NO_OVERSEAS_SITES_ORG.orgName,
       exporterRegistrationNumber(year, NO_OVERSEAS_SITES_ORG.orgId)
+    ),
+    ...Object.fromEntries(
+      REAPPLY_ORGS.map((org) => [
+        org.registrationId,
+        approvedExporterRegistration(
+          org.orgName,
+          exporterRegistrationNumber(year, org.orgId)
+        )
+      ])
     ),
     // RA-739: numbered, unlike a real Created registration, so its /manage URL
     // reaches the not-Approved error path.

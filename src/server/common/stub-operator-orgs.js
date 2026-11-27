@@ -3,6 +3,7 @@ import {
   MANAGE_EXPORTER_ORG,
   NO_CHANGE_REQUESTS_ORG,
   NO_OVERSEAS_SITES_ORG,
+  REAPPLY_ORGS,
   REGISTRATION_ONLY_ORG
 } from './constants/test-orgs.js'
 
@@ -74,7 +75,9 @@ const NUMBERED_TEST_ORGS = [
   // fixture test/fixtures/reex-registration-status-orgs.js uses them: keep
   // all three in step.
   ['50023', 'RA-806 Approved Exporter Ltd'],
-  ['50024', 'RA-806 Created Exporter Ltd']
+  ['50024', 'RA-806 Created Exporter Ltd'],
+  // RA-765: the manage page's apply banner cases.
+  ...REAPPLY_ORGS.map(({ orgId, orgName }) => [String(orgId), orgName])
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).
