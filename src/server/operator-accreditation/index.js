@@ -3,13 +3,29 @@ import {
   startNewAccreditationController,
   startNewAccreditationExporterController
 } from './controller.js'
+import Boom from '@hapi/boom'
+import { config } from '../../config/config.js'
 import { requireOperator } from '../common/helpers/auth/auth-scopes.js'
 import { usesRegistrationNumber } from '../common/helpers/accreditationUrls.js'
+
+// RA-765: runs before auth, as on the manage page, so a logged-out caller gets
+// the same 404 for a URL by number with the flag off rather than a redirect to
+// sign in. A URL by ReEx's ids is unaffected by the flag.
+export function notFoundUnlessNumberUrlEnabled(request, h) {
+  if (
+    usesRegistrationNumber(request.params) &&
+    !config.get('featureFlags.inYearChangesEnabled')
+  ) {
+    throw Boom.notFound()
+  }
+  return h.continue
+}
 
 // RA-765: a URL by registration number has the manage page's material, which
 // names glass by its recycling process. A URL by ReEx's ids still doesn't.
 const landingRouteOptions = {
   ...requireOperator,
+  ext: { onPreAuth: { method: notFoundUnlessNumberUrlEnabled } },
   plugins: {
     routeParamsGuard: { glassRecyclingProcesses: usesRegistrationNumber }
   }

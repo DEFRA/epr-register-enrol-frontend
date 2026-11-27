@@ -1,6 +1,5 @@
 import Boom from '@hapi/boom'
 
-import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
@@ -136,23 +135,37 @@ export function buildLandingViewModel(
   }
 }
 
+async function assertCanAccessOrganisation(request, organisationId) {
+  const canAccess = await operatorCanAccessOrganisation(
+    getUser(request),
+    organisationId,
+    { logger: request.logger }
+  )
+  if (!canAccess) {
+    throw Boom.forbidden('You do not have access to this organisation')
+  }
+}
+
 /**
  * RA-765: the manage page links here by organisation number and registration
  * number. The by-number lookup, which only exists while the backend's in-year
  * changes flag is on, checks that organisation holds the registration and
- * gives ReEx's ids for both, so a URL by number is a 404 with the flag off.
- * The registration must be for the URL's material, as on the manage page.
+ * gives ReEx's ids for both. A URL by number is a 404 with the flag off,
+ * checked before sign-in (see index.js). The registration must be for the
+ * URL's material, as on the manage page.
+ *
+ * As on the manage page, access is checked against the organisation number
+ * before the lookup, so its 404 never tells an operator about a registration
+ * another organisation holds.
  *
  * Everything after the entry URL (session, start-new, onward links) uses
  * ReEx's ids, which a URL by ReEx's ids carries itself.
  */
 async function resolveLandingIds(request) {
   const { organisationId, registrationId, materialType } = request.params
+  await assertCanAccessOrganisation(request, organisationId)
   if (!usesRegistrationNumber(request.params)) {
     return { organisationId, registrationId, materialType }
-  }
-  if (!config.get('featureFlags.inYearChangesEnabled')) {
-    throw Boom.notFound()
   }
 
   const registration = await fetchRegistration({
@@ -184,17 +197,6 @@ export const operatorAccreditationController = {
     const yearInt = Number.parseInt(request.params.year, 10)
     const userName = user?.name
     const reExBackLink = reExBackLinkUrl(organisationId, registrationId)
-
-    const canAccess = await operatorCanAccessOrganisation(
-      user,
-      organisationId,
-      {
-        logger: request.logger
-      }
-    )
-    if (!canAccess) {
-      throw Boom.forbidden('You do not have access to this organisation')
-    }
 
     const errorView = (message) =>
       h

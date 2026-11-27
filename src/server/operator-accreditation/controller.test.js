@@ -14,6 +14,7 @@ import { config } from '../../config/config.js'
 import { apiClient } from '../common/api-client.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
 import { buildLandingViewModel } from './controller.js'
+import { notFoundUnlessNumberUrlEnabled } from './index.js'
 import { stubApiClient } from '../common/stub-api-client.js'
 import { currentYear } from '../common/helpers/currentYear.js'
 import {
@@ -1861,6 +1862,10 @@ describe('#operatorAccreditationController', () => {
 
     beforeEach(() => {
       configOverrides['featureFlags.inYearChangesEnabled'] = true
+      // The operator's organisation, by its number or by ReEx's id.
+      operatorCanAccessOrganisation.mockImplementation(async (_user, orgId) =>
+        [ORG_NUMBER, ORG_ID].includes(orgId)
+      )
     })
 
     test('looks the registration up by the organisation and registration numbers', async () => {
@@ -1890,23 +1895,25 @@ describe('#operatorAccreditationController', () => {
       expect(postSpy).not.toHaveBeenCalled()
     })
 
-    test('checks operator access against the ReEx organisation id', async () => {
+    // As on the manage page, access is checked against the URL's organisation
+    // number before the registration is looked up, so a 404 never tells an
+    // operator about a registration another organisation holds.
+    test('checks operator access against the organisation number', async () => {
       mockNaturalGet([makeApp()])
 
       await server.inject({ method: 'GET', url: naturalUrl })
 
+      expect(operatorCanAccessOrganisation).toHaveBeenCalledTimes(1)
       expect(operatorCanAccessOrganisation).toHaveBeenCalledWith(
         expect.anything(),
-        ORG_ID,
+        ORG_NUMBER,
         expect.anything()
       )
     })
 
-    test('returns 403 when the operator cannot access the ReEx organisation', async () => {
-      mockNaturalGet(
-        [makeApp()],
-        makeRegistration({ reExOrganisationId: 'not-my-org' })
-      )
+    test('returns 403 without looking the registration up when the operator cannot access the organisation number', async () => {
+      operatorCanAccessOrganisation.mockResolvedValue(false)
+      const getSpy = mockNaturalGet([makeApp()])
       const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
 
       const { statusCode } = await server.inject({
@@ -1915,7 +1922,20 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.forbidden)
+      expect(getSpy).not.toHaveBeenCalled()
       expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('returns 403, not 404, for an unknown registration number under an organisation the operator cannot access', async () => {
+      operatorCanAccessOrganisation.mockResolvedValue(false)
+      mockNaturalGet([makeApp()], apiError(statusCodes.notFound))
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
     })
 
     test('seeds an empty year with the ReEx ids', async () => {
@@ -1961,7 +1981,6 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
-      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
       expect(postSpy).not.toHaveBeenCalled()
     })
 
@@ -1974,7 +1993,6 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.serviceUnavailable)
-      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
     })
 
     test('returns 404 when the registration is for another material', async () => {
@@ -1986,7 +2004,6 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(statusCode).toBe(statusCodes.notFound)
-      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
     })
 
     test('returns 404 with the in-year changes flag off, without looking anything up', async () => {
@@ -2001,6 +2018,43 @@ describe('#operatorAccreditationController', () => {
       expect(statusCode).toBe(statusCodes.notFound)
       expect(getSpy).not.toHaveBeenCalled()
       expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
+    })
+
+    // As on the manage page, the flag's 404 comes before sign-in, so a
+    // logged-out caller gets it too rather than a redirect to sign in.
+    describe('the in-year changes flag check before sign-in', () => {
+      const h = { continue: Symbol('continue') }
+      const byNumber = {
+        params: {
+          organisationId: ORG_NUMBER,
+          registrationId: REGISTRATION_NUMBER
+        }
+      }
+
+      test('404s a URL by number with the flag off', () => {
+        configOverrides['featureFlags.inYearChangesEnabled'] = false
+
+        expect(() => notFoundUnlessNumberUrlEnabled(byNumber, h)).toThrow(
+          expect.objectContaining({
+            output: expect.objectContaining({
+              statusCode: statusCodes.notFound
+            })
+          })
+        )
+      })
+
+      test('lets a URL by number through with the flag on', () => {
+        expect(notFoundUnlessNumberUrlEnabled(byNumber, h)).toBe(h.continue)
+      })
+
+      test('lets a URL by ReEx ids through with the flag off', () => {
+        configOverrides['featureFlags.inYearChangesEnabled'] = false
+        const byReExIds = {
+          params: { organisationId: ORG_ID, registrationId: REGISTRATION_ID }
+        }
+
+        expect(notFoundUnlessNumberUrlEnabled(byReExIds, h)).toBe(h.continue)
+      })
     })
 
     test('works with the Welsh prefix', async () => {
