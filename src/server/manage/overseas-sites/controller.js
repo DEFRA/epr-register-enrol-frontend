@@ -213,7 +213,15 @@ export const manageOverseasSitesController = {
     const { sites, changeRequests } = list
     const readyForSubmissionCount = changeRequests?.readyForSubmissionCount ?? 0
     // RA-814: the list is ordered before it is paged, and the banners count
-    // the whole list, so they read the same on every page.
+    // the whole list, so they read the same on every page. The pending count
+    // takes approved sites' updates (RA-682) as well as registered sites'
+    // additions.
+    const pendingCount = sites.filter((site) => site.pending).length
+    // User, 2026-11-27: the pending banner gives way to the requests banner,
+    // but only where that banner links to the requests. Registration-only
+    // operators have no requests page yet, so they keep both.
+    const showPendingBanner =
+      pendingCount > 0 && !(readyForSubmissionCount > 0 && list.requestsUrl)
     const paged = paginate(sites, request.query.page)
     const pageUrl = overseasSitesUrl(request.params, currentLocale)
 
@@ -237,14 +245,9 @@ export const manageOverseasSitesController = {
         testId: 'overseas-sites-pagination',
         t
       }),
-      // RA-492 banners: AC09 pending change, AC10 requests to resume. The
-      // pending count takes approved sites' updates (RA-682) as well as
-      // registered sites' additions, and the pending banner gives way to the
-      // requests banner when both apply (user, 2026-11-27).
-      pendingCount:
-        readyForSubmissionCount > 0
-          ? 0
-          : sites.filter((site) => site.pending).length,
+      // RA-492 banners: AC09 pending change, AC10 requests to resume.
+      pendingCount,
+      showPendingBanner,
       isRegistrationOnly: context.isRegistrationOnly,
       readyForSubmissionCount,
       requestsUrl: list.requestsUrl

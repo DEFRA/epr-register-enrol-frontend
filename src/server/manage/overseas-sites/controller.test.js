@@ -1279,6 +1279,26 @@ describe('#manageOverseasSitesController', () => {
       )
     })
 
+    test('shows both banners when a site is pending and a request is ready, as the requests banner has no link', async () => {
+      const { result } = await getRegistrationOnly({
+        ...registrationView(
+          REGISTERED_SITES.map((site) => ({
+            ...site,
+            pendingRequestStatus: { 2: 'Submitted', 3: 'InProgress' }[
+              site.siteId
+            ]
+          }))
+        ),
+        activeRequest: { status: 'InProgress', sites: [{ siteId: 3 }] }
+      })
+
+      expect(result).toContain(
+        'Your regulator is reviewing your application for 1 overseas reprocessing site.'
+      )
+      expect(result).toContain('data-testid="requests-banner"')
+      expect(result).not.toContain('view-requests-link')
+    })
+
     test('sets no accreditation session keys', async () => {
       await getRegistrationOnly()
 
