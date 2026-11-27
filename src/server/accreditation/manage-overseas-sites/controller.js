@@ -463,8 +463,9 @@ function isCharged(changeRequest) {
 
 /**
  * The submitted request a page after the declaration shows: the one just
- * submitted when the redirect names it, otherwise the newest that `matches`
- * (the page opened directly, or with Back). Null when there is none.
+ * submitted when the redirect names it, otherwise the most recently created
+ * one that `matches` (the page opened directly, or with Back). Null when there
+ * is none.
  */
 export function submittedRequest(view, requestId, matches) {
   return (
@@ -547,7 +548,7 @@ export const declarationPostController = {
 }
 
 // f07: the existing bank-transfer payment page, charged per ORS only
-// (AC03/AC04) for the most recently submitted request.
+// (AC03/AC04) for the request just submitted.
 export const paymentGetController = {
   async handler(request, h) {
     const { t, currentLocale } = getLocaleAndTranslator(request)

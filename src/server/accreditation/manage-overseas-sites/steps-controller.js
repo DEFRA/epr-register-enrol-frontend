@@ -114,8 +114,8 @@ function stepUrls(request) {
  * PATCHes the draft. Returns null when it saved, or errors keyed by field
  * when it was refused: the backend's own on a 400 (a field that became
  * locked, or one that failed its rules, possibly none it can name), or a
- * 409's message against every field sent (the site was already sent to the
- * regulator, so its answers are fixed).
+ * 409's message once, against the first field sent (the site was already
+ * sent to the regulator, or the draft was changed elsewhere).
  */
 async function patchSite(request, body) {
   const { applicationId, siteId } = request.params
@@ -134,16 +134,14 @@ async function patchSite(request, body) {
     const message =
       err.status === statusCodes.conflict ? conflictMessage(err) : null
     if (message) {
-      return Object.fromEntries(
-        Object.keys(body).map((field) => [field, message])
-      )
+      return { [Object.keys(body)[0]]: message }
     }
     throw err
   }
 }
 
 // ASP.NET may send a ValidationProblem's error keys in either case.
-export function errorKeyFor(errors, field) {
+function errorKeyFor(errors, field) {
   return Object.keys(errors).find(
     (name) => name.toLowerCase() === field.toLowerCase()
   )
@@ -168,7 +166,7 @@ export function refusedFields(t, errors, fields) {
  * message for it, a general one when the answer was refused without naming
  * the field, or null when it saved.
  */
-export function refusal(t, errors, field) {
+function refusal(t, errors, field) {
   if (errors === null) {
     return null
   }

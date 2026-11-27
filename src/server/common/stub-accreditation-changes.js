@@ -148,7 +148,8 @@ function besRequired(site, effective) {
 
 const isUpdate = (item) => item.changeType === CHANGE_TYPES.updateOverseasSite
 
-// Blank and missing are the same answer, as the backend compares them.
+// Blank and missing are treated as the same answer. The backend stores a blank
+// optional line as missing, so for what the forms send this matches it.
 function sameValue(a, b) {
   if (Array.isArray(a) || Array.isArray(b)) {
     return [a ?? []].flat().join() === [b ?? []].flat().join()
@@ -354,7 +355,7 @@ function addSite(ctx) {
   }
   if (!ctx.store.draft) {
     storeRequest(ctx.store, {
-      requestId: `stub-request-${Date.now()}`,
+      requestId: randomUUID(),
       status: ITEM_STATUSES.inProgress
     })
   }

@@ -13,7 +13,6 @@ import {
   validationErrors
 } from '../../../common/helpers/accreditationChangesService.js'
 import { MAX_REPATRIATED_WORDS } from '../../../common/helpers/overseasSiteAnswerValidation.js'
-import { orsAddressLine1 } from '../../../common/helpers/orsAddress.js'
 import { buildTextareaInput } from '../../add-overseas-site/repatriated-loads/controller.js'
 import {
   NOTHING_TO_DO,
@@ -238,7 +237,7 @@ function refusedStatus(result) {
   return result.errors ? statusCodes.badRequest : statusCodes.conflict
 }
 
-function errorList(errors, pageError = null) {
+function errorList(errors, pageError) {
   return [
     ...(pageError ? [{ href: null, text: pageError }] : []),
     ...Object.entries(errors).map(([name, text]) => ({
@@ -289,7 +288,8 @@ export const detailsGetController = handler({}, (request, h, locale, loaded) =>
 
 // --- ORS detail steps ----------------------------------------------------------
 
-// The add journey's rejected-loads textarea, under this form's field name.
+// The add journey's rejected-loads textarea, with this form's id and input
+// testid.
 function characterCount(t, input, tooManyWords) {
   return {
     ...buildTextareaInput(t, input.value, input.error, tooManyWords),
@@ -298,13 +298,16 @@ function characterCount(t, input, tooManyWords) {
   }
 }
 
-// A legacy ORS has only its one-line siteAddress, whose first part is address
-// line 1, so the location step starts from that.
+// A legacy ORS has only its one-line siteAddress. The location step puts all
+// of it in address line 1, so nothing in it is dropped when the operator
+// splits it across the lines.
 function stepValues(update) {
   return {
     ...update.details,
     addressLine1:
-      update.details.addressLine1 ?? orsAddressLine1(update.entry.site)
+      update.details.addressLine1 ||
+      update.entry.site.addressLine1 ||
+      update.entry.site.siteAddress
   }
 }
 

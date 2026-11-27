@@ -107,7 +107,8 @@ const updateOptions = {
   }
 }
 
-// The request the declaration just submitted; any other value is refused.
+// The request the declaration just submitted. A value that is not an id is
+// refused; an id that matches no submitted request falls back to the newest.
 const submittedOptions = {
   ...routeOptions,
   validate: {

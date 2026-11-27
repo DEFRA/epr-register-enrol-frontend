@@ -298,7 +298,7 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(result).toContain('902501 Harbour Estate, Unit 4, Gdynia, Poland')
     })
 
-    test('an ORS with only a one-line address shows it, and its step starts from its first part', async () => {
+    test('an ORS with only a one-line address shows it, and its step starts from all of it', async () => {
       const legacy = {
         ...SITE,
         addressLine1: null,
@@ -311,7 +311,9 @@ describe('#updateOverseasSite (RA-682)', () => {
       const details = await server.inject(UPDATE)
       expect(details.result).toContain('7 Old Road, Gdansk, Poland')
       const step = await server.inject(`${UPDATE}/details/location`)
-      expect(step.result).toMatch(/id="addressLine1"[^>]*value="7 Old Road"/)
+      expect(step.result).toMatch(
+        /id="addressLine1"[^>]*value="7 Old Road, Gdansk, Poland"/
+      )
     })
   })
 
@@ -645,6 +647,29 @@ describe('#updateOverseasSite (RA-682)', () => {
         })
       )
       expect(headers.location).toBe(`${UPDATE}?updated=interim-sites`)
+    })
+
+    test("a 409 on an interim change shows the backend's message for the page", async () => {
+      mockGet(makeView({ item: updateItem() }))
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(
+        apiError(
+          409,
+          JSON.stringify('This change has already been sent to the regulator')
+        )
+      )
+
+      const { statusCode, result } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/interim-sites/902511`,
+        payload: INTERIM_FORM
+      })
+
+      expect(statusCode).toBe(statusCodes.conflict)
+      expect(result).toContain(
+        'This change has already been sent to the regulator'
+      )
+      expect(result).toContain('data-testid="error-message"')
+      expect(result).not.toContain('href="#siteName"')
     })
 
     test('an unknown interim site goes back to the details', async () => {
