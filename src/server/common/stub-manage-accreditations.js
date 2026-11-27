@@ -1,3 +1,4 @@
+import { APPROVED_STATUS } from './constants/applicationStatuses.js'
 import { currentYear, yearSuffix } from './helpers/currentYear.js'
 import {
   IN_YEAR_CHANGE_ORG,
@@ -451,7 +452,7 @@ function buildReapplyOrgDoc(org, year) {
         applicationStatus: status,
         applicationReference: `AP${suffix}EA0${org.orgId}${org.postcode.slice(-POSTCODE_SUFFIX_LENGTH)}PL`,
         accreditationReference:
-          status === 'Approved' ? `A${suffix}EX0${org.orgId}0001PL` : null,
+          status === APPROVED_STATUS ? `A${suffix}EX0${org.orgId}0001PL` : null,
         material: org.material,
         wasteProcessingType: 'exporter',
         registrationId: org.registrationId,

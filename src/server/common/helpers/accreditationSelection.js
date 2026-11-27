@@ -1,8 +1,8 @@
+import { REJECTED_STATUS } from '../constants/applicationStatuses.js'
 import { accreditationApiService } from './accreditationApiService.js'
 import { logStructuredError } from './logging/log-structured-error.js'
 
 export const WITHDRAWN_STATUS = 'Withdrawn'
-export const REJECTED_STATUS = 'Rejected'
 
 // RA-357 / RA-765: a withdrawn or refused (Rejected) application no longer
 // counts as the application for its year, so the operator can start a new one.
