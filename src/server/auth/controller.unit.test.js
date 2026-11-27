@@ -258,7 +258,7 @@ describe('#logoutController federated (Defra ID) branch', () => {
     const params = new URL(url).searchParams
     expect(params.get('id_token_hint')).toBe('stored-id-token')
     expect(params.get('post_logout_redirect_uri')).toBe(
-      'http://localhost:3000/auth/logout?userType=operator'
+      'http://localhost:3000/auth/logout'
     )
   })
 
@@ -289,7 +289,7 @@ describe('#logoutController federated (Defra ID) branch', () => {
     const [url] = h.redirect.mock.calls[0]
     expect(url.startsWith(`${DEFRA_ENDPOINTS.endSessionUrl}?`)).toBe(true)
     expect(new URL(url).searchParams.get('post_logout_redirect_uri')).toBe(
-      'http://localhost:3000/auth/logout?userType=operator'
+      'http://localhost:3000/auth/logout'
     )
   })
 })

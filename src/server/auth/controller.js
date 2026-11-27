@@ -218,10 +218,12 @@ export async function logoutController(request, h) {
   request.yar.reset()
 
   const params = new URLSearchParams({
-    // Kept as `?userType=operator` so the post_logout_redirect_uri sent to
-    // Defra ID is byte-for-byte what it was before regulator sign-in was
-    // removed (an IdP may match it exactly against its registered URIs).
-    post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout?userType=operator`
+    // Must match a post-logout URI registered for our client with Defra ID
+    // exactly, query string included. Only the plain /auth/logout is
+    // registered: with `?userType=operator` appended, Defra ID signs the user
+    // out but stays on its own "signed out" page, so the return leg never
+    // reaches us and the ReEx hand-off above never runs (RA-460).
+    post_logout_redirect_uri: `${config.get('auth.callbackBaseUrl')}/auth/logout`
   })
   params.set('id_token_hint', idToken)
 
