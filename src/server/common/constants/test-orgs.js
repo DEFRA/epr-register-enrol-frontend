@@ -61,11 +61,20 @@ export const REGISTRATION_ONLY_ORG = {
 }
 
 // RA-697: registered with no accreditation and no registered ORSs, for the
-// overseas-sites page's empty Accredited and Registered tabs.
+// overseas-sites page's empty state.
 export const NO_OVERSEAS_SITES_ORG = {
   orgId: 50022,
   orgName: 'No Overseas Sites Exports Ltd',
   registrationId: 'aaa000000000000000050022',
+  material: 'plastic'
+}
+
+// RA-682: the in-year ORS update journey's exporter. The backend's
+// DevExporterOrg.InYearUpdate and the fe-tests fixture define the same org.
+export const IN_YEAR_UPDATE_ORG = {
+  orgId: 50025,
+  orgName: 'In-Year Update Exports Ltd',
+  registrationId: 'aaa000000000000000050025',
   material: 'plastic'
 }
 

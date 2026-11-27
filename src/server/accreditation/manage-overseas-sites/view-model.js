@@ -6,7 +6,8 @@ import {
   addSiteToRequestUrl,
   addToAccreditationUrl,
   besEvidenceFileDeleteUrl,
-  stepUrl
+  stepUrl,
+  updateUrl
 } from './urls.js'
 
 // RA-492: view models for the in-year add-ORS pages, built from the
@@ -62,10 +63,43 @@ export function changeRequestsSummary(view) {
   }
 }
 
+// RA-492 and RA-682: the change tags a row's in-year request status gives it.
+function changeTags(status) {
+  return {
+    pending: status === ITEM_STATUSES.submitted,
+    inProgress: status === ITEM_STATUSES.inProgress
+  }
+}
+
 /**
- * RA-492's actions for an ORS on RA-425's Registered tab: "Pending" and no
- * action while it is in a submitted request (AC09), "In progress" and a View
- * link while it is in the draft request, otherwise "Add to accreditation".
+ * RA-682's actions for an approved ORS: "Pending" and no action while a
+ * submitted request holds it (AC03), "In progress" and View while its change
+ * is in the draft, otherwise Change. All lead to its details page.
+ *
+ * RA-814: each link is its own value, set only when it shows, as for a
+ * registered ORS, so the combined table renders them without an either/or.
+ */
+export function approvedSiteActions(
+  applicationId,
+  siteId,
+  status,
+  isInDraftRequest
+) {
+  const detailsUrl = updateUrl(applicationId, siteId)
+  const { pending, inProgress } = changeTags(status)
+  return {
+    pending,
+    inProgress,
+    viewUrl: inProgress && isInDraftRequest ? detailsUrl : null,
+    changeUrl: pending || inProgress ? null : detailsUrl
+  }
+}
+
+/**
+ * RA-492's actions for a registered ORS on RA-425's Manage overseas
+ * reprocessing sites page: "Pending" and no action while it is in a submitted
+ * request (AC09), "In progress" and a View link while it is in the draft
+ * request, otherwise "Add to accreditation".
  *
  * RA-697: with no accreditation (a null applicationId, for registration only)
  * there is nothing to add the ORS to, and RA-492's View link has no
@@ -73,6 +107,9 @@ export function changeRequestsSummary(view) {
  * View is also left out for an ORS In progress in a draft other than the
  * accreditation's own (a registration-only one), which this journey can't
  * open.
+ *
+ * RA-814: each link is its own value, set only when it shows, so later flows
+ * (RA-683, RA-676) can add theirs to a row alongside these.
  */
 export function registeredSiteActions(
   applicationId,
@@ -81,14 +118,16 @@ export function registeredSiteActions(
   isInDraftRequest
 ) {
   const hasAccreditation = Boolean(applicationId)
+  const { pending, inProgress } = changeTags(status)
   return {
-    pending: status === ITEM_STATUSES.submitted,
-    inProgress: status === ITEM_STATUSES.inProgress,
-    addUrl: hasAccreditation
-      ? addSiteToRequestUrl(applicationId, siteId)
-      : null,
+    pending,
+    inProgress,
+    addUrl:
+      hasAccreditation && !pending && !inProgress
+        ? addSiteToRequestUrl(applicationId, siteId)
+        : null,
     viewUrl:
-      hasAccreditation && isInDraftRequest
+      hasAccreditation && inProgress && isInDraftRequest
         ? addToAccreditationUrl(applicationId, siteId)
         : null
   }
@@ -124,7 +163,7 @@ function editableRow({ t, applicationId, siteId, field, label, value }) {
 // The site's rows, each with the backend field that edits it (if any) and
 // that field's own answer, which decides whether the row is missing: the
 // location row shows the whole address but is missing only without a country.
-function siteDetailRows(t, site, effective) {
+export function siteDetailRows(t, site, effective) {
   const label = (key) => manageSitesText(t, `rows.${key}`)
   const answer = (field, key) => {
     const value = displayValue(t, field, effective[field])

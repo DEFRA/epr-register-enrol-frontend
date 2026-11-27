@@ -4,10 +4,7 @@ import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
-import {
-  SITE_FIELD_MAX_LENGTHS,
-  exceedsMaxLength
-} from '../../../common/constants/siteFieldLimits.js'
+import { validateInterimSiteName } from '../../../common/helpers/interimSiteValidation.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 
 function selectOverseasSitesUrl(applicationId) {
@@ -85,27 +82,11 @@ export const addInterimSiteNamePostController = {
 
     const siteName = (request.payload?.siteName ?? '').trim()
 
-    if (!siteName) {
+    const error = validateInterimSiteName(t, siteName)
+    if (error) {
       return renderPage(
         h,
-        buildViewData(
-          t,
-          applicationId,
-          '',
-          t('pages.addInterimSite.siteName.validation.required')
-        )
-      ).code(statusCodes.badRequest)
-    }
-
-    if (exceedsMaxLength(siteName, SITE_FIELD_MAX_LENGTHS.siteName)) {
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          siteName,
-          t('pages.addInterimSite.siteName.validation.tooLong')
-        )
+        buildViewData(t, applicationId, siteName, error)
       ).code(statusCodes.badRequest)
     }
 

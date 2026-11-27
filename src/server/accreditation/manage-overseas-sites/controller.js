@@ -6,8 +6,8 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
-  CHANGE_TYPES,
-  ITEM_STATUSES
+  ITEM_STATUSES,
+  isOrsUpdate
 } from '../../common/constants/changeRequests.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
@@ -37,10 +37,13 @@ import {
 } from './view-model.js'
 import {
   addToAccreditationUrl,
+  cancelUpdateUrl,
   declarationUrl,
   manageSitesUrl,
   paymentUrl,
-  requestsUrl
+  requestsUrl,
+  submittedUrl,
+  updateUrl
 } from './urls.js'
 
 const VIEWS = {
@@ -50,10 +53,14 @@ const VIEWS = {
   payment: 'accreditation/view-payment-details/index'
 }
 
-// 404 (no such application or site) and 409 (not a granted exporter
-// accreditation, or a site that cannot be added) mean the same thing to
-// these pages: there is nothing to show or do.
-const NOTHING_TO_DO = new Set([statusCodes.notFound, statusCodes.conflict])
+// 404 (no such application, site or draft) and 409 (not a granted exporter
+// accreditation, a site that cannot be added, or a draft already sent or
+// submitted) mean the same thing to these pages: there is nothing to show or
+// do.
+export const NOTHING_TO_DO = new Set([
+  statusCodes.notFound,
+  statusCodes.conflict
+])
 
 export function organisationIdFrom(request) {
   return request.yar.get(ACCREDITATION_SESSION_KEYS.organisationId)
@@ -282,6 +289,12 @@ export const cancelAddToAccreditationController = {
   }
 }
 
+function itemUrl(applicationId, site) {
+  return isOrsUpdate(site)
+    ? updateUrl(applicationId, site.siteId)
+    : addToAccreditationUrl(applicationId, site.siteId)
+}
+
 function renderRequests(
   h,
   { t, currentLocale },
@@ -294,19 +307,27 @@ function renderRequests(
     heading: manageSitesText(t, 'requests.title'),
     backLink: manageUrl,
     cancelUrl: manageUrl,
-    // AC10: "Add another request" goes to the registered ORS list.
-    addAnotherUrl: manageSitesUrl(view, currentLocale, { registered: true }),
+    // AC10, RA-814: "Add another request" goes to the combined ORS table.
+    addAnotherUrl: manageUrl,
     requests: sites.map((site) => {
       const entry = findSite(view, site.siteId)
+      const isUpdate = isOrsUpdate(site)
       return {
         siteId: site.siteId,
         orsId: site.orsId,
         siteName: site.siteName,
         address: orsAddressLine(entry.site),
-        viewUrl: addToAccreditationUrl(applicationId, site.siteId)
+        typeKey: isUpdate
+          ? 'pages.manageChangeRequests.types.updateOverseasSite'
+          : 'pages.manageOverseasSites.requests.newOrs',
+        viewUrl: itemUrl(applicationId, site),
+        removeUrl: isUpdate ? cancelUpdateUrl(applicationId, site.siteId) : null
       }
     }),
-    charge: view.activeRequest ? chargeFor(view.activeRequest.charge) : null,
+    // RA-682 AC05: only adding an ORS is charged.
+    charge: isCharged(view.activeRequest)
+      ? chargeFor(view.activeRequest.charge)
+      : null,
     errors: errors ?? []
   })
 }
@@ -387,7 +408,7 @@ export const requestsPostController = {
     const incomplete = sites.filter((site) => site.isComplete === false)
     if (incomplete.length > 0) {
       const errors = incomplete.map((site) => ({
-        href: addToAccreditationUrl(applicationId, site.siteId),
+        href: itemUrl(applicationId, site),
         testId: `error-request-${site.orsId}`,
         text: manageSitesText(t, 'requests.incomplete', {
           site: site.siteName,
@@ -436,6 +457,27 @@ function paymentReferenceFor(application) {
   )
 }
 
+function isCharged(changeRequest) {
+  return (changeRequest?.charge?.chargeableSites ?? 0) > 0
+}
+
+/**
+ * The submitted request a page after the declaration shows: the one just
+ * submitted when the redirect names it, otherwise the most recently created
+ * one that `matches` (the page opened directly, or with Back). Null when there
+ * is none.
+ */
+export function submittedRequest(view, requestId, matches) {
+  return (
+    view.requests?.find(
+      (changeRequest) =>
+        changeRequest.status === ITEM_STATUSES.submitted &&
+        (!requestId || changeRequest.requestId === requestId) &&
+        matches(changeRequest)
+    ) ?? null
+  )
+}
+
 export const declarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -455,62 +497,72 @@ export const declarationPostController = {
         })
         .code(statusCodes.badRequest)
     }
+    let submitted
     try {
       const organisationId = organisationIdFrom(request)
       const application = await accreditationApiService.getApplication(
         organisationId,
         applicationId
       )
-      await accreditationChangesService.submit(organisationId, applicationId, {
-        fullName,
-        jobTitle,
-        email: getUser(request)?.email ?? null,
-        paymentReference: paymentReferenceFor(application)
-      })
-    } catch (err) {
-      // 404: no draft to submit. 409: a concurrent submit (another tab) won,
-      // so this one has nothing left to submit either.
-      if (NOTHING_TO_DO.has(err.status)) {
-        return redirectToManageSites(request, h)
-      }
-      if (err.status === statusCodes.unprocessableEntity) {
-        const query = besRefusalQuery(err)
-        return h.redirect(
-          query
-            ? `${requestsUrl(applicationId)}?${query}`
-            : requestsUrl(applicationId)
-        )
-      }
-      logStructuredError(
-        request.logger,
-        err,
-        { applicationId },
-        'Error submitting in-year accreditation change request'
+      submitted = await accreditationChangesService.submit(
+        organisationId,
+        applicationId,
+        {
+          fullName,
+          jobTitle,
+          email: getUser(request)?.email ?? null,
+          paymentReference: paymentReferenceFor(application)
+        }
       )
-      return h
-        .view(VIEWS.declaration, {
-          ...declarationViewData(t, applicationId, fullName, jobTitle),
-          error: t('pages.submitDeclaration.validation.submitError')
-        })
-        .code(statusCodes.internalServerError)
+    } catch (err) {
+      return submitFailed(request, h, t, err, { fullName, jobTitle })
     }
-    return h.redirect(paymentUrl(applicationId))
+    // RA-682 AC05: a request that only changes ORS details has nothing to pay.
+    // With no request in the reply, the payment page finds the charged one, if
+    // any, rather than the operator missing it.
+    const next = !submitted || isCharged(submitted) ? paymentUrl : submittedUrl
+    return h.redirect(next(applicationId, submitted?.requestId))
   }
 }
 
+function submitFailed(request, h, t, err, { fullName, jobTitle }) {
+  const { applicationId } = request.params
+  // 404: no draft to submit. 409: a concurrent submit (another tab) won,
+  // so this one has nothing left to submit either.
+  if (NOTHING_TO_DO.has(err.status)) {
+    return redirectToManageSites(request, h)
+  }
+  if (err.status === statusCodes.unprocessableEntity) {
+    const query = besRefusalQuery(err)
+    return h.redirect(
+      query
+        ? `${requestsUrl(applicationId)}?${query}`
+        : requestsUrl(applicationId)
+    )
+  }
+  logStructuredError(
+    request.logger,
+    err,
+    { applicationId },
+    'Error submitting in-year accreditation change request'
+  )
+  return h
+    .view(VIEWS.declaration, {
+      ...declarationViewData(t, applicationId, fullName, jobTitle),
+      error: t('pages.submitDeclaration.validation.submitError')
+    })
+    .code(statusCodes.internalServerError)
+}
+
 // f07: the existing bank-transfer payment page, charged per ORS only
-// (AC03/AC04) for the most recently submitted request.
+// (AC03/AC04) for the request just submitted.
 export const paymentGetController = {
   async handler(request, h) {
     const { t, currentLocale } = getLocaleAndTranslator(request)
     const { applicationId } = request.params
     const organisationId = organisationIdFrom(request)
     const view = await loadView(request)
-    const submitted = view.requests.find(
-      (changeRequest) =>
-        changeRequest.status === ITEM_STATUSES.submitted &&
-        changeRequest.changeType === CHANGE_TYPES.addOverseasSite
-    )
+    const submitted = submittedRequest(view, request.query?.request, isCharged)
     if (!submitted) {
       return redirectToManageSites(request, h, view)
     }

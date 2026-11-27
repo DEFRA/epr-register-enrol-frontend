@@ -456,8 +456,8 @@
         "action": "[Welsh] Action"
       },
       "sections": {
-        "accredited": "[Welsh] Accredited",
-        "accreditedCaption": "[Welsh] These are the sites that you used in {year}.",
+        "approved": "[Welsh] Approved",
+        "approvedCaption": "[Welsh] These are the sites that you used in {year}.",
         "registered": "[Welsh] Registered",
         "registeredCaption": "[Welsh] These are the registered sites that you can add to this application.",
         "newSites": "[Welsh] New sites",
@@ -465,9 +465,9 @@
       },
       "interimSite": {
         "removeButton": "[Welsh] Withdraw from application",
-        "disclosure": "[Welsh] Show interim sites",
+        "disclosure": "[Welsh] Interim sites",
         "addAnother": "[Welsh] Add another interim site",
-        "withdrawnDisclosure": "[Welsh] Show withdrawn interim sites",
+        "withdrawnDisclosure": "[Welsh] Withdrawn interim sites",
         "restoreButton": "[Welsh] Add to application",
         "withdrawnBanner": {
           "title": "[Welsh] Interim site withdrawn",
@@ -951,19 +951,15 @@
     },
     "manageOverseasSites": {
       "heading": "[Welsh] Manage overseas reprocessing sites",
-      "accredited": {
-        "tab": "[Welsh] Accredited ({{count}})",
-        "heading": "[Welsh] Accredited overseas reprocessing sites",
-        "intro": "[Welsh] These are your accredited overseas reprocessing sites for {{year}}.",
-        "empty": "[Welsh] You have no accredited overseas reprocessing sites for {{year}}."
+      "intro": "[Welsh] You can add new overseas reprocessing sites, change existing site details or withdraw sites from your accreditation.",
+      "introRegistrationOnly": "[Welsh] You can add new overseas reprocessing sites or change existing site details.",
+      "empty": "[Welsh] You have no overseas reprocessing sites.",
+      "table": {
+        "siteName": "[Welsh] Site name",
+        "status": "[Welsh] Status",
+        "actions": "[Welsh] Actions"
       },
-      "registered": {
-        "tab": "[Welsh] Registered ({{count}})",
-        "heading": "[Welsh] Registered overseas reprocessing sites",
-        "intro": "[Welsh] These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for {{year}}.",
-        "empty": "[Welsh] You have no registered overseas reprocessing sites for {{year}}."
-      },
-      "interimDisclosure": "[Welsh] Show interim sites",
+      "interimDisclosure": "[Welsh] Interim sites",
       "viewChangeRequests": "[Welsh] View change requests",
       "returnToHome": "[Welsh] Return to home",
       "requestsBanner": {
@@ -977,15 +973,13 @@
       "pendingBanner": {
         "title": "[Welsh] Change in review",
         "body": {
-          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site to your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
-          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
-        },
-        "bodyRegistrationOnly": {
-          "one": "[Welsh] Your regulator is reviewing your application to add 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
-          "other": "[Welsh] Your regulator is reviewing your application to add {{count}} overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
+          "one": "[Welsh] Your regulator is reviewing your application for 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "[Welsh] Your regulator is reviewing your applications for {{count}} overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         }
       },
       "status": {
+        "approved": "[Welsh] Approved",
+        "registered": "[Welsh] Registered",
         "pending": "[Welsh] Pending",
         "inProgress": "[Welsh] In progress"
       },
@@ -1032,7 +1026,8 @@
         "totalAmount": "[Welsh] Total amount",
         "addAnother": "[Welsh] Add another request",
         "none": "[Welsh] You have no accreditation requests in progress.",
-        "incomplete": "[Welsh] {{site}} ({{orsId}}) is missing information"
+        "incomplete": "[Welsh] {{site}} ({{orsId}}) is missing information",
+        "remove": "[Welsh] Remove"
       },
       "payment": {
         "backLink": "[Welsh] Back to manage overseas reprocessing sites"
@@ -1123,14 +1118,6 @@
         "body": "[Welsh] Improve your search results by removing one or more of your selected filters."
       },
       "returnToHome": "[Welsh] Return to home",
-      "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}",
-      "pagination": {
-        "landmarkLabel": "[Welsh] Pagination",
-        "previous": "[Welsh] Previous",
-        "next": "[Welsh] Next",
-        "visuallyHiddenPage": "[Welsh] page",
-        "page": "[Welsh] Page {{number}}"
-      },
       "detail": {
         "header": {
           "location": "[Welsh] Location:",
@@ -1255,6 +1242,49 @@
         "title": "[Welsh] Success",
         "body": "[Welsh] You've set your cookie preferences."
       }
+    },
+    "updateOverseasSite": {
+      "success": "[Welsh] Success",
+      "rows": {
+        "orsName": "[Welsh] ORS name",
+        "recyclingOperations": "[Welsh] Recycling operations"
+      },
+      "status": {
+        "label": "[Welsh] Status",
+        "approved": "[Welsh] Approved",
+        "validFrom": "[Welsh] Valid from"
+      },
+      "pending": "[Welsh] Your regulator is reviewing a change to this overseas reprocessing site. You can apply for another change once they have made their decision.",
+      "updated": {
+        "siteName": "[Welsh] Site name updated.",
+        "location": "[Welsh] Location updated.",
+        "contactDetails": "[Welsh] Contact details updated.",
+        "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads updated.",
+        "interimSites": "[Welsh] Interim sites updated.",
+        "besEvidence": "[Welsh] Evidence of broadly equivalent standards updated."
+      },
+      "interim": {
+        "heading": "[Welsh] Interim sites ({{count}})",
+        "changed": "[Welsh] Changed",
+        "new": "[Welsh] New",
+        "toBeRemoved": "[Welsh] To be removed",
+        "remove": "[Welsh] Remove",
+        "undo": "[Welsh] Undo",
+        "add": "[Welsh] Add an interim site",
+        "addHeading": "[Welsh] Add an interim site",
+        "changeHeading": "[Welsh] Change an interim site",
+        "operations": "[Welsh] Recycling operations"
+      },
+      "besEvidence": {
+        "upload": "[Welsh] Upload"
+      },
+      "saveAndContinue": "[Welsh] Save and continue",
+      "submitted": {
+        "title": "[Welsh] In year change application submitted",
+        "references": "[Welsh] Your references",
+        "next": "[Welsh] Your regulator must approve your application for the changes to take effect. There is no charge for changing an overseas reprocessing site's details.",
+        "backLink": "[Welsh] Back to manage overseas reprocessing sites"
+      }
     }
   },
   "navigation": {
@@ -1329,6 +1359,14 @@
         "message": "[Welsh] Your upload may have expired or not finished, so your file has not been saved.",
         "uploadAgain": "[Welsh] Upload your file again"
       }
+    },
+    "pagination": {
+      "landmarkLabel": "[Welsh] Pagination",
+      "previous": "[Welsh] Previous",
+      "next": "[Welsh] Next",
+      "visuallyHiddenPage": "[Welsh] page",
+      "page": "[Welsh] Page {{number}}",
+      "showing": "[Welsh] Showing {{start}}-{{end}} of {{total}}"
     }
   },
   "languageSwitcher": {

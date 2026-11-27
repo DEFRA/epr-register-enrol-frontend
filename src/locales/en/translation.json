@@ -457,8 +457,8 @@
         "action": "Action"
       },
       "sections": {
-        "accredited": "Accredited",
-        "accreditedCaption": "These are the sites that you used in {year}.",
+        "approved": "Approved",
+        "approvedCaption": "These are the sites that you used in {year}.",
         "registered": "Registered",
         "registeredCaption": "These are the registered sites that you can add to this application.",
         "newSites": "New sites",
@@ -466,9 +466,9 @@
       },
       "interimSite": {
         "removeButton": "Withdraw from application",
-        "disclosure": "Show interim sites",
+        "disclosure": "Interim sites",
         "addAnother": "Add another interim site",
-        "withdrawnDisclosure": "Show withdrawn interim sites",
+        "withdrawnDisclosure": "Withdrawn interim sites",
         "restoreButton": "Add to application",
         "withdrawnBanner": {
           "title": "Interim site withdrawn",
@@ -952,19 +952,15 @@
     },
     "manageOverseasSites": {
       "heading": "Manage overseas reprocessing sites",
-      "accredited": {
-        "tab": "Accredited ({{count}})",
-        "heading": "Accredited overseas reprocessing sites",
-        "intro": "These are your accredited overseas reprocessing sites for {{year}}.",
-        "empty": "You have no accredited overseas reprocessing sites for {{year}}."
+      "intro": "You can add new overseas reprocessing sites, change existing site details or withdraw sites from your accreditation.",
+      "introRegistrationOnly": "You can add new overseas reprocessing sites or change existing site details.",
+      "empty": "You have no overseas reprocessing sites.",
+      "table": {
+        "siteName": "Site name",
+        "status": "Status",
+        "actions": "Actions"
       },
-      "registered": {
-        "tab": "Registered ({{count}})",
-        "heading": "Registered overseas reprocessing sites",
-        "intro": "These are the registered overseas reprocessing sites that you can request to add as accredited overseas reprocessing sites for {{year}}.",
-        "empty": "You have no registered overseas reprocessing sites for {{year}}."
-      },
-      "interimDisclosure": "Show interim sites",
+      "interimDisclosure": "Interim sites",
       "viewChangeRequests": "View change requests",
       "returnToHome": "Return to home",
       "requestsBanner": {
@@ -978,15 +974,13 @@
       "pendingBanner": {
         "title": "Change in review",
         "body": {
-          "one": "Your regulator is reviewing your application to add 1 overseas reprocessing site to your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
-          "other": "Your regulator is reviewing your application to add {{count}} overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
-        },
-        "bodyRegistrationOnly": {
-          "one": "Your regulator is reviewing your application to add 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
-          "other": "Your regulator is reviewing your application to add {{count}} overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
+          "one": "Your regulator is reviewing your application for 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.",
+          "other": "Your regulator is reviewing your applications for {{count}} overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions."
         }
       },
       "status": {
+        "approved": "Approved",
+        "registered": "Registered",
         "pending": "Pending",
         "inProgress": "In progress"
       },
@@ -1033,7 +1027,8 @@
         "totalAmount": "Total amount",
         "addAnother": "Add another request",
         "none": "You have no accreditation requests in progress.",
-        "incomplete": "{{site}} ({{orsId}}) is missing information"
+        "incomplete": "{{site}} ({{orsId}}) is missing information",
+        "remove": "Remove"
       },
       "payment": {
         "backLink": "Back to manage overseas reprocessing sites"
@@ -1124,14 +1119,6 @@
         "body": "Improve your search results by removing one or more of your selected filters."
       },
       "returnToHome": "Return to home",
-      "showing": "Showing {{start}}-{{end}} of {{total}}",
-      "pagination": {
-        "landmarkLabel": "Pagination",
-        "previous": "Previous",
-        "next": "Next",
-        "visuallyHiddenPage": "page",
-        "page": "Page {{number}}"
-      },
       "detail": {
         "header": {
           "location": "Location:",
@@ -1256,6 +1243,49 @@
         "title": "Success",
         "body": "You've set your cookie preferences."
       }
+    },
+    "updateOverseasSite": {
+      "success": "Success",
+      "rows": {
+        "orsName": "ORS name",
+        "recyclingOperations": "Recycling operations"
+      },
+      "status": {
+        "label": "Status",
+        "approved": "Approved",
+        "validFrom": "Valid from"
+      },
+      "pending": "Your regulator is reviewing a change to this overseas reprocessing site. You can apply for another change once they have made their decision.",
+      "updated": {
+        "siteName": "Site name updated.",
+        "location": "Location updated.",
+        "contactDetails": "Contact details updated.",
+        "repatriatedLoads": "Arrangements for rejected or returned loads updated.",
+        "interimSites": "Interim sites updated.",
+        "besEvidence": "Evidence of broadly equivalent standards updated."
+      },
+      "interim": {
+        "heading": "Interim sites ({{count}})",
+        "changed": "Changed",
+        "new": "New",
+        "toBeRemoved": "To be removed",
+        "remove": "Remove",
+        "undo": "Undo",
+        "add": "Add an interim site",
+        "addHeading": "Add an interim site",
+        "changeHeading": "Change an interim site",
+        "operations": "Recycling operations"
+      },
+      "besEvidence": {
+        "upload": "Upload"
+      },
+      "saveAndContinue": "Save and continue",
+      "submitted": {
+        "title": "In year change application submitted",
+        "references": "Your references",
+        "next": "Your regulator must approve your application for the changes to take effect. There is no charge for changing an overseas reprocessing site's details.",
+        "backLink": "Back to manage overseas reprocessing sites"
+      }
     }
   },
   "navigation": {
@@ -1331,6 +1361,14 @@
     "readOnlySubmittedSection": {
       "heading": "You cannot edit this section",
       "body": "This application has already been submitted, so this section is now read-only. Go back to the task list to view the rest of your application."
+    },
+    "pagination": {
+      "landmarkLabel": "Pagination",
+      "previous": "Previous",
+      "next": "Next",
+      "visuallyHiddenPage": "page",
+      "page": "Page {{number}}",
+      "showing": "Showing {{start}}-{{end}} of {{total}}"
     }
   },
   "languageSwitcher": {

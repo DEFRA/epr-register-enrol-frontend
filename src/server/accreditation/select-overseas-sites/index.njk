@@ -168,12 +168,12 @@
         } %}
 
         {% if accreditedSites.length %}
-          <h2 class="govuk-heading-m" id="accredited-sites" data-testid="accredited-heading">
-            {{ t('pages.selectOverseasSites.sections.accredited') }}({{ accreditedSites.length }})
+          <h2 class="govuk-heading-m" id="accredited-sites" data-testid="approved-heading">
+            {{ t('pages.selectOverseasSites.sections.approved') }}({{ accreditedSites.length }})
           </h2>
           {% if accreditedYear %}
             <p class="govuk-caption-m" data-testid="accredited-caption">
-              {{ t('pages.selectOverseasSites.sections.accreditedCaption') | replace('{year}', accreditedYear) }}
+              {{ t('pages.selectOverseasSites.sections.approvedCaption') | replace('{year}', accreditedYear) }}
             </p>
           {% endif %}
           <table class="govuk-table select-overseas-sites-table" data-testid="accredited-sites-list">

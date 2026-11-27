@@ -188,6 +188,25 @@ describe('#manageOverseasSites BES evidence (RA-492)', () => {
     expect(initUpload).not.toHaveBeenCalled()
   })
 
+  test('an answer refused because the site was already sent shows why', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue(view)
+    vi.spyOn(apiClient, 'patch').mockRejectedValue(
+      Object.assign(new Error('409'), {
+        status: 409,
+        response: JSON.stringify(
+          "This change has already been sent to the regulator, so it can't be changed."
+        )
+      })
+    )
+    const { statusCode, result } = await server.inject({
+      method: 'POST',
+      url: `${SITE}/conditions-of-export`,
+      payload: { conditionsOfExport: 'yes' }
+    })
+    expect(statusCode).toBe(statusCodes.badRequest)
+    expect(result).toContain('already been sent to the regulator')
+  })
+
   test('a backend failure saving an answer is not hidden', async () => {
     vi.spyOn(apiClient, 'get').mockResolvedValue(view)
     vi.spyOn(apiClient, 'patch').mockRejectedValue(

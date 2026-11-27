@@ -5,10 +5,7 @@ import {
   getAddInterimSiteSession,
   setAddInterimSiteSession
 } from '../../../common/helpers/addInterimSiteSession.js'
-import {
-  SITE_FIELD_MAX_LENGTHS,
-  exceedsMaxLength
-} from '../../../common/constants/siteFieldLimits.js'
+import { validateInterimCountry } from '../../../common/helpers/interimSiteValidation.js'
 import { COUNTRIES } from '../../../common/data/countries.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 
@@ -83,27 +80,11 @@ export const addInterimSiteCountryPostController = {
 
     const country = (request.payload?.country ?? '').trim()
 
-    if (!country) {
+    const error = validateInterimCountry(t, country)
+    if (error) {
       return renderPage(
         h,
-        buildViewData(
-          t,
-          applicationId,
-          '',
-          t('pages.addInterimSite.country.validation.required')
-        )
-      ).code(statusCodes.badRequest)
-    }
-
-    if (exceedsMaxLength(country, SITE_FIELD_MAX_LENGTHS.country)) {
-      return renderPage(
-        h,
-        buildViewData(
-          t,
-          applicationId,
-          country,
-          t('pages.addInterimSite.country.validation.tooLong')
-        )
+        buildViewData(t, applicationId, country, error)
       ).code(statusCodes.badRequest)
     }
 

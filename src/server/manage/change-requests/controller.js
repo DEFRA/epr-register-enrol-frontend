@@ -1,5 +1,10 @@
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
+import {
+  buildPagination,
+  countText,
+  paginate
+} from '../../common/helpers/pagination.js'
 import { fetchChangeRequestsView } from '../helpers/change-requests-view.js'
 import {
   loadManagePage,
@@ -12,13 +17,11 @@ import {
   manageUrl
 } from '../helpers/manage-urls.js'
 import {
-  buildPagination,
   changeTypeLabel,
   changeTypesFor,
   filterItems,
   filterOptions,
   flattenItems,
-  paginate,
   readFilters,
   sortItems
 } from './change-request-items.js'
@@ -64,14 +67,13 @@ export const manageChangeRequestsController = {
     const listUrl = changeRequestsUrl(params, currentLocale)
     const types = changeTypesFor(context)
     const filters = readFilters(request.query, types)
-    const { rows, page, totalPages, totalCount, rangeStart, rangeEnd } =
-      paginate(
-        filterItems(
-          sortItems(flattenItems(view.requests ?? [], view.sites ?? [])),
-          filters
-        ),
-        request.query.page
-      )
+    const paged = paginate(
+      filterItems(
+        sortItems(flattenItems(view.requests ?? [], view.sites ?? [])),
+        filters
+      ),
+      request.query.page
+    )
 
     return h.view('manage/change-requests/index', {
       pageTitle: heading,
@@ -85,20 +87,13 @@ export const manageChangeRequestsController = {
       ),
       listUrl,
       filterOptions: filterOptions(filters, t, types),
-      rows: rows.map((row) => toRowView(row, { t, params, currentLocale })),
-      // RA-697: the wording copies case management's count line and still
-      // needs design or content confirmation.
-      countText:
-        totalCount > 0
-          ? t('pages.manageChangeRequests.showing', {
-              start: rangeStart,
-              end: rangeEnd,
-              total: totalCount
-            })
-          : null,
+      rows: paged.rows.map((row) =>
+        toRowView(row, { t, params, currentLocale })
+      ),
+      countText: countText(paged, t),
       pagination: buildPagination({
-        page,
-        totalPages,
+        page: paged.page,
+        totalPages: paged.totalPages,
         baseUrl: listUrl,
         query: filters,
         t
