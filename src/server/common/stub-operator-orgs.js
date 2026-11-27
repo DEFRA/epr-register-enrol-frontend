@@ -3,7 +3,8 @@ import {
   MANAGE_EXPORTER_ORG,
   NO_CHANGE_REQUESTS_ORG,
   NO_OVERSEAS_SITES_ORG,
-  REGISTRATION_ONLY_ORG
+  REGISTRATION_ONLY_ORG,
+  IN_YEAR_UPDATE_ORG
 } from './constants/test-orgs.js'
 
 /**
@@ -74,7 +75,9 @@ const NUMBERED_TEST_ORGS = [
   // fixture test/fixtures/reex-registration-status-orgs.js uses them: keep
   // all three in step.
   ['50023', 'RA-806 Approved Exporter Ltd'],
-  ['50024', 'RA-806 Created Exporter Ltd']
+  ['50024', 'RA-806 Created Exporter Ltd'],
+  // RA-682: the in-year ORS update journey.
+  [String(IN_YEAR_UPDATE_ORG.orgId), IN_YEAR_UPDATE_ORG.orgName]
 ].map(([id, name]) => ({ reExOrgId: id, defraOrgId: id, name }))
 
 // defraOrgId is a Defra ID organisation id — a string (a UUID in production).

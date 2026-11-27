@@ -2,6 +2,7 @@ import { activeInterimSites } from '../../common/helpers/interimSites.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
+  approvedSiteActions,
   changeRequestsSummary,
   registeredSiteActions
 } from '../../accreditation/manage-overseas-sites/view-model.js'
@@ -33,6 +34,24 @@ function toOrsView(site, status) {
     address: orsAddressLine(site),
     interimSites: activeInterimSites(site),
     status
+  }
+}
+
+// RA-682: where an approved ORS's change stands. Without the change
+// requests view or an accreditation the row has no change tag or action.
+function approvedSiteView(site, applicationId, changeRequests) {
+  const view = toOrsView(site, ORS_STATUSES.approved)
+  if (!changeRequests || !applicationId) {
+    return view
+  }
+  return {
+    ...view,
+    ...approvedSiteActions(
+      applicationId,
+      site.siteId,
+      changeRequests.pendingRequestStatus(site.siteId),
+      changeRequests.isInDraftRequest(site.siteId)
+    )
   }
 }
 
@@ -81,15 +100,16 @@ function byOrsId(a, b) {
 // RA-492: with the change requests, each registered ORS offers "Add to
 // accreditation"; one in the draft request shows "In progress" and View, and
 // one in a submitted request shows "Pending" and no action (AC09). It stays
-// Registered until the regulator approves it. Without them the rows are
-// RA-425's alone.
+// Registered until the regulator approves it. RA-682: each approved ORS offers
+// Change, or shows "Pending", or "In progress" and View, for its own update.
+// Without the change requests the rows are RA-425's alone.
 function accreditationSites(sites, applicationId, changeRequests) {
   return sites
     .filter((site) => site.selected === true || !site.isNewSite)
     .sort(byOrsId)
     .map((site) =>
       site.selected === true
-        ? toOrsView(site, ORS_STATUSES.approved)
+        ? approvedSiteView(site, applicationId, changeRequests)
         : registeredSiteView(site, applicationId, changeRequests)
     )
 }

@@ -6,6 +6,7 @@ import {
   setAddOrsSession
 } from '../../../common/helpers/addOverseasSiteSession.js'
 import {
+  MAX_REPATRIATED_WORDS,
   requiresConditionsOfExport,
   validateRepatriatedLoads
 } from '../../../common/helpers/overseasSiteAnswerValidation.js'
@@ -62,11 +63,11 @@ function renderPage(h, viewData) {
 // by reducing word count), is what lets application.js's
 // initCharacterCountLiveErrorClearing find and clear it once the operator
 // is back within the limit.
-function buildTextareaInput(t, repatriatedLoads, error, tooManyWords) {
+export function buildTextareaInput(t, repatriatedLoads, error, tooManyWords) {
   return {
     id: 'repatriated-loads',
     name: 'repatriatedLoads',
-    maxwords: 500,
+    maxwords: MAX_REPATRIATED_WORDS,
     rows: 8,
     value: repatriatedLoads,
     label: { text: t('pages.addOverseasSite.repatriatedLoads.label') },

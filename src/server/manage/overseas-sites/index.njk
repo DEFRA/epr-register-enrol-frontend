@@ -3,11 +3,11 @@
 {% from "overseas-site-row/macro.njk" import interimSiteDisclosure %}
 {% from "govuk/components/pagination/macro.njk" import govukPagination %}
 
-{# RA-492: where a registered ORS stands in the operator's in-year change
+{# RA-492 and RA-682: where an ORS stands in the operator's in-year change
    requests. RA-814: each link is rendered on its own, so later flows can add
    theirs to a row beside these. #}
 {% macro siteActions(site) %}
-  {% if site.pending or site.inProgress or site.viewUrl or site.addUrl %}
+  {% if site.pending or site.inProgress or site.viewUrl or site.changeUrl or site.addUrl %}
     <div class="app-ors-table__actions">
       {% if site.pending %}
         <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
@@ -16,6 +16,9 @@
       {% endif %}
       {% if site.viewUrl %}
         <a class="govuk-link" href="{{ site.viewUrl }}" data-testid="view-request-{{ site.siteId }}">{{ t('pages.manageOverseasSites.viewChangeRequests') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
+      {% endif %}
+      {% if site.changeUrl %}
+        <a class="govuk-link" href="{{ site.changeUrl }}" data-testid="change-site-{{ site.siteId }}">{{ t('pages.manageOverseasSites.change') }}<span class="govuk-visually-hidden"> {{ site.siteName }}</span></a>
       {% endif %}
       {% if site.addUrl %}
         {# Adding a site changes the draft request, so this is a crumb-protected

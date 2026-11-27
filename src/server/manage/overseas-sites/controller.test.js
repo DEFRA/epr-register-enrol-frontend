@@ -384,12 +384,14 @@ describe('#manageOverseasSitesController', () => {
       expect(table).not.toMatch(/2026|Valid/)
     })
 
-    // RA-814: approved rows get their actions from RA-682 and RA-676.
-    test('leaves an approved row’s Actions cell empty', () => {
+    // RA-814: approved rows get their actions from RA-682 (Change) and,
+    // later, RA-676 (Withdraw).
+    test('offers only Change on an approved row in no request', () => {
       for (const id of [1, 2, 3]) {
         const row = siteRow(result, id)
         expect(cells(row)).toHaveLength(3)
-        expect(cells(row)[2].trim()).toBe('')
+        expect(cells(row)[2]).toContain(`data-testid="change-site-${id}"`)
+        expect(cells(row)[2]).not.toMatch(/<form |site-status-tag-/)
       }
     })
 
@@ -436,14 +438,19 @@ describe('#manageOverseasSitesController', () => {
       }
     })
 
-    // RA-492's "Add to accreditation" on registered ORSs is the only action.
-    // RA-814: the design's Add, Change, Withdraw and Remove belong to later
-    // tickets.
-    test('has no Add buttons, change, withdraw, remove or interim-site actions', () => {
+    // RA-492's "Add to accreditation" on registered ORSs and RA-682's Change on
+    // approved ones are the only actions. RA-814: the design's Add, Withdraw,
+    // Remove and a registered ORS's Change belong to later tickets.
+    test('has no Add buttons, withdraw, remove, registered Change or interim-site actions', () => {
       expect(result).not.toMatch(
         /change-interim-site|remove-button|add-interim-site/
       )
-      expect(result).not.toMatch(/>\s*(Change|Withdraw|Remove)\s*</)
+      expect(result).not.toMatch(/>\s*(Withdraw|Remove)\s*</)
+      expect(result.match(/data-testid="change-site-\d+"/g)).toEqual([
+        'data-testid="change-site-1"',
+        'data-testid="change-site-2"',
+        'data-testid="change-site-3"'
+      ])
       expect(result).not.toContain('Add a new overseas reprocessing site')
       expect(result).not.toContain('govuk-button')
       expect(result.match(/<form /g)).toHaveLength(
@@ -862,7 +869,7 @@ describe('#manageOverseasSitesController', () => {
         'data-testid="add-to-accreditation-5"'
       )
       for (const id of [1, 2, 3]) {
-        expect(actions(result, id).trim()).toBe('')
+        expect(actions(result, id)).not.toContain(`add-to-accreditation-${id}`)
       }
       expect(result).not.toContain('data-testid="pending-change-banner"')
       expect(result).not.toContain('data-testid="requests-banner"')
@@ -881,8 +888,8 @@ describe('#manageOverseasSitesController', () => {
     )
 
     // RA-814: a change request never moves a site between Approved and
-    // Registered, and approved rows get their change tags from RA-682.
-    test('a change request on a site neither changes its status nor tags an approved row', async () => {
+    // Registered; it only sets the row's change tag (RA-682 on approved rows).
+    test('a change request on a site never changes its status', async () => {
       const { result } = await getWithChanges(
         changes({ 1: 'Submitted', 2: 'InProgress', 5: 'Submitted' }, [
           { siteId: 2 }
@@ -890,10 +897,49 @@ describe('#manageOverseasSitesController', () => {
       )
 
       for (const id of [1, 2]) {
-        expect(actions(result, id).trim()).toBe('')
         expect(cells(siteRow(result, id))[1]).toMatch(/>\s*Approved\s*</)
       }
       expect(cells(siteRow(result, 5))[1]).toMatch(/>\s*Registered\s*</)
+    })
+
+    test('RA-682: an approved ORS in no request offers Change, to its details page', async () => {
+      const { result } = await getWithChanges(noChangeRequests)
+
+      expect(actions(result, 1)).toContain(
+        'href="/accreditation/manage-overseas-sites/app-current/update/1" data-testid="change-site-1"'
+      )
+      expect(actions(result, 1)).not.toContain('site-status-tag-1')
+      expect(actions(result, 1)).not.toContain('add-to-accreditation-1')
+    })
+
+    test('RA-682 AC03: an approved ORS a submitted request holds shows Pending, with no Change', async () => {
+      const { result } = await getWithChanges(changes({ 1: 'Submitted' }))
+
+      expect(actions(result, 1)).toMatch(
+        /data-testid="site-status-tag-1"[^>]*>\s*Pending\s*</
+      )
+      expect(actions(result, 1)).not.toContain('data-testid="change-site-1"')
+      expect(actions(result, 2)).toContain('data-testid="change-site-2"')
+    })
+
+    test('RA-682: an approved ORS whose change is in the draft shows In progress and View, to its details, with no Change', async () => {
+      const { result } = await getWithChanges(
+        changes({ 1: 'InProgress' }, [{ siteId: 1 }])
+      )
+
+      expect(actions(result, 1)).toMatch(
+        /data-testid="site-status-tag-1"[^>]*>\s*In progress\s*</
+      )
+      expect(actions(result, 1)).toContain(
+        'href="/accreditation/manage-overseas-sites/app-current/update/1" data-testid="view-request-1"'
+      )
+      expect(actions(result, 1)).not.toContain('data-testid="change-site-1"')
+    })
+
+    test('a registered ORS never offers Change', async () => {
+      const { result } = await getWithChanges(noChangeRequests)
+
+      expect(actions(result, 4)).not.toContain('change-site-4')
     })
 
     test('AC10: a site in the in-progress request shows In progress and View, with the requests banner', async () => {

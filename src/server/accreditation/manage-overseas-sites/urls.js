@@ -52,6 +52,52 @@ export function declarationUrl(applicationId) {
   return `${journeyUrl(applicationId)}/declaration`
 }
 
-export function paymentUrl(applicationId) {
-  return `${journeyUrl(applicationId)}/payment`
+function forRequest(url, requestId) {
+  return requestId ? `${url}?request=${encodeURIComponent(requestId)}` : url
+}
+
+export function paymentUrl(applicationId, requestId) {
+  return forRequest(`${journeyUrl(applicationId)}/payment`, requestId)
+}
+
+// RA-682: changing an accredited ORS's details (and its interim sites), keyed
+// by the approved application's id and the ORS's site id, as RA-492's pages.
+export function updateUrl(applicationId, siteId) {
+  return `${journeyUrl(applicationId)}/update/${siteId}`
+}
+
+export function updatedUrl(applicationId, siteId, updated) {
+  return `${updateUrl(applicationId, siteId)}?updated=${updated}`
+}
+
+export function updateStepUrl(applicationId, siteId, step) {
+  return `${updateUrl(applicationId, siteId)}/details/${step}`
+}
+
+export function updateBesEvidenceUrl(applicationId, siteId) {
+  return `${updateUrl(applicationId, siteId)}/bes-evidence`
+}
+
+export function updateBesEvidenceFileDeleteUrl(applicationId, siteId, fileId) {
+  return `${updateBesEvidenceUrl(applicationId, siteId)}/${encodeURIComponent(fileId)}/delete`
+}
+
+export function cancelUpdateUrl(applicationId, siteId) {
+  return `${updateUrl(applicationId, siteId)}/cancel`
+}
+
+export function newInterimSiteUrl(applicationId, siteId) {
+  return `${updateUrl(applicationId, siteId)}/interim-sites/new`
+}
+
+export function interimSiteUrl(applicationId, siteId, interimSiteId) {
+  return `${updateUrl(applicationId, siteId)}/interim-sites/${interimSiteId}`
+}
+
+export function interimSiteAdditionUrl(applicationId, siteId, changeId) {
+  return `${updateUrl(applicationId, siteId)}/interim-site-changes/${encodeURIComponent(changeId)}`
+}
+
+export function submittedUrl(applicationId, requestId) {
+  return forRequest(`${journeyUrl(applicationId)}/submitted`, requestId)
 }

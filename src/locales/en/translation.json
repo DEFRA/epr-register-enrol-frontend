@@ -1030,7 +1030,8 @@
         "totalAmount": "Total amount",
         "addAnother": "Add another request",
         "none": "You have no accreditation requests in progress.",
-        "incomplete": "{{site}} ({{orsId}}) is missing information"
+        "incomplete": "{{site}} ({{orsId}}) is missing information",
+        "remove": "Remove"
       },
       "payment": {
         "backLink": "Back to manage overseas reprocessing sites"
@@ -1197,6 +1198,49 @@
       "saved": {
         "title": "Success",
         "body": "You've set your cookie preferences."
+      }
+    },
+    "updateOverseasSite": {
+      "success": "Success",
+      "rows": {
+        "orsName": "ORS name",
+        "recyclingOperations": "Recycling operations"
+      },
+      "status": {
+        "label": "Status",
+        "approved": "Approved",
+        "validFrom": "Valid from"
+      },
+      "pending": "Your regulator is reviewing a change to this overseas reprocessing site. You can apply for another change once they have made their decision.",
+      "updated": {
+        "siteName": "Site name updated.",
+        "location": "Location updated.",
+        "contactDetails": "Contact details updated.",
+        "repatriatedLoads": "Arrangements for rejected or returned loads updated.",
+        "interimSites": "Interim sites updated.",
+        "besEvidence": "Evidence of broadly equivalent standards updated."
+      },
+      "interim": {
+        "heading": "Interim sites ({{count}})",
+        "changed": "Changed",
+        "new": "New",
+        "toBeRemoved": "To be removed",
+        "remove": "Remove",
+        "undo": "Undo",
+        "add": "Add an interim site",
+        "addHeading": "Add an interim site",
+        "changeHeading": "Change an interim site",
+        "operations": "Recycling operations"
+      },
+      "besEvidence": {
+        "upload": "Upload"
+      },
+      "saveAndContinue": "Save and continue",
+      "submitted": {
+        "title": "In year change application submitted",
+        "references": "Your references",
+        "next": "Your regulator must approve your application for the changes to take effect. There is no charge for changing an overseas reprocessing site's details.",
+        "backLink": "Back to manage overseas reprocessing sites"
       }
     }
   },
