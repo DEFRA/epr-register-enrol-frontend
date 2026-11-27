@@ -10,12 +10,11 @@ import { proxyUploadToCdp } from '../../../common/helpers/upload/proxy-upload-to
 import {
   ALLOWED_MIME_TYPES,
   MAX_FILE_BYTES,
-  hasMaxBesEvidenceFiles,
   parseDate,
   resolveBesEvidenceValidTo,
   uploadRejectionErrorFromQuery,
   uploadRejectionQuery,
-  validateFileExtension
+  validateBesEvidenceFile
 } from '../../../accreditation/upload-bes-evidence/controller.js'
 import { FLASH_UPDATED } from './steps.js'
 import { loadQueriedItem } from './load.js'
@@ -93,24 +92,12 @@ function renderPage(h, ctx, payload = {}, errors = {}) {
 }
 
 function validateFile(ctx, uploadedFile) {
-  const { t } = ctx
-  if (hasMaxBesEvidenceFiles(allFiles(ctx))) {
-    return t('pages.uploadBesEvidence.validation.maxFiles')
-  }
-  const filename = uploadedFile?.filename ?? ''
-  if (!filename) {
-    return t('pages.uploadBesEvidence.validation.noFile')
-  }
-  if (!validateFileExtension(filename)) {
-    return t('pages.uploadBesEvidence.validation.invalidType')
-  }
-  if (uploadedFile.payload.length > MAX_FILE_BYTES) {
-    return t('pages.uploadBesEvidence.validation.fileTooLarge')
-  }
-  if (isFilenameAmong(filename, filenamesInUse(ctx))) {
-    return t('pages.uploadBesEvidence.validation.duplicateFilename')
-  }
-  return null
+  return validateBesEvidenceFile(ctx.t, {
+    filename: uploadedFile?.filename ?? '',
+    fileSize: uploadedFile?.payload?.length ?? 0,
+    files: allFiles(ctx),
+    isDuplicate: (name) => isFilenameAmong(name, filenamesInUse(ctx))
+  })
 }
 
 function validateDates(ctx, payload) {

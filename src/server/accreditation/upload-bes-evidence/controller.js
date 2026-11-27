@@ -169,8 +169,11 @@ function renderPage(h, viewData) {
 // if-blocks each rendering the page — the duplicate-filename rule
 // (AC01-AC04) is a fourth check on the same file, and one function keeps
 // the handler itself a plain sequence of guards.
-function validateBesEvidenceFile(t, { filename, fileSize, application, site }) {
-  if (hasMaxBesEvidenceFiles(site?.besEvidence?.besEvidenceUploads)) {
+export function validateBesEvidenceFile(
+  t,
+  { filename, fileSize, files, isDuplicate }
+) {
+  if (hasMaxBesEvidenceFiles(files)) {
     return t('pages.uploadBesEvidence.validation.maxFiles')
   }
   if (!filename) {
@@ -182,7 +185,7 @@ function validateBesEvidenceFile(t, { filename, fileSize, application, site }) {
   if (fileSize > MAX_FILE_BYTES) {
     return t('pages.uploadBesEvidence.validation.fileTooLarge')
   }
-  if (isDuplicateFilename(filename, application)) {
+  if (isDuplicate(filename)) {
     return t('pages.uploadBesEvidence.validation.duplicateFilename')
   }
   return null
@@ -332,8 +335,8 @@ export const uploadBesEvidencePostController = {
     const fileError = validateBesEvidenceFile(t, {
       filename,
       fileSize,
-      application,
-      site
+      files: site?.besEvidence?.besEvidenceUploads,
+      isDuplicate: (name) => isDuplicateFilename(name, application)
     })
     if (fileError) {
       return renderPage(
