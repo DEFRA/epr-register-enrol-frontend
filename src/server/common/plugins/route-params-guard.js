@@ -70,8 +70,15 @@ const GLASS_RECYCLING_PROCESS_SCHEMAS = {
     .insensitive()
 }
 
-const schemasFor = ({ glassRecyclingProcesses = false } = {}) =>
-  glassRecyclingProcesses ? GLASS_RECYCLING_PROCESS_SCHEMAS : PARAM_SCHEMAS
+// RA-765: a function, so one route can take them for one URL style and refuse
+// them for another.
+const takesGlassRecyclingProcesses = (option, params) =>
+  typeof option === 'function' ? option(params) : option
+
+const schemasFor = ({ glassRecyclingProcesses = false } = {}, params = {}) =>
+  takesGlassRecyclingProcesses(glassRecyclingProcesses, params)
+    ? GLASS_RECYCLING_PROCESS_SCHEMAS
+    : PARAM_SCHEMAS
 
 // Only materialType's schema value can differ from its raw input (case
 // normalisation) — every other schema here validates shape without
@@ -83,11 +90,11 @@ const NORMALISED_PARAM_KEYS = ['materialType']
 
 /**
  * @param {object} [params]
- * @param {{ glassRecyclingProcesses?: boolean }} [options] - the route's
+ * @param {{ glassRecyclingProcesses?: boolean | ((params: object) => boolean) }} [options] - the route's
  *   plugins.routeParamsGuard option
  */
 export function findInvalidParam(params, options) {
-  const schemas = schemasFor(options)
+  const schemas = schemasFor(options, params ?? {})
   for (const [key, value] of Object.entries(params ?? {})) {
     const schema = schemas[key]
     if (!schema) {
@@ -105,7 +112,7 @@ export function findInvalidParam(params, options) {
 // against. Only touches the keys in NORMALISED_PARAM_KEYS (materialType) —
 // see the comment there for why the rest are left as-is.
 export function normaliseParams(params, options) {
-  const schemas = schemasFor(options)
+  const schemas = schemasFor(options, params ?? {})
   for (const key of NORMALISED_PARAM_KEYS) {
     if (!(key in (params ?? {}))) {
       continue

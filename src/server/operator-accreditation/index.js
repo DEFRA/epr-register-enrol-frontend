@@ -4,6 +4,16 @@ import {
   startNewAccreditationExporterController
 } from './controller.js'
 import { requireOperator } from '../common/helpers/auth/auth-scopes.js'
+import { usesRegistrationNumber } from '../common/helpers/accreditationUrls.js'
+
+// RA-765: a URL by registration number has the manage page's material, which
+// names glass by its recycling process. A URL by ReEx's ids still doesn't.
+const landingRouteOptions = {
+  ...requireOperator,
+  plugins: {
+    routeParamsGuard: { glassRecyclingProcesses: usesRegistrationNumber }
+  }
+}
 
 export const operatorAccreditation = {
   plugin: {
@@ -13,13 +23,13 @@ export const operatorAccreditation = {
         {
           method: 'GET',
           path: '/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}',
-          options: requireOperator,
+          options: landingRouteOptions,
           ...operatorAccreditationController
         },
         {
           method: 'GET',
           path: '/{language}/operator-accreditation/{organisationId}/{registrationId}/{materialType}/{year}',
-          options: requireOperator,
+          options: landingRouteOptions,
           ...operatorAccreditationController
         },
         // RA-357: restarting after a withdrawal creates an application, so it

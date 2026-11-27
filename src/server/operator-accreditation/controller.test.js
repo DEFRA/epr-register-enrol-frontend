@@ -24,7 +24,9 @@ vi.mock('../common/helpers/reex-organisation-service.js', () => ({
 }))
 
 const ORG_ID = 'org-123'
-const REGISTRATION_ID = 'REG001'
+// A ReEx registration id is a Mongo id: anything else is a registration number
+// (RA-765).
+const REGISTRATION_ID = '64f1c2a9e4b0a1b2c3d4e5f6'
 const MATERIAL = 'Steel'
 const YEAR = 2026
 
@@ -1810,5 +1812,293 @@ describe('#operatorAccreditationController', () => {
         'data-testid="current-accreditation-site-address"'
       )
     })
+  })
+  // RA-765: the manage page links here by organisation number and
+  // registration number. The by-number registration lookup resolves them to
+  // ReEx's ids, which the rest of the page and journey use as before.
+  describe('natural-number URL (RA-765)', () => {
+    const ORG_NUMBER = '50018'
+    const REGISTRATION_NUMBER = 'R27EX0500180001PL'
+    const naturalUrl = `/operator-accreditation/${ORG_NUMBER}/${REGISTRATION_NUMBER}/${MATERIAL}/${YEAR}`
+    const BY_NUMBER_PATH = `/api/v1/registrations/by-number/${REGISTRATION_NUMBER}/status`
+
+    const makeRegistration = (overrides = {}) => ({
+      registrationId: REGISTRATION_ID,
+      registrationNumber: REGISTRATION_NUMBER,
+      status: 'Approved',
+      organisationName: 'Acme Recycling Ltd',
+      materialType: MATERIAL,
+      glassRecyclingProcess: null,
+      isExporter: false,
+      siteAddress: null,
+      reExOrganisationId: ORG_ID,
+      ...overrides
+    })
+
+    const apiError = (status) =>
+      Object.assign(new Error(`API request failed: ${status}`), { status })
+
+    function mockNaturalGet(apps, registration = makeRegistration()) {
+      return vi.spyOn(apiClient, 'get').mockImplementation(async (url) => {
+        if (url.startsWith('/api/v1/registrations/by-number/')) {
+          if (registration instanceof Error) {
+            throw registration
+          }
+          return registration
+        }
+        const lastSegment = url.split('/').pop()
+        return apps.find((app) => app.applicationId === lastSegment) ?? apps
+      })
+    }
+
+    beforeEach(() => {
+      configOverrides['featureFlags.inYearChangesEnabled'] = true
+    })
+
+    test('looks the registration up by the organisation and registration numbers', async () => {
+      const getSpy = mockNaturalGet([makeApp({ applicationStatus: 'Started' })])
+
+      await server.inject({ method: 'GET', url: naturalUrl })
+
+      expect(getSpy).toHaveBeenCalledWith(
+        `${BY_NUMBER_PATH}?organisationId=${ORG_NUMBER}`
+      )
+    })
+
+    test('lands on the application the equivalent ReEx id URL shows', async () => {
+      mockNaturalGet([makeApp({ applicationStatus: 'Started' })])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const natural = await server.inject({ method: 'GET', url: naturalUrl })
+      const old = await server.inject({ method: 'GET', url: baseUrl })
+
+      expect(natural.statusCode).toBe(statusCodes.ok)
+      expect(natural.result).toContain('/accreditation/task-list/app-id-001')
+      expect(natural.result).toContain(
+        `/organisations/${ORG_ID}/registrations/${REGISTRATION_ID}`
+      )
+      expect(natural.result).toContain('IN PROGRESS')
+      expect(old.result).toContain('/accreditation/task-list/app-id-001')
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('checks operator access against the ReEx organisation id', async () => {
+      mockNaturalGet([makeApp()])
+
+      await server.inject({ method: 'GET', url: naturalUrl })
+
+      expect(operatorCanAccessOrganisation).toHaveBeenCalledWith(
+        expect.anything(),
+        ORG_ID,
+        expect.anything()
+      )
+    })
+
+    test('returns 403 when the operator cannot access the ReEx organisation', async () => {
+      mockNaturalGet(
+        [makeApp()],
+        makeRegistration({ reExOrganisationId: 'not-my-org' })
+      )
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.forbidden)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('seeds an empty year with the ReEx ids', async () => {
+      mockNaturalGet([])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(makeApp())
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(postSpy).toHaveBeenCalledWith(
+        `/api/v1/accreditation-applications/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/seed`,
+        { year: YEAR }
+      )
+    })
+
+    test('posts start-new for a withdrawn application to the ReEx id URL', async () => {
+      mockNaturalGet([
+        makeApp({ applicationStatus: 'Withdrawn', organisationId: ORG_ID })
+      ])
+
+      const { result } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(result).toContain(
+        `action="/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/start-new"`
+      )
+    })
+
+    // The backend gives the same 404 for an organisation number that doesn't
+    // hold the registration.
+    test('returns 404 for an unknown registration number', async () => {
+      mockNaturalGet([makeApp()], apiError(statusCodes.notFound))
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('renders the service-unavailable page (503) when the lookup fails', async () => {
+      mockNaturalGet([makeApp()], apiError(statusCodes.serviceUnavailable))
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.serviceUnavailable)
+      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
+    })
+
+    test('returns 404 when the registration is for another material', async () => {
+      mockNaturalGet([makeApp()], makeRegistration({ materialType: 'Plastic' }))
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
+    })
+
+    test('returns 404 with the in-year changes flag off, without looking anything up', async () => {
+      configOverrides['featureFlags.inYearChangesEnabled'] = false
+      const getSpy = mockNaturalGet([makeApp()])
+
+      const { statusCode } = await server.inject({
+        method: 'GET',
+        url: naturalUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.notFound)
+      expect(getSpy).not.toHaveBeenCalled()
+      expect(operatorCanAccessOrganisation).not.toHaveBeenCalled()
+    })
+
+    test('works with the Welsh prefix', async () => {
+      mockNaturalGet([makeApp({ applicationStatus: 'Started' })])
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: `/cy${naturalUrl}`
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('/accreditation/task-list/app-id-001')
+    })
+
+    describe('glass', () => {
+      const glassRegistration = makeRegistration({
+        materialType: 'Glass',
+        glassRecyclingProcess: 'glass_re_melt'
+      })
+      const glassApp = makeApp({
+        materialType: 'Glass',
+        glassRecyclingProcess: ['glass_re_melt'],
+        applicationStatus: 'Started'
+      })
+      const glassUrl = (material) =>
+        `/operator-accreditation/${ORG_NUMBER}/${REGISTRATION_NUMBER}/${material}/${YEAR}`
+
+      test('takes the glass recycling process and lands on the Glass application', async () => {
+        mockNaturalGet([glassApp], glassRegistration)
+        const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: glassUrl('glass_re_melt')
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('/accreditation/task-list/app-id-001')
+        expect(postSpy).not.toHaveBeenCalled()
+      })
+
+      test('seeds Glass for an empty year', async () => {
+        mockNaturalGet([], glassRegistration)
+        const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(glassApp)
+
+        await server.inject({ method: 'GET', url: glassUrl('glass_re_melt') })
+
+        expect(postSpy).toHaveBeenCalledWith(
+          `/api/v1/accreditation-applications/${ORG_ID}/${REGISTRATION_ID}/Glass/seed`,
+          { year: YEAR }
+        )
+      })
+
+      test('returns 404 when the registration has the other glass recycling process', async () => {
+        mockNaturalGet([glassApp], glassRegistration)
+
+        const { statusCode } = await server.inject({
+          method: 'GET',
+          url: glassUrl('glass_other')
+        })
+
+        expect(statusCode).toBe(statusCodes.notFound)
+      })
+
+      test.each(['glass_re_melt', 'glass_other'])(
+        'still rejects %s on a ReEx id URL',
+        async (material) => {
+          const getSpy = mockNaturalGet([glassApp], glassRegistration)
+
+          const { statusCode } = await server.inject({
+            method: 'GET',
+            url: `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${material}/${YEAR}`
+          })
+
+          expect(statusCode).toBe(statusCodes.badRequest)
+          expect(getSpy).not.toHaveBeenCalled()
+        }
+      )
+    })
+  })
+
+  describe('ReEx id URL and the in-year changes flag (RA-765)', () => {
+    const STUB_ORG_ID = '50001'
+
+    test.each([true, false])(
+      'is unchanged with the flag %s, including for the numeric stub organisation id',
+      async (flag) => {
+        configOverrides['featureFlags.inYearChangesEnabled'] = flag
+        operatorCanAccessOrganisation.mockImplementation(
+          async (_user, orgId) => orgId === STUB_ORG_ID
+        )
+        const getSpy = mockAccreditationGet([
+          makeApp({ applicationStatus: 'Started' })
+        ])
+
+        const { statusCode, result } = await server.inject({
+          method: 'GET',
+          url: `/operator-accreditation/${STUB_ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}`
+        })
+
+        expect(statusCode).toBe(statusCodes.ok)
+        expect(result).toContain('/accreditation/task-list/app-id-001')
+        expect(getSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining('/registrations/by-number/')
+        )
+      }
+    )
   })
 })

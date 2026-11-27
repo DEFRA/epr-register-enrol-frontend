@@ -1,5 +1,6 @@
 import Boom from '@hapi/boom'
 
+import { config } from '../../config/config.js'
 import { getLocaleAndTranslator } from '../common/helpers/get-locale-translator.js'
 import { getUser } from '../common/helpers/auth/get-user.js'
 import { operatorCanAccessOrganisation } from '../common/helpers/reex-organisation-service.js'
@@ -7,8 +8,14 @@ import { ACCREDITATION_SESSION_KEYS } from '../common/constants/accreditationSes
 import {
   queryTaskListUrl,
   landingUrl,
-  reExBackLinkUrl
+  reExBackLinkUrl,
+  usesRegistrationNumber
 } from '../common/helpers/accreditationUrls.js'
+import { fetchRegistration } from '../manage/helpers/current-registration.js'
+import {
+  matchesUrlMaterial,
+  parseUrlMaterial
+} from '../manage/helpers/url-material.js'
 import {
   APPLICATION_STATUS_TAGS,
   applicationStatusTag
@@ -129,13 +136,52 @@ export function buildLandingViewModel(
   }
 }
 
+/**
+ * RA-765: the manage page links here by organisation number and registration
+ * number. The by-number lookup, which only exists while the backend's in-year
+ * changes flag is on, checks that organisation holds the registration and
+ * gives ReEx's ids for both, so a URL by number is a 404 with the flag off.
+ * The registration must be for the URL's material, as on the manage page.
+ *
+ * Everything after the entry URL (session, start-new, onward links) uses
+ * ReEx's ids, which a URL by ReEx's ids carries itself.
+ */
+async function resolveLandingIds(request) {
+  const { organisationId, registrationId, materialType } = request.params
+  if (!usesRegistrationNumber(request.params)) {
+    return { organisationId, registrationId, materialType }
+  }
+  if (!config.get('featureFlags.inYearChangesEnabled')) {
+    throw Boom.notFound()
+  }
+
+  const registration = await fetchRegistration({
+    organisationId,
+    registrationNumber: registrationId,
+    logger: request.logger
+  })
+  if (!registration?.reExOrganisationId) {
+    throw Boom.serverUnavailable('Registration service temporarily unavailable')
+  }
+  const urlMaterial = parseUrlMaterial(materialType)
+  if (!matchesUrlMaterial(registration, urlMaterial)) {
+    throw Boom.notFound()
+  }
+
+  return {
+    organisationId: registration.reExOrganisationId,
+    registrationId: registration.registrationId,
+    materialType: urlMaterial.materialType
+  }
+}
+
 export const operatorAccreditationController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
     const user = getUser(request)
-    const { organisationId, registrationId, materialType, year } =
-      request.params
-    const yearInt = Number.parseInt(year, 10)
+    const { organisationId, registrationId, materialType } =
+      await resolveLandingIds(request)
+    const yearInt = Number.parseInt(request.params.year, 10)
     const userName = user?.name
     const reExBackLink = reExBackLinkUrl(organisationId, registrationId)
 
