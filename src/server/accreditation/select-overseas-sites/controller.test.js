@@ -1939,7 +1939,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toContain('Interim sites (1)')
-      expect(result).toContain('Show withdrawn interim sites (1)')
+      expect(result).toContain('Withdrawn interim sites (1)')
       expect(result).toContain('data-testid="restore-button-interim-site-43"')
       // The withdrawn one is not offered a Change or Withdraw of its own.
       expect(result).not.toContain('data-testid="change-interim-site-43"')

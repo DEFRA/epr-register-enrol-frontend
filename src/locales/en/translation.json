@@ -467,7 +467,7 @@
         "removeButton": "Withdraw from application",
         "disclosure": "Interim sites",
         "addAnother": "Add another interim site",
-        "withdrawnDisclosure": "Show withdrawn interim sites",
+        "withdrawnDisclosure": "Withdrawn interim sites",
         "restoreButton": "Add to application",
         "withdrawnBanner": {
           "title": "Interim site withdrawn",

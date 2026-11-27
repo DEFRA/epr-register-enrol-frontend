@@ -21,7 +21,7 @@ const LABELS = {
   interimRemove: 'Withdraw from application',
   interimDisclosure: 'Interim sites',
   addAnotherInterimSite: 'Add another interim site',
-  withdrawnDisclosure: 'Show withdrawn interim sites',
+  withdrawnDisclosure: 'Withdrawn interim sites',
   restore: 'Add to application',
   incomplete: 'Incomplete'
 }
@@ -457,7 +457,7 @@ describe('overseasSiteRows component', () => {
         $('[data-testid="withdrawn-interim-sites-disclosure-summary-900001"]')
           .text()
           .trim()
-      ).toBe('Show withdrawn interim sites (2)')
+      ).toBe('Withdrawn interim sites (2)')
     })
 
     // The restore form has to name the interim site, not just its parent: the
