@@ -947,6 +947,12 @@
         "title": "In year change requests",
         "noActive": "You currently have no active change requests.",
         "viewAll": "View change requests"
+      },
+      "applyBanner": {
+        "title": "Important",
+        "heading": "You can now apply for {{year}} accreditation",
+        "body": "Apply by 30 September {{deadlineYear}} to be accredited from 1 January {{year}}.",
+        "link": "Start your {{year}} application"
       }
     },
     "manageOverseasSites": {

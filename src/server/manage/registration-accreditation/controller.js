@@ -1,9 +1,13 @@
 import { applicationStatusTag } from '../../common/constants/applicationStatusTags.js'
-import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
-import { endOfYear } from '../../common/helpers/currentYear.js'
+import {
+  naturalNumberLandingUrl,
+  reExBackLinkUrl
+} from '../../common/helpers/accreditationUrls.js'
+import { currentYear, endOfYear } from '../../common/helpers/currentYear.js'
 import { fetchChangeRequestsView } from '../helpers/change-requests-view.js'
 import { loadManagePage, manageCaption } from '../helpers/manage-page.js'
 import { changeRequestsUrl, overseasSitesUrl } from '../helpers/manage-urls.js'
+import { offeredApplicationYear } from '../helpers/offered-application-year.js'
 import {
   changeTypeLabel,
   flattenItems,
@@ -47,13 +51,34 @@ function statusSummary(context, t) {
   }
 }
 
+// RA-765: the URL's own material segment keeps a glass operator's recycling
+// process, and its numbers are the ones the apply page's natural-number URL
+// takes.
+function applyBanner(request, registrationApplications, currentLocale) {
+  const year = offeredApplicationYear(registrationApplications, currentYear())
+  if (year === null) {
+    return null
+  }
+  const { organisationId, registrationNumber, materialType } = request.params
+  return {
+    year,
+    deadlineYear: year - 1,
+    url: naturalNumberLandingUrl(
+      {
+        organisationNumber: organisationId,
+        registrationNumber,
+        materialType,
+        year
+      },
+      currentLocale
+    )
+  }
+}
+
 export const manageRegistrationAccreditationController = {
   async handler(request, h) {
-    const { context, t, currentLocale, response } = await loadManagePage(
-      request,
-      h,
-      { allowRegistrationOnly: true }
-    )
+    const { context, registrationApplications, t, currentLocale, response } =
+      await loadManagePage(request, h, { allowRegistrationOnly: true })
     if (response) {
       return response
     }
@@ -74,6 +99,11 @@ export const manageRegistrationAccreditationController = {
       siteAddress: context.siteAddress,
       registrationNumber: context.registrationNumber,
       ...statusSummary(context, t),
+      applyBanner: applyBanner(
+        request,
+        registrationApplications,
+        currentLocale
+      ),
       changeRequests: await changeRequestsSection(
         request,
         context,

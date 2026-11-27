@@ -758,6 +758,297 @@ describe('#manageRegistrationAccreditationController', () => {
     )
   })
 
+  // RA-765: the route to apply for an accreditation year, once RA-741 takes
+  // it off the Re/Ex material page.
+  describe('apply for accreditation banner', () => {
+    const LIVE_STATUSES = [
+      'Started',
+      'Saved',
+      'Submitted',
+      'DulyMade',
+      'Queried',
+      'Updated',
+      'AwaitingDecision',
+      'Approved'
+    ]
+    const applyUrl = (year, material = MATERIAL, prefix = '') =>
+      `${prefix}/operator-accreditation/${ORG_ID}/${REGISTRATION_NUMBER}/${material}/${year}`
+
+    const offeredYears = (result) =>
+      [
+        ...result.matchAll(
+          /data-testid="apply-banner-link"[^>]*>\s*Start your (\d{4}) application\s*</g
+        )
+      ].map(([, year]) => Number(year))
+
+    async function bannerFor(apps, registration = approvedRegistration) {
+      mockManageGets(apps, registration)
+      const response = await get(PAGE_URL)
+      expect(response.statusCode).toBe(statusCodes.ok)
+      return response.result
+    }
+
+    test('offers next year when this year is Approved and next year has no application', async () => {
+      const result = await bannerFor([makeApp()])
+
+      expect(offeredYears(result)).toEqual([CURRENT_YEAR + 1])
+    })
+
+    test('shows the Important banner with the year, deadline and a natural-number link', async () => {
+      const result = await bannerFor([makeApp()])
+
+      expect(result).toMatch(
+        /class="govuk-notification-banner"[^>]*data-testid="apply-banner"/
+      )
+      expect(result).toMatch(
+        /data-testid="apply-banner-title"[^>]*>\s*Important\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="apply-banner-heading"[^>]*>\s*You can now apply for 2028 accreditation\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="apply-banner-body"[^>]*>\s*Apply by 30 September 2027 to be accredited from 1 January 2028\.\s*</
+      )
+      expect(result).toMatch(
+        new RegExp(
+          `href="${applyUrl(2028)}"[^>]*data-testid="apply-banner-link"[^>]*>\\s*Start your 2028 application\\s*<`
+        )
+      )
+    })
+
+    test('sits under the summary row and above the change requests section', async () => {
+      const result = await bannerFor([makeApp()])
+
+      const summary = result.indexOf('data-testid="accreditation-summary"')
+      const banner = result.indexOf('data-testid="apply-banner"')
+      const section = result.indexOf('data-testid="change-requests-section"')
+      expect(summary).toBeGreaterThan(-1)
+      expect(banner).toBeGreaterThan(summary)
+      expect(section).toBeGreaterThan(banner)
+    })
+
+    describe('offers this year', () => {
+      test.each([
+        ['last year', CURRENT_YEAR - 1],
+        ['two or more years ago (lapsed)', CURRENT_YEAR - 2]
+      ])(
+        'when Approved only %s, showing the deadline before it',
+        async (_label, grantedYear) => {
+          const result = await bannerFor(
+            [makeApp({ year: grantedYear })],
+            registrationOnlyExporter
+          )
+
+          expect(offeredYears(result)).toEqual([CURRENT_YEAR])
+          expect(result).toMatch(
+            /data-testid="apply-banner-body"[^>]*>\s*Apply by 30 September 2026 to be accredited from 1 January 2027\.\s*</
+          )
+          expect(result).toMatch(
+            new RegExp(
+              `href="${applyUrl(2027)}"[^>]*data-testid="apply-banner-link"`
+            )
+          )
+        }
+      )
+
+      test('and only this year, when next year has no application either', async () => {
+        const result = await bannerFor(
+          [makeApp({ year: CURRENT_YEAR - 1 })],
+          registrationOnlyExporter
+        )
+
+        expect(offeredYears(result)).toEqual([CURRENT_YEAR])
+        expect(result.match(/data-testid="apply-banner"/g)).toHaveLength(1)
+      })
+
+      test.each(['Withdrawn', 'Rejected'])(
+        'again when its only application was %s',
+        async (status) => {
+          const result = await bannerFor(
+            [
+              makeApp({ year: CURRENT_YEAR - 1 }),
+              makeApp({ id: 'app-gone', applicationStatus: status })
+            ],
+            registrationOnlyExporter
+          )
+
+          expect(offeredYears(result)).toEqual([CURRENT_YEAR])
+        }
+      )
+    })
+
+    test.each(LIVE_STATUSES.filter((status) => status !== 'Approved'))(
+      'offers next year when this year has a %s application',
+      async (status) => {
+        const result = await bannerFor(
+          [
+            makeApp({ year: CURRENT_YEAR - 1 }),
+            makeApp({ id: 'app-this-year', applicationStatus: status })
+          ],
+          registrationOnlyExporter
+        )
+
+        expect(offeredYears(result)).toEqual([CURRENT_YEAR + 1])
+      }
+    )
+
+    // An Approved application stays Approved when the accreditation is
+    // suspended, so a suspended accreditation shows no banner either.
+    test.each(LIVE_STATUSES)(
+      'is hidden when the year it would offer has a %s application',
+      async (status) => {
+        const result = await bannerFor([
+          makeApp(),
+          makeApp({
+            id: 'app-next-year',
+            year: CURRENT_YEAR + 1,
+            applicationStatus: status
+          })
+        ])
+
+        expect(result).not.toContain('data-testid="apply-banner"')
+      }
+    )
+
+    test.each(['Withdrawn', 'Rejected'])(
+      'offers next year again when its only application was %s',
+      async (status) => {
+        const result = await bannerFor([
+          makeApp(),
+          makeApp({
+            id: 'app-next-year',
+            year: CURRENT_YEAR + 1,
+            applicationStatus: status
+          })
+        ])
+
+        expect(offeredYears(result)).toEqual([CURRENT_YEAR + 1])
+      }
+    )
+
+    test.each([
+      ['no application at all', []],
+      [
+        'applications never Approved',
+        [
+          makeApp({ year: CURRENT_YEAR - 1, applicationStatus: 'Rejected' }),
+          makeApp({ year: CURRENT_YEAR - 1, applicationStatus: 'Withdrawn' }),
+          makeApp({ applicationStatus: 'Submitted' })
+        ]
+      ],
+      [
+        "another registration's or material's Approved accreditation",
+        [
+          makeApp({ year: CURRENT_YEAR - 1, registrationId: 'REG999' }),
+          makeApp({ year: CURRENT_YEAR - 1, material: 'wood' })
+        ]
+      ]
+    ])(
+      'is hidden when the registration was never granted: %s',
+      async (_label, apps) => {
+        const result = await bannerFor(apps, registrationOnlyExporter)
+
+        expect(result).not.toContain('data-testid="apply-banner"')
+      }
+    )
+
+    test("ignores another registration's live application in the offered year", async () => {
+      const result = await bannerFor([
+        makeApp(),
+        makeApp({
+          id: 'app-other-registration',
+          year: CURRENT_YEAR + 1,
+          registrationId: 'REG999',
+          applicationStatus: 'Submitted'
+        })
+      ])
+
+      expect(offeredYears(result)).toEqual([CURRENT_YEAR + 1])
+    })
+
+    test('shows a reprocessor the banner', async () => {
+      const result = await bannerFor([reprocessorApp()])
+
+      expect(offeredYears(result)).toEqual([CURRENT_YEAR + 1])
+    })
+
+    test.each(['glass_re_melt', 'glass_other'])(
+      'keeps the %s material segment in the link',
+      async (process) => {
+        mockManageGets([
+          makeApp({
+            material: 'glass',
+            glassRecyclingProcess: [process],
+            wasteProcessingType: 'reprocessor'
+          })
+        ])
+
+        const { result } = await get(
+          `/manage/${ORG_ID}/${REGISTRATION_NUMBER}/${process}`
+        )
+
+        expect(result).toMatch(
+          new RegExp(
+            `href="${applyUrl(2028, process)}"[^>]*data-testid="apply-banner-link"`
+          )
+        )
+      }
+    )
+
+    test('offers a registration-only glass reprocessor the year for its own process', async () => {
+      mockManageGets(
+        [
+          makeApp({
+            year: CURRENT_YEAR - 1,
+            material: 'glass',
+            glassRecyclingProcess: ['glass_re_melt'],
+            wasteProcessingType: 'reprocessor'
+          })
+        ],
+        registrationOnlyReprocessor
+      )
+
+      const { result } = await get(
+        `/manage/${ORG_ID}/${REGISTRATION_NUMBER}/glass_re_melt`
+      )
+
+      expect(result).toMatch(
+        new RegExp(
+          `href="${applyUrl(2027, 'glass_re_melt')}"[^>]*data-testid="apply-banner-link"`
+        )
+      )
+    })
+
+    test('is in Welsh, with a Welsh-prefixed link, under the Welsh path', async () => {
+      mockManageGets([makeApp()])
+
+      const { result } = await get(WELSH_PAGE_URL)
+
+      expect(result).toMatch(
+        /data-testid="apply-banner-title"[^>]*>\s*\[Welsh\] Important\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="apply-banner-heading"[^>]*>\s*\[Welsh\] You can now apply for 2028 accreditation\s*</
+      )
+      expect(result).toMatch(
+        /data-testid="apply-banner-body"[^>]*>\s*\[Welsh\] Apply by 30 September 2027 to be accredited from 1 January 2028\.\s*</
+      )
+      expect(result).toMatch(
+        new RegExp(
+          `href="${applyUrl(2028, MATERIAL, '/cy')}"[^>]*data-testid="apply-banner-link"[^>]*>\\s*\\[Welsh\\] Start your 2028 application\\s*<`
+        )
+      )
+    })
+
+    test('takes the year from the clock', async () => {
+      vi.setSystemTime(new Date(`${CURRENT_YEAR + 1}-01-01T00:00:00Z`))
+
+      const result = await bannerFor([makeApp({ year: CURRENT_YEAR + 1 })])
+
+      expect(offeredYears(result)).toEqual([CURRENT_YEAR + 2])
+    })
+  })
+
   describe('In year change requests section', () => {
     const item = (itemId, changeType, status) => ({
       siteId: 1,
@@ -1136,6 +1427,43 @@ describe('#manageRegistrationAccreditationController', () => {
         )
       ].map(([, type, status]) => [type, status])
       expect(statuses).toEqual([['update-overseas-site', 'QUERIED']])
+    })
+
+    // RA-765: 50018 is Approved for this year only; 50021 was never granted.
+    test.each([
+      ['exporter', MANAGE_EXPORTER_ORG, exporterRegistrationNumber, 'Plastic'],
+      [
+        'glass reprocessor',
+        MANAGE_EXPORTER_ORG,
+        reprocessorRegistrationNumber,
+        'glass_re_melt'
+      ]
+    ])(
+      "offers the stub %s next year's accreditation",
+      async (_label, org, registrationNumber, material) => {
+        const nextYear = currentYear() + 1
+        const number = registrationNumber(currentYear())
+
+        const { result } = await get(stubManageUrl(org, number, material))
+
+        expect(result).toMatch(
+          new RegExp(
+            `href="/operator-accreditation/${org.orgId}/${number}/${material}/${nextYear}"[^>]*data-testid="apply-banner-link"[^>]*>\\s*Start your ${nextYear} application\\s*<`
+          )
+        )
+      }
+    )
+
+    test('offers the stub registration-only exporter no accreditation', async () => {
+      const { statusCode, result } = await get(
+        stubManageUrl(
+          REGISTRATION_ONLY_ORG,
+          exporterRegistrationNumber(currentYear(), REGISTRATION_ONLY_ORG.orgId)
+        )
+      )
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).not.toContain('data-testid="apply-banner"')
     })
 
     test('shows the stub exporter with no change requests', async () => {
