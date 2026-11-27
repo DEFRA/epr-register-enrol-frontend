@@ -6,16 +6,18 @@ import {
   conflictMessage
 } from '../../../common/helpers/accreditationChangesService.js'
 import { organisationIdFrom } from '../controller.js'
-import { updateUrl } from '../urls.js'
+import { updateUrl, updatedUrl } from '../urls.js'
 import {
   VIEWS,
-  detailsView,
   errorList,
   handler,
   refused,
+  refusedOnDetails,
   refusedStatus,
-  saveChange
+  saveChange,
+  trimmedFields
 } from './shared.js'
+import { INTERIM_SITES_UPDATED } from './steps.js'
 import { validateInterim } from './validation.js'
 import { interimAddition, interimFields, updateText } from './view-model.js'
 
@@ -37,13 +39,7 @@ const INTERIM_FIELDS = [...INTERIM_TEXT_FIELDS, 'country', 'operationCodes']
 
 function interimValues(payload) {
   return {
-    ...Object.fromEntries(
-      INTERIM_TEXT_FIELDS.map((name) => [
-        name,
-        String(payload?.[name] ?? '').trim()
-      ])
-    ),
-    country: String(payload?.country ?? '').trim(),
+    ...trimmedFields(payload, [...INTERIM_TEXT_FIELDS, 'country']),
     operationCodes: [payload?.operationCodes ?? []].flat().filter(Boolean)
   }
 }
@@ -74,8 +70,21 @@ function interimView(
     backLink: updateUrl(applicationId, siteId),
     cancelUrl: updateUrl(applicationId, siteId),
     isNew,
-    countries: COUNTRIES,
-    codes: INTERIM_OPERATION_CODES,
+    countryItems: [
+      { value: '', text: '' },
+      ...COUNTRIES.map((country) => ({
+        value: country,
+        text: country,
+        selected: country === values.country
+      }))
+    ],
+    codeItems: INTERIM_OPERATION_CODES.map((code) => ({
+      value: code,
+      text: code,
+      id: `operation-${code}`,
+      checked: (values.operationCodes ?? []).includes(code),
+      attributes: { 'data-testid': `operation-${code}` }
+    })),
     values,
     errors,
     errorSummary: errorList(errors, pageError)
@@ -110,7 +119,7 @@ async function saveInterim(request, h, t, { update, locked, call }) {
       ...refused(t, result, INTERIM_FIELDS)
     }).code(refusedStatus(result))
   }
-  return h.redirect(`${updateUrl(applicationId, siteId)}?updated=interim-sites`)
+  return h.redirect(updatedUrl(applicationId, siteId, INTERIM_SITES_UPDATED))
 }
 
 function backToDetails(request, h) {
@@ -207,16 +216,6 @@ export const interimAdditionPostController = handler(
   }
 )
 
-function refusedOnDetails(h, request, locale, loaded, result) {
-  return detailsView(
-    h,
-    request,
-    locale,
-    loaded,
-    result.message ?? locale.t('pages.manageOverseasSites.saveRefused')
-  ).code(refusedStatus(result))
-}
-
 // Remove and undo change the draft, so each is a crumb-protected POST styled as a link.
 export const interimRemoveController = handler(
   { editable: true },
@@ -240,9 +239,7 @@ export const interimRemoveController = handler(
     if (result) {
       return refusedOnDetails(h, request, locale, loaded, result)
     }
-    return h.redirect(
-      `${updateUrl(applicationId, siteId)}?updated=interim-sites`
-    )
+    return h.redirect(updatedUrl(applicationId, siteId, INTERIM_SITES_UPDATED))
   }
 )
 

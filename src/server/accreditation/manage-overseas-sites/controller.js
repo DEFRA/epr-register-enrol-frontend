@@ -6,8 +6,8 @@ import { statusCodes } from '../../common/constants/status-codes.js'
 import { logStructuredError } from '../../common/helpers/logging/log-structured-error.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
-  CHANGE_TYPES,
-  ITEM_STATUSES
+  ITEM_STATUSES,
+  isOrsUpdate
 } from '../../common/constants/changeRequests.js'
 import { accreditationApiService } from '../../common/helpers/accreditationApiService.js'
 import { materialDisplayName } from '../../common/helpers/materialDisplayName.js'
@@ -290,7 +290,7 @@ export const cancelAddToAccreditationController = {
 }
 
 function itemUrl(applicationId, site) {
-  return site.changeType === CHANGE_TYPES.updateOverseasSite
+  return isOrsUpdate(site)
     ? updateUrl(applicationId, site.siteId)
     : addToAccreditationUrl(applicationId, site.siteId)
 }
@@ -311,7 +311,7 @@ function renderRequests(
     addAnotherUrl: manageSitesUrl(view, currentLocale, { registered: true }),
     requests: sites.map((site) => {
       const entry = findSite(view, site.siteId)
-      const isUpdate = site.changeType === CHANGE_TYPES.updateOverseasSite
+      const isUpdate = isOrsUpdate(site)
       return {
         siteId: site.siteId,
         orsId: site.orsId,
@@ -518,7 +518,9 @@ export const declarationPostController = {
       return submitFailed(request, h, t, err, { fullName, jobTitle })
     }
     // RA-682 AC05: a request that only changes ORS details has nothing to pay.
-    const next = isCharged(submitted) ? paymentUrl : submittedUrl
+    // With no request in the reply, the payment page finds the charged one, if
+    // any, rather than the operator missing it.
+    const next = !submitted || isCharged(submitted) ? paymentUrl : submittedUrl
     return h.redirect(next(applicationId, submitted?.requestId))
   }
 }

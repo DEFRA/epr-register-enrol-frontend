@@ -5,20 +5,17 @@ import {
   ACTIVE_ITEM_STATUSES,
   CHANGE_TYPES,
   MISSING_CHANGES,
+  ORS_ANSWER_FIELDS,
   ORS_UPDATE_DETAIL_FIELDS,
   SITE_ACCREDITATION_STATUSES,
+  isOrsUpdate,
   orsUpdateDetailsOf
 } from './constants/changeRequests.js'
 import { isItemForSite } from './helpers/changeRequestSite.js'
 import { hasValue } from './helpers/hasValue.js'
 import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
 
-export const LOCKABLE = [
-  'country',
-  'coordinates',
-  'operationCodes',
-  'conditionsOfExport'
-]
+export const LOCKABLE = ORS_ANSWER_FIELDS
 
 const CHARGE_PER_SITE_PENCE = ORS_FEE * PENCE_PER_POUND
 
@@ -26,8 +23,7 @@ function besRequired(site, effective) {
   return !site.isEu && !site.isOecd && effective.conditionsOfExport !== true
 }
 
-export const isUpdate = (item) =>
-  item.changeType === CHANGE_TYPES.updateOverseasSite
+export const isUpdate = isOrsUpdate
 
 // Blank and missing are treated as the same answer. The backend stores a blank
 // optional line as missing, so for what the forms send this matches it.
@@ -40,13 +36,14 @@ export function sameValue(a, b) {
 
 // RA-682: an update's details as well as RA-697's fields. As the backend, an
 // update that changes nothing yet is missing its changes; a seeded one has no
-// proposed details or interim changes.
+// proposed details or interim changes. New BES evidence is a change too.
 function updateFields(site, entry) {
   const previous = orsUpdateDetailsOf(site)
   const proposed = entry.proposed ?? previous
   const interimSiteChanges = entry.interimSiteChanges ?? []
   const changed =
     interimSiteChanges.length > 0 ||
+    entry.besEvidenceUploads.length > 0 ||
     ORS_UPDATE_DETAIL_FIELDS.some(
       (field) => !sameValue(proposed[field], previous[field])
     )

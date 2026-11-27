@@ -1,7 +1,6 @@
 import { getLocaleAndTranslator } from '../../../common/helpers/get-locale-translator.js'
 import { statusCodes } from '../../../common/constants/status-codes.js'
 import { accreditationChangesService } from '../../../common/helpers/accreditationChangesService.js'
-import { MAX_REPATRIATED_WORDS } from '../../../common/helpers/overseasSiteAnswerValidation.js'
 import { buildTextareaInput } from '../../add-overseas-site/repatriated-loads/controller.js'
 import {
   NOTHING_TO_DO,
@@ -10,7 +9,7 @@ import {
   redirectToManageSites,
   submittedRequest
 } from '../controller.js'
-import { manageSitesUrl, requestsUrl, updateUrl } from '../urls.js'
+import { manageSitesUrl, requestsUrl, updateUrl, updatedUrl } from '../urls.js'
 import {
   VIEWS,
   detailsView,
@@ -18,99 +17,18 @@ import {
   handler,
   refused,
   refusedStatus,
-  saveChange
+  saveChange,
+  trimmedFields
 } from './shared.js'
-import { validateStep } from './validation.js'
+import { STEPS } from './steps.js'
 import { updateText } from './view-model.js'
 
-export {
-  interimAdditionGetController,
-  interimAdditionPostController,
-  interimChangeGetController,
-  interimChangePostController,
-  interimNewGetController,
-  interimNewPostController,
-  interimRemoveController,
-  interimUndoController
-} from './interim-controller.js'
+// --- Site details (Figma screens 3 and 5) -----------------------------------
 
-const STEPS = {
-  'site-name': {
-    titleKey: 'pages.addOverseasSite.siteName.heading',
-    fields: [
-      { name: 'siteName', labelKey: 'pages.addOverseasSite.siteName.label' }
-    ]
-  },
-  location: {
-    titleKey: 'pages.addOverseasSite.siteLocation.heading',
-    fields: [
-      {
-        name: 'addressLine1',
-        labelKey: 'pages.addOverseasSite.siteLocation.addressLine1Label'
-      },
-      {
-        name: 'addressLine2',
-        labelKey: 'pages.addOverseasSite.siteLocation.addressLine2Label'
-      },
-      {
-        name: 'townOrCity',
-        labelKey: 'pages.addOverseasSite.siteLocation.townOrCityLabel',
-        width: 'govuk-input--width-20'
-      }
-    ],
-    // AC02: shown as read-only inputs from the ORS's stored values, and never
-    // posted, so the update can't change them.
-    readOnly: [
-      {
-        name: 'country',
-        labelKey: 'pages.addOverseasSite.siteLocation.countryLabel'
-      },
-      {
-        name: 'coordinates',
-        labelKey: 'pages.addOverseasSite.siteLocation.coordinatesLabel',
-        hintKey: 'pages.addOverseasSite.siteLocation.coordinatesHint'
-      }
-    ]
-  },
-  'contact-details': {
-    titleKey: 'pages.addOverseasSite.siteContactDetails.heading',
-    fields: [
-      {
-        name: 'contactName',
-        labelKey: 'pages.addOverseasSite.siteContactDetails.nameLabel'
-      },
-      {
-        name: 'contactEmail',
-        labelKey: 'pages.addOverseasSite.siteContactDetails.emailLabel',
-        type: 'email'
-      },
-      {
-        name: 'contactPhone',
-        labelKey: 'pages.addOverseasSite.siteContactDetails.phoneLabel',
-        type: 'tel',
-        width: 'govuk-input--width-20'
-      }
-    ]
-  },
-  'rejected-loads': {
-    titleKey: 'pages.addOverseasSite.repatriatedLoads.heading',
-    fields: [
-      {
-        name: 'repatriatedLoads',
-        labelKey: 'pages.addOverseasSite.repatriatedLoads.label',
-        hintKey: 'pages.addOverseasSite.repatriatedLoads.hint',
-        maxwords: MAX_REPATRIATED_WORDS
-      }
-    ]
-  }
-}
-
-export const STEP_NAMES = Object.keys(STEPS)
-
-export const UPDATED_KEYS = [...STEP_NAMES, 'interim-sites']
 export const detailsGetController = handler({}, (request, h, locale, loaded) =>
   detailsView(h, request, locale, loaded)
 )
+
 // --- ORS detail steps ----------------------------------------------------------
 
 // The add journey's rejected-loads textarea, with this form's id and input
@@ -183,10 +101,8 @@ export const stepPostController = handler(
   async (request, h, { t }, { update }) => {
     const { applicationId, siteId, step } = request.params
     const names = STEPS[step].fields.map((field) => field.name)
-    const values = Object.fromEntries(
-      names.map((name) => [name, String(request.payload?.[name] ?? '').trim()])
-    )
-    const { errors, tooManyWords } = validateStep(t, step, values)
+    const values = trimmedFields(request.payload, names)
+    const { errors, tooManyWords } = STEPS[step].validate(t, values)
     if (Object.keys(errors).length > 0) {
       return stepView(h, t, request, {
         update,
@@ -208,9 +124,10 @@ export const stepPostController = handler(
         ...refused(t, result, names)
       }).code(refusedStatus(result))
     }
-    return h.redirect(`${updateUrl(applicationId, siteId)}?updated=${step}`)
+    return h.redirect(updatedUrl(applicationId, siteId, step))
   }
 )
+
 // --- Taking the update back out of the draft (the requests page's Remove) -------
 
 export const cancelUpdateController = {
@@ -233,7 +150,6 @@ export const cancelUpdateController = {
 
 // --- AC06: submitted, with nothing to pay ------------------------------------------
 
-// A submitted request of ORS changes with nothing to pay.
 function isFreeChange(changeRequest) {
   return (
     changeRequest.sites?.length > 0 &&

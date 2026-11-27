@@ -1,23 +1,33 @@
 import {
-  CHANGE_TYPES,
   ITEM_STATUSES,
+  ORS_ANSWER_FIELDS,
   SITE_ACCREDITATION_STATUSES,
+  isOrsUpdate,
   orsUpdateDetailsOf
 } from '../../../common/constants/changeRequests.js'
 import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 import { activeInterimSites } from '../../../common/helpers/interimSites.js'
-import { findRequestSite, findSite, siteDetailRows } from '../view-model.js'
+import { requiresConditionsOfExport } from '../../../common/helpers/overseasSiteAnswerValidation.js'
+import { besEvidenceRequired } from '../../upload-evidence-for-overseas-site/controller.js'
+import {
+  findRequestSite,
+  findSite,
+  grantedBesUploads,
+  siteDetailRows
+} from '../view-model.js'
 import {
   interimSiteAdditionUrl,
   interimSiteUrl,
+  updateBesEvidenceFileDeleteUrl,
+  updateBesEvidenceUrl,
   updateStepUrl
 } from '../urls.js'
+import { STEP_FOR_ROW } from './steps.js'
 
 // RA-682: view models for changing an accredited ORS's details, built from
 // the backend's AccreditationChangesView. An ORS in the draft as an
 // update-overseas-site item shows its proposed details; otherwise its own.
 
-/** A translation from this journey's `pages.updateOverseasSite` keys. */
 export function updateText(t, key, params) {
   return t(`pages.updateOverseasSite.${key}`, params)
 }
@@ -34,7 +44,7 @@ export function resolveUpdate(view, siteId) {
     return null
   }
   const item = findRequestSite(view, siteId)
-  const inDraft = item?.changeType === CHANGE_TYPES.updateOverseasSite
+  const inDraft = isOrsUpdate(item)
   return {
     entry,
     item: inDraft ? item : null,
@@ -43,30 +53,10 @@ export function resolveUpdate(view, siteId) {
   }
 }
 
-// The update step that changes each of siteDetailRows' rows. The rest are
-// locked (AC02) and have no action.
-const CONTACT_DETAILS_STEP = 'contact-details'
-
-const ROW_STEPS = {
-  'site-name': 'site-name',
-  location: 'location',
-  'contact-name': CONTACT_DETAILS_STEP,
-  'contact-email': CONTACT_DETAILS_STEP,
-  'contact-phone': CONTACT_DETAILS_STEP,
-  'repatriated-loads': 'rejected-loads'
-}
-
 const ROW_LABELS = {
   'site-name': 'rows.orsName',
   'recycling-operation': 'rows.recyclingOperations'
 }
-
-const LOCKED_ANSWERS = [
-  'country',
-  'coordinates',
-  'operationCodes',
-  'conditionsOfExport'
-]
 
 // Every address line and the town, so a change to any of them shows. An ORS
 // with only a one-line siteAddress (which ends with its country) shows that
@@ -77,40 +67,94 @@ function locationValue(site) {
     : (site.siteAddress ?? formatSiteAddress(site))
 }
 
+// RA-682: conditions of export apply to steel and aluminium only.
+function shownRow(id, materialType) {
+  return (
+    id !== 'conditions-of-export' || requiresConditionsOfExport(materialType)
+  )
+}
+
+/**
+ * RA-682: BES evidence can't be amended, but new evidence can be uploaded. The
+ * ORS's own files are shown and can't be removed; the update's can be.
+ */
+function besEvidenceRow({ t, applicationId, update }) {
+  const { entry, item, pending } = update
+  const { held, added } = grantedBesUploads(entry.site, item)
+  const file =
+    (deleteUrl) =>
+    ({ fileId, filename }) => ({
+      fileId,
+      filename,
+      deleteUrl: deleteUrl?.(fileId) ?? null
+    })
+  const files = [
+    ...held.map(file(null)),
+    ...added.map(
+      file(
+        pending
+          ? null
+          : (fileId) =>
+              updateBesEvidenceFileDeleteUrl(
+                applicationId,
+                entry.siteId,
+                fileId
+              )
+      )
+    )
+  ]
+  return {
+    id: 'bes-evidence',
+    label: t('pages.manageOverseasSites.rows.besEvidence'),
+    value: files.map(({ filename }) => filename).join(', '),
+    files,
+    action:
+      pending || !besEvidenceRequired(entry.site)
+        ? null
+        : {
+            href: updateBesEvidenceUrl(applicationId, entry.siteId),
+            text: updateText(t, 'besEvidence.upload')
+          }
+  }
+}
+
 /**
  * The ORS's summary rows, as RA-492's summary builds them, with the update's
  * details in place of the ORS's own. Editable rows link to their step; a
  * pending ORS has no actions.
  */
-export function buildDetailRows({ t, applicationId, update }) {
+export function buildDetailRows({ t, applicationId, update, materialType }) {
   const { entry, details, pending } = update
   const site = entry.site
   const shown = { ...site, ...details }
   const locked = Object.fromEntries(
-    LOCKED_ANSWERS.map((field) => [field, site[field]])
+    ORS_ANSWER_FIELDS.map((field) => [field, site[field]])
   )
-  const rows = siteDetailRows(t, shown, locked).map(({ id, label, value }) => ({
-    id,
-    label: ROW_LABELS[id] ? updateText(t, ROW_LABELS[id]) : label,
-    value: id === 'location' ? locationValue(shown) : value,
-    action:
-      ROW_STEPS[id] && !pending
-        ? {
-            href: updateStepUrl(applicationId, entry.siteId, ROW_STEPS[id]),
-            text: t('pages.manageOverseasSites.change')
-          }
-        : null
-  }))
-  const besFiles = site.besEvidence?.besEvidenceUploads ?? []
-  return [
-    ...rows,
-    {
-      id: 'bes-evidence',
-      label: t('pages.manageOverseasSites.rows.besEvidence'),
-      value: besFiles.map((file) => file.filename).join(', '),
-      action: null
-    }
-  ]
+  const rows = siteDetailRows(t, shown, locked)
+    .filter(({ id }) => shownRow(id, materialType))
+    .map(({ id, label, value }) => ({
+      id,
+      label: ROW_LABELS[id] ? updateText(t, ROW_LABELS[id]) : label,
+      value: id === 'location' ? locationValue(shown) : value,
+      action:
+        STEP_FOR_ROW[id] && !pending
+          ? {
+              href: updateStepUrl(
+                applicationId,
+                entry.siteId,
+                STEP_FOR_ROW[id]
+              ),
+              text: t('pages.manageOverseasSites.change')
+            }
+          : null
+    }))
+  return [...rows, besEvidenceRow({ t, applicationId, update })]
+}
+
+const INTERIM_TAGS = {
+  change: { key: 'interim.changed', colour: 'blue' },
+  add: { key: 'interim.new', colour: 'turquoise' },
+  remove: { key: 'interim.toBeRemoved', colour: 'red' }
 }
 
 function interimLine(details) {
@@ -124,8 +168,15 @@ function interimLine(details) {
  * one, changed or marked for removal, then the ones being added. Each says
  * what the operator can do with it, none when the ORS is pending.
  */
-export function buildInterimRows({ applicationId, update }) {
+export function buildInterimRows({ t, applicationId, update }) {
   const { entry, item, pending } = update
+  const tag = (state) =>
+    INTERIM_TAGS[state]
+      ? {
+          text: updateText(t, INTERIM_TAGS[state].key),
+          colour: INTERIM_TAGS[state].colour
+        }
+      : null
   const siteId = entry.siteId
   const changes = item?.interimSiteChanges ?? []
   const changeFor = (interimSiteId) =>
@@ -136,7 +187,7 @@ export function buildInterimRows({ applicationId, update }) {
     return {
       key: `interim-${interim.siteId}`,
       line: interimLine(change?.proposed ?? interim),
-      state,
+      tag: tag(state),
       changeUrl:
         pending || state === 'remove'
           ? null
@@ -156,7 +207,7 @@ export function buildInterimRows({ applicationId, update }) {
     .map((change) => ({
       key: `interim-new-${change.changeId}`,
       line: interimLine(change.proposed),
-      state: 'add',
+      tag: tag('add'),
       changeUrl: pending
         ? null
         : interimSiteAdditionUrl(applicationId, siteId, change.changeId),
@@ -168,7 +219,6 @@ export function buildInterimRows({ applicationId, update }) {
   return [...existing, ...added]
 }
 
-/** The interim site being changed, as the update would leave it. */
 export function interimFields(update, interimSiteId) {
   const interim = activeInterimSites(update.entry.site).find(
     (site) => String(site.siteId) === String(interimSiteId)
@@ -182,7 +232,6 @@ export function interimFields(update, interimSiteId) {
   return change?.action === 'change' ? change.proposed : interim
 }
 
-/** A pending interim site addition, by its change id. */
 export function interimAddition(update, changeId) {
   return update.item?.interimSiteChanges?.find(
     (c) => c.changeId === changeId && c.action === 'add'

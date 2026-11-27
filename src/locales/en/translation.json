@@ -1223,11 +1223,12 @@
       },
       "pending": "Your regulator is reviewing a change to this overseas reprocessing site. You can apply for another change once they have made their decision.",
       "updated": {
-        "site-name": "Site name updated.",
+        "siteName": "Site name updated.",
         "location": "Location updated.",
-        "contact-details": "Contact details updated.",
-        "rejected-loads": "Arrangements for rejected or returned loads updated.",
-        "interim-sites": "Interim sites updated."
+        "contactDetails": "Contact details updated.",
+        "repatriatedLoads": "Arrangements for rejected or returned loads updated.",
+        "interimSites": "Interim sites updated.",
+        "besEvidence": "Evidence of broadly equivalent standards updated."
       },
       "interim": {
         "heading": "Interim sites ({{count}})",
@@ -1240,6 +1241,9 @@
         "addHeading": "Add an interim site",
         "changeHeading": "Change an interim site",
         "operations": "Recycling operations"
+      },
+      "besEvidence": {
+        "upload": "Upload"
       },
       "saveAndContinue": "Save and continue",
       "submitted": {

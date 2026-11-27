@@ -1,4 +1,8 @@
 {% extends 'layouts/page.njk' %}
+{% from "govuk/components/input/macro.njk" import govukInput %}
+{% from "govuk/components/select/macro.njk" import govukSelect %}
+{% from "govuk/components/checkboxes/macro.njk" import govukCheckboxes %}
+{% from "error-summary/macro.njk" import appErrorSummary %}
 
 {#
   RA-682 AC04: an interim site's details as part of an ORS update. Changing one
@@ -6,30 +10,25 @@
   enters every field, as the add-interim-site journey does.
 #}
 {% macro textInput(name, label, value, error, width) %}
-  <div class="govuk-form-group{% if error %} govuk-form-group--error{% endif %}">
-    <label class="govuk-label" for="{{ name }}">{{ label }}</label>
-    {% if error %}<p class="govuk-error-message" data-testid="{{ name }}-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ error }}</p>{% endif %}
-    <input class="govuk-input {{ width }}{% if error %} govuk-input--error{% endif %}" id="{{ name }}" name="{{ name }}" type="text" value="{{ value }}" data-testid="{{ name }}-input">
-  </div>
+  {{ govukInput({
+    id: name,
+    name: name,
+    value: value,
+    classes: width,
+    label: { text: label },
+    errorMessage: {
+      text: error,
+      visuallyHiddenText: t('common.error'),
+      attributes: { 'data-testid': name + '-error' }
+    } if error else undefined,
+    attributes: { 'data-testid': name + '-input' }
+  }) }}
 {% endmacro %}
 
 {% block content %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
-      {% if errorSummary.length %}
-        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
-          <div role="alert">
-            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
-            <div class="govuk-error-summary__body">
-              <ul class="govuk-list govuk-error-summary__list">
-                {% for error in errorSummary %}
-                  <li>{% if error.href %}<a href="{{ error.href }}">{{ error.text }}</a>{% else %}<span data-testid="error-message">{{ error.text }}</span>{% endif %}</li>
-                {% endfor %}
-              </ul>
-            </div>
-          </div>
-        </div>
-      {% endif %}
+      {{ appErrorSummary(errorSummary, t('common.errorSummaryTitle')) }}
 
       <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
       <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
@@ -44,37 +43,47 @@
         {{ textInput('postcode', t('pages.addInterimSite.siteLocation.postcodeLabel'), values.postcode, errors.postcode, 'govuk-input--width-10') }}
 
         {% if isNew %}
-          <div class="govuk-form-group{% if errors.country %} govuk-form-group--error{% endif %}">
-            <label class="govuk-label" for="country">{{ t('pages.addOverseasSite.siteLocation.countryLabel') }}</label>
-            {% if errors.country %}<p class="govuk-error-message" data-testid="country-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.country }}</p>{% endif %}
-            <select class="govuk-select{% if errors.country %} govuk-select--error{% endif %}" id="country" name="country" data-testid="country-input">
-              <option value=""></option>
-              {% for country in countries %}<option value="{{ country }}"{% if country == values.country %} selected{% endif %}>{{ country }}</option>{% endfor %}
-            </select>
-          </div>
-          <div class="govuk-form-group{% if errors.operationCodes %} govuk-form-group--error{% endif %}">
-            <fieldset class="govuk-fieldset" id="operationCodes">
-              <legend class="govuk-fieldset__legend govuk-fieldset__legend--s">{{ t('pages.updateOverseasSite.interim.operations') }}</legend>
-              {% if errors.operationCodes %}<p class="govuk-error-message" data-testid="operationCodes-error"><span class="govuk-visually-hidden">{{ t('common.error') }}:</span> {{ errors.operationCodes }}</p>{% endif %}
-              <div class="govuk-checkboxes govuk-checkboxes--small" data-module="govuk-checkboxes">
-                {% for code in codes %}
-                  <div class="govuk-checkboxes__item">
-                    <input class="govuk-checkboxes__input" id="operation-{{ code }}" name="operationCodes" type="checkbox" value="{{ code }}"{% if code in values.operationCodes %} checked{% endif %} data-testid="operation-{{ code }}">
-                    <label class="govuk-label govuk-checkboxes__label" for="operation-{{ code }}">{{ code }}</label>
-                  </div>
-                {% endfor %}
-              </div>
-            </fieldset>
-          </div>
+          {{ govukSelect({
+            id: 'country',
+            name: 'country',
+            items: countryItems,
+            label: { text: t('pages.addOverseasSite.siteLocation.countryLabel') },
+            errorMessage: {
+              text: errors.country,
+              visuallyHiddenText: t('common.error'),
+              attributes: { 'data-testid': 'country-error' }
+            } if errors.country else undefined,
+            attributes: { 'data-testid': 'country-input' }
+          }) }}
+          {{ govukCheckboxes({
+            name: 'operationCodes',
+            classes: 'govuk-checkboxes--small',
+            fieldset: {
+              legend: { text: t('pages.updateOverseasSite.interim.operations'), classes: 'govuk-fieldset__legend--s' },
+              attributes: { id: 'operationCodes' }
+            },
+            items: codeItems,
+            errorMessage: {
+              text: errors.operationCodes,
+              visuallyHiddenText: t('common.error'),
+              attributes: { 'data-testid': 'operationCodes-error' }
+            } if errors.operationCodes else undefined
+          }) }}
         {% else %}
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="country">{{ t('pages.addOverseasSite.siteLocation.countryLabel') }}</label>
-            <input class="govuk-input app-input--readonly" id="country" type="text" value="{{ values.country }}" readonly data-testid="country-input">
-          </div>
-          <div class="govuk-form-group">
-            <label class="govuk-label" for="operationCodesReadOnly">{{ t('pages.updateOverseasSite.interim.operations') }}</label>
-            <input class="govuk-input app-input--readonly" id="operationCodesReadOnly" type="text" value="{{ values.operationCodes | join(', ') }}" readonly data-testid="operation-codes-input">
-          </div>
+          {{ govukInput({
+            id: 'country',
+            value: values.country,
+            classes: 'app-input--readonly',
+            label: { text: t('pages.addOverseasSite.siteLocation.countryLabel') },
+            attributes: { readonly: 'readonly', 'data-testid': 'country-input' }
+          }) }}
+          {{ govukInput({
+            id: 'operationCodesReadOnly',
+            value: values.operationCodes | join(', '),
+            classes: 'app-input--readonly',
+            label: { text: t('pages.updateOverseasSite.interim.operations') },
+            attributes: { readonly: 'readonly', 'data-testid': 'operation-codes-input' }
+          }) }}
         {% endif %}
 
         {{ textInput('contactName', t('pages.addInterimSite.siteContactDetails.nameLabel'), values.contactName, errors.contactName) }}

@@ -15,7 +15,7 @@ import {
   organisationIdFrom,
   redirectToManageSites
 } from '../controller.js'
-import { refusedFields } from '../steps-controller.js'
+import { refusedFields } from '../refusals.js'
 import {
   manageSitesUrl,
   newInterimSiteUrl,
@@ -28,8 +28,7 @@ import {
   resolveUpdate,
   updateText
 } from './view-model.js'
-
-// RA-682: what the ORS update journey's controllers share.
+import { UPDATED_KEYS } from './steps.js'
 
 export const VIEWS = {
   details: 'accreditation/manage-overseas-sites/update/details',
@@ -151,6 +150,12 @@ export function refused(t, result, names) {
       }
 }
 
+export function trimmedFields(payload, names) {
+  return Object.fromEntries(
+    names.map((name) => [name, String(payload?.[name] ?? '').trim()])
+  )
+}
+
 export function refusedStatus(result) {
   return result.errors ? statusCodes.badRequest : statusCodes.conflict
 }
@@ -194,14 +199,31 @@ export function detailsView(
     status: statusOf(update),
     validFrom: entry.site.validFrom ?? null,
     successBanner:
-      updated && !error ? updateText(t, `updated.${updated}`) : null,
+      updated && !error
+        ? updateText(t, `updated.${UPDATED_KEYS[updated]}`)
+        : null,
     error,
-    rows: buildDetailRows({ t, applicationId, update }),
-    interimSites: buildInterimRows({ applicationId, update }),
+    rows: buildDetailRows({
+      t,
+      applicationId,
+      update,
+      materialType: view.materialType
+    }),
+    interimSites: buildInterimRows({ t, applicationId, update }),
     addInterimSiteUrl: pending
       ? null
       : newInterimSiteUrl(applicationId, entry.siteId),
     continueUrl: item ? requestsUrl(applicationId) : null,
     pending
   })
+}
+
+export function refusedOnDetails(h, request, locale, loaded, result) {
+  return detailsView(
+    h,
+    request,
+    locale,
+    loaded,
+    result.message ?? locale.t('pages.manageOverseasSites.saveRefused')
+  ).code(refusedStatus(result))
 }

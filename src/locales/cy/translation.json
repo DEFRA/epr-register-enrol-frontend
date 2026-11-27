@@ -1222,11 +1222,12 @@
       },
       "pending": "[Welsh] Your regulator is reviewing a change to this overseas reprocessing site. You can apply for another change once they have made their decision.",
       "updated": {
-        "site-name": "[Welsh] Site name updated.",
+        "siteName": "[Welsh] Site name updated.",
         "location": "[Welsh] Location updated.",
-        "contact-details": "[Welsh] Contact details updated.",
-        "rejected-loads": "[Welsh] Arrangements for rejected or returned loads updated.",
-        "interim-sites": "[Welsh] Interim sites updated."
+        "contactDetails": "[Welsh] Contact details updated.",
+        "repatriatedLoads": "[Welsh] Arrangements for rejected or returned loads updated.",
+        "interimSites": "[Welsh] Interim sites updated.",
+        "besEvidence": "[Welsh] Evidence of broadly equivalent standards updated."
       },
       "interim": {
         "heading": "[Welsh] Interim sites ({{count}})",
@@ -1239,6 +1240,9 @@
         "addHeading": "[Welsh] Add an interim site",
         "changeHeading": "[Welsh] Change an interim site",
         "operations": "[Welsh] Recycling operations"
+      },
+      "besEvidence": {
+        "upload": "[Welsh] Upload"
       },
       "saveAndContinue": "[Welsh] Save and continue",
       "submitted": {

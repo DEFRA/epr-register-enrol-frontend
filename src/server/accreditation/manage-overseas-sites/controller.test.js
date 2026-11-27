@@ -1105,6 +1105,16 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(`${BASE}/payment`)
     })
 
+    test('a submit with no request in its reply goes to the payment page', async () => {
+      vi.spyOn(apiClient, 'post').mockResolvedValue(undefined)
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/declaration`,
+        payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+      })
+      expect(headers.location).toBe(`${BASE}/payment`)
+    })
+
     test('the declaration names the submitted request for the page after it', async () => {
       const requestId = '7a1c2d0e-0000-4000-8000-000000000004'
       vi.spyOn(apiClient, 'post').mockResolvedValue({

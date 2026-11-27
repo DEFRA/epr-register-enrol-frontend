@@ -1,0 +1,20 @@
+{% from "govuk/components/error-summary/macro.njk" import govukErrorSummary %}
+
+{#- A message about the whole request has no field to link to. -#}
+{% macro appErrorSummary(errors, titleText) %}
+  {% if errors.length %}
+    {% set errorList = [] %}
+    {% for error in errors %}
+      {% if error.href %}
+        {% set _ = errorList.push({ href: error.href, text: error.text }) %}
+      {% else %}
+        {% set _ = errorList.push({ html: '<span data-testid="error-message">' + (error.text | escape) + '</span>' }) %}
+      {% endif %}
+    {% endfor %}
+    {{ govukErrorSummary({
+      titleText: titleText,
+      errorList: errorList,
+      attributes: { 'data-testid': 'error-summary' }
+    }) }}
+  {% endif %}
+{% endmacro %}

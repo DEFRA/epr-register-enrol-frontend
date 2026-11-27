@@ -58,7 +58,6 @@ export function declarationUrl(applicationId) {
   return `${journeyUrl(applicationId)}/declaration`
 }
 
-// RA-682: the request just submitted, so the page shows that one.
 function forRequest(url, requestId) {
   return requestId ? `${url}?request=${encodeURIComponent(requestId)}` : url
 }
@@ -73,8 +72,20 @@ export function updateUrl(applicationId, siteId) {
   return `${journeyUrl(applicationId)}/update/${siteId}`
 }
 
+export function updatedUrl(applicationId, siteId, updated) {
+  return `${updateUrl(applicationId, siteId)}?updated=${updated}`
+}
+
 export function updateStepUrl(applicationId, siteId, step) {
   return `${updateUrl(applicationId, siteId)}/details/${step}`
+}
+
+export function updateBesEvidenceUrl(applicationId, siteId) {
+  return `${updateUrl(applicationId, siteId)}/bes-evidence`
+}
+
+export function updateBesEvidenceFileDeleteUrl(applicationId, siteId, fileId) {
+  return `${updateBesEvidenceUrl(applicationId, siteId)}/${encodeURIComponent(fileId)}/delete`
 }
 
 export function cancelUpdateUrl(applicationId, siteId) {

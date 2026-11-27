@@ -28,6 +28,7 @@ import {
   ITEM_STATUSES,
   ORS_UPDATE_DETAIL_FIELDS,
   SITE_ACCREDITATION_STATUSES,
+  isOrsUpdate,
   orsUpdateDetailsOf
 } from './constants/changeRequests.js'
 import { APPROVED_STATUS } from './constants/applicationStatuses.js'
@@ -171,7 +172,7 @@ function addSite(ctx) {
   if (!target) {
     throw stubError(statusCodes.notFound, 'Site not found')
   }
-  const updating = ctx.body.changeType === CHANGE_TYPES.updateOverseasSite
+  const updating = isOrsUpdate(ctx.body)
   const listed = ctx.view().sites.find((s) => s.siteId === target.siteId)
   const accredited =
     listed.accreditationStatus === SITE_ACCREDITATION_STATUSES.accredited

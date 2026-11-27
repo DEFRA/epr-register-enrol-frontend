@@ -2,7 +2,7 @@ import { activeInterimSites } from '../../common/helpers/interimSites.js'
 import { reExBackLinkUrl } from '../../common/helpers/accreditationUrls.js'
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import {
-  accreditedSiteActions,
+  approvedSiteActions,
   changeRequestsSummary,
   registeredSiteActions
 } from '../../accreditation/manage-overseas-sites/view-model.js'
@@ -32,14 +32,14 @@ function toOrsView(site) {
 
 // RA-682: where an accredited ORS's change stands. Without the change
 // requests view or an accreditation the row has no status or action.
-function accreditedSiteView(site, applicationId, changeRequests) {
+function approvedSiteView(site, applicationId, changeRequests) {
   const view = toOrsView(site)
   if (!changeRequests || !applicationId) {
     return view
   }
   return {
     ...view,
-    ...accreditedSiteActions(
+    ...approvedSiteActions(
       applicationId,
       site.siteId,
       changeRequests.pendingRequestStatus(site.siteId),
@@ -86,7 +86,7 @@ function partitionSites(sites, applicationId, changeRequests) {
     accredited: sites
       .filter(isAccredited)
       .sort(bySiteId)
-      .map((site) => accreditedSiteView(site, applicationId, changeRequests)),
+      .map((site) => approvedSiteView(site, applicationId, changeRequests)),
     registered: sites
       .filter((site) => !isAccredited(site) && !site.isNewSite)
       .sort(bySiteId)

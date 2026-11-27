@@ -61,7 +61,24 @@
         {% for row in rows %}
           <div class="govuk-summary-list__row{% if not row.action %} govuk-summary-list__row--no-actions{% endif %}" id="row-{{ row.id }}" data-testid="row-{{ row.id }}">
             <dt class="govuk-summary-list__key">{{ row.label }}</dt>
-            <dd class="govuk-summary-list__value" data-testid="row-{{ row.id }}-value">{{ row.value }}</dd>
+            <dd class="govuk-summary-list__value" data-testid="row-{{ row.id }}-value">
+              {%- if row.files.length %}
+                {# As the add-to-accreditation summary: the ORS's own files have no Delete. #}
+                {% for file in row.files %}
+                  <div class="govuk-!-margin-bottom-2" data-testid="evidence-row-{{ file.fileId }}">
+                    <span data-testid="filename-{{ file.fileId }}">{{ file.filename }}</span>
+                    {% if file.deleteUrl %}
+                      <form method="post" action="{{ file.deleteUrl }}" novalidate class="govuk-!-display-inline" data-testid="delete-file-form-{{ file.fileId }}">
+                        <input type="hidden" name="crumb" value="{{ crumb }}">
+                        <button type="submit" class="select-overseas-sites-link-button select-overseas-sites-link-button--red govuk-body govuk-!-margin-left-2" data-testid="delete-file-button-{{ file.fileId }}">{{ t('pages.cyaEvidenceForSite.deleteFile') }}<span class="govuk-visually-hidden"> {{ file.filename }}</span></button>
+                      </form>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              {% else -%}
+                {{ row.value }}
+              {%- endif -%}
+            </dd>
             {% if row.action %}
               <dd class="govuk-summary-list__actions">
                 <a class="govuk-link" href="{{ row.action.href }}" data-testid="row-{{ row.id }}-action">{{ row.action.text }}<span class="govuk-visually-hidden"> {{ row.label | lower }}</span></a>
@@ -78,12 +95,8 @@
             <div class="govuk-summary-list__row" data-testid="{{ interim.key }}">
               <dt class="govuk-summary-list__key govuk-!-font-weight-regular" data-testid="{{ interim.key }}-line">
                 {{ interim.line }}
-                {% if interim.state == 'change' %}
-                  <strong class="govuk-tag govuk-tag--blue govuk-!-margin-left-2" data-testid="{{ interim.key }}-state">{{ t('pages.updateOverseasSite.interim.changed') }}</strong>
-                {% elif interim.state == 'add' %}
-                  <strong class="govuk-tag govuk-tag--turquoise govuk-!-margin-left-2" data-testid="{{ interim.key }}-state">{{ t('pages.updateOverseasSite.interim.new') }}</strong>
-                {% elif interim.state == 'remove' %}
-                  <strong class="govuk-tag govuk-tag--red govuk-!-margin-left-2" data-testid="{{ interim.key }}-state">{{ t('pages.updateOverseasSite.interim.toBeRemoved') }}</strong>
+                {% if interim.tag %}
+                  <strong class="govuk-tag govuk-tag--{{ interim.tag.colour }} govuk-!-margin-left-2" data-testid="{{ interim.key }}-state">{{ interim.tag.text }}</strong>
                 {% endif %}
               </dt>
               <dd class="govuk-summary-list__actions">

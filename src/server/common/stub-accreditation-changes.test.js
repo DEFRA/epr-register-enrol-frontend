@@ -209,6 +209,20 @@ describe('stubAccreditationChanges ORS updates (RA-682)', () => {
     expect(draft.sites[0].siteName).toBe('Berlin Recyclers')
   })
 
+  test('an update takes new BES evidence, which is a change, and can remove it', async () => {
+    await start()
+    const added = await call('post', `${SITE}/bes-evidence/files`, {
+      fileUploadId: 'up-1'
+    })
+    expect(added.sites[0]).toMatchObject({
+      besEvidence: { besEvidenceUploads: [{ fileId: 'up-1' }] },
+      missingFields: [],
+      isComplete: true
+    })
+    const removed = await call('delete', `${SITE}/bes-evidence/files/up-1`)
+    expect(removed.sites[0].missingFields).toEqual(['changes'])
+  })
+
   test('an update is complete once it changes a detail', async () => {
     await start()
     const draft = await call('patch', SITE, { townOrCity: 'Potsdam' })

@@ -185,13 +185,14 @@ describe('#updateOverseasSite (RA-682)', () => {
         'coordinates',
         'recycling-operation',
         'basel-codes',
-        'conditions-of-export',
         'bes-evidence'
       ]) {
         expect(result).toContain(`data-testid="row-${row}-value"`)
         expect(result).not.toContain(`data-testid="row-${row}-action"`)
       }
-      expect(result).toContain('bes.pdf')
+      expect(result).not.toContain('data-testid="row-conditions-of-export')
+      expect(result).toContain('data-testid="filename-f1">bes.pdf')
+      expect(result).not.toContain('data-testid="delete-file-button-f1"')
       expect(result).toContain('Interim sites (2)')
       expect(result).not.toContain('data-testid="save-and-continue"')
     })
@@ -326,9 +327,11 @@ describe('#updateOverseasSite (RA-682)', () => {
 
       expect(statusCode).toBe(statusCodes.ok)
       expect(result).toContain('value="902501 Harbour Estate"')
-      expect(result).toMatch(/id="country" type="text" value="Poland" readonly/)
       expect(result).toMatch(
-        /id="coordinates" type="text" value="54.3520, 18.6466" readonly/
+        /id="country"[^>]*value="Poland"[^>]*readonly="readonly"/
+      )
+      expect(result).toMatch(
+        /id="coordinates"[^>]*value="54.3520, 18.6466" aria-describedby="coordinates-hint"[^>]*readonly="readonly"/
       )
       expect(result).not.toContain('name="country"')
       expect(result).not.toContain('name="coordinates"')
@@ -418,6 +421,11 @@ describe('#updateOverseasSite (RA-682)', () => {
         'location',
         { addressLine1: '1 Road', townOrCity: 'Port 9' },
         'data-testid="townOrCity-error"'
+      ],
+      [
+        'location',
+        { addressLine1: '1 Road', townOrCity: 'Port 9' },
+        'aria-describedby="townOrCity-error"'
       ]
     ])(
       '%s: an invalid answer is shown and nothing is saved',
@@ -620,9 +628,11 @@ describe('#updateOverseasSite (RA-682)', () => {
       mockGet(makeView())
       const { result } = await server.inject(`${UPDATE}/interim-sites/902511`)
       expect(result).toContain('Change an interim site')
-      expect(result).toMatch(/id="country" type="text" value="Poland" readonly/)
+      expect(result).toMatch(
+        /id="country"[^>]*value="Poland"[^>]*readonly="readonly"/
+      )
       expect(result).toContain('data-prevent-double-click="true"')
-      expect(result).toContain('value="R3, R13" readonly')
+      expect(result).toMatch(/value="R3, R13"[^>]*readonly="readonly"/)
     })
 
     test('a change keeps its country and recycling operations whatever is posted', async () => {
@@ -701,6 +711,11 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(statusCode).toBe(statusCodes.badRequest)
       expect(result).toContain('Enter the country')
       expect(result).toContain('Select R12 or R13')
+      expect(result).toMatch(
+        /id="country"[^>]*aria-describedby="country-error"/
+      )
+      expect(result).toContain('aria-describedby="operationCodes-error"')
+      expect(result).toMatch(/value="R3" checked/)
     })
 
     test('adding one posts it to the update', async () => {

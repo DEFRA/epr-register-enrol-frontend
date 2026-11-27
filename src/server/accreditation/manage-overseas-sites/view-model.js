@@ -66,7 +66,7 @@ export function changeRequestsSummary(view) {
  * while a submitted request holds it (AC03), "In progress" and View while its
  * change is in the draft, otherwise Change. All lead to its details page.
  */
-export function accreditedSiteActions(
+export function approvedSiteActions(
   applicationId,
   siteId,
   status,

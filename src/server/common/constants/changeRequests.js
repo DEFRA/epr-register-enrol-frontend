@@ -63,9 +63,21 @@ export const ORS_UPDATE_DETAIL_FIELDS = [
 
 export const MISSING_CHANGES = 'changes'
 
-/** An ORS's details as an update item holds them. */
 export function orsUpdateDetailsOf(site) {
   return Object.fromEntries(
     ORS_UPDATE_DETAIL_FIELDS.map((field) => [field, site?.[field] ?? null])
   )
 }
+
+export function isOrsUpdate(item) {
+  return item?.changeType === CHANGE_TYPES.updateOverseasSite
+}
+
+// RA-492: the answers an operator can supply for a registered ORS, each
+// locked once the ORS holds it. RA-682: an update never changes them.
+export const ORS_ANSWER_FIELDS = [
+  'country',
+  'coordinates',
+  'operationCodes',
+  'conditionsOfExport'
+]
