@@ -3,6 +3,7 @@ import { accreditationApiService } from '../../common/helpers/accreditationApiSe
 import { ACCREDITATION_SESSION_KEYS } from '../../common/constants/accreditationSessionKeys.js'
 import { statusCodes } from '../../common/constants/status-codes.js'
 import { queryTaskListUrl } from '../../common/helpers/accreditationUrls.js'
+import { isCombinedOrsBesQuery } from '../../common/helpers/regulatorQuery.js'
 import {
   resolveQueriedSectionAccess,
   guardSectionWrite
@@ -183,6 +184,13 @@ export const confirmOverseasSitesPostController = {
       ).code(500)
     }
 
+    // RA-698: queried with the BES evidence, the sites are one task with it,
+    // so the BES upload is the next step.
+    if (isCombinedOrsBesQuery(application)) {
+      return h.redirect(
+        `/accreditation/upload-evidence-for-overseas-site/${applicationId}`
+      )
+    }
     return h.redirect(taskListUrl(applicationId))
   }
 }

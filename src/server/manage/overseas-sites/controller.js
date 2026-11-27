@@ -72,15 +72,17 @@ function registeredSiteView(site, applicationId, changeRequests) {
   if (!changeRequests) {
     return view
   }
-  return withActions(
-    view,
-    registeredSiteActions(
-      applicationId,
-      site.siteId,
-      changeRequests.pendingRequestStatus(site.siteId),
-      changeRequests.isInDraftRequest(site.siteId)
-    )
+  const actions = registeredSiteActions(
+    applicationId,
+    site.siteId,
+    changeRequests.pendingRequestStatus(site.siteId),
+    changeRequests.isInDraftRequest(site.siteId)
   )
+  // RA-698: no ORS can be added while the regulator has a query open.
+  return withActions(view, {
+    ...actions,
+    addUrl: changeRequests.hasOpenQuery ? null : actions.addUrl
+  })
 }
 
 // RA-814: by ORS ID as a number, so "010" follows "9". A blank or

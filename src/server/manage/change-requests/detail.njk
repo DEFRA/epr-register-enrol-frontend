@@ -3,9 +3,11 @@
 {#
   RA-697: a read-only version of Figma 604:137479, the site details landing
   page, and a tonnage band upgrade's equivalent. Nothing here changes the
-  request: no buttons, and no Change, Remove or Add links. Responding to a
-  query comes with RA-698.
+  request, except for a Queried item (RA-698), which has Change and Upload
+  links for only the fields the query leaves open, and a way to send the
+  response.
 #}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% macro headerItem(label, testId) %}
   <div class="app-detail-header__item">
@@ -15,17 +17,33 @@
 {% endmacro %}
 
 {% macro readOnlySummary(rows, testId) %}
-  <dl class="govuk-summary-list" data-testid="{{ testId }}">
+  <dl class="govuk-summary-list" id="{{ testId }}" data-testid="{{ testId }}">
     {% for row in rows %}
       <div class="govuk-summary-list__row" data-testid="row-{{ row.id }}">
         <dt class="govuk-summary-list__key" data-testid="row-{{ row.id }}-label">{{ row.label }}</dt>
         <dd class="govuk-summary-list__value" data-testid="row-{{ row.id }}-value">{{ row.value }}</dd>
+        {% if row.action %}
+          <dd class="govuk-summary-list__actions">
+            <a class="govuk-link" href="{{ row.action.href }}" data-testid="row-{{ row.id }}-action">{{ row.action.text }}<span class="govuk-visually-hidden"> {{ row.action.hiddenText }}</span></a>
+          </dd>
+        {% endif %}
       </div>
     {% endfor %}
   </dl>
 {% endmacro %}
 
 {% block content %}
+  {% if success %}
+    {{ govukNotificationBanner({ type: 'success', titleText: success.title, text: success.text, attributes: { 'data-testid': 'success-banner' } }) }}
+  {% endif %}
+  {% if problem %}
+    <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+      <div role="alert">
+        <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+        <div class="govuk-error-summary__body"><ul class="govuk-list govuk-error-summary__list"><li><a href="#site-summary" data-testid="error-summary-link">{{ problem }}</a></li></ul></div>
+      </div>
+    </div>
+  {% endif %}
   {% if isQueried %}
     <div class="govuk-notification-banner app-notification-banner--full-width" role="region" aria-labelledby="query-raised-banner-title" data-module="govuk-notification-banner" data-testid="query-raised-banner">
       <div class="govuk-notification-banner__header">
@@ -33,6 +51,11 @@
       </div>
       <div class="govuk-notification-banner__content">
         <p class="govuk-notification-banner__heading">{{ t('pages.manageChangeRequests.detail.queried.body') }}</p>
+        {% if queryNote %}
+          <h3 class="govuk-heading-s govuk-!-margin-bottom-1">{{ t('pages.manageChangeRequests.detail.queried.noteHeading') }}</h3>
+          <p class="govuk-body" data-testid="query-note">{{ queryNote }}</p>
+        {% endif %}
+        {% if respond %}<p class="govuk-body">{{ respond.labels.instruction }}</p>{% endif %}
       </div>
     </div>
   {% endif %}
@@ -67,12 +90,21 @@
   {% if interimSites.length %}
     <ul class="govuk-list app-detail-interim-list" data-testid="interim-sites">
       {% for interimSite in interimSites %}
-        <li class="app-detail-interim-list__item" data-testid="interim-site-{{ interimSite.siteId }}">{{ interimSite.line }}</li>
+        <li class="app-detail-interim-list__item" data-testid="interim-site-{{ interimSite.siteId }}">{{ interimSite.line }}{% if interimSite.changeUrl %}
+          <a class="govuk-link app-detail-interim-list__action govuk-!-margin-left-3" href="{{ interimSite.changeUrl }}" data-testid="change-interim-site-{{ interimSite.siteId }}">{{ respond.labels.change }}<span class="govuk-visually-hidden"> {{ t('pages.manageChangeRequests.detail.interimSiteHidden', { name: interimSite.name }) }}</span></a>
+        {% endif %}</li>
       {% endfor %}
     </ul>
   {% else %}
     <p class="govuk-body" data-testid="no-interim-sites">{{ t('pages.manageChangeRequests.detail.noInterimSites') }}</p>
   {% endif %}
+  {% endif %}
+
+  {% if respond %}
+    <div class="govuk-button-group govuk-!-margin-top-6">
+      <a href="{{ respond.continueUrl }}" role="button" draggable="false" class="govuk-button" data-module="govuk-button" data-testid="save-and-continue-button">{{ respond.labels.saveAndContinue }}</a>
+      <a href="{{ respond.cancelUrl }}" class="govuk-link" data-testid="cancel-link">{{ respond.labels.cancel }}</a>
+    </div>
   {% endif %}
 
   <h2 class="govuk-heading-m govuk-!-margin-top-8" data-testid="request-details-heading">{{ t('pages.manageChangeRequests.detail.requestDetails.heading') }}</h2>

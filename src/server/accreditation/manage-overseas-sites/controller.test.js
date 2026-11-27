@@ -1197,3 +1197,49 @@ describe('#manageOverseasSites (RA-492)', () => {
     })
   })
 })
+
+describe('while the regulator has a query open (RA-698)', () => {
+  let server
+
+  beforeAll(async () => {
+    server = await createServer()
+    await server.initialize()
+  })
+
+  afterAll(async () => {
+    await server.stop({ timeout: 0 })
+  })
+
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    setFeatureFlag('inYearChangesEnabled', true)
+  })
+
+  test('every page of the journey goes back to the manage page', async () => {
+    vi.spyOn(apiClient, 'get').mockResolvedValue({
+      ...makeView(),
+      hasOpenQuery: true
+    })
+
+    const response = await server.inject({
+      method: 'GET',
+      url: `${BASE}/requests`
+    })
+
+    expect(response.statusCode).toBe(statusCodes.redirect)
+    expect(response.headers.location).toBe(
+      '/manage/50018/R26EX0500180001PL/Plastic'
+    )
+  })
+
+  test('lets the page through when the view cannot be read', async () => {
+    vi.spyOn(apiClient, 'get').mockRejectedValue(new Error('down'))
+
+    const response = await server.inject({
+      method: 'GET',
+      url: `${BASE}/requests`
+    })
+
+    expect(response.statusCode).not.toBe(statusCodes.redirect)
+  })
+})

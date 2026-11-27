@@ -14,6 +14,7 @@ import {
 import { isItemForSite } from './helpers/changeRequestSite.js'
 import { hasValue } from './helpers/hasValue.js'
 import { ORS_FEE, PENCE_PER_POUND } from './helpers/paymentDetails.js'
+import { isQueried, queriedEffective, queryView } from './stub-queried-items.js'
 
 export const LOCKABLE = ORS_ANSWER_FIELDS
 
@@ -75,7 +76,7 @@ function requestSiteView(site, entry) {
     orsId: entry.orsId ?? site.orsId ?? null,
     siteName: entry.siteName ?? site.siteName,
     answers: entry.answers,
-    effective,
+    effective: { ...effective, ...queriedEffective(site, entry) },
     besEvidenceRequired: required,
     besEvidence: { besEvidenceUploads: entry.besEvidenceUploads },
     missingFields,
@@ -85,7 +86,8 @@ function requestSiteView(site, entry) {
     status: entry.status,
     validFrom: entry.validFrom,
     withdrawnAt: entry.withdrawnAt,
-    caseManagementReference: entry.caseManagementReference ?? null
+    caseManagementReference: entry.caseManagementReference ?? null,
+    query: queryView(site, entry)
   }
   return isUpdate(entry) ? { ...view, ...updateFields(site, entry) } : view
 }
@@ -173,6 +175,7 @@ export function buildView(
     sites: sites.map(siteView),
     activeRequest: store.draft ? requestView(store.draft, sites) : null,
     requests: requests.map((r) => requestView(r, sites)),
+    hasOpenQuery: requests.some((request) => request.sites.some(isQueried)),
     pendingOrsIds: [
       ...new Set(
         activeSiteItems

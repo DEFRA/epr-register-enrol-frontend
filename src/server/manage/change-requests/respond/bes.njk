@@ -1,0 +1,96 @@
+{% extends 'layouts/page.njk' %}
+
+{% from "govuk/components/date-input/macro.njk" import govukDateInput %}
+{% from "govuk/components/file-upload/macro.njk" import govukFileUpload %}
+
+{% macro fileList(files, removable, removeLabel) %}
+  <ul class="govuk-list" data-testid="{{ 'new-files' if removable else 'existing-files' }}">
+    {% for file in files %}
+      <li data-testid="bes-file-{{ file.fileId }}">
+        {{ file.filename }}
+        {% if removable %}
+          <form method="post" action="{{ file.deleteUrl }}" class="govuk-!-display-inline govuk-!-margin-left-2">
+            <input type="hidden" name="crumb" value="{{ crumb }}">
+            <button type="submit" class="govuk-button govuk-button--secondary govuk-!-margin-bottom-0" data-module="govuk-button" data-testid="remove-file-{{ file.fileId }}">{{ removeLabel }}<span class="govuk-visually-hidden"> {{ file.filename }}</span></button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endmacro %}
+
+{% macro dateInput(prefix, label, day, month, year, error) %}
+    {{ govukDateInput({
+    id: prefix,
+    fieldset: { legend: { text: label, classes: 'govuk-label' } },
+    hint: { text: t('pages.uploadBesEvidence.dateHint') },
+    errorMessage: { text: error, visuallyHiddenText: t('common.error'), attributes: { 'data-testid': prefix + '-error' } } if error,
+    attributes: { 'data-testid': prefix + '-date' },
+    items: [
+      { id: prefix + 'Day', name: prefix + 'Day', label: t('common.day'), classes: 'govuk-input--width-2' + (' govuk-input--error' if error), value: day, attributes: { 'data-testid': prefix + '-day' } },
+      { id: prefix + 'Month', name: prefix + 'Month', label: t('common.month'), classes: 'govuk-input--width-2' + (' govuk-input--error' if error), value: month, attributes: { 'data-testid': prefix + '-month' } },
+      { id: prefix + 'Year', name: prefix + 'Year', label: t('common.year'), classes: 'govuk-input--width-4' + (' govuk-input--error' if error), value: year, attributes: { 'data-testid': prefix + '-year' } }
+    ]
+  }) }}
+{% endmacro %}
+
+{% block content %}
+  <div class="govuk-grid-row">
+    <div class="govuk-grid-column-two-thirds">
+      {% if fileError or validFromError or validToError %}
+        <div class="govuk-error-summary" data-module="govuk-error-summary" data-testid="error-summary">
+          <div role="alert">
+            <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
+            <div class="govuk-error-summary__body">
+              <ul class="govuk-list govuk-error-summary__list">
+                {% if fileError %}<li><a href="#file">{{ fileError }}</a></li>{% endif %}
+                {% if validFromError %}<li><a href="#validFromDay">{{ validFromError }}</a></li>{% endif %}
+                {% if validToError %}<li><a href="#validToDay">{{ validToError }}</a></li>{% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <span class="govuk-caption-l" data-testid="page-caption">{{ applicationHeader.captionText }}</span>
+      <h1 class="govuk-heading-l" data-testid="page-heading">{{ heading }}</h1>
+
+      {% if existing.length %}
+        <h2 class="govuk-heading-m">{{ existingHeading }}</h2>
+        {{ fileList(existing, false, removeLabel) }}
+      {% endif %}
+
+      <h2 class="govuk-heading-m">{{ newHeading }}</h2>
+      {% if added.length %}
+        {{ fileList(added, true, removeLabel) }}
+      {% else %}
+        <p class="govuk-body" data-testid="no-new-files">{{ noNewFiles }}</p>
+      {% endif %}
+
+      <p class="govuk-body">{{ t('pages.uploadBesEvidence.requirements.intro') }}</p>
+      <ul class="govuk-list govuk-list--bullet">
+        <li>{{ t('pages.uploadBesEvidence.requirements.maxSize') }}</li>
+        <li>{{ t('pages.uploadBesEvidence.requirements.fileTypes') }}</li>
+      </ul>
+
+      <form method="post" enctype="multipart/form-data" novalidate data-testid="upload-form">
+        <input type="hidden" name="crumb" value="{{ crumb }}">
+        {{ govukFileUpload({
+          id: 'file',
+          name: 'file',
+          label: { text: t('pages.uploadBesEvidence.fileLabel') },
+          errorMessage: { text: fileError, visuallyHiddenText: t('common.error'), attributes: { 'data-testid': 'file-error' } } if fileError,
+          attributes: { accept: '.pdf,.doc,.docx,.xls,.csv,.png,.tif,.jpg,.msg', 'data-testid': 'file-input' }
+        }) }}
+        {{ dateInput('validFrom', t('pages.uploadBesEvidence.validFrom'), validFromDay, validFromMonth, validFromYear, validFromError) }}
+        {{ dateInput('validTo', t('pages.uploadBesEvidence.validTo'), validToDay, validToMonth, validToYear, validToError) }}
+        <button type="submit" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="upload-button">{{ t('pages.uploadBesEvidence.uploadButton') }}</button>
+      </form>
+
+      <p class="govuk-body">
+        <a href="{{ backLink }}" class="govuk-button" role="button" draggable="false" data-module="govuk-button" data-testid="continue-button">{{ continueLabel }}</a>
+        <a href="{{ cancelUrl }}" class="govuk-link govuk-!-margin-left-3" data-testid="cancel-link">{{ cancelLink }}</a>
+      </p>
+    </div>
+  </div>
+{% endblock %}

@@ -85,7 +85,7 @@
         </div>
 
         <button type="submit" name="submitAction" value="submit" class="govuk-button" data-module="govuk-button" data-testid="submit-button">
-          {{ t('pages.submitDeclaration.submitButton') }}
+          {{ submitButtonText or t('pages.submitDeclaration.submitButton') }}
         </button>
 
         <button type="submit" name="submitAction" value="saveAndComeLater" class="govuk-button govuk-button--secondary" data-module="govuk-button" data-testid="save-come-back-button">

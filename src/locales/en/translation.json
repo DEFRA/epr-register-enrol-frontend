@@ -381,6 +381,7 @@
       "viewPaymentDetailsLink": "View payment details",
       "loadError": "Sorry, we were unable to load your accreditation task list. Please try again.",
       "tasks": {
+        "overseasSitesAndBesEvidence": "Overseas reprocessing sites and BES evidence",
         "prns": "PRN tonnage and authority to issue",
         "perns": "PERN tonnage and authority to issue",
         "businessPlan": "Business plan",
@@ -927,7 +928,7 @@
       }
     },
     "manageRegistrationAccreditation": {
-      "heading": "Manage registration and accreditation",
+      "heading": "Manage your registration and accreditation",
       "accreditationStatusLabel": "Accreditation status:",
       "registrationStatusLabel": "Registration status:",
       "accreditationNumberLabel": "Accreditation number:",
@@ -944,9 +945,9 @@
         "link": "Manage overseas reprocessing sites"
       },
       "changeRequests": {
-        "title": "In year change requests",
+        "title": "In year change applications",
         "noActive": "You currently have no active change requests.",
-        "viewAll": "View change requests"
+        "viewAll": "View your in year change applications"
       }
     },
     "manageOverseasSites": {
@@ -1034,7 +1035,52 @@
       }
     },
     "manageChangeRequests": {
-      "heading": "In year change requests",
+      "respond": {
+        "actions": {
+          "change": "Change",
+          "upload": "Upload",
+          "saveAndContinue": "Save and continue",
+          "cancel": "Cancel",
+          "continue": "Continue",
+          "remove": "Remove"
+        },
+        "rows": {
+          "siteName": "ORS name",
+          "recyclingOperation": "Recycling operations",
+          "country": "Country"
+        },
+        "fieldLabels": {
+          "siteName": "ORS name",
+          "location": "Location",
+          "contactName": "Contact name",
+          "contactEmail": "Contact email",
+          "contactPhone": "Contact phone number",
+          "repatriatedLoads": "Arrangements for rejected or returned loads",
+          "besEvidence": "Evidence of broadly equivalent standards"
+        },
+        "success": {
+          "title": "Success",
+          "body": "{{field}} updated"
+        },
+        "requestUpdated": "Request updated",
+        "queryInstruction": "Change the details you can change and upload any new evidence. Then save and continue to send your response.",
+        "nothingChanged": "Change at least one detail or upload new evidence before you continue.",
+        "besRequired": "Upload evidence of broadly equivalent standards before you continue.",
+        "lockedHint": "This cannot be changed in response to a query.",
+        "interimSite": {
+          "title": "Interim site"
+        },
+        "bes": {
+          "existingFiles": "Files already uploaded",
+          "newFiles": "Files you have added",
+          "noNewFiles": "You have not added any new files.",
+          "removeError": "We could not remove the file. Try again."
+        },
+        "declaration": {
+          "confirm": "Confirm and submit"
+        }
+      },
+      "heading": "In year change applications",
       "filters": {
         "heading": "Filter by",
         "status": "Status",
@@ -1054,7 +1100,7 @@
         }
       },
       "table": {
-        "siteName": "Site name",
+        "siteName": "ORS",
         "type": "Type",
         "status": "Status",
         "action": "Action"
@@ -1063,7 +1109,7 @@
       "view": "View",
       "viewHidden": "{{type}} for {{site}}",
       "types": {
-        "addOverseasSite": "New ORS accreditation",
+        "addOverseasSite": "Accreditation: new ORS",
         "updateOverseasSite": "ORS update",
         "upgradeTonnageBand": "Tonnage band upgrade",
         "other": "Change request"
@@ -1084,6 +1130,7 @@
         "notProvided": "Not provided",
         "notSubmitted": "Not submitted",
         "interimSites": "Interim sites ({{count}})",
+        "interimSiteHidden": "interim site {{name}}",
         "interimSitesNone": "Interim sites",
         "noInterimSites": "No interim sites have been added.",
         "requestDetails": {
@@ -1096,6 +1143,7 @@
           "reference": "Reference"
         },
         "queried": {
+          "noteHeading": "The regulator’s query",
           "title": "Important",
           "body": "A query has been raised on this application for change."
         },
@@ -1247,6 +1295,10 @@
     "signOut": "Sign out"
   },
   "common": {
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "success": "Success",
     "yes": "Yes",
     "no": "No",
     "back": "Back",
@@ -1292,6 +1344,7 @@
       "updateHeading": "Update the application",
       "changeLink": "Change",
       "sectionLabels": {
+        "overseasSitesAndBesEvidence": "overseas reprocessing sites and BES evidence",
         "prns": "tonnage and authority to issue PRNs",
         "perns": "tonnage and authority to issue PERNs",
         "businessPlan": "business plan",

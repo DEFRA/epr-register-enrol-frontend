@@ -57,6 +57,8 @@ export function changeRequestsSummary(view) {
     pendingRequestStatus: (siteId) =>
       statusBySiteId.get(String(siteId)) ?? null,
     isInDraftRequest: (siteId) => Boolean(findRequestSite(view, siteId)),
+    // RA-698: no ORS can be added while the regulator has a query open.
+    hasOpenQuery: Boolean(view.hasOpenQuery),
     readyForSubmissionCount: view.activeRequest?.sites?.length ?? 0
   }
 }

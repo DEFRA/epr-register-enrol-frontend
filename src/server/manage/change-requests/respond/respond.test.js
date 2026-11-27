@@ -1,0 +1,1094 @@
+import { describe, test, expect, vi, beforeEach } from 'vitest'
+
+import { statusCodes } from '../../../common/constants/status-codes.js'
+import { apiClient } from '../../../common/api-client.js'
+import { initUpload } from '../../../common/helpers/upload/init-upload.js'
+import { proxyUploadToCdp } from '../../../common/helpers/upload/proxy-upload-to-cdp.js'
+import {
+  MANAGE_URL,
+  makeManageApp,
+  mockManageGets,
+  noChangeRequests,
+  registrationOnlyExporter,
+  apiError
+} from '../../../common/test-helpers/manage-api.js'
+import { setupManagePageServer } from '../../../common/test-helpers/manage-page.js'
+
+vi.mock('../../../common/helpers/upload/init-upload.js', () => ({
+  initUpload: vi.fn()
+}))
+vi.mock('../../../common/helpers/upload/proxy-upload-to-cdp.js', () => ({
+  proxyUploadToCdp: vi.fn()
+}))
+vi.mock('../../../common/helpers/reex-organisation-service.js', () => ({
+  operatorCanAccessOrganisation: vi.fn()
+}))
+
+const ITEM_ID = '0b6a3c1e-5d2f-4a8b-9c71-1e2d3f4a5b01'
+const ITEM_URL = `${MANAGE_URL}/change-requests/${ITEM_ID}`
+const CHANGES = '/api/v1/accreditation-changes/reex-org-123/app-current'
+
+const SITE = {
+  siteId: 901801,
+  orsId: '001',
+  siteName: 'Rotterdam Recycling BV',
+  addressLine1: 'Industrieweg 44',
+  townOrCity: 'Rotterdam',
+  country: 'Netherlands',
+  coordinates: '51.9, 4.4',
+  contactName: 'Jan de Vries',
+  contactEmail: 'jan@rotterdam.example',
+  contactPhone: '+31 10 123 4567',
+  repatriatedLoads: 'Returned by sea',
+  interimSites: [
+    {
+      siteId: 901802,
+      siteNumber: '2',
+      siteName: 'Calais Storage SARL',
+      country: 'France',
+      operationCodes: ['R13'],
+      removedAt: null
+    }
+  ]
+}
+
+const INTERIM = {
+  siteId: 901802,
+  siteNumber: '2',
+  country: 'France',
+  operationCodes: ['R13'],
+  values: {
+    siteName: 'Calais Storage SARL',
+    addressLine1: '1 Quay Street',
+    townOrCity: 'Calais',
+    contactName: 'Marie',
+    contactEmail: 'marie@calais.example',
+    contactPhone: '+33 1 23 45 67 89'
+  },
+  editableFields: [
+    'siteName',
+    'addressLine1',
+    'addressLine2',
+    'townOrCity',
+    'stateOrRegion',
+    'postcode',
+    'contactName',
+    'contactEmail',
+    'contactPhone'
+  ],
+  lockedFields: ['country', 'operationCodes']
+}
+
+const EDITABLE = [
+  'siteName',
+  'addressLine1',
+  'addressLine2',
+  'townOrCity',
+  'stateOrRegion',
+  'postcode',
+  'contactName',
+  'contactEmail',
+  'contactPhone',
+  'rejectedLoadsArrangements',
+  'besEvidence'
+]
+
+const queriedItem = (extra = {}, queryExtra = {}) => ({
+  itemId: ITEM_ID,
+  siteId: SITE.siteId,
+  orsId: SITE.orsId,
+  siteName: SITE.siteName,
+  changeType: 'add-overseas-site',
+  status: 'Queried',
+  answers: {},
+  effective: { country: 'Netherlands', coordinates: '51.9, 4.4' },
+  besEvidenceRequired: false,
+  besEvidence: {
+    besEvidenceUploads: [
+      { fileId: 'old-file', filename: 'old.pdf' },
+      { fileId: 'new-file', filename: 'new.pdf' }
+    ]
+  },
+  missingFields: [],
+  isComplete: true,
+  validFrom: null,
+  withdrawnAt: null,
+  caseManagementReference: 'CR-1',
+  query: {
+    queryNote: 'Please confirm the contact details.',
+    raisedAt: '2027-06-01T09:00:00Z',
+    querySubmissions: [],
+    editableFields: EDITABLE,
+    lockedFields: ['country', 'coordinates', 'operationCodes'],
+    preQueryBesFileIds: ['old-file'],
+    interimSites: [INTERIM],
+    ...queryExtra
+  },
+  ...extra
+})
+
+const viewWith = (item) => ({
+  ...noChangeRequests,
+  organisationId: 'reex-org-123',
+  registrationReference: 'R27EX0500180001PL',
+  materialType: 'Plastic',
+  hasOpenQuery: item.status === 'Queried',
+  sites: [
+    {
+      siteId: SITE.siteId,
+      orsId: SITE.orsId,
+      accreditationStatus: 'Accredited',
+      pendingRequestStatus: item.status,
+      lockedFields: [],
+      site: SITE
+    }
+  ],
+  requests: [
+    {
+      requestId: 'R1',
+      changeType: 'add-overseas-site',
+      status: 'Submitted',
+      createdAt: '2027-04-01T09:00:00Z',
+      updatedAt: '2027-04-01T09:00:00Z',
+      submittedAt: '2027-04-01T11:00:00Z',
+      submittedBy: { fullName: 'Sam Patel' },
+      sites: [item],
+      tonnageBandUpgrade: null
+    }
+  ]
+})
+
+const app = makeManageApp()
+
+describe('responding to a queried item (RA-698)', () => {
+  const page = setupManagePageServer()
+  const post = (url, payload = {}) =>
+    page.server.inject({ method: 'POST', url, payload })
+
+  let patch
+  let postSpy
+
+  beforeEach(() => {
+    patch = vi.spyOn(apiClient, 'patch').mockResolvedValue({})
+    postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+  })
+
+  const load = (item = queriedItem()) =>
+    mockManageGets([app], undefined, viewWith(item))
+
+  describe('the detail page', () => {
+    test('shows the query note and Change links only for editable fields', async () => {
+      load(
+        queriedItem(
+          {},
+          { editableFields: ['siteName', 'contactName', 'besEvidence'] }
+        )
+      )
+
+      const { result } = await page.get(ITEM_URL)
+
+      expect(result).toContain('Please confirm the contact details.')
+      expect(result).toContain('data-testid="row-site-name-action"')
+      expect(result).toContain('data-testid="row-contact-name-action"')
+      expect(result).toContain('data-testid="row-bes-evidence-action"')
+      expect(result).not.toContain('data-testid="row-location-action"')
+      expect(result).not.toContain('data-testid="row-repatriated-loads-action"')
+      expect(result).not.toContain('row-operation-codes-action')
+      expect(result).toContain('data-testid="save-and-continue-button"')
+    })
+
+    test('gives each interim site a Change link', async () => {
+      load()
+
+      const { result } = await page.get(ITEM_URL)
+
+      expect(result).toContain('data-testid="change-interim-site-901802"')
+      expect(result).toContain(`${ITEM_URL}/interim-sites/901802`)
+    })
+
+    test('has no Change links once the item is Updated', async () => {
+      load(queriedItem({ status: 'Updated' }))
+
+      const { result } = await page.get(ITEM_URL)
+
+      expect(result).not.toContain('-action"')
+      expect(result).not.toContain('change-interim-site')
+      expect(result).not.toContain('save-and-continue-button')
+    })
+
+    test('shows the success banner after a change', async () => {
+      load()
+      const response = await post(`${ITEM_URL}/site-name`, {
+        siteName: 'New name'
+      })
+      const cookie = response.headers['set-cookie']
+        ?.map((c) => c.split(';')[0])
+        .join('; ')
+
+      const { result } = await page.server.inject({
+        method: 'GET',
+        url: ITEM_URL,
+        headers: { cookie }
+      })
+
+      expect(result).toContain('data-testid="success-banner"')
+      expect(result).toContain('ORS name updated')
+    })
+  })
+
+  describe('the ORS steps', () => {
+    test('GET the name page with the current name', async () => {
+      load()
+
+      const { statusCode, result } = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('value="Rotterdam Recycling BV"')
+    })
+
+    test('POST the name patches the item and returns to the detail page', async () => {
+      load()
+
+      const response = await post(`${ITEM_URL}/site-name`, {
+        siteName: '  New name '
+      })
+
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          siteName: 'New name'
+        }
+      )
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+
+    test('POST a blank name shows the error without patching', async () => {
+      load()
+
+      const { statusCode } = await post(`${ITEM_URL}/site-name`, {
+        siteName: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(patch).not.toHaveBeenCalled()
+    })
+
+    test('the location page shows country and coordinates greyed out', async () => {
+      load()
+
+      const { result } = await page.get(`${ITEM_URL}/location`)
+
+      expect(result).toMatch(/data-testid="locked-country"[^>]*>/)
+      expect(result).toContain('value="Netherlands"')
+      expect(result).toContain('disabled')
+      expect(result).not.toContain('name="country"')
+      expect(result).not.toContain('name="coordinates"')
+    })
+
+    test('POST the location patches the address only', async () => {
+      load()
+
+      await post(`${ITEM_URL}/location`, {
+        addressLine1: '1 New Street',
+        addressLine2: '',
+        townOrCity: 'Rotterdam',
+        stateOrRegion: '',
+        postcode: '3000 AA',
+        country: 'France'
+      })
+
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          addressLine1: '1 New Street',
+          addressLine2: '',
+          townOrCity: 'Rotterdam',
+          stateOrRegion: '',
+          postcode: '3000 AA'
+        }
+      )
+    })
+
+    test('POST contact details maps the form fields to the backend ones', async () => {
+      load()
+
+      await post(`${ITEM_URL}/contact-details`, {
+        siteContactName: 'Pat',
+        siteContactEmail: 'pat@example.com',
+        siteContactPhone: ''
+      })
+
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          contactName: 'Pat',
+          contactEmail: 'pat@example.com',
+          contactPhone: ''
+        }
+      )
+    })
+
+    test('POST the rejected loads arrangements', async () => {
+      load()
+
+      await post(`${ITEM_URL}/rejected-loads`, {
+        repatriatedLoads: 'Sent back by rail'
+      })
+
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/answers`,
+        {
+          rejectedLoadsArrangements: 'Sent back by rail'
+        }
+      )
+    })
+
+    test('a backend 400 is shown against the field it names', async () => {
+      load()
+      patch.mockRejectedValue(
+        Object.assign(new Error('400'), {
+          status: 400,
+          response: JSON.stringify({
+            errors: { siteName: ['That name is taken'] }
+          })
+        })
+      )
+
+      const { statusCode, result } = await post(`${ITEM_URL}/site-name`, {
+        siteName: 'Taken'
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('That name is taken')
+    })
+
+    test('a backend 409 returns to the detail page', async () => {
+      load()
+      patch.mockRejectedValue(Object.assign(new Error('409'), { status: 409 }))
+
+      const response = await post(`${ITEM_URL}/site-name`, {
+        siteName: 'New name'
+      })
+
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+
+    test('another backend failure is not swallowed', async () => {
+      load()
+      patch.mockRejectedValue(Object.assign(new Error('500'), { status: 500 }))
+
+      const { statusCode } = await post(`${ITEM_URL}/site-name`, {
+        siteName: 'New name'
+      })
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    test('a field the query leaves closed goes back to the detail page', async () => {
+      load(queriedItem({}, { editableFields: ['contactName'] }))
+
+      const response = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+
+    test('a step for an item that is not Queried goes back to the detail page', async () => {
+      load(queriedItem({ status: 'Updated' }))
+
+      const response = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(ITEM_URL)
+      expect(patch).not.toHaveBeenCalled()
+    })
+
+    test('returns 404 for a tonnage item', async () => {
+      mockManageGets([app], undefined, {
+        ...viewWith(queriedItem()),
+        requests: [
+          {
+            requestId: 'T1',
+            sites: [],
+            tonnageBandUpgrade: queriedItem({
+              changeType: 'upgrade-tonnage-band'
+            })
+          }
+        ]
+      })
+
+      const { statusCode } = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('returns 404 when the flag is off', async () => {
+      page.setInYearChangesEnabled(false)
+      load()
+
+      const { statusCode } = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+  })
+
+  describe('the interim site pages', () => {
+    const INTERIM_URL = `${ITEM_URL}/interim-sites/901802`
+
+    test('the summary shows country and recycling operations without Change links', async () => {
+      load()
+
+      const { result } = await page.get(INTERIM_URL)
+
+      expect(result).toContain('Calais Storage SARL')
+      expect(result).toContain('data-testid="change-site-name"')
+      expect(result).toContain('data-testid="change-contact-email"')
+      expect(result).not.toContain('data-testid="change-country"')
+      expect(result).not.toContain('data-testid="change-operation-codes"')
+      expect(result).toContain('R13')
+    })
+
+    test('POST the interim name patches the interim site', async () => {
+      load()
+
+      const response = await post(`${INTERIM_URL}/site-name`, {
+        siteName: 'Calais Depot'
+      })
+
+      expect(patch).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/interim-sites/901802/answers`,
+        { siteName: 'Calais Depot' }
+      )
+      expect(response.headers.location).toBe(INTERIM_URL)
+    })
+
+    test('POST the interim address and contact', async () => {
+      load()
+
+      await post(`${INTERIM_URL}/location`, {
+        addressLine1: '2 Quay Street',
+        townOrCity: 'Calais'
+      })
+      await post(`${INTERIM_URL}/contact-details`, {
+        siteContactName: 'Marie',
+        siteContactEmail: 'marie@calais.example',
+        siteContactPhone: '+33 1 23 45 67 89'
+      })
+
+      expect(patch).toHaveBeenCalledTimes(2)
+      expect(patch.mock.calls[1][1]).toEqual({
+        contactName: 'Marie',
+        contactEmail: 'marie@calais.example',
+        contactPhone: '+33 1 23 45 67 89'
+      })
+    })
+
+    test('an interim site that is not on the ORS goes back to the detail page', async () => {
+      load()
+
+      const response = await page.get(`${ITEM_URL}/interim-sites/1/site-name`)
+
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+  })
+
+  describe('the BES evidence page', () => {
+    test('lists the files from before the query without a remove button', async () => {
+      load()
+
+      const { result } = await page.get(`${ITEM_URL}/bes-evidence`)
+
+      expect(result).toContain('data-testid="bes-file-old-file"')
+      expect(result).not.toContain('remove-file-old-file')
+      expect(result).toContain('data-testid="remove-file-new-file"')
+    })
+
+    test('removing a new file calls the backend and returns to the page', async () => {
+      load()
+      const del = vi.spyOn(apiClient, 'delete').mockResolvedValue({})
+
+      const response = await post(`${ITEM_URL}/bes-evidence/new-file/delete`)
+
+      expect(del).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/bes-evidence/files/new-file`
+      )
+      expect(response.headers.location).toBe(`${ITEM_URL}/bes-evidence`)
+    })
+
+    test('a file from before the query stays, whatever the backend says', async () => {
+      load()
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(
+        Object.assign(new Error('422'), { status: 422 })
+      )
+
+      const response = await post(`${ITEM_URL}/bes-evidence/old-file/delete`)
+
+      expect(response.statusCode).toBe(statusCodes.redirect)
+    })
+
+    test('the status page without an upload keeps the Welsh prefix', async () => {
+      load()
+
+      const response = await page.get(`/cy${ITEM_URL}/bes-evidence/status`)
+
+      expect(response.headers.location).toBe(
+        `/cy${MANAGE_URL}/change-requests/${ITEM_ID}/bes-evidence`
+      )
+    })
+
+    test('the status page without an upload goes back to the upload page', async () => {
+      load()
+
+      const response = await page.get(`${ITEM_URL}/bes-evidence/status`)
+
+      expect(response.headers.location).toBe(
+        `${MANAGE_URL}/change-requests/${ITEM_ID}/bes-evidence`
+      )
+    })
+  })
+
+  describe('uploading BES evidence', () => {
+    const BES = `${ITEM_URL}/bes-evidence`
+    const boundary = 'respond-bes-boundary'
+    const CRLF = '\r\n'
+
+    const multipart = ({
+      filename = 'evidence.pdf',
+      fields = {
+        validFromDay: '1',
+        validFromMonth: '11',
+        validFromYear: '2026',
+        validToDay: '30',
+        validToMonth: '11',
+        validToYear: '2027'
+      }
+    } = {}) => {
+      const parts = []
+      if (filename) {
+        parts.push(
+          `--${boundary}${CRLF}Content-Disposition: form-data; name="file"; filename="${filename}"${CRLF}Content-Type: application/pdf${CRLF}${CRLF}content${CRLF}`
+        )
+      } else {
+        parts.push(
+          `--${boundary}${CRLF}Content-Disposition: form-data; name="file"; filename=""${CRLF}Content-Type: application/octet-stream${CRLF}${CRLF}${CRLF}`
+        )
+      }
+      for (const [name, value] of Object.entries(fields)) {
+        parts.push(
+          `--${boundary}${CRLF}Content-Disposition: form-data; name="${name}"${CRLF}${CRLF}${value}${CRLF}`
+        )
+      }
+      parts.push(`--${boundary}--${CRLF}`)
+      return Buffer.from(parts.join(''))
+    }
+
+    const upload = (options) =>
+      page.server.inject({
+        method: 'POST',
+        url: BES,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`
+        },
+        payload: multipart(options)
+      })
+
+    beforeEach(() => {
+      vi.mocked(initUpload).mockReset().mockResolvedValue({
+        fileUploadId: 'upload-1',
+        uploadUrl: 'http://cdp/upload/upload-1',
+        statusUrl: 'http://cdp/status/upload-1'
+      })
+      vi.mocked(proxyUploadToCdp).mockReset().mockResolvedValue()
+    })
+
+    test('GET shows a rejected upload from the query string', async () => {
+      load()
+
+      const { statusCode } = await page.get(`${BES}?uploadError=virus`)
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('GET shows an error for a failed upload', async () => {
+      load()
+
+      const { result } = await page.get(`${BES}?reason=uploadFailed`)
+
+      expect(result).toContain('data-testid="file-error"')
+      expect(result).toContain('aria-describedby="file-error"')
+    })
+
+    test('POST with no file shows the error', async () => {
+      load()
+
+      const { statusCode, result } = await upload({ filename: '' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(result).toContain('data-testid="file-error"')
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with a disallowed file type shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({ filename: 'malware.exe' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with a filename already used shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({ filename: 'old.pdf' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('POST with no valid from date shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({ fields: {} })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with an invalid valid to date shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload({
+        fields: {
+          validFromDay: '1',
+          validFromMonth: '11',
+          validFromYear: '2026',
+          validToDay: '1',
+          validToMonth: '1',
+          validToYear: '2020'
+        }
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST starts the upload and goes to the status page', async () => {
+      load()
+
+      const response = await upload()
+
+      expect(initUpload).toHaveBeenCalledWith(
+        expect.objectContaining({
+          s3Path: expect.stringContaining(ITEM_ID)
+        })
+      )
+      expect(proxyUploadToCdp).toHaveBeenCalled()
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(`${BES}/status`)
+    })
+
+    test('POST shows an error when the upload cannot be started', async () => {
+      load()
+      vi.mocked(initUpload).mockRejectedValue(new Error('cdp down'))
+
+      const { statusCode } = await upload()
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    describe('the status page', () => {
+      const startUpload = async () => {
+        const response = await upload()
+        return response.headers['set-cookie']
+          ?.map((c) => c.split(';')[0])
+          .join('; ')
+      }
+      const getStatus = (cookie) =>
+        page.server.inject({
+          method: 'GET',
+          url: `${BES}/status`,
+          headers: { cookie }
+        })
+      const withStatus = (status) => {
+        const original = apiClient.get.getMockImplementation()
+        vi.spyOn(apiClient, 'get').mockImplementation((path, ...rest) =>
+          path.includes('/status/upload-1')
+            ? Promise.resolve(status)
+            : original(path, ...rest)
+        )
+      }
+
+      test('shows the progress page while the file is processing', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({ uploadStatus: 'pending', processingStatus: 'scanning' })
+
+        const { statusCode } = await getStatus(cookie)
+
+        expect(statusCode).toBe(statusCodes.ok)
+      })
+
+      test('saves a ready file and returns to the detail page', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({ uploadStatus: 'ready', form: { file: {} } })
+
+        const response = await getStatus(cookie)
+
+        expect(postSpy).toHaveBeenCalledWith(
+          `${CHANGES}/items/${ITEM_ID}/bes-evidence/files`,
+          expect.objectContaining({ fileUploadId: 'upload-1' })
+        )
+        expect(response.headers.location).toBe(ITEM_URL)
+      })
+
+      test('goes back to the upload page for a file the scan rejected', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({
+          uploadStatus: 'ready',
+          form: { file: { hasError: true } }
+        })
+
+        const response = await getStatus(cookie)
+
+        expect(response.headers.location).toBe(`${BES}?reason=uploadFailed`)
+        expect(postSpy).not.toHaveBeenCalled()
+      })
+
+      test('goes back to the upload page when the backend refuses the file', async () => {
+        load()
+        const cookie = await startUpload()
+        withStatus({ uploadStatus: 'ready', form: { file: {} } })
+        postSpy.mockRejectedValue(
+          Object.assign(new Error('boom'), { status: 500 })
+        )
+
+        const response = await getStatus(cookie)
+
+        expect(response.statusCode).toBe(statusCodes.redirect)
+        expect(response.headers.location).toBe(`${BES}?reason=uploadFailed`)
+      })
+    })
+
+    test('removing a file shows an error when the backend fails', async () => {
+      load()
+      vi.spyOn(apiClient, 'delete').mockRejectedValue(
+        Object.assign(new Error('500'), { status: 500 })
+      )
+
+      const { statusCode } = await post(`${BES}/new-file/delete`)
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+  })
+
+  describe('the declaration', () => {
+    const DECLARATION = `${ITEM_URL}/declaration`
+    const details = { fullName: 'Sam Patel', jobTitle: 'Director' }
+
+    test('GET shows the declaration', async () => {
+      load()
+
+      const { statusCode, result } = await page.get(DECLARATION)
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="full-name-input"')
+      expect(result).toContain('Confirm and submit')
+    })
+
+    test('GET goes back to the detail page while required BES evidence is missing', async () => {
+      load(queriedItem({ missingFields: ['besEvidence'] }))
+
+      const response = await page.get(DECLARATION)
+
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+
+    test('POST without the declaration shows the errors', async () => {
+      load()
+
+      const { statusCode } = await post(DECLARATION, { fullName: '' })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('POST resubmits the item and returns to the manage page', async () => {
+      load()
+
+      const response = await post(DECLARATION, details)
+
+      expect(postSpy).toHaveBeenCalledWith(
+        `${CHANGES}/items/${ITEM_ID}/resubmit`,
+        expect.objectContaining(details),
+        { timeout: 20000 }
+      )
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(MANAGE_URL)
+    })
+
+    test('the manage page then shows the Request updated banner', async () => {
+      load()
+      const response = await post(DECLARATION, details)
+      const cookie = response.headers['set-cookie']
+        ?.map((c) => c.split(';')[0])
+        .join('; ')
+
+      const { result } = await page.server.inject({
+        method: 'GET',
+        url: MANAGE_URL,
+        headers: { cookie }
+      })
+
+      expect(result).toContain('Request updated')
+    })
+
+    test('a 422 (nothing changed) returns to the detail page with the reason', async () => {
+      load()
+      postSpy.mockRejectedValue(
+        Object.assign(new Error('422'), { status: 422 })
+      )
+
+      const response = await post(DECLARATION, details)
+
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+
+    test('a backend failure keeps the declaration with an error', async () => {
+      load()
+      postSpy.mockRejectedValue(
+        Object.assign(new Error('503'), { status: 503 })
+      )
+
+      const { statusCode } = await post(DECLARATION, details)
+
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    test('saving and coming back later does not resubmit', async () => {
+      load()
+
+      const response = await post(DECLARATION, {
+        ...details,
+        submitAction: 'saveAndComeLater'
+      })
+
+      expect(response.headers.location).toBe(ITEM_URL)
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+  })
+  describe('pages that cannot be shown', () => {
+    const BES = `${ITEM_URL}/bes-evidence`
+    const INTERIM_URL = `${ITEM_URL}/interim-sites/901802`
+
+    test.each([
+      ['GET', BES],
+      ['POST', `${BES}/new-file/delete`],
+      ['GET', `${ITEM_URL}/declaration`],
+      ['POST', `${ITEM_URL}/declaration`],
+      ['GET', INTERIM_URL],
+      ['GET', `${INTERIM_URL}/site-name`]
+    ])(
+      '%s %s goes back to the detail page once the item is no longer Queried',
+      async (method, url) => {
+        load(queriedItem({ status: 'Updated' }))
+
+        const response = await page.server.inject({ method, url, payload: {} })
+
+        expect(response.statusCode).toBe(statusCodes.redirect)
+        expect(response.headers.location).toBe(ITEM_URL)
+      }
+    )
+
+    test('the BES status page goes back to the detail page once the item is no longer Queried', async () => {
+      load()
+      vi.mocked(initUpload).mockResolvedValue({
+        fileUploadId: 'upload-1',
+        uploadUrl: 'http://cdp/upload/upload-1',
+        statusUrl: 'http://cdp/status/upload-1'
+      })
+      vi.mocked(proxyUploadToCdp).mockResolvedValue()
+      const boundary = 'status-boundary'
+      const field = (name, value) =>
+        `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`
+      const started = await page.server.inject({
+        method: 'POST',
+        url: BES,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`
+        },
+        payload: Buffer.from(
+          `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="x.pdf"\r\nContent-Type: application/pdf\r\n\r\ncontent\r\n` +
+            field('validFromDay', '1') +
+            field('validFromMonth', '11') +
+            field('validFromYear', '2026') +
+            `--${boundary}--\r\n`
+        )
+      })
+      const cookie = started.headers['set-cookie']
+        ?.map((c) => c.split(';')[0])
+        .join('; ')
+      load(queriedItem({ status: 'Updated' }))
+
+      const response = await page.server.inject({
+        method: 'GET',
+        url: `${BES}/status`,
+        headers: { cookie }
+      })
+
+      expect(response.statusCode).toBe(statusCodes.redirect)
+      expect(response.headers.location).toBe(ITEM_URL)
+    })
+
+    test('is a 404 for a registration-only operator', async () => {
+      mockManageGets([], registrationOnlyExporter, viewWith(queriedItem()))
+
+      const { statusCode } = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(statusCode).toBe(statusCodes.notFound)
+    })
+
+    test('shows the service problem page when the changes cannot be loaded', async () => {
+      mockManageGets(
+        [app],
+        undefined,
+        apiError(statusCodes.internalServerError)
+      )
+
+      const { statusCode } = await page.get(`${ITEM_URL}/site-name`)
+
+      expect(statusCode).not.toBe(statusCodes.ok)
+    })
+  })
+
+  describe('the remaining step pages', () => {
+    const INTERIM_URL = `${ITEM_URL}/interim-sites/901802`
+
+    test.each([
+      `${ITEM_URL}/contact-details`,
+      `${ITEM_URL}/rejected-loads`,
+      `${INTERIM_URL}/site-name`,
+      `${INTERIM_URL}/location`,
+      `${INTERIM_URL}/contact-details`
+    ])('GET %s shows the current values', async (url) => {
+      load()
+
+      const { statusCode } = await page.get(url)
+
+      expect(statusCode).toBe(statusCodes.ok)
+    })
+
+    test('POST a blank interim name shows the error without patching', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/site-name`, {
+        siteName: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(patch).not.toHaveBeenCalled()
+    })
+
+    test('POST an interim name that is too long shows the error', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/site-name`, {
+        siteName: 'x'.repeat(500)
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('POST an interim address with the required lines blank shows the errors', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/location`, {
+        addressLine1: '',
+        townOrCity: ''
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(patch).not.toHaveBeenCalled()
+    })
+
+    test('POST an interim address with a line that is too long shows the error', async () => {
+      load()
+
+      const { statusCode } = await post(`${INTERIM_URL}/location`, {
+        addressLine1: '1 Quay Street',
+        townOrCity: 'Calais',
+        postcode: 'x'.repeat(500)
+      })
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+    })
+
+    test('the detail page shows the repatriated loads answer the item has given', async () => {
+      load(
+        queriedItem({
+          effective: {
+            country: 'Netherlands',
+            rejectedLoadsArrangements: 'Sent back by rail'
+          }
+        })
+      )
+
+      const { result } = await page.get(ITEM_URL)
+
+      expect(result).toContain('Sent back by rail')
+    })
+  })
+
+  describe('BES evidence limits', () => {
+    const BES = `${ITEM_URL}/bes-evidence`
+    const boundary = 'limits'
+    const upload = (size = 10) =>
+      page.server.inject({
+        method: 'POST',
+        url: BES,
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`
+        },
+        payload: Buffer.concat([
+          Buffer.from(
+            `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="fresh.pdf"\r\nContent-Type: application/pdf\r\n\r\n`
+          ),
+          Buffer.alloc(size, 'a'),
+          Buffer.from(`\r\n--${boundary}--\r\n`)
+        ])
+      })
+
+    test('POST with too many files already held shows the error', async () => {
+      const held = Array.from({ length: 10 }, (_, index) => ({
+        fileId: `held-${index}`,
+        filename: `held-${index}.pdf`
+      }))
+      const view = viewWith(queriedItem())
+      mockManageGets([app], undefined, {
+        ...view,
+        sites: [
+          {
+            ...view.sites[0],
+            site: { ...SITE, besEvidence: { besEvidenceUploads: held } }
+          }
+        ]
+      })
+
+      const { statusCode } = await upload()
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+
+    test('POST with a file that is too large shows the error', async () => {
+      load()
+
+      const { statusCode } = await upload(20 * 1024 * 1024 + 1)
+
+      expect(statusCode).toBe(statusCodes.badRequest)
+      expect(initUpload).not.toHaveBeenCalled()
+    })
+  })
+})

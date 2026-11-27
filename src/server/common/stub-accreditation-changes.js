@@ -36,6 +36,7 @@ import { statusCodes } from './constants/status-codes.js'
 import { isItemForSite } from './helpers/changeRequestSite.js'
 import { currentYear } from './helpers/currentYear.js'
 import { hasValue } from './helpers/hasValue.js'
+import { QUERIED_ITEM_ROUTES } from './stub-queried-items.js'
 import {
   seededStubChangeRequests,
   seededStubRegistrationChangeRequests
@@ -416,7 +417,8 @@ const ROUTES = [
   ],
   ['patch', INTERIM_CHANGE_PATH, changeInterimSiteAddition],
   ['delete', INTERIM_CHANGE_PATH, undoInterimSiteChange],
-  ['post', '/requests/current/submit', submit]
+  ['post', '/requests/current/submit', submit],
+  ...QUERIED_ITEM_ROUTES
 ].map(([method, path, handle]) => ({
   method,
   pattern: new RegExp(`^${path}$`),

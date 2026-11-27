@@ -266,7 +266,7 @@ describe('sortItems', () => {
 
 describe('changeTypeLabel', () => {
   test.each([
-    ['add-overseas-site', 'New ORS accreditation'],
+    ['add-overseas-site', 'Accreditation: new ORS'],
     ['update-overseas-site', 'ORS update'],
     ['upgrade-tonnage-band', 'Tonnage band upgrade'],
     ['remove-overseas-site', 'Change request'],
@@ -415,7 +415,7 @@ describe('filterOptions', () => {
       { value: '', text: 'Select type', selected: true },
       {
         value: 'add-overseas-site',
-        text: 'New ORS accreditation',
+        text: 'Accreditation: new ORS',
         selected: false
       },
       { value: 'update-overseas-site', text: 'ORS update', selected: false },

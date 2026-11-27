@@ -6,6 +6,7 @@ import {
   reExBackLinkFromSession
 } from '../../common/helpers/accreditationUrls.js'
 import { fetchApplicationOrRenderSimpleErrorPage } from '../../common/helpers/fetchApplicationOrRenderError.js'
+import { isCombinedOrsBesQuery } from '../../common/helpers/regulatorQuery.js'
 
 const SECTION_STATUS_CONFIG = {
   NotStarted: { tagText: 'NOT STARTED', tagClass: 'govuk-tag--grey' },
@@ -48,23 +49,37 @@ function allSectionTasks(application, t) {
     }
   ]
 
-  if (isExporter) {
-    const { overseasSites, besEvidence } = application
-    tasks.push(
-      {
-        label: t('pages.taskList.tasks.overseasSites'),
-        url: `/accreditation/select-overseas-sites/${applicationId}`,
-        status: overseasSites?.sectionStatus,
-        testId: 'task-overseas-sites'
-      },
-      {
-        label: t('pages.taskList.tasks.besEvidence'),
-        url: `/accreditation/upload-evidence-for-overseas-site/${applicationId}`,
-        status: besEvidence?.sectionStatus,
-        testId: 'task-bes-evidence'
-      }
-    )
+  if (!isExporter) {
+    return tasks
   }
+
+  if (isCombinedOrsBesQuery(application)) {
+    // RA-698: queried together, so one task. It opens the ORS section, whose
+    // confirmation continues to the BES upload.
+    tasks.push({
+      label: t('pages.taskList.tasks.overseasSitesAndBesEvidence'),
+      url: `/accreditation/select-overseas-sites/${applicationId}`,
+      status: 'Queried',
+      testId: 'task-overseas-sites-bes-evidence'
+    })
+    return tasks
+  }
+
+  const { overseasSites, besEvidence } = application
+  tasks.push(
+    {
+      label: t('pages.taskList.tasks.overseasSites'),
+      url: `/accreditation/select-overseas-sites/${applicationId}`,
+      status: overseasSites?.sectionStatus,
+      testId: 'task-overseas-sites'
+    },
+    {
+      label: t('pages.taskList.tasks.besEvidence'),
+      url: `/accreditation/upload-evidence-for-overseas-site/${applicationId}`,
+      status: besEvidence?.sectionStatus,
+      testId: 'task-bes-evidence'
+    }
+  )
 
   return tasks
 }

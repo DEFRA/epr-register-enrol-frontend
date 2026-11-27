@@ -169,8 +169,11 @@
   margin-top: 0;
 }
 
-// The interim sites, one per line between rules, with no actions.
+// The interim sites, one per line between rules. RA-698: a queried ORS's have
+// a Change link, right-aligned as the summary rows' are.
 .app-detail-interim-list__item {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 0;
   padding: govuk-spacing(3) 0;
   border-bottom: 1px solid $govuk-border-colour;

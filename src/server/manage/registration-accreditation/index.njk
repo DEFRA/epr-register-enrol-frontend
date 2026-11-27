@@ -1,6 +1,7 @@
 {% extends 'layouts/page.njk' %}
 
 {% from "task-card/macro.njk" import appTaskCard, appInactiveLink %}
+{% from "govuk/components/notification-banner/macro.njk" import govukNotificationBanner %}
 
 {% macro summaryItem(label, testId) %}
   <div class="govuk-grid-column-one-quarter">
@@ -10,6 +11,9 @@
 {% endmacro %}
 
 {% block content %}
+  {% if notification %}
+    {{ govukNotificationBanner({ type: 'success', titleText: t('common.success'), text: notification, attributes: { 'data-testid': 'success-banner' } }) }}
+  {% endif %}
   <div class="govuk-grid-row">
     <div class="govuk-grid-column-two-thirds">
       <span class="govuk-caption-l" data-testid="page-caption">{{ caption }}</span>
@@ -99,9 +103,11 @@
         description: t('pages.manageRegistrationAccreditation.manageOverseasSites.description'),
         columnClass: 'govuk-grid-column-full' if isRegistrationOnly else 'govuk-grid-column-one-half'
       }) %}
-        <p class="govuk-body">
-          <a href="{{ overseasSitesUrl }}" class="govuk-link" data-testid="manage-overseas-sites-link">{{ t('pages.manageRegistrationAccreditation.manageOverseasSites.link') }}</a>
-        </p>
+        {% if not (changeRequests and changeRequests.hasOpenQuery) %}
+          <p class="govuk-body">
+            <a href="{{ overseasSitesUrl }}" class="govuk-link" data-testid="manage-overseas-sites-link">{{ t('pages.manageRegistrationAccreditation.manageOverseasSites.link') }}</a>
+          </p>
+        {% endif %}
       {% endcall %}
     {% endif %}
   </div>

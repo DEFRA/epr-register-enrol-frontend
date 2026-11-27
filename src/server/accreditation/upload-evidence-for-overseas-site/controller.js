@@ -8,6 +8,7 @@ import {
 } from '../../common/helpers/accreditationUrls.js'
 import {
   buildRegulatorQuerySummary,
+  isCombinedOrsBesQuery,
   isRegulatorQueryBannerVisible
 } from '../../common/helpers/regulatorQuery.js'
 import {
@@ -157,6 +158,8 @@ export const uploadEvidenceListGetController = {
     )
     const sites = mapSites(t, applicationId, selectedSites)
     const queried = isRegulatorQueryBannerVisible(application, { readOnly })
+    const combined = isCombinedOrsBesQuery(application)
+    const summaryKey = combined ? 'overseasSitesAndBesEvidence' : 'besEvidence'
     return renderPage(
       h,
       buildViewData(
@@ -165,11 +168,11 @@ export const uploadEvidenceListGetController = {
         sites,
         null,
         queried,
-        queried ? buildRegulatorQuerySummary('besEvidence', t) : null,
+        queried ? buildRegulatorQuerySummary(summaryKey, t) : null,
         queried
           ? [
               {
-                label: t('pages.taskList.tasks.besEvidence'),
+                label: t(`pages.taskList.tasks.${summaryKey}`),
                 href: '#sites-table'
               }
             ]

@@ -511,6 +511,8 @@ describe('#updateOverseasSite (RA-682)', () => {
 
     test('a failed first save takes the empty update back out of the draft', async () => {
       vi.spyOn(apiClient, 'get')
+        // the open-query check reads the view before the controller does
+        .mockResolvedValueOnce(makeView())
         .mockResolvedValueOnce(makeView())
         .mockResolvedValue(
           makeView({
@@ -535,6 +537,8 @@ describe('#updateOverseasSite (RA-682)', () => {
 
     test('an update another tab started and changed is left in the draft when this save fails', async () => {
       vi.spyOn(apiClient, 'get')
+        // the open-query check reads the view before the controller does
+        .mockResolvedValueOnce(makeView())
         .mockResolvedValueOnce(makeView())
         .mockResolvedValue(makeView({ item: updateItem() }))
       vi.spyOn(apiClient, 'post').mockResolvedValue({})
@@ -550,6 +554,8 @@ describe('#updateOverseasSite (RA-682)', () => {
 
     test("a failure taking the empty update back out still leaves the save's own failure to the error page", async () => {
       vi.spyOn(apiClient, 'get')
+        // the open-query check reads the view before the controller does
+        .mockResolvedValueOnce(makeView())
         .mockResolvedValueOnce(makeView())
         .mockResolvedValue(
           makeView({
