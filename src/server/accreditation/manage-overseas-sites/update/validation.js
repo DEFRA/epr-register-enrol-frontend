@@ -49,25 +49,22 @@ const STEP_RULES = {
     only('siteName', validateSiteName(t, fields.siteName)),
   location: (t, fields) => validateSiteAddressFields(t, fields),
   'contact-details': (t, fields) =>
-    contactErrors(validateOrsContactDetails, t, fields),
-  'rejected-loads': (t, fields) =>
-    only(
-      'repatriatedLoads',
-      validateRepatriatedLoads(t, fields.repatriatedLoads)?.message
-    )
+    contactErrors(validateOrsContactDetails, t, fields)
 }
 
-/** The errors on one ORS detail step, keyed by field. */
+/**
+ * The errors on one ORS detail step, keyed by field. `tooManyWords` says the
+ * rejected-loads error is the word limit, which the page's live counter clears.
+ */
 export function validateStep(t, step, fields) {
-  return STEP_RULES[step](t, fields)
-}
-
-/** Whether the rejected-loads error is the word limit, which the page's live counter clears. */
-export function isTooManyWords(t, fields) {
-  return (
-    validateRepatriatedLoads(t, fields.repatriatedLoads ?? '')?.tooManyWords ??
-    false
-  )
+  if (step === 'rejected-loads') {
+    const refused = validateRepatriatedLoads(t, fields.repatriatedLoads)
+    return {
+      errors: only('repatriatedLoads', refused?.message),
+      tooManyWords: refused?.tooManyWords ?? false
+    }
+  }
+  return { errors: STEP_RULES[step](t, fields), tooManyWords: false }
 }
 
 /** An interim site's form. A new one also needs its country and recycling operations. */

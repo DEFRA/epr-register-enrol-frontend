@@ -164,3 +164,17 @@ export function validationErrors(err) {
     return {}
   }
 }
+
+/**
+ * The message of a 409: Results.Conflict(string) sends it as a JSON string,
+ * a ProblemDetails as its detail. Null when the body is neither.
+ */
+export function conflictMessage(err) {
+  try {
+    const body =
+      typeof err.response === 'string' ? JSON.parse(err.response) : null
+    return typeof body === 'string' ? body : (body?.detail ?? null)
+  } catch {
+    return null
+  }
+}

@@ -183,11 +183,12 @@ describe('#updateOverseasSite (RA-682)', () => {
       }
       for (const row of [
         'coordinates',
-        'recycling-operations',
+        'recycling-operation',
         'basel-codes',
         'conditions-of-export',
         'bes-evidence'
       ]) {
+        expect(result).toContain(`data-testid="row-${row}-value"`)
         expect(result).not.toContain(`data-testid="row-${row}-action"`)
       }
       expect(result).toContain('bes.pdf')
@@ -277,6 +278,40 @@ describe('#updateOverseasSite (RA-682)', () => {
       mockGet(makeView())
       const { headers } = await server.inject(`${BASE}/update/902504`)
       expect(headers.location).toBe(MANAGE)
+    })
+  })
+
+  describe('Location on the details page', () => {
+    test('shows every address line and the town, so a changed town shows', async () => {
+      mockGet(
+        makeView({
+          item: updateItem({
+            proposed: {
+              ...DETAILS,
+              addressLine2: 'Unit 4',
+              townOrCity: 'Gdynia'
+            }
+          })
+        })
+      )
+      const { result } = await server.inject(UPDATE)
+      expect(result).toContain('902501 Harbour Estate, Unit 4, Gdynia, Poland')
+    })
+
+    test('an ORS with only a one-line address shows it, and its step starts from its first part', async () => {
+      const legacy = {
+        ...SITE,
+        addressLine1: null,
+        townOrCity: null,
+        siteAddress: '7 Old Road, Gdansk, Poland'
+      }
+      const view = makeView()
+      view.sites[0].site = legacy
+      mockGet(view)
+      const details = await server.inject(UPDATE)
+      expect(details.result).toContain('7 Old Road, Gdansk, Poland')
+      const step = await server.inject(`${UPDATE}/details/location`)
+      expect(step.result).toMatch(/id="addressLine1"[^>]*value="7 Old Road"/)
     })
   })
 
@@ -442,6 +477,8 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(result).toContain(
         'This change has already been sent to the regulator'
       )
+      expect(result).toContain('data-testid="error-message"')
+      expect(result).not.toContain('href="#siteName"')
     })
 
     test.each([
@@ -463,7 +500,13 @@ describe('#updateOverseasSite (RA-682)', () => {
     })
 
     test('a failed first save takes the empty update back out of the draft', async () => {
-      mockGet(makeView())
+      vi.spyOn(apiClient, 'get')
+        .mockResolvedValueOnce(makeView())
+        .mockResolvedValue(
+          makeView({
+            item: updateItem({ proposed: DETAILS, missingFields: ['changes'] })
+          })
+        )
       vi.spyOn(apiClient, 'post').mockResolvedValue({})
       vi.spyOn(apiClient, 'patch').mockRejectedValue(
         apiError(400, { errors: { SiteName: ['Site name is taken.'] } })
@@ -480,22 +523,11 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(result).toContain('Site name is taken.')
     })
 
-    test('a failure taking the empty update back out is logged and the refusal still shown', async () => {
-      mockGet(makeView())
+    test('an update another tab started and changed is left in the draft when this save fails', async () => {
+      vi.spyOn(apiClient, 'get')
+        .mockResolvedValueOnce(makeView())
+        .mockResolvedValue(makeView({ item: updateItem() }))
       vi.spyOn(apiClient, 'post').mockResolvedValue({})
-      vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(503))
-      vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(503))
-      const { statusCode } = await server.inject({
-        method: 'POST',
-        url: `${UPDATE}/details/site-name`,
-        payload: { siteName: 'Gdansk' }
-      })
-      expect(statusCode).toBe(statusCodes.internalServerError)
-    })
-
-    test('a later save leaves the update in the draft whatever happens', async () => {
-      mockGet(makeView({ item: updateItem() }))
-      const post = vi.spyOn(apiClient, 'post')
       vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(400, {}))
       const del = vi.spyOn(apiClient, 'delete')
       await server.inject({
@@ -503,9 +535,45 @@ describe('#updateOverseasSite (RA-682)', () => {
         url: `${UPDATE}/details/site-name`,
         payload: { siteName: 'Gdansk' }
       })
-      expect(post).not.toHaveBeenCalled()
       expect(del).not.toHaveBeenCalled()
     })
+
+    test("a failure taking the empty update back out still leaves the save's own failure to the error page", async () => {
+      vi.spyOn(apiClient, 'get')
+        .mockResolvedValueOnce(makeView())
+        .mockResolvedValue(
+          makeView({
+            item: updateItem({ proposed: DETAILS, missingFields: ['changes'] })
+          })
+        )
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+      vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(503))
+      const del = vi.spyOn(apiClient, 'delete').mockRejectedValue(apiError(503))
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `${UPDATE}/details/site-name`,
+        payload: { siteName: 'Gdansk' }
+      })
+      expect(del).toHaveBeenCalled()
+      expect(statusCode).toBe(statusCodes.internalServerError)
+    })
+
+    test.each([400, 409, 503])(
+      'a later save refused with %i leaves the update in the draft',
+      async (status) => {
+        mockGet(makeView({ item: updateItem() }))
+        const post = vi.spyOn(apiClient, 'post')
+        vi.spyOn(apiClient, 'patch').mockRejectedValue(apiError(status, {}))
+        const del = vi.spyOn(apiClient, 'delete')
+        await server.inject({
+          method: 'POST',
+          url: `${UPDATE}/details/site-name`,
+          payload: { siteName: 'Gdansk' }
+        })
+        expect(post).not.toHaveBeenCalled()
+        expect(del).not.toHaveBeenCalled()
+      }
+    )
 
     test('an ORS that has gone goes back to its details', async () => {
       mockGet(makeView({ item: updateItem() }))
@@ -851,6 +919,38 @@ describe('#updateOverseasSite (RA-682)', () => {
       expect(result).toContain('In year change application submitted')
       expect(result).toContain('IYC-ORS-2026-00007')
       expect(result).not.toContain('IYC-ORS-2026-00009')
+    })
+
+    test('the submitted page shows the request the declaration names', async () => {
+      const id = '7a1c2d0e-0000-4000-8000-000000000002'
+      mockGet(
+        makeView({
+          requests: [
+            {
+              requestId: '7a1c2d0e-0000-4000-8000-000000000003',
+              status: 'Submitted',
+              sites: [{ caseManagementReference: 'IYC-ORS-2026-00011' }],
+              charge: { chargeableSites: 0 }
+            },
+            {
+              requestId: id,
+              status: 'Submitted',
+              sites: [{ caseManagementReference: 'IYC-ORS-2026-00010' }],
+              charge: { chargeableSites: 0 }
+            }
+          ]
+        })
+      )
+      const { result } = await server.inject(`${BASE}/submitted?request=${id}`)
+      expect(result).toContain('IYC-ORS-2026-00010')
+      expect(result).not.toContain('IYC-ORS-2026-00011')
+    })
+
+    test('the submitted page refuses a request that is not an id', async () => {
+      const { statusCode } = await server.inject(
+        `${BASE}/submitted?request=nonsense`
+      )
+      expect(statusCode).toBe(statusCodes.badRequest)
     })
 
     test('with nothing submitted the submitted page goes back to Manage ORS', async () => {

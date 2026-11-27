@@ -46,3 +46,26 @@ export const ITEM_STATUS_ORDER = [
   ITEM_STATUSES.rejected,
   ITEM_STATUSES.withdrawn
 ]
+
+// RA-682: the details an update-overseas-site item proposes (the backend's
+// OverseasSiteDetails), and the missing field of an update that changes
+// nothing yet.
+export const ORS_UPDATE_DETAIL_FIELDS = [
+  'siteName',
+  'addressLine1',
+  'addressLine2',
+  'townOrCity',
+  'contactName',
+  'contactEmail',
+  'contactPhone',
+  'repatriatedLoads'
+]
+
+export const MISSING_CHANGES = 'changes'
+
+/** An ORS's details as an update item holds them. */
+export function orsUpdateDetailsOf(site) {
+  return Object.fromEntries(
+    ORS_UPDATE_DETAIL_FIELDS.map((field) => [field, site?.[field] ?? null])
+  )
+}

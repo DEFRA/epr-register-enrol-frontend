@@ -186,7 +186,8 @@ describe('stubAccreditationChanges ORS updates (RA-682)', () => {
       siteName: 'Berlin Recycling',
       proposed: expect.objectContaining({ townOrCity: 'Berlin' }),
       interimSiteChanges: [],
-      isComplete: true
+      missingFields: ['changes'],
+      isComplete: false
     })
     expect(draft.changeType).toBe(UPDATE)
     expect(draft.charge).toMatchObject({ chargeableSites: 0, totalPence: 0 })
@@ -206,6 +207,26 @@ describe('stubAccreditationChanges ORS updates (RA-682)', () => {
     })
     expect(draft.sites[0].previous.siteName).toBe('Berlin Recycling')
     expect(draft.sites[0].siteName).toBe('Berlin Recyclers')
+  })
+
+  test('an update is complete once it changes a detail', async () => {
+    await start()
+    const draft = await call('patch', SITE, { townOrCity: 'Potsdam' })
+    expect(draft.sites[0]).toMatchObject({
+      missingFields: [],
+      isComplete: true
+    })
+  })
+
+  test('changing an interim site back to what it holds drops the change', async () => {
+    await start()
+    await call('patch', `${SITE}/interim-sites/11`, { siteName: 'Hub 2' })
+    const draft = await call('patch', `${SITE}/interim-sites/11`, {
+      siteName: 'Hub',
+      country: 'Germany',
+      operationCodes: []
+    })
+    expect(draft.sites[0].interimSiteChanges).toEqual([])
   })
 
   test('interim sites are added, changed, removed and undone', async () => {

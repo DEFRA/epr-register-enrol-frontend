@@ -22,7 +22,9 @@
             <h2 class="govuk-error-summary__title">{{ t('common.errorSummaryTitle') }}</h2>
             <div class="govuk-error-summary__body">
               <ul class="govuk-list govuk-error-summary__list">
-                {% for error in errorSummary %}<li><a href="{{ error.href }}">{{ error.text }}</a></li>{% endfor %}
+                {% for error in errorSummary %}
+                  <li>{% if error.href %}<a href="{{ error.href }}">{{ error.text }}</a>{% else %}<span data-testid="error-message">{{ error.text }}</span>{% endif %}</li>
+                {% endfor %}
               </ul>
             </div>
           </div>

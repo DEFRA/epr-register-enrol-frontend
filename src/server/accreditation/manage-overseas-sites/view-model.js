@@ -113,7 +113,7 @@ export function registeredSiteActions(
   }
 }
 
-export function displayValue(t, field, value) {
+function displayValue(t, field, value) {
   if (!hasValue(value)) {
     return ''
   }

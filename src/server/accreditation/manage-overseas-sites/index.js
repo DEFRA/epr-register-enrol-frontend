@@ -107,6 +107,15 @@ const updateOptions = {
   }
 }
 
+// The request the declaration just submitted; any other value is refused.
+const submittedOptions = {
+  ...routeOptions,
+  validate: {
+    ...routeOptions.validate,
+    query: Joi.object({ request: Joi.string().guid() }).unknown()
+  }
+}
+
 // RA-492: in-year request to add registered ORSs to a granted accreditation.
 function route(method, path, controller, options = routeOptions) {
   return { method, path, options, ...controller }
@@ -153,8 +162,8 @@ const ROUTES = [
   route('POST', `${BASE}/requests`, requestsPostController),
   route('GET', `${BASE}/declaration`, declarationGetController),
   route('POST', `${BASE}/declaration`, declarationPostController),
-  route('GET', `${BASE}/payment`, paymentGetController),
-  route('GET', `${BASE}/submitted`, submittedGetController),
+  route('GET', `${BASE}/payment`, paymentGetController, submittedOptions),
+  route('GET', `${BASE}/submitted`, submittedGetController, submittedOptions),
   route('GET', UPDATE, detailsGetController, updateOptions),
   route('POST', `${UPDATE}/cancel`, cancelUpdateController, updateOptions),
   route('GET', `${UPDATE}/details/{step}`, stepGetController, updateOptions),

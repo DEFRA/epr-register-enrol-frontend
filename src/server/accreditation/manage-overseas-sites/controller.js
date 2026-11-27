@@ -53,9 +53,10 @@ const VIEWS = {
   payment: 'accreditation/view-payment-details/index'
 }
 
-// 404 (no such application or site) and 409 (not a granted exporter
-// accreditation, or a site that cannot be added) mean the same thing to
-// these pages: there is nothing to show or do.
+// 404 (no such application, site or draft) and 409 (not a granted exporter
+// accreditation, a site that cannot be added, or a draft already sent or
+// submitted) mean the same thing to these pages: there is nothing to show or
+// do.
 export const NOTHING_TO_DO = new Set([
   statusCodes.notFound,
   statusCodes.conflict
@@ -460,6 +461,22 @@ function isCharged(changeRequest) {
   return (changeRequest?.charge?.chargeableSites ?? 0) > 0
 }
 
+/**
+ * The submitted request a page after the declaration shows: the one just
+ * submitted when the redirect names it, otherwise the newest that `matches`
+ * (the page opened directly, or with Back). Null when there is none.
+ */
+export function submittedRequest(view, requestId, matches) {
+  return (
+    view.requests?.find(
+      (changeRequest) =>
+        changeRequest.status === ITEM_STATUSES.submitted &&
+        (!requestId || changeRequest.requestId === requestId) &&
+        matches(changeRequest)
+    ) ?? null
+  )
+}
+
 export const declarationPostController = {
   async handler(request, h) {
     const { t } = getLocaleAndTranslator(request)
@@ -524,11 +541,8 @@ export const declarationPostController = {
         .code(statusCodes.internalServerError)
     }
     // RA-682 AC05: a request that only changes ORS details has nothing to pay.
-    return h.redirect(
-      isCharged(submitted)
-        ? paymentUrl(applicationId)
-        : submittedUrl(applicationId)
-    )
+    const next = isCharged(submitted) ? paymentUrl : submittedUrl
+    return h.redirect(next(applicationId, submitted?.requestId))
   }
 }
 
@@ -540,11 +554,7 @@ export const paymentGetController = {
     const { applicationId } = request.params
     const organisationId = organisationIdFrom(request)
     const view = await loadView(request)
-    const submitted = view.requests.find(
-      (changeRequest) =>
-        changeRequest.status === ITEM_STATUSES.submitted &&
-        isCharged(changeRequest)
-    )
+    const submitted = submittedRequest(view, request.query?.request, isCharged)
     if (!submitted) {
       return redirectToManageSites(request, h, view)
     }

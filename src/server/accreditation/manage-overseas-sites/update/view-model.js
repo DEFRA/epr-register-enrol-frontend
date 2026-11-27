@@ -1,8 +1,10 @@
 import {
   CHANGE_TYPES,
   ITEM_STATUSES,
-  SITE_ACCREDITATION_STATUSES
+  SITE_ACCREDITATION_STATUSES,
+  orsUpdateDetailsOf
 } from '../../../common/constants/changeRequests.js'
+import { formatSiteAddress } from '../../../common/helpers/formatSiteAddress.js'
 import { activeInterimSites } from '../../../common/helpers/interimSites.js'
 import { findRequestSite, findSite, siteDetailRows } from '../view-model.js'
 import {
@@ -18,23 +20,6 @@ import {
 /** A translation from this journey's `pages.updateOverseasSite` keys. */
 export function updateText(t, key, params) {
   return t(`pages.updateOverseasSite.${key}`, params)
-}
-
-export const DETAIL_FIELDS = [
-  'siteName',
-  'addressLine1',
-  'addressLine2',
-  'townOrCity',
-  'contactName',
-  'contactEmail',
-  'contactPhone',
-  'repatriatedLoads'
-]
-
-export function detailsOf(site) {
-  return Object.fromEntries(
-    DETAIL_FIELDS.map((field) => [field, site?.[field] ?? null])
-  )
 }
 
 /**
@@ -57,7 +42,7 @@ export function resolveUpdate(view, siteId) {
     entry,
     item: inDraft ? item : null,
     pending: entry.pendingRequestStatus === ITEM_STATUSES.submitted,
-    details: inDraft ? item.proposed : detailsOf(entry.site)
+    details: inDraft ? item.proposed : orsUpdateDetailsOf(entry.site)
   }
 }
 
@@ -84,6 +69,15 @@ const LOCKED_ANSWERS = [
   'conditionsOfExport'
 ]
 
+// Every address line and the town, so a change to any of them shows. An ORS
+// with only a one-line siteAddress (which ends with its country) shows that
+// until an address is proposed.
+function locationValue(site) {
+  return site.addressLine1
+    ? formatSiteAddress(site)
+    : (site.siteAddress ?? formatSiteAddress(site))
+}
+
 /**
  * The ORS's summary rows, as RA-492's summary builds them, with the update's
  * details in place of the ORS's own. Editable rows link to their step; a
@@ -92,15 +86,14 @@ const LOCKED_ANSWERS = [
 export function buildDetailRows({ t, applicationId, update }) {
   const { entry, details, pending } = update
   const site = entry.site
-  // A stored one-line siteAddress would show the ORS's old address lines.
-  const shown = { ...site, ...details, siteAddress: null }
+  const shown = { ...site, ...details }
   const locked = Object.fromEntries(
     LOCKED_ANSWERS.map((field) => [field, site[field]])
   )
   const rows = siteDetailRows(t, shown, locked).map(({ id, label, value }) => ({
     id,
     label: ROW_LABELS[id] ? updateText(t, ROW_LABELS[id]) : label,
-    value,
+    value: id === 'location' ? locationValue(shown) : value,
     action:
       ROW_STEPS[id] && !pending
         ? {

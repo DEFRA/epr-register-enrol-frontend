@@ -19,7 +19,7 @@ const KEYS = 'pages.addInterimSite'
 export const INTERIM_OPERATION_CODES = ['R3', 'R4', 'R5', 'R12', 'R13']
 const CORE_CODES = new Set(['R12', 'R13'])
 
-export function hasInterimCoreCode(codes) {
+function hasInterimCoreCode(codes) {
   return codes.some((code) => CORE_CODES.has(code))
 }
 

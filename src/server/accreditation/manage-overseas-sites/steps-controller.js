@@ -26,6 +26,7 @@ import {
 } from '../upload-bes-evidence/controller.js'
 import {
   accreditationChangesService,
+  conflictMessage,
   validationErrors
 } from '../../common/helpers/accreditationChangesService.js'
 import {
@@ -110,9 +111,11 @@ function stepUrls(request) {
 }
 
 /**
- * PATCHes the draft. Returns null when it saved, or the backend's field
- * errors (possibly none it can name) when it refused the answer with a 400
- * - a field that became locked, or one that failed its rules.
+ * PATCHes the draft. Returns null when it saved, or errors keyed by field
+ * when it was refused: the backend's own on a 400 (a field that became
+ * locked, or one that failed its rules, possibly none it can name), or a
+ * 409's message against every field sent (the site was already sent to the
+ * regulator, so its answers are fixed).
  */
 async function patchSite(request, body) {
   const { applicationId, siteId } = request.params
@@ -128,6 +131,13 @@ async function patchSite(request, body) {
     if (err.status === statusCodes.badRequest) {
       return validationErrors(err)
     }
+    const message =
+      err.status === statusCodes.conflict ? conflictMessage(err) : null
+    if (message) {
+      return Object.fromEntries(
+        Object.keys(body).map((field) => [field, message])
+      )
+    }
     throw err
   }
 }
@@ -136,6 +146,20 @@ async function patchSite(request, body) {
 export function errorKeyFor(errors, field) {
   return Object.keys(errors).find(
     (name) => name.toLowerCase() === field.toLowerCase()
+  )
+}
+
+/**
+ * A refused save's message against each field the backend named, or against
+ * the first field when it named none.
+ */
+export function refusedFields(t, errors, fields) {
+  const named = fields.filter((field) => errorKeyFor(errors, field))
+  return Object.fromEntries(
+    (named.length > 0 ? named : fields.slice(0, 1)).map((field) => [
+      field,
+      refusal(t, errors, field)
+    ])
   )
 }
 
@@ -214,14 +238,7 @@ export const locationPostController = stepHandler(
     )
     const apiErrors = await patchSite(request, body)
     if (apiErrors) {
-      const named = draft.open.filter((field) => errorKeyFor(apiErrors, field))
-      // A refusal that names neither field is shown against the first one.
-      const shown = Object.fromEntries(
-        (named.length > 0 ? named : draft.open.slice(0, 1)).map((field) => [
-          field,
-          refusal(t, apiErrors, field)
-        ])
-      )
+      const shown = refusedFields(t, apiErrors, draft.open)
       return locationView(h, t, request, draft, fields, shown).code(
         statusCodes.badRequest
       )

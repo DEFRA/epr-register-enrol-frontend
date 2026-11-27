@@ -1105,6 +1105,42 @@ describe('#manageOverseasSites (RA-492)', () => {
       expect(headers.location).toBe(`${BASE}/payment`)
     })
 
+    test('the declaration names the submitted request for the page after it', async () => {
+      const requestId = '7a1c2d0e-0000-4000-8000-000000000004'
+      vi.spyOn(apiClient, 'post').mockResolvedValue({
+        requestId,
+        charge: chargeOf(1)
+      })
+      const { headers } = await server.inject({
+        method: 'POST',
+        url: `${BASE}/declaration`,
+        payload: { fullName: 'Jane Smith', jobTitle: 'Director' }
+      })
+      expect(headers.location).toBe(`${BASE}/payment?request=${requestId}`)
+    })
+
+    test('the payment page shows the request the declaration names, not the newest', async () => {
+      const named = '7a1c2d0e-0000-4000-8000-000000000005'
+      const newer = {
+        requestId: '7a1c2d0e-0000-4000-8000-000000000006',
+        status: 'Submitted',
+        submittedBy: { fullName: 'Sam Lee', email: 'sam@example.com' },
+        sites: [requestSite()],
+        charge: chargeOf(1)
+      }
+      const mine = {
+        requestId: named,
+        status: 'Submitted',
+        submittedBy: { fullName: 'Jane Smith', email: 'jane@example.com' },
+        sites: [requestSite()],
+        charge: chargeOf(1)
+      }
+      mockGet(makeView({ active: null, requests: [newer, mine] }))
+      const { result } = await server.inject(`${BASE}/payment?request=${named}`)
+      expect(result).toContain('jane@example.com')
+      expect(result).not.toContain('sam@example.com')
+    })
+
     test('AC05: the payment page passes over a newer submitted request with nothing to pay', async () => {
       const free = {
         requestId: 'req-free',

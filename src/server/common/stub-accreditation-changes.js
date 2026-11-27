@@ -27,7 +27,10 @@ import {
   ACTIVE_ITEM_STATUSES,
   CHANGE_TYPES,
   ITEM_STATUSES,
-  SITE_ACCREDITATION_STATUSES
+  MISSING_CHANGES,
+  ORS_UPDATE_DETAIL_FIELDS,
+  SITE_ACCREDITATION_STATUSES,
+  orsUpdateDetailsOf
 } from './constants/changeRequests.js'
 import { APPROVED_STATUS } from './constants/applicationStatuses.js'
 import { statusCodes } from './constants/status-codes.js'
@@ -50,16 +53,6 @@ const LOCKABLE = [
   'conditionsOfExport'
 ]
 const CHARGE_PER_SITE_PENCE = ORS_FEE * PENCE_PER_POUND
-const DETAIL_FIELDS = [
-  'siteName',
-  'addressLine1',
-  'addressLine2',
-  'townOrCity',
-  'contactName',
-  'contactEmail',
-  'contactPhone',
-  'repatriatedLoads'
-]
 
 const state = new Map()
 
@@ -155,23 +148,33 @@ function besRequired(site, effective) {
 
 const isUpdate = (item) => item.changeType === CHANGE_TYPES.updateOverseasSite
 
-function detailsOf(site) {
-  return Object.fromEntries(
-    DETAIL_FIELDS.map((field) => [field, site?.[field] ?? null])
-  )
+// Blank and missing are the same answer, as the backend compares them.
+function sameValue(a, b) {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return [a ?? []].flat().join() === [b ?? []].flat().join()
+  }
+  return (a ?? '') === (b ?? '')
 }
 
-// RA-682: an update's details as well as RA-697's fields. Nothing is ever
-// missing from one; a seeded one has no proposed details or interim changes.
+// RA-682: an update's details as well as RA-697's fields. As the backend, an
+// update that changes nothing yet is missing its changes; a seeded one has no
+// proposed details or interim changes.
 function updateFields(site, entry) {
-  const proposed = entry.proposed ?? detailsOf(site)
+  const previous = orsUpdateDetailsOf(site)
+  const proposed = entry.proposed ?? previous
+  const interimSiteChanges = entry.interimSiteChanges ?? []
+  const changed =
+    interimSiteChanges.length > 0 ||
+    ORS_UPDATE_DETAIL_FIELDS.some(
+      (field) => !sameValue(proposed[field], previous[field])
+    )
   return {
     siteName: proposed.siteName ?? entry.siteName ?? site.siteName,
-    previous: detailsOf(site),
+    previous,
     proposed,
-    interimSiteChanges: entry.interimSiteChanges ?? [],
-    missingFields: [],
-    isComplete: true
+    interimSiteChanges,
+    missingFields: changed ? [] : [MISSING_CHANGES],
+    isComplete: changed
   }
 }
 
@@ -317,7 +320,7 @@ function newUpdateItem(site) {
   return newSiteItem({
     changeType: CHANGE_TYPES.updateOverseasSite,
     siteId: site.siteId,
-    proposed: detailsOf(site),
+    proposed: orsUpdateDetailsOf(site),
     interimSiteChanges: []
   })
 }
@@ -377,7 +380,7 @@ function removeSite(ctx, siteId) {
 function patchSite(ctx, siteId) {
   const entry = draftSite(ctx, siteId)
   if (isUpdate(entry)) {
-    for (const field of DETAIL_FIELDS) {
+    for (const field of ORS_UPDATE_DETAIL_FIELDS) {
       if (ctx.body?.[field] !== undefined) {
         entry.proposed[field] = ctx.body[field] || null
       }
@@ -448,15 +451,23 @@ function activeInterimSite(ctx, entry, interimSiteId) {
   return interim
 }
 
-// One change per interim site: a later change or removal replaces it.
+// One change per interim site: a later change or removal replaces it, and a
+// change back to what the interim site holds drops it, as the backend does.
 function setInterimChange(ctx, siteId, interimSiteId, change) {
   const entry = draftUpdate(ctx, siteId)
   const interim = activeInterimSite(ctx, entry, interimSiteId)
+  const unchanged =
+    change.action === 'change' &&
+    Object.entries(change.proposed).every(([field, value]) =>
+      sameValue(value, interim[field])
+    )
   entry.interimSiteChanges = [
     ...entry.interimSiteChanges.filter(
       (c) => c.interimSiteId !== interim.siteId
     ),
-    { changeId: randomUUID(), interimSiteId: interim.siteId, ...change }
+    ...(unchanged
+      ? []
+      : [{ changeId: randomUUID(), interimSiteId: interim.siteId, ...change }])
   ]
   return currentRequest(ctx)
 }

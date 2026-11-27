@@ -58,8 +58,13 @@ export function declarationUrl(applicationId) {
   return `${journeyUrl(applicationId)}/declaration`
 }
 
-export function paymentUrl(applicationId) {
-  return `${journeyUrl(applicationId)}/payment`
+// RA-682: the request just submitted, so the page shows that one.
+function forRequest(url, requestId) {
+  return requestId ? `${url}?request=${encodeURIComponent(requestId)}` : url
+}
+
+export function paymentUrl(applicationId, requestId) {
+  return forRequest(`${journeyUrl(applicationId)}/payment`, requestId)
 }
 
 // RA-682: changing an accredited ORS's details (and its interim sites), keyed
@@ -88,6 +93,6 @@ export function interimSiteAdditionUrl(applicationId, siteId, changeId) {
   return `${updateUrl(applicationId, siteId)}/interim-site-changes/${encodeURIComponent(changeId)}`
 }
 
-export function submittedUrl(applicationId) {
-  return `${journeyUrl(applicationId)}/submitted`
+export function submittedUrl(applicationId, requestId) {
+  return forRequest(`${journeyUrl(applicationId)}/submitted`, requestId)
 }
