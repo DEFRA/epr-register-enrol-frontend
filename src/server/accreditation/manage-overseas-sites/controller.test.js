@@ -203,7 +203,6 @@ describe('#manageOverseasSites (RA-492)', () => {
         method: 'POST',
         url: `${BASE}/sites/900182`
       })
-      // RA-814: the first page of the combined table.
       expect(headers.location).toBe(MANAGE)
     })
 

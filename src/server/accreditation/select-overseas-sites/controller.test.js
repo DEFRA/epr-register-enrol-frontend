@@ -153,7 +153,7 @@ describe('#selectOverseasSitesController', () => {
         url: `/accreditation/select-overseas-sites/${APPLICATION_ID}`
       })
 
-      expect(result).toContain('data-testid="accredited-heading"')
+      expect(result).toContain('data-testid="approved-heading"')
       expect(result).toContain('data-testid="registered-heading"')
       expect(result).not.toContain('data-testid="new-sites-heading"')
       expect(result).not.toContain(
@@ -374,7 +374,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       expect(result).toMatch(
-        /data-testid="accredited-heading">\s*Approved\(\d+\)\s*</
+        /data-testid="approved-heading">\s*Approved\(\d+\)\s*</
       )
       expect(result).toMatch(
         /data-testid="registered-heading">\s*Registered\(\d+\)\s*</
@@ -429,7 +429,7 @@ describe('#selectOverseasSitesController', () => {
       })
 
       const top = result.indexOf('data-testid="add-new-ors-button-top"')
-      const heading = result.indexOf('data-testid="accredited-heading"')
+      const heading = result.indexOf('data-testid="approved-heading"')
       const bottom = result.indexOf('data-testid="add-new-ors-button"')
       const cont = result.indexOf('data-testid="continue-form"')
 

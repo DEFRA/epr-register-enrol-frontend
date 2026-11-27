@@ -41,7 +41,14 @@ export function countText({ rangeStart, rangeEnd, totalCount }, t) {
 
 // Ported from case management's work-items list. The labels are passed in
 // because the GOV.UK macro's defaults are English only.
-export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {
+export function buildPagination({
+  page,
+  totalPages,
+  baseUrl,
+  query = {},
+  testId,
+  t
+}) {
   if (totalPages <= 1) {
     return null
   }
@@ -68,6 +75,7 @@ export function buildPagination({ page, totalPages, baseUrl, query = {}, t }) {
 
   return {
     landmarkLabel: t(`${PAGINATION_KEYS}.landmarkLabel`),
+    ...(testId && { attributes: { 'data-testid': testId } }),
     previous:
       page > 1 ? { href: hrefFor(page - 1), html: linkHtml('previous') } : null,
     next:

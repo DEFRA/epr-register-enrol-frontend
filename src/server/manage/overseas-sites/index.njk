@@ -7,7 +7,7 @@
    requests. RA-814: each link is rendered on its own, so later flows can add
    theirs to a row beside these. #}
 {% macro siteActions(site) %}
-  {% if site.pending or site.inProgress or site.viewUrl or site.changeUrl or site.addUrl %}
+  {% if site.hasActions %}
     <div class="app-ors-table__actions">
       {% if site.pending %}
         <strong class="govuk-tag govuk-tag--yellow" data-testid="site-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.pending') }}</strong>
@@ -101,13 +101,13 @@
               {% endif %}
             </td>
             <td class="govuk-table__cell">
-              {% if site.status == 'approved' %}
+              {% if site.isApproved %}
                 <strong class="govuk-tag govuk-tag--green" data-testid="ors-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.approved') }}</strong>
               {% else %}
                 <strong class="govuk-tag govuk-tag--grey" data-testid="ors-status-tag-{{ site.siteId }}">{{ t('pages.manageOverseasSites.status.registered') }}</strong>
               {% endif %}
             </td>
-            <td class="govuk-table__cell app-ors-table__actions-cell">{{ siteActions(site) }}</td>
+            <td class="govuk-table__cell app-ors-table__actions-cell" data-testid="site-actions-{{ site.siteId }}">{{ siteActions(site) }}</td>
           </tr>
         {% endfor %}
       </tbody>

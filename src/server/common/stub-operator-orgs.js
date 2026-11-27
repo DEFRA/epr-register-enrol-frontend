@@ -67,7 +67,7 @@ const NUMBERED_TEST_ORGS = [
   [String(NO_CHANGE_REQUESTS_ORG.orgId), NO_CHANGE_REQUESTS_ORG.orgName],
   // RA-697: the registration-only manage pages.
   [String(REGISTRATION_ONLY_ORG.orgId), REGISTRATION_ONLY_ORG.orgName],
-  // RA-697: the overseas-sites page's empty tabs.
+  // RA-697, RA-814: the overseas-sites page's empty state.
   [String(NO_OVERSEAS_SITES_ORG.orgId), NO_OVERSEAS_SITES_ORG.orgName],
   // RA-806: exporters whose registration status comes only from the stub
   // ReEx (approved and created), for the fe-tests' RA-806 spec. The backend's

@@ -21,57 +21,66 @@ import {
   paginate
 } from '../../common/helpers/pagination.js'
 
-const ORS_STATUSES = { approved: 'approved', registered: 'registered' }
-
 // RA-425: withdrawn interim sites are filtered per ORS, so withdrawing a
 // shared interim site from one ORS leaves it showing under the others.
 // RA-495 (user, 2026-11-20): registered ORSs show their interim sites too.
-function toOrsView(site, status) {
+// RA-814: approved (on the accreditation) or registered; a change request
+// never changes it.
+function toOrsView(site, isApproved) {
   return {
     siteId: site.siteId,
     orsId: site.orsId,
     siteName: site.siteName,
     address: orsAddressLine(site),
     interimSites: activeInterimSites(site),
-    status
+    isApproved
+  }
+}
+
+// RA-814: hasActions says whether the Actions cell has anything in it, so the
+// template need not list every action a later flow adds.
+function withActions(view, actions) {
+  return {
+    ...view,
+    ...actions,
+    hasActions: Object.values(actions).some(Boolean)
   }
 }
 
 // RA-682: where an approved ORS's change stands. Without the change
 // requests view or an accreditation the row has no change tag or action.
 function approvedSiteView(site, applicationId, changeRequests) {
-  const view = toOrsView(site, ORS_STATUSES.approved)
+  const view = toOrsView(site, true)
   if (!changeRequests || !applicationId) {
     return view
   }
-  return {
-    ...view,
-    ...approvedSiteActions(
+  return withActions(
+    view,
+    approvedSiteActions(
       applicationId,
       site.siteId,
       changeRequests.pendingRequestStatus(site.siteId),
       changeRequests.isInDraftRequest(site.siteId)
     )
-  }
+  )
 }
 
 // RA-492: where a registered ORS stands in the in-year change requests.
 // RA-697: applicationId is null for registration only.
 function registeredSiteView(site, applicationId, changeRequests) {
-  const view = toOrsView(site, ORS_STATUSES.registered)
+  const view = toOrsView(site, false)
   if (!changeRequests) {
     return view
   }
-  const status = changeRequests.pendingRequestStatus(site.siteId)
-  return {
-    ...view,
-    ...registeredSiteActions(
+  return withActions(
+    view,
+    registeredSiteActions(
       applicationId,
       site.siteId,
-      status,
+      changeRequests.pendingRequestStatus(site.siteId),
       changeRequests.isInDraftRequest(site.siteId)
     )
-  }
+  )
 }
 
 // RA-814: by ORS ID as a number, so "010" follows "9". A blank or
@@ -224,9 +233,12 @@ export const manageOverseasSitesController = {
         page: paged.page,
         totalPages: paged.totalPages,
         baseUrl: pageUrl,
+        testId: 'overseas-sites-pagination',
         t
       }),
-      // RA-492 banners: AC09 pending change, AC10 requests to resume.
+      // RA-492 banners: AC09 pending change, AC10 requests to resume. The
+      // pending count takes approved sites' updates (RA-682) as well as
+      // registered sites' additions (user, 2026-11-27).
       pendingCount: sites.filter((site) => site.pending).length,
       isRegistrationOnly: context.isRegistrationOnly,
       readyForSubmissionCount: changeRequests?.readyForSubmissionCount ?? 0,

@@ -54,7 +54,7 @@ describe('#getTranslator', () => {
 
   test('leaves single-brace placeholders for the pages that still use replace()', () => {
     expect(
-      t('pages.selectOverseasSites.sections.accreditedCaption', { year: 2027 })
+      t('pages.selectOverseasSites.sections.approvedCaption', { year: 2027 })
     ).toBe('These are the sites that you used in {year}.')
   })
 
@@ -62,15 +62,15 @@ describe('#getTranslator', () => {
   test.each([
     [
       1,
-      'Your regulator is reviewing your application to add 1 overseas reprocessing site to your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
+      'Your regulator is reviewing your application to add or change 1 overseas reprocessing site on your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
     ],
     [
       2,
-      'Your regulator is reviewing your application to add 2 overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      'Your regulator is reviewing your application to add or change 2 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
     ],
     [
       0,
-      'Your regulator is reviewing your application to add 0 overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      'Your regulator is reviewing your application to add or change 0 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
     ]
   ])('takes the plural form for count %s', (count, expected) => {
     expect(t('pages.manageOverseasSites.pendingBanner.body', { count })).toBe(
@@ -84,7 +84,7 @@ describe('#getTranslator', () => {
         count: 2
       })
     ).toBe(
-      '[Welsh] Your regulator is reviewing your application to add 2 overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      '[Welsh] Your regulator is reviewing your application to add or change 2 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
     )
   })
 

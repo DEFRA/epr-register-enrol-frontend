@@ -61,6 +61,14 @@ export function changeRequestsSummary(view) {
   }
 }
 
+// RA-492 and RA-682: the change tags a row's in-year request status gives it.
+function changeTags(status) {
+  return {
+    pending: status === ITEM_STATUSES.submitted,
+    inProgress: status === ITEM_STATUSES.inProgress
+  }
+}
+
 /**
  * RA-682's actions for an approved ORS: "Pending" and no action while a
  * submitted request holds it (AC03), "In progress" and View while its change
@@ -76,8 +84,7 @@ export function approvedSiteActions(
   isInDraftRequest
 ) {
   const detailsUrl = updateUrl(applicationId, siteId)
-  const pending = status === ITEM_STATUSES.submitted
-  const inProgress = status === ITEM_STATUSES.inProgress
+  const { pending, inProgress } = changeTags(status)
   return {
     pending,
     inProgress,
@@ -100,7 +107,7 @@ export function approvedSiteActions(
  * open.
  *
  * RA-814: each link is its own value, set only when it shows, so later flows
- * (RA-682, RA-683, RA-676) can add theirs to a row alongside these.
+ * (RA-683, RA-676) can add theirs to a row alongside these.
  */
 export function registeredSiteActions(
   applicationId,
@@ -109,8 +116,7 @@ export function registeredSiteActions(
   isInDraftRequest
 ) {
   const hasAccreditation = Boolean(applicationId)
-  const pending = status === ITEM_STATUSES.submitted
-  const inProgress = status === ITEM_STATUSES.inProgress
+  const { pending, inProgress } = changeTags(status)
   return {
     pending,
     inProgress,

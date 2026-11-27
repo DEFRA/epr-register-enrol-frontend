@@ -617,6 +617,14 @@ describe('#manageOverseasSitesController', () => {
       }
     )
 
+    test('marks the pagination for tests when there is more than one page', async () => {
+      const { result } = await getListPage('')
+
+      expect(result).toMatch(
+        /<nav class="govuk-pagination"[^>]*data-testid="overseas-sites-pagination"/
+      )
+    })
+
     test('puts the count line above the table', async () => {
       const { result } = await getListPage('')
       const count = result.indexOf('data-testid="overseas-sites-count"')
@@ -727,7 +735,7 @@ describe('#manageOverseasSitesController', () => {
         const { result } = await getListPage(query, { changes })
 
         expect(result).toContain(
-          'application to add 2 overseas reprocessing sites to your accreditation.'
+          'application to add or change 2 overseas reprocessing sites on your accreditation.'
         )
         expect(result).toContain(
           'You currently have 1 change request ready for submission.'
@@ -988,7 +996,7 @@ describe('#manageOverseasSitesController', () => {
       expect(registered).not.toContain('view-request-5')
       expect(cells(siteRow(result, 5))[1]).toMatch(/>\s*Registered\s*</)
       expect(result).toMatch(
-        /data-testid="pending-change-banner"[\s\S]*application to add 1 overseas reprocessing site to your accreditation\. You will not be able to apply for any other changes to this site /
+        /data-testid="pending-change-banner"[\s\S]*application to add or change 1 overseas reprocessing site on your accreditation\. You will not be able to apply for any other changes to this site /
       )
       expect(result).toMatch(
         /class="govuk-notification-banner app-notification-banner--full-width"[^>]*data-testid="pending-change-banner"/
@@ -1008,7 +1016,32 @@ describe('#manageOverseasSitesController', () => {
         'You currently have 2 change requests ready for submission.'
       )
       expect(result).toContain(
-        'application to add 2 overseas reprocessing sites to your accreditation. You will not be able to apply for any other changes to these sites '
+        'application to add or change 2 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites '
+      )
+    })
+
+    // User, 2026-11-27: one banner for every site the regulator is reviewing,
+    // approved sites' updates (RA-682) and registered sites' additions alike.
+    test('the pending banner counts approved and registered sites in submitted requests together', async () => {
+      const { result } = await getWithChanges(
+        changes({ 1: 'Submitted', 5: 'Submitted' })
+      )
+
+      expect(cells(siteRow(result, 1))[1]).toMatch(/>\s*Approved\s*</)
+      expect(cells(siteRow(result, 5))[1]).toMatch(/>\s*Registered\s*</)
+      expect(result).toMatch(
+        /data-testid="pending-change-banner"[\s\S]*application to add or change 2 overseas reprocessing sites on your accreditation\./
+      )
+    })
+
+    test("marks each row's Actions cell for tests", async () => {
+      const { result } = await getWithChanges(noChangeRequests)
+
+      expect(result).toMatch(
+        /<td class="govuk-table__cell app-ors-table__actions-cell" data-testid="site-actions-1">[\s\S]*?data-testid="change-site-1"/
+      )
+      expect(result).toMatch(
+        /<td class="govuk-table__cell app-ors-table__actions-cell" data-testid="site-actions-4">[\s\S]*?data-testid="add-to-accreditation-4"/
       )
     })
 
@@ -1190,7 +1223,7 @@ describe('#manageOverseasSitesController', () => {
       expect(result).toContain(
         'Your regulator is reviewing your application to add 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
       )
-      expect(result).not.toContain('to your accreditation')
+      expect(result).not.toContain('on your accreditation')
     })
 
     test('words the registration pending banner in the plural for several sites', async () => {

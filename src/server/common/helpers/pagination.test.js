@@ -112,6 +112,13 @@ describe('buildPagination', () => {
     expect(build({ page: 1, totalPages: 1 })).toBeNull()
   })
 
+  test('sets a data-testid only when given one', () => {
+    expect(
+      build({ page: 1, totalPages: 2, testId: 'sites-pagination' }).attributes
+    ).toEqual({ 'data-testid': 'sites-pagination' })
+    expect(build({ page: 1, totalPages: 2 })).not.toHaveProperty('attributes')
+  })
+
   test('links every page, marks the current one and labels the links', () => {
     const pagination = build({ page: 2, totalPages: 3 })
 
