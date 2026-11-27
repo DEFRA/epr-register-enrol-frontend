@@ -716,16 +716,34 @@ describe('#manageOverseasSitesController', () => {
       )
     })
 
-    // Worked out from the whole list, so the same on every page.
+    // Worked out from the whole list, so the same on every page. The pending
+    // banner gives way to the requests banner, so each is checked alone.
     test.each(['', '?page=2', '?page=3'])(
-      'counts pending additions and ready requests across all pages (%s)',
+      'counts pending sites across all pages (%s)',
       async (query) => {
         const changes = {
           ...noChangeRequests,
           sites: [
             // Page 1 and page 3.
             { siteId: 21, pendingRequestStatus: 'Submitted' },
-            { siteId: 3, pendingRequestStatus: 'Submitted' },
+            { siteId: 3, pendingRequestStatus: 'Submitted' }
+          ]
+        }
+
+        const { result } = await getListPage(query, { changes })
+
+        expect(result).toContain(
+          'your applications for 2 overseas reprocessing sites.'
+        )
+      }
+    )
+
+    test.each(['', '?page=2', '?page=3'])(
+      'counts ready requests on every page (%s)',
+      async (query) => {
+        const changes = {
+          ...noChangeRequests,
+          sites: [
             // Page 2.
             { siteId: 9, pendingRequestStatus: 'InProgress' }
           ],
@@ -734,9 +752,6 @@ describe('#manageOverseasSitesController', () => {
 
         const { result } = await getListPage(query, { changes })
 
-        expect(result).toContain(
-          'your applications for 2 overseas reprocessing sites.'
-        )
         expect(result).toContain(
           'You currently have 1 change request ready for submission.'
         )
@@ -1004,7 +1019,9 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toContain('data-testid="requests-banner"')
     })
 
-    test('both banners count several sites in the plural', async () => {
+    // User, 2026-11-27: the requests banner replaces the pending banner when
+    // both apply, so the page shows one.
+    test('shows the requests banner in the plural, and not the pending banner as well', async () => {
       const { result } = await getWithChanges(
         changes({ 4: 'Submitted', 5: 'Submitted', 7: 'InProgress' }, [
           { siteId: 7 },
@@ -1015,8 +1032,9 @@ describe('#manageOverseasSitesController', () => {
       expect(result).toContain(
         'You currently have 2 change requests ready for submission.'
       )
-      expect(result).toContain(
-        'your applications for 2 overseas reprocessing sites. You will not be able to apply for any other changes to these sites '
+      expect(result).not.toContain('data-testid="pending-change-banner"')
+      expect(actions(result, 4)).toMatch(
+        /data-testid="site-status-tag-4"[^>]*>\s*Pending\s*</
       )
     })
 
