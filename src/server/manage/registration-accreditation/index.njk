@@ -54,7 +54,7 @@
             <p class="govuk-notification-banner__heading" data-testid="apply-banner-heading">{{ t('pages.manageRegistrationAccreditation.applyBanner.heading', { year: applyBanner.year }) }}</p>
             <p class="govuk-body govuk-!-margin-bottom-0" data-testid="apply-banner-body">{{ t('pages.manageRegistrationAccreditation.applyBanner.body', { year: applyBanner.year, deadlineYear: applyBanner.deadlineYear }) }}</p>
             <p class="govuk-body">
-              <a href="{{ applyBanner.url }}" class="govuk-notification-banner__link" data-testid="apply-banner-link">{{ t('pages.manageRegistrationAccreditation.applyBanner.link', { year: applyBanner.year }) }}</a>
+              <a href="{{ applyBanner.url }}" class="govuk-notification-banner__link" data-testid="apply-banner-link">{{ t('pages.manageRegistrationAccreditation.applyBanner.continueLink' if applyBanner.continues else 'pages.manageRegistrationAccreditation.applyBanner.link', { year: applyBanner.year }) }}</a>
             </p>
           </div>
         </div>

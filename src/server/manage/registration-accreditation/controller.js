@@ -55,13 +55,15 @@ function statusSummary(context, t) {
 // process, and its numbers are the ones the apply page's natural-number URL
 // takes.
 function applyBanner(request, registrationApplications, currentLocale) {
-  const year = offeredApplicationYear(registrationApplications, currentYear())
-  if (year === null) {
+  const offer = offeredApplicationYear(registrationApplications, currentYear())
+  if (offer === null) {
     return null
   }
+  const { year, continues } = offer
   const { organisationId, registrationNumber, materialType } = request.params
   return {
     year,
+    continues,
     deadlineYear: year - 1,
     url: naturalNumberLandingUrl(
       {

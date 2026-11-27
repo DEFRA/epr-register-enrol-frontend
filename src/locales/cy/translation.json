@@ -951,7 +951,8 @@
         "title": "[Welsh] Important",
         "heading": "[Welsh] You can now apply for {{year}} accreditation",
         "body": "[Welsh] Apply by 30 September {{deadlineYear}} to be accredited from 1 January {{year}}.",
-        "link": "[Welsh] Start your {{year}} application"
+        "link": "[Welsh] Start your {{year}} application",
+        "continueLink": "[Welsh] Continue your {{year}} application"
       }
     },
     "manageOverseasSites": {

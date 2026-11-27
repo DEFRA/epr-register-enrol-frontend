@@ -775,6 +775,11 @@ describe('#manageRegistrationAccreditationController', () => {
       'AwaitingDecision',
       'Approved'
     ]
+    // Saved and Started are drafts the operator hasn't submitted yet.
+    const UNSUBMITTED_STATUSES = ['Saved', 'Started']
+    const SUBMITTED_STATUSES = LIVE_STATUSES.filter(
+      (status) => !UNSUBMITTED_STATUSES.includes(status)
+    )
     const applyUrl = (year, material = MATERIAL, prefix = '') =>
       `${prefix}/operator-accreditation/${ORG_ID}/${REGISTRATION_NUMBER}/${material}/${year}`
 
@@ -782,6 +787,13 @@ describe('#manageRegistrationAccreditationController', () => {
       [
         ...result.matchAll(
           /data-testid="apply-banner-link"[^>]*>\s*Start your (\d{4}) application\s*</g
+        )
+      ].map(([, year]) => Number(year))
+
+    const continuedYears = (result) =>
+      [
+        ...result.matchAll(
+          /data-testid="apply-banner-link"[^>]*>\s*Continue your (\d{4}) application\s*</g
         )
       ].map(([, year]) => Number(year))
 
@@ -881,7 +893,7 @@ describe('#manageRegistrationAccreditationController', () => {
       )
     })
 
-    test.each(LIVE_STATUSES.filter((status) => status !== 'Approved'))(
+    test.each(SUBMITTED_STATUSES.filter((status) => status !== 'Approved'))(
       'offers next year when this year has a %s application',
       async (status) => {
         const result = await bannerFor(
@@ -898,7 +910,7 @@ describe('#manageRegistrationAccreditationController', () => {
 
     // An Approved application stays Approved when the accreditation is
     // suspended, so a suspended accreditation shows no banner either.
-    test.each(LIVE_STATUSES)(
+    test.each(SUBMITTED_STATUSES)(
       'is hidden when the year it would offer has a %s application',
       async (status) => {
         const result = await bannerFor([
@@ -913,6 +925,62 @@ describe('#manageRegistrationAccreditationController', () => {
         expect(result).not.toContain('data-testid="apply-banner"')
       }
     )
+
+    describe('lets the operator continue an application not yet submitted', () => {
+      test.each(UNSUBMITTED_STATUSES)(
+        'for this year, when it is %s',
+        async (status) => {
+          const result = await bannerFor(
+            [
+              makeApp({ year: CURRENT_YEAR - 1 }),
+              makeApp({ id: 'app-this-year', applicationStatus: status })
+            ],
+            registrationOnlyExporter
+          )
+
+          expect(continuedYears(result)).toEqual([CURRENT_YEAR])
+          expect(offeredYears(result)).toEqual([])
+          expect(result).toMatch(
+            new RegExp(
+              `href="${applyUrl(CURRENT_YEAR)}"[^>]*data-testid="apply-banner-link"`
+            )
+          )
+        }
+      )
+
+      test.each(UNSUBMITTED_STATUSES)(
+        'for next year, when it is %s',
+        async (status) => {
+          const result = await bannerFor([
+            makeApp(),
+            makeApp({
+              id: 'app-next-year',
+              year: CURRENT_YEAR + 1,
+              applicationStatus: status
+            })
+          ])
+
+          expect(continuedYears(result)).toEqual([CURRENT_YEAR + 1])
+          expect(result).toMatch(
+            /data-testid="apply-banner-heading"[^>]*>\s*You can now apply for 2028 accreditation\s*</
+          )
+          expect(result).toMatch(
+            new RegExp(
+              `href="${applyUrl(2028)}"[^>]*data-testid="apply-banner-link"[^>]*>\\s*Continue your 2028 application\\s*<`
+            )
+          )
+        }
+      )
+
+      test('but not for a registration never granted', async () => {
+        const result = await bannerFor(
+          [makeApp({ applicationStatus: 'Started' })],
+          registrationOnlyExporter
+        )
+
+        expect(result).not.toContain('data-testid="apply-banner"')
+      })
+    })
 
     test.each(['Withdrawn', 'Rejected'])(
       'offers next year again when its only application was %s',
