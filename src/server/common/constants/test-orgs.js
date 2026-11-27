@@ -61,7 +61,7 @@ export const REGISTRATION_ONLY_ORG = {
 }
 
 // RA-697: registered with no accreditation and no registered ORSs, for the
-// overseas-sites page's empty Accredited and Registered tabs.
+// overseas-sites page's empty state.
 export const NO_OVERSEAS_SITES_ORG = {
   orgId: 50022,
   orgName: 'No Overseas Sites Exports Ltd',

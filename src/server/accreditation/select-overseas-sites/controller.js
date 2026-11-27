@@ -137,7 +137,7 @@ function decorateInterimSites(applicationId, interimSites) {
 // RA-603 AC05: `interimSites` is what the operator has; `withdrawnInterimSites`
 // is what they have taken off and can put back. Withdrawn sites are kept out of
 // the main list entirely rather than greyed out in it — AC05 keeps them for
-// reporting, not for display — which is also why the "Show interim sites (n)"
+// reporting, not for display — which is also why the "Interim sites (n)"
 // count is taken from the active list alone.
 function decorateSite(applicationId, site) {
   return {
