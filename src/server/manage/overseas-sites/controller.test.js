@@ -735,7 +735,7 @@ describe('#manageOverseasSitesController', () => {
         const { result } = await getListPage(query, { changes })
 
         expect(result).toContain(
-          'application to add or change 2 overseas reprocessing sites on your accreditation.'
+          'your applications for 2 overseas reprocessing sites.'
         )
         expect(result).toContain(
           'You currently have 1 change request ready for submission.'
@@ -996,7 +996,7 @@ describe('#manageOverseasSitesController', () => {
       expect(registered).not.toContain('view-request-5')
       expect(cells(siteRow(result, 5))[1]).toMatch(/>\s*Registered\s*</)
       expect(result).toMatch(
-        /data-testid="pending-change-banner"[\s\S]*application to add or change 1 overseas reprocessing site on your accreditation\. You will not be able to apply for any other changes to this site /
+        /data-testid="pending-change-banner"[\s\S]*your application for 1 overseas reprocessing site\. You will not be able to apply for any other changes to this site /
       )
       expect(result).toMatch(
         /class="govuk-notification-banner app-notification-banner--full-width"[^>]*data-testid="pending-change-banner"/
@@ -1016,7 +1016,7 @@ describe('#manageOverseasSitesController', () => {
         'You currently have 2 change requests ready for submission.'
       )
       expect(result).toContain(
-        'application to add or change 2 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites '
+        'your applications for 2 overseas reprocessing sites. You will not be able to apply for any other changes to these sites '
       )
     })
 
@@ -1030,7 +1030,7 @@ describe('#manageOverseasSitesController', () => {
       expect(cells(siteRow(result, 1))[1]).toMatch(/>\s*Approved\s*</)
       expect(cells(siteRow(result, 5))[1]).toMatch(/>\s*Registered\s*</)
       expect(result).toMatch(
-        /data-testid="pending-change-banner"[\s\S]*application to add or change 2 overseas reprocessing sites on your accreditation\./
+        /data-testid="pending-change-banner"[\s\S]*your applications for 2 overseas reprocessing sites\./
       )
     })
 
@@ -1210,7 +1210,7 @@ describe('#manageOverseasSitesController', () => {
       expect(result).not.toMatch(/add-to-accreditation-|<form /)
     })
 
-    test('words the pending banner for the registration, not an accreditation', async () => {
+    test('words the pending banner the same for registration only', async () => {
       const { result } = await getRegistrationOnly(
         registrationView(
           REGISTERED_SITES.map((site) => ({
@@ -1221,9 +1221,8 @@ describe('#manageOverseasSitesController', () => {
       )
 
       expect(result).toContain(
-        'Your regulator is reviewing your application to add 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
+        'Your regulator is reviewing your application for 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
       )
-      expect(result).not.toContain('on your accreditation')
     })
 
     test('words the registration pending banner in the plural for several sites', async () => {
@@ -1237,7 +1236,7 @@ describe('#manageOverseasSitesController', () => {
       )
 
       expect(result).toContain(
-        'Your regulator is reviewing your application to add 2 overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+        'Your regulator is reviewing your applications for 2 overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
       )
     })
 

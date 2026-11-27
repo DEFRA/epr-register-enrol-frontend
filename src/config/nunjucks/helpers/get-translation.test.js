@@ -62,15 +62,15 @@ describe('#getTranslator', () => {
   test.each([
     [
       1,
-      'Your regulator is reviewing your application to add or change 1 overseas reprocessing site on your accreditation. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
+      'Your regulator is reviewing your application for 1 overseas reprocessing site. You will not be able to apply for any other changes to this site until your regulator makes their decision.'
     ],
     [
       2,
-      'Your regulator is reviewing your application to add or change 2 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      'Your regulator is reviewing your applications for 2 overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
     ],
     [
       0,
-      'Your regulator is reviewing your application to add or change 0 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      'Your regulator is reviewing your applications for 0 overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
     ]
   ])('takes the plural form for count %s', (count, expected) => {
     expect(t('pages.manageOverseasSites.pendingBanner.body', { count })).toBe(
@@ -84,7 +84,7 @@ describe('#getTranslator', () => {
         count: 2
       })
     ).toBe(
-      '[Welsh] Your regulator is reviewing your application to add or change 2 overseas reprocessing sites on your accreditation. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
+      '[Welsh] Your regulator is reviewing your applications for 2 overseas reprocessing sites. You will not be able to apply for any other changes to these sites until your regulator makes their decisions.'
     )
   })
 
