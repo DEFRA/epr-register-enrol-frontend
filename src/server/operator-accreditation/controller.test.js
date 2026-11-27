@@ -515,6 +515,25 @@ describe('#buildLandingViewModel', () => {
     )
   })
 
+  // RA-765: a refused (Rejected) application can be replaced, as a withdrawn one can.
+  test('startNewUrl targets the same accreditation year for a refused application', () => {
+    const vm = buildLandingViewModel(
+      makeApp({
+        applicationStatus: 'Rejected',
+        organisationId: ORG_ID,
+        year: 2027
+      }),
+      'Org Name',
+      'siteAddr',
+      2027,
+      t
+    )
+
+    expect(vm.startNewUrl).toBe(
+      `/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/2027/start-new`
+    )
+  })
+
   test('startNewUrl uses the accreditation year even when the record carries a different year', () => {
     const vm = buildLandingViewModel(
       makeApp({
@@ -541,8 +560,7 @@ describe('#buildLandingViewModel', () => {
     'Queried',
     'Updated',
     'AwaitingDecision',
-    'Approved',
-    'Rejected'
+    'Approved'
   ])('startNewUrl is null when application status is %s', (status) => {
     const vm = buildLandingViewModel(
       makeApp({ applicationStatus: status, organisationId: ORG_ID }),
@@ -1551,6 +1569,129 @@ describe('#operatorAccreditationController', () => {
       })
 
       expect(result).not.toContain('data-testid="start-new-link"')
+    })
+  })
+
+  // RA-765: a refused (Rejected, shown as "Refused") application no longer
+  // counts as the live one for its year, so it can be replaced like a
+  // withdrawn one.
+  describe('starting again after a refusal', () => {
+    const refusedApp = (overrides = {}) =>
+      makeApp({
+        applicationId: 'app-refused',
+        applicationStatus: 'Rejected',
+        organisationId: ORG_ID,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        ...overrides
+      })
+
+    const newApp = (overrides = {}) =>
+      makeApp({
+        applicationId: 'app-new',
+        applicationStatus: 'Saved',
+        organisationId: ORG_ID,
+        createdAt: '2026-02-01T00:00:00.000Z',
+        ...overrides
+      })
+
+    test('a refused-only year shows the refused application with REFUSED and the start-new form', async () => {
+      mockAccreditationGet([refusedApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('REFUSED')
+      expect(result).toContain('data-testid="start-new-form"')
+      expect(result).toContain(
+        `action="/operator-accreditation/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/${YEAR}/start-new"`
+      )
+      expect(result).not.toContain('data-testid="continue-button"')
+      expect(result).not.toContain('data-testid="withdraw-link"')
+      // Viewing a refused application must not create a replacement.
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('a year with only withdrawn and refused records shows the newest with the start-new form', async () => {
+      mockAccreditationGet([
+        refusedApp(),
+        makeApp({
+          applicationId: 'app-withdrawn',
+          applicationStatus: 'Withdrawn',
+          organisationId: ORG_ID,
+          createdAt: '2025-12-01T00:00:00.000Z'
+        })
+      ])
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { result } = await server.inject({ method: 'GET', url: baseUrl })
+
+      expect(result).toContain('REFUSED')
+      expect(result).toContain('data-testid="start-new-form"')
+    })
+
+    test('POST start-new seeds for the SAME year then redirects to the landing URL', async () => {
+      mockAccreditationGet([refusedApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue(newApp())
+
+      const { statusCode, headers } = await server.inject({
+        method: 'POST',
+        url: `${baseUrl}/start-new`
+      })
+
+      expect(postSpy).toHaveBeenCalledWith(
+        `/api/v1/accreditation-applications/${ORG_ID}/${REGISTRATION_ID}/${MATERIAL}/seed`,
+        { year: YEAR }
+      )
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(headers.location).toBe(baseUrl)
+    })
+
+    test('the landing URL then renders the new application, not the refused one', async () => {
+      mockAccreditationGet([refusedApp(), newApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode, result } = await server.inject({
+        method: 'GET',
+        url: baseUrl
+      })
+
+      expect(statusCode).toBe(statusCodes.ok)
+      expect(result).toContain('data-testid="continue-button"')
+      expect(result).toContain('/accreditation/task-list/app-new')
+      expect(result).not.toContain('REFUSED')
+      expect(result).not.toContain('data-testid="start-new-form"')
+      expect(postSpy).not.toHaveBeenCalled()
+    })
+
+    test('a refused application with a newer live one shows the live one with no start-new', async () => {
+      mockAccreditationGet([
+        refusedApp(),
+        newApp({ applicationStatus: 'Submitted' })
+      ])
+      vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { result } = await server.inject({ method: 'GET', url: baseUrl })
+
+      expect(result).toContain('SUBMITTED')
+      expect(result).not.toContain('REFUSED')
+      expect(result).not.toContain('data-testid="start-new-form"')
+    })
+
+    test('POST start-new does not seed when a live application exists beside the refused one', async () => {
+      mockAccreditationGet([refusedApp(), newApp()])
+      const postSpy = vi.spyOn(apiClient, 'post').mockResolvedValue({})
+
+      const { statusCode } = await server.inject({
+        method: 'POST',
+        url: `${baseUrl}/start-new`
+      })
+
+      expect(statusCode).toBe(statusCodes.redirect)
+      expect(postSpy).not.toHaveBeenCalled()
     })
   })
 

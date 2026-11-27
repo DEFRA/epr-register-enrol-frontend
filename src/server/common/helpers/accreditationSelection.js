@@ -2,6 +2,17 @@ import { accreditationApiService } from './accreditationApiService.js'
 import { logStructuredError } from './logging/log-structured-error.js'
 
 export const WITHDRAWN_STATUS = 'Withdrawn'
+export const REJECTED_STATUS = 'Rejected'
+
+// RA-357 / RA-765: a withdrawn or refused (Rejected) application no longer
+// counts as the application for its year, so the operator can start a new one.
+// Mirrors ApplicationStatusExtensions.NotLive in epr-register-enrol-backend,
+// which the seed endpoint uses to decide whether to create.
+export const NOT_LIVE_STATUSES = new Set([WITHDRAWN_STATUS, REJECTED_STATUS])
+
+export function isLiveApplication(application) {
+  return !NOT_LIVE_STATUSES.has(application.applicationStatus)
+}
 
 // RA-415: once a regulator decision is final (Approved/Rejected) or the
 // operator has withdrawn, the application is read-only end-to-end. The
@@ -83,9 +94,10 @@ export function latestByCreatedAt(applications) {
   }, null)
 }
 
-// RA-357: a single accreditation year can hold both a withdrawn record and its
-// live replacement, so pick the newest live application and only fall back to a
-// withdrawn one when that is genuinely all there is for the year.
+// RA-357: a single accreditation year can hold both a withdrawn (or, RA-765,
+// refused) record and its live replacement, so pick the newest live application
+// and only fall back to the newest withdrawn or refused one when that is
+// genuinely all there is for the year.
 export function selectApplicationForYear(
   applications,
   { registrationId, materialType, year }
@@ -96,9 +108,7 @@ export function selectApplicationForYear(
       app.materialType === materialType &&
       app.year === year
   )
-  const live = matching.filter(
-    (app) => app.applicationStatus !== WITHDRAWN_STATUS
-  )
+  const live = matching.filter(isLiveApplication)
 
   return {
     application: latestByCreatedAt(live) ?? latestByCreatedAt(matching),
@@ -140,8 +150,8 @@ export async function resolveLandingApplication({
   )
 
   // Seed when the year is empty, or when the operator explicitly asked to start
-  // again and every record for the year is withdrawn. Simply viewing a
-  // withdrawn application must leave it exactly as it is.
+  // again and every record for the year is withdrawn or refused. Simply viewing a
+  // withdrawn or refused application must leave it exactly as it is.
   if (hasMatch && (hasLive || !startNewRequested)) {
     // RA-415: listApplications() -> GetList never populates dueDate (or other
     // CM-sourced live fields), so the list record is stale by construction.

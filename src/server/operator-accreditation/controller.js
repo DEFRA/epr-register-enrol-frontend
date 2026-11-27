@@ -17,9 +17,9 @@ import { APPROVED_STATUS } from '../common/constants/applicationStatuses.js'
 import { materialDisplayName } from '../common/helpers/materialDisplayName.js'
 import { buildApplicationHeaderViewModel } from '../common/helpers/applicationHeader.js'
 import {
-  WITHDRAWN_STATUS,
   NON_WITHDRAWABLE_STATUSES,
   TERMINAL_STATUSES,
+  isLiveApplication,
   resolveLandingApplication
 } from '../common/helpers/accreditationSelection.js'
 
@@ -113,13 +113,13 @@ export function buildLandingViewModel(
     // audit. This used to link to accreditationYear + 1, which seeded against a
     // prior year that has no approved accreditation and always failed.
     // This is the action of a POST form, not an anchor href — see
-    // START_NEW_SEGMENT above.
-    startNewUrl:
-      application.applicationStatus === WITHDRAWN_STATUS
-        ? `${landingUrl({ ...application, year: accreditationYear })}${
-            isExporter ? '/exporter' : ''
-          }${START_NEW_SEGMENT}`
-        : null,
+    // START_NEW_SEGMENT above. RA-765: a refused (Rejected) application can be
+    // replaced the same way.
+    startNewUrl: !isLiveApplication(application)
+      ? `${landingUrl({ ...application, year: accreditationYear })}${
+          isExporter ? '/exporter' : ''
+        }${START_NEW_SEGMENT}`
+      : null,
     // RA102-2i2: only a 'failed' notificationStatus is surfaced — null (not yet
     // submitted, or no linked work item) and 'sent' both render nothing extra.
     notificationFailedBanner: application.notificationStatus === 'failed',
